@@ -5,6 +5,7 @@
 	"authors": [
 		{ "name": "Roland Kujundzic", "email": "roland@kujundzic.de" }
 	],
+	"minimum-stability": "stable",
 	"require": { "php": ">=5.5.0" },
 	"require-dev": {
 		"phpdocumentor/phpdocumentor": "*",
