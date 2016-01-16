@@ -3,7 +3,7 @@ PHP library with template engine and wrapper classes to filesystem, mysql and ot
 
 ## examples
 
-´´´
+```
 <?php
 
 # composer autoload:
@@ -19,5 +19,5 @@ use rkphplib\Dir;
 if (Dir::exists('src')) {
 	echo File::load('composer.json');
 }
-´´´
+```
 
