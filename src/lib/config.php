@@ -9,13 +9,9 @@ namespace rkphplib\lib;
  *  settings_TIMEZONE = GMT
  *  settings_LANGUAGE = de
  *
- * Set global defines:
+ * Define:
  *
- *  RKPHPLIB_VERSION = 1.0
- *  IGNORE_EMPTY = 1
- *  PRESERVE_QUOTE = 2
- *  TRIM_LINES = 4
- *  FIX_DQUOTE = 8
+ *   RKPHPLIB_VERSION = 1.0
  *
  * Register exception_handler and error_handler.
  *
@@ -47,10 +43,6 @@ if (!isset($settings_LANGUAGE)) {
 
 // global define
 define('RKPHPLIB_VERSION', 1.0);
-define('IGNORE_EMPTY', 1);
-define('PRESERVE_QUOTE', 2);
-define('TRIM_LINES', 4);
-define('FIX_DQUOTE', 8);
 
 
 /**

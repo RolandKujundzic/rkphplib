@@ -2,6 +2,11 @@
 
 namespace rkphplib\lib;
 
+define('CSV_IGNORE_EMPTY', 1);
+define('CSV_PRESERVE_QUOTE', 2);
+define('CSV_TRIM_LINES', 4);
+define('CSV_FIX_DQUOTE', 8);
+
 
 /**
  * Explode csv string into array. Escape delim with quite enclosure. Escape quote with double quote.
@@ -10,7 +15,7 @@ namespace rkphplib\lib;
  * @param string $text
  * @param string $delim (default = ",")
  * @param string $quote (default = '"')
- * @param int $mode (default = 0 - 1=IGNORE_EMPTY, 2=PRESERVE_QUOTE, 4=TRIM_LINES, 8=FIX_DQUOTE)
+ * @param int $mode (default = 0 - 1=CSV_IGNORE_EMPTY, 2=CSV_PRESERVE_QUOTE, 4=CSV_TRIM_LINES, 8=CSV_FIX_DQUOTE)
  * @return array
  */
 function csv_explode($text, $delim=',', $quote = '"', $mode = 0) {

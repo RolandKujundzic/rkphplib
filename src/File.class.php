@@ -3,10 +3,6 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/FSEntry.class.php');
-require_once(__DIR__.'/lib.php');
-
-use rkphplib\lib\Exception;
-
 
 
 /**

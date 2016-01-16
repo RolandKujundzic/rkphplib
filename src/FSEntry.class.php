@@ -2,9 +2,9 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/lib.php');
+require_once(__DIR__.'/Exception.class.php');
 
-use rkphplib\lib\Exception;
+use rkphplib\Exception;
 
 
 
