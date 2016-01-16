@@ -1,5 +1,5 @@
 {
-	"name": "rkphplib",
+	"name": "rklib/rkphplib",
 	"type": "library",
 	"description": "PHP library with template engine and wrapper classes to filesystem, mysql and other.",
 	"authors": [
