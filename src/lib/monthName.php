@@ -7,6 +7,7 @@ namespace rkphplib\lib;
  * Return localized month names ($settings_LANGUAGE = en|de|hr). 
  *
  * Month is from [1,12].
+ *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @param int $month
  * @return string

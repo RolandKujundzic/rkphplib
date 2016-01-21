@@ -9,21 +9,26 @@ use rkphplib\Exception;
 
 
 /**
+ * Filesystem operations for files and directories.
+ *
+ * All methods are static.
+ *
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
  */
 class FSEntry {
 
-// SAMBA mount has no stat function (use true to avoid abort)
+/** @var bool abort if stat failed (BEWARE: SAMBA mount has no stat function - use false to avoid abort) */
 public static $STAT_ABORT = true;
 
-// CHMOD is only possible if you are owner or root
+/** @var bool abort if chmod failed (CHMOD is only possible if you are owner or root) */
 public static $CHMOD_ABORT = true;
 
 
 
 /**
  * Return path info.
+ *
  * @see pathinfo().
  * @param string $path
  * @param string $opt (PATHINFO_DIRNAME, PATHINFO_BASENAME, PATHINFO_EXTENSION, PATHINFO_FILENAME - default = '')
@@ -36,6 +41,7 @@ public static function path($path, $opt = '') {
 
 /**
  * Change $path mode.
+ *
  * @param string $path
  * @param octal $mode (default = 0)
  */
@@ -76,11 +82,12 @@ public static function chmod($path, $mode = 0) {
 
 
 /**
- * Check if file exists. If abort is true throw error otherwise return false.
+ * Check if file exists. 
+ *
  * @param string $path
- * @param boolean $abort (default = true)
- * @param boolean $is_readable (default = true)
- * @return boolean
+ * @param bool $abort (default = true) If abort is true throw error otherwise return false.
+ * @param bool $is_readable (default = true)
+ * @return bool
  */
 public static function isFile($path, $abort = true, $is_readable = true) {
 
@@ -106,11 +113,12 @@ public static function isFile($path, $abort = true, $is_readable = true) {
 
 
 /**
- * Check if directory exists. If abort is true throw error otherwise return false.
+ * Check if directory exists. 
+ *
  * @param string $path
- * @param boolean $abort (default = true)
- * @param boolean $is_readable (default = true)
- * @return boolean
+ * @param bool $abort (default = true) If abort is true throw error otherwise return false.
+ * @param bool $is_readable (default = true)
+ * @return bool
  */
 public static function isDir($path, $abort = true, $is_readable = true) {
 
@@ -137,8 +145,9 @@ public static function isDir($path, $abort = true, $is_readable = true) {
 
 /**
  * Return file or directory stats.
+ *
  * @param string $path
- * @param boolean $clearcache (default = false)
+ * @param bool $clearcache (default = false)
  * @return hash|false
  */
 public static function stat($path, $clearcache = false) {

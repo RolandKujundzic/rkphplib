@@ -7,8 +7,9 @@ require_once(__DIR__.'/Exception.class.php');
 use rkphplib\Exception;
 
 
-
 /**
+ * JSON wrapper. 
+ *
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
  */
@@ -17,7 +18,9 @@ class JSON {
 
 /**
  * Convert all strings within $data to latin1.
+ *
  * If string are latin1 already no change should occur.
+ *
  * @param any $data (referece)
  */
 public static function latin1(&$data) {
@@ -46,7 +49,9 @@ public static function latin1(&$data) {
 
 /**
  * Convert all strings within $data to utf8.
+ *
  * If strings are utf8 Umlaute (öäüß ÖÄÜ) will be broken.
+ *
  * @param any $data (reference)
  */
 public static function utf8(&$data) {
@@ -75,6 +80,7 @@ public static function utf8(&$data) {
 
 /**
  * Return last error message for encode/decode.
+ *
  * @param int $err_no
  * @return string
  */
@@ -102,8 +108,9 @@ private static function _error_msg($err_no) {
 
 
 /**
- * Return json encoded $obj. Throw error if failed.
- * Wrapper of json_encode().
+ * Return json encoded $obj. 
+ *
+ * Throw error if failed. Wrapper of json_encode().
  *
  * @param object $obj
  * @param int $options (default = 322 = JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)
@@ -125,7 +132,7 @@ public static function encode($obj, $options = 320, $depth = 512) {
  * Return json decoded $txt.
  * 
  * @param string $txt
- * @param boolean $assoc (default = true = return hash)
+ * @param bool $assoc (default = true = return hash)
  * @param int $options (default = 0)
  * @param int $depth (default = 512)
  * @return hash|object
@@ -146,7 +153,7 @@ public static function decode($txt, $assoc = true, $options = 0, $depth = 512) {
  *
  * @see http://stackoverflow.com/questions/6054033/pretty-printing-json-with-php
  * @param string $json
- * @param boolean $custom (default = false = use native JSON_PRETTY_PRINT)
+ * @param bool $custom (default = false = use native JSON_PRETTY_PRINT)
  * @return string
  */
 public static function pretty_print($json, $custom = false) {

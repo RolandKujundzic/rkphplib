@@ -6,20 +6,28 @@ require_once(__DIR__.'/FSEntry.class.php');
 
 
 /**
+ * Directory access wrapper.
+ *
+ * All methods are static.
+ * 
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
  */
 class Dir {
 
+/** @var octal default directory creation mode */
 public static $DEFAULT_MODE = 0777;
+
+/** @var bool directory copy behaviour */
 public static $SKIP_UNREADABLE = false;
 
 
 /**
  * Return true if directory exists.
+ *
  * @param string $path
- * @param boolean $required
- * @return boolean
+ * @param bool $required
+ * @return bool
  */
 public static function exists($path, $required = false) {
 	$error = '';
@@ -52,7 +60,9 @@ public static function exists($path, $required = false) {
 
 
 /**
- * Create directory. Use $recursive = true to create parent directories.
+ * Create directory. 
+ *
+ * Use $recursive = true to create parent directories.
  * 
  * @param string $path
  * @param octal $mode (default = self.DEFAULT_MODE)
@@ -91,7 +101,10 @@ public static function create($path, $mode = 0, $recursive = false) {
 
 
 /**
- * Copy directory. Skip unreadable entries.
+ * Copy directory. 
+ * 
+ * Skip unreadable entries.
+ *
  * @param string $source_dir
  * @param string $target_dir
  * @param string $link_root (default = '', if set keep links)
@@ -199,6 +212,7 @@ public static function entries($path, $type = 0) {
 
 /**
  * Return directory entries (relative filepath). 
+ *
  * @see scandir()
  * @param string $path
  * @param int $sort (SCANDIR_SORT_ASCENDING=default|SCANDIR_SORT_DESCENDING|SCANDIR_SORT_NONE)
@@ -210,8 +224,9 @@ public static function scan($path, $sort = SCANDIR_SORT_ASCENDING) {
 
 
 /**
- * Remove leading dot [.] from suffix list entries. List is changed.
- * @param array &$suffix_list
+ * Remove leading dot [.] from suffix list entries. 
+ *
+ * @param array &$suffix_list list is changed
  */
 private static function _fix_suffix_list(&$suffix_list) {
   for ($i = 0; $i < count($suffix_list); $i++) {
@@ -223,12 +238,14 @@ private static function _fix_suffix_list(&$suffix_list) {
 
 
 /**
- * True if $file suffix is in suffix list. True if $suffix_list is empty.
+ * True if $file suffix is in suffix list. 
+ * 
+ * True if $suffix_list is empty.
  * Suffix comparsion is context insensitive.
  * 
  * @param string $file
  * @param array $suffix_list
- * @return boolean
+ * @return bool
  */
 private static function _has_suffix($file, $suffix_list) {
 
@@ -285,12 +302,13 @@ public static function scanDir($path, $suffix_list = array(), $rel_dir = '') {
 
 /**
  * Return files from directory tree with suffix in suffix_list. 
+ *
  * Exclude directories found in exclude_dir list.
  * 
  * @param string $path
  * @param array $suffix_list e.g. (jpg,png) or (.jpg,.png)
  * @param array $exclude_dir list with relative path
- * @param boolean $_recursion internal parameter
+ * @param bool $_recursion internal parameter
  * @return array
  */
 public static function scanTree($path, $suffix_list = array(), $exclude_dir = array(), $_recursion = false) {

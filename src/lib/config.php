@@ -4,6 +4,7 @@ namespace rkphplib\lib;
 
 /**
  * Configuration file.
+ *
  * Set global $settings_* default values:
  *
  *  settings_TIMEZONE = GMT
@@ -47,6 +48,8 @@ define('RKPHPLIB_VERSION', 1.0);
 
 /**
  * Default Exception catch.
+ * 
+ * @param Exception $e
  */
 function exception_handler($e) {
 	$msg = "\n\nABORT: ".$e->getMessage();
@@ -65,7 +68,14 @@ set_exception_handler('\rkphplib\lib\exception_handler');
 
 
 /**
- * Custom error handler. Convert any php error into Exception.
+ * Custom error handler. 
+ *
+ * Convert any php error into Exception.
+ * 
+ * @param int $errNo
+ * @param string $errStr
+ * @param string $errFile
+ * @param int $errLine
  */
 function error_handler($errNo, $errStr, $errFile, $errLine) {
 

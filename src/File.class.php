@@ -6,21 +6,30 @@ require_once(__DIR__.'/FSEntry.class.php');
 
 
 /**
+ * File access wrapper.
+ * 
+ * All methods are static.
+ * By default file locking is disabled (enable with self::$USE_FLOCK = true).
+ *
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
- * By default file locking is disabled (enable with self::$USE_FLOCK = true).
  */
 class File {
 
-// BEWARE: locking will not work on NFS
+/** @var bool don't use file locking by default (BEWARE: locking will not work on NFS) */
 public static $USE_FLOCK = false;
 
+/** @var bool default file creation mode */
 public static $DEFAULT_MODE = 0666;
 
 
 
 /**
- * Return file content. Use flock if self::USE_FLOCK is true.
+ * Return content of file $file.
+ *
+ * Start reading at byte offset if offset is set (default = -1).
+ * Use flock if self::USE_FLOCK is true.
+ *
  * @param string $file
  * @param int $offset (default = -1, start reading at byte offset)
  * @return string
@@ -48,7 +57,10 @@ public static function load($file, $offset = -1) {
 
 
 /**
- * Return file content. Apply file locking. If $file = STDIN return self::stdin().
+ * Return file content. 
+ *
+ * Apply file locking. If $file = STDIN return self::stdin().
+ *
  * @param string $file
  * @param int $offset (default = -1, start reading at byte offset)
  * @return string
@@ -112,9 +124,10 @@ private static function _open_lock($file, $lock_mode, $open_mode) {
 
 /**
  * Return filesize in byte (or formattet via File::formatSize if $as_text is true).
+ *
  * @param string $file
- * @param boolean $as_text (default = false)
- * @return integer
+ * @param bool $as_text (default = false)
+ * @return int
  */
 public static function size($file, $as_text = false) {
 
@@ -134,6 +147,7 @@ public static function size($file, $as_text = false) {
 
 /**
  * Return formated size (N MB, N KB or N Byte).
+ *
  * @param int $bytes
  * @return string
  */
@@ -156,6 +170,7 @@ public static function formatSize($bytes) {
 
 /**
  * Check if file exists.
+ *
  * @param string $file
  * @param bool $required (default = true) 
  * @return bool
@@ -167,6 +182,7 @@ public static function exists($file, $required = false) {
 
 /**
  * Change file permissions.
+ *
  * @param string $file
  * @param octal $mode (self::$DEFAULT_MODE)
  */
@@ -183,6 +199,7 @@ public static function chmod($file, $mode = 0) {
 
 /**
  * Save $data to $file. 
+ *
  * @param string $file
  * @param string $data
  * @param string $flag (default = 0, FILE_APPEND)
@@ -208,7 +225,8 @@ public static function save($file, $data, $flag = 0) {
 
 
 /**
- * Save $data to $file.
+ * Save $data to $file and modify privileges to $mode.
+ *
  * @param string $file
  * @param string $data
  * @param octal $mode (default = 0 = self::DEFAULT_MODE)
@@ -226,8 +244,9 @@ public static function save_rw($file, $data, $mode = 0) {
 
 /**
  * Delete file.
+ *
  * @param string $file
- * @param boolean $must_exist (default = true)
+ * @param bool $must_exist (default = true)
  */
 public static function remove($file, $must_exist = true) {
 
@@ -253,12 +272,13 @@ public static function append($file, $data) {
 
 
 /**
- * Open File for reading. Use mode = rb|ab|wb|ru|wu.
- * Always use ru for reading and wu for writing UTF-8 text files.
+ * Open File for reading. 
+ *
+ * Use mode = rb|ab|wb|ru|wu. Always use ru for reading and wu for writing UTF-8 text files.
  * 
  * @param string $file
  * @param string $mode
- * @return file_handle
+ * @return filehandle
  */
 public static function open($file, $mode = 'rb') {
 
@@ -303,6 +323,7 @@ public static function open($file, $mode = 'rb') {
 
 /**
  * Write CSV line to file.
+ *
  * @param array $data
  * @param char $delimiter (default = ',')
  * @param char $enclosure (default = '"')
@@ -322,6 +343,7 @@ public static function writeCSV($fh, $data, $delimiter = ',', $enclosure = '"', 
 
 /**
  * Write to data file.
+ *
  * @param filehandle $fh
  * @param string $data
  */
@@ -343,6 +365,7 @@ public static function write($fh, $data) {
 
 /**
  * Read up to length bytes from file.
+ *
  * @param filehandle $fh
  * @param int $length (default = 8192)
  * @return string|false
@@ -367,6 +390,7 @@ public static function read($fh, $length = 8192) {
 
 /**
  * Read CSV line from filehandle.
+ *
  * @param filehandle $fh
  * @param char $delimiter (default = ',')
  * @param char $enclose (default = '"')
@@ -389,6 +413,7 @@ public static function readCSV($fh, $delimiter = ',', $enclosure = '"', $escape 
 
 /**
  * Close file.
+ *
  * @param filehandle &$fh
  */
 public static function close(&$fh) {
@@ -409,7 +434,7 @@ public static function close(&$fh) {
  * Return lowercase file name suffix (without dot - unless $keep_dot= true).
  * 
  * @param string $file
- * @param boolean $keep_dot (default = false)
+ * @param bool $keep_dot (default = false)
  * @return string
  */
 public static function suffix($file, $keep_dot = false) {
@@ -434,10 +459,13 @@ public static function suffix($file, $keep_dot = false) {
 
 
 /**
- * Return file basename. If remove_suffix is true remove .xxxx.
+ * Return file basename. 
+ *
+ * If remove_suffix is true remove .xxxx.
  * If rsuffix is set remove everything after rsuffix rpos (apply after remove_suffix). 
+ *
  * @param string $file
- * @param boolean (default = false)
+ * @param bool (default = false)
  * @param string (default = empty)
  * @return string
  */
@@ -459,9 +487,10 @@ public static function basename($file, $remove_suffix = false, $rsuffix = '') {
 
 /**
  * Transform filename array into hash.
+ *
  * @see File::basename(path, remove_suffix, rsuffix)
  * @param array $list
- * @param boolean remove_suffix (default = true)
+ * @param bool remove_suffix (default = true)
  * @param string rsuffix (default = '_')
  * @return hash {base1: [file1, file2, ...], ... }
  */
@@ -485,6 +514,7 @@ public static function basename_collect($list, $remove_suffix = true, $rsuffix =
 
 /**
  * Copy file.
+ *
  * @param string $source
  * @param string $target
  * @param string $mode (default = 0 = self::$DEFAULT_MODE)
@@ -505,9 +535,10 @@ public static function copy($source, $target, $mode = 0) {
 
 /**
  * Move file.
+ *
  * @param string $source
  * @param string $target
- * @param boolean $mode (default = 0 = self::$DEFAULT_MODE)
+ * @param bool $mode (default = 0 = self::$DEFAULT_MODE)
  */
 public static function move($source, $target, $mode = 0666) {
 
@@ -523,9 +554,12 @@ public static function move($source, $target, $mode = 0666) {
 
 
 /**
- * Return last modified. Return Y-m-d H:i:s instead of unix timestamp if $sql_ts is true.
+ * Return last modified. 
+ *
+ * Return Y-m-d H:i:s instead of unix timestamp if $sql_ts is true.
+ *
  * @param string $file
- * @param boolean $sql_ts (default = false) 
+ * @param bool $sql_ts (default = false) 
  * @return int|string
  */
 public static function lastModified($path, $sql_ts = false) {

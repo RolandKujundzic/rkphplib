@@ -4,7 +4,9 @@ namespace rkphplib\lib;
 
 
 /**
- * Split text into key value hash. Keys must not start with "@@" or "@_". 
+ * Split text into key value hash. 
+ * 
+ * Keys must not start with "@@" or "@_". 
  * Split text at $d2 (|#|) into lines. Split lines at first $d1 (=) into key value.
  * If key is not found return $text or use "@_N" as key (N is autoincrement 1, 2, ...) if mulitple keys are missing.
  * If key already exists rename to key.N (N is autoincrement 1, 2, ...).
@@ -16,7 +18,7 @@ namespace rkphplib\lib;
  * @param string $text
  * @param string $d1 (default is "=")
  * @param string $d2 (default is "|#|")
- * @param hash ikv (config hash - default [ ])
+ * @param map ikv (config hash - default [ ])
  * @return string|array|hash
  */
 function conf2kv($text, $d1 = '=', $d2 = '|#|', $ikv = array()) {

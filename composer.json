@@ -7,10 +7,11 @@
 	],
 	"minimum-stability" : "dev",
 	"prefer-stable" : true,
-	"require": { "php": ">=5.5.0" },
+	"require": {
+		"php": ">=5.5.0"
+	},
 	"require-dev": {
-		"phpdocumentor/phpdocumentor": "*",
-		"phpunit/phpunit": "*"
+		"apigen/apigen": "^4.1"
 	},
 	"autoload": {
 		"classmap": ["src/"],
