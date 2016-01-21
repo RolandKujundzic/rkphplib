@@ -1,0 +1,755 @@
+<?php
+
+namespace rkphplib;
+
+require_once(__DIR__.'/Exception.class.php');
+
+use rkphplib\lib\Exception;
+
+
+/**
+ * Date calculation helper class.
+ *
+ * All methods are static.
+ *
+ * @author Roland Kujundzic <roland@inkoeln.com>
+ */
+class DateCalc {
+
+
+/**
+ * Convert sql date(time) "yyyy-mm-dd[ hh:ii:ss]" to number "yyyymmdd[.hhiiss]".
+ * 
+ * Use day > 0 to force day instead of dd.
+ * Use day = -1 to cut off hh:ii:ss.
+ * 
+ * @param string $date (e.g. 2015-01-17[ hh:ii:ss])
+ * @param int $day (-1, 0, 1, 2, ..., 31)
+ * @return int|float
+ */
+public static function sql2num($date, $day = 0) {
+	$res = null;
+
+	if (empty($date) || mb_substr($date, 0, 10) == '0000-00-00' || $date == '0000-00-00 00:00:00') {
+		$res = 0;
+	}
+	else if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $date, $m)) {
+		$day = ($day > 0 && $day < 32) ? sprintf("%02d", $day) : $m[3];
+		$res = intval($m[1].$m[2].$day);
+	}
+	else if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-5][0-9])\:([0-5][0-9])\:([0-5][0-9])$/', $date, $m)) {
+		if ($day > 0 && $day < 32) {
+			$res = intval($m[1].$m[2].sprintf("%02d", $day));
+		}
+		else if ($day == -1) {
+			$res = intval($m[1].$m[2].$m[3]);
+		}
+		else {
+			$res = floatval($m[1].$m[2].$m[3].'.'.$m[4].$m[5].$m[6]);
+		}
+	}
+	else {
+		throw new Exception('invalid sql date|datetime', $date);
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return max sql date|datetime (sql format).
+ *
+ * @param string $d1 
+ * @param string $d2
+ * @param bool $force_date (default = false)
+ * @return string
+ */
+public static function max($d1, $d2, $force_date = false) {
+	$day = $force_date ? -1 : 0;
+    $nd1 = self::sql2num($d1, $day);
+    $nd2 = self::sql2num($d2, $day);
+    return ($nd1 < $nd2) ? $d2 : $d1;
+}
+
+
+/**
+ * Return timestamp of sql date|datetime.
+ *
+ * @param string $date (e.g. 2015-01-17[ hh:ii:ss])
+ * @param int $day (default = 0 = use dd of yyy-mm-dd, -1 = cut of hh:ii:ss)
+ * @return int
+ */
+public static function sqlTS($date, $day = 0) {
+
+	if (empty($date) || mb_substr($date, 0, 10) == '0000-00-00' || $date == '0000-00-00 00:00:00') {
+		return 0;
+	}
+
+	if ($day == -1) {
+		$date = mb_substr($date, 0, 10);	
+	}
+
+	if ($day > 0 && $day < 32) {
+		$day = intval($day);
+	}
+	else {
+    	$day = intval(mb_substr($date, 8, 2));
+	}
+
+	$m = intval(mb_substr($date, 5, 2));
+	$y = mb_substr($date, 0, 4);
+
+	if (mb_strlen($date) == 10) {
+		$res = mktime(0, 0, 0, $m, $day, $y);
+	}
+	else if (mb_strlen($date) == 19) {
+		$h = intval(mb_substr($date, 11, 2));
+		$i = intval(mb_substr($date, 14, 2));
+		$s = intval(mb_substr($date, 17, 2));
+		$res = mktime($h, $i, $s, $m, $day, $y);
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return sql date|datetime with mnum (number of month added).
+ *
+ * @param string $date (e.g. 2015-01-17[ hh:ii:ss])
+ * @param int $mnum
+ * @return string
+ */
+public static function sqlAddMonth($date, $mnum) {
+
+	if ($mnum < -120 || $mnum > 120) {
+		throw new Exception('invalid mnum use [-120,120]', $mnum);
+	}
+
+	$ymd = mb_substr($date, 0, 10);
+
+	if ($mnum > 0) {
+		while ($mnum > 0) {
+			$ymd = date('Y-m', self::sqlTS($ymd, 25) + 3600 * 24 * 8)."-".mb_substr($ymd, 8, 2);
+			$mnum--;
+		}
+	}
+	else if ($mnum < 0) {
+		while ($mnum < 0) {
+			$ymd = date('Y-m', self::sqlTS($ymd, 1) - 3600 * 24 * 2)."-".mb_substr($ymd, 8, 2);
+			$mnum++;
+		}
+	}
+
+	if (mb_strlen($date) == 19) {
+		$ymd .= mb_substr($date, 10);
+	}
+
+	return $ymd;
+}
+
+
+/**
+ * Convert date string into unix timestamp.
+ *
+ * @see self::date2dmyhis for valid date format.
+ * @param string $date
+ * @param bool $allow_dmy (default = false = only "d.m.y h:i:s" allowed)
+ * @return int Return 0 if date is empty or zero (0000-00-00).
+ */
+public static function date2unix($date, $allow_dmy = false) {
+  return self::dmy2unix(self::date2dmyhis($date, $allow_dmy, false));
+}
+
+
+/**
+ * Convert $dmy = array(d,m,y) into unix timestamp. 
+ *
+ * Year is in [1970,2200] or 0.
+ * 
+ * @param array $dmy (d,m,y) 
+ * @return int
+ */
+public static function dmy2unix($dmy) {
+
+	if (count($dmy) != 3 && count($dmy) != 6) {
+		throw new Exception('invalid dmy array', join('|', $dmy));
+	} 
+
+	$d = intval($dmy[0]);
+	$m = intval($dmy[1]);
+	$y = intval($dmy[2]);
+
+	if ($d + $m + $y == 0) {
+		return 0;
+	}
+
+	if ($d < 1 || $d > 31 || $m < 1 || $m > 12 || $dmy[2] < 1970 || $dmy[2] > 2200) {
+		throw new Exception('invalid value in dmy array', join('|', $dmy));
+	}
+
+	if (count($dmy) == 6) {
+    	$res = mktime(intval($dmy[3]), intval($dmy[4]), intval($dmy[5]), $m, $d, $y);
+	}
+	else {
+    	$res = mktime(0, 0, 0, $m, $d, $y);
+	}
+
+	return $res;
+}
+
+
+/**
+ * Convert string date(time) into dmyhis array.
+ *
+ * Recognised dates are date2dmy()." hhii[ss]". 
+ *
+ * @see self::date2dmy
+ * @param string $date
+ * @param bool $allow_dmy default=false, only dmyhis
+ * @param bool default=false, use 00:00:00 as his  
+ * @return array (d,m,y,h,i,s)
+ */
+public static function date2dmyhis($date, $allow_dmy = false, $use_curr_time = false) {
+
+	$dmyhis = array();
+	$dl = mb_strlen($date);
+
+	if ($dl > 11) {
+
+		if ($dl == 12 || $dl == 14) {
+			// yyyymmddhhii[ss]
+			$dmyhis = self::date2dmy(mb_substr($date, 0, 8));
+			$his = array(mb_substr($date, 8, 2), mb_substr($date, 10, 2));
+			$his[2] = ($dl == 14) ? mb_substr($date, 12, 2) : 0;
+		}
+		else if ($dl > 14) {
+			// dd.mm.yyyy hh:ii[:ss] or yyyy-mm-dd hh:ii[:ss]
+			$dmyhis = self::date2dmy(mb_substr($date, 0, 10));
+			$his = explode(':', mb_substr($date, 11));
+		}
+
+		if (count($his) == 3) {
+			array_push($dmyhis, intval($his[0]), intval($his[1]), intval($his[2]));
+		}
+		else if (count($his) == 2) {
+			array_push($dmyhis, intval($his[0]), intval($his[1]), 0);
+		}
+		else {
+			throw new Exception('invalid date|datetime', $date);
+		}
+	}
+	else if ($allow_dmy) {
+		$dmyhis = self::date2dmy($date);
+
+		if ($use_curr_time) {
+			$his = date('His', time());
+			$h = intval(mb_substr($his, 0, 2));
+			$m = intval(mb_substr($his, 2, 2));
+			$s = intval(mb_substr($his, 4, 2));
+			array_push($dmyhis, $h, $m, $s);
+		}
+		else {
+			array_push($dmyhis, 0, 0, 0);
+		}
+	}
+	else {
+		throw new Exception('invalid date|datetime', $date);
+	}
+
+	return $dmyhis;
+}
+
+
+/**
+ * Convert string date into dmy array.
+ *
+ * Cut datetime to date.
+ * 
+ * Recognised formats are "yyyymmddhhii[ss]", "dd.mm.yyyy hh:ii[:ss]",
+ * "200708", "20070813", "26.01.2007", "11.2003|11/2003|2003-11" and "2007-01-26".
+ * 
+ * @param string $date
+ * @param bool $abort
+ * @return array (d,m,y)
+ */
+public static function date2dmy($date, $abort = true) {
+
+	$dmy = array();
+	$dl = mb_strlen($date);
+
+	if ($dl > 11) {
+		if ($dl == 12 || $dl == 14) {
+			// yyyymmddhhii[ss]
+			$date = mb_substr($date, 0, 8);
+		}
+		else if ($dl > 14) {
+			// dd.mm.yyyy hh:ii[:ss]
+			$date = mb_substr($date, 0, 10);
+		}
+
+		$dl = mb_strlen($date);
+	}
+
+	if ($dl == 6) {
+		// e.g. 200708 (= 01.08.2007)
+		$dmy = array(1, intval(mb_substr($date, 4, 2)), intval(mb_substr($date, 0, 4)));
+	}
+	else if ($dl == 7) {
+		// e.g. 11.2007 = (01.11.2007) = 2007-11 = 11/2007
+		if (($pos = mb_strpos($date, '-')) !== false && $pos == 4) {
+			$dmy = array(1, intval(mb_substr($date, 5, 2)), intval(mb_substr($date, 0, 4)));
+		}
+		else {
+			if (intval(mb_substr($date, 4, 1)) > 0) {
+				throw new Exception('invalid date', $date);
+			}
+
+			$dmy = array(1, intval(mb_substr($date, 0, 2)), intval(mb_substr($date, 3, 4)));
+		}
+	}
+	else if ($dl == 8) {
+		// e.g. 20070813
+		$dmy = array(intval(mb_substr($date, 6, 2)), intval(mb_substr($date, 4, 2)), intval(mb_substr($date, 0, 4)));
+	}
+	else if ($dl == 10) {
+		if (mb_strpos($date, '.') !== false) {
+			// e.g. 26.01.2007
+			$tmp = explode('.', $date);
+			$dmy = array(intval($tmp[0]), intval($tmp[1]), intval($tmp[2]));
+		}
+		else if (mb_strpos($date, '-') !== false) {
+			// e.g. 2007-01-26
+			$tmp = explode('-', $date);
+			$dmy = array(intval($tmp[2]), intval($tmp[1]), intval($tmp[0]));
+		}
+	}
+
+	if (count($dmy) != 3 && $abort) {
+		throw new Exception('invalid date', $date);
+	}
+
+	return $dmy;
+}
+
+
+/**
+ * Re-format date strint into yyyy-mm-dd.
+ * 
+ * @see self::date2dmy
+ * @param string $date
+ * @param string $delimiter
+ * @return string
+ */
+public static function sql_date($date, $delimiter = '-') {
+  $dmy = self::date2dmy($date);
+  $res = $dmy[2].$delimiter.sprintf("%02d", $dmy[1]).$delimiter.sprintf("%02d", $dmy[0]);
+  return $res;
+}
+
+
+/**
+ * Return number of seconds formated as "LL h NN min KK sec".
+ *
+ * @param string $param (use h:m:s if param == hms)
+ * @param int $sec
+ * @return string
+ */
+public static function min_sec($sec, $param = '') {
+
+	$sec = intval($sec);
+	$res = '';
+	$h = -1;
+	$m = -1;
+	$s = -1;
+
+	if ($sec < 0) {
+		throw new Exception('invalid sec', $sec);
+	}
+	else if ($sec < 1) {
+		// return nothing ...
+	}
+	else if ($sec < 60) {
+    	$s = $sec;
+	}
+	else if ($sec < 3600) {
+    	$m = intval($sec / 60);
+		$s = $sec % 60;
+	}
+	else {
+		$h = intval($sec / 3600);
+		$sec = $sec % 3600;
+		$m = intval($sec / 60);
+		$s = $sec % 60;
+	}
+
+	if ($param == 'hms')  {
+		if ($h > -1) { $res .= $h.':'; }
+		if ($m > -1) { $res .= $m.':'; }
+		if ($s > -1) { $res .= $s; }
+	}
+	else {
+		if ($h > -1) { $res .= $h.' h '; }
+		if ($m > -1) { $res .= $m.' min '; }
+		if ($s > -1) { $res .= $s.' sec'; }
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return kw of year (MONDAY, SUNDAY).
+ *
+ * If kw is empty return (MONDAY_1, SUNDAY_2, MONDAY_2, SUNDAY_2, ... , MONDAY_53, SUNDAY_53).
+ * If you retrieve kw of whole year use kw[(n-1)*2, (n-1)*2 + 1] for n'th entry.
+ * 
+ * @param int $year
+ * @param int $kw (optional)
+ * @return array
+ */
+public static function kw($year, $kw = 0) {
+	$res = array();
+  
+	if ($kw > 0) {
+		$kw = sprintf("%02d", $kw);
+		$res[0] = date("d.m.Y", strtotime($year.'-W'.$kw));
+		$res[1] = date("d.m.Y", strtotime($year.'-W'.$kw.'-7'));
+	}
+	else {
+		for ($i = 1; $i < 54; $i++) {
+			$kw = sprintf("%02d", $i);
+			array_push($res, date("d.m.Y", strtotime($year.'-W'.$kw)));
+			array_push($res, date("d.m.Y", strtotime($year.'-W'.$kw.'-7')));
+		}
+	}
+
+	return $res;
+}
+
+
+/**
+ * Convert hh, hh:mm and hh:mm:ss into number of second (h * 3600 + m * 60 + s).
+ * 
+ * @param string $hms e.g. 14:32:55, 32:55 
+ * @return int
+ */
+public static function hms2sec($hms) {
+
+	if (preg_match('/^([0-5][0-9])\:([0-5][0-9])\:([0-5][0-9])$/', $hms, $m)) {
+		$res = intval($m[1]) * 3600 + intval($m[2]) * 60 + intval($m[3]);
+	}
+	else if (preg_match('/^([0-5][0-9])\:([0-5][0-9])$/', $hms, $m)) {
+		$res = intval($m[1]) * 60 + intval($m[2]);
+	}
+	else {
+		throw new Exception('invalid hms', $hms);
+	}
+
+	return $res;
+}
+
+
+/**
+ * Convert seconds into [hh:]mm:ss.
+ *  
+ * @param int $sec
+ * @return string
+ */
+public static function sec2hms($sec) {
+
+	$h = '';
+	if ($sec >= 3600) {
+		$h = sprintf("%02d", ($sec / 3600));
+		$sec = $sec % 3600;
+	}
+
+	$m = '00';
+	if ($sec >= 60) {
+		$m = sprintf("%02d", ($sec / 60));
+		$sec = $sec % 60;
+	}
+
+	$s = sprintf("%02d", $sec);
+	$res = '';
+
+	if (!empty($h)) {
+		$res = $h.':';
+	}
+
+	$res .= $m.':'.$s;
+
+	return $res;
+}
+
+
+/**
+ * Compute unix timestamp from now string "now(+/-offset)".
+ * 
+ * @param string $str e.g. now(), now(+3600) or now(-60)
+ * @param bool $abort (default = true = abort if error)
+ * @return int
+ */
+public static function nowstr2time($str, $abort = true) {
+
+	$str = trim($str);
+
+	if (mb_substr($str, 0, 4) !== 'now(' || mb_substr($str, -1) !== ')') {
+		if ($abort) {
+			throw new Exception('invalid - use now(...)', $str);
+		}
+
+		return 0;
+	}
+
+	$res = time();
+
+	if (mb_strlen($str) > 5) {
+		$nc = mb_substr($str, 4, 1);
+
+		if ($nc === '-') {
+			$num = intval(mb_substr($str, 5, -1));
+			$res -= $num;
+		}
+		else if ($nc === '+') {
+			$num = intval(mb_substr($str, 5, -1));
+			$res += $num;
+		}
+		else {
+			$num = intval(mb_substr($str, 4, -1));
+			$res += $num;
+		}
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return next month as yyyymm.
+ * If year = 0 (default) return only next month.
+ * 
+ * @param int $month
+ * @param int $year (default = 0)
+ * @return int
+ */
+public static function nextMonth($month, $year = 0) {
+
+	if ($year > 1000) {
+		$res = ($year * 100) + $month;
+		$res = ($month == 12) ? $res + 89 : $res + 1;
+	}
+	else {
+		$res = ($month % 12) + 1;
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return previous month as yyyymm.
+ * If year = 0 (default) return only prev month.
+ * 
+ * @param int $month
+ * @param int $year (default = 0)
+ * @return int
+ */
+public static function prevMonth($month, $year = 0) {
+
+	if ($year > 1089) {
+		$res = ($year * 100) + $month;
+    	$res = ($month == 1) ? $res - 89 : $res - 1;
+	}
+	else {
+		$res = ($month + 10) % 12 + 1;
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return last day of month.
+ * 
+ * @param int $month
+ * @param int $year
+ * @return int
+ */
+public static function lastDay($month, $year) {
+	$res = date("t", mktime(0, 0, 0, $month, 1, $year));
+	return intval($res);
+}
+
+
+/**
+ * Return Day of month of sql date string yyyy-mm-dd.
+ * If since_year is given add days from since_year - sql_date.year
+ * @param string sql_date
+ * @param int since_year optional (> 1000)
+ * @return int
+ */
+public static function sqlDayOfYear($sql_date, $since_year = 0) {
+	$dmy = self::date2dmy($sql_date);
+	$res = date("z", mktime(0, 0, 0, $dmy[1], $dmy[0], $dmy[2])) + 1;
+
+	if ($since_year > 1000) {
+		for ($i = $since_year; $i < $dmy[2]; $i++) {
+			$res += date("z", mktime(0, 0, 0, 12, 31, $i)) + 1;
+		}
+	}
+
+	return $res;
+}
+
+
+/**
+ * Re-format date string. 
+ * 
+ * Format in/out:
+ * 
+ * de = d.m.Y H:i:s
+ * sql = Y-m-d H:i:s
+ * % map = any combination of %d, %e, %m, %y, %Y, %H, %i, %s, %B
+ * default map = any combination of d,m,Y,y,H,i,s
+ * 
+ * @see self::formatDateTimeStr
+ * @param string $format_out
+ * @param string $date_str
+ * @param string $format_in
+ * @return string
+ */
+public static function formatDateStr($format_out, $date_str, $format_in = '') {
+
+	if (preg_match('/^[0\-\.\:]+$/', $date_str) || (!$date_str && $format_in != 'now')) {
+		return '';
+	}
+
+	if (empty($format_out)) {
+		throw new Exception('no output format defined');
+	}
+
+	$format_map = array('de' => 'd.m.Y H:i:s', 'sql' => 'Y-m-d H:i:s');
+
+	if (!empty($format_map[$format_out])) {
+		$format_out = $format_map[$format_out];
+	}
+
+	if (!empty($format_map[$format_in])) {
+		$format_in = $format_map[$format_in];
+	}
+
+	$regroup = array('d.m.Y', 'd.m.Y H:i:s', 'YmdHis', 'Ymd', 'Ym', 'Y-m-d', 'Y-m-d H:i:s');
+
+	if (in_array($format_in, $regroup) && (in_array($format_out, $regroup) || mb_strpos($format_out, '%') !== false)) {
+		$dmyhis = self::date2dmyhis($date_str, true, true);
+
+		$Xd = sprintf('%02d', $dmyhis[0]);
+		$Xm = sprintf('%02d', $dmyhis[1]);
+		$Xyyyy = $dmyhis[2];
+		$Xyy = mb_substr($dmyhis[2], -2);
+		$Xh = sprintf('%02d', $dmyhis[3]);
+		$Xi = sprintf('%02d', $dmyhis[4]);
+		$Xs = sprintf('%02d', $dmyhis[5]);
+
+		if (mb_strpos($format_out, '%') !== false) {
+			$map = array('%d' => $Xd, '%e' => $Xd, '%m' => $Xm, '%y' => $Xyy, '%Y' => $Xyyyy, '%H' => $Xh, '%i' => $Xi, '%s' => $Xs, 
+				'%B' => lib\monthName($Xm));
+		}
+		else {
+			$map = array('d' => $Xd, 'm' => $Xm, 'y' => $Xyy, 'Y' => $Xyyyy, 'H' => $Xh, 'i' => $Xi, 's' => $Xs);
+		}
+
+		$res = $format_out;
+		foreach ($map as $tag => $value) {
+			$res = str_replace($tag, $value, $res);
+		}
+	}
+	else {
+		$res = self::formatDateTimeStr($format_out, $date_str, $format_in);
+	}
+
+	return $res;
+}
+
+
+/**
+ * Re-format datetime string.
+ * 
+ * Format in/out:
+ * 
+ * unix = unix timestamp
+ * date = unix timestamp
+ * strtotime = use strtotime($date_str)
+ * mm/yyyy = use d=1, his=00:00:00
+ * now = see nowstr2time($date_str)
+ * strftime = use strftime($format_out, time)
+ * 
+ * @see DateCalc::nowstr2time
+ * @see DateCalc::date2dmyhis
+ * @see DateCalc::dmy2unix
+ * 
+ * @param string $format_out
+ * @param string $date_str
+ * @param string $format_in
+ * @return string
+ */
+public static function formatDateTimeStr($format_out, $date_str, $format_in = '') {
+
+	if ($format_in == 'unix' && mb_substr($date_str, 0, 4) == 'now(') {
+		$format_in = 'now';
+	}
+
+	if ($format_in == 'unix' || $format_in == 'date') {
+		$time = intval($date_str);
+	}
+	else if ($format_in == 'strtotime') {
+		$time = strtotime($date_str);
+	}
+	else if (preg_match("/^([0-9]{2})\/([0-9]{4})$/", $date_str, $m)) {
+		$time = mktime(0, 0, 0, $m[1], 1, $m[2]) - 1;
+	}
+	else if ($format_in == 'now' || mb_substr($date_str, 0, 4) == 'now(') {
+		$time = empty($date_str) ? time() : self::nowstr2time($date_str);
+	}
+	else {
+		$date = self::date2dmyhis($date_str, true, true);
+		$time = self::dmy2unix($date);
+	}
+
+	if ($format_in == 'strftime') {
+		$res = strftime($format_out, $time);
+	}
+	else if (mb_strpos($format_out, '%') !== false) {
+		// replace %e=day, %m=month, %y, %H=hour, %M=minute, %S=second, %B=month name 
+		$tmp = explode('-', date('d-m-Y-H-i-s', $time));
+		$map['%d'] = $tmp[0];
+		$map['%e'] = intval($tmp[0]);
+		$map['%m'] = $tmp[1];
+		$map['%Y'] = $tmp[2];
+		$map['%H'] = $tmp[3];
+		$map['%i'] = $tmp[4];
+		$map['%s'] = $tmp[5];
+		$map['%B'] = lib\monthName(intval($tmp[1]));
+
+		$res = $format_out;
+		foreach ($map as $tag => $value) {
+			$res = str_replace($tag, $value, $res);
+		}
+	}
+	else if ($format_out == 'unix') {
+		$res = $time;
+	}
+	else if ($time > 0) {
+		$res = date($format_out, $time);
+	}
+	else {
+		throw new Exception('invalid time', $time);
+	}
+
+	return $res;
+}
+
+
+}
+
