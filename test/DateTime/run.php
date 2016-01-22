@@ -1,7 +1,7 @@
 <?php
 
-require_once(dirname(dirname(__FILE__)).'/testlib.php');
-require_once(dirname(dirname(dirname(__FILE__))).'/src/DateCalc.class.php');
+require_once(dirname(__DIR__).'/testlib.php');
+require_once(dirname(dirname(__DIR__)).'/src/DateCalc.class.php');
 
 fc('sql2num');
 fc('max');
