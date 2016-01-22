@@ -7,8 +7,8 @@ namespace rkphplib\lib;
  *
  * Set global $settings_* default values:
  *
- *  settings_TIMEZONE = GMT
- *  settings_LANGUAGE = de
+ *  $settings_TIMEZONE = GMT
+ *  $settings_LANGUAGE = de
  *
  * Define:
  *
@@ -28,19 +28,20 @@ namespace rkphplib\lib;
 mb_internal_encoding('UTF-8');
 
 
-// set default timezone
-if (isset($settings_TIMEZONE)) {
-	date_default_timezone_set($settings_TIMEZONE);
-}
-else {
-	date_default_timezone_set('GMT');
+if (!isset($settings_TIMEZONE)) {
+	/** @global string $settings_TIMEZONE = 'GMT' */
+	global $settings_TIMEZONE;
+	$settings_TIMEZONE = 'GMT';
 }
 
-// set default language (=de)
+date_default_timezone_set($settings_TIMEZONE);
+
+
 if (!isset($settings_LANGUAGE)) {
+	/** @global string $settings_LANGUAGE = 'de' */
+	global $settings_LANGUAGE;
 	$settings_LANGUAGE = 'de';
 }
-
 
 // global define
 define('RKPHPLIB_VERSION', 1.0);
