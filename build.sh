@@ -20,19 +20,23 @@ function _mb_check() {
 
 case $1 in
 composer)
+	# install composer
 	if ! test -f composer.phar; then
 		curl -sS https://getcomposer.org/installer | php
 	fi
 	php composer.phar install
 	;;
 test)
+	# run all tests
 	php test/run.php
 	;;
 docs)
+	# create apigen documentation
 	test -d docs/api && rm -rf docs/api
 	vendor/apigen/apigen/bin/apigen generate -s ./src -d ./docs/api
-  ;;
+	;;
 mb_check)
+	# show where string function needs to change to mb_* version
 	_mb_check
 	;;
 *)
