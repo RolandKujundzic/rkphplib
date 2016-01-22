@@ -3,8 +3,9 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
+require_once(__DIR__.'/lib/config.php');
 
-use rkphplib\lib\Exception;
+use rkphplib\Exception;
 
 
 /**
@@ -15,6 +16,45 @@ use rkphplib\lib\Exception;
  * @author Roland Kujundzic <roland@inkoeln.com>
  */
 class DateCalc {
+
+
+/**
+ * Return localized month names ($settings_LANGUAGE = en|de|hr).
+ *
+ * Month is from [1,12].
+ *
+ * @author Roland Kujundzic <roland@kujundzic.de>
+ * @param int $month
+ * @return string
+ */
+public static function monthName($month) {
+  global $settings_LANGUAGE;
+
+  $month = ($month > 100000) ? intval(mb_substr($month, -2)) : intval($month);
+
+  if ($month < 1 || $month > 12) {
+    throw new Exception('invalid month', $month);
+  }
+
+  $lang = $settings_LANGUAGE;
+
+  $month_names = array();
+
+  $month_names['de'] = array('Januar', 'Februar', 'März', 'April', 'Mai',
+    'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember');
+
+  $month_names['en'] = array('January', 'February', 'March', 'April', 'Mai',
+    'June', 'July', 'August', 'September', 'October', 'November', 'December');
+
+  $month_names['hr'] = array('Sije&#269;anj', 'Velj&#269;a', 'O&#382;ujak', 'Travanj', 'Svibanj',
+    'Lipanj', 'Srpanj', 'Kolovoz', 'Rujan', 'Listopad', 'Studeni', 'Prosinac');
+
+  if (!isset($month_names[$lang])) {
+    throw new Exception("no month names for [$lang]");
+  }
+
+  return $month_names[$lang][$month - 1];
+}
 
 
 /**
@@ -654,7 +694,7 @@ public static function formatDateStr($format_out, $date_str, $format_in = '') {
 
 		if (mb_strpos($format_out, '%') !== false) {
 			$map = array('%d' => $Xd, '%e' => $Xd, '%m' => $Xm, '%y' => $Xyy, '%Y' => $Xyyyy, '%H' => $Xh, '%i' => $Xi, '%s' => $Xs, 
-				'%B' => lib\monthName($Xm));
+				'%B' => self::monthName($Xm));
 		}
 		else {
 			$map = array('d' => $Xd, 'm' => $Xm, 'y' => $Xyy, 'Y' => $Xyyyy, 'H' => $Xh, 'i' => $Xi, 's' => $Xs);
@@ -730,7 +770,7 @@ public static function formatDateTimeStr($format_out, $date_str, $format_in = ''
 		$map['%H'] = $tmp[3];
 		$map['%i'] = $tmp[4];
 		$map['%s'] = $tmp[5];
-		$map['%B'] = lib\monthName(intval($tmp[1]));
+		$map['%B'] = self::monthName(intval($tmp[1]));
 
 		$res = $format_out;
 		foreach ($map as $tag => $value) {
