@@ -740,6 +740,16 @@ public static function formatDateTimeStr($format_out, $date_str, $format_in = ''
 		$format_in = 'now';
 	}
 
+	$format_map = array('de' => 'd.m.Y H:i:s', 'sql' => 'Y-m-d H:i:s');
+
+	if (!empty($format_map[$format_out])) {
+		$format_out = $format_map[$format_out];
+	}
+
+	if (!empty($format_map[$format_in])) {
+		$format_in = $format_map[$format_in];
+	}
+
 	if ($format_in == 'unix' || $format_in == 'date') {
 		$time = intval($date_str);
 	}
