@@ -12,13 +12,22 @@ composer require rklib/rkphplib
 
 ## Examples
 
+Autoload library via composer.
+
 ```
 <?php
 
-# composer autoload:
-# require 'vendor/autoload.php';
+require 'vendor/autoload.php';
 
-# php include:
+print $settings_TIMEZONE."\n";
+print $settings_LANGUAGE."\n";
+```
+
+File and Dir example.
+
+```
+<?php
+
 require_once('src/File.class.php');
 require_once('src/Dir.class.php');
 
@@ -28,6 +37,24 @@ use rkphplib\Dir;
 if (Dir::exists('src')) {
 	echo File::load('composer.json');
 }
+```
+
+Date calcuation.
+
+```
+<?php
+
+require_once('src/DateCalc.class.php');
+
+use rkphplib\DateCalc;
+
+print "3rd month in german: ".DateCalc::monthName(3)."\n";
+
+$settings_LANGUAGE = 'en';
+print "3rd month in english: ".DateCalc::monthName(3)."\n";
+
+$sql_date = '2016-07-18 15:30:00';
+print "SQL Date $sql_date: de_format=".DateCalc::formatDateTimeStr('de', $sql_date, 'sql').", timestamp=".DateCalc::sqlTS('2016-07-18 15:30:00')."\n";
 ```
 
 
