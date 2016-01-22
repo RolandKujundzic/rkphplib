@@ -25,6 +25,9 @@ composer)
 	fi
 	php composer.phar install
 	;;
+test)
+	php test/run.php
+	;;
 docs)
 	test -d docs/api && rm -rf docs/api
 	vendor/apigen/apigen/bin/apigen generate -s ./src -d ./docs/api
