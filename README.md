@@ -39,7 +39,7 @@ if (Dir::exists('src')) {
 }
 ```
 
-Date calcuation.
+Date calculation.
 
 ```
 <?php
