@@ -40,7 +40,7 @@ mb_check)
 	_mb_check
 	;;
 *)
-	echo -e "\nSYNTAX: $0 [composer|docs|mb_check]\n"
+	echo -e "\nSYNTAX: $0 [composer|docs|test|mb_check]\n"
 	exit 1
 esac
 
