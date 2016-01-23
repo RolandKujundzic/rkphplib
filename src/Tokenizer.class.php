@@ -13,8 +13,12 @@ use rkphplib\Exception;
  * String Tokenizer.
  *
  * Token Structure: [prefix][name][delimiter][parameter][suffix][body][prefix][delimiter][name][suffix].
- * Default prefix = [{], delimiter = [:], suffix = [}]. Parameter and body are optional. Parsing is top-down.
- * Tokens can be nested. Tokens are replaced with result of associated plugin.
+ * Default prefix = [{], delimiter = [:], suffix = [}]. Parameter and body are optional. Parsing is bottom-up
+ * (but can be changed by plugin). Tokens can be nested. Tokens are replaced with result of associated plugin.
+ *
+ * Tag {action:param}body{:action} will be replaced with result of Plugin->tok_action(param, body).
+ * Tag parameter and body are optional, e.g. {action:} or {action:param}. If body is empty close tag {:action} is 
+ * not required.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
