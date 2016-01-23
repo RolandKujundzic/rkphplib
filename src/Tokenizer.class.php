@@ -20,22 +20,22 @@ use rkphplib\Exception;
  */
 class Tokenizer {
 
-/** @var array $rx Token expression */
+/** @var vector $rx Token expression (regular expression for start+end token, prefix, delimiter, suffix) */
 public $rx = array("/\{([a-zA-Z0-9_]*\:.*?)\}/s", '{', ':', '}');
 
 /** @var string $file Token data filename */
 public $file = '';
 
-/** @var array $vmap plugin variable interchange */
+/** @var map $vmap plugin variable interchange */
 public $vmap = array();
 
 /** @const PARSE tokenize plugin body */
 const PARSE = 0;
 
-/** @const TEXT dont tokenize plugin body */
+/** @const TEXT don't tokenize plugin body */
 const TEXT = 2;
 
-/** @const REDO re-pare plugin result */ 
+/** @const REDO re-parse plugin result */ 
 const REDO = 4;
 
 /** @const TOKCALL use plugin callback tokCall(name, param, body) instead of tok_name(param, body) */
