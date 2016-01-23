@@ -57,6 +57,29 @@ $sql_date = '2016-07-18 15:30:00';
 print "SQL Date $sql_date: de_format=".DateCalc::formatDateTimeStr('de', $sql_date, 'sql').", timestamp=".DateCalc::sqlTS('2016-07-18 15:30:00')."\n";
 ```
 
+Template parser. If {action:param}body{:action} is detected the result of Plugin->tok_action(param, body) callback will be inserted. 
+Parser is bottom-up but can be changed by plugin to top-down.
+
+```
+<?php
+
+require_once('src/Tokenizer.class.php');
+
+class Plugin {
+	private $n = 0;
+  public $tokPlugin = array('x' => 6); // change 6 to 0 or 2 and compare different output
+  public function tok_x($param, $arg) { $this->n++; return "X".$this->n."($param)[$arg]"; }
+}
+
+$txt = 'a1{x:p1}a2{x:p2}a3{:x}a4{:x}a5{x:p3}a6{:x}';
+
+$tok = new rkphplib\Tokenizer();
+$p = new Plugin();
+$tok->setPlugin($p);
+$tok->setText($txt);
+
+print "\nInput: $txt\nOutput: ".$tok->toString()."\n\n";
+```
 
 ## Requirements
 
@@ -65,14 +88,16 @@ print "SQL Date $sql_date: de_format=".DateCalc::formatDateTimeStr('de', $sql_da
 
 ## Documentation
 
-Created with [ApiGen](https://github.com/ApiGen/ApiGen). Re-create documentation with:
+Create with [ApiGen](https://github.com/ApiGen/ApiGen):
 
 ```sh
 vendor/apigen/apigen/bin/apigen generate -s ./src -d ./docs/api
 ```
 
-ApiGen was installed with
-```sh
-php composer.phar require --dev apigen/apigen
+If composer or ApiGen are not installed run:
+
+````sh
+./build.sh composer
+./build.sh docs 
 ```
 
