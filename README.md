@@ -67,15 +67,14 @@ require_once('src/Tokenizer.class.php');
 
 class Plugin {
 	private $n = 0;
-  public $tokPlugin = array('x' => 6); // change 6 to 0 or 2 and compare different output
-  public function tok_x($param, $arg) { $this->n++; return "X".$this->n."($param)[$arg]"; }
+	public $tokPlugin = array('x' => 6); // change 6 to 0 or 2 and compare different output
+	public function tok_x($param, $arg) { $this->n++; return "X".$this->n."($param)[$arg]"; }
 }
 
 $txt = 'a1{x:p1}a2{x:p2}a3{:x}a4{:x}a5{x:p3}a6{:x}';
 
 $tok = new rkphplib\Tokenizer();
-$p = new Plugin();
-$tok->setPlugin($p);
+$tok->setPlugin(new Plugin());
 $tok->setText($txt);
 
 print "\nInput: $txt\nOutput: ".$tok->toString()."\n\n";
