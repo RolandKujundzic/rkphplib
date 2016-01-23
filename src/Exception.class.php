@@ -20,8 +20,8 @@ public $internal_message = '';
  * @param string $message error message
  * @param string $internal_message error message detail
  */
-public function __construct($message, $interal_message = '') {
-  $this->internal_message = $interal_message;
+public function __construct($message, $internal_message = '') {
+  $this->internal_message = $internal_message;
   parent::__construct($message);
 }
 
