@@ -5,7 +5,7 @@ PHP library with template engine and wrapper classes to filesystem, mysql and ot
 
 Install with composer in project directory
 
-```
+```sh
 composer require rklib/rkphplib
 ```
 
@@ -14,7 +14,7 @@ composer require rklib/rkphplib
 
 Autoload library via composer.
 
-```
+```php
 <?php
 
 require 'vendor/autoload.php';
@@ -25,7 +25,7 @@ print $settings_LANGUAGE."\n";
 
 File and Dir example.
 
-```
+```php
 <?php
 
 require_once('src/File.class.php');
@@ -41,7 +41,7 @@ if (Dir::exists('src')) {
 
 Date calculation.
 
-```
+```php
 <?php
 
 require_once('src/DateCalc.class.php');
@@ -60,7 +60,7 @@ print "SQL Date $sql_date: de_format=".DateCalc::formatDateTimeStr('de', $sql_da
 Template parser. If **{action:param}body{:action}** is detected the result of **Plugin->tok_action(param, body)** callback will be inserted. 
 Parser is bottom-up but can be changed by plugin to top-down.
 
-```
+```php
 <?php
 
 require_once('src/Tokenizer.class.php');
