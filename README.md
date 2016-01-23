@@ -57,7 +57,7 @@ $sql_date = '2016-07-18 15:30:00';
 print "SQL Date $sql_date: de_format=".DateCalc::formatDateTimeStr('de', $sql_date, 'sql').", timestamp=".DateCalc::sqlTS('2016-07-18 15:30:00')."\n";
 ```
 
-Template parser. If {action:param}body{:action} is detected the result of Plugin->tok_action(param, body) callback will be inserted. 
+Template parser. If **{action:param}body{:action}** is detected the result of **Plugin->tok_action(param, body)** callback will be inserted. 
 Parser is bottom-up but can be changed by plugin to top-down.
 
 ```
