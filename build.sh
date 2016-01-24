@@ -17,14 +17,27 @@ function _mb_check() {
 }
 
 
-
-case $1 in
-composer)
+#------------------------------------------------------------------------------
+function _composer() {
 	# install composer
 	if ! test -f composer.phar; then
 		curl -sS https://getcomposer.org/installer | php
 	fi
+
+	## unused/removed dev packages
+	# php composer.phar require --dev phpdocumentor/phpdocumentor
+	# php composer.phar require --dev phpunit/phpunit
+
+	## used dev packages
+	# php composer.phar require --dev apigen/apigen
+
 	php composer.phar install
+}
+
+
+case $1 in
+composer)
+	_composer
 	;;
 test)
 	# run all tests
