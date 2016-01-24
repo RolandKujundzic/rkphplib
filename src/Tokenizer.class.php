@@ -13,7 +13,7 @@ use rkphplib\Exception;
  * String Tokenizer.
  *
  * Token Structure: [prefix][name][delimiter][parameter][suffix][body][prefix][delimiter][name][suffix].
- * Default prefix = [{], delimiter = [:], suffix = [}]. Parameter and body are optional. Parsing is bottom-up
+ * Default prefix = "{", delimiter = ":", suffix = "}". Parameter and body are optional. Parsing is bottom-up
  * (but can be changed by plugin). Tokens can be nested. Tokens are replaced with result of associated plugin.
  *
  * Tag {action:param}body{:action} will be replaced with result of Plugin->tok_action(param, body).
@@ -161,7 +161,7 @@ private function _join_tok($start, $end) {
       $name = trim(mb_substr($tok, 0, $pos));
       $param = trim(mb_substr($tok, $pos + $dl));
 
-			if (!isset($this->_plugin[$name]) || !isset($this->_plugin[$name]->tokPlugin[$name])) {
+			if (isset($this->_plugin[$name]) && isset($this->_plugin[$name]->tokPlugin[$name])) {
 				$tp = $this->_plugin[$name]->tokPlugin[$name];
 
 				if (isset($this->_plugin['any'])) {
@@ -176,6 +176,9 @@ private function _join_tok($start, $end) {
 				else if (!method_exists($this->_plugin[$name], 'tok_'.$name)) {
 					throw new Exception("Plugin $name missing or invalid");
 				}
+			}
+			else {
+				throw new Exception('unknown plugin '.$name, "param=$param");
 			}
 
 			$pmode = $this->_plugin[$name]->tokPlugin[$name];
