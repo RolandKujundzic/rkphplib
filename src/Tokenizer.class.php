@@ -27,7 +27,7 @@ class Tokenizer {
 /** @var vector $rx Token expression (regular expression for start+end token, prefix, delimiter, suffix) */
 public $rx = array("/\{([a-zA-Z0-9_]*\:.*?)\}/s", '{', ':', '}');
 
-/** @var string $file Token data filename */
+/** @var string $file Token data from $file - defined if load($file) was used */
 public $file = '';
 
 /** @var map $vmap plugin variable interchange */
@@ -44,6 +44,18 @@ const REDO = 4;
 
 /** @const TOKCALL use plugin callback tokCall(name, param, body) instead of tok_name(param, body) */
 const TOKCALL = 8;
+
+/** @const REQUIRE_PARAM plugin parameter is required */
+const REQUIRE_PARAM = 16;
+
+/** @const NO_PARAM no plugin parameter */
+const NO_PARAM = 32;
+
+/** @const REQUIRE_BODY plugin body is required */
+const REQUIRE_BODY = 64;
+
+/** @const NO_BODY no plugin body */
+const NO_BODY = 128;
 
 private $_plugin = array();
 private $_endpos = array();
@@ -80,13 +92,19 @@ public function setText($txt) {
  * Plugin provider object must have property tokPlugin (callback:mode map), e.g. handler.tokPlugin = { a: 2, b: 0 }.
  * Callback is handler.tok_a(param, body). Parse modes are:
  *
- *  0 = tokenized body (self::PARSE)
- *  2 = untokenized body (self::TEXT)
- *  4 = re-parse result (self::REDO)
- *  8 = use tokCall(name, param, body) instead of tok_name(param, body) (self::TOKCALL)
+ *   0 = tokenized body (self::PARSE)
+ *   2 = untokenized body (self::TEXT)
+ *   4 = re-parse result (self::REDO)
+ *   8 = use tokCall(name, param, body) instead of tok_name(param, body) (self::TOKCALL)
+ *  16 = parameter is required (self::REQUIRE_PARAM)
+ *  32 = no parameter (self::NO_PARAM)
+ *  64 = body is required (self::REQUIRE_BODY)
+ * 128 = no body (self::NO_BODY)
  *
  *  6 = untokenized body + re-parse result (self::TEXT | self::REDO)
  *
+ * If plugin parameter or argument needs parsing use handler.tokPlugin = { "name": { "parse": 2, "param": required }}.
+ * 
  * Add this (Tokenizer) as handler->tokPlugin[_]. If tokPlugin[_] exists unset it.
  *
  * @param object $handler
