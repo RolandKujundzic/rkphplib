@@ -130,6 +130,7 @@ public function toString() {
  * 
  * @param int $start
  * @param int $end
+ * @throws rkphplib\Exception "invalid plugin" if error occurs 
  * @return string
  */
 private function _join_tok($start, $end) {
@@ -147,7 +148,7 @@ private function _join_tok($start, $end) {
       $out = $tok;
     }
     else if ($ep == 0 || $ep < -3) {
-			throw new Exception('parse error', "i=$i ep=".$ep[$i].' tok='.$tok[$i]);
+			throw new Exception('invalid plugin', "parse error: i=$i ep=".$ep[$i].' tok='.$tok[$i]);
     }
     else if ($ep == -2) {
       $out = $this->rx[1].$tok.$this->rx[3]; // ignore
@@ -170,15 +171,15 @@ private function _join_tok($start, $end) {
 				}
 				else if ($tp & 8) {
 					if (!method_exists($this->_plugin[$name], 'tokCall')) {
-						throw new Exception("Plugin $name has no callback");
+						throw new Exception('invalid plugin', "$name has no callback");
 					}
 				}
 				else if (!method_exists($this->_plugin[$name], 'tok_'.$name)) {
-					throw new Exception("Plugin $name missing or invalid");
+					throw new Exception('invalid plugin', "$name missing or invalid");
 				}
 			}
 			else {
-				throw new Exception('unknown plugin '.$name, "param=$param");
+				throw new Exception('invalid plugin', "$name:$param is undefined");
 			}
 
 			$pmode = $this->_plugin[$name]->tokPlugin[$name];
@@ -340,7 +341,7 @@ private function _compute_endpos($tok) {
     
     if ($endpos[$i] > 0) {
       if ($endpos[$i] > $max) {
-				throw new Exception("Plugin [".$tok[$i]."] must end before [".$tok[$max]."]", "i=[$i] ep=[".$endpos[$i]."] max=[$max]");
+				throw new Exception('invalid plugin', "Plugin [".$tok[$i]."] must end before [".$tok[$max]." i=[$i] ep=[".$endpos[$i]."] max=[$max]");
       }
       else {
         array_push($max_ep, $endpos[$i]);
