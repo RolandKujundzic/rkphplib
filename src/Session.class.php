@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/Exception.class.php');
+require_once(__DIR__.'/ASession.class.php');
 
 use rkphplib\Exception;
 
@@ -12,7 +12,7 @@ use rkphplib\Exception;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class Session {
+class Session extends ASession {
 
 }
 
