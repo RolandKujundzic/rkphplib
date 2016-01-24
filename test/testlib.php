@@ -1,6 +1,7 @@
 <?php
 
-$test_count = ['path' => '', 'num' => 0, 'ok' => 0, 'error' => 0, 't_ok' => 0, 't_error' => 0, 't_num' => 0, 't_pass' => 0, 't_fail' => 0 ];
+$test_count = ['path' => '', 'num' => 0, 'ok' => 0, 'error' => 0, 't_ok' => 0, 't_error' => 0, 't_num' => 0, 't_pass' => 0, 't_fail' => 0,
+	'overview' => [ ] ];
 
 
 /**
@@ -40,6 +41,9 @@ function run_test($run_php) {
 	print "---------------------------------------------------------------------------------------\n";
 	print "RESULT: ".$test_count['ok'].'/'.$test_count['num']." OK - ".$test_count['error']." ERROR \t".$result."\n";
 	print "---------------------------------------------------------------------------------------\n\n";
+
+	$overview = sprintf("%16s: %3d/%-3d ok - %3d errors", dirname($run_php), $test_count['ok'], $test_count['num'], $test_count['error']);
+	array_push($test_count['overview'], $overview);
 }
 
 
