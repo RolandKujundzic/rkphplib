@@ -2,6 +2,8 @@
 
 namespace rkphplib\lib;
 
+require_once(__DIR__.'/csv_explode.php');
+
 
 /**
  * Split text into key value hash. 
