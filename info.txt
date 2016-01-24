@@ -1,0 +1,4 @@
+PHPDoc Links:
+-------------
+
+http://phpdoc.org/docs/latest/references/phpdoc/tags/author.html
