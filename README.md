@@ -77,6 +77,9 @@ $tok = new rkphplib\Tokenizer();
 $tok->setPlugin(new Plugin());
 $tok->setText($txt);
 
+// (6) Output: a1X1(p1)[a2X2(p2)[a3]a4]a5X3(p3)[a6]
+// (0) Output: a1X2(p1)[a2X1(p2)[a3]a4]a5X3(p3)[a6]
+// (2) Output: a1X1(p1)[a2{x:p2}a3{:x}a4]a5X2(p3)[a6] 
 print "\nInput: $txt\nOutput: ".$tok->toString()."\n\n";
 ```
 
