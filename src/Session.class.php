@@ -14,5 +14,28 @@ use rkphplib\Exception;
  */
 class Session extends ASession {
 
+
+/**
+ *
+ */
+public function init($conf = array()) {
+	$this->setConf($conf);
+
+	if (!session_id()) {
+		session_start();
+	}
+
+	throw new Exception("Not implemented");
+}
+
+
+/**
+ *
+ */
+public function destroy() {
+	throw new Exception("Not implemented");
+}
+
+
 }
 

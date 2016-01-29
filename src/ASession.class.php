@@ -15,40 +15,75 @@ use rkphplib\Exception;
 abstract class ASession {
 
 /** @var map $conf */
-protected $conf = [ 'name' => '', 'scope' => '', 'type' => '' ];
+protected $conf = [ 'name' => '',
+	'scope' => 'domain',
+	'type' => '',
+	'ttl' => 7200,
+	'expire' => 3600,
+	'max_duration' => 172000,
+	'start' => 0,
+	'lchange' => 0,
+	'reload' => 0 ];
+
 
 /**
- * Set session name. 
+ * Set session configuration. Parameter:
  *
- * Default name is empty.
- *
- * @param string $name default = empty
+ *  name: Session Name (default = empty)
+ *  scope: dir|file|subdir|domain (default = domain)
+ *	type: login type or group (default = empty)
+ *  ttl: expiration date increase [1-14400] after activity (default = 7200 sec = 2 h)
+ *  expire: expiration after inactivity [1-14400] (default = 3600 = 1 h)
+ *	max_duration: maximum session duration [1, 345600] (default = 172000 = 4 h)
+ * 
+ * @throws rkphplib\Exception if check fails
+ * @param map $conf
  */
-public function setName($name) {
-	$this->conf['name'] = $name;
+public function setConf($conf) {
+
+	$allow_scope = array('dir', 'file', 'subdir', 'domain');
+	if (isset($conf['scope']) && !in_array($conf['scope'], $allow_scope)) {
+		throw new Exception('no such scope', $conf['scope']);
+	}
+
+	$key_list = [ 'name', 'type', 'scope' ];
+	foreach ($key_list as $key) {
+		if (isset($conf[$key])) {
+			$this->conf[$key] = $conf[$key];
+		}
+	}
+
+	$time_keys = [ 'ttl' => [1, 14400], 'expire' => [1, 21600], 'max_duration' => [1, 345600] ];
+	foreach ($time_keys as $key => $range) {
+		if (isset($conf[$key])) {
+			$sec = intval($conf[$key]);
+
+			if ($sec < $range[0] || $sec > $range[1]) {
+				throw new Exception("parameter outside range", $sec." not in [".$range[0].",".$range[1]."]");
+			}
+
+			$this->conf[$key] = $conf[$key];
+		}
+	}
 }
 
 
 /**
- * Set session scope. 
+ * Initialize session.
  *
- * Default scope is webserver.
+ * Call setConf() or use $conf to initialize session.
  *
- * @param string $scope dir, file or default = empty = domain
+ * @param map $conf (default = array())
+ * @throws rkphplib\Exception if error
+ * @see setConf
+ * @return map
  */
-public function setScope($scope) {
-	$this->conf['name'] = $name;
-}
+abstract public function init($conf = array());
 
 
 /**
- * Set session type (group).
- *
- * @param string $type default = empty
+ * Destroy session.
  */
-public function setType($type) {
-	$this->conf['type'] = $type;
-}
-
+abstract public function destroy();
 
 }
