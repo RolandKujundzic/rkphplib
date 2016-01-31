@@ -10,12 +10,13 @@
 	"require": {
 		"php": ">=5.5.0"
 	},
-	"require-dev": {
-		"apigen/apigen": "^4.1"
-	},
 	"autoload": {
 		"classmap": ["src/"],
 		"files": ["src/lib/config.php"]
 	},
-	"license": "GPL-3"
+	"license": "GPL-3",
+	"require-dev": {
+		"apigen/apigen": "^4.1",
+		"phpunit/phpunit": "^5.1"
+	}
 }
