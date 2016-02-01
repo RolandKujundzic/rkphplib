@@ -60,7 +60,15 @@ function _test() {
 
 
 #------------------------------------------------------------------------------
+function _abort() {
+	echo -e "\nABORT: $1\n\n" 
+	exit 1
+}
+
+
+#------------------------------------------------------------------------------
 function _ubuntu() {
+	test -f /usr/bin/apt-get || _abort "apt-get not found"
 	echo "Install php5-cli php5-sqlite"
 	sudo -s apt-get install php5-cli php5-sqlite
 }
