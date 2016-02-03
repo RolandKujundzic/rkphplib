@@ -70,8 +70,8 @@ function kv2conf($kv, $d1 = '=', $d2 = '|#|', $ikv = false, $level = 1) {
 		}
 		else {
 			throw new Exception("invalid value", "$key: ".print_r($obj, true));
-    }
-  }
+		}
+	}
 
 	$res = trim($conf);
 	$ld2 = mb_strlen($d2);
