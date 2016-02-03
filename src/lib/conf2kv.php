@@ -13,6 +13,7 @@ require_once(__DIR__.'/csv_explode.php');
  * If key is not found return $text or use "@_N" as key (N is autoincrement 1, 2, ...) if mulitple keys are missing.
  * If key already exists rename to key.N (N is autoincrement 1, 2, ...).
  * If value starts with "@N" use conf[@@N]="sd1","sd2" and set value = conf2kv(value, sd1, sd2).
+ * Default values are [@@1="",","] and [@@2=$d1,$d2]. 
  * All keys and values are trimmed. Use Quote character ["] to preserve whitespace and delimiter.
  * Use double quote [""] to escape ["]. If $d1 is empty return array with $d2 as delimiter.
  *
@@ -70,6 +71,16 @@ function conf2kv($text, $d1 = '=', $d2 = '|#|', $ikv = array()) {
 
 		if (preg_match('/^"(@[0-9]+)\s(.+)"$/s', $value, $match) || preg_match('/^(@[0-9]+)\s(.+)$/s', $value, $match)) {
 			$sf = $match[1];
+
+			if (!isset($ikv[$sf])) {
+				if ($sf == '@1') {
+					$ikv['@1'] = array('', ',');
+				}
+				else if ($sf == '@2') {
+					$ikv['@2'] = array($d1, $d2);
+				}
+			}
+
 			if (isset($ikv[$sf])) {
 				$kv[$key] = conf2kv(trim($match[2]), $ikv[$sf][0], $ikv[$sf][1], $ikv);
 			}
