@@ -196,17 +196,24 @@ function fc($path) {
 		$ok = array_pop($x);
 
 		if ($csm) {
-        	$res = _fc_static_method($class, $method, $x);
-    	}
-    	else {
-        	$res = _fc_function($func, $x);
-    	}
+			$res = _fc_static_method($class, $method, $x);
+		}
+		else {
+			$res = _fc_function($func, $x);
+		}
 
 		$res = _res2str($res);
 		$msg = 'ok';
 
 		if ($res !== $ok) {
 			$msg = ' != '.$ok.' - ERROR!';
+
+			if (strlen($res) > 40) {
+				$save_ok = sys_get_temp_dir().'/res.out';
+				file_put_contents($save_ok, $res);
+				$msg .= ' (see: '.$save_ok.')';
+			}
+
 			$n_err++;
 		}
 
@@ -240,7 +247,7 @@ function _res2str($res) {
 		return $res;
 	}
 	else {
-    	// is_object(), is_array()
+		// is_object(), is_array()
 		return json_encode($res, 322);
 	}
 }
