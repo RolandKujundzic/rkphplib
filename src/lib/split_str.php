@@ -29,7 +29,7 @@ function split_str($delim, $txt, $ignore_empty = false, $limit = -1) {
 		if ($esc && substr($txt, $pos - 1, 1) == $esc) {
 			$is_esc = true;
 			$pos++;
-    }
+		}
 		else {
 			$value = trim(substr($txt, $lpos, $pos - $lpos));
 
