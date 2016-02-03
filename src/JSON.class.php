@@ -113,11 +113,11 @@ private static function _error_msg($err_no) {
  * Throw error if failed. Wrapper of json_encode().
  *
  * @param object $obj
- * @param int $options (default = 322 = JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)
+ * @param int $options (default = 448 = JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT)
  * @param int $depth (default = 512)
  * @return string
  */
-public static function encode($obj, $options = 320, $depth = 512) {
+public static function encode($obj, $options = 448, $depth = 512) {
 	$res = json_encode($obj, $options, $depth);
 
 	if (($err_no = json_last_error())) {
