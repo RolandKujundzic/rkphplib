@@ -49,13 +49,17 @@ function conf2kv($text, $d1 = '=', $d2 = '|#|', $ikv = array()) {
 			$key = trim(mb_substr($line, 0, $pos));
 			$value = trim(mb_substr($line, $pos + $ld1));
 
-			if (isset($kv[$key]) && mb_substr($key, 0, 2) != '@') {
-				if (!isset($kn[$key])) {
-					$kn[$key] = 0;
-				}
+			if (mb_substr($key, 0, 1) != '@') {
+				$value = str_replace('""', '"', $value);
 
-				$kn[$key]++;
-				$key .= '.'.$kn[$key];
+				if (isset($kv[$key])) {
+					if (!isset($kn[$key])) {
+						$kn[$key] = 0;
+					}
+
+					$kn[$key]++;
+					$key .= '.'.$kn[$key];
+				}
 			}
 		}
 		else {
@@ -64,7 +68,7 @@ function conf2kv($text, $d1 = '=', $d2 = '|#|', $ikv = array()) {
 			$n++;
 		}
 
-		if (preg_match('/^(@[0-9]+)\s(.+)$/s', $value, $match)) {
+		if (preg_match('/^"(@[0-9]+)\s(.+)"$/s', $value, $match) || preg_match('/^(@[0-9]+)\s(.+)$/s', $value, $match)) {
 			$sf = $match[1];
 			if (isset($ikv[$sf])) {
 				$kv[$key] = conf2kv(trim($match[2]), $ikv[$sf][0], $ikv[$sf][1], $ikv);
