@@ -11,7 +11,7 @@ define('CSV_FIX_DQUOTE', 8);
 /**
  * Explode csv string into array. 
  *
- * Escape delim with quite enclosure. Escape quote with double quote.
+ * Escape delim with quote enclosure. Escape quote with double quote.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @param string $text
