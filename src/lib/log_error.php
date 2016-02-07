@@ -7,15 +7,18 @@ require_once(__DIR__.'/config.php');
 
 /**
  * Log error message (add timestamp and trace information).
- * If file is empty do nothing.
+ *
+ * Disable logging with $settings_LOG_ERROR = 0,
+ * Enable logging to default with $settings_LOG_ERROR = 1 (default).
+ * Enable logging to file with $settings_LOG_ERROR = 'path/error.log'.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @param string $msg
- * @param string $file 0|1|filename 
  */
-function log_error($msg, $file = 1) {
+function log_error($msg) {
+	global $settings_LOG_ERROR;
 
-	if (!$file) {
+	if (!$settings_LOG_ERROR) {
 		return;
 	}
 
@@ -48,8 +51,8 @@ function log_error($msg, $file = 1) {
 		$i++;
 	}
 
-	if (mb_strlen($file) > 1) {
-		error_log($log."\n", 3, $file);
+	if (mb_strlen($settings_LOG_ERROR) > 1) {
+		error_log($log."\n", 3, $settings_LOG_ERROR);
 	}
 	else {
 		error_log($log);

@@ -43,6 +43,14 @@ if (!isset($settings_LANGUAGE)) {
 	$settings_LANGUAGE = 'de';
 }
 
+
+if (!isset($settings_LOG_ERROR)) {
+	/** @global string $settings_LOG_ERROR = 1 */
+	global $settings_LOG_ERROR;
+	$settings_LOG_ERROR = 1;
+}
+
+
 // global define
 define('RKPHPLIB_VERSION', 1.0);
 
