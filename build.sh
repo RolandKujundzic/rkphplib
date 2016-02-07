@@ -98,7 +98,7 @@ function _docker_osx {
 	echo -e "\nSet docker env and restart rkphplib:\n"	
 	echo 'eval $(docker-machine env default)'
 	echo 'docker stop rkphplib; docker rm rkphplib'
-	echo 'docker run -it -v $PWD:/var/www/html/rkphlib -p 80:80 --name rkphplib rolandkujundzic/ubuntu_trusty_dev bash'
+	echo 'docker run -it -v $PWD:/var/www/html/rkphplib -p 80:80 --name rkphplib rolandkujundzic/ubuntu_trusty_dev bash'
 	echo
 }
 
