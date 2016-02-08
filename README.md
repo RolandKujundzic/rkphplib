@@ -57,7 +57,7 @@ $sql_date = '2016-07-18 15:30:00';
 print "SQL Date $sql_date: de_format=".DateCalc::formatDateTimeStr('de', $sql_date, 'sql').", timestamp=".DateCalc::sqlTS('2016-07-18 15:30:00')."\n";
 ```
 
-Template parser. If **{action:param}body{:action}** is detected the result of **Plugin->tok_action(param, body)** callback will be inserted. 
+Template parser. If `{action:param}body{:action}` is detected the result of `Plugin->tok_action(param, body)` callback will be inserted. 
 Parser is bottom-up but can be changed by plugin to top-down.
 
 ```php
@@ -81,6 +81,41 @@ $tok->setText($txt);
 // (0) Output: a1X2(p1)[a2X1(p2)[a3]a4]a5X3(p3)[a6]
 // (2) Output: a1X1(p1)[a2{x:p2}a3{:x}a4]a5X2(p3)[a6] 
 print "\nInput: $txt\nOutput: ".$tok->toString()."\n\n";
+```
+
+Extend abstract class ARestAPI for simple REST API implementation.
+
+```php
+<?php
+
+require_once('src/ARestAPI.class.php');
+
+class APIExample extends rkphplib\ARestAPI {
+
+	public static function apiMap($allow = array()) {
+		return = ['postSomeAction' => ['POST', 'some/action', 0], 'getSomeAction' => ['GET', 'some/action', 2], 'putSomething' => ['PUT', 'something', 1]];
+	}
+
+	public function checkToken() {
+		if ($this->_req['api_token'] != '123') { $this->out(['error' => 'invalid api token'], 400); }
+		return ['allow' => ['getSomeAction']];
+	}
+
+	public function run() {
+		$r = $this->parse(); // log or check $r if necessary
+		$priv = $this->checkToken(); // check $this->req['api_token'] and return privileges
+		$this->route($this->allow(self::apiMap(), $priv['allow'])); // set api_call if exists and is authorized
+    $method = $this->_req['api_call'];
+    $this->$method();
+	}
+
+	protected function getSomeAction() {
+		$this->out($this->_req);
+	}
+}
+
+$api = new API();
+$api->run();
 ```
 
 ## Requirements
