@@ -116,7 +116,7 @@ class APIExample extends rkphplib\ARestAPI {
 	}
 }
 
-$api = new API();
+$api = new APIExample();
 $api->run();
 ```
 
