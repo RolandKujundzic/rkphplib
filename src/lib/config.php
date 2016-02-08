@@ -9,6 +9,8 @@ namespace rkphplib\lib;
  *
  *  $settings_TIMEZONE = GMT
  *  $settings_LANGUAGE = de
+ *  $settings_LOG_ERROR = 1
+ *  $settings_LOG_DEBUG = 1
  *
  * Define:
  *
@@ -20,13 +22,11 @@ namespace rkphplib\lib;
  *
  */
 
-
 // E_ERROR | E_WARNING | E_PARSE | E_NOTICE or E_ALL or E_ALL ^ E_NOTICE
 // error_reporting(E_ALL);
 
 // Force UTF-8 encoding
 mb_internal_encoding('UTF-8');
-
 
 if (!isset($settings_TIMEZONE)) {
 	/** @global string $settings_TIMEZONE = 'GMT' */
@@ -36,18 +36,22 @@ if (!isset($settings_TIMEZONE)) {
 
 date_default_timezone_set($settings_TIMEZONE);
 
-
 if (!isset($settings_LANGUAGE)) {
 	/** @global string $settings_LANGUAGE = 'de' */
 	global $settings_LANGUAGE;
 	$settings_LANGUAGE = 'de';
 }
 
-
 if (!isset($settings_LOG_ERROR)) {
 	/** @global string $settings_LOG_ERROR = 1 */
 	global $settings_LOG_ERROR;
 	$settings_LOG_ERROR = 1;
+}
+
+if (!isset($settings_LOG_DEBUG)) {
+	/** @global string $settings_LOG_DEBUG = 1 */
+	global $settings_LOG_DEBUG;
+	$settings_LOG_DEBUG = 1;
 }
 
 
