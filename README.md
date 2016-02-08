@@ -93,7 +93,9 @@ require_once('src/ARestAPI.class.php');
 class APIExample extends rkphplib\ARestAPI {
 
 	public static function apiMap($allow = array()) {
-		return = ['postSomeAction' => ['POST', 'some/action', 0], 'getSomeAction' => ['GET', 'some/action', 2], 'putSomething' => ['PUT', 'something', 1]];
+		return = ['postSomeAction' => ['POST', 'some/action', 0], 
+			'getSomeAction' => ['GET', 'some/action', 2], 
+			'putSomething' => ['PUT', 'something', 1]];
 	}
 
 	public function checkToken() {
@@ -102,11 +104,11 @@ class APIExample extends rkphplib\ARestAPI {
 	}
 
 	public function run() {
-		$r = $this->parse(); // log or check $r if necessary
+		$this->parse(); // log or check $r if necessary
 		$priv = $this->checkToken(); // check $this->req['api_token'] and return privileges
-		$this->route($this->allow(self::apiMap(), $priv['allow'])); // set api_call if exists and is authorized
-    $method = $this->_req['api_call'];
-    $this->$method();
+		$this->route($this->allow(self::apiMap(), $priv['allow'])); // set _req.api_call if authorized
+		$method = $this->_req['api_call'];
+		$this->$method();
 	}
 
 	protected function getSomeAction() {
