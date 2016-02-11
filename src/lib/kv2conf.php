@@ -42,7 +42,7 @@ function kv2conf($kv, $d1 = '=', $d2 = '|#|', $ikv = false, $level = 1) {
 			$conf .= $value.$d2."\n";
 		}
 		else if (is_array($value)) {
-			if (array_keys($value) !== range(0, count($value) - 1)) {
+			if (count(array_filter(array_keys($value), 'is_string')) == 0) {
 				$q = str_pad("", $level, '"');
 				$conf .= $q.'@2 '.kv2conf($value, $d1, $d2, false, $level + 1).$q.$d2."\n";
 			}
