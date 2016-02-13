@@ -81,8 +81,8 @@ public static function getRequestMethod() {
 		$method = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
 	}
 	else if (!empty($_SERVER['HTTP_X_HTTP_METHOD'])) {
-    $method = $_SERVER['HTTP_X_HTTP_METHOD'];
-  }
+		$method = $_SERVER['HTTP_X_HTTP_METHOD'];
+	}
 
 	return $method;
 }
@@ -193,10 +193,10 @@ public function call($req, $priv = array()) {
 	$this->_req = $req;
 	$this->_priv = $priv;
 
-  if (empty($this->_req['api_call']) || !method_exists($this, $this->_req['api_call'])) {
-    $err_msg = lib\error_msg('invalid api call p1x', array($this->_req['api_call']));
-    $this->out(['error' => $err_msg], 400);
-  }
+	if (empty($this->_req['api_call']) || !method_exists($this, $this->_req['api_call'])) {
+		$err_msg = lib\error_msg('invalid api call p1x', array($this->_req['api_call']));
+		$this->out(['error' => $err_msg], 400);
+	}
 
 	$method = $this->_req['api_call'];
 	$this->$method();
