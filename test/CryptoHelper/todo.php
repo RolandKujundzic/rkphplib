@@ -4,7 +4,7 @@ require_once(dirname(dirname(__DIR__)).'/src/CryptoHelper.class.php');
 
 
 // $method = [ 'xor', 'ord', 'aes256cbc', 'mcrypt_r256' ];
-$method = [ 'xor', 'ord' ];
+$method = [ 'xor', 'ord', 'mcrypt_r256' ];
 $wrapper = [ 'no', 'urlenc_base64', 'safe64' ]; 
 
 $txt = 'This is a secret.';
