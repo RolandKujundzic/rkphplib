@@ -49,18 +49,19 @@ public function setDSN($dsn) {
 
 
 /**
- * Return database connect string.
+ * Return (split = self::splitDSN()) database connect string.
  *
- * @throws rkphplib\Exception if $dsn was not set 
+ * @throws rkphplib\Exception if $dsn was not set
+ * @param boole $split (default = false) 
  * @return string 
  */
-public function getDSN() {
+public function getDSN($split = false) {
 
 	if (empty($this->_dsn)) {
 		throw new Exception('call setDSN() first');
 	}
 
-	return $this->_dsn;
+	return $split ? self::splitDSN($this->_dsn) : $this->_dsn;
 }
 
 
@@ -72,22 +73,14 @@ public function getDSN() {
  * type://[password]@./file or type://@/path/to/file 
  *
  * @throws rkphplib\Exception if split failed
- * @string $dsn (default = null, use setDSN() value)
+ * @string $dsn 
  * @return map
  */
-public function splitDSN($dsn = null) {
-
-	if (is_null($dsn)) {
-		if (empty($this->_dsn)) {
-			throw new Exception('call setDSN() first');
-		}
-
-		$dsn = $this->_dsn;
-	}
+public static function splitDSN($dsn) {
 
 	$file_db = array('sqlite');
 
-	if (preg_match('/^([a-z0-9]+)\:\/\/(.+?)@(.+?)\/(.+)$/i', $this->_dsn, $match)) {
+	if (preg_match('/^([a-z0-9]+)\:\/\/(.+?)@(.+?)\/(.*)$/i', $dsn, $match)) {
 		$db = array('login' => '', 'password' => '', 'protocol' => '', 'host' => '', 'port' => '', 'name' => '', 'file' => '');
 		$db['type'] = $match[1];
 
@@ -349,6 +342,54 @@ public static function escape_name($name, $abort = false) {
 
 	return $res;
 }
+
+
+/**
+ * Return database name vector.
+ * 
+ * @param boolean $reload_cache
+ * @return vector
+ */
+abstract public function getDatabaseList($reload_cache = false);
+
+
+/**
+ * True if database exists.
+ * 
+ * @param string $name
+ * @return boolean
+ */
+public function hasDatabase($name) {
+	return in_array($name, $this->getDatabaseList());
+}
+
+
+/**
+ * Return table name vector.
+ * 
+ * @param boolean $reload_cache
+ * @return vector
+ */
+abstract public function getTableList($reload_cache = false);
+
+
+/**
+ * True if table exists.
+ * 
+ * @param string $name
+ * @return boolean
+ */
+public function hasTable($name) {
+	return in_array($name, $this->getTableList());
+}
+
+
+/**
+ * Create database.
+ *
+ * @param string $dsn
+ */
+abstract public function createDatabase($dsn);
 
 
 /**

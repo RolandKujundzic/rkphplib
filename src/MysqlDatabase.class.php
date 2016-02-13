@@ -4,7 +4,7 @@ namespace rkphplib;
 
 require_once(__DIR__.'/ADatabase.class.php');
 
-use rkphplib\lib\Exception;
+use rkphplib\Exception;
 
 
 
@@ -27,20 +27,20 @@ private $_cache = array();
  */
 private function _connect() {
 
-  if (is_object($this->_db)) {
+	if (is_object($this->_db)) {
 		if ($this->_conn_ttl < time() && !$this->_db->ping()) {
 			$this->close();
 		}
 		else {
-	    return;
+			return;
 		}
-  }
+	}
 
-  if (empty($this->_dsn)) {
+	if (empty($this->_dsn)) {
 		throw new Exception('call setDSN first');
-  }
+	}
 
-	$dsn = $this->splitDSN();
+	$dsn = self::splitDSN($this->_dsn);
 
 	if ($dsn['type'] != 'mysqli') {
 		throw new Exception('invalid dsn type: '.$dsn['type']);
@@ -90,6 +90,26 @@ public function close() {
 
 	$this->_db = null;
 	$this->_conn_ttl = 0;
+}
+
+
+/**
+ * Create new database and dbadmin account. 
+ * 
+ * @param string $dsn
+ */
+public function createDatabase($dsn) {
+
+        $dsn = self::splitDSN($dsn);
+
+	if ($dsn['type'] != 'mysqli') {
+		throw new Exception('invalid dsn type: '.$dsn['type']);
+	}
+
+	$this->execute("CREATE DATABASE ".$dsn['name']);
+	$this->execute("GRANT ALL PRIVILEGES ON ".$dsn['name'].".* TO '".self::escape_name($dsn['login'])."'@'".
+		self::escape_name($dsn['host'])."' IDENTIFIED BY '".self::escape_name($dsn['password'])."'");
+	$this->execute("FLUSH PRIVILEGES");
 }
 
 
@@ -221,15 +241,15 @@ private function _fetch($query, $rbind = null, $rcount = 0) {
 
 	$end = $rnum;
 
-  if ($rcount < 0) {
-    $dbres->data_seek(-1 * $rcount + 1);
-    $end = 1;
-  }
-  else if ($this->_seek > -1) {
-    $dbres->data_seek($this->_seek);
-    $end -= $this->_seek + 1;
-    $this->_seek = -1;
-  }
+	if ($rcount < 0) {
+		$dbres->data_seek(-1 * $rcount + 1);
+		$end = 1;
+	}
+	else if ($this->_seek > -1) {
+		$dbres->data_seek($this->_seek);
+		$end -= $this->_seek + 1;
+		$this->_seek = -1;
+	}
 
 	$bl = is_null($rbind) ? 0 : count($rbind);
 
@@ -409,13 +429,13 @@ private function _fetch_stmt($stmt, $rbind = null, $rcount = 0) {
 	for ($i = 0; $i < $end; $i++) {
 		$stmt->fetch();
 
-    if ($bl == 1) {
-      array_push($res, $db_data[$rbind[0]]);
-    }
-    else if ($bl == 2) {
-      $res[$db_data[$rbind[0]]] = $db_data[$rbind[1]];
-    }
-    else if ($bl > 2) {
+		if ($bl == 1) {
+			array_push($res, $db_data[$rbind[0]]);
+		}
+		else if ($bl == 2) {
+			$res[$db_data[$rbind[0]]] = $db_data[$rbind[1]];
+		}
+		else if ($bl > 2) {
 			$row = array();
 
 			foreach ($rbind as $key) {
@@ -424,7 +444,7 @@ private function _fetch_stmt($stmt, $rbind = null, $rcount = 0) {
 
 			array_push($res, $row);
 		}
-  }
+	}
 
 	$stmt->close();
 
@@ -449,6 +469,48 @@ public function esc($txt) {
 
 
 /**
+ * Return vector with database names.
+ * 
+ * @param boolean $reload_cache
+ * @return vector
+ */
+public function getDatabaseList($reload_cache = false) {
+
+	if ($reload_cache || !isset($this->_cache['DATABASE_LIST:']) || count($this->_cache['DATABASE_LIST:']) == 0) {
+		$dbres = $this->select('SHOW DATABASES');
+		$this->_cache['DATABASE_LIST:'] = [ ];
+
+		for ($i = 0; $i < count($dbres); $i++) {
+			array_push($this->_cache['DATABASE_LIST:'], array_pop($dbres[$i]));
+		}
+	}
+
+	return $this->_cache['DATABASE_LIST:'];
+}
+
+
+/**
+ * Return vector with table names.
+ * 
+ * @param boolean $reload_cache
+ * @return vector
+ */
+public function getTableList($reload_cache = false) {
+
+	if ($reload_cache || !isset($this->_cache['TABLE_LIST:']) || count($this->_cache['TABLE_LIST:']) == 0) {
+		$dbres = $this->select('SHOW TABLES');
+		$this->_cache['TABLE_LIST:'] = [ ];
+
+		for ($i = 0; $i < count($dbres); $i++) {
+			array_push($this->_cache['TABLE_LIST:'], array_pop($dbres[$i]));
+		}
+	}
+
+	return $this->_cache['TABLE_LIST:'];
+}
+
+
+/**
  * Return table description.
  * 
  * @param string $table
@@ -457,21 +519,21 @@ public function esc($txt) {
 public function getTableDesc($table) {
 
 	if (isset($this->_cache['DESC:'.$table])) {
-    return $this->_cache['DESC:'.$table];
-  }
+		return $this->_cache['DESC:'.$table];
+	}
 
-  $db_res = $this->select('DESC '.self::escape_name($table));
-  $res = array();
+	$db_res = $this->select('DESC '.self::escape_name($table));
+	$res = array();
 
-  foreach ($db_res as $info) {
-    $colname = $info['Field'];
-    unset($info['Field']);
-    $res[$colname] = $info;
-  }
+	foreach ($db_res as $info) {
+		$colname = $info['Field'];
+		unset($info['Field']);
+		$res[$colname] = $info;
+	}
 
-  $this->_cache['DESC:'.$table] = $res;
+	$this->_cache['DESC:'.$table] = $res;
 
-  return $res;
+	return $res;
 }
 
 
