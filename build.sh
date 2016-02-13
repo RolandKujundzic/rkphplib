@@ -70,7 +70,9 @@ function _abort() {
 function _ubuntu() {
 	test -f /usr/bin/apt-get || _abort "apt-get not found"
 	echo "Install php + mysql + nginx"
-	sudo -s apt-get -y install php5-cli php5-sqlite php5-curl php5-gd php5-fpm mysql-server mysql-client php5-mysql nginx
+	sudo apt-get -y update && \
+	sudo apt-get -y install php5-cli php5-sqlite php5-curl php5-gd php5-mcrypt php5-fpm mysql-server mysql-client php5-mysql nginx && \
+	sudo php5enmod mcrypt
 
 	if ! test -f /etc/nginx/sites-available/default.original; then
 		local SITE=/etc/nginx/sites-available/default
