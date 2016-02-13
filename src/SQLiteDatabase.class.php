@@ -33,7 +33,7 @@ private function _connect() {
 		throw new Exception('call setDSN first');
 	}
 
-	$dsn = $this->splitDSN();
+	$dsn = self::splitDSN($this->_dsn);
 
 	if ($dsn['type'] != 'sqlite') {
 		throw new Exception('invalid dsn type: '.$dsn['type']);
