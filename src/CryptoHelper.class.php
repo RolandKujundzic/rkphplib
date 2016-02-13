@@ -155,7 +155,7 @@ class CryptoHelper {
 	 * @return string
 	 */
 	public static function unwrap_urlenc_base64($str) {
-    return base64_decode(urldecode($str));
+		return base64_decode(urldecode($str));
 	}
 
 
@@ -169,16 +169,16 @@ class CryptoHelper {
 	public static function enc_mcrypt_r256($text, $secret) { 
 		$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB);
 		$iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
-		$crypttext = mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $secret, $text, MCRYPT_MODE_ECB, $iv);
+		return mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $secret, $text, MCRYPT_MODE_ECB, $iv);
 	}
  
 
 	/**
 	 * Return multiple xor encoded string.
-   *
-   * @param string $text
-   * @param string $secret
-   * @return string
+	 *
+	 * @param string $text
+	 * @param string $secret
+	 * @return string
 	 */
 	public static function enc_xor($text, $secret) {
 		$slen = strlen($secret);
@@ -195,10 +195,10 @@ class CryptoHelper {
 
 	/**
 	 * Return ord(char) + ord(secret) encoded string.
-   *
-   * @param string $text
-   * @param string $secret
-   * @return string
+	 *
+	 * @param string $text
+	 * @param string $secret
+	 * @return string
 	 */
 	public static function enc_ord($text, $secret) {
 		$result = '';
@@ -245,7 +245,7 @@ class CryptoHelper {
 	public static function dec_mcrypt_r256($text, $secret) {
 		$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB);
 		$iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
-    return trim(mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $secret, $text, MCRYPT_MODE_ECB, $iv));
+		return trim(mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $secret, $text, MCRYPT_MODE_ECB, $iv));
 	}
 
 
@@ -295,10 +295,10 @@ class CryptoHelper {
 	 * Join values from $hash according to $keys with "|".
 	 *
 	 * Example: "hash[keys[0]]|hash[keys[0]]|..."
-   *
-   * @param map $hash
+	 *
+	 * @param map $hash
 	 * @param vector $keys
-   * @return string
+	 * @return string
 	 */
 	public static function map2str($hash, $keys) {
 		$tmp = array();	
