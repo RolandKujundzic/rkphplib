@@ -72,7 +72,7 @@ const PARAM_CSLIST = 2048;
 /** @const CSLIST_BODY example {action:}p1, p2, ... {:action} escape , with \, */ 
 const CSLIST_BODY = 4096;
 
-/** @const LIST_BODY example {action:}p1|#|p2|#| ... {:action} escape |#| with |##| */
+/** @const LIST_BODY example {action:}p1|#|p2|#| ... {:action} escape |#| with \|#| */
 const LIST_BODY = 8192;
 
 /** @const XML_BODY body is xml */
@@ -122,8 +122,15 @@ public function setText($txt) {
  *  32 = no parameter (self::NO_PARAM)
  *  64 = body is required (self::REQUIRE_BODY)
  * 128 = no body (self::NO_BODY)
+ * 256 = map string body (key=value|#|...) @see lib\kv2conf()
+ * 512 = JSON body
+ * 1024 = parameter is colon separated list e.g. {action:p1:p2:...} escape : with \:
+ * 2048 = parameter is comma separated list e.g. {action:p1,p2,...} escape , with \,
+ * 4096 = body is comma sparated list
+ * 8192 = body is array string e.g. {action:}p1|#|p2|#| ... {:action} escape |#| with \|#|
+ * 16384 = body is xml
  *
- *  6 = untokenized body + re-parse result (self::TEXT | self::REDO)
+ * 6 = untokenized body + re-parse result (self::TEXT | self::REDO)
  *
  * If plugin parameter or argument needs parsing use handler.tokPlugin = { "name": { "parse": 2, "param": required }}.
  * 
@@ -293,13 +300,58 @@ private function _merge_txt($n, $m) {
 
 /**
  * Return plugin result = $plugin->tok_NAME($param, $arg).
- * 
+ * Convert param into vector and arg into map if plugin $name
+ * is configured with e.g. 
+ *
+ * Tokenizer::KV_BODY | Tokenizer::PARAM_CSLIST | Tokenizer::REQUIRE_BODY | Tokenizer::REQUIRE_PARAM 
+ *
+ * @throws exception if plugin call is invalid 
  * @param string $name
  * @param string $param
  * @param string $arg (default = null = no argument)
  * @return string
  */
 private function _call_plugin($name, $param, $arg = null) {	
+
+	$pconf = $this->_plugin[$name]->tokPlugin[$name];
+
+	if (($pconf & self::REQUIRE_PARAM) && mb_strlen($param) == 0) {
+		throw new Exception('plugin parameter missing', "plugin=$name");
+	}
+	else if (($pconf & self::NO_PARAM) && mb_strlen($param) > 0) {
+		throw new Exception('invalid plugin parameter', "plugin=$name param=$param");
+	}
+
+	if (($pconf & self::REQUIRE_BODY) &&  mb_strlen($arg) == 0) {
+		throw new Exception('plugin body missing', "plugin=$name");
+	}
+	else if (($pconf & self::NO_BODY) &&  mb_strlen($arg) > 0) {
+		throw new Exception('invalid plugin body', "plugin=$name arg=$arg");
+	}
+
+	if ($pconf & self::KV_BODY) {
+		require_once(__DIR__.'/lib/kv2conf.php');
+		$arg = lib\kv2conf($arg);
+	}
+	else if ($pconf & self::JSON_BODY) {
+		require_once(__DIR__.'/JSON.class.php');
+		$arg = JSON::decode($arg);
+	}
+	else if (($pconf & self::CSLIST_BODY) || ($pconf & self::LIST_BODY)) {
+		require_once(__DIR__.'/lib/split_str.php');
+		$delim = ($pconf & self::CSLIST_BODY) ? ',' : '|#|';
+		$arg = lib\split_str($delim, $arg);
+	}
+	else if (($pconf & self::PARAM_LIST) || ($pconf & self::PARAM_CSLIST)) {
+		require_once(__DIR__.'/lib/split_str.php');
+		$delim = ($pconf & self::PARAM_LIST) ? ':' : ',';
+		$param = lib\split_str($delim, $param);
+	}
+	else if ($pconf & self::XML_BODY) {
+		require_once(__DIR__.'/XML.class.php');	
+		$arg = XML::toJSON($arg);
+	}
+
 	if ($this->_plugin[$name]->tokPlugin[$name] & self::TOKCALL) {
   	return call_user_func(array(&$this->_plugin[$name], 'tokCall'), $name, $param, $arg);
 	}
