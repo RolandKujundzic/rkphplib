@@ -182,32 +182,32 @@ public function toString() {
  */
 private function _join_tok($start, $end) {
 
-  $d  = $this->rx[2];
-  $dl = mb_strlen($d);
+	$d  = $this->rx[2];
+	$dl = mb_strlen($d);
 	$tok_out = array();
 
-  for ($i = $start; $i < $end; $i++) {
-    $tok = $this->_tok[$i];
-    $ep = $this->_endpos[$i];
-    $out = '';
+	for ($i = $start; $i < $end; $i++) {
+		$tok = $this->_tok[$i];
+		$ep = $this->_endpos[$i];
+		$out = '';
 
-    if ($i % 2 == 0) {
-      $out = $tok;
-    }
-    else if ($ep == 0 || $ep < -3) {
+		if ($i % 2 == 0) {
+			$out = $tok;
+		}
+		else if ($ep == 0 || $ep < -3) {
 			throw new Exception('invalid plugin', "parse error: i=$i ep=".$ep[$i].' tok='.$tok[$i]);
+		}
+		else if ($ep == -2) {
+			$out = $this->rx[1].$tok.$this->rx[3]; // ignore
     }
-    else if ($ep == -2) {
-      $out = $this->rx[1].$tok.$this->rx[3]; // ignore
-    }
-    else if ($ep == -3) {
-      // drop plugin end ...
-    }
-    else {
-      // call plugin if registered ...
-      $pos = mb_strpos($tok, $d);
-      $name = trim(mb_substr($tok, 0, $pos));
-      $param = trim(mb_substr($tok, $pos + $dl));
+		else if ($ep == -3) {
+			// drop plugin end ...
+		}
+		else {
+			// call plugin if registered ...
+			$pos = mb_strpos($tok, $d);
+			$name = trim(mb_substr($tok, 0, $pos));
+			$param = trim(mb_substr($tok, $pos + $dl));
 
 			if (isset($this->_plugin[$name]) && isset($this->_plugin[$name]->tokPlugin[$name])) {
 				$tp = $this->_plugin[$name]->tokPlugin[$name];
@@ -232,24 +232,24 @@ private function _join_tok($start, $end) {
 			$pmode = $this->_plugin[$name]->tokPlugin[$name];
 
 			if ($ep == -1) {
-     	  $out = $this->_call_plugin($name, $param);
-      }
- 	    else if ($ep > 0) {
+				$out = $this->_call_plugin($name, $param);
+			}
+			else if ($ep > 0) {
 				$out = ($pmode & self::TEXT) ? $this->_call_plugin($name, $param, $this->_merge_txt($i+1, $ep-1)) : 
-					$this->_call_plugin($name, $param, $this->_join_tok($i + 1, $ep));
-     	  $i = $ep;
+				$this->_call_plugin($name, $param, $this->_join_tok($i + 1, $ep));
+				$i = $ep;
 			}
 
 			if ($pmode & self::REDO) {
 				$this->_redo = array($i, $out);
 				return join('', $tok_out);
 			}
-   	}
+		}
 
-    array_push($tok_out, $out);
-  }
+		array_push($tok_out, $out);
+	}
 
-  return join('', $tok_out);
+	return join('', $tok_out);
 }
 
 
@@ -356,10 +356,10 @@ private function _call_plugin($name, $param, $arg = null) {
 	}
 
 	if ($this->_plugin[$name]->tokPlugin[$name] & self::TOKCALL) {
-  	return call_user_func(array(&$this->_plugin[$name], 'tokCall'), $name, $param, $arg);
+		return call_user_func(array(&$this->_plugin[$name], 'tokCall'), $name, $param, $arg);
 	}
 	else {
-  	return call_user_func(array(&$this->_plugin[$name], 'tok_'.$name), $param, $arg);
+		return call_user_func(array(&$this->_plugin[$name], 'tok_'.$name), $param, $arg);
 	}
 }
 
