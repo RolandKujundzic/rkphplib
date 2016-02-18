@@ -378,71 +378,71 @@ private function _call_plugin($name, $param, $arg = null) {
  */
 private function _compute_endpos($tok) {
 
-  $endpos = array();
+	$endpos = array();
 
-  for ($i = 0; $i < count($tok); $i++) {
-    $endpos[$i] = 0;
-  }
+	for ($i = 0; $i < count($tok); $i++) {
+		$endpos[$i] = 0;
+	}
 
-  $d = $this->rx[2];
-  $dl = mb_strlen($d);
+	$d = $this->rx[2];
+	$dl = mb_strlen($d);
   
-  for ($i = 1; $i < count($tok); $i = $i + 2) {
-    $plugin = $tok[$i];
-    $start = '';
+	for ($i = 1; $i < count($tok); $i = $i + 2) {
+		$plugin = $tok[$i];
+		$start = '';
 
-    if (mb_substr($plugin, 0, $dl) == $d) {
-      // ignore plugin ... unless start is found ...
-      $endpos[$i] = -2;
-      $end = mb_substr($plugin, $dl);
+		if (mb_substr($plugin, 0, $dl) == $d) {
+			// ignore plugin ... unless start is found ...
+			$endpos[$i] = -2;
+			$end = mb_substr($plugin, $dl);
 
-      // {=:}x{:=} is forbidden ...
-      if (mb_substr($end, 0, 1) != '=') {
-        $start = empty($end) ? $d : $end.$d;
-      }
-    }
+			// {=:}x{:=} is forbidden ...
+			if (mb_substr($end, 0, 1) != '=') {
+				$start = empty($end) ? $d : $end.$d;
+			}
+		}
 
-    if ($start) {
-      // find plugin start ...
-      $found = false;
+		if ($start) {
+			// find plugin start ...
+			$found = false;
 
-      for ($j = $i - 2; !$found && $j > 0; $j = $j - 2) {
-        $prev_plugin = $tok[$j];
+			for ($j = $i - 2; !$found && $j > 0; $j = $j - 2) {
+				$prev_plugin = $tok[$j];
 
-        if ($endpos[$j] == -1 && ($xpos = mb_strpos($prev_plugin, $start)) !== false && ($start == $d || $xpos == 0)) {
-          $found = true;
-          $endpos[$j] = $i;
-          $endpos[$i] = -3;
-        }
-      }
-    }
-    else if ($endpos[$i] == 0) {
-      // parameter only plugin ...
-      $endpos[$i] = -1;
-    }
-  }
-  
-  // check sanity ... e.g. {a:}{b:}{:a}{:b} is forbidden
-  $max_ep = array(count($endpos) - 2);
+				if ($endpos[$j] == -1 && ($xpos = mb_strpos($prev_plugin, $start)) !== false && ($start == $d || $xpos == 0)) {
+					$found = true;
+					$endpos[$j] = $i;
+					$endpos[$i] = -3;
+				}
+			}
+		}
+		else if ($endpos[$i] == 0) {
+			// parameter only plugin ...
+			$endpos[$i] = -1;
+		}
+	}
+
+	// check sanity ... e.g. {a:}{b:}{:a}{:b} is forbidden
+	$max_ep = array(count($endpos) - 2);
 	$max = 0;
 
-  for ($i = 1; $i < count($endpos) - 1; $i = $i + 2) {
-    $max = end($max_ep);
-    
-    if ($max < $i) {
-      array_pop($max_ep);
-      $max = end($max_ep);
-    }
-    
-    if ($endpos[$i] > 0) {
-      if ($endpos[$i] > $max) {
+	for ($i = 1; $i < count($endpos) - 1; $i = $i + 2) {
+		$max = end($max_ep);
+
+		if ($max < $i) {
+			array_pop($max_ep);
+			$max = end($max_ep);
+		}
+
+		if ($endpos[$i] > 0) {
+			if ($endpos[$i] > $max) {
 				throw new Exception('invalid plugin', "Plugin [".$tok[$i]."] must end before [".$tok[$max]." i=[$i] ep=[".$endpos[$i]."] max=[$max]");
-      }
-      else {
-        array_push($max_ep, $endpos[$i]);
-      }
-    }
-  }
+			}
+			else {
+				array_push($max_ep, $endpos[$i]);
+			}
+		}
+	}
 
 	return $endpos;
 }
