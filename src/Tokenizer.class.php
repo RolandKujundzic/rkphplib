@@ -314,19 +314,27 @@ private function _merge_txt($n, $m) {
 private function _call_plugin($name, $param, $arg = null) {	
 
 	$pconf = $this->_plugin[$name]->tokPlugin[$name];
+	$plen = strlen($param);
+	$alen = strlen($arg);
 
-	if (($pconf & self::REQUIRE_PARAM) && mb_strlen($param) == 0) {
+	if (($pconf & self::REQUIRE_PARAM) && $plen == 0) {
 		throw new Exception('plugin parameter missing', "plugin=$name");
 	}
-	else if (($pconf & self::NO_PARAM) && mb_strlen($param) > 0) {
+	else if (($pconf & self::NO_PARAM) && $plen > 0) {
 		throw new Exception('invalid plugin parameter', "plugin=$name param=$param");
 	}
 
-	if (($pconf & self::REQUIRE_BODY) &&  mb_strlen($arg) == 0) {
+	if (($pconf & self::REQUIRE_BODY) && $alen == 0) {
 		throw new Exception('plugin body missing', "plugin=$name");
 	}
-	else if (($pconf & self::NO_BODY) &&  mb_strlen($arg) > 0) {
+	else if (($pconf & self::NO_BODY) && $alen > 0) {
 		throw new Exception('invalid plugin body', "plugin=$name arg=$arg");
+	}
+
+	if (($pconf & self::PARAM_LIST) || ($pconf & self::PARAM_CSLIST)) {
+		require_once(__DIR__.'/lib/split_str.php');
+		$delim = ($pconf & self::PARAM_LIST) ? ':' : ',';
+		$param = lib\split_str($delim, $param);
 	}
 
 	if ($pconf & self::KV_BODY) {
@@ -341,11 +349,6 @@ private function _call_plugin($name, $param, $arg = null) {
 		require_once(__DIR__.'/lib/split_str.php');
 		$delim = ($pconf & self::CSLIST_BODY) ? ',' : '|#|';
 		$arg = lib\split_str($delim, $arg);
-	}
-	else if (($pconf & self::PARAM_LIST) || ($pconf & self::PARAM_CSLIST)) {
-		require_once(__DIR__.'/lib/split_str.php');
-		$delim = ($pconf & self::PARAM_LIST) ? ':' : ',';
-		$param = lib\split_str($delim, $param);
 	}
 	else if ($pconf & self::XML_BODY) {
 		require_once(__DIR__.'/XML.class.php');	
