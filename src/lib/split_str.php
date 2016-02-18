@@ -17,7 +17,8 @@ namespace rkphplib\lib;
  */
 function split_str($delim, $txt, $ignore_empty = false, $limit = -1) {
 
-	$esc = (strlen($delim) == 1) ? '\\' : '';
+	$esc = '\\';
+	$dl = strlen($delim);
 	$len = strlen($txt);
 	$is_esc = false;
 	$parts = array();
@@ -28,7 +29,7 @@ function split_str($delim, $txt, $ignore_empty = false, $limit = -1) {
 
 		if ($esc && substr($txt, $pos - 1, 1) == $esc) {
 			$is_esc = true;
-			$pos++;
+			$pos += $dl;
 		}
 		else {
 			$value = trim(substr($txt, $lpos, $pos - $lpos));
@@ -45,7 +46,7 @@ function split_str($delim, $txt, $ignore_empty = false, $limit = -1) {
 				array_push($parts, $value);
 			}
 
-			$pos++;
+			$pos += $dl;
 			$lpos = $pos;
 			$is_esc = false;
 		}
