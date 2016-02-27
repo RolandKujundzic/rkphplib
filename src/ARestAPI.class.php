@@ -120,12 +120,13 @@ public function parse() {
 	if ($input) {
 		$r['input'] = $input;
 
-		if ($r['content-type'] == 'application/xml') {
+		// e.g. Content-type: application/xml; UTF-8
+		if (strpos($r['content_type'], 'application/xml') !== false) {
 			$xml = simplexml_load_string($input, 'SimpleXMLElement', LIBXML_NOCDATA);
 			$this->_req = json_decode(json_encode((array)$xml), true);
 			$input = '';
 		}
-		else if ($content_type == 'application/json') {
+		else if (strpos($r['content_type'], 'application/json') !== false) {
 			$this->_req = json_decode($input, true);
 			$input = '';
 		}
@@ -269,6 +270,10 @@ public function route($api_map) {
 	$r['url'] = $_SERVER['REQUEST_URI'];
 	$base = str_replace(array('\\',' '), array('/','%20'), dirname($_SERVER['SCRIPT_NAME']));
 
+	if (($pos = mb_strpos($r['url'], '?')) > 0) {
+		$r['url'] = substr($r['url'], 0, $pos);
+	}
+
 	if (mb_strlen($base) > 0 && mb_strpos($r['url'], $base) === 0) {
 		$r['url'] = substr($r['url'], mb_strlen($base));
 	}
@@ -277,11 +282,11 @@ public function route($api_map) {
 		$r['url'] = substr($r['url'], 1);
 	}
 
-	if (($pos = mb_strpos($r['url'], '?')) > 0) {
-		$r['url'] = substr($r['url'], 0, $pos);
-	}
-
 	$parent_url = dirname($r['url']);
+
+  $api_map = self::apiMap();
+  $func_id = '';
+  $func = '';
 
 	foreach ($api_map as $fname => $fconf) {
 
@@ -290,15 +295,20 @@ public function route($api_map) {
 		}
 
 		if ($fconf[1] == $r['url']) {
-			$this->_req['api_call'] = $fname;
-			break;
+			$func = $fname;
 		}
 		else if ($parent_url && ($fconf[2] == 1 || $fconf[2] == 2) && $fconf[1] == $parent_url) {
-			$this->_req['api_id'] = basename($r['url']);
-			$this->_req['api_call'] = $fname;
-			$r['url'] = $parent_url;
-			break;
+			$func_ic = $fname;
 		}
+	}
+
+	if ($func) {
+		$this->_req['api_call'] = $func_id;
+	}
+	else if ($func_id) {
+		$this->_req['api_id'] = basename($r['url']);
+		$this->_req['api_call'] = $func_id;
+		$r['url'] = $parent_url;
 	}
 
 	if (empty($this->_req['api_call']) || !method_exists($this, $this->_req['api_call'])) {
