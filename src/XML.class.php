@@ -39,6 +39,7 @@ public static function toJSON($xml) {
  *  XML::fromJSON(['A', 'B', 'C']) =  <json2xml><vector>A</vector><vector>B</vector><vector>C</vector></json2xml> 
  *  XML::fromJSON(['names' => ['A', 'B', 'C']]) = <json2xml><names>A</names>...</json2xml>
  *
+ * @throws rkphplib\Exception
  * @param map|string $json
  * @param map $root (default = 'json2xml')
  * @param map $xml (default = null = create DomDocument) 
