@@ -20,42 +20,32 @@ use rkphplib\Exception;
  */
 class CryptoHelper {
 
-/** @var string $secret secret key */
-protected $secret = '';
-
-/** @var string $enc = 'xor' - encoding/crypt method */
-protected $enc = 'xor';
-
-/** @var string $wrap = urlenc_base64 = urlencode(base64_encode(...)) */
-protected $wrap = 'urlenc_base64';
+/** @var map $_opt default options */
+private $_opt = array('secret' => '', 'enc' => 'xor', 'wrap' => 'urlenc_base64', 'xor_secret' => '');
 
 
 /**
  * Constructor. Options:
  * 
- *  secret: set secret key
- *  enc: xor|ord|aes256cbc|mcrypt_r256 
- *  wrap: urlenc_base64|safe64|no 
+ *  secret: set secret key (required)
+ *  enc: en/decrypt method - xor (default) | ord | aes256cbc | mcrypt_r256  
+ *  wrap: urlenc_base64 (default) | safe64 | no 
+ *  xor_secret: obfuscate with xor first if set
+ *
+ * @throws Exception
+ * @param map $opt
  */
 public function __construct($opt = array()) {
 
-	if (!empty($opt['secret'])) {
-		$this->secret = $opt['secret'];
+	foreach ($opt as $key => $value) {
+		$this->_opt[$key] = $value;
 	}
 
-	if (!empty($opt['enc'])) {
-		$this->enc = $opt['enc'];
-	}
-
-	if (!empty($opt['wrap'])) {
-		$this->wrap = $opt['wrap'];
-	}
-
-	if (strlen($this->secret) < 4) {
+	if (strlen($this->_opt['secret']) < 4) {
 		throw new Exception('Secret key is too short (use at lease 4 characters)');
 	}
 
-	$method_list = [ 'enc_'.$this->enc, 'dec_'.$this->enc, 'wrap_'.$this->wrap, 'unwrap_'.$this->wrap ];
+	$method_list = [ 'enc_'.$this->_opt['enc'], 'dec_'.$this->_opt['enc'], 'wrap_'.$this->_opt['wrap'], 'unwrap_'.$this->_opt['wrap'] ];
 	foreach ($method_list as $m) {
 		if (!method_exists($this, $m)) {
 			throw new Exception('Invalid configuration', "no such method: $m");
@@ -65,7 +55,7 @@ public function __construct($opt = array()) {
 
 
 /**
- * Return encrypted (@see $this->enc and $this->secret) and wrapped (@see $this->wrap) data.
+ * Return encrypted (@see $this->_opt[enc] and $this->_opt[secret]) and wrapped (@see $this->_opt[wrap]) data.
  * If $data is map and keys is vector use map2str($data, $keys).
  *
  * @param string|map $data
@@ -78,9 +68,14 @@ public function encode($data, $keys = null) {
 		$data = $this->map2str($data, $keys);
 	}
 
-	$method = 'enc_'.$this->enc;
-	$wrap = 'wrap_'.$this->wrap;
-	return self::$wrap(self::$method($data, $this->secret));
+	$method = 'enc_'.$this->_opt['enc'];
+	$wrap = 'wrap_'.$this->_opt['wrap'];
+
+	if ($this->_opt['xor_secret']) {
+		$data = self::enc_sxor($data, $this->_opt['xor_secret']);
+	}
+
+	return self::$wrap(self::$method($data, $this->_opt['secret']));
 }
 
 
@@ -170,7 +165,30 @@ public static function enc_mcrypt_r256($text, $secret) {
 	$iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
 	return mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $secret, $text, MCRYPT_MODE_ECB, $iv);
 }
+
  
+/**
+ * Return simple xor de/encoded string.
+ *
+ * @param string $text
+ * @param string $secret
+ * @return string
+ */
+public static function enc_sxor($text, $secret) {
+	$tlen = strlen($text);
+	$slen = strlen($secret);
+
+	for ($i = 0, $k = 0; $i < $tlen; $i++) {
+		if ($k === $slen - 1) {
+			$k = 0;
+		}
+
+		$text[$i] = chr(ord($text[$i]) ^ ord($secret[$k]));
+	}
+
+	return $text;
+}
+
 
 /**
  * Return multiple xor encoded string.
@@ -221,9 +239,15 @@ public static function enc_ord($text, $secret) {
  * @return string|map
  */
 public function decode($data, $keys = null) {
-	$method = 'dec_'.$this->enc;
-	$unwrap = 'unwrap_'.$this->wrap;
-	$res = self::$method(self::$unwrap($data), $this->secret);
+	$method = 'dec_'.$this->_opt['enc'];
+	$unwrap = 'unwrap_'.$this->_opt['wrap'];
+
+	$res = self::$method(self::$unwrap($data), $this->_opt['secret']);
+
+	if ($this->_opt['xor_secret']) {
+		$res = self::enc_sxor($res, $this->_opt['xor_secret']);
+	}
+
 	if (count($keys) > 0) {
 		$res = self::str2map($res, $keys);
 	}
@@ -337,8 +361,8 @@ public static function str2map($text, $keys) {
  */
 public static function splitSecret($secret) {
 	return [
-		hash_hmac('sha256', 'encryption', $masterKey, true),
-		hash_hmac('sha256', 'authentication', $masterKey, true)
+		hash_hmac('sha256', 'encryption', $secret, true),
+		hash_hmac('sha256', 'authentication', $secret, true)
 	];
 }
 
@@ -357,7 +381,7 @@ public static function enc_aes256cbc($text, $secret) {
 	$iv = openssl_random_pseudo_bytes($ivsize);
 
 	$ciphertext = openssl_encrypt($text, 'aes-256-cbc', $encKey, OPENSSL_RAW_DATA, $iv);
-	$mac = hash_hmac('sha256', $iv.$ciphertext, $authkey, true);
+	$mac = hash_hmac('sha256', $iv.$ciphertext, $authKey, true);
 	return $mac.$iv.$ciphertext;
 }
 
@@ -382,7 +406,7 @@ public static function dec_aes256cbc($text, $secret) {
 		throw new Exception('MAC Validation failed');
 	}
         
-	return openssl_decrypt($ciphertext, 'aes-256-cbc', $secret, OPENSSL_RAW_DATA, $iv);
+	return openssl_decrypt($ciphertext, 'aes-256-cbc', $encKey, OPENSSL_RAW_DATA, $iv);
 }
 
 
