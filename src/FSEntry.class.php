@@ -18,9 +18,6 @@ use rkphplib\Exception;
  */
 class FSEntry {
 
-/** @var bool abort if stat failed (BEWARE: SAMBA mount has no stat function - use false to avoid abort) */
-public static $STAT_ABORT = true;
-
 /** @var bool abort if chmod failed (CHMOD is only possible if you are owner or root) */
 public static $CHMOD_ABORT = true;
 
@@ -60,10 +57,6 @@ public static function chmod($path, $mode = 0) {
 	}
 
   if (($stat = stat($entry)) === false) {
-		if (!self::$STAT_ABORT) {
-			return;
-		}
-
 		throw new Exception('stat failed', $entry);
   }
 
@@ -157,10 +150,6 @@ public static function stat($path, $clearcache = false) {
   }
 
   if (($ss = stat($path)) === false) {
-		if (!self::$STAT_ABORT) {
-			return false;
-		}
-
 		throw new Exception("stat failed", $path);
 	}
 
