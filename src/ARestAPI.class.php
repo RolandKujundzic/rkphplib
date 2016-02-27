@@ -356,7 +356,7 @@ public function route($api_map) {
  * @param int $code (default = 200, use 400 if error)
  * @exit print JSON|JSONP|XML
  */
-abstract public function out($o, $code = 200) {
+public function out($o, $code = 200) {
 
 	$is_jsonp = empty($this->_req['jsonpCallback']) ? false : true;
 
@@ -365,7 +365,8 @@ abstract public function out($o, $code = 200) {
 			$output = XML::fromJSON($o);
 		}
 		catch (Exception $e) {
-			$this->out(['error' => lib\error_msg('XML::fromJSON error: p1x', array($e->getMessage())), 400);
+			$err_msg = lib\error_msg('XML::fromJSON error: p1x', array($e->getMessage()));
+			$this->out(['error' => $err_msg], 400);
 		}
 
 		header('Content-Type: application/xml');
