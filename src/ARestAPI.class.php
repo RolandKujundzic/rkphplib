@@ -2,6 +2,7 @@
 
 namespace rkphplib;
 
+require_once(__DIR__.'/XML.class.php');
 require_once(__DIR__.'/lib/error_msg.php');
 // require_once(__DIR__.'/lib/log_debug.php');
 
@@ -14,10 +15,10 @@ require_once(__DIR__.'/lib/error_msg.php');
 abstract class ARestAPI {
 
 /** @var map $req Request data */
-protected $req = array();
+protected $_req = array();
 
 /** @var map $priv Request data */
-protected $priv = array();
+protected $_priv = array();
 
 /** @var string $xml_root XML Root node of api result */
 public static $xml_root = '<api></api>';
@@ -122,8 +123,7 @@ public function parse() {
 
 		// e.g. Content-type: application/xml; UTF-8
 		if (strpos($r['content_type'], 'application/xml') !== false) {
-			$xml = simplexml_load_string($input, 'SimpleXMLElement', LIBXML_NOCDATA);
-			$this->_req = json_decode(json_encode((array)$xml), true);
+			$this->_req = XML::toJSON($input);
 			$input = '';
 		}
 		else if (strpos($r['content_type'], 'application/json') !== false) {
@@ -219,13 +219,15 @@ abstract public static function apiMap();
 
 
 /**
- * Return allowed keys from complete_map.
+ * Return allowed keys from complete_map. Example:
+ * 
+ * $this->_allow(self::apiMap(), $allow)
  *
  * @param map $complete_map
  * @param vector $allow
  * @return $amp
  */
-protected function allow($complete_map, $allow) {
+protected function _allow($complete_map, $allow) {
 	$res = [];
 
 	foreach ($allow as $key) {
@@ -235,6 +237,28 @@ protected function allow($complete_map, $allow) {
 	}
 
 	return $res;
+}
+
+
+/**
+ * If priv.custom is set and private method _$_priv.custom_$method() exists execute it.
+ * You can not use reference parameter in plist. Example:
+ *
+ * $this->_call_custom('postUserOrder', array($p, $user));
+ *
+ * @param string $method
+ * @param vector $plist
+ */
+protected function _call_custom($method, $plist = array()) {
+
+	if (empty($this->_priv['custom'])) {
+		return;
+	}
+
+	$cc = '_'.$this->_priv['custom'].'_'.$method;
+	if (method_exists($this, $cc)) {
+		call_user_func_array(array($this, $cc), $plist);
+	}
 }
 
 
@@ -260,7 +284,7 @@ abstract public function checkToken();
  * Return api method call and other route information.
  * 
  * @exit this::out(lib\error_msg('invalid route')) if no route is found
- * @param map $api_map allowed api calls e.g. $this->allow(self::apiMap(), $allow)
+ * @param map $api_map allowed api calls e.g. $this->_allow(self::apiMap(), $allow)
  * @return map keys: method, url, base.
  */
 public function route($api_map) {
@@ -324,19 +348,27 @@ public function route($api_map) {
  * Return api call result. 
  *
  * Default result format is JSON (change with HTTP_ACCEPT: application/xml to XML).
- * Overwrite for custom modification.
+ * Overwrite for custom modification. If error call:
+ *
+ *  $this->out(['error' => lib\error_msg('error msg p1x', array($p1x))], 400);
  *
  * @param map $o
  * @param int $code (default = 200, use 400 if error)
- * @return JSON|JSONP|XML
+ * @exit print JSON|JSONP|XML
  */
-public function out($o, $code = 200) {
+abstract public function out($o, $code = 200) {
 
 	$is_jsonp = empty($this->_req['jsonpCallback']) ? false : true;
 
 	if (!empty($_SERVER['HTTP_ACCEPT']) && $_SERVER['HTTP_ACCEPT'] == 'application/xml') {
+		try {
+			$output = XML::fromJSON($o);
+		}
+		catch (Exception $e) {
+			$this->out(['error' => lib\error_msg('XML::fromJSON error: p1x', array($e->getMessage())), 400);
+		}
+
 		header('Content-Type: application/xml');
-		$output = self::json2xml($o);
 	}
 	else if ($is_jsonp) {
 		header('Content-Type: application/javascript');
@@ -357,31 +389,6 @@ public function out($o, $code = 200) {
 	header('Content-Length: '.mb_strlen($output));
 	print $output;
 	exit(0);
-}
-
-
-/**
- * Convert JSON to XML.
- *
- * @param map $json
- * @return string
- */
-protected static function json2xml($json, SimpleXMLElement $xml = null) {
-
-  if (is_null($xml)) {
-    $xml = new SimpleXMLElement('<'.'?'.'xml version="1.0" encoding="UTF-8"'.'?'.'>'.self::$xml_root);
-	}
-
-	foreach ($json as $key => $value){
-		if (is_array($value)) {
-			self::json2xml($value, $xml->addChild($key));
-    }
-    else {
-      $xml->addChild("$key", "$value");
-    }
-  }
-
-  return $xml->asXML();
 }
 
 
