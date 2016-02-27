@@ -308,9 +308,9 @@ public function route($api_map) {
 
 	$parent_url = dirname($r['url']);
 
-  $api_map = self::apiMap();
-  $func_id = '';
-  $func = '';
+	$api_map = self::apiMap();
+	$func_id = '';
+	$func = '';
 
 	foreach ($api_map as $fname => $fconf) {
 
