@@ -90,24 +90,37 @@ function call_test($func, $arg, $result) {
 /**
  * Print _fc_function|_fc_static_method call.
  * @param string $call
- * @param array $x
+ * @param any $x
+ * @return string
  */
 function _fc_log($call, $x) {
 	$y = array();
+	$prefix = '';
+	$suffix = '';
 
-	foreach ($x as $param) {
-		if (is_array($param)) {
-			array_push($y, '["'.join('", "', $param).'"]');
+	if (is_array($x)) {
+		foreach ($x as $key => $value) {
+			if (is_numeric($key)) {
+				array_push($y, _fc_log('', $value));
+			}
+			else {
+				array_push($y, $key.' => '._fc_log('', $value));
+			}
 		}
-		else if (is_string($param)) {
-			array_push($y, "'".$param."'");
-		}
-		else {
-			array_push($y, $param);
-		}
+
+		$prefix = '[';
+		$suffix = ']';
+	}
+	else if (is_string($x)) {
+		array_push($y, $x);
+		$prefix = "'";
+		$suffix = "'";
+	}
+	else {
+		array_push($y, $x);
 	}
 
-	print "$call(".join(", ", $y).") = ";
+	return $call ? $call.'('.join(', ', $y).') = ' : $prefix.join(', ', $y).$suffix;
 }
 
 
@@ -119,7 +132,7 @@ function _fc_log($call, $x) {
  */
 function _fc_function($func, $x) {
 
-	_fc_log("$func", $x);
+	print _fc_log("$func", $x);
 	$pnum = count($x);
 
 	if ($pnum == 1) {
@@ -148,7 +161,7 @@ function _fc_function($func, $x) {
  */
 function _fc_static_method($class, $method, $x) {
 
-	_fc_log("$class::$method", $x);
+	print _fc_log("$class::$method", $x);
 	$pnum = count($x);
 
 	if ($pnum == 1) {
@@ -251,5 +264,4 @@ function _res2str($res) {
 		return json_encode($res, 322);
 	}
 }
-
 
