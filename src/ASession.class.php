@@ -16,7 +16,10 @@ abstract class ASession {
 
 /** @var map $conf */
 protected $conf = [ 'name' => '',
-	'scope' => 'domain',
+	'host' => '',
+	'script' => '',
+	'docroot' => '',
+	'scope' => '',
 	'type' => '',
 	'ttl' => 7200,
 	'expire' => 3600,
@@ -30,7 +33,10 @@ protected $conf = [ 'name' => '',
  * Set session configuration. Parameter:
  *
  *  name: Session Name (default = empty)
- *  scope: dir|file|subdir|domain (default = domain)
+ *  script: $_SERVER[SCRIPT_FILENAME] (set when first called)
+ *  host: $_SERVER[HTTP_HOST] (set when first called)
+ *  docroot: $_SERVER[DOCUMENT_ROOT] (set when first called)
+ *  scope: file|dir|subdir|host|docroot (default = empty)
  *	type: login type or group (default = empty)
  *  ttl: expiration date increase [1-14400] after activity (default = 7200 sec = 2 h)
  *  expire: expiration after inactivity [1-14400] (default = 3600 = 1 h)
@@ -41,7 +47,7 @@ protected $conf = [ 'name' => '',
  */
 public function setConf($conf) {
 
-	$allow_scope = array('dir', 'file', 'subdir', 'domain');
+	$allow_scope = array('file', 'dir', 'subdir', 'host', 'docroot');
 	if (isset($conf['scope']) && !in_array($conf['scope'], $allow_scope)) {
 		throw new Exception('no such scope', $conf['scope']);
 	}
@@ -65,6 +71,64 @@ public function setConf($conf) {
 			$this->conf[$key] = $conf[$key];
 		}
 	}
+}
+
+
+/**
+ * Return session key. Key is md5 value and depends on conf.scope and conf.name.
+ * If scope and name is empty it is md5(ASession:any).
+ *
+ * @return string
+ */
+public function getSessionKey() {
+	$name = empty($this->conf['name']) ? 'ASession' : $this->conf['name'];
+	$scope = 'any';
+
+	if (empty($this->conf['script'])) {
+		$this->conf['script'] = $_SERVER['SCRIPT_FILENAME'];
+	}
+
+	if (empty($this->conf['host'])) {
+		$this->conf['host'] = $_SERVER['HTTP_HOST'];
+	}
+
+	if (empty($this->conf['docroot'])) {
+		$this->conf['docroot'] = $_SERVER['DOCUMENT_ROOT'];
+	}
+
+  switch ($conf['scope']) {
+		case 'file':
+      if ($_SERVER['SCRIPT_FILENAME'] == $this->conf['script']) {
+				$scope = md5($_SERVER['SCRIPT_FILENAME']);	
+			}
+			break;
+		case "dir":
+			if (dirname($_SERVER['SCRIPT_FILENAME']) == dirname($this->conf['script'])) {
+				$scope = md5(dirname($_SERVER['SCRIPT_FILENAME']));
+			}
+			break;
+		case "subdir":
+			if (mb_strpos($_SERVER['SCRIPT_FILENAME'], dirname($this->conf['script'])) === 0) {
+				$scope = md5(dirname($this->conf['script']).'/*');
+			}
+			break;
+		case "host":
+			if ($this->conf['host'] == $_SERVER['HTTP_HOST']) {
+				$scope = md5($this->conf['host']);
+			}
+			break;
+		case 'docroot':
+			if ($this->conf['docroot'] == $_SERVER['DOCUMENT_ROOT']) {
+				$scope = md5($this->conf['docroot']);
+			}
+			break;
+	}
+
+	if (!empty($conf['scope']) && $scope == 'any') {
+		throw new Exception('invalid scope', print_r($this->conf, true));
+	}
+
+	return md5($name.':'.$scope);
 }
 
 
