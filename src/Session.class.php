@@ -8,7 +8,7 @@ use rkphplib\Exception;
 
 
 /**
- * Session wrapper.
+ * PHP Session wrapper ($_SESSION).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
@@ -25,7 +25,13 @@ public function init($conf = array()) {
 		session_start();
 	}
 
-	throw new Exception("Not implemented");
+	$skey = $this->getSessionKey();
+
+	if (!isset($_SESSION[$skey]) || !is_array($_SESSION[$skey])) {
+    $_SESSION[$skey] = array();
+  }
+
+	throw new Exception("ToDo: implement ttl, expire, max_duration, start, lchange, reload");
 }
 
 
