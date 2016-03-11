@@ -395,7 +395,7 @@ public static function read($fh, $length = 8192) {
  * @param char $delimiter (default = ',')
  * @param char $enclose (default = '"')
  * @param char $escape (default = '\\')
- * @return array
+ * @return array|null
  */
 public static function readCSV($fh, $delimiter = ',', $enclosure = '"', $escape = '\\') {
 
@@ -405,6 +405,10 @@ public static function readCSV($fh, $delimiter = ',', $enclosure = '"', $escape 
 
 	if (($res = fgetcsv($fh, 0, $delimiter, $enclosure, $escape)) === false) {
 		throw new Exception('error reading csv from filehandle');
+	}
+
+	if (is_array($res) && count($res) === 1 && is_null($res[0])) {
+		$res = null;
 	}
 
 	return $res;
