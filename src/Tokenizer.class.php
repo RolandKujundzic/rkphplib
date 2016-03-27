@@ -79,11 +79,32 @@ const LIST_BODY = 8192;
 const XML_BODY = 16384;
 
 
+/** @const TOK_IGNORE remove unkown plugin */
+const TOK_IGNORE = 2;
+
+/** @const TOK_KEEP keep unknown plugin */
+const TOK_KEEP = 4;
+
+/** @const TOK_DEBUG debug unknown plugin */
+const TOK_DEBUG = 8;
+
+
 private $_plugin = array();
 private $_endpos = array();
 private $_tok = array();
 private $_redo = array();
+private $_config = 0;
 
+
+/**
+ * Constructor. Set behavior for unknown plugin (TOK_[IGNORE|KEEP|DEBUG).
+ * Default is to abort if unknown plugin is found.
+ *
+ * @param int $config (0=default, Tokenizer::TOK_[IGNORE|KEEP|DEBUG])
+ */
+public function __construct($config = 0) {
+	$this->_config = $config;
+}
 
 
 /**
@@ -208,6 +229,7 @@ private function _join_tok($start, $end) {
 			$pos = mb_strpos($tok, $d);
 			$name = trim(mb_substr($tok, 0, $pos));
 			$param = trim(mb_substr($tok, $pos + $dl));
+			$buildin = '';
 
 			if (isset($this->_plugin[$name]) && isset($this->_plugin[$name]->tokPlugin[$name])) {
 				$tp = $this->_plugin[$name]->tokPlugin[$name];
@@ -226,23 +248,45 @@ private function _join_tok($start, $end) {
 				}
 			}
 			else {
-				throw new Exception('invalid plugin', "$name:$param is undefined");
+				if ($this->_config & self::TOK_IGNORE) {
+					$buildin = 'ignore';
+				}
+				else if ($this->_config & self::TOK_KEEP) {
+					$buildin = 'keep';
+				}
+				else if ($this->_config & self::TOK_DEBUG) {
+					$buildin = 'debug';
+				}
+				else {
+					throw new Exception('invalid plugin', "$name:$param is undefined");
+				}
 			}
 
-			$pmode = $this->_plugin[$name]->tokPlugin[$name];
-
-			if ($ep == -1) {
-				$out = $this->_call_plugin($name, $param);
+			if ($buildin) {
+				if ($ep == -1) {
+					$out = $this->_buildin($buildin, $name, $param);
+				}
+				else if ($ep > 0) {
+					$out = $this->_buildin($buildin, $name, $param, $this->_merge_txt($i+1, $ep-1));
+					$i = $ep;
+				}
 			}
-			else if ($ep > 0) {
-				$out = ($pmode & self::TEXT) ? $this->_call_plugin($name, $param, $this->_merge_txt($i+1, $ep-1)) : 
-				$this->_call_plugin($name, $param, $this->_join_tok($i + 1, $ep));
-				$i = $ep;
-			}
+			else {
+				$pmode = $this->_plugin[$name]->tokPlugin[$name];
 
-			if ($pmode & self::REDO) {
-				$this->_redo = array($i, $out);
-				return join('', $tok_out);
+				if ($ep == -1) {
+					$out = $this->_call_plugin($name, $param);
+				}
+				else if ($ep > 0) {
+					$out = ($pmode & self::TEXT) ? $this->_call_plugin($name, $param, $this->_merge_txt($i+1, $ep-1)) : 
+						$this->_call_plugin($name, $param, $this->_join_tok($i + 1, $ep));
+					$i = $ep;
+				}
+
+				if ($pmode & self::REDO) {
+					$this->_redo = array($i, $out);
+					return join('', $tok_out);
+				}
 			}
 		}
 
@@ -292,6 +336,34 @@ private function _merge_txt($n, $m) {
 		else {
 			$res .= $this->rx[1].$this->_tok[$i].$this->rx[3];
 		}
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return result of buildin action.
+ * If action is ignore return empty. 
+ *
+ * @param string $action (ignore, keep, buildin)
+ * @param string $name
+ * @param string $param
+ * @param string $arg (default = null = no argument)
+ * @return string
+ */
+private function _buildin($action, $name, $param, $arg = null) {	
+	$res = '';
+
+	if ($action == 'ignore') {
+		// do nothing ...
+	}
+	else if ($action == 'keep') {
+		$tok = $name.$this->rx[2].$param;
+		$res = is_null($arg) ? $this->rx[1].$tok.$this->rx[3] : $this->rx[1].$tok.$this->rx[3].$arg.$this->rx[1].$this->rx[2].$name.$this->rx[3];
+  }
+	else if ($action == 'debug') {
+		$res = is_null($arg) ? "{debug:$name:$param}": "{debug:$name:$param}$arg{:debug}";
 	}
 
 	return $res;
