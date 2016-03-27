@@ -94,6 +94,8 @@ private $_endpos = array();
 private $_tok = array();
 private $_redo = array();
 private $_config = 0;
+private $_jt = 0;
+
 
 
 /**
@@ -180,6 +182,7 @@ public function setPlugin(&$handler) {
  */
 public function toString() {
 	$this->_redo = array();
+	$this->_jt = 0;
 	$out = $this->_join_tok(0, count($this->_tok));
 
 	while (count($this->_redo) == 2) {	
@@ -206,6 +209,7 @@ private function _join_tok($start, $end) {
 	$d  = $this->rx[2];
 	$dl = mb_strlen($d);
 	$tok_out = array();
+	$this->_jt++;
 
 	for ($i = $start; $i < $end; $i++) {
 		$tok = $this->_tok[$i];
@@ -293,7 +297,18 @@ private function _join_tok($start, $end) {
 		array_push($tok_out, $out);
 	}
 
+	$this->_jt--;
 	return join('', $tok_out);
+}
+
+
+/**
+ * Return plugin level.
+ *
+ * @return int
+ */
+public function getLevel() {
+	return $this->_jt;
 }
 
 
