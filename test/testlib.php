@@ -265,3 +265,57 @@ function _res2str($res) {
 	}
 }
 
+
+/**
+ * Run tokenizer tests t1.txt ... t$num.txt.
+ * Requires t1.ok.txt ... t$num.ok.txt
+ *
+ * @param int $num
+ * @param vector $plugin_list
+ */
+function run_tokenizer($num, $plugin_list) {
+	global $test_count;
+
+	$src_dir = dirname(__DIR__).'/src';
+
+	include_once($src_dir.'/Tokenizer.class.php');
+	include_once($src_dir.'/File.class.php');
+
+	print "src_dir=$src_dir\n";
+
+	$tok = new rkphplib\Tokenizer();
+
+	for ($i = 0; $i < count($plugin_list); $i++) {
+		$plugin = 'rkphplib\\'.$plugin_list[$i];
+		include_once($src_dir.'/'.$plugin_list[$i].'.class.php');
+		$tok->setPlugin(new $plugin());
+	}
+
+	for ($i = 1; $i <= $num; $i++) {
+		$tok->setText(rkphplib\File::load('t'.$num.'.txt'), rkphplib\Tokenizer::TOK_DEBUG);
+		$ok = rkphplib\File::load('t'.$num.'.ok.txt');
+		$out = $tok->toString();
+
+		$test_count['num']++;
+		print "Test $i ... ";
+
+		if ($out != $ok) {
+			if (strlen($ok) > 40) {
+				$out_file = 't'.$num.'.out.txt';
+				print "... ERROR! (see $out_file)\n";
+				rkphplib\File::save($out_file, $out);
+			}
+			else {
+				print "$out != $ok - ERROR!\n";
+			}
+
+			$test_count['error']++;
+		}
+		else {
+			$test_count['ok']++;
+			print "ok\n";
+		}
+	}
+}
+
+

@@ -1,0 +1,12 @@
+{tf:}a{:tf}
+{f:}{:f}
+{false:}{:false}
+{t:}1{:t}
+{t:}2{:t}
+{t:}3{:t}
+{true:}4{:true}
+
+{tf:}{:tf}
+{f:}5{:f}
+{false:}6{:false}
+
