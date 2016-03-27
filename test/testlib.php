@@ -277,13 +277,12 @@ function run_tokenizer($num, $plugin_list) {
 	global $test_count;
 
 	$src_dir = dirname(__DIR__).'/src';
+	$tdir = dirname(getcwd().'/'.$_SERVER['SCRIPT_NAME']);
 
 	include_once($src_dir.'/Tokenizer.class.php');
 	include_once($src_dir.'/File.class.php');
 
-	print "src_dir=$src_dir\n";
-
-	$tok = new rkphplib\Tokenizer();
+	$tok = new rkphplib\Tokenizer(rkphplib\Tokenizer::TOK_DEBUG);
 
 	for ($i = 0; $i < count($plugin_list); $i++) {
 		$plugin = 'rkphplib\\'.$plugin_list[$i];
@@ -292,17 +291,17 @@ function run_tokenizer($num, $plugin_list) {
 	}
 
 	for ($i = 1; $i <= $num; $i++) {
-		$tok->setText(rkphplib\File::load('t'.$num.'.txt'), rkphplib\Tokenizer::TOK_DEBUG);
-		$ok = rkphplib\File::load('t'.$num.'.ok.txt');
+		$tok->setText(rkphplib\File::load($tdir.'/t'.$num.'.txt'));
+		$ok = rkphplib\File::load($tdir.'/t'.$num.'.ok.txt');
 		$out = $tok->toString();
 
 		$test_count['num']++;
 		print "Test $i ... ";
 
 		if ($out != $ok) {
-			if (strlen($ok) > 40) {
-				$out_file = 't'.$num.'.out.txt';
-				print "... ERROR! (see $out_file)\n";
+			if (mb_strlen($out) > 40) {
+				$out_file = $tdir.'/t'.$num.'.out.txt';
+				print "ERROR! (see $out_file)\n";
 				rkphplib\File::save($out_file, $out);
 			}
 			else {
