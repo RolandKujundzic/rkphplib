@@ -25,6 +25,10 @@ function split_str($delim, $txt, $ignore_empty = false, $limit = -1) {
 	$lpos = 0;
 	$pos = 0;
 
+	if ($len == 0) {
+		return $ignore_empty ? array() : array("");
+	}
+
 	while ($pos < $len && ($pos = strpos($txt, $delim, $pos)) !== false) {
 
 		if ($esc && substr($txt, $pos - 1, 1) == $esc) {
