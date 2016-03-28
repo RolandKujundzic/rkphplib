@@ -287,7 +287,7 @@ function run_tokenizer($num, $plugin_list) {
 	for ($i = 0; $i < count($plugin_list); $i++) {
 		$plugin = 'rkphplib\\'.$plugin_list[$i];
 		include_once($src_dir.'/'.$plugin_list[$i].'.class.php');
-		$tok->setPlugin(new $plugin());
+		$tok->register(new $plugin());
 	}
 
 	for ($i = 1; $i <= $num; $i++) {
@@ -299,7 +299,7 @@ function run_tokenizer($num, $plugin_list) {
 		print "Test $i ... ";
 
 		if ($out != $ok) {
-			if (mb_strlen($out) > 40) {
+			if (mb_strlen($out) > 40 || strpos($out, "\n") !== false) {
 				$out_file = $tdir.'/t'.$num.'.out.txt';
 				print "ERROR! (see $out_file)\n";
 				rkphplib\File::save($out_file, $out);
