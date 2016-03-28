@@ -161,7 +161,7 @@ public function setText($txt) {
  *
  * @param object $handler
  */
-public function setPlugin(&$handler) {
+public function register(&$handler) {
 
 	if (isset($handler->tokPlugin['_'])) {
 		unset($handler->tokPlugin['_']);
@@ -172,6 +172,17 @@ public function setPlugin(&$handler) {
 	}
 
 	$handler->tokPlugin['_'] =& $this;
+}
+
+
+/**
+ * Old style plugin registration. These plugins use tokCall() callback.
+ * 
+ * @param string $name
+ * @param object $handler
+ */
+public function setPlugin($name, &$obj) {
+	$this->_plugin[$name] =& $handler;
 }
 
 
@@ -189,6 +200,12 @@ public function toString() {
 		$this->_tok = preg_split($this->rx[0], $this->_redo[1].$this->_merge_txt($this->_redo[0] + 1, count($this->_tok) - 1), -1, PREG_SPLIT_DELIM_CAPTURE);
 		$this->_endpos = $this->_compute_endpos($this->_tok);
 		$this->_redo = array();
+		$this->_jt--;
+
+		if ($this->_jt < 0) {
+			throw new Exception('tokenizer bug', print_r($this->_tok, true));
+		}
+
 		$out .= $this->_join_tok(0, count($this->_tok));
 	}
 
@@ -234,15 +251,18 @@ private function _join_tok($start, $end) {
 			$name = trim(mb_substr($tok, 0, $pos));
 			$param = trim(mb_substr($tok, $pos + $dl));
 			$buildin = '';
+			$tp = null;
 
-			if (isset($this->_plugin[$name]) && isset($this->_plugin[$name]->tokPlugin[$name])) {
-				$tp = $this->_plugin[$name]->tokPlugin[$name];
+			if (isset($this->_plugin[$name])) {
+				if (property_exists($this->_plugin[$name], 'tokPlugin')) {
+					$tp = $this->_plugin[$name]->tokPlugin[$name];
+				}
 
 				if (isset($this->_plugin['any'])) {
 					$param = $tok;
 					$name = 'any';
 				}
-				else if ($tp & 8) {
+				else if (is_null($tp) || $tp & self::TOKCALL) {
 					if (!method_exists($this->_plugin[$name], 'tokCall')) {
 						throw new Exception('invalid plugin', "$name has no callback");
 					}
@@ -276,18 +296,21 @@ private function _join_tok($start, $end) {
 				}
 			}
 			else {
-				$pmode = $this->_plugin[$name]->tokPlugin[$name];
-
 				if ($ep == -1) {
 					$out = $this->_call_plugin($name, $param);
 				}
 				else if ($ep > 0) {
-					$out = ($pmode & self::TEXT) ? $this->_call_plugin($name, $param, $this->_merge_txt($i+1, $ep-1)) : 
-						$this->_call_plugin($name, $param, $this->_join_tok($i + 1, $ep));
+					if ($tp & self::TEXT) {
+						$out = $this->_call_plugin($name, $param, $this->_merge_txt($i+1, $ep-1));
+					}
+					else { 
+						$out = $this->_call_plugin($name, $param, $this->_join_tok($i + 1, $ep));
+					}
+
 					$i = $ep;
 				}
 
-				if ($pmode & self::REDO) {
+				if ($tp & self::REDO) {
 					$this->_redo = array($i, $out);
 					return join('', $tok_out);
 				}
@@ -298,6 +321,7 @@ private function _join_tok($start, $end) {
 	}
 
 	$this->_jt--;
+
 	return join('', $tok_out);
 }
 
@@ -387,9 +411,9 @@ private function _buildin($action, $name, $param, $arg = null) {
 
 /**
  * Return plugin result = $plugin->tok_NAME($param, $arg).
- * Convert param into vector and arg into map if plugin $name
- * is configured with e.g. 
+ * If callback mode is not Tokenizer::TOKCALL preprocess param and arg. Example:
  *
+ * Convert param into vector and arg into map if plugin $name is configured with
  * Tokenizer::KV_BODY | Tokenizer::PARAM_CSLIST | Tokenizer::REQUIRE_BODY | Tokenizer::REQUIRE_PARAM 
  *
  * @throws exception if plugin call is invalid 
@@ -399,6 +423,10 @@ private function _buildin($action, $name, $param, $arg = null) {
  * @return string
  */
 private function _call_plugin($name, $param, $arg = null) {	
+
+	if (!property_exists($this->_plugin[$name], 'tokPlugin') || $this->_plugin[$name]->tokPlugin[$name] & self::TOKCALL) {
+		return call_user_func(array(&$this->_plugin[$name], 'tokCall'), $name, $param, $arg);
+	}
 
 	$pconf = $this->_plugin[$name]->tokPlugin[$name];
 	$plen = strlen($param);
@@ -442,12 +470,19 @@ private function _call_plugin($name, $param, $arg = null) {
 		$arg = XML::toJSON($arg);
 	}
 
-	if ($this->_plugin[$name]->tokPlugin[$name] & self::TOKCALL) {
-		return call_user_func(array(&$this->_plugin[$name], 'tokCall'), $name, $param, $arg);
+	$res = '';
+
+	if ($pconf & self::NO_PARAM) {
+		$res = call_user_func(array(&$this->_plugin[$name], 'tok_'.$name), $arg);
+	}
+	else if ($pconf & self::NO_BODY) {
+		$res = call_user_func(array(&$this->_plugin[$name], 'tok_'.$name), $param);
 	}
 	else {
-		return call_user_func(array(&$this->_plugin[$name], 'tok_'.$name), $param, $arg);
+		$res = call_user_func(array(&$this->_plugin[$name], 'tok_'.$name), $param, $arg);
 	}
+
+	return $res;
 }
 
 
