@@ -291,8 +291,8 @@ function run_tokenizer($num, $plugin_list) {
 	}
 
 	for ($i = 1; $i <= $num; $i++) {
-		$tok->setText(rkphplib\File::load($tdir.'/t'.$num.'.txt'));
-		$ok = rkphplib\File::load($tdir.'/t'.$num.'.ok.txt');
+		$tok->setText(rkphplib\File::load($tdir.'/t'.$i.'.txt'));
+		$ok = rkphplib\File::load($tdir.'/t'.$i.'.ok.txt');
 		$out = $tok->toString();
 
 		$test_count['num']++;
@@ -300,7 +300,7 @@ function run_tokenizer($num, $plugin_list) {
 
 		if ($out != $ok) {
 			if (mb_strlen($out) > 40 || strpos($out, "\n") !== false) {
-				$out_file = $tdir.'/t'.$num.'.out.txt';
+				$out_file = $tdir.'/t'.$i.'.out.txt';
 				print "ERROR! (see $out_file)\n";
 				rkphplib\File::save($out_file, $out);
 			}
