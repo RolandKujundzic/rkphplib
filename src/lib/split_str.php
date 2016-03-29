@@ -25,12 +25,7 @@ function split_str($delim, $txt, $ignore_empty = false, $limit = -1) {
 	$lpos = 0;
 	$pos = 0;
 
-	if ($len == 0) {
-		return $ignore_empty ? array() : array("");
-	}
-
 	while ($pos < $len && ($pos = strpos($txt, $delim, $pos)) !== false) {
-
 		if ($esc && substr($txt, $pos - 1, 1) == $esc) {
 			$is_esc = true;
 			$pos += $dl;
@@ -71,7 +66,7 @@ function split_str($delim, $txt, $ignore_empty = false, $limit = -1) {
 			array_push($parts, $value);
 		}
 	}
-	else if ($lpos == $len && !$ignore_empty && substr($txt, -1) === $delim) {
+	else if ($pos == $len && !$ignore_empty && ($len === 0 || substr($txt, -1 * $dl) === $delim)) {
 		// a,b, = [a][b][]
 		array_push($parts, '');
 	}
