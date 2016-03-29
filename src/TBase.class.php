@@ -20,13 +20,19 @@ class TBase {
 private $_tf = [ ];
 
 /** @var map tok plugin definition */
-public $tokPlugin = [
-	'tf' => Tokenizer::PARAM_LIST, 
-	't' => Tokenizer::REQUIRE_BODY | Tokenizer::TEXT | Tokenizer::REDO,
-	'true' => Tokenizer::REQUIRE_BODY | Tokenizer::TEXT | Tokenizer::REDO, 
-	'f' => Tokenizer::REQUIRE_BODY | Tokenizer::TEXT | Tokenizer::REDO | Tokenizer::NO_PARAM, 
-	'false' => Tokenizer::REQUIRE_BODY | Tokenizer::TEXT | Tokenizer::REDO | Tokenizer::NO_PARAM
-];
+public $tokPlugin = [ ];
+
+
+/**
+ * Constructor
+ */
+public function __construct() {
+	$this->tokPlugin['tf'] = Tokenizer::PARAM_LIST; 
+	$this->tokPlugin['t'] = Tokenizer::REQUIRE_BODY | Tokenizer::TEXT | Tokenizer::REDO;
+	$this->tokPlugin['true'] = Tokenizer::REQUIRE_BODY | Tokenizer::TEXT | Tokenizer::REDO; 
+	$this->tokPlugin['f'] = Tokenizer::REQUIRE_BODY | Tokenizer::TEXT | Tokenizer::REDO | Tokenizer::NO_PARAM; 
+	$this->tokPlugin['false'] = Tokenizer::REQUIRE_BODY | Tokenizer::TEXT | Tokenizer::REDO | Tokenizer::NO_PARAM;
+}
 
 
 /**
