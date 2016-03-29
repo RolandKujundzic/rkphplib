@@ -279,6 +279,10 @@ function run_tokenizer($num, $plugin_list) {
 	$src_dir = dirname(__DIR__).'/src';
 	$tdir = dirname(getcwd().'/'.$_SERVER['SCRIPT_NAME']);
 
+	if (!empty($test_count['path'])) {
+		$tdir .= '/'.$test_count['path'];
+	}
+
 	include_once($src_dir.'/Tokenizer.class.php');
 	include_once($src_dir.'/File.class.php');
 
