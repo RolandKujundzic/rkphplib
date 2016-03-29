@@ -1,15 +1,5 @@
-{tf:a}a{:tf}
-{false:}{:false}
-{t:}a1{:t}
-{f:}{:f}
-{t:}
-	{tf:c}{:tf}
-	{t:}{:t}
-	{f:}B{:f}
-{:t}
-{t:}a2{:t}
-{t:}
-	{t:}C1{:t}
-	{f:}C2{:f}
-{:t}
+{tf:!}a{:tf}{t:}Ta{:t}{f:}Fa{:f}
+{tf:!}1{:tf}{t:}T1{:t}{f:}F1{:f}
+{tf:!}0{:tf}{t:}T0{:t}{f:}F0{:f}
+{tf:!}{:tf}{t:}T{:t}{f:}F{:f}
 
