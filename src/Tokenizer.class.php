@@ -94,7 +94,6 @@ private $_endpos = array();
 private $_tok = array();
 private $_redo = array();
 private $_config = 0;
-private $_jt = 0;
 
 
 
@@ -193,19 +192,12 @@ public function setPlugin($name, &$obj) {
  */
 public function toString() {
 	$this->_redo = array();
-	$this->_jt = 0;
 	$out = $this->_join_tok(0, count($this->_tok));
 
 	while (count($this->_redo) == 2) {	
 		$this->_tok = preg_split($this->rx[0], $this->_redo[1].$this->_merge_txt($this->_redo[0] + 1, count($this->_tok) - 1), -1, PREG_SPLIT_DELIM_CAPTURE);
 		$this->_endpos = $this->_compute_endpos($this->_tok);
 		$this->_redo = array();
-		$this->_jt--;
-
-		if ($this->_jt < 0) {
-			throw new Exception('tokenizer bug', print_r($this->_tok, true));
-		}
-
 		$out .= $this->_join_tok(0, count($this->_tok));
 	}
 
@@ -226,7 +218,6 @@ private function _join_tok($start, $end) {
 	$d  = $this->rx[2];
 	$dl = mb_strlen($d);
 	$tok_out = array();
-	$this->_jt++;
 
 	for ($i = $start; $i < $end; $i++) {
 		$tok = $this->_tok[$i];
@@ -300,6 +291,7 @@ private function _join_tok($start, $end) {
 					$out = $this->_call_plugin($name, $param);
 				}
 				else if ($ep > 0) {
+
 					if ($tp & self::TEXT) {
 						$out = $this->_call_plugin($name, $param, $this->_merge_txt($i+1, $ep-1));
 					}
@@ -320,8 +312,6 @@ private function _join_tok($start, $end) {
 		array_push($tok_out, $out);
 	}
 
-	$this->_jt--;
-
 	return join('', $tok_out);
 }
 
@@ -332,7 +322,7 @@ private function _join_tok($start, $end) {
  * @return int
  */
 public function getLevel() {
-	return $this->_jt;
+	return 0;
 }
 
 
