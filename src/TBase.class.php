@@ -212,7 +212,7 @@ public function tok_true($val, $out) {
 	$level = $this->tokPlugin['_']->getLevel(); 
 
 	if (count($this->_tf) == 0 || !isset($this->_tf[$level])) {
- 		throw new Exception('call tf first', 'Plugin [true:]'.$out.'[:true]');
+ 		throw new Exception('call tf first', 'Level '.$level.', Plugin [true:]'.$out.'[:true]');
 	}
 
 	return ((is_bool($this->_tf[$level]) && $this->_tf[$level]) || 
@@ -239,7 +239,7 @@ public function tok_false($out) {
 	$level = $this->tokPlugin['_']->getLevel(); 
 
 	if (count($this->_tf) == 0 || !isset($this->_tf[$level])) {
- 		throw new Exception('call tf first', 'Plugin [false:]'.$out.'[:false]');
+ 		throw new Exception('call tf first', 'Level '.$level.', Plugin [false:]'.$out.'[:false]');
 	}
 
 	return (is_bool($this->_tf[$level]) && !$this->_tf[$level]) ? $out : '';
