@@ -94,6 +94,8 @@ private $_endpos = array();
 private $_tok = array();
 private $_redo = array();
 private $_config = 0;
+private $_level = array(); // [ [ tok_startpos, tok_endpos, level, redo_count ], ... ]
+private $_lc = array();
 
 
 
@@ -127,6 +129,7 @@ public function load($file) {
 public function setText($txt) {
 	$this->_tok = preg_split($this->rx[0], $txt, -1, PREG_SPLIT_DELIM_CAPTURE);
 	$this->_endpos = $this->_compute_endpos($this->_tok);
+	$this->_compute_level();
 }
 
 
@@ -197,6 +200,7 @@ public function toString() {
 	while (count($this->_redo) == 2) {	
 		$this->_tok = preg_split($this->rx[0], $this->_redo[1].$this->_merge_txt($this->_redo[0] + 1, count($this->_tok) - 1), -1, PREG_SPLIT_DELIM_CAPTURE);
 		$this->_endpos = $this->_compute_endpos($this->_tok);
+		$this->_update_level();
 		$this->_redo = array();
 		$out .= $this->_join_tok(0, count($this->_tok));
 	}
@@ -208,9 +212,9 @@ public function toString() {
 /**
  * Recursive $_tok parser.
  * 
+ * @throws rkphplib\Exception 'invalid plugin'
  * @param int $start
  * @param int $end
- * @throws rkphplib\Exception "invalid plugin" if error occurs 
  * @return string
  */
 private function _join_tok($start, $end) {
@@ -287,6 +291,8 @@ private function _join_tok($start, $end) {
 				}
 			}
 			else {
+				$this->_set_level($i, $ep);
+
 				if ($ep == -1) {
 					$out = $this->_call_plugin($name, $param);
 				}
@@ -322,7 +328,29 @@ private function _join_tok($start, $end) {
  * @return int
  */
 public function getLevel() {
-	return 0;
+
+	if (count($this->_lc) !== 4) {
+		throw new Exception('tokenizer error', '_lc is not set');
+	}
+
+	return $this->_lc[2];
+}
+
+
+/**
+ * Set level. Copy _level[i] to _lc where _level[i][0] = start and _level[i][1] = end.
+ *
+ * @param int $start
+ * @param int $end
+ */
+public function _set_level($start, $end) {
+	$this->_lc = array();
+
+	for ($i = count($this->_level) - 1; count($this->_lc) === 0 && $i > -1; $i--) {
+		if ($this->_level[$i][0] === $start && $this->_level[$i][1] === $end) {
+			$this->_lc = $this->_level[$i];
+		}
+	}
 }
 
 
@@ -406,7 +434,7 @@ private function _buildin($action, $name, $param, $arg = null) {
  * Convert param into vector and arg into map if plugin $name is configured with
  * Tokenizer::KV_BODY | Tokenizer::PARAM_CSLIST | Tokenizer::REQUIRE_BODY | Tokenizer::REQUIRE_PARAM 
  *
- * @throws exception if plugin call is invalid 
+ * @throws rkphplib\Exception 'plugin parameter missing', 'invalid plugin parameter', 'plugin body missing', 'invalid plugin body'
  * @param string $name
  * @param string $param
  * @param string $arg (default = null = no argument)
@@ -485,6 +513,7 @@ private function _call_plugin($name, $param, $arg = null) {
  *  -2: ignore
  *  -3: plugin end ({:xxxx})
  * 
+ * @throws rkphplib\Exception 'invalid plugin'
  * @param array $tok
  * @return array
  */
@@ -534,7 +563,7 @@ private function _compute_endpos($tok) {
 		}
 	}
 
-	// check sanity ... e.g. {a:}{b:}{:a}{:b} is forbidden
+	// Check endpos sanity, e.g. {a:}{b:}{:a}{:b} is forbidden
 	$max_ep = array(count($endpos) - 2);
 	$max = 0;
 
@@ -560,6 +589,61 @@ private function _compute_endpos($tok) {
 }
 
 
+/**
+ * Compute level. 
+ */
+private function _compute_level() {
+
+	$this->_level = array();
+	$level = 1;
+	$e = array();	
+
+	for ($i = 0; $i < count($this->_endpos); $i++) {
+		if (count($e) > 0 && $i === end($e)) {
+			array_pop($e);
+			$level--;
+		}
+
+		$ep = $this->_endpos[$i];
+
+		if ($ep == -1) {
+			array_push($this->_level, array($i, $i, $level, 0));
+		}
+		else if ($ep > 0) {
+			array_push($this->_level, array($i, $ep, $level, 0));
+			array_push($e, $ep);
+			$level++;
+		}
+	}
 }
 
+
+/**
+ * Update tok-start/end and redo counter in _level.
+ */
+private function _update_level() {
+	$r = $this->_level[count($this->_level) - 1][3];
+
+	for ($i = 0, $found = false; !$found && $i < count($this->_level); $i++) {
+		if ($this->_redo[0] === $this->_level[$i][1] && $r === $this->_level[$i][3]) {
+			$found = $i;
+		}
+	}
+
+	$k = $found + 1;
+
+	for ($i = 0; $i < count($this->_endpos); $i++) {
+		$ep = $this->_endpos[$i];
+
+		if ($ep == -1 || $ep > 0) {
+			$this->_level[$k][0] = $i;
+			$this->_level[$k][1] = ($ep == -1) ? $i : $ep;  
+			$this->_level[$k][3] = $r + 1;
+      $k++;
+    }
+	}
+}
+
+
+}
 
