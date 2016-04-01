@@ -209,15 +209,33 @@ public function tok_t($param, $arg) {
  * @return $out|empty
  */
 public function tok_true($val, $out) {
-	$level = $this->tokPlugin['_']->getLevel(); 
-
-	if (count($this->_tf) == 0 || !isset($this->_tf[$level])) {
- 		throw new Exception('call tf first', 'Level '.$level.', Plugin [true:]'.$out.'[:true]');
-	}
+	$level = $this->_get_level('true');
 
 	return ((is_bool($this->_tf[$level]) && $this->_tf[$level]) || 
 		(is_string($this->_tf[$level]) && $this->_tf[$level] === $val) || 
 		(is_array($this->_tf[$level]) && !empty($val) && in_array($val, $this->_tf[$level]))) ? $out : '';
+}
+
+
+/**
+ * Return current level.
+ *
+ * @throws rkphplib\Exception 'call tf first' 
+ * @param string $tf 'true'|'false'
+ * @return int
+ */
+private function _get_level($tf) {
+	$level = $this->tokPlugin['_']->getLevel(); 
+
+	if (!isset($this->_tf[$level])) {
+ 		throw new Exception('call tf first', "Level $level, Plugin [$tf:]");
+	}
+
+	for ($i = count($this->_tf) - 1; $i > $level - 1; $i--) {
+		array_pop($this->_tf);
+	}
+
+	return $level;
 }
 
 
@@ -236,12 +254,7 @@ public function tok_f($out) {
  * @return $out|empty
  */
 public function tok_false($out) {
-	$level = $this->tokPlugin['_']->getLevel(); 
-
-	if (count($this->_tf) == 0 || !isset($this->_tf[$level])) {
- 		throw new Exception('call tf first', 'Level '.$level.', Plugin [false:]'.$out.'[:false]');
-	}
-
+	$level = $this->_get_level('false');
 	return (is_bool($this->_tf[$level]) && !$this->_tf[$level]) ? $out : '';
 }
 
