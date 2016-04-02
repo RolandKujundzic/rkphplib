@@ -54,8 +54,10 @@ public function __construct() {
  * @test:t7 p[0] == set: search true:param in p[1..n] later
  * @test:t8 p.length == 2 and p[0] == in: set is split(',', p[1]) true if p[0] in set
  * @test:t9 p.length == 2 and p[0] == in_set: set is split(',', p[0]) true if p[1] in set
- *
- * - p.length == 2 and p[0] in (and, or, cmp_and, cmp_or): 
+ * @test:t10 p.length >= 2 and p[0] == or: true if one entry in p[1...n] is not empty
+ * @test:t11 p.legnth >= 2 and p[0] == and: true if every entry in p[1...n] is not empty
+ * @test:t12 p.length >= 3 and p[0] == cmp_or: true if one p[i] == p[i+1] (i+=2)
+ * @test:t13 p.length >= 3 and p[0] == cmp_and: true if every p[i] == p[i+1] (i+=2)
  * - p.length == 2 and p[0] == prev[:n]: modify result of previous evaluation
  *
  * @tok {tf:eq:5}3{:tf} = false, {tf:lt:3}1{:tf} = true, {tf:}0{:tf} = false, {tf:}00{:tf} = true
@@ -157,9 +159,37 @@ public function tok_tf($p, $arg) {
 			$tf = in_array($ap[0], $set);
 		}
 	}
-	else if ($do == 'and' || $do == 'or' || $do == 'cmp_or' || $do == 'cmp_and') {
-		// ToDo ...
-		throw new Exception('ToDo ...');
+	else if ($do == 'and' || $do == 'or') {
+		$apn = count($ap);
+
+		if ($do == 'or') {
+			for ($i = 0, $tf = false; !$tf && $i < $apn; $i++) {
+				$tf = !empty($ap[$i]);
+			}
+		}
+		else if ($do == 'and') {
+			for ($i = 0, $tf = true; $tf && $i < $apn; $i++) {
+				$tf = !empty($ap[$i]);
+			}
+		}
+	}
+	else if ($do == 'cmp_or' || $do == 'cmp_and') {
+		$apn = count($ap);
+
+		if ($apn < 2 || $apn % 2 != 0) {
+			throw new Exception("invalid tf:$do", 'ap=['.join('|', $ap).']');
+		}
+
+		if ($do == 'cmp_or') {
+			for ($i = 0, $tf = false; !$tf && $i < $apn - 1; $i = $i + 2) {
+				$tf = ($ap[$i] == $ap[$i + 1]);
+			}
+		}
+		else if ($do == 'cmp_and') {
+			for ($i = 0, $tf = true; $tf && $i < $apn - 1; $i = $i + 2) {
+				$tf = ($ap[$i] == $ap[$i + 1]);
+			}
+		}
 	}
 
 	$this->_tf[$level] = $tf;
@@ -184,15 +214,33 @@ public function tok_t($param, $arg) {
  * @return $out|empty
  */
 public function tok_true($val, $out) {
-	$level = $this->tokPlugin['_']->getLevel(); 
-
-	if (count($this->_tf) == 0 || !isset($this->_tf[$level])) {
- 		throw new Exception('call tf first', 'Plugin [true:]'.$out.'[:true]');
-	}
+	$level = $this->_get_level('true');
 
 	return ((is_bool($this->_tf[$level]) && $this->_tf[$level]) || 
 		(is_string($this->_tf[$level]) && $this->_tf[$level] === $val) || 
 		(is_array($this->_tf[$level]) && !empty($val) && in_array($val, $this->_tf[$level]))) ? $out : '';
+}
+
+
+/**
+ * Return current level.
+ *
+ * @throws rkphplib\Exception 'call tf first' 
+ * @param string $tf 'true'|'false'
+ * @return int
+ */
+private function _get_level($tf) {
+	$level = $this->tokPlugin['_']->getLevel(); 
+
+	if (!isset($this->_tf[$level])) {
+ 		throw new Exception('call tf first', "Level $level, Plugin [$tf:]");
+	}
+
+	for ($i = count($this->_tf) - 1; $i > $level - 1; $i--) {
+		array_pop($this->_tf);
+	}
+
+	return $level;
 }
 
 
@@ -211,12 +259,7 @@ public function tok_f($out) {
  * @return $out|empty
  */
 public function tok_false($out) {
-	$level = $this->tokPlugin['_']->getLevel(); 
-
-	if (count($this->_tf) == 0 || !isset($this->_tf[$level])) {
- 		throw new Exception('call tf first', 'Plugin [false:]'.$out.'[:false]');
-	}
-
+	$level = $this->_get_level('false');
 	return (is_bool($this->_tf[$level]) && !$this->_tf[$level]) ? $out : '';
 }
 

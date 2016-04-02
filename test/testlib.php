@@ -270,7 +270,7 @@ function _res2str($res) {
  * Run tokenizer tests t1.txt ... t$num.txt.
  * Requires t1.ok.txt ... t$num.ok.txt
  *
- * @param int $num
+ * @param any $num (5 = run t1.txt ... t5.txt, 'a.txt' run only this test)
  * @param vector $plugin_list
  */
 function run_tokenizer($num, $plugin_list) {
@@ -294,9 +294,25 @@ function run_tokenizer($num, $plugin_list) {
 		$tok->register(new $plugin());
 	}
 
-	for ($i = 1; $i <= $num; $i++) {
-		$tok->setText(rkphplib\File::load($tdir.'/t'.$i.'.txt'));
-		$ok = rkphplib\File::load($tdir.'/t'.$i.'.ok.txt');
+	$test_files = array();
+
+	if (is_string($num)) {
+		array_push($test_files, $tdir.'/'.$num);
+	}
+	else {
+		for ($i = 1; $i <= $num; $i++) {
+			array_push($test_files, $tdir.'/t'.$i.'.txt');
+		}
+	}
+
+	$i = 0;
+	foreach ($test_files as $f_txt) {
+		$f_out = str_replace('.txt', '.out.txt', $f_txt);
+		$f_ok = str_replace('.txt', '.ok.txt', $f_txt);
+		$i++;
+
+		$tok->setText(rkphplib\File::load($f_txt));
+		$ok = rkphplib\File::load($f_ok);
 		$out = $tok->toString();
 
 		$test_count['num']++;
@@ -304,9 +320,8 @@ function run_tokenizer($num, $plugin_list) {
 
 		if ($out != $ok) {
 			if (mb_strlen($out) > 40 || strpos($out, "\n") !== false) {
-				$out_file = $tdir.'/t'.$i.'.out.txt';
-				print "ERROR! (see $out_file)\n";
-				rkphplib\File::save($out_file, $out);
+				print "ERROR! (see $f_out)\n";
+				rkphplib\File::save($f_out, $out);
 			}
 			else {
 				print "$out != $ok - ERROR!\n";
