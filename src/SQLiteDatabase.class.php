@@ -4,7 +4,7 @@ namespace rkphplib;
 
 require_once(__DIR__.'/ADatabase.class.php');
 
-use rkphplib\lib\Exception;
+use rkphplib\Exception;
 
 
 
@@ -419,6 +419,44 @@ public function getTableDesc($table) {
   $this->_cache['DESC:'.$table] = $res;
 
   return $res;
+}
+
+/**
+ * Return vector with database names.
+ *
+ * @param boolean $reload_cache
+ * @return vector
+ */
+public function getDatabaseList($reload_cache = false) {
+	throw new Exception('ToDo ...');	
+}
+
+
+/**
+ * Return vector with table names.
+ *
+ * @param boolean $reload_cache
+ * @return vector
+ */
+public function getTableList($reload_cache = false) {
+	throw new Exception('ToDo ...');	
+}
+
+
+/**
+ * Create new database and dbadmin account.
+ *
+ * @param string $dsn
+ */
+public function createDatabase($dsn) {
+
+	$dsn = self::splitDSN($dsn);
+
+  if ($dsn['type'] != 'sqlite') {
+    throw new Exception('invalid dsn type: '.$dsn['type']);
+  }
+
+	throw new Exception('ToDo ...');	
 }
 
 
