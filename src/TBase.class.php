@@ -19,12 +19,17 @@ class TBase {
 /** @var vector<bool> $_tf keep results of (nested) tok_tf evaluation */
 private $_tf = [ ];
 
-/** @var map tok plugin definition */
+/** @var map $tokPlugin plugin definition @see __construct() */
 public $tokPlugin = [ ];
 
 
 /**
- * Constructor
+ * Constructor. Tokenizer plugin definition:
+ *
+ * - tf: PARAM_LIST
+ * - t, true: REQUIRE_BODY, TEXT, REDO
+ * - f, false: REQUIRE_BODY, TEXT, REDO, NO_PARAM
+ *
  */
 public function __construct() {
 	$this->tokPlugin['tf'] = Tokenizer::PARAM_LIST; 
