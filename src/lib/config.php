@@ -73,6 +73,14 @@ function exception_handler($e) {
 		error_log("$msg\n$internal\n\n$trace\n\n", 3, '/tmp/php.fatal');
 	  die("<h3 style='color:red'>$msg</h3>");
 	}
+  else if (php_sapi_name() === 'cli' && !empty($e->internal_message) && substr($e->internal_message, 0, 1) === '@') {
+    if ($e->internal_message == '@ABORT') {
+      print "\nABORT: ".$e->getMessage()."\n\n"; exit(1);
+    }
+    else if ($e->internal_message == '@SYNTAX') {
+      print "\nSYNTAX: ".$e->getMessage()."\n\n"; exit(1);
+    }
+  }
 
 	die("$msg\n$internal\n\n$trace\n\n");
 }
