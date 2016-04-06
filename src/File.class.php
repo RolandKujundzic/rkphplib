@@ -404,7 +404,12 @@ public static function readCSV($fh, $delimiter = ',', $enclosure = '"', $escape 
 	}
 
 	if (($res = fgetcsv($fh, 0, $delimiter, $enclosure, $escape)) === false) {
-		throw new Exception('error reading csv from filehandle');
+		if (feof($fh)) {
+			return null;
+		}
+		else {
+			throw new Exception('error reading csv from filehandle');
+		}
 	}
 
 	if (is_array($res) && count($res) === 1 && is_null($res[0])) {
