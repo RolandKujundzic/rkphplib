@@ -385,11 +385,47 @@ public function hasTable($name) {
 
 
 /**
- * Create database.
+ * Create database and account.
  *
  * @param string $dsn
  */
 abstract public function createDatabase($dsn);
+
+
+/**
+ * Drop database and account.
+ *
+ * @param string $dsn
+ */
+abstract public function dropDatabase($dsn);
+
+
+/**
+ * Create table. Value of $table_conf:
+ * 
+ * - @id: 1 = primary key int unsigned not null auto_increment, 2 = primary key int unsigned not null, 3 = primary key varchar(30) not null
+ * - @status: 1 = tinyint unsigned + index
+ * - @timestamp: 1 = since, 2 = last_change, 3 = since + last_change datetime cols
+ * - colname: TYPE:SIZE:NOT_NULL:DEFAULT, e.g. 
+ *			"colname => int:11:1:1:0" = "colname int(11) NOT NULL DEFAULT 1"
+ * 			"colname => varchar:30:1:admin:1" = "colname varchar(30) NOT NULL DEFAULT 'admin', KEY (colname(20))"
+ *			"colname => varchar:50:1::2" = "colname varchar(50) NOT NULL, UNIQUE (colname(20))"
+ *			"colname => enum::1:a,b" = "colname enum('a', 'b') NOT NULL"
+ *			"colA:colB" => unique" = "UNIQUE KEY ('colA', 'colB')"
+ *			"colA:colB:colC" => foreign:1:1" = "FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE"
+ *
+ * @param hash $table_list
+ * @param hash $config (default: drop_existing=false, ignore_existing = false)
+ */
+abstract public function createTables($table_conf, $config = [ 'drop_existing' => false, 'ignore_existing' => false ]);
+
+
+/**
+ * Drop tables.
+ *
+ * @param array $table_list
+ */
+abstract public function dropTables($table_list);
 
 
 /**

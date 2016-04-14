@@ -94,13 +94,11 @@ public function close() {
 
 
 /**
- * Create new database and dbadmin account. 
  * 
- * @param string $dsn
  */
 public function createDatabase($dsn) {
 
-        $dsn = self::splitDSN($dsn);
+	$dsn = self::splitDSN($dsn);
 
 	if ($dsn['type'] != 'mysqli') {
 		throw new Exception('invalid dsn type: '.$dsn['type']);
@@ -110,6 +108,30 @@ public function createDatabase($dsn) {
 	$this->execute("GRANT ALL PRIVILEGES ON ".$dsn['name'].".* TO '".self::escape_name($dsn['login'])."'@'".
 		self::escape_name($dsn['host'])."' IDENTIFIED BY '".self::escape_name($dsn['password'])."'");
 	$this->execute("FLUSH PRIVILEGES");
+}
+
+
+/**
+ * 
+ */
+public function dropDatabase($dsn) {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
+ * 
+ */
+public function createTables($table_conf, $config = [ 'drop_existing' => false, 'ignore_existing' => false ]) {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
+ * 
+ */
+public function dropTables($table_list) {
+	throw new Exception('ToDo ...');
 }
 
 
