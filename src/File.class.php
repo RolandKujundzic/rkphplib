@@ -181,6 +181,58 @@ public static function exists($file, $required = false) {
 
 
 /**
+ * Return file md5 checksum.
+ * 
+ * @param string $file
+ * @return string
+ */
+public static function md5($file) {
+	FSEntry::isFile($file);
+	return md5_file($file);
+}
+
+
+/**
+ * True if file was modified.
+ * 
+ * @param string $file
+ * @param string $md5_log
+ * @return bool
+ */
+public static function hasChanged($file, $md5_log) {
+  $md5 = File::md5($file);
+
+	if (!FSEntry::isFile($md5_log, false)) {
+		File::save($md5_log, $md5);
+		return true;
+	}
+
+	$old_md5 = trim(File::load($md5_log));
+	$res = ($old_md5 == $md5);
+
+	if (!$res) {
+		File::save($md5_log, $md5);
+  }
+
+  return !$res;
+}
+
+
+/**
+ * Return true if file changes within $watch seconds.
+ *
+ * @param string $file
+ * @param int $watch (default = 15, max = 300 seconds)
+ */
+public static function isChanging($file, $watch = 15) {
+	$md5_old = File::md5($file);
+  sleep(min($watch, 300));
+  $md5_new = File::md5($file);
+	return $md5_old != $md5_new;
+}
+
+
+/**
  * Change file permissions.
  *
  * @param string $file
@@ -322,6 +374,25 @@ public static function open($file, $mode = 'rb') {
 
 
 /**
+ * Load file content into array.
+ *
+ * @param string
+ * @param flags (FILE_IGNORE_NEW_LINES, FILE_SKIP_EMPTY_LINES)
+ */
+public static function loadLines($file, $flags = 0) {
+	$lines = array();
+
+	if (File::size($file) > 0) {
+    $lines = file($file, $flags);
+  }
+
+  return $lines;
+}
+
+
+
+
+/**
  * Write CSV line to file.
  *
  * @param array $data
@@ -385,6 +456,56 @@ public static function read($fh, $length = 8192) {
 	}
 
 	return $res;
+}
+
+
+/**
+ * Return true if filehandle is at eof.
+ * 
+ * @param filehandle $fh
+ * @return bool
+ */
+public static function end($fh) {
+	return feof($fh);
+}
+
+
+/**
+ * Read line from filehandle (until \n or maxlen is reached).
+ *
+ * @param filehandle $fh
+ * @param int $maxlen (default = 8192)
+ */
+public static function readLine($fh, $maxlen = 8192) {
+  $res = fgets($fh, $maxlen);
+
+	if (mb_strlen($res) === $maxlen - 1 && !feof($fh)) {
+		throw new Exception('line too long', $res);
+	}
+
+	return $res;
+}
+
+
+/**
+ * Save serialized data in file.
+ *
+ * @param string $file
+ * @param any $data
+ */
+public static function serialize($file, $data) {
+  File::save($file, serialize($data));
+}
+
+
+/**
+ * Return unserialized file content.
+ * 
+ * @param string $file
+ * @return string 
+ */
+public static function unserialize($file) {
+	return unserialize(File::load($file));
 }
 
 
