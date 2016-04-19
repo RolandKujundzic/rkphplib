@@ -1,6 +1,11 @@
 <?php
 
-require_once(dirname(__DIR__).'/testlib.php');
-require_once(dirname(dirname(__DIR__)).'/src/lib/csv_explode.php');
+global $th;
 
-fc('csv_explode');
+if (!isset($th)) {
+	require_once(dirname(dirname(__DIR__)).'/src/TestHelper.class.php');
+	$th = new rkphplib\TestHelper();
+}
+
+$th->load('src/lib/csv_explode.php');
+$th->runFuncTest('csv_explode');

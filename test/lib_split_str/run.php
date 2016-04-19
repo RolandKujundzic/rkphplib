@@ -1,6 +1,11 @@
 <?php
 
-require_once(dirname(__DIR__).'/testlib.php');
-require_once(dirname(dirname(__DIR__)).'/src/lib/split_str.php');
+global $th;
 
-fc('split_str');
+if (!isset($th)) {
+  require_once(dirname(dirname(__DIR__)).'/src/TestHelper.class.php');
+  $th = new rkphplib\TestHelper();
+}
+
+$th->load('src/lib/split_str.php');
+$th->runFuncTest('split_str');

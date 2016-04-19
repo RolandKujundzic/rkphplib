@@ -1,6 +1,11 @@
 <?php
 
-require_once(dirname(__DIR__).'/testlib.php');
-require_once(dirname(dirname(__DIR__)).'/src/lib/replace_tags.php');
+global $th;
 
-fc('replace_tags');
+if (!isset($th)) {
+	require_once(dirname(dirname(__DIR__)).'/src/TestHelper.class.php');
+	$th = new rkphplib\TestHelper();
+}
+
+$th->load('src/lib/replace_tags.php');
+$th->runFuncTest('replace_tags');

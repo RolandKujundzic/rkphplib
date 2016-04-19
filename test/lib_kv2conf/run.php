@@ -1,6 +1,12 @@
 <?php
 
-require_once(dirname(__DIR__).'/testlib.php');
-require_once(dirname(dirname(__DIR__)).'/src/lib/kv2conf.php');
+global $th;
 
-fc('kv2conf');
+if (!isset($th)) {
+  require_once(dirname(dirname(__DIR__)).'/src/TestHelper.class.php');
+  $th = new rkphplib\TestHelper();
+}
+
+$th->load('src/lib/kv2conf.php');
+$th->runFuncTest('kv2conf');
+

@@ -1,17 +1,19 @@
 <?php
 
-require_once(__DIR__.'/testlib.php');
+require_once(dirname(__DIR__).'/src/TestHelper.class.php');
 
-run_test('lib_conf2kv/run.php');
-run_test('lib_kv2conf/run.php');
-run_test('lib_split_str/run.php');
-run_test('lib_csv_explode/run.php');
-run_test('lib_replace_tags/run.php');
-run_test('DateTime/run.php');
+$th = new rkphplib\TestHelper();
+$th->runTest('lib_conf2kv/run.php');
+$th->runTest('lib_kv2conf/run.php');
+$th->runTest('lib_split_str/run.php');
+$th->runTest('lib_csv_explode/run.php');
+$th->runTest('lib_replace_tags/run.php');
+$th->runTest('DateTime/run.php');
+$th->result();
+
+/* ToDo ...
 run_test('Tokenizer/run.php');
 run_test('TBase/run.php');
 // run_test('MysqlDatabase/run.php');
+*/
 
-$overall = "Overall result of ".count($test_count['overview'])." Class/Function Tests:";
-printf("%s\n%'=".mb_strlen($overall)."s\n", $overall, '');
-print join("\n", $test_count['overview'])."\n\n";
