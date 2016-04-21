@@ -1,6 +1,10 @@
 <?php
 
-require_once(dirname(__DIR__).'/testlib.php');
+global $th;
 
-run_tokenizer(1, array());
+if (!isset($th)) {
+	require_once(dirname(dirname(__DIR__)).'/src/TestHelper.class.php');
+	$th = new rkphplib\TestHelper();
+}
 
+$th->runTokenizer(1, array());
