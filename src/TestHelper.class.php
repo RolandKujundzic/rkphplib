@@ -88,6 +88,11 @@ public function load($file) {
 	}
 
 	FSEntry::isDir($rkphplib);
+
+	if (!FSEntry::isFile($rkphplib.'/'.$file, false)) {
+		$file = 'src/'.$file;
+	}
+
 	FSEntry::isFile($rkphplib.'/'.$file);
 
 	require_once($rkphplib.'/'.$file);
@@ -379,39 +384,65 @@ private static function _res2str($res) {
 
 
 /**
+ * Return test dir.
+ *
+ * @return array (abs-path, rel-path)
+ */
+private function _test_dir() {
+	$cwd = getcwd();
+	$tdir = '';
+
+	if (basename(dirname($cwd)) == 'test') {
+		$tdir = $cwd;
+	}
+	else if (!empty($this->_tc['path'])) {
+		$tdir = $cwd.'/'.$this->_tc['path'];
+	}
+
+	if (empty($tdir) || ($pos = mb_strpos($tdir, '/test/')) === false) {
+		throw new Exception('could not determine test directory');
+	}
+
+	$rel_dir = substr($tdir, $pos + 6);
+
+	return [ $tdir, $rel_dir ];
+}
+
+
+/**
  * Run tokenizer tests t1.txt ... t$num.txt.
  * Requires t1.ok.txt ... t$num.ok.txt
  *
  * @param any $num (5 = run t1.txt ... t5.txt, 'a.txt' run only this test)
  * @param vector $plugin_list
  */
-function run_tokenizer($num, $plugin_list) {
-	global $test_count;
+public function runTokenizer($num, $plugin_list) {
 
-	$src_dir = dirname(__DIR__).'/src';
-	$tdir = dirname(getcwd().'/'.$_SERVER['SCRIPT_NAME']);
+	list ($tdir, $rel_tdir) = $this->_test_dir();
 
-	if (!empty($test_count['path'])) {
-		$tdir .= '/'.$test_count['path'];
-	}
-
-	include_once($src_dir.'/Tokenizer.class.php');
-	include_once($src_dir.'/File.class.php');
-
-	$tok = new rkphplib\Tokenizer(rkphplib\Tokenizer::TOK_DEBUG);
+	$this->load('Tokenizer.class.php');
+	$tok = new Tokenizer(Tokenizer::TOK_DEBUG);
 
 	for ($i = 0; $i < count($plugin_list); $i++) {
 		$plugin = 'rkphplib\\'.$plugin_list[$i];
-		include_once($src_dir.'/'.$plugin_list[$i].'.class.php');
+		$this->load($plugin_list[$i].'.class.php');
 		$tok->register(new $plugin());
 	}
 
 	$test_files = array();
 
 	if (is_string($num)) {
+		$this->_log("runTokenizer: $rel_tdir/$num", 11);
 		array_push($test_files, $tdir.'/'.$num);
 	}
 	else {
+		if ($num > 1) {
+			$this->_log("runTokenizer: $rel_tdir/t1.txt ... $rel_tdir/t$num.txt", 11);
+		}
+		else {
+			$this->_log("runTokenizer: $rel_tdir/t$num.txt", 11);
+		}
+
 		for ($i = 1; $i <= $num; $i++) {
 			array_push($test_files, $tdir.'/t'.$i.'.txt');
 		}
@@ -423,27 +454,27 @@ function run_tokenizer($num, $plugin_list) {
 		$f_ok = str_replace('.txt', '.ok.txt', $f_txt);
 		$i++;
 
-		$tok->setText(rkphplib\File::load($f_txt));
-		$ok = rkphplib\File::load($f_ok);
+		$tok->setText(File::load($f_txt));
+		$ok = File::load($f_ok);
 		$out = $tok->toString();
 
-		$test_count['num']++;
-		print "Test $i ... ";
+		$this->_tc['num']++;
+		$this->_log("Test $i ... ", 0);
 
 		if ($out != $ok) {
 			if (mb_strlen($out) > 40 || strpos($out, "\n") !== false) {
-				print "ERROR! (see $f_out)\n";
-				rkphplib\File::save($f_out, $out);
+				$this->_log("ERROR! (see $f_out)");
+				File::save($f_out, $out);
 			}
 			else {
-				print "$out != $ok - ERROR!\n";
+				$this->_log("$out != $ok - ERROR!");
 			}
 
-			$test_count['error']++;
+			$this->_tc['error']++;
 		}
 		else {
-			$test_count['ok']++;
-			print "ok\n";
+			$this->_tc['ok']++;
+			$this->_log("ok");
 		}
 	}
 }
