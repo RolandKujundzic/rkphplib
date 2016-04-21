@@ -9,11 +9,12 @@ $th->runTest('lib_split_str/run.php');
 $th->runTest('lib_csv_explode/run.php');
 $th->runTest('lib_replace_tags/run.php');
 $th->runTest('DateTime/run.php');
+$th->runTest('Tokenizer/run.php');
+$th->runTest('TBase/run.php'); // ToDo: track exception as ok
 $th->result();
 
 /* ToDo ...
-run_test('Tokenizer/run.php');
-run_test('TBase/run.php');
+// run_test('Dir/run.php');
 // run_test('MysqlDatabase/run.php');
 */
 
