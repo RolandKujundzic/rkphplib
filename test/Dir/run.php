@@ -1,7 +1,11 @@
 <?php
 
-require_once(dirname(__DIR__).'/testlib.php');
-require_once(dirname(dirname(__DIR__)).'/src/Dir.class.php');
+global $th;
+
+if (!isset($th)) {
+  require_once(dirname(dirname(__DIR__)).'/src/TestHelper.class.php');
+  $th = new rkphplib\TestHelper();
+}
 
 
 /**
@@ -25,5 +29,6 @@ function test_exists($path_list) {
 }
 
 
-call_test('test_exists', array('/etc', '/etc/apache2', '/var/lib/mysql'), array('Dir::exits()', 1, 1, 0));
+$th->load('src/Dir.class.php');
+$th->callTest('test_exists', array('/etc', '/etc/apache2', '/var/lib/mysql'), array('Dir::exits()', 1, 1, 0));
 
