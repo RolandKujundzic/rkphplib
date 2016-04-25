@@ -232,12 +232,10 @@ public function runFuncTest($path) {
  * @param any $arg
  * @param array $result ( NAME, 1, 1, 0, 1, ... ) - 1 = OK, 0 = ERR
  */
-function call_test($func, $arg, $result) {
-  global $test_count;
+public function callTest($func, $arg, $result) {
+  $this->_tc['num']++;
 
-  $test_count['num']++;
-
-  print array_shift($result).": ";
+  $this->_log(array_shift($result).": ", 0);
 
 	// execute test
   $r = $func($arg);
@@ -256,12 +254,12 @@ function call_test($func, $arg, $result) {
 	}
 
   if ($err == 0 && $ok == $n) {
-    print "$n/$n OK\n";
-  	$test_count['ok']++;
+    $this->_log("$n/$n OK");
+  	$this->_tc['ok']++;
   }
   else {
-    print "$ok/$n OK and $err ERROR\n";
-  	$test_count['error']++;
+    $this->_log("$ok/$n OK and $err ERROR");
+  	$this->_tc['error']++;
   }
 }
 
