@@ -129,6 +129,65 @@ private static function _lload($file, $offset = -1) {
 
 
 /**
+ * Return image info hash. If image is not detected return
+ * width=height=0 and suffix=mime=file=''.
+ * 
+ * @param string $file
+ * @param boolean $abort
+ * @return map (width, height, mime, suffix, file)
+ */
+public static function imageInfo($file, $abort = true) {
+
+	FSEntry::isFile($file);
+
+	$suffix_map = array(1 => '.gif', 2 => '.jpg', 3 => '.png', 4 => '.swf',
+		5 => '.psd', 6 => '.bmp', 7 => '.tif', 8 => '.tif', 9 => '.jpc',
+		10 => '.jp2', 11 => '.jpx', 12 => '.jb2', 13 => '.swc', 14 => '.iff',
+		15 => '.bmp', 16 => '.xbm');
+
+	$suffix = File::suffix($file, true);
+
+	if ($suffix == '.jpeg') {
+		$suffix = '.jpg';
+	}
+
+	if ($suffix == '.tiff') {
+		$suffix = '.tif';
+	}
+
+	$res = array('width' => 0, 'height' => 0, 'mime' => '', 'suffix' => '', 'file' => '');
+
+	if (!in_array($suffix, $suffix_map)) {
+		return $res;  
+	}
+
+	$info = getimagesize($file);
+
+	if (empty($info[0]) || empty($info[1]) || empty($info[2]) || empty($info['mime'])) {
+		if ($abort) {
+			throw new Exception('invalid image', "$file: ".print_r($info, true));
+		}
+		else {
+			return $res;
+		}
+	}
+
+	if ($info[0] < 1 || $info[0] > 40000) {
+		throw new Exception('invalid image width', "$file: ".$info[0]);
+	}
+
+	if ($info[1] < 1 || $info[1] > 40000) {
+		throw new Exception('invalid image heigth', "$file: ".$info[1]);
+	}
+
+	$res = array('width' => $info[0], 'height' => $info[1], 'mime' => $info['mime'],
+		'suffix' => $suffix_map[$info[2]], 'file' => $file);
+
+	return $res;
+}
+
+
+/**
  * Open and lock file (or pipe if $file = STDOUT|STDIN).
  *
  * @param string file path
