@@ -70,7 +70,8 @@ function exception_handler($e) {
 	$internal = empty($e->internal_message) ? '' : "INFO: ".$e->internal_message;
 
 	if (php_sapi_name() !== 'cli') {
-		error_log("$msg\n$internal\n\n$trace\n\n", 3, '/tmp/php.fatal');
+		$ts = date('d.m.Y H:i:s');
+		error_log("$ts $msg\n$internal\n\n$trace\n\n", 3, '/tmp/php.fatal');
 	  die("<h3 style='color:red'>$msg</h3>");
 	}
   else if (php_sapi_name() === 'cli' && !empty($e->internal_message) && substr($e->internal_message, 0, 1) === '@') {
