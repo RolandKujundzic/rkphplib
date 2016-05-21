@@ -554,5 +554,34 @@ public static function escape($txt) {
 }
 
 
+/**
+ * Return comma separted list of columns. Example:
+ * self::columnList(['a', 'b', 'c'], 'l') = 'l.a AS l_a, l.b AS l_b, l.c AS l_c'. 
+ * 
+ * @param vector $cols
+ * @param string $prefix (default = '')
+ * @return string
+ */
+public static function columnList($cols, $prefix = '') {
+	$cnames = [];
+
+	if (!is_array($cols)) {
+		throw new Exception('invalid column list', "prefix=$prefix cols: ".print_r($cols, true));
+	} 
+
+	if (empty($prefix)) {
+		foreach ($cols as $name) {
+			array_push($cnames, self::escape_name($name));
+		}
+	}
+	else {
+		foreach ($cols as $name) {
+			array_push($cnames, self::escape_name($prefix.'.'.$name).' AS '.self::escape_name($prefix.'_'.$name));
+		}
+	}
+
+	return join(', ', $cnames);
+}
+
 }
 
