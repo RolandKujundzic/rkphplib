@@ -25,6 +25,44 @@ public static $DEFAULT_MODE = 0666;
 
 
 /**
+ * Return filecontent loaded from url.
+ * 
+ * @param string $url
+ * @param boolean $required (default = true, abort if zero size)
+ * @return string
+ */
+public static function fromURL($url, $required = true) {
+
+	if (empty($url)) {
+		throw new Exception('empty url');
+	}
+
+	$cu = curl_init();
+	curl_setopt($cu, CURLOPT_URL, $url);
+	curl_setopt($cu, CURLOPT_BINARYTRANSFER, true);
+	curl_setopt($cu, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($cu, CURLOPT_SSL_VERIFYHOST, false);
+	curl_setopt($cu, CURLOPT_SSL_VERIFYPEER, false);
+	curl_setopt($cu, CURLOPT_FOLLOWLOCATION, true);
+
+	$res = curl_exec($cu);
+	$status = curl_getinfo($cu);
+
+	if ($status['http_code'] != 200) {
+		throw new Exception('failed to retrieve file', "status=".$status['http_code']." url=$url");
+	}
+
+	curl_close($cu);
+
+	if (!strlen($res) && $required) {
+		throw new Exception('empty file', $url);
+	}
+
+  return $res;
+}
+
+
+/**
  * Return content of file $file.
  *
  * Start reading at byte offset if offset is set (default = -1).
@@ -37,7 +75,7 @@ public static $DEFAULT_MODE = 0666;
 public static function load($file, $offset = -1) {
 
 	if (empty($file)) {
-		throw new Exception("Empty filename");
+		throw new Exception("empty filename");
 	}
 
 	if ($file == 'STDIN') {
@@ -49,7 +87,7 @@ public static function load($file, $offset = -1) {
 	}
 
 	if (($data = file_get_contents($file, false, null, $offset)) === false) {
-		throw new Exception("Failed to load file", $file);
+		throw new Exception("failed to load file", $file);
 	}
 
 	return $data;
@@ -74,7 +112,7 @@ private static function _lload($file, $offset = -1) {
 		$fh = self::_open_lock($file, LOCK_SH, 'rb');
 
 		if ($offset > -1 && fseek($fh, $offset) == -1) {
-			throw new Exception("fseek $offset failed", $file);
+			throw new Exception("fseek failed", "file=$file offset=$offset");
 		}
 
 		if (($res = fread($fh, $fsize)) === false) {
@@ -109,12 +147,12 @@ private static function _open_lock($file, $lock_mode, $open_mode) {
 
 	if ($lock_mode == LOCK_EX) {
 		if (!flock($fh, LOCK_EX)) {
-			throw new Exception('exclusive lock on "'.$file.'" failed');
+			throw new Exception('exclusive file lock failed', $file);
 		}
 	}
 	else if ($lock_mode == LOCK_SH) {
 		if (!flock($fh, LOCK_SH)) {
-			throw new Exception('shared lock on "'.$file.'" failed');
+			throw new Exception('shared file lock failed', $file);
 		}
 	}
 
@@ -134,7 +172,7 @@ public static function size($file, $as_text = false) {
   FSEntry::isFile($file);
 
 	if (($res = filesize($file)) === false) {
-		throw new Exception("filesize failed", $file);
+		throw new Exception('filesize failed', $file);
 	}
 
 	if ($as_text) {
@@ -259,7 +297,7 @@ public static function chmod($file, $mode = 0) {
 public static function save($file, $data, $flag = 0) {
 
 	if (empty($file)) {
-		throw new Exception("Empty filename");
+		throw new Exception('empty filename');
 	}
 
 	if ($file == 'STDOUT') {
@@ -271,7 +309,7 @@ public static function save($file, $data, $flag = 0) {
 	}
 
 	if (($bytes = file_put_contents($file, $data, $flag)) === false) {
-		throw new Exception("Failed to save data to file", $file);
+		throw new Exception('failed to save data to file', $file);
 	}
 }
 
@@ -307,7 +345,7 @@ public static function remove($file, $must_exist = true) {
 	}
 
 	if (!unlink($file)) {
-		throw new Exception('remove file "'.$file.'" failed');
+		throw new Exception('file removal failed', $file);
   }
 }
 
@@ -349,11 +387,11 @@ public static function open($file, $mode = 'rb') {
   }
 
   if ($mode != 'rb' && $mode != 'wb' && $mode != 'ab') {
-		throw new Exception('Invalid file open mode', 'mode=['.$mode.'] use rb|wb|ab');
+		throw new Exception('invalid file open mode', 'mode=['.$mode.'] use rb|wb|ab');
   }
 
   if (!($fh = fopen($file, $mode))) {
-		throw new Exception('Open file failed', 'file=['.$file.']');
+		throw new Exception('open file failed', "file=[$file]");
   }
 
   if ($read_utf8_bom) {
@@ -365,7 +403,7 @@ public static function open($file, $mode = 'rb') {
 
   if ($write_utf8_bom) {
     if (!fwrite($fh, $utf8_bom)) {
-			throw new Exception('Could not write utf-8 bom', 'file='.$file);
+			throw new Exception('could not write utf-8 bom', $file);
 		}
   }
 
@@ -407,7 +445,7 @@ public static function writeCSV($fh, $data, $delimiter = ',', $enclosure = '"', 
 	}
 
 	if (fputcsv($fh, $data, $delimiter, $enclosure, $escape) === false) {
-		throw new Exception('Could not write csv line', 'fh=['.$fh.'] data=['.mb_substr(join('|', $data), 0, 40).' ... ]');
+		throw new Exception('could not write csv line', 'fh=['.$fh.'] data=['.mb_substr(join('|', $data), 0, 40).' ... ]');
 	}
 }
 
@@ -429,7 +467,7 @@ public static function write($fh, $data) {
 	}
 
 	if (fwrite($fh, $data) === false) {
-		throw new Exception('Could not write data', 'fh=['.$fh.'] data=['.mb_substr($data, 0, 40).' ... ]');
+		throw new Exception('could not write data', 'fh=['.$fh.'] data=['.mb_substr($data, 0, 40).' ... ]');
 	}
 }
 
