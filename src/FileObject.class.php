@@ -55,7 +55,7 @@ public $json_format = null;
  * - cwd: change current working directory ($path_absolute = realpath(getcwd().'/'.$path))
  * - remote_path: sync if set and self::$sync.server is not empty
  * - json_format: don't sync (retrieve only file information)
- * - old_md5: 
+ * - md5_old: 
  *
  * @param string $path (default = '')
  * @param string $cwd (default = '' = use current working directory)
@@ -84,7 +84,7 @@ public function __construct($path = '', $opt = []) {
 				throw $e;
 			}
 			else {
-				$this->is_synchronized = false;
+				$this->is_synchronized = 0;
 			}
 		}
 	}
@@ -97,8 +97,8 @@ public function __construct($path = '', $opt = []) {
 		$this->scanFile();
 	}
 
-	if (!$this->is_modified && !empty($opt['old_md5']) && $opt['old_md5'] != $this->md5) {
-		$this->is_modified = true;
+	if (isset($opt['md5_old']) || array_key_exists('md5_old', $opt)) {
+		$this->is_modified = ($opt['md5_old'] != $this->md5) ? 1 : 0;
 	}
 }
 
@@ -191,7 +191,7 @@ private function synchronize($opt) {
 	}
 	else if (!File::exists($this->path_absolute)) {
 		File::save($this->path_absolute, File::fromURL($remote_file_url));
-		$this->is_modified = true;
+		$this->is_modified = 1;
 		$this->scanFile();
 	}
 	else {
@@ -204,15 +204,15 @@ private function synchronize($opt) {
 
 		if ($remote_json['md5'] != $this->md5) {
 			File::save($this->path_absolute, File::fromURL($remote_file_url));
-			$this->is_modified = true;
+			$this->is_modified = 1;
 			$this->scanFile();
 		}
 		else {
-			$this->is_modified = false;
+			$this->is_modified = 0;
 		}
 	}
 
-	$this->is_synchronized = true;
+	$this->is_synchronized = 1;
 }
 
 
