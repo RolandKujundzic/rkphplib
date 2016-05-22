@@ -26,10 +26,19 @@ function _git_clone {
 		rm -rf $1
 	fi
 
-	_log "git clone https://github.com/$1/$1".git
-	git clone "https://github.com/$1/$1".git
+	_log "git clone https://github.com/$2/$1".git
+	git clone "https://github.com/$2/$1".git
 
 	cd ..
+}
+
+
+#
+function _update_JsonMapper {
+	_log "Update JsonMapper"
+	mkdir jsonmapper
+	cp source/jsonmapper/src/JsonMapper/Exception.php jsonmapper/
+	cp source/jsonmapper/src/JsonMapper.php jsonmapper/
 }
 
 
@@ -54,11 +63,13 @@ test -d source || mkdir source
 
 case $1 in
 PHPMailer)
-	_git_clone PHPMailer
+	_git_clone PHPMailer PHPMailer
   ;;
-
+JsonMapper)
+	_git_clone jsonmapper cweiske
+	;;
 *)
-  echo -e "\nSYNTAX: $0 [PHPMailer] [[update]]\n\n" 1>&2
+  echo -e "\nSYNTAX: $0 [PHPMailer|JsonMapper] [[update]]\n\n" 1>&2
   exit 1
 esac
 
