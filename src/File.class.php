@@ -54,7 +54,7 @@ public static function fromURL($url, $required = true) {
 
 	curl_close($cu);
 
-	if (!strlen($res) && $required) {
+	if (trim($res) == '' && $required) {
 		throw new Exception('empty file', $url);
 	}
 
