@@ -129,7 +129,7 @@ public static function encode($obj, $options = 448, $depth = 512) {
 
 
 /**
- * Return json decoded $txt. Use decode($json_str, false, new Class()) to get Class object.
+ * Return json decoded $txt.
  * 
  * @param string $txt
  * @param bool $assoc (default = true = return hash)
