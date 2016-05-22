@@ -129,20 +129,27 @@ public static function encode($obj, $options = 448, $depth = 512) {
 
 
 /**
- * Return json decoded $txt.
+ * Return json decoded $txt. Use decode($json_str, false, new Class()) to get Class object.
  * 
  * @param string $txt
  * @param bool $assoc (default = true = return hash)
- * @param int $options (default = 0)
- * @param int $depth (default = 512)
  * @return hash|object
  */
-public static function decode($txt, $assoc = true, $options = 0, $depth = 512) {
-	$res = json_decode($txt, $assoc, $depth, $options);
+public static function decode($txt, $assoc = true) { // , $cast_to = null) {
+	$res = json_decode($txt, $assoc);
 
 	if (($err_no = json_last_error())) {
 		throw new Exception("JSON.decode failed", self::_error_msg($err_no));
 	}
+
+/* @under_construction no deep casting yet in JsonMapper ??? might work with php7 type hinting
+	if (!is_null($cast_to)) {
+		// other approach: $res = unserialize(preg_replace('@^O:8:"stdClass":@', 'O:7:"ClassName":', serialize($res)));
+		require_once(dirname(__DIR__).'/other/jsonmapper/JsonMapper.php');
+		$mapper = new \JsonMapper();
+		$res = $mapper->map($res, $cast_to);
+	}
+*/
 
 	return $res;
 }
