@@ -16,7 +16,7 @@ use rkphplib\Exception;
 abstract class ADatabase {
 
 /** @var bool $use_prepared */
-public static $use_prepared = true;
+public static $use_prepared = false;
 
 protected $_dsn = null;
 
@@ -170,9 +170,8 @@ public function setQuery($qkey, $query) {
 			}
 			else {
 				$key = mb_substr($m, 4, -2);
-				$tok[$i-1] = mb_substr($tok[$i-1], 0, -1);
+				$tok[$i] = substr($tok[$i], 1, -1);
 				$map[$key] = 'escape';
-				$tok[$i+1] = mb_substr($tok[$i+1], 1);
 			}
 		}
 		else if (mb_substr($m, 3, 1) == '_') {
@@ -194,6 +193,7 @@ public function setQuery($qkey, $query) {
 	}
 
 	$map['@query'] = join('', $tok);
+
 	$this->_query[$qkey] = $map;
 }
 
@@ -235,7 +235,7 @@ public function getQuery($qkey, $replace = null) {
 	}
 
 	foreach ($q as $key => $do) {
-		if (!isset($replace[$key])) {
+		if (!isset($replace[$key]) && !array_key_exists($key, $replace)) {
 			throw new Exception("query replace key $key missing", "($qkey) $query: ".print_r($replace, true));
 		}
 
@@ -265,10 +265,6 @@ public function getQuery($qkey, $replace = null) {
 	}
 
 	if (!$bind) {
-		if (count($replace) > 0) {
-			throw new Exception("Too many replace parameter", print_r($replace, true));
-		}
-
 		return $query;
 	}
 
