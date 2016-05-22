@@ -51,10 +51,10 @@ public $json_format = null;
  * - json_format: don't sync (retrieve only file information)
  * - old_md5: 
  *
- * @param string $path
+ * @param string $path (default = '')
  * @param string $cwd (default = '' = use current working directory)
  */
-public function __construct($path, $opt = []) {
+public function __construct($path = '', $opt = []) {
 
 	if (empty($path)) {
     return;
@@ -93,6 +93,20 @@ public function __construct($path, $opt = []) {
 
 	if (!$this->is_modified && !empty($opt['old_md5']) && $opt['old_md5'] != $this->md5) {
 		$this->is_modified = true;
+	}
+}
+
+
+/**
+ * Initialize object with hash values.
+ *
+ * @param map $map
+ */
+public function fromHash($map) {
+	foreach ($map as $key => $value) {
+		if (property_exists($this, $key)) {
+			$this->$key = $value;
+		}
 	}
 }
 
