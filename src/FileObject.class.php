@@ -32,6 +32,12 @@ public $path_absolute = '';
 /** @var string $md5 checksum */
 public $md5 = null;
 
+/** @var int $last_modified */
+public $last_modified = null;
+
+/** @var int $size */
+public $size = null;
+
 /** @var bool $modified true if file was modified */
 public $is_modified = null;
 
@@ -136,6 +142,8 @@ protected function scanJSON($json = null) {
  */
 protected function scanFile() {
 	$this->md5 = File::md5($this->path_absolute);
+	$this->size = File::size($this->path_absolute);
+	$this->last_modified = File::lastModified($this->path_absolute);
 }
 
 
@@ -188,9 +196,13 @@ private function synchronize($opt) {
 	}
 	else {
 		$this->scanFile();
-		$remote_md5 = File::fromURL($server_bin.'?path='.urlencode($remote_file));
+		$remote_json = JSON::decode(File::fromURL($server_bin.'?path='.urlencode($remote_file)));
 
-		if ($remote_md5 != $this->md5) {
+		if (empty($remote_json['md5'])) {
+			throw new Exception('remote md5 missing', print_r($remote_json, true));
+		}
+
+		if ($remote_json['md5'] != $this->md5) {
 			File::save($this->path_absolute, File::fromURL($remote_file_url));
 			$this->is_modified = true;
 			$this->scanFile();
