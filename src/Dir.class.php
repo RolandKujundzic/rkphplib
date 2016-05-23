@@ -60,6 +60,48 @@ public static function exists($path, $required = false) {
 
 
 /**
+ * Remove directory.
+ *
+ * @param string $path
+ * @param boolean $must_exist (default = true)
+ */
+public static function remove($path, $must_exist = true) {
+
+	if ($path != trim($path)) {
+		throw new Exception('no leading or trailing whitespace allowed in path', $path);
+	}
+ 
+	if (substr($path, -1) == '/') {
+		throw new Exception('no trailing / allowed in path', $path);
+	}
+
+	if (!$must_exist && !FSEntry::isDir($path, false)) {
+		return;
+	}
+
+	if (FSEntry::isDir($path) && FSEntry::isLink($path, false)) {
+		FSEntry::unlink($path);
+		return;
+	}
+
+	$entries = Dir::entries($path);
+
+	foreach ($entries as $entry) {
+		if (FSEntry::isFile($entry, false)) {
+			File::remove($entry);
+		}
+		else {
+			Dir::remove($entry);
+		}
+	}
+
+  if (!rmdir($path) || FSEntry::isDir($path, false)) {
+		throw new Exception('remove directory failed', $path);
+	}
+}
+
+
+/**
  * Create directory. 
  *
  * Use $recursive = true to create parent directories.
