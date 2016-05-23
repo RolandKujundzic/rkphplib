@@ -15,6 +15,9 @@ require_once(__DIR__.'/FSEntry.class.php');
  */
 class Dir {
 
+const CREATE_TARGET_PATH = 1;
+const REMOVE_EXISTING = 2;
+
 /** @var octal default directory creation mode */
 public static $DEFAULT_MODE = 0777;
 
@@ -147,12 +150,21 @@ public static function create($path, $mode = 0, $recursive = false) {
  *
  * @param string $old_dir
  * @param string $new_dir
+ * @param int $opt (default = 0, e.g. Dir::CREATE_TARGET_PATH|Dir::REMOVE_EXISTING)
  */
-public static function move($old_dir, $new_dir) {
+public static function move($old_dir, $new_dir, $opt = 0) {
 	FSEntry::isDir($old_dir);
 
 	if (realpath($old_dir) == realpath($new_dir)) {
 		throw new Exception('source and target directory are same', "mv [$old_dir] to [$new_dir]");
+	}
+
+	if ($opt & Dir::REMOVE_EXISTING && Dir::exists($new_dir)) {
+		Dir::remove($new_dir);
+	}
+
+	if ($opt & Dir::CREATE_PARENT_DIR) {
+		Dir::create(dirname($new_dir), 0, true);
 	}
 
 	if (!rename($old_dir, $new_dir)) {
