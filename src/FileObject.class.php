@@ -97,7 +97,7 @@ public function __construct($path = '', $opt = []) {
 		$this->scanFile();
 	}
 
-	if (isset($opt['md5_old']) || array_key_exists('md5_old', $opt)) {
+	if (!$this->is_modified && (isset($opt['md5_old']) || array_key_exists('md5_old', $opt))) {
 		$this->is_modified = ($opt['md5_old'] != $this->md5) ? 1 : 0;
 	}
 }
