@@ -163,7 +163,7 @@ public static function move($old_dir, $new_dir, $opt = 0) {
 		Dir::remove($new_dir);
 	}
 
-	if ($opt & Dir::CREATE_PARENT_DIR) {
+	if ($opt & Dir::CREATE_TARGET_PATH) {
 		Dir::create(dirname($new_dir), 0, true);
 	}
 
