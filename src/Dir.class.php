@@ -143,6 +143,29 @@ public static function create($path, $mode = 0, $recursive = false) {
 
 
 /**
+ * Move directory.
+ *
+ * @param string $old_dir
+ * @param string $new_dir
+ */
+public static function move($old_dir, $new_dir) {
+	FSEntry::isDir($old_dir);
+
+	if (realpath($old_dir) == realpath($new_dir)) {
+		throw new Exception('source and target directory are same', "mv [$old_dir] to [$new_dir]");
+	}
+
+	if (!rename($old_dir, $new_dir)) {
+		// rename is fast but works only on same device
+		Dir::copy($old_dir, $new_dir);
+		Dir::remove($old_dir);
+	}
+
+	FSEntry::isDir($new_dir);
+}
+
+
+/**
  * Copy directory. 
  * 
  * Skip unreadable entries.
