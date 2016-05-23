@@ -6,7 +6,7 @@ namespace rkphplib\lib;
 /**
  * Split string at delimiter.
  *
- * Remove quotes from parts, allow backslash escaped delimiter char.
+ * Remove quotes from parts, trim parts, allow backslash escaped delimiter char.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @param string $delim
