@@ -75,6 +75,33 @@ public static function chmod($path, $mode = 0) {
 
 
 /**
+ * True if $path is link.
+ *
+ * @param string $path
+ * @param bool $abort (default = true)
+ */
+public static function isLink($path, $abort = true) {
+
+	if (empty($path)) {
+		if ($abort) {
+			throw new Exception('empty file path');
+		}
+
+		return false;
+	}
+
+	if (is_link($path) && readlink($path)) {
+		return true;
+	}
+	else if ($abort) {
+		throw new Exception('invalid link', $path);
+	}
+
+	return false;
+}
+
+
+/**
  * Check if file exists. 
  *
  * @param string $path
