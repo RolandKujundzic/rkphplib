@@ -6,14 +6,21 @@ namespace rkphplib\lib;
 /**
  * Replace {:=key} in $text with $map.key value.
  * Replace {:=key.subkey} with $map.key.subkey value.
+ * Use "(array)$obj" for objects. Use 'prefix' as 
+ * shortcut for ['{:=', '}', 'prefix' ] ({:=prefix.tag} replace).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @param string $text
- * @param map $map
+ * @param map $map use "(array)$obj" for objects
  * @param array $conf (default = [ '{:=', '}', '' ])
  * @return string
  */
 function replace_tags($text, $map, $conf = array('{:=', '}', '')) {
+
+	if (is_string($conf)) {
+		$conf = [ '{:=', '}', $conf ];
+	}
+
 	foreach ($map as $key => $value) {
     if (is_array($value)) {
 			$sub_conf = $conf;
