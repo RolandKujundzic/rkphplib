@@ -49,12 +49,12 @@ public function __construct($file) {
 public function get($key, $required = true) {
 
 	if ($this->abort_if_missing && !isset($this->conf[$key]) && !array_key_exists($key, $this->conf)) {
-		throw new Exception('missing configuration key', "key=$key conf_file".$this->file);
+		throw new Exception('missing configuration key', "key=$key in ".$this->file);
 	}
 
 	if (empty($this->conf[$key])) {
 		if ($required) {
-			throw new Exception('empty configuration key', "key=$key conf_file".$this->file);
+			throw new Exception('empty configuration key', "key=$key in ".$this->file);
 		}
 
 		return '';
@@ -75,12 +75,12 @@ public function get($key, $required = true) {
 private function rm($key, $required = true) {
 
 	if ($this->abort_if_missing && !isset($this->conf[$key]) && !array_key_exists($key, $this->conf)) {
-		throw new Exception('missing configuration key', "key=$key conf_file".$this->file);
+		throw new Exception('missing configuration key', "key=$key in ".$this->file);
 	}
 
   if (empty($this->conf[$key])) {
 		if ($required) {
-			throw new Exception('empty configuration key', "key=$key conf_file".$this->file);
+			throw new Exception('empty configuration key', "key=$key in ".$this->file);
 		}
 
 		if (!isset($this->conf[$key]) && !array_key_exists($key, $this->conf)) {
