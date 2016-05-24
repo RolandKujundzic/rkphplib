@@ -53,6 +53,15 @@ public $json_format = null;
 
 
 /**
+ * Return original filename when (string) cast occurs.
+ * @return string
+ */
+public function __toString() {
+	return $this->path;
+}
+
+
+/**
  * Load file data. If self::$sync.server is set synchronize. Parameter:
  *
  * - cwd: change current working directory ($path_absolute = realpath(getcwd().'/'.$path))
