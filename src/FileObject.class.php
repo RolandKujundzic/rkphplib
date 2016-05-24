@@ -27,7 +27,10 @@ public $name = null;
 public $path = null;
 
 /** @var string $path_absolute realpath */
-public $path_absolute = '';
+public $path_absolute = null;
+
+/** @var string $remote_path */
+public $remote_path = null;
 
 /** @var string $md5 checksum */
 public $md5 = null;
@@ -54,6 +57,7 @@ public $json_format = null;
  *
  * - cwd: change current working directory ($path_absolute = realpath(getcwd().'/'.$path))
  * - remote_path: sync if set and self::$sync.server is not empty
+ * - remote_file: if relative filename is different on remote server
  * - json_format: don't sync (retrieve only file information)
  * - md5_old: 
  *
@@ -149,18 +153,17 @@ protected function scanFile() {
 
 /**
  * Syncronize with self::$sync.server if md5($cwd/$this.path) changed. Retrieve remote md5 with
- * "self::$sync[server]/self::$sync[bin]?path=$remote_path/$this.path". Auto create local file
- * directory if necessary. If remote_only is true retrieve only file information and save as
- * $this.path.json. 
+ * "self::$sync[server]/self::$sync[bin]?path=$remote_path/$this.path|$remote_file". 
+ * Auto create local file directory if necessary. If remote_only is true retrieve only file 
+ * information and save as $this.path.json. Use $this->remote_path if set and remote_path is empty.
  *
  * @param map $opt
  * 
  */
 private function synchronize($opt) {
 
-	$remote_path = $opt['remote_path'];
 	$cwd = empty($opt['cwd']) ? getcwd() : $opt['cwd'];
-	
+
 	if (empty($this->path)) {
 		throw new Exception('empty path');
 	}
@@ -173,8 +176,12 @@ private function synchronize($opt) {
 		$cwd = getcwd();
 	}
 
-	$remote_file = empty($remote_path) ? $this->path : $remote_path.'/'.$this->path;
-	$remote_file_url = self::$sync['server'].'/'.$remote_file;
+	if (isset($opt['remote_path'])) {
+		$rpath = empty($opt['remote_file']) ? $this->path : $opt['remote_file'];
+		$this->remote_path = empty($opt['remote_path']) ? $rpath : $opt['remote_path'].'/'.$rpath;
+	}
+
+	$remote_file_url = self::$sync['server'].'/'.$this->remote_path;
 	$dir = $cwd.'/'.dirname($this->path); 
 
 	if (!Dir::exists($dir)) {
@@ -185,9 +192,23 @@ private function synchronize($opt) {
 	$server_bin = self::$sync['server'].'/'.self::$sync['bin']; 
 
 	if (!empty($this->json_format)) {
-		$json_str = File::fromURL($server_bin.'?format='.$this->json_format.'&path='.urlencode($remote_file));
-		File::save($this->path_absolute.'.json', $json_str);
-		$this->scanJSON(JSON::decode($json_str));
+		$json_file = $this->path_absolute.'.json';
+
+		if (File::exists($json_file)) {
+			$this->scanJSON();
+		}
+
+		$remote_json_str = File::fromURL($server_bin.'?format='.$this->json_format.'&path='.urlencode($this->remote_path));
+		$remote_json = JSON::decode($remote_json_str);
+
+		if ($this->md5 != $remote_json['md5']) {
+			File::save($json_file, $remote_json_str);
+			$this->scanJSON($remote_json);
+			$this->is_modified = 1;
+		}
+		else {
+			$this->is_modified = 0;
+		}
 	}
 	else if (!File::exists($this->path_absolute)) {
 		File::save($this->path_absolute, File::fromURL($remote_file_url));
@@ -196,7 +217,7 @@ private function synchronize($opt) {
 	}
 	else {
 		$this->scanFile();
-		$remote_json = JSON::decode(File::fromURL($server_bin.'?path='.urlencode($remote_file)));
+		$remote_json = JSON::decode(File::fromURL($server_bin.'?path='.urlencode($this->remote_path)));
 
 		if (empty($remote_json['md5'])) {
 			throw new Exception('remote md5 missing', print_r($remote_json, true));
