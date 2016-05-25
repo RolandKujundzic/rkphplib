@@ -72,7 +72,7 @@ public function get($key, $required = true) {
  * @param boolean $rm (default = true = unset)
  * @return string|false (false = no such key - if not required)
  */
-private function rm($key, $required = true) {
+public function rm($key, $required = true) {
 
 	if ($this->abort_if_missing && !isset($this->conf[$key]) && !array_key_exists($key, $this->conf)) {
 		throw new Exception('missing configuration key', "key=$key in ".$this->file);
