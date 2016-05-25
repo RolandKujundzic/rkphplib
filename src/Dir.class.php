@@ -139,7 +139,19 @@ public static function create($path, $mode = 0, $recursive = false) {
 		throw new Exception("Empty create mode");
   }
 
-	if (!mkdir($path, $mode, $recursive)) {
+	if (@mkdir($path, $mode, $recursive) === false) {
+		if (($pos = mb_strpos($path, '/../')) !== false) {
+			// try to fix "/../" in non-existing path problem
+			while (($pos = mb_strpos($path, '/../')) !== false) {
+				$path = dirname(mb_substr($path, 0, $pos)).'/'.mb_substr($path, $pos + 4);
+				$has_pdir_ref = true;
+			}
+
+			if (!empty($path)) {
+				return Dir::create($path, $mode, $recursive);
+			}
+		}
+
 		throw new Exception("Failed to create directory", $path);
   }
 }
