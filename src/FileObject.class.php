@@ -197,8 +197,8 @@ private function synchronize($opt) {
 		Dir::create($dir, 0, true);
 	}
 
-	$this->path_absolute = realpath($dir).'/'.basename($this->path);
-	$server_bin = self::$sync['server'].'/'.self::$sync['bin']; 
+	$this->path_absolute = empty(realpath($dir)) ? $dir.'/'.$this->path : realpath($dir).'/'.basename($this->path);
+	$server_bin = self::$sync['server'].'/'.self::$sync['bin'];
 
 	if (!empty($this->json_format)) {
 		$json_file = $this->path_absolute.'.json';
