@@ -154,12 +154,19 @@ protected function scanJSON($json = null) {
 
 
 /**
- * Scan $this->path_absolute and set $this->md5.
+ * Scan $this->path_absolute and set md5, size and last_modified properties.
+ * If with and height property exists retrieve image dimensions.
  */
 protected function scanFile() {
 	$this->md5 = File::md5($this->path_absolute);
 	$this->size = File::size($this->path_absolute);
 	$this->last_modified = File::lastModified($this->path_absolute);
+
+	if (property_exists($this, 'width') && property_exists($this, 'height')) {
+		$ii = File::imageInfo($this->path_absolute);
+		$this->width = intval($ii['width']);
+		$this->height = intval($ii['height']);
+	}
 }
 
 
