@@ -11,6 +11,7 @@ require_once(__DIR__.'/JSON.class.php');
 /**
  * File Object. Basic File information and synchronization.
  * Enable synchronization with FileObject::$sync['server'] = 'https://remote.tld'.
+ * If file does not exists path_absolute is empty.
  * 
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
@@ -96,15 +97,23 @@ public function __construct($path = '', $opt = []) {
 		$this->synchronize($opt);
 	}
 	else if (!empty($this->json_format)) {
-		$this->path_absolute = realpath($cwd.'/'.dirname($path)).'/'.$this->name;
-		$this->scanJSON();
+		$dir = realpath($cwd.'/'.dirname($path));
+
+		if (File::exists($dir.'/'.$this->name.'.json')) {
+			$this->path_absolute = $dir.'/'.$this->name;
+			$this->scanJSON();
+		}
 	}
 	else {
-		$this->path_absolute = realpath($cwd.'/'.$path);
-		$this->scanFile();
+		$rpath = realpath($cwd.'/'.$path);
+
+		if ($rpath) {
+			$this->path_absolute = $rpath;
+			$this->scanFile();
+		}
 	}
 
-	if (!$this->is_modified && (isset($opt['md5_old']) || array_key_exists('md5_old', $opt))) {
+	if (!is_null($this->md5) && !$this->is_modified && (isset($opt['md5_old']) || array_key_exists('md5_old', $opt))) {
 		$this->is_modified = ($opt['md5_old'] != $this->md5) ? 1 : 0;
 	}
 }
