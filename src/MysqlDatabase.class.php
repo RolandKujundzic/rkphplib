@@ -559,5 +559,22 @@ public function getTableDesc($table) {
 }
 
 
+/**
+ * Return auto_increment column value if last 
+ * query was insert and table has auto_increment column.
+ *
+ * @throw not_implemented|no_id
+ * @return int 
+ */
+public function getInsertId() {
+
+	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) == 0) {
+		throw new Exception('no_id');
+	}
+
+	return $this->_db->insert_id;
+}
+
+
 }
 
