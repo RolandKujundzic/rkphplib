@@ -67,14 +67,14 @@ define('RKPHPLIB_VERSION', 1.0);
 function exception_handler($e) {
 	$msg = "\n\nABORT: ".$e->getMessage();
 	$trace = $e->getFile()." on line ".$e->getLine()."\n".$e->getTraceAsString();
-	$internal = empty($e->internal_message) ? '' : "INFO: ".$e->internal_message;
+	$internal = property_exists($e, 'internal_message') ? "INFO: ".$e->internal_message : '';
 
 	if (php_sapi_name() !== 'cli') {
 		$ts = date('d.m.Y H:i:s');
 		error_log("$ts $msg\n$internal\n\n$trace\n\n", 3, '/tmp/php.fatal');
 	  die("<h3 style='color:red'>$msg</h3>");
 	}
-  else if (php_sapi_name() === 'cli' && !empty($e->internal_message) && substr($e->internal_message, 0, 1) === '@') {
+  else if (php_sapi_name() === 'cli' && property_exists($e, 'internal_message') && substr($e->internal_message, 0, 1) === '@') {
     if ($e->internal_message == '@ABORT') {
       print "\nABORT: ".$e->getMessage()."\n\n"; exit(1);
     }
