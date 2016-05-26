@@ -381,6 +381,16 @@ public function hasTable($name) {
 
 
 /**
+ * Return auto_increment column value if last 
+ * query was insert and table has auto_increment column.
+ *
+ * @throw not_implemented|no_id
+ * @return int 
+ */
+abstract public function getInsertId();
+
+
+/**
  * Create database and account.
  *
  * @param string $dsn
