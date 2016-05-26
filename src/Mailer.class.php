@@ -40,7 +40,7 @@ public function __construct() {
  * @param boolean $throw_error (default = false)
  * @return boolean
  */
-public static isValidEmail($email, $throw_error = false) {
+public static function isValidEmail($email, $throw_error = false) {
 	$res = true;
 
 	if (empty($email) || mb_strpos($email, '@') == false) {
@@ -131,6 +131,8 @@ public function setTo($email, $name = '') {
 }
 
 
+/*
+
 //Set an alternative reply-to address
 $mail->addReplyTo('replyto@example.com', 'First Last');
 
@@ -155,5 +157,6 @@ $mail->AltBody = 'This is a plain-text message body';
 //Attach an image file
 $mail->addAttachment('images/phpmailer_mini.png');
 
+*/
 
 }
