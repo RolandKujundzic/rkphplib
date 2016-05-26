@@ -188,8 +188,16 @@ try {
 	$cwd = empty($opt['cwd']) ? getcwd() : $opt['cwd'];
 
 	$rserver = empty($opt['remote_server']) ? self::$sync['server'] : $opt['remote_server'];
-	$rpath = empty($opt['remote_path']) ? empty(self::$sync['cwd']) ? '' : self::$sync['cwd'] : $opt['remote_path'];
 	$rfile = empty($opt['remote_file']) ? $this->path : $opt['remote_file'];
+	$rpath = '';
+
+	if (isset($opt['remote_path'])) {
+		$rpath = $opt['remote_path'];
+	}
+	else if (!empty(self::$sync['cwd'])) {
+		$rpath = self::$sync['cwd'];
+	}
+
 	$this->remote_path = empty($rpath) ? $rfile : $rpath.'/'.$rfile;
 
 	$dir = $cwd.'/'.dirname($this->path); 
@@ -214,8 +222,15 @@ try {
 			$this->scanJSON();
 		}
 
-		$remote_json_str = File::fromURL($server_bin.'?format='.$this->json_format.'&path='.urlencode($this->remote_path));
-		$remote_json = JSON::decode($remote_json_str);
+		$json_query = $server_bin.'?format='.$this->json_format.'&path='.urlencode($this->remote_path);
+
+		try {
+			$remote_json_str = File::fromURL($json_query);
+			$remote_json = JSON::decode($remote_json_str);
+		}
+		catch (Exception $e) {
+			throw new Exception('failed to retrive file information', "query=$json_query");
+		}
 
 		if ($this->md5 != $remote_json['md5']) {
 			File::save($json_file, $remote_json_str);
