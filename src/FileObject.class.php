@@ -236,7 +236,7 @@ try {
 			$remote_json = JSON::decode($remote_json_str);
 		}
 		catch (Exception $e) {
-			throw new Exception('failed to retrive file information', "query=$json_query");
+			throw new Exception('failed to retrive file information', "query=$json_query result=$remote_json_str");
 		}
 
 		if ($this->md5 != $remote_json['md5']) {
