@@ -246,15 +246,15 @@ private function _fetch($query, $rbind = null, $rcount = 0) {
 	$res = array();
 
 	if ($rcount > 0 && $rnum != $rcount) {
-		throw new Exception('unexpected number of rows', $rnum.' != '.$rcount);
+		throw new Exception('unexpected number of rows', "$rnum != $rcount query=$query");
 	}
 
 	if ($rcount < 0 && -1 * $rcount > $rnum) {
-		throw new Exception('number of rows too low', $rnum.' < '.(-1 * $rcount));
+		throw new Exception('number of rows too low', "$rnum < -1 * $rcount query=$query");
 	}
 
 	if ($rnum > 50000) {
-		throw new Exception('number of rows too high', $rnum);
+		throw new Exception('number of rows too high', "$rnum query=$query");
 	}
 
 	if ($rnum == 0) {
