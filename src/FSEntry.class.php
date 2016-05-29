@@ -24,6 +24,60 @@ public static $CHMOD_ABORT = true;
 
 
 /**
+ * Create symlink.
+ * 
+ * @param string $target
+ * @param string $link
+ * @param boolean $target_basename
+ */
+public static function link($target, $link, $target_basename = false) {
+
+	if (is_link($link) && $target == readlink($link)) {
+		// already exists
+		return;
+	}
+
+	if (FSEntry::isFile($link, false)) {
+		throw new Exception('remove existing file', "link=$link target=$target");
+  }
+
+	if (FSEntry::isDir($link, false)) {
+		throw new Exception('remove existing directory', "link=$link target=$target");
+  }
+
+	if (!FSEntry::isFile($target, false)) {
+		FSEntry::isDir($target);
+	}
+
+	if ($target_basename) {
+		if (!@symlink(basename($target), $link)) {
+			throw new Exception('Could not create symlink', "link=$link target=".basename($target));
+		}
+	}
+	else {
+		if (!@symlink($target, $link)) {
+			throw new Exception('Could not create symlink', "link=$link target=$target");
+		}
+	}
+}
+
+
+/**
+ * Remove link.
+ * 
+ * @param string $link
+ */
+public static function unlink($link) {
+
+	if (!is_link($link)) {
+		throw new Exception('no such link', "link=[$link]");
+  }
+
+	unlink($link);
+}
+
+
+/**
  * Return path info.
  *
  * @see pathinfo().
