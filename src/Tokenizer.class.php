@@ -69,10 +69,10 @@ const PARAM_LIST = 1024;
 /** @const PARAM_CSLIST example {action:p1,p2,...} escape , with \, */
 const PARAM_CSLIST = 2048;
 
-/** @const CSLIST_BODY example {action:}p1, p2, ... {:action} escape , with \, */ 
+/** @const CSLIST_BODY example {action:}p1, p2, ... {:action} escape , with \, */ 
 const CSLIST_BODY = 4096;
 
-/** @const LIST_BODY example {action:}p1|#|p2|#| ... {:action} escape |#| with \|#| */
+/** @const LIST_BODY example {action:}p1|#|p2|#| ... {:action} escape |#| with \|#| */
 const LIST_BODY = 8192;
 
 /** @const XML_BODY body is xml */
@@ -152,7 +152,7 @@ public function setText($txt) {
  * 1024 = parameter is colon separated list e.g. {action:p1:p2:...} escape : with \:
  * 2048 = parameter is comma separated list e.g. {action:p1,p2,...} escape , with \,
  * 4096 = body is comma sparated list
- * 8192 = body is array string e.g. {action:}p1|#|p2|#| ... {:action} escape |#| with \|#|
+ * 8192 = body is array string e.g. {action:}p1|#|p2|#| ... {:action} escape |#| with \|#|
  * 16384 = body is xml
  *
  * 6 = untokenized body + re-parse result (self::TEXT | self::REDO)
