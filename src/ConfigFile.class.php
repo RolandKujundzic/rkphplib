@@ -65,6 +65,38 @@ public function get($key, $required = true) {
 
 
 /**
+ * Add key, value. 
+ * 
+ * @param string $key
+ * @param string $value 
+ */
+public function set($key, $value) {
+	$this->conf[$key] = $value;
+}
+
+
+/**
+ * Return true if value of $key is 1, true, "1", "true" or "y[es]".
+ * 
+ * @param string $key
+ * @param string $value 
+ */
+public function isTrue($key) {
+
+	if (empty($this->conf[$key]) || !array_key_exists($key, $this->conf[$key])) {
+		return false;
+	}
+
+	if ($this->conf[$key] === 1 || $this->conf[$key] === true) {
+		return true;
+	}
+
+	$val = mb_strtolower(trim($this->conf[$key]));
+	return ($val === '1' || $val === 'true' || $val === 'y' || $val === 'yes'); 
+}
+
+
+/**
  * Return and remove value. If required is true throw exception if value is empty.
  *
  * @param string $key
