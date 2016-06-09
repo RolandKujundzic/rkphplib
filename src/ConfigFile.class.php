@@ -83,7 +83,7 @@ public function set($key, $value) {
  */
 public function isTrue($key) {
 
-	if (empty($this->conf[$key]) || !array_key_exists($key, $this->conf[$key])) {
+	if (empty($this->conf[$key]) || !array_key_exists($key, $this->conf)) {
 		return false;
 	}
 
