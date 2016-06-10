@@ -134,6 +134,31 @@ public function setText($txt) {
 
 
 /**
+ * Return true if tag {$name:...} exists.
+ * 
+ * @param string $name
+ * @return bool
+ */
+public function hasTag($name) {
+
+	if (count($this->_tok) == 0) {
+		throw new Exception('call setText() or load() first');
+	}
+
+	$tag = $name.':';
+	$tl = mb_strlen($tag);
+
+	for ($i = 1; $i < count($this->_tok); $i = $i + 2) {
+		if (substr($this->_tok[$i], 0, $tl) == $tag) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+/**
  * Register plugins.
  * 
  * Plugin provider object must have property tokPlugin (callback:mode map), e.g. handler.tokPlugin = { a: 2, b: 0 }.
