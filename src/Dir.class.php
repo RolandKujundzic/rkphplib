@@ -313,15 +313,19 @@ public static function scan($path, $sort = SCANDIR_SORT_ASCENDING) {
 
 
 /**
- * Remove leading dot [.] from suffix list entries. 
+ * Remove leading dot [.] from suffix list entries and change to lower. 
  *
  * @param array &$suffix_list list is changed
  */
 private static function _fix_suffix_list(&$suffix_list) {
   for ($i = 0; $i < count($suffix_list); $i++) {
-    if (mb_substr($suffix_list[$i], 0, 1) == '.') {
-      $suffix_list[$i] = mb_substr($suffix_list[$i], 1);
-    }
+		$s = $suffix_list[$i];
+
+		if (mb_substr($s, 0, 1) == '.') {
+			$s = mb_substr($s, 1);
+		}
+
+		$suffix_list[$i] = mb_strtolower($s);
   }
 }
 
