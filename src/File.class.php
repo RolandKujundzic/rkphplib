@@ -129,7 +129,7 @@ private static function _lload($file, $offset = -1) {
 
 
 /**
- * Return image info hash. If image is not detected return
+ * Return image info hash. If image is not detected and abort=false, return
  * width=height=0 and suffix=mime=file=''.
  * 
  * @param string $file
@@ -139,33 +139,12 @@ private static function _lload($file, $offset = -1) {
 public static function imageInfo($file, $abort = true) {
 
 	FSEntry::isFile($file);
-
-	$suffix_map = array(1 => '.gif', 2 => '.jpg', 3 => '.png', 4 => '.swf',
-		5 => '.psd', 6 => '.bmp', 7 => '.tif', 8 => '.tif', 9 => '.jpc',
-		10 => '.jp2', 11 => '.jpx', 12 => '.jb2', 13 => '.swc', 14 => '.iff',
-		15 => '.bmp', 16 => '.xbm');
-
-	$suffix = File::suffix($file, true);
-
-	if ($suffix == '.jpeg') {
-		$suffix = '.jpg';
-	}
-
-	if ($suffix == '.tiff') {
-		$suffix = '.tif';
-	}
-
+	$info = getimagesize($file);
 	$res = array('width' => 0, 'height' => 0, 'mime' => '', 'suffix' => '', 'file' => '');
 
-	if (!in_array($suffix, $suffix_map)) {
-		return $res;  
-	}
-
-	$info = getimagesize($file);
-
-	if (empty($info[0]) || empty($info[1]) || empty($info[2]) || empty($info['mime'])) {
+	if ($info === false || empty($info[0]) || empty($info[1]) || empty($info[2]) || empty($info['mime'])) {
 		if ($abort) {
-			throw new Exception('invalid image', "$file: ".print_r($info, true));
+			throw new Exception('invalid image', $file.': '.print_r($info, true));
 		}
 		else {
 			return $res;
@@ -173,15 +152,45 @@ public static function imageInfo($file, $abort = true) {
 	}
 
 	if ($info[0] < 1 || $info[0] > 40000) {
-		throw new Exception('invalid image width', "$file: ".$info[0]);
+		throw new Exception('invalid image width', $file.': '.$info[0]);
 	}
 
 	if ($info[1] < 1 || $info[1] > 40000) {
-		throw new Exception('invalid image heigth', "$file: ".$info[1]);
+		throw new Exception('invalid image heigth', $file.': '.$info[1]);
 	}
 
-	$res = array('width' => $info[0], 'height' => $info[1], 'mime' => $info['mime'],
-		'suffix' => $suffix_map[$info[2]], 'file' => $file);
+	$res['file'] = $file;
+	$res['width'] = $info[0];
+	$res['height'] = $info[1];
+	$res['mime'] = $info['mime'];
+
+	$mime_suffix = array('image/png' => '.png', 'image/jpeg' => '.jpg', 'image/gif' => '.gif', 'image/tiff' => '.tif',
+		'image/jp2' => '.jp2', 'image/jpx' => '.jpx', 'image/x-ms-bmp' => '.bmp', 'image/x-photoshop' => '.psd',
+		'image/x-xbitmap' => '.xbm');
+	
+	$suffix_map = array(1 => '.gif', 2 => '.jpg', 3 => '.png', 4 => '.swf',
+		5 => '.psd', 6 => '.bmp', 7 => '.tif', 8 => '.tif', 9 => '.jpc',
+		10 => '.jp2', 11 => '.jpx', 12 => '.jb2', 13 => '.swc', 14 => '.iff',
+		15 => '.bmp', 16 => '.xbm', 17 => '.ico');
+
+	if (isset($mime_suffix[$info['mime']])) {
+		$res['suffix'] = $mime_suffix[$info['mime']];
+	}
+	else if (isset($suffix_map[$info[2]])) {
+		$res['suffix'] = $suffix_map[$info[2]];
+	}
+	else {
+		$suffix = File::suffix($file, true);
+
+		if ($suffix == '.jpeg') {
+			$suffix = '.jpg';
+		}
+		else if ($suffix == '.tiff') {
+			$suffix = '.tif';
+		}
+
+		$res['suffix'] = $suffix;
+	}
 
 	return $res;
 }
@@ -806,3 +815,4 @@ public static function lastModified($path, $sql_ts = false) {
 
 
 }
+
