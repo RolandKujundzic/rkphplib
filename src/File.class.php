@@ -130,14 +130,31 @@ private static function _lload($file, $offset = -1) {
 
 
 /**
- * Resize source image and save as target.
+ * Resize source image and save as target. If wxh is empty you can convert from one image type to another. 
+ * Abort if w or h is greater than 2 * original size. Requires convert from ImageMagic.
  *
  * @param string $wxh (e.g. 140x140 or 140x or x140)
  * @param string $source
  * @param string $target (if empty overwrite source)
  */
 public static function resizeImage($wxh, $source, $target = '') {
-	File::exists($source, true);
+
+	$info = File::imageInfo($source);
+	$resize = '';
+
+	if (!empty($wxh)) {
+		list ($w, $h) = explode('x', $wxh);
+
+		if ($w < 0 || $w > 2 * $info['width']) {
+			throw new Exception('invalid resize width', "$w not in ]0, 2 * ".$info['width']."]");
+		}
+
+		if ($h < 0 || $h > 2 * $info['height']) {
+			throw new Exception('invalid resize height', "$h not in ]0, 2 * ".$info['height']."]");
+		}
+
+		$resize = "-resize '$wxh'";
+	}
 
 	if (empty($target)) {
 		$suffix = File::suffix($source, true);
@@ -148,12 +165,12 @@ public static function resizeImage($wxh, $source, $target = '') {
 			throw new Exception('already resizing or resize failed', $temp);
 		}
 
-		\rkphplib\lib\execute("convert -resize '$wxh' '$source' '$temp'");
+		\rkphplib\lib\execute("convert $resize '$wxh' '$source' '$temp'");
 		File::move($temp, $source);
 		$target = $source;
 	}
 	else {
-		\rkphplib\lib\execute("convert -resize '$wxh' '$source' '$target'");
+		\rkphplib\lib\execute("convert $resize '$wxh' '$source' '$target'");
 	}
 
 	File::exists($target, true);
