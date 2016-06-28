@@ -3,6 +3,7 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/FSEntry.class.php');
+require_once(__DIR__.'/lib/execute.php');
 
 
 /**
@@ -125,6 +126,37 @@ private static function _lload($file, $offset = -1) {
 	}
 
 	return $res;
+}
+
+
+/**
+ * Resize source image and save as target.
+ *
+ * @param string $wxh (e.g. 140x140 or 140x or x140)
+ * @param string $source
+ * @param string $target (if empty overwrite source)
+ */
+public static function resizeImage($wxh, $source, $target = '') {
+	File::exists($source, true);
+
+	if (empty($target)) {
+		$suffix = File::suffix($source, true);
+		$base = File::basename($source, true);
+		$temp = dirname($source).'/'.$base.'_'.$wxh.$suffix;
+
+		if (File::exists($temp)) {
+			throw new Exception('already resizing or resize failed', $temp);
+		}
+
+		\rkphplib\lib\execute("convert -resize '$wxh' '$source' '$temp'");
+		File::move($temp, $source);
+		$target = $source;
+	}
+	else {
+		\rkphplib\lib\execute("convert -resize '$wxh' '$source' '$target'");
+	}
+
+	File::exists($target, true);
 }
 
 
