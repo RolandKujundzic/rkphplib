@@ -106,7 +106,7 @@ class APIExample extends rkphplib\ARestAPI {
 	public function run() {
 		$this->parse(); // log or check $r if necessary
 		$priv = $this->checkToken(); // check $this->req['api_token'] and return privileges
-		$this->route($this->allow(self::apiMap(), $priv['allow'])); // set _req.api_call if authorized
+		$this->route(static::allow(static::apiMap(), $priv['allow'])); // set _req.api_call if authorized
 		$method = $this->_req['api_call'];
 		$this->$method();
 	}
