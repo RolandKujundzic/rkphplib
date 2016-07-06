@@ -7,6 +7,7 @@ require_once(__DIR__.'/lib/error_msg.php');
 // require_once(__DIR__.'/lib/log_debug.php');
 
 
+
 /**
  * Abstract rest api class.
  *
@@ -113,7 +114,7 @@ public function parse() {
 
 	$r = array();
 	$r['content-type'] = empty($_SERVER['CONTENT_TYPE']) ? '' : $_SERVER['CONTENT_TYPE'];
-	$r['method'] = self::getRequestMethod();
+	$r['method'] = static::getRequestMethod();
 	$r['ip'] = empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR'];
 
 	$input = file_get_contents('php://input');
@@ -221,13 +222,13 @@ abstract public static function apiMap();
 /**
  * Return allowed keys from complete_map. Example:
  * 
- * $this->_allow(self::apiMap(), $allow)
+ * static::allow(static::apiMap(), $allow)
  *
  * @param map $complete_map
  * @param vector $allow
  * @return $amp
  */
-protected function _allow($complete_map, $allow) {
+public static function allow($complete_map, $allow) {
 	$res = [];
 
 	foreach ($allow as $key) {
@@ -284,13 +285,13 @@ abstract public function checkToken();
  * Return api method call and other route information.
  * 
  * @exit this::out(lib\error_msg('invalid route')) if no route is found
- * @param map $api_map allowed api calls e.g. $this->_allow(self::apiMap(), $allow)
+ * @param map $api_map allowed api calls e.g. static::allow(static::apiMap(), $allow)
  * @return map keys: method, url, base.
  */
 public function route($api_map) {
 
 	$r = array();
-	$r['method'] = self::getRequestMethod();
+	$r['method'] = static::getRequestMethod();
 	$r['url'] = $_SERVER['REQUEST_URI'];
 	$base = str_replace(array('\\',' '), array('/','%20'), dirname($_SERVER['SCRIPT_NAME']));
 
@@ -308,7 +309,7 @@ public function route($api_map) {
 
 	$parent_url = dirname($r['url']);
 
-	$api_map = self::apiMap();
+	$api_map = static::apiMap();
 	$func_id = '';
 	$func = '';
 
@@ -322,12 +323,12 @@ public function route($api_map) {
 			$func = $fname;
 		}
 		else if ($parent_url && ($fconf[2] == 1 || $fconf[2] == 2) && $fconf[1] == $parent_url) {
-			$func_ic = $fname;
+			$func_id = $fname;
 		}
 	}
 
 	if ($func) {
-		$this->_req['api_call'] = $func_id;
+		$this->_req['api_call'] = $func;
 	}
 	else if ($func_id) {
 		$this->_req['api_id'] = basename($r['url']);
