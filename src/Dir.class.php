@@ -3,6 +3,7 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/FSEntry.class.php');
+require_once(__DIR__.'/File.class.php');
 
 
 /**
@@ -440,6 +441,30 @@ public static function scanTree($path, $suffix_list = array(), $exclude_dir = ar
 	}
 
 	return $tree;
+}
+
+
+/**
+ * Return directory size (= sum of all filesizes in directory tree).
+ *
+ * @param string $path
+ * @return int
+ */
+public static function size($path) {
+
+	$entries = Dir::entries($path);
+	$size = 0;
+
+	foreach ($entries as $entry) {
+		if (FSEntry::isDir($entry, false)) {
+			$size += Dir::size($entry);
+		}
+		else if (FSEntry::isFile($entry, false)) {
+      $size += File::size($entry);
+		}
+	}
+
+	return $size;
 }
 
 
