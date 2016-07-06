@@ -131,12 +131,16 @@ public function parse() {
 	if ($input) {
 		$r['input'] = $input;
 
-		// e.g. Content-type: application/xml; UTF-8
-		if (strpos($r['content_type'], 'application/xml') !== false) {
+		if (strpos($r['content-type'], 'image/') !== false) {
+			$this->_req['image'] = $input;
+			$input = '';
+		}
+		else if (strpos($r['content-type'], 'application/xml') !== false) {
+			// e.g. Content-type: application/xml; UTF-8
 			$this->_req = XML::toJSON($input);
 			$input = '';
 		}
-		else if (strpos($r['content_type'], 'application/json') !== false) {
+		else if (strpos($r['content-type'], 'application/json') !== false) {
 			$this->_req = json_decode($input, true);
 			$input = '';
 		}
