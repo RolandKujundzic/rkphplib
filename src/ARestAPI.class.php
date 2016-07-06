@@ -15,6 +15,14 @@ require_once(__DIR__.'/lib/error_msg.php');
  */
 abstract class ARestAPI {
 
+const ERR_UNKNOWN = -1;
+
+const ERR_INVALID_API_CALL = -2;
+
+const ERR_INVALID_ROUTE = -3;
+
+const ERR_JSON_TO_XML = -4;
+
 /** @var map $req Request data */
 protected $_req = array();
 
@@ -23,6 +31,7 @@ protected $_priv = array();
 
 /** @var string $xml_root XML Root node of api result */
 public static $xml_root = '<api></api>';
+
 
 
 /**
@@ -196,8 +205,7 @@ public function call($req, $priv = array()) {
 	$this->_priv = $priv;
 
 	if (empty($this->_req['api_call']) || !method_exists($this, $this->_req['api_call'])) {
-		$err_msg = lib\error_msg('invalid api call p1x', array($this->_req['api_call']));
-		$this->out(['error' => $err_msg], 400);
+		$this->error(lib\error_msg('invalid api call p1x', array($this->_req['api_call'])), self::ERR_INVALID_API_CALL);
 	}
 
 	$method = $this->_req['api_call'];
@@ -337,8 +345,7 @@ public function route($api_map) {
 	}
 
 	if (empty($this->_req['api_call']) || !method_exists($this, $this->_req['api_call'])) {
-		$err_msg = lib\error_msg('invalid route p1x:/p2x', array($r['method'], $r['url']));
-		$this->out(['error' => $err_msg], 400); 
+		$this->error(lib\error_msg('invalid route p1x:/p2x', array($r['method'], $r['url'])), self::ERR_INVALID_ROUTE);
 	}
 
 	return $r;
@@ -346,12 +353,24 @@ public function route($api_map) {
 
 
 /**
+ * Return api error message. Example:
+ * 
+ * $this->error('error message') = $this->out(['error' => 'error message', 'error_code' => 1], 400)
+ * $this->error(lib\error_msg('error msg p1x', array('unknown')), 4) = $this->out(['error' => 'error msg unknown', 'error_code' => 4], 400)
+ *
+ * @param string $msg
+ * @param int $error_code (default = -1 = unknown error)
+ */
+public function error($msg, $error_code = -1) {
+	$this->out([ 'error' => $msg, 'error_code' => $error_code ], 400);
+}
+
+
+/**
  * Return api call result. 
  *
  * Default result format is JSON (change with HTTP_ACCEPT: application/xml to XML).
- * Overwrite for custom modification. If error call:
- *
- *  $this->out(['error' => lib\error_msg('error msg p1x', array($p1x))], 400);
+ * Overwrite for custom modification. 
  *
  * @param map $o
  * @param int $code (default = 200, use 400 if error)
@@ -366,8 +385,7 @@ public function out($o, $code = 200) {
 			$output = XML::fromJSON($o);
 		}
 		catch (Exception $e) {
-			$err_msg = lib\error_msg('XML::fromJSON error: p1x', array($e->getMessage()));
-			$this->out(['error' => $err_msg], 400);
+			$this->error(lib\error_msg('XML::fromJSON error: p1x', array($e->getMessage())), self::ERR_JSON_TO_XML);
 		}
 
 		header('Content-Type: application/xml');
