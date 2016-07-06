@@ -9,8 +9,8 @@ namespace rkphplib\lib;
  *
  *  $settings_TIMEZONE = GMT
  *  $settings_LANGUAGE = de
- *  $settings_LOG_ERROR = 1
- *  $settings_LOG_DEBUG = 1
+ *  $settings_LOG_ERROR = /tmp/php.fatal
+ *  $settings_LOG_DEBUG = /tmp/php.warn
  *
  * Define:
  *
@@ -45,13 +45,13 @@ if (!isset($settings_LANGUAGE)) {
 if (!isset($settings_LOG_ERROR)) {
 	/** @global string $settings_LOG_ERROR = 1 */
 	global $settings_LOG_ERROR;
-	$settings_LOG_ERROR = 1;
+	$settings_LOG_ERROR = '/tmp/php.fatal';
 }
 
 if (!isset($settings_LOG_DEBUG)) {
 	/** @global string $settings_LOG_DEBUG = 1 */
 	global $settings_LOG_DEBUG;
-	$settings_LOG_DEBUG = 1;
+	$settings_LOG_DEBUG = '/tmp/php.warn';
 }
 
 
