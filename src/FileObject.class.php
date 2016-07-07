@@ -7,7 +7,6 @@ require_once(__DIR__.'/Dir.class.php');
 require_once(__DIR__.'/JSON.class.php');
 
 
-
 /**
  * File Object. Basic File information and synchronization.
  * Enable synchronization with FileObject::$sync['server'] = 'https://remote.tld'.
@@ -111,6 +110,9 @@ public function __construct($path = '', $opt = []) {
 			$this->path_absolute = $rpath;
 			$this->scanFile();
 		}
+		else if (mb_strlen($cwd) > 3 && mb_strpos($path, $cwd) !== false) {
+			throw new Exception('path is not relative', "cwd=[$cwd] path=[$path]");
+		}
 	}
 
 	if (!is_null($this->md5) && !$this->is_modified && (isset($opt['md5_old']) || array_key_exists('md5_old', $opt))) {
@@ -183,7 +185,7 @@ protected function scanFile() {
 public function synchronize($opt) {
 
 	if (is_null($this->path) || mb_strlen($this->path) == 0) {
-		throw Exception('empty path');
+		throw new Exception('empty path');
 	}
 	
 	if (empty(self::$sync['server']) && empty($opt['remote_server'])) {
