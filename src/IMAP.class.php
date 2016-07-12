@@ -1,0 +1,606 @@
+<?php
+
+namespace rkphplib;
+
+require_once(__DIR__.'/Exception.class.php');
+
+use rkphplib\Exception;
+
+
+/**
+ * IMAP/POP3 wrapper.
+ * 
+ * Install php-imap if necessary (e.g. apt-get install php7-imap)
+ *
+ * @author Roland Kujundzic <roland@kujundzic.de>
+ *
+ */
+class IMAP {
+
+/** @var object $_con */
+protected $con = null;
+
+/** @var map $conf */
+protected $conf = [];
+
+/** @var int $inbox_count */
+protected $inbox_count = null;
+
+/** @var bool $expunge */
+protected $expunge = false;
+
+/** @var int $id */
+protected $id = null;
+
+/** @var int $is_uid (0 = default, FT_UID otherwise) */
+private $id_is_uid = 0;
+
+
+/**
+ * Open IMAP/POP3 connection.
+ * 
+ * @param map $conf
+ * @see open()
+ */
+public function __construct($conf = []) {
+
+	$this->reset();
+
+	if (count($conf) > 0) {
+		$this->open($conf);
+	}
+}
+
+
+/**
+ * Close connection and reset to default connection parameter.
+ */
+public function reset() {
+
+	if (!is_null($this->con)) {
+		$this->close();
+	}
+
+	$this->con = null;
+	$this->inbox_count = null;
+	$this->expunge = false;
+	$this->id = null;
+	$this->id_is_uid = 0;
+	$this->conf = [ 'connect' => '', 'server' => '', 'port' => '143', 'mode' => '', 'ssl' => false, 'login' => '', 
+		'password' => '', 'dir' => 'INBOX', 'extra' => '' ];
+}
+
+
+/**
+ * Set connection parameter. Parameter List:
+ * 
+ * - server: required
+ * - port: required (imap = 143, pop3 = 110, default = 143)
+ * - mode: imap|pop3|nntp (default = '')
+ * - ssl: true|false (default = false)
+ * - extra: e.g. ssl certificate (default = '')
+ * - login:
+ * - password:
+ * - dir: (default = INBOX)
+ *
+ * Use special parameter "connect" instead of server+port+mode+ssl+dir.
+ * Connect examples: 
+ *
+ * {localhost:143}INBOX - IMAP server auf Port 143 des lokalen Rechners
+ * {localhost:110/pop3}INBOX - POP3 server auf Port 110 des lokalen Rechners
+ * {localhost:993/imap/ssl}INBOX
+ * {localhost:995/pop3/ssl/novalidate-cert} - Servern mit selbstsignierten Zertifikaten  
+ * {localhost:119/nntp}comp.test - use empty login + pass
+ * 
+ * @see http://de.php.net/manual/de/function.imap-open.php
+ *
+ * @param string $key
+ * @param string $value
+ */
+public function set($key, $value) {
+
+	if (!isset($this->conf[$key])) {
+		throw new Exception('invalid parameter '.$key);
+	}
+
+	if (in_array($key, [ 'server', 'port' ]) && empty($value)) {
+		throw new Exception('empty value', "key=$key value=$value");
+	}
+
+	if ($key == 'port' && intval($value) < 1) {
+		throw new Exception('invalid port', 'port='.$value);
+	}
+
+	$this->conf[$key] = $value;
+}
+
+
+/**
+ * Return configuration value.
+ *
+ * @param string $key
+ * @return string
+ */
+public function get($key) {
+
+	if (!isset($this->conf[$key])) {
+		throw new Exception('no such configuration parameter '.$key);
+	}
+
+	return $this->conf[$key];
+}
+
+
+/**
+ * Open connection.
+ *
+ * @param map $conf
+ * @see set()
+ */
+public function open($conf = []) {
+
+	foreach ($conf as $key => $value) {
+		$this->set($key, $value);
+	}
+
+	if (empty($this->conf['connect'])) {
+
+		if (empty($this->conf['server'])) {
+			throw new Exception('server is not set');
+		}
+
+		if (empty($this->conf['port'])) {
+			throw new Exception('port is not set');
+		}
+
+		$this->conf['connect'] = '{'.$this->conf['server'].':'.$this->conf['port'];
+
+		if (!empty($this->conf['mode'])) {
+			$this->conf['connect'] .= '/'.$this->conf['mode'];
+		}
+
+		if (!empty($this->conf['ssl'])) {
+			$this->conf['connect'] .= '/ssl';
+		}
+
+		if (!empty($this->conf['extra'])) {
+			$this->conf['connect'] .= '/'.$this->conf['extra'];
+		}
+
+		$this->conf['connect'] .= '}';
+
+		if (!empty($this->conf['dir'])) {
+			$this->conf['connect'] .= $this->conf['dir'];
+		}
+	}
+
+	$this->con = imap_open($this->conf['connect'], $this->conf['login'], $this->conf['password']);
+
+	if (!is_resource($this->con)) {
+		throw new Exception("Could not connect", 'connect='.$this->conf['connect'].' error='.imap_last_error());
+	}
+
+	if (substr($this->conf['connect'], -6) == '}INBOX') {
+		$this->inbox_count = imap_num_msg($this->con);
+	}
+}
+
+
+/**
+ * Return message number.
+ * @return int
+ */
+public function count() {
+	$this->_check_con();
+  return $this->inbox_count;
+}
+
+
+/**
+ * Return connection resource. For use with e.g. imap_xxx() functions.
+ * @return resource
+ */
+public function getConnection() {
+	$this->_check_con(false);
+	return $this->con;
+}
+
+
+/**
+ * Check if message exists.
+ * 
+ * @param int $num
+ * @param bool $abort (default = false)
+ * @return bool (if $abort = false)
+ */
+public function hasMessage($num, $abort = false) {
+	$this->_check_con();
+
+	if ($num < 1 || $num > $this->inbox_count) {
+		if ($abort) {
+			throw new Exception('invalid message number', $num.' not in 1..'.$this->inbox_count);
+		}
+
+		return false;
+  }
+
+	return true;
+}
+
+ 
+/**
+ * Delete message.
+ * 
+ * @param int $num
+ */
+public function deleteMsg($num) {
+	$this->hasMessage($num, true);
+   
+	if (!imap_delete($this->con, $num)) {
+		throw new Exception('could not delete message', $num);
+	}
+
+  $this->expunge = true;
+}
+
+
+/**
+ * Select message by number. Necessary for getXXX() operations.
+ * 
+ * @param int $num
+ */
+public function selectMsg($num) {
+	$this->hasMessage($num, true);
+  $this->id = $num;
+  $this->opt = 0;
+}
+
+
+/**
+ * Set message id. Necessary for getXXX() operations.
+ * 
+ * @param string $uid
+ */
+public function setUid($uid) {
+	$this->_check_con();
+  $this->id_is_uid = FT_UID;
+  $this->id = $uid;
+}
+
+
+/**
+ * Return header hash. Return keys are: 
+ *  date, subject, message_id, to, from, size, uid,
+ *  udate, references, in_reply_to, msgno, recent, flagged, answered, deleted, seen, draft
+ *
+ * @see php imap_fetch_overview()
+ * @return map
+ */
+public function getHeader() {
+  $this->_check_id();
+  $h = imap_fetch_overview($this->con, $this->id, $this->id_id_uid);
+
+	$udate = property_exists($h[0], 'udate') ? $h[0]->udate : strtotime($h[0]->date);
+
+  $res = [];
+  $res['subject'] = $h[0]->subject;
+  $res['from'] = $h[0]->from;
+  $res['to'] = $h[0]->to;
+  $res['date'] = $h[0]->date;
+  $res['udate'] = $udate;
+  $res['message_id'] = $h[0]->message_id;
+  $res['references'] = property_exists($h[0], 'references') ? $h[0]->references : '';
+  $res['in_reply_to'] = property_exists($h[0], 'in_reply_to') ? $h[0]->in_reply_to : '';
+  $res['size'] = $h[0]->size;
+  $res['uid'] = $h[0]->uid;
+  $res['msgno'] = $h[0]->msgno;
+  $res['recent'] = $h[0]->recent;
+  $res['flagged'] = $h[0]->flagged;
+  $res['answered'] = $h[0]->answered;
+  $res['deleted'] = $h[0]->deleted;
+  $res['seen'] = $h[0]->seen;
+  $res['draft'] = $udate;
+
+  return $res;
+}
+
+
+/**
+ * Return raw mail header.
+ * @return string
+ */
+public function getRawHeaders() {
+	$this->_check_id();
+  return imap_fetchheader($this->con, $this->id, $this->id_is_uid);
+}
+
+
+/**
+ * Return current mailbox.
+ * @return object
+ */
+public function getMailbox() {
+	$this->_check_con();
+	return imap_check($this->con);
+}
+
+
+/**
+ * Return table with mailbox overview.
+ * @see getHeader() for table rows
+ * @param boolean $show_all
+ * @return table
+ */
+public function getListing($show_all = true) {
+	$this->_check_con();
+  $res = array();
+
+  if ($show_all) {
+    $mbox = $this->getMailbox();
+    $overview = imap_fetch_overview($this->con, '1:'.$mbox->Nmsgs, 0);
+  }
+  else {
+		$this->_check_id();
+    $overview = imap_fetch_overview($this->con, $this->id, $this->opt);
+  }
+
+  foreach ($overview as $o) {
+    $info = array();
+    $info['subject'] = $o->subject;
+    $info['from'] = $o->from;
+    $info['to'] = $o->to;
+    $info['date'] = $o->date;
+    $info['message_id'] = $o->message_id;
+    $info['references'] = $o->references;
+    $info['in_reply_to'] = $o->in_reply_to;
+    $info['size'] = $o->size;
+    $info['uid'] = $o->uid;
+    $info['msgno'] = $o->msgno;
+    $info['recent'] = $o->recent;
+    $info['flagged'] = $o->flagged;
+    $info['answered'] = $o->answered;
+    $info['deleted'] = $o->deleted;
+    $info['seen'] = $o->seen;
+    $info['draft'] = $o->draft;
+
+    array_push($res, $info);
+  }
+
+  return $res;
+}
+
+
+/**
+ * Return mail structure.
+ * @return object
+ */
+public function getStructure() {
+	$this->_check_id();
+  return imap_fetchstructure($this->con, $this->id, $this->opt);
+}
+
+
+/**
+ * Return headers. Parameter are: date, subject, message_id, to, from.
+ * 
+ * @param string $head
+ * @return hash
+ */
+public function parseHeaders($head) { 
+	$h = imap_rfc822_parse_headers($head);
+	$p = array();
+	
+	$p['date'] = $h->date;
+	$p['subject'] = $h->subject;
+	$p['message_id'] = $h->message_id;
+	$p['to'] = $h->toaddress;
+	// $h->reply_toaddress, $h->senderaddress
+	$p['from'] = $h->fromaddress;
+	
+	return $p;
+}
+
+
+/**
+ * Return attachments. If suffix is set return only matching attachments.
+ * @param string $suffix
+ * @return table  
+ */
+public function getAttachments($suffix = '') {
+	$this->_check_id();
+	$res = array();
+
+  $s = $this->getStructure();
+
+  if (!isset($s->parts) || count($s->parts) < 1) {
+		return $res;      	
+  }
+  
+	for ($i = 0; $i < count($s->parts); $i++) {
+    $att = array('is_attachment' => false, 'filename' => '', 'name' => '', 'attachment' => '');
+
+    if ($s->parts[$i]->ifdparameters) {
+			foreach ($s->parts[$i]->dparameters as $obj) {
+				if (strtolower($obj->attribute) == 'filename') {
+					$att['is_attachment'] = true;
+					$att['filename'] = $obj->value;
+ 				}
+			}    	
+		}
+		
+		if ($s->parts[$i]->ifparameters) {
+			foreach ($s->parts[$i]->parameters as $obj) {
+				if (strtolower($obj->attribute) == 'name') {
+					$att['is_attachment'] = true;
+					$att['name'] = $obj->value;
+				}
+			}
+		}
+
+		if ($att['is_attachment'] && $suffix) {
+			$suffix = strtolower($suffix);
+			$sl = -1 * strlen($suffix);
+			$att['is_attachment'] = false;
+			
+			if (substr(strtolower($att['filename']), $sl) == $suffix || substr(strtolower($att['name']), $sl) == $suffix) {
+				$att['is_attachment'] = true;	
+			}
+		}
+				
+		if ($att['is_attachment']) {
+			$att['attachment'] = $this->_decode(imap_fetchbody($this->con, $this->id, $i+1, $this->id_as_uid), $s->parts[$i]->encoding);
+			array_push($res, $att);
+		}		
+	} 
+
+	return $res;
+}
+
+
+/**
+ * Return Message as (head, body) hash. Use getAttachments() for attachment retrieval.
+ * @return hash
+ */
+public function getMsg() {
+  $this->_check_id();
+  $res = array();
+  
+  $res['head'] = imap_fetchbody($this->con, $this->id, 0, $this->id_as_uid);
+  $res['body'] = imap_fetchbody($this->con, $this->id, 1, $this->id_as_uid);
+
+  $s = $this->getStructure();
+  $parts = isset($s->parts) ? $s->parts : array();
+  $fpos = 2;
+
+	// Attachment detection is only usable for special cases ...
+  for ($i = 1; $i < count($parts); $i++) {
+    $message["pid"][$i] = ($i);
+    $part = $parts[$i];
+
+		if (!property_exists($part, 'disposition')) {
+			continue;
+		}
+
+    if ($part->disposition == "ATTACHMENT") {
+      $attachment = imap_fetchbody($this->con, $this->id, $fpos, $this->id_as_uid);
+
+      $key = isset($part->description) ? $fpos.'_'.$part->description : $fpos;   
+      $res[$key] = $this->_decode($attachment, $part->type);
+      $fpos++;
+    }
+    else {
+			throw new Exception('could not parse message part', "({$this->_id}) ignored part $i / $fpos = [{$part->disposition}]");
+    }
+  }
+
+  return $res;
+}
+
+
+/**
+ * Save message in directory. Save header and body as mail[Timestamp]_00.txt and attachments as mail[$msg_num]_[01, 02, ...].txt.
+ * 
+ * @param string $dir
+ * @param int $msg_num
+ */
+public function save($dir, $msg_num) {
+	require_once(__DIR__.'/File.class.php');
+
+	$this->selectMsg($msg_num);
+
+	$h = $this->getHeader();
+	$path = $dir.'/mail'.date('Ymdhis', $h['udate']).$h['msgno'].'_';
+
+	$headers = imap_fetchheader($this->con, $this->id, $this->id_as_uid | FT_PREFETCHTEXT);
+	$body = imap_body($this->con, $this->id, $this->id_as_uid);
+	File::save($path.'00.txt', $headers."\n".$body);
+
+	$attachments = $this->getAttachments();
+	$n = 1;
+
+	foreach ($attachments as $att) {
+		$info = 'name='.$att['name']."\nfilename=".$att['filename']."\n\n";
+		File::save($path.sprintf('%02d', $n).'.txt', $info.$att['attachment']);
+		$n++;
+	}
+}
+
+
+/**
+ * Close imap connection.
+ */
+public function close() {
+	$this->_check_con(false);
+
+	if ($this->_expunge) {
+		imap_expunge($this->con);  
+	}
+
+  imap_close($this->con);
+}
+
+
+/**
+ * Decode text.
+ * 
+ * @param string $txt
+ * @param int $coding
+ * @return string
+ */
+private function _decode($txt, $coding) {
+	
+  switch ($coding) {
+    case 0:
+      $txt = imap_8bit($txt); break;
+    case 1:
+      $txt = imap_8bit($txt); break;
+    case 2:
+      $txt = imap_binary($txt); break;
+    case 3:
+      $txt = imap_base64($txt); break; 
+    case 4:
+      $txt = imap_qprint($txt); break;
+    case 5: 
+      $txt = imap_base64($txt); break; 
+  }
+
+  return $txt;
+}
+
+
+/**
+ * Check if connection exists. Throw exception if abort is true.
+ *
+ * @param bool $abort (default = true)
+ * @return bool (if $abort = false)
+ */
+private function _check_con($is_inbox = true, $abort = true) {
+	$error_msg = '';
+
+	if (is_null($this->con) || !is_resource($this->con)) {
+		$error_msg = 'no connection';
+	}
+
+	if (!$error_msg && $is_inbox && is_null($this->inbox_count)) {
+		$error_msg = 'no inbox connection';
+	}
+
+	if ($error && $abort) {
+		throw new Exception($error_msg);
+	}
+
+	return empty($error_msg);
+}
+
+
+/**
+ * Throw exception if this.id is null.
+ */
+private function _check_id() {	
+	if (is_null($this->id)) {
+    throw new Exception('call selectMsg() or setUid() first');
+  }	
+}
+
+
+}
