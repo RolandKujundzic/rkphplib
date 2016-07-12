@@ -498,7 +498,8 @@ public function getMsg() {
 
 
 /**
- * Save message in directory. Save header and body as mail[Timestamp]_00.txt and attachments as mail[$msg_num]_[01, 02, ...].txt.
+ * Save serialized message map in directory. Parameter are getHeader() parameter plus raw_headers, body and
+ * attachments.
  * 
  * @param string $dir
  * @param int $msg_num
@@ -507,22 +508,19 @@ public function save($dir, $msg_num) {
 	require_once(__DIR__.'/File.class.php');
 
 	$this->selectMsg($msg_num);
-
 	$h = $this->getHeader();
-	$path = $dir.'/mail'.date('Ymdhis', $h['udate']).$h['msgno'].'_';
 
-	$headers = imap_fetchheader($this->con, $this->id, $this->id_as_uid | FT_PREFETCHTEXT);
-	$body = imap_body($this->con, $this->id, $this->id_as_uid);
-	File::save($path.'00.txt', $headers."\n".$body);
+	$save_as = $dir.'/mail_'.date('YmdHis', $h['udate']).'_'.$h['uid'].'.ser';
 
-	$attachments = $this->getAttachments();
-	$n = 1;
-
-	foreach ($attachments as $att) {
-		$info = 'name='.$att['name']."\nfilename=".$att['filename']."\n\n";
-		File::save($path.sprintf('%02d', $n).'.txt', $info.$att['attachment']);
-		$n++;
+	if (File::exists($save_as)) {
+		return;
 	}
+
+	$h['raw_headers'] = imap_fetchheader($this->con, $this->id, $this->id_as_uid | FT_PREFETCHTEXT);
+	$h['body'] = imap_body($this->con, $this->id, $this->id_as_uid);
+	$h['attachments'] = $this->getAttachments();
+
+	File::serialize($save_as, $h);
 }
 
 
