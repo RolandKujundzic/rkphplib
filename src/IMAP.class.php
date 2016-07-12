@@ -279,27 +279,35 @@ public function setUid($uid) {
 public function getHeader() {
   $this->_check_id();
   $h = imap_fetch_overview($this->con, $this->id, $this->id_id_uid);
+	return $this->_convert_overview($h[0]);
+}
 
-	$udate = property_exists($h[0], 'udate') ? $h[0]->udate : strtotime($h[0]->date);
 
+/**
+ * Convert overview object to map.
+ * 
+ * @param object $o
+ * @return map
+ */
+private function _convert_overview($o) {
   $res = [];
-  $res['subject'] = $h[0]->subject;
-  $res['from'] = $h[0]->from;
-  $res['to'] = $h[0]->to;
-  $res['date'] = $h[0]->date;
-  $res['udate'] = $udate;
-  $res['message_id'] = $h[0]->message_id;
-  $res['references'] = property_exists($h[0], 'references') ? $h[0]->references : '';
-  $res['in_reply_to'] = property_exists($h[0], 'in_reply_to') ? $h[0]->in_reply_to : '';
-  $res['size'] = $h[0]->size;
-  $res['uid'] = $h[0]->uid;
-  $res['msgno'] = $h[0]->msgno;
-  $res['recent'] = $h[0]->recent;
-  $res['flagged'] = $h[0]->flagged;
-  $res['answered'] = $h[0]->answered;
-  $res['deleted'] = $h[0]->deleted;
-  $res['seen'] = $h[0]->seen;
-  $res['draft'] = $udate;
+  $res['subject'] = $o->subject;
+  $res['from'] = $o->from;
+  $res['to'] = $o->to;
+  $res['date'] = $o->date;
+  $res['udate'] = property_exists($o, 'udate') ? $o->udate : strtotime($o->date);
+  $res['message_id'] = $o->message_id;
+  $res['references'] = property_exists($o, 'references') ? $o->references : '';
+  $res['in_reply_to'] = property_exists($o, 'in_reply_to') ? $o->in_reply_to : '';
+  $res['size'] = $o->size;
+  $res['uid'] = $o->uid;
+  $res['msgno'] = $o->msgno;
+  $res['recent'] = $o->recent;
+  $res['flagged'] = $o->flagged;
+  $res['answered'] = $o->answered;
+  $res['deleted'] = $o->deleted;
+  $res['seen'] = $o->seen;
+  $res['draft'] = $o->draft;
 
   return $res;
 }
@@ -345,25 +353,7 @@ public function getListing($show_all = true) {
   }
 
   foreach ($overview as $o) {
-    $info = array();
-    $info['subject'] = $o->subject;
-    $info['from'] = $o->from;
-    $info['to'] = $o->to;
-    $info['date'] = $o->date;
-    $info['message_id'] = $o->message_id;
-    $info['references'] = $o->references;
-    $info['in_reply_to'] = $o->in_reply_to;
-    $info['size'] = $o->size;
-    $info['uid'] = $o->uid;
-    $info['msgno'] = $o->msgno;
-    $info['recent'] = $o->recent;
-    $info['flagged'] = $o->flagged;
-    $info['answered'] = $o->answered;
-    $info['deleted'] = $o->deleted;
-    $info['seen'] = $o->seen;
-    $info['draft'] = $o->draft;
-
-    array_push($res, $info);
+    array_push($res, $this->_convert_overview($o));
   }
 
   return $res;
@@ -494,6 +484,35 @@ public function getMsg() {
   }
 
   return $res;
+}
+
+
+/**
+ * Save all messages in directory. 
+ *
+ * @see save() 
+ * @param string $dir
+ */
+public function saveAll($dir) {
+	$this->_check_con();
+
+	$mbox = $this->getMailbox();
+	$overview = imap_fetch_overview($this->con, '1:'.$mbox->Nmsgs, 0);
+	$ov_num = count($overview);
+
+	for ($i = 0; $i < $ov_num; $i++) {
+		$h = $this->_convert_overview($overview[$i]);
+		$save_as = $dir.'/mail_'.date('YmdHis', $h['udate']).'_'.$h['uid'].'.ser';
+
+		if (!File::exists($save_as)) {
+			$h['raw_headers'] = imap_fetchheader($this->con, $this->id, FT_PREFETCHTEXT);
+			$h['body'] = imap_body($this->con, $this->id);
+			$h['attachments'] = $this->getAttachments();
+			File::serialize($save_as, $h);
+		}
+	}
+
+	return $ov_num;
 }
 
 
