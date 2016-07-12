@@ -252,7 +252,7 @@ public function deleteMsg($num) {
 public function selectMsg($num) {
 	$this->hasMessage($num, true);
   $this->id = $num;
-  $this->opt = 0;
+  $this->id_as_uid = 0;
 }
 
 
@@ -341,7 +341,7 @@ public function getListing($show_all = true) {
   }
   else {
 		$this->_check_id();
-    $overview = imap_fetch_overview($this->con, $this->id, $this->opt);
+    $overview = imap_fetch_overview($this->con, $this->id, $this->id_as_uid);
   }
 
   foreach ($overview as $o) {
@@ -376,7 +376,7 @@ public function getListing($show_all = true) {
  */
 public function getStructure() {
 	$this->_check_id();
-  return imap_fetchstructure($this->con, $this->id, $this->opt);
+  return imap_fetchstructure($this->con, $this->id, $this->id_as_uid);
 }
 
 
@@ -489,7 +489,7 @@ public function getMsg() {
       $fpos++;
     }
     else {
-			throw new Exception('could not parse message part', "({$this->_id}) ignored part $i / $fpos = [{$part->disposition}]");
+			throw new Exception('could not parse message part', "({$this->id}) ignored part $i / $fpos = [{$part->disposition}]");
     }
   }
 
