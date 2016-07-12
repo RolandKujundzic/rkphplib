@@ -284,7 +284,7 @@ public function getHeader() {
 
 
 /**
- * Convert overview object to map.
+ * Convert overview object to map. Add first part of message_id as mid (= unique identifier).
  * 
  * @param object $o
  * @return map
@@ -308,6 +308,12 @@ private function _convert_overview($o) {
   $res['deleted'] = $o->deleted;
   $res['seen'] = $o->seen;
   $res['draft'] = $o->draft;
+
+  $tmp = explode('@', $res['message_id']);
+  if (substr($tmp[0], 0, 1) == '<') {
+    $tmp[0] = substr($tmp[0], 1);
+  }
+  $res['mid'] = $tmp[0];
 
   return $res;
 }
@@ -500,9 +506,14 @@ public function saveAll($dir) {
 	$overview = imap_fetch_overview($this->con, '1:'.$mbox->Nmsgs, 0);
 	$ov_num = count($overview);
 
+	$curr_id = $this->id;
+	$curr_id_as_uid = $this->id_as_uid;
+	$this->id_as_uid = 0;
+
 	for ($i = 0; $i < $ov_num; $i++) {
 		$h = $this->_convert_overview($overview[$i]);
-		$save_as = $dir.'/mail_'.date('YmdHis', $h['udate']).'_'.$h['uid'].'.ser';
+		$save_as = $dir.'/mail_'.date('YmdHis', $h['udate']).'_'.$h['mid'].'.ser';
+		$this->id = $h['msgno'];
 
 		if (!File::exists($save_as)) {
 			$h['raw_headers'] = imap_fetchheader($this->con, $this->id, FT_PREFETCHTEXT);
@@ -511,6 +522,9 @@ public function saveAll($dir) {
 			File::serialize($save_as, $h);
 		}
 	}
+
+	$this->id = $curr_id;
+	$this->id_as_uid = $curr_id_as_uid;
 
 	return $ov_num;
 }
@@ -529,7 +543,7 @@ public function save($dir, $msg_num) {
 	$this->selectMsg($msg_num);
 	$h = $this->getHeader();
 
-	$save_as = $dir.'/mail_'.date('YmdHis', $h['udate']).'_'.$h['uid'].'.ser';
+	$save_as = $dir.'/mail_'.date('YmdHis', $h['udate']).'_'.$h['mid'].'.ser';
 
 	if (File::exists($save_as)) {
 		return;
