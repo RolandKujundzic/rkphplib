@@ -52,16 +52,21 @@ public function setDSN($dsn) {
  * Return (split = self::splitDSN()) database connect string.
  *
  * @throws rkphplib\Exception if $dsn was not set
- * @param boole $split (default = false) 
+ * @param bool $split (default = false) 
+ * @param string $dsn (default = '')
  * @return string 
  */
-public function getDSN($split = false) {
+public function getDSN($split = false, $dsn = '') {
 
-	if (empty($this->_dsn)) {
-		throw new Exception('call setDSN() first');
-	}
+  if (empty($dsn)) {
+    if (empty($this->_dsn)) {
+      throw new Exception('call setDSN() first');
+    }
 
-	return $split ? self::splitDSN($this->_dsn) : $this->_dsn;
+    $dsn = $this->_dsn;
+  }
+
+	return $split ? self::splitDSN($dsn) : $dsn;
 }
 
 
@@ -73,7 +78,7 @@ public function getDSN($split = false) {
  * type://[password]@./file or type://@/path/to/file 
  *
  * @throws rkphplib\Exception if split failed
- * @string $dsn 
+ * @string $dsn
  * @return map
  */
 public static function splitDSN($dsn) {
@@ -120,6 +125,14 @@ public static function splitDSN($dsn) {
 	}
 	else {
 		throw new Exception('invalid dsn', $dsn);
+	}
+
+	if (empty($db['type'])) {
+		throw new Exception('empty type');
+	}
+
+	if (empty($db['name'])) {
+		throw new Exception('empty name');
 	}
 
 	return $db;
@@ -391,24 +404,27 @@ abstract public function getInsertId();
 
 
 /**
- * Create database and account.
+ * Create database and account (drop if exists).
  *
- * @param string $dsn
+ * @param string $dsn (default = '' = use internal)
  */
-abstract public function createDatabase($dsn);
+abstract public function createDatabase($dsn = '');
 
 
 /**
- * Drop database and account.
+ * Drop database and account (if exists).
  *
- * @param string $dsn
+ * @param string $dsn (default = '' = use internal)
  */
-abstract public function dropDatabase($dsn);
+abstract public function dropDatabase($dsn = '');
 
 
 /**
- * Create table. Value of $table_conf:
+ * Create table (drop if exists). Parameter examples:
  * 
+ * - @table: tablename (optional)
+ * - @language: e.g. de, en, ... (optional)
+ * - @multilang: e.g. name, desc = name_de, name_en, desc_de, desc_en
  * - @id: 1 = primary key int unsigned not null auto_increment, 2 = primary key int unsigned not null, 3 = primary key varchar(30) not null
  * - @status: 1 = tinyint unsigned + index
  * - @timestamp: 1 = since, 2 = last_change, 3 = since + last_change datetime cols
@@ -420,18 +436,17 @@ abstract public function dropDatabase($dsn);
  *			"colA:colB" => unique" = "UNIQUE KEY ('colA', 'colB')"
  *			"colA:colB:colC" => foreign:1:1" = "FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE"
  *
- * @param hash $table_list
- * @param hash $config (default: drop_existing=false, ignore_existing = false)
+ * @param map<string:string> $conf
  */
-abstract public function createTables($table_conf, $config = [ 'drop_existing' => false, 'ignore_existing' => false ]);
+abstract public function createTable($conf);
 
 
 /**
- * Drop tables.
+ * Drop table (if exists).
  *
- * @param array $table_list
+ * @param string $table
  */
-abstract public function dropTables($table_list);
+abstract public function dropTable($table);
 
 
 /**
