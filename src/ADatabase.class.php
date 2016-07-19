@@ -15,12 +15,42 @@ use rkphplib\Exception;
  */
 abstract class ADatabase {
 
+/** @const NOT_NULL = NOT NULL column */
+const NOT_NULL = 1;
+
+/** @const PRIMARY = PRIMARY KEY (column) */
+const PRIMARY = 2;
+
+/** @const UNIQUE = UNQUE (column) */
+const UNIQUE = 4;
+
+/** @const INDEX = KEY (column) */
+const INDEX = 8;
+
+/** @const FOREIGN = FOREIGN KEY (column) REFERENCES ... */
+const FOREIGN = 16;
+
+/** @const FOREIGN KEY ... ON DELETE CASCADE */
+const UNSIGNED = 32;
+
+/** @const FOREIGN KEY ... ON DELETE CASCADE */
+const DELETE_CASCADE = 64;
+
+/** @const FOREIGN KEY ... ON UPDATE CASCADE */
+const UPDATE_CASCADE = 128;
+
+
 /** @var bool $use_prepared */
 public static $use_prepared = false;
 
+/** @var string $_dsn */
 protected $_dsn = null;
 
-protected $_query = array();
+/** @var map $_query */
+protected $_query = [];
+
+/** @var map $_create_conf */
+protected $_create_conf = [];
 
 
 
@@ -428,14 +458,14 @@ abstract public function dropDatabase($dsn = '');
  * - @id: 1 = primary key int unsigned not null auto_increment, 2 = primary key int unsigned not null, 3 = primary key varchar(30) not null
  * - @status: 1 = tinyint unsigned + index
  * - @timestamp: 1 = since, 2 = last_change, 3 = since + last_change datetime cols
- * - colname: TYPE:SIZE:NOT_NULL:DEFAULT, e.g. 
- *			"colname => int:11:1:1:0" = "colname int(11) NOT NULL DEFAULT 1"
- * 			"colname => varchar:30:1:admin:1" = "colname varchar(30) NOT NULL DEFAULT 'admin', KEY (colname(20))"
- *			"colname => varchar:50:1::2" = "colname varchar(50) NOT NULL, UNIQUE (colname(20))"
- *			"colname => enum::1:a,b" = "colname enum('a', 'b') NOT NULL"
+ * - colname: TYPE:SIZE:DEFAULT:EXTRA, e.g. 
+ *			"colname => int:11:1:33" = "colname int(11) UNSIGNED NOT NULL DEFAULT 1"
+ * 			"colname => varchar:30:admin:9" = "colname varchar(30) NOT NULL DEFAULT 'admin', KEY (colname(20))"
+ *			"colname => varchar:50::5" = "colname varchar(50) NOT NULL, UNIQUE (colname(20))"
+ *			"colname => enum::a,b:1" = "colname enum('a', 'b') NOT NULL"
  *			"colA:colB" => unique" = "UNIQUE KEY ('colA', 'colB')"
- *			"colA:colB:colC" => foreign:1:1" = "FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE"
- *
+ *			"colA:colB:colC" => foreign:192" = "FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE"
+ *			EXTRA example: NOT_NULL|INDEX, NOT_NULL|UNIQUE, INDEX, ...
  * @param map<string:string> $conf
  */
 abstract public function createTable($conf);
