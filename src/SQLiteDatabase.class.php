@@ -444,19 +444,34 @@ public function getTableList($reload_cache = false) {
 
 
 /**
- * Create new database and dbadmin account.
  *
- * @param string $dsn
  */
-public function createDatabase($dsn) {
+public function createDatabase($dsn = '') {
+	throw new Exception('ToDo ...');
+}
 
-	$dsn = self::splitDSN($dsn);
 
-  if ($dsn['type'] != 'sqlite') {
-    throw new Exception('invalid dsn type: '.$dsn['type']);
-  }
+/**
+ *
+ */
+public function dropDatabase($dsn = '') {
+	throw new Exception('ToDo ...');
+}
 
-	throw new Exception('ToDo ...');	
+
+/**
+ *
+ */
+public function createTable($conf) {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
+ *
+ */
+public function dropTable($table) {
+	throw new Exception('ToDo ...');
 }
 
 
