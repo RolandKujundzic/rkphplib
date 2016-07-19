@@ -129,7 +129,42 @@ public function dropDatabase($dsn = '') {
  * 
  */
 public function createTable($conf) {
-	throw new Exception('ToDo ...');
+
+	if (empty($conf['@table'])) {
+		throw new Exception('missing tablename');
+	}
+
+	$table = $conf['@table'];
+	$tname = self::escape_name($table);
+	$this->_create_conf[$table] = $conf;
+	unset($conf['@table']);
+
+	$cols = [];
+	$keys = [];
+
+	if (!empty($conf['@id'])) {
+		$id_mode = intval($conf['@id']);
+
+		if ($id_mode == 1) {
+			array_push($cols, 'id int UNSIGNED NOT NULL AUTO_INCREMENT');
+		}
+		else if ($id_mode == 2) {
+			array_push($cols, 'id int UNSIGNED NOT NULL');
+		}
+		else if ($id_mode == 3) {
+			array_push($cols, 'id varchar(30) NOT NULL');
+		}
+		else {
+			throw new Exception('invalid primary key id', 'id=['.$conf['@id'].'] use (1,2,3)');
+		}
+
+		array_push($keys, 'PRIMARY KEY (id)');
+		unset($conf['@id']);
+	}
+
+	$query = "CREATE TABLE $tname (".join(",\n", $cols).join(",\n", $keys)."\n)";
+
+	throw new Exception('@ToDo ... ', $query);
 }
 
 
