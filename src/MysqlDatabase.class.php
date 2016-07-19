@@ -96,17 +96,17 @@ public function close() {
 /**
  * 
  */
-public function createDatabase($dsn) {
+public function createDatabase($dsn = '') {
+	$db = $this->getDSN(true, $dsn);
+	$name = self::escape_name($db['name']));
+	$login = self::escape_name($db['login']);
+	$pass = self::escape_name($db['password']);
+	$host = self::escape_name($db['host']);
 
-	$dsn = self::splitDSN($dsn);
+	$this->dropDatabase($dsn);
 
-	if ($dsn['type'] != 'mysqli') {
-		throw new Exception('invalid dsn type: '.$dsn['type']);
-	}
-
-	$this->execute("CREATE DATABASE ".$dsn['name']);
-	$this->execute("GRANT ALL PRIVILEGES ON ".$dsn['name'].".* TO '".self::escape_name($dsn['login'])."'@'".
-		self::escape_name($dsn['host'])."' IDENTIFIED BY '".self::escape_name($dsn['password'])."'");
+	$this->execute("CREATE DATABASE ".$name);
+	$this->execute("GRANT ALL PRIVILEGES ON $name.* TO '$login'@'$host' IDENTIFIED BY '$pass'");
 	$this->execute("FLUSH PRIVILEGES");
 }
 
@@ -114,7 +114,21 @@ public function createDatabase($dsn) {
 /**
  * 
  */
-public function dropDatabase($dsn) {
+public function dropDatabase($dsn = '') {
+	$db = $this->getDSN(true, $dsn);
+	$name = self::escape_name($db['name']));
+	$login = self::escape_name($db['login']);
+	$host = self::escape_name($db['host']);
+
+	$this->execute("DROP DATABASE IF EXISTS $name");
+	$this->execute("DROP USER IF EXISTS '$login'@'$host'");
+}
+
+
+/**
+ * 
+ */
+public function createTable($conf) {
 	throw new Exception('ToDo ...');
 }
 
@@ -122,16 +136,8 @@ public function dropDatabase($dsn) {
 /**
  * 
  */
-public function createTables($table_conf, $config = [ 'drop_existing' => false, 'ignore_existing' => false ]) {
-	throw new Exception('ToDo ...');
-}
-
-
-/**
- * 
- */
-public function dropTables($table_list) {
-	throw new Exception('ToDo ...');
+public function dropTable($table) {
+	$this->execute("DROP TABLE IF EXISTS $table");
 }
 
 
