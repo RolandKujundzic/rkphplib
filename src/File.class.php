@@ -770,6 +770,38 @@ public static function close(&$fh) {
 
 
 /**
+ * Return file mime type.
+ * You might need to enable fileinfo extension (e.g. extension=php_fileinfo.dll).
+ *
+ * @param string $file
+ * @param bool $use_only_suffix (default = false)
+ * @return string
+ */
+public static function mime($file, $use_only_suffix = false) {
+	$res = '';
+
+	if (!$use_only_suffix && file_exists($file) && !is_dir($file) && is_readable($file)) {
+		$finfo = finfo_open(FILEINFO_MIME_TYPE);
+		$res = finfo_file($finfo, $file);
+	}
+	else {
+		$pi = pathinfo($file);
+		if (!empty($pi['extension'])) {
+			$s = $pi['extension'];
+
+			$suffix2mime = array('png' => 'image/png', 'jpg' => 'image/jpeg', 'gif' => 'image/gif', 'tif' => 'image/tiff', 'psd' => 'image/x-photoshop');
+
+			if (isset($suffix2mime[$s])) {
+				$res = $suffix2mime[$s];
+			}
+		}
+	}
+
+	return $res;
+}
+
+
+/**
  * Return lowercase file name suffix (without dot - unless $keep_dot= true).
  * 
  * @param string $file
