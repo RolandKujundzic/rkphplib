@@ -41,6 +41,41 @@ public function __construct() {
 
 
 /**
+ * Print error message.
+ *
+ * @param string $msg
+ * @param string|array $out
+ * @param string|array $ok
+ */
+private function _error_cmp($msg, $out, $ok) {
+	$m_out = '';
+	$m_ok = '';
+
+	if (is_string($out)) {
+		$m_out = (strlen($out) < 40) ? "out=[$out]" : "\nout=[$out]\n"; 
+	}
+	else if (is_numeric($out) || is_bool($out)) {
+		$m_out = "out=[$out]";
+	}
+	else {
+		$m_out = "\nout: ".print_r($out, true)."\n";
+	}
+
+	if (is_string($ok)) {
+		$m_ok = (strlen($ok) < 40) ? "ok=[$ok]" : "\nok=[$ok]\n"; 
+	}
+	else if (is_numeric($ok) || is_bool($ok)) {
+		$m_ok = "ok=[$ok]";
+	}
+	else {
+		$m_ok = "\nok: ".print_r($ok, true)."\n";
+	}
+
+	print "\nERROR: $m_out $m_ok\n\n";
+}
+
+
+/**
  * Print log message. Values of cn (2^n):
  *
  * 0: print only $msg
@@ -257,6 +292,65 @@ public function callTest($func, $arg, $result) {
     $this->_log("$n/$n OK");
   	$this->_tc['ok']++;
   }
+  else {
+    $this->_log("$ok/$n OK and $err ERROR");
+  	$this->_tc['error']++;
+  }
+}
+
+
+/**
+ * Compare output with expected result. Result hash may contain lass keys than output (e.g. date key).
+ *
+ * @param string $msg
+ * @param <vector:any> $out_list
+ * @param <vector:any> $ok_list
+ */
+public function compare($msg, $out_list, $ok_list) {
+	$this->_log($msg.": ", 0);
+	$this->_tc['num']++;
+
+	$n = count($ok_list);
+	$err = 0;
+	$ok = 0;
+
+	for ($i = 0; $i < $n; $i++) {
+		$t_out = $out_list[$i];
+		$t_ok = $ok_list[$i];
+		$cmp = true;
+
+		if ((is_string($t_out) && is_string($t_ok)) || (is_numeric($t_out) && is_numeric($t_ok)) || (is_bool($t_out) && is_bool($t_ok))) {
+			if ($t_out !== $t_ok) {
+				$this->_error_cmp("(Test $i)", $t_out, $t_ok);
+				$cmp = false;
+			}
+		}
+		else if (is_array($t_out) && is_array($t_ok) && count($t_out) >= count($t_ok)) {
+			foreach ($t_ok as $key => $value) {
+				if (!array_key_exists($key, $t_out) || $value != $t_out[$key]) {
+					$this->_error_cmp("(Test $i) key=$key", $t_out[$key], $value);
+					$cmp = false;
+					break;
+				}
+			}
+		}
+		else {
+			$this->_error_cmp("(Test $i)", $t_out, $t_ok);
+			$cmp = false;
+		}
+
+		if ($cmp) {
+  		$ok++;
+		}
+		else {
+  		$err++;
+		}
+	}
+
+  if ($err == 0 && $ok == $n) {
+		$this->_log("$n/$n OK");
+  	$this->_tc['ok']++;
+	}
   else {
     $this->_log("$ok/$n OK and $err ERROR");
   	$this->_tc['error']++;
