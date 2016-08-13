@@ -113,7 +113,7 @@ public static function fromURL($url, $required = true) {
 		throw new Exception('empty file', $url);
 	}
 
-  return $res;
+	return $res;
 }
 
 
@@ -327,7 +327,7 @@ private static function _open_lock($file, $lock_mode, $open_mode) {
 		}
 	}
 
-  return $fh;
+	return $fh;
 }
 
 
@@ -340,7 +340,7 @@ private static function _open_lock($file, $lock_mode, $open_mode) {
  */
 public static function size($file, $as_text = false) {
 
-  FSEntry::isFile($file);
+	FSEntry::isFile($file);
 
 	if (($res = filesize($file)) === false) {
 		throw new Exception('filesize failed', $file);
@@ -421,9 +421,9 @@ public static function hasChanged($file, $md5_log) {
 
 	if (!$res) {
 		File::save($md5_log, $md5);
-  }
+	}
 
-  return !$res;
+	return !$res;
 }
 
 
@@ -435,8 +435,8 @@ public static function hasChanged($file, $md5_log) {
  */
 public static function isChanging($file, $watch = 15) {
 	$md5_old = File::md5($file);
-  sleep(min($watch, 300));
-  $md5_new = File::md5($file);
+	sleep(min($watch, 300));
+	$md5_new = File::md5($file);
 	return $md5_old != $md5_new;
 }
 
@@ -453,8 +453,8 @@ public static function chmod($file, $mode = 0) {
 		$mode = self::$DEFAULT_MODE;
 	}
 
-  FSEntry::isFile($file, true);
-  FSEntry::chmod($file, $mode);
+	FSEntry::isFile($file, true);
+	FSEntry::chmod($file, $mode);
 }
 
 
@@ -543,42 +543,42 @@ public static function append($file, $data) {
  */
 public static function open($file, $mode = 'rb') {
 
-  $write_utf8_bom = false;
-  $read_utf8_bom = false;
-  $utf8_bom = chr(239).chr(187).chr(191); // byte order mark == b"\xEF\xBB\xBF"
+	$write_utf8_bom = false;
+	$read_utf8_bom = false;
+	$utf8_bom = chr(239).chr(187).chr(191); // byte order mark == b"\xEF\xBB\xBF"
 
-  if ($mode == 'ru') {
-    $read_utf8_bom = true;
-    $mode = 'rb';
-  }
+	if ($mode == 'ru') {
+		$read_utf8_bom = true;
+		$mode = 'rb';
+	}
 
-  if ($mode == 'wu') {
-    $write_utf8_bom = true;
-    $mode = 'wb';
-  }
+	if ($mode == 'wu') {
+		$write_utf8_bom = true;
+		$mode = 'wb';
+	}
 
-  if ($mode != 'rb' && $mode != 'wb' && $mode != 'ab') {
+	if ($mode != 'rb' && $mode != 'wb' && $mode != 'ab') {
 		throw new Exception('invalid file open mode', 'mode=['.$mode.'] use rb|wb|ab');
-  }
+	}
 
-  if (!($fh = fopen($file, $mode))) {
+	if (!($fh = fopen($file, $mode))) {
 		throw new Exception('open file failed', "file=[$file]");
-  }
+	}
 
-  if ($read_utf8_bom) {
-    $bom = fread($fh, 3);
-    if ($bom != $utf8_bom) {
-      fseek($fh, 0);
-    }
-  }
+	if ($read_utf8_bom) {
+		$bom = fread($fh, 3);
+		if ($bom != $utf8_bom) {
+			fseek($fh, 0);
+		}
+	}
 
-  if ($write_utf8_bom) {
-    if (!fwrite($fh, $utf8_bom)) {
+	if ($write_utf8_bom) {
+		if (!fwrite($fh, $utf8_bom)) {
 			throw new Exception('could not write utf-8 bom', $file);
 		}
-  }
+	}
 
-  return $fh;
+	return $fh;
 }
 
 
@@ -592,10 +592,10 @@ public static function loadLines($file, $flags = 0) {
 	$lines = array();
 
 	if (File::size($file) > 0) {
-    $lines = file($file, $flags);
-  }
+		$lines = file($file, $flags);
+	}
 
-  return $lines;
+	return $lines;
 }
 
 
@@ -686,7 +686,7 @@ public static function end($fh) {
  * @param int $maxlen (default = 8192)
  */
 public static function readLine($fh, $maxlen = 8192) {
-  $res = fgets($fh, $maxlen);
+	$res = fgets($fh, $maxlen);
 
 	if (mb_strlen($res) === $maxlen - 1 && !feof($fh)) {
 		throw new Exception('line too long', $res);
@@ -703,7 +703,7 @@ public static function readLine($fh, $maxlen = 8192) {
  * @param any $data
  */
 public static function serialize($file, $data) {
-  File::save($file, serialize($data));
+	File::save($file, serialize($data));
 }
 
 
@@ -757,15 +757,49 @@ public static function readCSV($fh, $delimiter = ',', $enclosure = '"', $escape 
  */
 public static function close(&$fh) {
 
-  if (!$fh) {
+	if (!$fh) {
 		throw new Exception('invalid file handle');
-  }
+	}
 
 	if (fclose($fh) === false) {
 		throw new Exception('close filehandle failed');
 	}
 
-  $fh = 0;
+	$fh = 0;
+}
+
+
+/**
+ * Return file mime type.
+ * You might need to enable fileinfo extension (e.g. extension=php_fileinfo.dll).
+ *
+ * @param string $file
+ * @param bool $use_only_suffix (default = false)
+ * @return string
+ */
+public static function mime($file, $use_only_suffix = false) {
+	$res = '';
+
+	if (!$use_only_suffix && file_exists($file) && !is_dir($file) && is_readable($file)) {
+		$finfo = finfo_open(FILEINFO_MIME_TYPE);
+		$res = finfo_file($finfo, $file);
+	}
+	else {
+		$pi = pathinfo($file);
+		if (!empty($pi['extension'])) {
+			$s = $pi['extension'];
+
+			$suffix2mime = [ 'png' => 'image/png', 'jpg' => 'image/jpeg', 'gif' => 'image/gif', 'tif' => 'image/tiff', 
+				'psd' => 'image/x-photoshop', 'txt' => 'text/plain', 'xml' => 'application/xml', 
+				'xsd' => 'application/xml' ];
+
+			if (isset($suffix2mime[$s])) {
+				$res = $suffix2mime[$s];
+			}
+		}
+	}
+
+	return $res;
 }
 
 
@@ -777,23 +811,23 @@ public static function close(&$fh) {
  * @return string
  */
 public static function suffix($file, $keep_dot = false) {
-  $res = '';
+	$res = '';
 
-  if (($pos = mb_strrpos($file, '.')) !== false) {
-    if ($keep_dot) {
-      $res = mb_strtolower(mb_substr($file, $pos));
-    }
-    else {
-      $res = mb_strtolower(mb_substr($file, $pos + 1));
-    }
+	if (($pos = mb_strrpos($file, '.')) !== false) {
+		if ($keep_dot) {
+			$res = mb_strtolower(mb_substr($file, $pos));
+		}
+		else {
+			$res = mb_strtolower(mb_substr($file, $pos + 1));
+		}
 
-    if (mb_strpos($res, '/') !== false) {
-      // ignore invalid suffix
-      $res = '';
-    }
-  }
+ 		if (mb_strpos($res, '/') !== false) {
+			// ignore invalid suffix
+			$res = '';
+		}
+	}
 
-  return $res;
+	return $res;
 }
 
 
@@ -810,17 +844,17 @@ public static function suffix($file, $keep_dot = false) {
  */
 public static function basename($file, $remove_suffix = false, $rsuffix = '') {
 
-  $res = basename($file);
+	$res = basename($file);
 
 	if ($remove_suffix && ($pos = mb_strrpos($res, '.')) !== false) {
-    $res = mb_substr($res, 0, $pos);
+		$res = mb_substr($res, 0, $pos);
 	}
 
 	if ($rsuffix && ($pos = mb_strrpos($res, $rsuffix)) !== false) {
-    $res = mb_substr($res, 0, $pos);
+		$res = mb_substr($res, 0, $pos);
 	}
 
-  return $res;
+	return $res;
 }
 
 
@@ -868,7 +902,7 @@ public static function copy($source, $target, $mode = 0) {
 		throw new Exception("Filecopy failed", "$source -> $target");
 	}
 
-  FSEntry::chmod($target, $mode);
+	FSEntry::chmod($target, $mode);
 }
 
 
@@ -885,7 +919,7 @@ public static function move($source, $target, $mode = 0666) {
 
 	if ($rp_target && realpath($source) == $rp_target) {
 		throw new Exception('same source and target', "mv [$source] to [$target]");
-  }
+	}
 
 	File::copy($source, $target, $mode);
 	File::remove($source);
@@ -914,6 +948,72 @@ public static function lastModified($path, $sql_ts = false) {
 	}
 
 	return $res;
+}
+
+
+/**
+ * Send file as http download. Use disposition = 'inline' for in browser display.
+ * Exit after send. If file does not exist send 404 not found.
+ *
+ * @param string $file
+ * @param string|bool $disposition (default = attachment = true)
+ * 
+ */
+public static function httpSend($file, $disposition = 'attachment') {
+	
+	if (!FSEntry::isFile($file, false)) {
+		header("HTTP/1.0 404 Not Found");
+		exit;
+	}
+
+	$mime_type = File::mime($file);
+	$content_type = empty($mime_type) ? 'application/force-download' : $mime_type;
+
+	// send header
+	header('HTTP/1.1 200 OK');
+
+	// IE is the shit ... needs cache control headers ...
+	header('Pragma: public');
+	header('Expires: 0');
+	header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+	header('Cache-Control: private', false);
+
+	$fsize = filesize($file);
+
+	header('Date: '.date("D M j G:i:s T Y"));
+	header('Last-Modified: '.date("D M j G:i:s T Y"));
+	header('Content-Type: '.$content_type);
+	header('Content-Length: '.$fsize);
+	header('Content-Transfer-Encoding: binary');
+
+	if ($disposition === true) {
+		// keep compatibility to old version
+		$disposition = 'attachment';
+	}
+
+	if ($disposition === 'attachment' || $disposition === 'inline') {
+		$fname = basename($file);
+		header('Content-Description: File Transfer');
+		header('Content-Disposition: '.$disposition.'; filename="'.$fname.'"');
+  	}
+
+	if ($fsize  > 1048576 * 50) {
+		// 50 MB+ ... flush the file ... otherwise the download dialog doesn't show up ...
+ 		$fp = fopen($file, 'rb');
+
+		while (!feof($fp)) {
+			print fread($fp, 65536);
+ 			flush();
+ 		}
+
+		fclose($fp);
+	}
+	else {
+		// send file content
+		readfile($file);
+	}
+
+	exit;
 }
 
 

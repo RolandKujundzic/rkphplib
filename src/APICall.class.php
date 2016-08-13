@@ -125,81 +125,81 @@ public function exec($data = null) {
 		}
 	}
 
-  $ch = curl_init();
-  $header = array();
+	$ch = curl_init();
+	$header = array();
 
-  if (!empty($this->token)) {
+	if (!empty($this->token)) {
 		if (empty($this->auth)) {
 			throw new Exception('missing parameter', 'auth');
 		}
-    else if ($this->auth == 'request' && is_array($data)) {
-      $data['api_token'] = $this->token;
-    }
-    else if ($this->auth == 'header') {
-      array_push($header, 'X-AUTH-TOKEN: '.$this->token);
-    }
-    else if ($this->auth == 'basic_auth') {
-      curl_setopt($ch, CURLOPT_USERPWD, $conf['api_token']);
-    }
-  }
+		else if ($this->auth == 'request' && is_array($data)) {
+			$data['api_token'] = $this->token;
+		}
+		else if ($this->auth == 'header') {
+			array_push($header, 'X-AUTH-TOKEN: '.$this->token);
+		}
+		else if ($this->auth == 'basic_auth') {
+			curl_setopt($ch, CURLOPT_USERPWD, $conf['api_token']);
+		}
+	}
 
-  if (!empty($this->accept)) {
-    array_push($header, 'ACCEPT: '.$this->accept);
-  }
+	if (!empty($this->accept)) {
+		array_push($header, 'ACCEPT: '.$this->accept);
+	}
 
-  if (!empty($this->content)) {
-    array_push($header, 'CONTENT-TYPE: '.$this->content);
-    if (is_string($data)) {
-      // raw data request
-      array_push($header, 'X-HTTP-Method-Override: '.$this->method);
+	if (!empty($this->content)) {
+		array_push($header, 'CONTENT-TYPE: '.$this->content);
+		if (is_string($data)) {
+			// raw data request
+			array_push($header, 'X-HTTP-Method-Override: '.$this->method);
 
 			if ($this->content == 'application/xml' && is_array($data)) {
 				$data = XML::fromJSON($data);
 			}
 
-      curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-    }
-  }
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+		}
+	}
 
-  if (count($header) > 0) {
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
-  }
+	if (count($header) > 0) {
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+	}
 	
 	$uri_append = '';
 
-  if ($this->method == 'GET') {
-    if (is_array($data) && count($data) > 0) {
-      $uri_append = '?'.http_build_query($data);
-    }
-  }
-  else {
-    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $this->method);
+	if ($this->method == 'GET') {
+		if (is_array($data) && count($data) > 0) {
+			$uri_append = '?'.http_build_query($data);
+		}
+	}
+	else {
+		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $this->method);
 
-    if (($this->method == 'PUT' || $this->method == 'DELETE') && is_array($data) && count($data) > 0) {
-      $data = http_build_query($data);
-    }
+		if (($this->method == 'PUT' || $this->method == 'DELETE') && is_array($data) && count($data) > 0) {
+			$data = http_build_query($data);
+		}
 
-    if (!is_null($data)) {
-      curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-    }
-  }
+		if (!is_null($data)) {
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+		}
+	}
 
-  curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-  curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  curl_setopt($ch, CURLOPT_URL, $this->url.'/'.$this->uri.$uri_append);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_URL, $this->url.'/'.$this->uri.$uri_append);
 
-  $this->result = curl_exec($ch);
-  $this->info = curl_getinfo($ch);
+	$this->result = curl_exec($ch);
+	$this->info = curl_getinfo($ch);
 	$this->status = intval($this->info['http_code']);
 
-  curl_close($ch);
+	curl_close($ch);
 
-  if ($this->accept == 'application/json') {
-    $this->result = json_decode($this->result, true);
-  }
+	if ($this->accept == 'application/json') {
+		$this->result = json_decode($this->result, true);
+	}
 
-  return $this->status === 200;
+	return $this->status === 200;
 }
 
 
