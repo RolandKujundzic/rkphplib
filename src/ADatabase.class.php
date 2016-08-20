@@ -384,6 +384,14 @@ public static function escape_name($name, $abort = false) {
 
 
 /**
+ * Return true if result set exists.
+ * 
+ * @return bool
+ */
+abstract public function hasResultSet();
+
+
+/**
  * Return database name vector.
  * 
  * @param boolean $reload_cache
