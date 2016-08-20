@@ -109,7 +109,7 @@ public function close() {
  */
 public function createDatabase($dsn = '') {
 	$db = $this->getDSN(true, $dsn);
-	$name = self::escape_name($db['name']));
+	$name = self::escape_name($db['name']);
 	$login = self::escape_name($db['login']);
 	$pass = self::escape_name($db['password']);
 	$host = self::escape_name($db['host']);
@@ -127,7 +127,7 @@ public function createDatabase($dsn = '') {
  */
 public function dropDatabase($dsn = '') {
 	$db = $this->getDSN(true, $dsn);
-	$name = self::escape_name($db['name']));
+	$name = self::escape_name($db['name']);
 	$login = self::escape_name($db['login']);
 	$host = self::escape_name($db['host']);
 
