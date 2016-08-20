@@ -475,5 +475,20 @@ public function dropTable($table) {
 }
 
 
+/**
+ *
+ */
+public function hasResultSet() {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
+ *
+ */
+public function getInsertId() {
+	throw new Exception('ToDo ...');
+}
+
 }
 
