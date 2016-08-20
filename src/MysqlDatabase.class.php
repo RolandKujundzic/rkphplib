@@ -19,7 +19,18 @@ private $_db = null;
 private $_conn_ttl = 0;
 private $_seek = -1;
 private $_cache = array();
+private $_dbres = null;
 
+
+
+/**
+ * Return true if result set exists.
+ * 
+ * @return bool
+ */
+public function hasResultSet() {
+	return !is_null($this->_dbres);
+}
 
 
 /**
