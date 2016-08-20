@@ -64,7 +64,7 @@ public static create($dsn = '') {
 
 
 /**
- * Singelton method. Return ADatabase object instance from pool. Call setDSN() first.
+ * Singelton method. Return unused ADatabase object instance with current dsn from pool. Call setDSN() first.
  *
  * @throws rkphplib\Exception
  * @return ADatabase
@@ -76,7 +76,7 @@ public static function getInstance() {
 	}
 
 	for ($i = 0; is_null($db) && $i < count($pool); $i++) {
-		if (self::$pool[$i]->isAvailable()) {
+		if (self::$pool[$i]->getDSN() == $this->dsn && self::$pool[$i]->isFree()) {
 			return self::$pool[$i];
 		}
 	}
