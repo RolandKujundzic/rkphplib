@@ -33,7 +33,7 @@ private static $pool = [];
  * @param string $dsn (default = '', use setDSN() value)
  * @return ADatabase
  */
-public static create($dsn = '') {
+public static function create($dsn = '') {
 	$db = null;
 	
 	if (mb_substr($dsn, 0, 9) == 'mysqli://') {
@@ -56,7 +56,7 @@ public static create($dsn = '') {
 			throw new Exception('empty dsn - call setDSN() first');
 		}
 
-		$db->setDSN($this->dsn));
+		$db->setDSN($this->dsn);
 	}
 
 	return $db;
