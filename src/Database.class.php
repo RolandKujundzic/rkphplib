@@ -76,7 +76,7 @@ public static function getInstance() {
 	}
 
 	for ($i = 0; is_null($db) && $i < count($pool); $i++) {
-		if (self::$pool[$i]->getDSN() == $this->dsn && self::$pool[$i]->isFree()) {
+		if (self::$pool[$i]->getDSN() == $this->dsn && !self::$pool[$i]->hasResultSet()) {
 			return self::$pool[$i];
 		}
 	}
