@@ -206,7 +206,7 @@ public function setQuery($qkey, $query) {
 	for ($i = 1; $i < count($tok) - 1; $i += 2) {
 		$m = $tok[$i];
 
-		if (mb_substr($m, 0, 1) == "'" && mb_substr($m, -1) == "'" && mb_substr($m, 4, 1) != '^') {
+		if (mb_substr($m, 0, 1) === "'" && mb_substr($m, -1) === "'" && mb_substr($m, 4, 1) !== '^') {
 			if (self::$use_prepared) {
 				array_push($map['bind'], mb_substr($m, 4, -2));
 				$tok[$i] = '?';
@@ -217,11 +217,11 @@ public function setQuery($qkey, $query) {
 				$map[$key] = 'escape';
 			}
 		}
-		else if (mb_substr($m, 3, 1) == '_') {
+		else if (mb_substr($m, 3, 1) === '_') {
 			$key = mb_substr($m, 3, -1);
 			$map[$key] = 'keep';
 		}
-		else if (mb_substr($m, 3, 1) == '^') {
+		else if (mb_substr($m, 3, 1) === '^') {
 			$key = mb_substr($m, 4, -1);
 			$map[$key] = 'escape_name';
 		}
@@ -231,7 +231,7 @@ public function setQuery($qkey, $query) {
 		}
 	}
 
-	if (count($map['bind']) == 0) {
+	if (count($map['bind']) === 0) {
 		unset($map['bind']);
 	}
 
@@ -282,10 +282,10 @@ public function getQuery($qkey, $replace = null) {
 			throw new Exception("query replace key $key missing", "($qkey) $query: ".print_r($replace, true));
 		}
 
-		if ($do == 'escape') {
+		if ($do === 'escape') {
 			$value = $replace[$key];
 
-			if (is_null($value) || $value == 'NULL' || $value == 'null') {
+			if (is_null($value) || $value === 'NULL' || $value === 'null') {
 				$value = 'NULL';
 			}
 			else {
@@ -294,10 +294,10 @@ public function getQuery($qkey, $replace = null) {
 
 			$query = str_replace("{:=$key}", $value, $query);
 		}
-		else if ($do == 'escape_name') {
+		else if ($do === 'escape_name') {
 			$query = str_replace('{:=^'.$key.'}', self::escape_name($replace[$key]), $query);
 		}
-		else if ($do == 'keep') {
+		else if ($do === 'keep') {
 			$query = str_replace('{:='.$key.'}', $replace[$key], $query);
 		}
 		else {
@@ -348,7 +348,7 @@ public function setQueryHash($conf_hash, $require_keys = '') {
 	}
 
 	foreach ($conf_hash as $key => $value) {
-		if (mb_substr($key, 0, 6) == 'query.' && !empty(trim($value))) {
+		if (mb_substr($key, 0, 6) === 'query.' && !empty(trim($value))) {
 			$this->setQuery(mb_substr($key, 6), $value);
 		}
 	}
@@ -592,16 +592,16 @@ public function selectOne($query) {
  */
 public static function escape($txt) {
 
-	if (mb_substr($txt, -1) == '\\') {
+	if (mb_substr($txt, -1) === '\\') {
 		// trailing [\'] is a problem because \ is mysql escape char
 		$l = mb_strlen($txt) * -1;
 		$n = -1;
 
-		while (mb_substr($txt, $n, 1) == '\\' && $n > $l) {
+		while (mb_substr($txt, $n, 1) === '\\' && $n > $l) {
 			$n--;
 		}
 
-		if ($n % 2 == 0) {
+		if ($n % 2 === 0) {
 			$txt .= '\\';
 		}
 	}
