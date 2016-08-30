@@ -404,7 +404,7 @@ private function _exec_stmt($q) {
 	for ($i = 0; $i < $ql - 2; $i++) {
 		$key = $q[$i];
 
-		if (!isset($replace[$key])) {
+		if (!isset($replace[$key]) && !array_key_exists($key, $replace)) {
 			throw new Exception("query replace key $key missing", "$query: ".print_r($replace, true));
 		}
 
