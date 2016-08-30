@@ -156,13 +156,13 @@ public function createTable($conf) {
 	if (!empty($conf['@id'])) {
 		$id_mode = intval($conf['@id']);
 
-		if ($id_mode == 1) {
+		if ($id_mode === 1) {
 			array_push($cols, 'id int UNSIGNED NOT NULL AUTO_INCREMENT');
 		}
-		else if ($id_mode == 2) {
+		else if ($id_mode === 2) {
 			array_push($cols, 'id int UNSIGNED NOT NULL');
 		}
-		else if ($id_mode == 3) {
+		else if ($id_mode === 3) {
 			array_push($cols, 'id varchar(30) NOT NULL');
 		}
 		else {
@@ -309,7 +309,7 @@ private function _fetch($query, $rbind = null, $rcount = 0) {
 		throw new Exception('number of rows too high', "$rnum query=$query");
 	}
 
-	if ($rnum == 0) {
+	if ($rnum === 0) {
 		return $res;
 	}
 
@@ -330,10 +330,10 @@ private function _fetch($query, $rbind = null, $rcount = 0) {
 	for ($i = 0; $i < $end; $i++) {
 		$dbrow = $dbres->fetch_assoc();
 
-		if ($bl == 1) {
+		if ($bl === 1) {
 			array_push($res, $dbrow[$rbind[0]]);
 		}
-		else if ($bl == 2) {
+		else if ($bl === 2) {
 			$key = $dbrow[$rbind[0]];
 
 			if (isset($res[$key])) {
@@ -466,7 +466,7 @@ private function _fetch_stmt($stmt, $rbind = null, $rcount = 0) {
 		throw new Exception('number of rows too high', $rnum);
 	}
 
-	if ($rnum == 0) {
+	if ($rnum === 0) {
 		return $res;
 	}
 
@@ -503,10 +503,10 @@ private function _fetch_stmt($stmt, $rbind = null, $rcount = 0) {
 	for ($i = 0; $i < $end; $i++) {
 		$stmt->fetch();
 
-		if ($bl == 1) {
+		if ($bl === 1) {
 			array_push($res, $db_data[$rbind[0]]);
 		}
-		else if ($bl == 2) {
+		else if ($bl === 2) {
 			$res[$db_data[$rbind[0]]] = $db_data[$rbind[1]];
 		}
 		else if ($bl > 2) {
@@ -550,7 +550,7 @@ public function esc($txt) {
  */
 public function getDatabaseList($reload_cache = false) {
 
-	if ($reload_cache || !isset($this->_cache['DATABASE_LIST:']) || count($this->_cache['DATABASE_LIST:']) == 0) {
+	if ($reload_cache || !isset($this->_cache['DATABASE_LIST:']) || count($this->_cache['DATABASE_LIST:']) === 0) {
 		$dbres = $this->select('SHOW DATABASES');
 		$this->_cache['DATABASE_LIST:'] = [ ];
 
@@ -571,7 +571,7 @@ public function getDatabaseList($reload_cache = false) {
  */
 public function getTableList($reload_cache = false) {
 
-	if ($reload_cache || !isset($this->_cache['TABLE_LIST:']) || count($this->_cache['TABLE_LIST:']) == 0) {
+	if ($reload_cache || !isset($this->_cache['TABLE_LIST:']) || count($this->_cache['TABLE_LIST:']) === 0) {
 		$dbres = $this->select('SHOW TABLES');
 		$this->_cache['TABLE_LIST:'] = [ ];
 
@@ -620,7 +620,7 @@ public function getTableDesc($table) {
  */
 public function getInsertId() {
 
-	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) == 0) {
+	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) === 0) {
 		throw new Exception('no_id');
 	}
 
