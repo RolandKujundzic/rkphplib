@@ -6,7 +6,7 @@ require_once(dirname(dirname(__DIR__)).'/src/Profiler.class.php');
 
 
 $dsn = 'mysqli://unit_test:magic123@tcp+localhost/unit_test';
-$admin_dsn = 'mysqli://root:@tcp+localhost/';
+$admin_dsn = 'mysqli://sql:admin@tcp+localhost/';
 
 
 
@@ -135,7 +135,8 @@ catch (Exception $e) {
 $db = new \rkphplib\MysqlDatabase();
 $db->setDSN($admin_dsn);
 
-if (!$db->hasDatabase()) {
+$dsn_info = \rkphplib\ADatabase::splitDSN($dsn);
+if (!$db->hasDatabase($dsn_info['name'])) {
 	$db->createDatabase($dsn);
 }
 
