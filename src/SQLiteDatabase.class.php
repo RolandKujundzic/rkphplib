@@ -494,7 +494,31 @@ public function getInsertId() {
 /**
  *
  */
+public function lock($tables) {
+  throw new Exception('@ToDo ... ');
+}
+
+
+/**
+ *
+ */
+public function unlock() {
+  throw new Exception('@ToDo ... ');
+}
+
+
+/**
+ *
+ */
 public function getLock($name) {
+  throw new Exception('@ToDo ... ');
+}
+
+
+/**
+ *
+ */
+public function hasLock($name) {
   throw new Exception('@ToDo ... ');
 }
 

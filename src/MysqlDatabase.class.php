@@ -231,22 +231,6 @@ public function dropTable($table) {
 
 
 /**
- *
- */
-public function getLock($name) {
-	throw new Exception('@ToDo ... ');
-}
-
-
-/**
- *
- */
-public function releaseLock($name) {
-	throw new Exception('@ToDo ... ');
-}
-
-
-/**
  * Execute database query.
  *
  * @param string $query
