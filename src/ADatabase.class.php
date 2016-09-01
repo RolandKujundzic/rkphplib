@@ -384,6 +384,42 @@ public static function escape_name($name, $abort = false) {
 
 
 /**
+ * Write lock tables.
+ * @param vectory<string> $tables 
+ */
+abstract public function lock($tables);
+
+
+/**
+ *
+ */
+abstract public function unlock();
+
+
+/**
+ * Get named lock. Use releaseLock($name) to free.
+ * @param string $name
+ * @throws
+ */
+abstract public function getLock($name);
+
+
+/**
+ * True if named lock exists.
+ * @param string $name
+ * @return int 0|1
+ */
+abstract public function hasLock($name);
+
+
+/**
+ * Release lock $name.
+ * @param string $name
+ */
+abstract public function releaseLock($name);
+
+
+/**
  * Return true if result set exists.
  * 
  * @return bool
@@ -575,10 +611,12 @@ public function seek($offset) {
  * 
  * @throw rkphplib\Exception if rownum != 1 
  * @param string $query
+ * @param string $col (default = '')
+ * @return array|string 
  */
-public function selectOne($query) {
+public function selectOne($query, $col = '') {
 	$dbres = $this->select($query, 1);
-	return $dbres[0];
+	return empty($col) ? $dbres[0] : $dbres[0][$col];
 }
 
 

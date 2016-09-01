@@ -127,6 +127,43 @@ catch (Exception $e) {
 }
 
 
+/*
+@ToDo: auto_incr
+
+CREATE TABLE `aaa` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `value` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `n` int(11) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=12634 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+$db = new Database();
+$db->setDSN($settings_DSN);
+
+for ($i = 0; $i < 50; $i++) {
+  $id = $db->auto_incr_insert("INSERT INTO aaa (name) VALUES ('$i')", "aaa", "id");
+  $db->execute("UPDATE aaa SET value='$i' WHERE id='$id'");
+}
+
+for ($i = 0; $i < 50; $i++) {
+  $id = $db->auto_incr_insert("INSERT INTO aaa (n, name) VALUES ('\$detect_max_n', '$i')", "aaa", "n");
+  $db->execute("UPDATE aaa SET value='$i' WHERE n='$id'");
+}
+
+$db->select("SELECT * FROM aaa WHERE name != value");
+
+--> per System Aufruf
+
+php aaa.php &
+php aaa.php &
+php aaa.php &
+php aaa.php &
+
+*/
+
+
+
 /**
  * M A I N
  */

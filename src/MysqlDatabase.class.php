@@ -34,6 +34,49 @@ public function hasResultSet() {
 
 
 /**
+ *
+ */
+public function lock($tables) {
+	throw new Exception('ToDo');
+}
+
+
+/**
+ *
+ */
+public function unlock() {
+	throw new Exception('ToDo');
+}
+
+
+/**
+ *
+ */
+public function getLock($name) {
+	$r = $this->selectOne("SELECT GET_LOCK('lck_$name', 10) AS r", 'r');
+	return intval($r);
+}
+
+
+/**
+ *
+ */
+public function hasLock($name) {
+	$r = $this->selectOne("SELECT IS_FREE_LOCK('lck_$name', 10) AS r", 'r');
+	return !inval($r);
+}
+
+
+/**
+ *
+ */
+public function releaseLock($name) {
+	$r = $this->selectOne("SELECT RELEASE_LOCK('lck_$name') AS r", 'r');
+	return intval($r);
+}
+
+
+/**
  * Connect to mysql database.
  */
 private function _connect() {
@@ -184,6 +227,22 @@ public function createTable($conf) {
  */
 public function dropTable($table) {
 	$this->execute("DROP TABLE IF EXISTS $table");
+}
+
+
+/**
+ *
+ */
+public function getLock($name) {
+	throw new Exception('@ToDo ... ');
+}
+
+
+/**
+ *
+ */
+public function releaseLock($name) {
+	throw new Exception('@ToDo ... ');
 }
 
 

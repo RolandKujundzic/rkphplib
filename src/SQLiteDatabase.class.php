@@ -490,5 +490,22 @@ public function getInsertId() {
 	throw new Exception('ToDo ...');
 }
 
+
+/**
+ *
+ */
+public function getLock($name) {
+  throw new Exception('@ToDo ... ');
+}
+
+
+/**
+ *
+ */
+public function releaseLock($name) {
+  throw new Exception('@ToDo ... ');
+}
+
+
 }
 
