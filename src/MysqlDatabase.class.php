@@ -240,7 +240,7 @@ public function execute($query, $use_result = false) {
 
 	if (is_array($query)) {
 		if ($use_result) {
-			throw new Exception('ToDo: exec prepared query + use result');
+			$stmt = $this->_exec_stmt($query);
 		}
 		else {
 			$stmt = $this->_exec_stmt($query);
@@ -276,10 +276,24 @@ public function getNextRow() {
 		throw new Exception('no resultset');
   }
 
-	$row = $this->_dbres->fetch_assoc();
+	$is_prepared = $this->_dbres instanceof mysqli_stmt;
+
+	if ($is_prepared) {
+		// see $this->_fetch_stmt()
+		throw new Exception('ToDo');
+	}
+	else {
+		$row = $this->_dbres->fetch_assoc();
+	}
 
 	if (is_null($row)) {
-		$this->_dbres->free();
+		if ($is_prepared) {
+			$this->_dbres->close();
+		}
+		else {
+			$this->_dbres->free();
+		}
+
 		$this->_dbres = null;
 	}
 
