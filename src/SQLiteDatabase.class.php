@@ -66,8 +66,9 @@ public function close() {
  * Execute query.
  *
  * @param string $query
+ * @param bool $use_result (default = false)
  */
-public function execute($query) {
+public function execute($query, $use_result = false) {
 
 	if (is_array($query)) {
 		$stmt = $this->_exec_stmt($query);
@@ -80,6 +81,28 @@ public function execute($query) {
 			throw new Exception('failed to execute sql query', $query."\n".$this->_db->lastErrorMsg());
 		}
 	}
+}
+
+
+/**
+ * Return next row (or NULL).
+ * 
+ * @throws if no resultset
+ * @return map<string:string>|null
+ */
+public function getNextRow() {
+	throw new Exception('ToDo');
+}
+
+
+/**
+ * Return number of rows in resultset.
+ * 
+ * @throws if no resultset
+ * @return int
+ */
+public function getRowNumber() {
+	throw new Exception('ToDo');
 }
 
 
