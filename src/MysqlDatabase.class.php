@@ -234,12 +234,18 @@ public function dropTable($table) {
  * Execute database query.
  *
  * @param string $query
+ * @param bool $use_result (default = false)
  */
-public function execute($query) {
+public function execute($query, $use_result = false) {
 
 	if (is_array($query)) {
-		$stmt = $this->_exec_stmt($query);
-		$stmt->close();
+		if ($use_result) {
+			throw new Exception('ToDo: exec prepared query + use result');
+		}
+		else {
+			$stmt = $this->_exec_stmt($query);
+			$stmt->close();
+		}
 	}
 	else {
 		$this->_connect();
@@ -247,7 +253,53 @@ public function execute($query) {
 		if ($this->_db->real_query($query) === false) {
 			throw new Exception('failed to execute sql query', $query."\n(".$this->_db->errno.') '.$this->_db->error);
 		}
+
+		if ($use_result) {
+			if (($this->_dbres = $this->_db->use_result()) === false) {
+				throw new Exception('failed to use query result', $query."\n(".$this->_db->errno.') '.$this->_db->error);
+			}
+		}
 	}
+}
+
+
+/**
+ * Return next row (or NULL).
+ * Free resultset when null is retrieved.
+ *
+ * @throws if no resultset
+ * @return map<string:string>|null
+ */
+public function getNextRow() {
+
+	if (!is_object($this->_dbres)) {
+		throw new Exception('no resultset');
+  }
+
+	$row = $this->_dbres->fetch_assoc();
+
+	if (is_null($row)) {
+		$this->_dbres->free();
+		$this->_dbres = null;
+	}
+
+	return $row;
+}
+
+
+/**
+ * Return number of rows in resultset.
+ * 
+ * @throws if no resultset
+ * @return int
+ */
+public function getRowNumber() {
+
+	if (!is_object($this->_dbres)) {
+		throw new Exception('no resultset');
+  }
+
+	return $this->_dbres->num_rows;
 }
 
 
@@ -333,6 +385,7 @@ private function _fetch($query, $rbind = null, $rcount = 0) {
 
 	$this->_connect();
 
+	// query = real_query + store_result
 	if (($dbres = $this->_db->query($query)) === false) {
 		throw new Exception('failed to execute sql query', $query."\n(".$this->_db->errno.') '.$this->_db->error);
 	}
@@ -394,7 +447,7 @@ private function _fetch($query, $rbind = null, $rcount = 0) {
 		}
 	}
 
-	$dbres->close();
+	$dbres->free();
 
 	return $res;
 }
