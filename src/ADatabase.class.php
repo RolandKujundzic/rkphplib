@@ -536,8 +536,27 @@ abstract public function esc($txt);
  * Execute query (string or prepared statement).
  *
  * @param string|object $query
+ * @param bool $use_result (default = false)
  */
-abstract public function execute($query);
+abstract public function execute($query, $use_result = false);
+
+
+/**
+ * Return next row (or NULL).
+ * 
+ * @throws if no resultset
+ * @return map<string:string>|null
+ */
+abstract public function getNextRow();
+
+
+/**
+ * Return number of rows in resultset.
+ * 
+ * @throws if no resultset
+ * @return int
+ */
+abstract public function getRowNumber();
 
 
 /**
