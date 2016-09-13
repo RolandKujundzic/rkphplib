@@ -15,57 +15,61 @@ use rkphplib\Exception;
 abstract class ASession {
 
 /** @var map $conf */
-protected $conf = [ 'name' => 'ASession',
-	'type' => 'ASession',
-	'host' => '',
-	'script' => '',
-	'docroot' => '',
-	'scope' => 'docroot',
-	'ttl' => 7200,
-	'expire' => 3600,
-	'max_duration' => 172000,
-	'start' => 0,
-	'lchange' => 0,
-	'reload' => 0 ];
+protected $conf = [ 'name' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800 ];
 
 
 /**
- * Set session configuration. Use empty map as $conf to initialize. Parameter:
+ * Initialize session metadata. Only on first session start. Parameter:
  *
- *  name: Session Name (default = ASession) - required
- *	type: login type/group (default = ASession) - required
+ *  script: $_SERVER['SCRIPT_FILENAME']
+ *  docroot: $_SERVER['DOCUMENT_ROOT']
+ *  host: $_SERVER['HTTP_HOST']
+ *  start: time()
+ *  last: time()
+ *
+ */
+public function initMeta() {
+
+	if ($this->hasMeta('start')) {
+		return;
+	}
+
+	$script = empty($_SERVER['SCRIPT_FILENAME']) ? '' : $_SERVER['SCRIPT_FILENAME'];
+	$this->setMeta('script', $script);
+
+	$docroot = empty($_SERVER['DOCUMENT_ROOT']) ? '' : $_SERVER['DOCUMENT_ROOT'];
+	$this->setMeta('docroot', $docroot);
+
+	$host = empty($_SERVER['HTTP_HOST']) ? '' : $_SERVER['HTTP_HOST'];
+	$this->setMeta('host', $host);
+
+	$this->setMeta('start', time());
+	$this->setMeta('last', time());
+}
+
+
+/**
+ * Set session configuration. Use $conf = [] to initialize. Required Parameter:
+ *
+ *  name: Session Name - required
  *  scope: file|dir|subdir|host|docroot (default = docroot)
- *  ttl: expiration date increase [1-14400] after activity (default = 7200 sec = 2 h)
- *  expire: expiration after inactivity [1-14400] (default = 3600 = 1 h)
- *	max_duration: maximum session duration [1, 345600] (default = 172000 = 4 h)
+ *  inactive: seconds of inactivity. Session expires after lchange + inactive. Range [1-14400] (default = 7200 = 2 h)
+ *	ttl: time to live in seconds. Session expires after start + ttl. Range [1, 345600] (default = 172800 = 48 h)
  * 
- *  Internal Parameter (set when first called):
- *
- *  script: $_SERVER[SCRIPT_FILENAME]
- *  host: $_SERVER[HTTP_HOST]
- *  docroot: $_SERVER[DOCUMENT_ROOT]
- *  start: now()
- *  lchange: now()
- *  reload: now()
+ *  Check inactive and ttl with hasExpired().
  *
  * @throws rkphplib\Exception if check fails
  * @param map $conf
  */
-public function setConf($conf) {
+protected function setConf($conf) {
 
-	$default = [ 'name' => 'ASession', 'type' => 'ASession', 'scope' => 'docroot', 'ttl' => 7200, 'expire' => 3600, 'max_duration' => 172000 ];
-	$default['script'] = $_SERVER['SCRIPT_FILENAME'];
-	$default['docroot'] = $_SERVER['DOCUMENT_ROOT'];
-	$default['host'] = $_SERVER['HTTP_HOST'];
-	$default['start'] = time();
-	$default['reload'] = time();
-	$default['lchange'] = time();
+	$this->conf = [ 'name' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800 ];
 
-	foreach ($default as $key => $value) {
-		if (empty($this->conf[$key])) {
-			$this->conf[$key] = $value;
-		}
+	if (empty($conf['name'])) {
+		throw new Exception('name is empty');
 	}
+
+	$this->conf['name'] = $conf['name'];
 
 	if (isset($conf['scope'])) {
 		$allow_scope = array('file', 'dir', 'subdir', 'host', 'docroot');
@@ -76,24 +80,13 @@ public function setConf($conf) {
 		$this->conf['scope'] = $conf['scope'];
 	}
 
-	$key_list = [ 'name', 'type' ];
-	foreach ($key_list as $key) {
-		if (isset($conf[$key])) {
-			if (empty($conf[$key])) {
-				throw new Exception($key.' is empty');
-			}
-
-			$this->conf[$key] = $conf[$key];
-		}
-	}
-
-	$time_keys = [ 'ttl' => [1, 14400], 'expire' => [1, 21600], 'max_duration' => [1, 345600] ];
+	$time_keys = [ 'inactive' => [1, 21600], 'ttl' => [1, 345600] ];
 	foreach ($time_keys as $key => $range) {
 		if (isset($conf[$key])) {
 			$sec = intval($conf[$key]);
 
 			if ($sec < $range[0] || $sec > $range[1]) {
-				throw new Exception("parameter outside range", $sec." not in [".$range[0].",".$range[1]."]");
+				throw new Exception("parameter $key outside of range", $sec." not in [".$range[0].",".$range[1]."]");
 			}
 
 			$this->conf[$key] = $conf[$key];
@@ -103,54 +96,93 @@ public function setConf($conf) {
 
 
 /**
- * Return session key. Key is md5 value and depends on conf.scope and conf.name.
- * If scope and name is empty it is md5(ASession:any).
+ * Return true if scope is valid.
  *
- * @return string
+ * @throws if initMeta was not called
+ * @return bool
  */
-public function getSessionKey() {
-	$scope = '';
+public function validScope() {
 
-  switch ($this->conf['scope']) {
+	$script = empty($_SERVER['SCRIPT_FILENAME']) ? '' : $_SERVER['SCRIPT_FILENAME'];
+	$host = empty($_SERVER['HTTP_HOST']) ? '' : $_SERVER['HTTP_HOST'];
+	$docroot = empty($_SERVER['DOCUMENT_ROOT']) ? '' : $_SERVER['DOCUMENT_ROOT'];
+	$ok = false;
+
+	switch ($this->conf['scope']) {
 		case 'file':
-      if ($_SERVER['SCRIPT_FILENAME'] == $this->conf['script']) {
-				$scope = md5($_SERVER['SCRIPT_FILENAME']);	
+			if ($script == $this->getMeta('script')) {
+				$ok = true;
 			}
 			break;
 		case "dir":
-			if (dirname($_SERVER['SCRIPT_FILENAME']) == dirname($this->conf['script'])) {
-				$scope = md5(dirname($_SERVER['SCRIPT_FILENAME']));
+			if (dirname($script) == dirname($this->getMeta('script')) {
+				$ok = true;
 			}
 			break;
 		case "subdir":
-			if (mb_strpos($_SERVER['SCRIPT_FILENAME'], dirname($this->conf['script'])) === 0) {
-				$scope = md5(dirname($this->conf['script']).'/*');
+			if (mb_strpos($script, dirname($this->getMeta('script')) === 0) {
+				$ok = true;
 			}
 			break;
 		case "host":
-			if ($this->conf['host'] == $_SERVER['HTTP_HOST']) {
-				$scope = md5($this->conf['host']);
+			if ($host == $this->getMeta('host')) {
+				$ok = true;
 			}
 			break;
 		case 'docroot':
-			if ($this->conf['docroot'] == $_SERVER['DOCUMENT_ROOT']) {
-				$scope = md5($this->conf['docroot'].'/*');
+			if ($docroot == $this->getMeta('docroot')) {
+				$ok = true;
 			}
 			break;
 	}
 
-	if (empty($scope)) {
-		throw new Exception('invalid scope', print_r($this->conf, true));
+	return $ok;
+}
+
+
+/**
+ * Return expiration reason if session has become invalid. Update lchange.
+ * 
+ * @throws if initMeta was not called
+ * @return string ttl|inactive|empty = session is valid
+ */
+public function hasExpired() {
+
+	$now = time();
+	$expire_reason = '';
+
+	if ($now - $this->getMeta('start') > $this->conf['ttl']) {
+		$expire_reason = 'ttl';
+	}
+	else if ($now - $this->getMeta('last_change') > $this->conf['inactive']) {
+		$expire_reason = 'inactive';
+	}
+	else {
+		$this->setMeta('last_change', time());
 	}
 
-	return md5($this->conf['name'].':'.$this->conf['type'].':'.$scope);
+	return $expire_reason;
+}
+
+
+/**
+ * Return session key. Key is md5(conf.name:conf.scope).
+ *
+ * @throws if setConf was not called
+ * @return string
+ */
+public function getSessionKey() {
+
+	if (empty($this->conf['name'])) {
+		throw new Exception('call setConf first');
+	}
+
+	return md5($this->conf['name'].':'.$this->conf['scope']);
 }
 
 
 /**
  * Initialize session.
- *
- * Call setConf() or use $conf for custom session.
  *
  * @param map $conf (default = array())
  * @throws rkphplib\Exception if error
@@ -158,6 +190,34 @@ public function getSessionKey() {
  * @return map
  */
 abstract public function init($conf = array());
+
+
+/**
+ * Set session metadata.
+ *
+ * @param string $key
+ * @param any $value
+ */
+abstract public function setMeta($key, $value);
+
+
+/**
+ * Get session metadata.
+ * 
+ * @throws if key is not set
+ * @param string $key
+ * @return any
+ */
+abstract public function getMeta($key);
+
+
+/**
+ * True if session metadata key exists.
+ * 
+ * @param string $key
+ * @return bool
+ */
+abstract public function hasMeta($key);
 
 
 /**
