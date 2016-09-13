@@ -29,4 +29,16 @@ $th->compare('has|get()', [ $sess->has('abc'), $sess->get('abc') ], [ true, 3 ])
 $sess->setHash([ 'abc' => 5, 'x' => 'a' ]);
 $th->compareHash('getHash()', $sess->getHash(), [ 'abc' => 5, 'x' => 'a' ]);
 
-$th->compare('getJSRefresh()', [ $sess->getJSRefresh() ], [ $js ]);
+$js = <<<END
+window.setInterval( function() {
+	$.ajax({
+		cache: false,
+		type: "GET",
+			url: "test.php"
+			
+    });
+}, 600000);
+END;
+ 
+$th->compare('getJSRefresh()', [ $sess->getJSRefresh('test.php') ], [ $js ]);
+
