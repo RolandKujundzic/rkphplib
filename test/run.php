@@ -12,6 +12,7 @@ $th->runTest('DateTime/run.php');
 $th->runTest('Tokenizer/run.php');
 $th->runTest('Dir/run.php');
 $th->runTest('TBase/run.php'); // ToDo: track exception as ok
+$th->runTest('Session/run.php');
 $th->result();
 
 // ToDo ...

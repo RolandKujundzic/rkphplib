@@ -15,7 +15,41 @@ use rkphplib\Exception;
 abstract class ASession {
 
 /** @var map $conf */
-protected $conf = [ 'name' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800 ];
+protected $conf = [];
+
+
+/**
+ * Return javascript code (window.setInterval(...), JQuery required).
+ * Implement function php_session_refresh(data) { ... } (data = OK or EXPIRED)
+ * and set $on_success = 'php_session_refresh' if you want to track refresh success.
+ *
+ * @param string $url (urlescaped ajax url)
+ * @param string $on_success (default = '')
+ * @param int $minutes (default = 10)
+ * @return string
+ */
+public function getJSRefresh($url, $on_success = '', $minutes = 10) {
+
+	$millisec = 60000 * $minutes;
+	$success = '';
+
+	if ($on_success) {
+		$success = ", success: $on_success";
+	}
+
+	$code = <<<END
+window.setInterval( function() {
+	$.ajax({
+		cache: false,
+		type: "GET",
+			url: "{$url}"
+			{$success}
+    });
+}, {$millisec});
+END;
+
+	return $code;
+}
 
 
 /**
@@ -30,7 +64,7 @@ protected $conf = [ 'name' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl
  */
 public function initMeta() {
 
-	if ($this->hasMeta('start')) {
+	if (!empty($this->conf['init_meta'])) {
 		return;
 	}
 
@@ -45,6 +79,28 @@ public function initMeta() {
 
 	$this->setMeta('start', time());
 	$this->setMeta('last', time());
+
+	$this->conf['init_meta'] = 1;
+}
+
+
+/**
+ * Get configuration value. Parameter: name, scope, inactive, ttl.
+ * 
+ * @param string $key
+ * @return int|string
+ */
+public function getConf($key) {
+
+	if (count($this->conf) === 0) {
+		throw new Exception('call setConf first');
+	}
+
+	if (!isset($this->conf[$key])) {
+		throw new Exception('no such configuration key', $key);
+	}
+
+	return $this->conf[$key];
 }
 
 
@@ -63,7 +119,10 @@ public function initMeta() {
  */
 protected function setConf($conf) {
 
-	$this->conf = [ 'name' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800 ];
+	$default = [ 'name' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => 0 ];
+	foreach ($default as $key => $value) {
+		$this->conf[$key] = $value;
+	}
 
 	if (empty($conf['name'])) {
 		throw new Exception('name is empty');
@@ -72,7 +131,7 @@ protected function setConf($conf) {
 	$this->conf['name'] = $conf['name'];
 
 	if (isset($conf['scope'])) {
-		$allow_scope = array('file', 'dir', 'subdir', 'host', 'docroot');
+		$allow_scope = array('script', 'dir', 'subdir', 'host', 'docroot');
 		if (!in_array($conf['scope'], $allow_scope)) {
 			throw new Exception('no such scope', $conf['scope']);
 		}
@@ -98,10 +157,14 @@ protected function setConf($conf) {
 /**
  * Return true if scope is valid.
  *
- * @throws if initMeta was not called
+ * @throws if setConf or initMeta was not called
  * @return bool
  */
 public function validScope() {
+
+	if (empty($this->conf['scope'])) {
+		throw new Exception('call setConf first');
+	}
 
 	$script = empty($_SERVER['SCRIPT_FILENAME']) ? '' : $_SERVER['SCRIPT_FILENAME'];
 	$host = empty($_SERVER['HTTP_HOST']) ? '' : $_SERVER['HTTP_HOST'];
@@ -109,18 +172,18 @@ public function validScope() {
 	$ok = false;
 
 	switch ($this->conf['scope']) {
-		case 'file':
+		case 'script':
 			if ($script == $this->getMeta('script')) {
 				$ok = true;
 			}
 			break;
 		case "dir":
-			if (dirname($script) == dirname($this->getMeta('script')) {
+			if (dirname($script) == dirname($this->getMeta('script'))) {
 				$ok = true;
 			}
 			break;
 		case "subdir":
-			if (mb_strpos($script, dirname($this->getMeta('script')) === 0) {
+			if (mb_strpos(dirname($script), dirname($this->getMeta('script'))) === 0) {
 				$ok = true;
 			}
 			break;
@@ -154,11 +217,11 @@ public function hasExpired() {
 	if ($now - $this->getMeta('start') > $this->conf['ttl']) {
 		$expire_reason = 'ttl';
 	}
-	else if ($now - $this->getMeta('last_change') > $this->conf['inactive']) {
+	else if ($now - $this->getMeta('last') > $this->conf['inactive']) {
 		$expire_reason = 'inactive';
 	}
 	else {
-		$this->setMeta('last_change', time());
+		$this->setMeta('last', time());
 	}
 
 	return $expire_reason;
@@ -166,18 +229,25 @@ public function hasExpired() {
 
 
 /**
- * Return session key. Key is md5(conf.name:conf.scope).
+ * Return (meta) session key. Key is md5(conf.name:conf.scope)[_meta].
  *
  * @throws if setConf was not called
+ * @param bool $meta (default = true)
  * @return string
  */
-public function getSessionKey() {
+public function getSessionKey($meta = false) {
 
 	if (empty($this->conf['name'])) {
 		throw new Exception('call setConf first');
 	}
 
-	return md5($this->conf['name'].':'.$this->conf['scope']);
+	$skey = md5($this->conf['name'].':'.$this->conf['scope']);
+
+	if ($meta) {
+		$skey .= '_meta';
+	}
+
+	return $skey;
 }
 
 
@@ -189,11 +259,56 @@ public function getSessionKey() {
  * @see setConf
  * @return map
  */
-abstract public function init($conf = array());
+abstract public function init($conf);
 
 
 /**
- * Set session metadata.
+ * Set session value.
+ *
+ * @param string $key
+ * @param any $value
+ */
+abstract public function set($key, $value);
+
+
+/**
+ * Set session map. Overwrite existing.
+ *
+ * @param map<string:any> $key
+ * @param any $value
+ */
+abstract public function setHash($p);
+
+
+/**
+ * Get session value.
+ * 
+ * @throws if key is not set and required
+ * @param string $key
+ * @return any
+ */
+abstract public function get($key, $required = true);
+
+
+/**
+ * Get session hash.
+ * 
+ * @return map<string:any>
+ */
+abstract public function getHash();
+
+
+/**
+ * True if session key exists.
+ * 
+ * @param string $key
+ * @return bool
+ */
+abstract public function has($key);
+
+
+/**
+ * Set session metadata value.
  *
  * @param string $key
  * @param any $value
@@ -202,13 +317,21 @@ abstract public function setMeta($key, $value);
 
 
 /**
- * Get session metadata.
+ * Get session metadata value.
  * 
  * @throws if key is not set
  * @param string $key
  * @return any
  */
 abstract public function getMeta($key);
+
+
+/**
+ * Get session metadata hash.
+ * 
+ * @return map<string:any>
+ */
+abstract public function getMetaHash();
 
 
 /**
@@ -221,7 +344,7 @@ abstract public function hasMeta($key);
 
 
 /**
- * Destroy session.
+ * Destroy session data.
  */
 abstract public function destroy();
 

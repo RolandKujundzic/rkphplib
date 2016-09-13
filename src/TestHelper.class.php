@@ -300,11 +300,11 @@ public function callTest($func, $arg, $result) {
 
 
 /**
- * Compare output with expected result. Result hash may contain lass keys than output (e.g. date key).
+ * Compare output with expected result. Result vector may contain lass keys than output (e.g. ignore date values).
  *
  * @param string $msg
- * @param <vector:any> $out_list
- * @param <vector:any> $ok_list
+ * @param vector<any> $out_list
+ * @param vector<any> $ok_list
  */
 public function compare($msg, $out_list, $ok_list) {
 	$this->_log($msg.": ", 0);
@@ -354,6 +354,45 @@ public function compare($msg, $out_list, $ok_list) {
   else {
     $this->_log("$ok/$n OK and $err ERROR");
   	$this->_tc['error']++;
+  }
+}
+
+
+/**
+ * Compare hash output with expected result. Result hash may contain lass keys than output (e.g. ignore date values).
+ *
+ * @param string $msg
+ * @param map<string:any> $out
+ * @param map<string:any> $ok
+ */
+public function compareHash($msg, $out, $ok) {
+	$this->_log($msg.": ", 0);
+	$this->_tc['num']++;
+	$err = 0;
+
+	foreach ($ok as $key => $ok_val) {
+		if (!isset($out[$key])) {
+			$this->_error_cmp("(Missing $key)", '', $ok_val);
+			$err++;
+		}
+		else {
+			$out_val = $out[$key];
+			if ($out_val !== $ok_val) {
+				$this->_error_cmp("(Compare $key)", $out_val, $ok_val);
+				$err++;
+			}
+		}
+	}
+
+	$n = count($ok);
+
+  if ($err) {
+    $this->_log(($n - $err)."/$n OK and $err ERROR");
+  	$this->_tc['error']++;
+	}
+  else {
+		$this->_log("$n/$n OK");
+  	$this->_tc['ok']++;
   }
 }
 
