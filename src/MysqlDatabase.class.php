@@ -113,10 +113,15 @@ private function _connect() {
 		}
 	}
 
-	if (!$this->_db->set_charset('utf8mb4')) {
-		throw new Exception('set charset utf8mb4 failed');
+	if (!empty(self::$charset) && !$this->_db->set_charset(self::$charset)) {
+		// $this->execute("SET names '".self::escape(self::$charset)."'");
+		throw new Exception('set charset failed', self::$charset);
 	}
 
+	if (!empty(self::$time_zone)) {
+		$this->execute("SET time_zone = '".self::escape(self::$time_zone)."'");
+	}
+	
 	$this->_conn_ttl = time() + 5 * 60; // re-check connection in 5 minutes ...
 }
 
@@ -168,6 +173,10 @@ public function createDatabase($dsn = '') {
 /**
  * 
  */
+public function dropDatabase($dsn = '') {
+	$db = $this->getDSN(true, $dsn);
+	$name = self::escape_name($db['name']);
+	$login = self::escape_name($db['login']);
 public function dropDatabase($dsn = '') {
 	$db = $this->getDSN(true, $dsn);
 	$name = self::escape_name($db['name']);
@@ -439,6 +448,10 @@ private function _fetch($query, $rbind = null, $rcount = 0) {
 
 	for ($i = 0; $i < $end; $i++) {
 		$dbrow = $dbres->fetch_assoc();
+
+		if (!empty($rbind[0]) && !isset($dbrow[$rbind[0]]) && !array_key_exists($rbind[0], $dbrow)) {
+			throw new Exception('no such column ['.$rbind[0].']', $rbind[0]);
+		}
 
 		if ($bl === 1) {
 			array_push($res, $dbrow[$rbind[0]]);
@@ -736,7 +749,3 @@ public function getInsertId() {
 
 	return $this->_db->insert_id;
 }
-
-
-}
-

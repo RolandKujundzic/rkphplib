@@ -43,6 +43,12 @@ const UPDATE_CASCADE = 128;
 /** @var bool $use_prepared */
 public static $use_prepared = false;
 
+/** @var string $time_zone (default = empty = use db default, Example: 'Europe/Berlin') */ 
+public static $time_zone = '';
+
+/** @var string $charset (default = empty = use db default, Example: 'utf8', 'utf8mb4') */
+public static $charset = '';
+
 /** @var string $_dsn */
 protected $_dsn = null;
 
