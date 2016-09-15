@@ -3,6 +3,7 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/ASession.class.php');
+require_once(__DIR__.'/lib/redirect.php');
 
 use rkphplib\Exception;
 
@@ -18,17 +19,22 @@ class Session extends ASession {
 
 
 /**
- * Initialize session. Parameter: name, scope(=docroot), ttl(=172800), invalid(=7200).
+ * Initialize session. Parameter: name, scope(=docroot), ttl(=172800), inactive(=7200), redirect_[forbidden|expired](='').
  * @param map $conf
  */
 public function init($conf) {
 	$this->setConf($conf);
 
+	$sess_ttl = ini_get('session.gc_maxlifetime');
+	if ($sess_ttl > 0 && $sess_ttl < $this->conf['inactive']) {
+		// avoid session garbage collection during session lifetime 
+		ini_set('session.gc_maxlifetime', $this->conf['inactive']);
+	}
+
 	if (!session_id()) {
 		session_start();
 	}
 
-	$this->setConf($conf);
 	$skey = $this->getSessionKey();
 	$skey_meta =$this->getSessionKey(true); 
 
@@ -43,11 +49,23 @@ public function init($conf) {
 	$this->initMeta();
 
 	if (!$this->validScope()) {
-		throw new Exception('forbidden');
+		if (!empty($this->conf['redirect_forbidden'])) {
+			\rkphplib\lib\redirect($this->conf['redirect_forbidden']);
+		}
+		else {
+			throw new Exception('forbidden');
+		}
 	}
 
 	if ($this->hasExpired()) {
-		throw new Exception('expired');
+		$this->destroy();
+
+		if (!empty($this->conf['redirect_expired'])) {
+			\rkphplib\lib\redirect($this->conf['redirect_expired']);
+		}
+		else {
+			throw new Exception('expired');
+		}
 	}
 }
 
