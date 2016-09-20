@@ -177,10 +177,6 @@ public function dropDatabase($dsn = '') {
 	$db = $this->getDSN(true, $dsn);
 	$name = self::escape_name($db['name']);
 	$login = self::escape_name($db['login']);
-public function dropDatabase($dsn = '') {
-	$db = $this->getDSN(true, $dsn);
-	$name = self::escape_name($db['name']);
-	$login = self::escape_name($db['login']);
 	$host = self::escape_name($db['host']);
 
 	$this->execute("DROP DATABASE IF EXISTS $name");
@@ -749,3 +745,7 @@ public function getInsertId() {
 
 	return $this->_db->insert_id;
 }
+
+
+}
+
