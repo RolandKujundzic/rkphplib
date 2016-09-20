@@ -108,7 +108,7 @@ public static function remove($path, $must_exist = true) {
 		return;
 	}
 
-	if (FSEntry::isDir($path) && FSEntry::isLink($path, false)) {
+	if (FSEntry::isLink($path, false)) {
 		FSEntry::unlink($path);
 		return;
 	}
