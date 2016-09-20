@@ -64,6 +64,31 @@ public static function exists($path, $required = false) {
 
 
 /**
+ * Return last modified. 
+ *
+ * Return Y-m-d H:i:s instead of unix timestamp if $sql_ts is true.
+ *
+ * @param string $file
+ * @param bool $sql_ts (default = false) 
+ * @return int|string
+ */
+public static function lastModified($path, $sql_ts = false) {
+
+  FSEntry::isDir($path);
+
+  if (($res = filemtime($path)) === false) {
+    throw new Exception('dir last modified failed', $file);
+  }
+
+  if ($sql_ts) {
+    $res = date('Y-m-d H:i:s', $res);
+  }
+
+  return $res;
+}
+
+
+/**
  * Remove directory.
  *
  * @param string $path
