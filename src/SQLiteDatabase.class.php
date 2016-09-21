@@ -96,6 +96,22 @@ public function getTableChecksum($table, $native = false) {
 
 
 /**
+ * Return table status. Result keys (there can be more keys):
+ * 
+ *  - rows: number of rows
+ *  - auto_increment: name of auto increment column
+ *  - create_time: sql-timestamp
+ * 
+ * @param string $table 
+ * @throws
+ * @return map<string:string>
+ */
+public function getTableStatus($table) {
+	throw new Exception('ToDo');
+}
+
+
+/**
  * Return next row (or NULL).
  * 
  * @throws if no resultset
