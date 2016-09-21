@@ -747,5 +747,16 @@ public function getInsertId() {
 }
 
 
+/**
+ * Return table data checksum.
+ *
+ * @param string $table
+ * @return string
+ */
+public function getTableChecksum($table) {
+	return $this->_db->selectOne('CHECKSUM TABLE '.self::escape_name($table), 'Checksum');
+}
+
+
 }
 

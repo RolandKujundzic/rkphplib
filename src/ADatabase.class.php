@@ -693,6 +693,15 @@ abstract public function select($query, $res_count = 0);
 
 
 /**
+ * Return table data checksum.
+ *
+ * @param string $table
+ * @return string
+ */
+abstract public function getTableChecksum($table);
+
+
+/**
  * Set offset for following select* function.
  *
  * @param int $offset

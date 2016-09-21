@@ -85,6 +85,17 @@ public function execute($query, $use_result = false) {
 
 
 /**
+ * Return table data checksum.
+ *
+ * @param string $table
+ * @return string
+ */
+public function getTableChecksum($table) {
+	throw new Exception('ToDo');
+}
+
+
+/**
  * Return next row (or NULL).
  * 
  * @throws if no resultset
