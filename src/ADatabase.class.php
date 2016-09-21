@@ -55,6 +55,9 @@ protected $_dsn = null;
 /** @var map $_query */
 protected $_query = [];
 
+/** @var map $_qinfo */
+protected $_qinfo = [];
+
 /** @var map $_create_conf */
 protected $_create_conf = [];
 
@@ -175,6 +178,69 @@ public static function splitDSN($dsn) {
 }
 
 
+/*
+ * Set query extra information ($info), e.g.:
+ * 
+ * - type: select, insert, update, delete, alter, create, drop, show, ...
+ * - auto_increment: id (name of auto_increment column)
+ * - table: name of table
+ * - master_query: INSERT INTO table (id, last_modified, login, password) values (0, null, CRC32(RAND()), CRC32(RAND())) 
+ *
+ * @throws 
+ * @param string $qkey
+ * @param map<string:any> $info
+ */
+public function setQueryInfo($qkey, $info) {
+	if (empty($qkey)) {
+		throw new Exception('empty query key');
+	}
+
+	if (!is_array($info) || count($info) === 0) {
+		throw new Exception('invalid query info', $qkey);
+	}
+
+	$info_keys = [ 'type', 'auto_increment', 'table', 'master_query' ];
+
+	foreach ($info as $key => $value) {
+		if (!in_array($key, $info_keys)) {
+			throw new Exception('invalid query info', "key=$key value=$value");
+		}
+	}
+
+	$this->_qinfo[$qkey] = $info;
+}
+
+
+/**
+ * Return query info map (or value if $ikey is set).
+ *
+ * @param string $qkey 
+ * @param string $ikey (default = '')
+ * @see setQueryInfo()
+ * @throws 
+ * @return any|map<string:any> 
+ */
+public function getQueryInfo($qkey, $ikey = '') {
+	if (empty($qkey)) {
+		throw new Exception('empty query key');
+	}
+
+	if (!isset($this->_qinfo[$qkey])) {
+		throw new Exception('no query info', $qkey);
+	}
+
+	if (empty($ikey)) {
+		return $this->_qinfo[$qkey];
+	}
+
+	if (!isset($this->_qinfo[$qkey][$ikey])) {
+		throw new Exception('no query info key', "qkey=$qkey ikey=$ikey");
+	}
+
+	return $this->_qinfo[$qkey][$ikey];
+}
+
+
 /**
  * Define query with placeholders. 
  *
@@ -189,15 +255,20 @@ public static function splitDSN($dsn) {
  * @throws rkphplib\Exception if error
  * @param string $qkey
  * @param string $query
+ * @param map<string:any> $info (default = [], see setQueryInfo())
  */
-public function setQuery($qkey, $query) {
+public function setQuery($qkey, $query, $info = []) {
 
 	if (empty($qkey)) {
 		throw new Exception('empty query key');
 	}
 
 	if (empty($query)) {
-		throw new Exception('empty query');
+		throw new Exception('empty query', $qkey);
+	}
+
+	if (count($info) > 0) {
+		$this->setQueryInfo($qkey, $info);
 	}
 
 	if (mb_strpos($query, '{:=') === false) {
