@@ -707,7 +707,7 @@ public function getTableList($reload_cache = false) {
  * Return table description.
  * 
  * @param string $table
- * @return map
+ * @return map<string:map> keys are column names
  */
 public function getTableDesc($table) {
 
@@ -751,10 +751,18 @@ public function getInsertId() {
  * Return table data checksum.
  *
  * @param string $table
+ * @param bool $native (default = false)
  * @return string
  */
-public function getTableChecksum($table) {
-	return $this->_db->selectOne('CHECKSUM TABLE '.self::escape_name($table), 'Checksum');
+public function getTableChecksum($table, $native = false) {
+	$tname = self::escape_name($table);
+
+	if ($native) {
+		return $this->_db->selectOne('CHECKSUM TABLE '.$tname, 'Checksum');
+	}
+
+	$column_names = join(',', array_keys(getTableDesc($table)));
+	return $this->_db->selectOne("SELECT MD5(GROUP_CONCAT(CONCAT_WS('|',$column_names) SEPARATOR '|#|')) AS md5 FROM $tname", 'md5');
 }
 
 

@@ -696,9 +696,10 @@ abstract public function select($query, $res_count = 0);
  * Return table data checksum.
  *
  * @param string $table
+ * @param bool $native (default = false)
  * @return string
  */
-abstract public function getTableChecksum($table);
+abstract public function getTableChecksum($table, $native = false);
 
 
 /**

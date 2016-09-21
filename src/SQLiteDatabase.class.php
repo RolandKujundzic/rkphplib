@@ -90,7 +90,7 @@ public function execute($query, $use_result = false) {
  * @param string $table
  * @return string
  */
-public function getTableChecksum($table) {
+public function getTableChecksum($table, $native = false) {
 	throw new Exception('ToDo');
 }
 
