@@ -111,6 +111,8 @@ public function getConf($key) {
  *  scope: file|dir|subdir|host|docroot (default = docroot)
  *  inactive: seconds of inactivity. Session expires after lchange + inactive. Range [1-14400] (default = 7200 = 2 h)
  *	ttl: time to live in seconds. Session expires after start + ttl. Range [1, 345600] (default = 172800 = 48 h)
+ *  redirect_expired: 
+ *  redirect_forbidden:
  * 
  *  Check inactive and ttl with hasExpired().
  *
@@ -119,7 +121,9 @@ public function getConf($key) {
  */
 protected function setConf($conf) {
 
-	$default = [ 'name' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => 0 ];
+	$default = [ 'name' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => 0, 
+		'redirect_expired' => '',  'redirect_forbidden' => '' ];
+
 	foreach ($default as $key => $value) {
 		$this->conf[$key] = $value;
 	}
