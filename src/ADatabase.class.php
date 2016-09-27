@@ -717,6 +717,16 @@ abstract public function getTableStatus($table);
 
 
 /**
+ * SQL Escape value.
+ *
+ * @see self::escape
+ * @param string $value
+ * @return string
+ */
+abstract public function esc($value);
+
+
+/**
  * Set offset for following select* function.
  *
  * @param int $offset
