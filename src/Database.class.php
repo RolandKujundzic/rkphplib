@@ -67,21 +67,26 @@ public static function create($dsn = '') {
  * Singelton method. Return unused ADatabase object instance with current dsn from pool. Call setDSN() first.
  *
  * @throws rkphplib\Exception
+ * @param string $dsn (default = '' = self::dsn)
  * @return ADatabase
  */
-public static function getInstance() {
+public static function getInstance($dsn = '') {
 
-	if (empty($this->dsn)) {
-		throw new Exception('empty dsn - call setDSN() first');
+	if (empty($dsn)) {
+		if (empty($this->dsn)) {
+			throw new Exception('empty dsn - set Databse::$dsn first');
+		}
+
+		$dsn = $this->dsn;
 	}
 
 	for ($i = 0; is_null($db) && $i < count($pool); $i++) {
-		if (self::$pool[$i]->getDSN() == $this->dsn && !self::$pool[$i]->hasResultSet()) {
+		if (self::$pool[$i]->getDSN() == $dsn && !self::$pool[$i]->hasResultSet()) {
 			return self::$pool[$i];
 		}
 	}
 
-	array_push(self::$pool, self::create());
+	array_push(self::$pool, self::create($dsn));
 	return self::$pool[$i];
 }
 
