@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/Tokenizer.class.php');
+require_once(__DIR__.'/iTokPlugin.iface.php');
 require_once(__DIR__.'/Exception.class.php');
 require_once(__DIR__.'/File.class.php');
 
@@ -14,29 +14,36 @@ use rkphplib\Exception;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class TBase {
+class TBase implements iTokPlugin {
 
 /** @var vector<bool> $_tf keep results of (nested) tok_tf evaluation */
 private $_tf = [ ];
 
-/** @var map $tokPlugin plugin definition @see __construct() */
-public $tokPlugin = [ ];
+/** @var Tokenizer $_tok */
+private $_tok = null;
 
 
 /**
- * Constructor. Tokenizer plugin definition:
+ * Return Tokenizer plugin list:
  *
  * - tf: PARAM_LIST
  * - t, true: REQUIRE_BODY, TEXT, REDO
  * - f, false: REQUIRE_BODY, TEXT, REDO, NO_PARAM
  *
+ * @param Tokenizer &$tok
+ * @return map<string:int>
  */
-public function __construct() {
-	$this->tokPlugin['tf'] = Tokenizer::PARAM_LIST; 
-	$this->tokPlugin['t'] = Tokenizer::REQUIRE_BODY | Tokenizer::TEXT | Tokenizer::REDO;
-	$this->tokPlugin['true'] = Tokenizer::REQUIRE_BODY | Tokenizer::TEXT | Tokenizer::REDO; 
-	$this->tokPlugin['f'] = Tokenizer::REQUIRE_BODY | Tokenizer::TEXT | Tokenizer::REDO | Tokenizer::NO_PARAM; 
-	$this->tokPlugin['false'] = Tokenizer::REQUIRE_BODY | Tokenizer::TEXT | Tokenizer::REDO | Tokenizer::NO_PARAM;
+public function getPlugins(&$tok) {
+	$this->_tok =& $tok;
+
+	$plugin = [];
+	$plugin['tf'] = iTokPlugin::PARAM_LIST; 
+	$plugin['t'] = iTokPlugin::REQUIRE_BODY | iTokPlugin::TEXT | iTokPlugin::REDO;
+	$plugin['true'] = iTokPlugin::REQUIRE_BODY | iTokPlugin::TEXT | iTokPlugin::REDO; 
+	$plugin['f'] = iTokPlugin::REQUIRE_BODY | iTokPlugin::TEXT | iTokPlugin::REDO | iTokPlugin::NO_PARAM; 
+	$plugin['false'] = iTokPlugin::REQUIRE_BODY | iTokPlugin::TEXT | iTokPlugin::REDO | iTokPlugin::NO_PARAM;
+
+	return $plugin;
 }
 
 
@@ -68,7 +75,7 @@ public function __construct() {
 public function tok_tf($p, $arg) {
 	$tf = false;
 
-	$level = $this->tokPlugin['_']->getLevel(); 
+	$level = $this->_tok->getLevel(); 
 	$ta = trim($arg);
 	$do = '';
 
@@ -230,7 +237,7 @@ public function tok_true($val, $out) {
  * @return int
  */
 private function _get_level($tf) {
-	$level = $this->tokPlugin['_']->getLevel(); 
+	$level = $this->_tok->getLevel(); 
 
 	if (!isset($this->_tf[$level])) {
  		throw new Exception('call tf first', "Level $level, Plugin [$tf:]");

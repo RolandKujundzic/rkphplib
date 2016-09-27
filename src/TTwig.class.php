@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/Tokenizer.class.php');
+require_once(__DIR__.'/iTokPlugin.iface.php');
 require_once(__DIR__.'/Exception.class.php');
 
 use rkphplib\Exception;
@@ -13,29 +13,43 @@ use rkphplib\Exception;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class TTwig {
-
-/** @var map $tokPlugin plugin definition @see __construct() */
-public $tokPlugin = [ ];
+class TTwig implements iTokPlugin {
 
 
 /**
- * Constructor. Tokenizer plugin definition:
+ * Return Tokenizer Plugin list:
  *
  * - autoescape, block, do, embed, extends, filter, flush, for, from, if, import, include, macro, sandbox, set, 
  *   spaceless, use, verbatim, v
  *
+ * @param Tokenizer &$tok
+ * @return map<string:int>
  */
-public function __construct() {
+public function getPlugins(&$tok) {
 
-	$default = [ 'autoescape', 'block', 'do', 'embed', 'extends', 'filter', 'flush', 'for', 'from',
-		'if', 'import', 'include', 'macro', 'sandbox', 'set', 'spaceless', 'use', 'verbatim' ];
+	$plugin = [
+		'autoescape' => iTokPlugin::TOKCALL,
+		'block' => iTokPlugin::TOKCALL,
+		'do' => iTokPlugin::TOKCALL,
+		'embed' => iTokPlugin::TOKCALL,
+		'extends' => iTokPlugin::TOKCALL,
+		'filter' => iTokPlugin::TOKCALL,
+		'flush' => iTokPlugin::TOKCALL,
+		'for' => iTokPlugin::TOKCALL,
+		'from' => iTokPlugin::TOKCALL,
+		'if' => iTokPlugin::TOKCALL,
+		'import' => iTokPlugin::TOKCALL,
+		'include' => iTokPlugin::TOKCALL,
+		'macro' => iTokPlugin::TOKCALL,
+		'sandbox' => iTokPlugin::TOKCALL,
+		'set' => iTokPlugin::TOKCALL,
+		'spaceless' => iTokPlugin::TOKCALL,
+		'use' => iTokPlugin::TOKCALL,
+		'verbatim' => iTokPlugin::TOKCALL,
+		'v' => iTokPlugin::REQUIRE_PARAM | iTokPlugin::NO_BODY
+	];
 
-	foreach ($default as $key) {
-		$this->tokPlugin[$key] = Tokenizer::TOKCALL;
-	}
-
-	$this->tokPlugin['v'] = Tokenizer::REQUIRE_PARAM | Tokenizer::NO_BODY;
+	return $plugin;
 }
 
 

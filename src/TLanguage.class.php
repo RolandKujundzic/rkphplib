@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/Tokenizer.class.php');
+require_once(__DIR__.'/iTokPlugin.iface.php');
 require_once(__DIR__.'/Exception.class.php');
 
 use rkphplib\Exception;
@@ -13,20 +13,33 @@ use rkphplib\Exception;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class TLanguage {
-
-public $tokPlugin = [
-	'language:init' => Tokenizer::REQUIRE_BODY | Tokenizer::KV_BODY, 
-	'language:get' => Tokenizer::NO_BODY,
-	'txt' => 0,
-	'ptxt' => 0,
-	'dtxt' => 0,
-	];
+class TLanguage implements iTokPlugin {
 
 private $_db;
 private $_sess;
 private $_cache = array();
 private $_conf = array();
+
+
+/**
+ * Return Tokenizer plugin list:
+ * 
+ *  language:init|get, txt, ptxt, dtxt
+ * 
+ * @param Tokenizer &$tok
+ * @return map <string:int>
+ */
+public function getPlugins(&$tok) {
+	$plugin = [
+		'language:init' => iTokPlugin::REQUIRE_BODY | iTokPlugin::KV_BODY, 
+		'language:get' => iTokPlugin::NO_BODY,
+		'txt' => 0,
+		'ptxt' => 0,
+		'dtxt' => 0,
+	];
+
+	return $plugin;
+}
 
 
 /**
