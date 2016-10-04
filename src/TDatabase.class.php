@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/iTokPlugin.iface.php');
+require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/Exception.class.php');
 require_once(__DIR__.'/Database.class.php');
 
@@ -14,7 +14,7 @@ use rkphplib\Exception;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class TDatabase implements iTokPlugin {
+class TDatabase implements TokPlugin {
 
 /** @var ADatabase $db (default = null) */
 private $db = null;
@@ -26,17 +26,17 @@ private $db = null;
  *
  * esc, null, sql_name, sql_query, sql_col
  *
- * @param Tokenizer &$tok
+ * @param Tokenizer $tok
  * @return map<string:int>
  */
-public function getPlugins(&$tok) {
+public function getPlugins($tok) {
 
 	$plugin = [];
-  $plugin['esc'] = iTokPlugin::TEXT;
-  $plugin['sql_dsn'] = iTokPlugin::REQUIRE_BODY | iTokPlugin::TEXT | iTokPlugin::NO_PARAM;
-  $plugin['sql_name'] = iTokPlugin::REQUIRE_BODY | iTokPlugin::TEXT | iTokPlugin::NO_PARAM;
-  $plugin['sql_query'] = iTokPlugin::REQUIRE_BODY | iTokPlugin::TEXT | iTokPlugin::NO_PARAM;
-  $plugin['sql_col'] = iTokPlugin::NO_BODY | iTokPlugin::REQUIRE_PARAM;
+  $plugin['esc'] = TokPlugin::TEXT;
+  $plugin['sql_dsn'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::NO_PARAM;
+  $plugin['sql_name'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::NO_PARAM;
+  $plugin['sql_query'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::NO_PARAM;
+  $plugin['sql_col'] = TokPlugin::NO_BODY | TokPlugin::REQUIRE_PARAM;
 
 	return $plugin;
 }
