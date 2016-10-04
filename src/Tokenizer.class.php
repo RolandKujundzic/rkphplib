@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/iTokPlugin.iface.php');
+require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/Exception.class.php');
 require_once(__DIR__.'/lib/config.php');
 require_once(__DIR__.'/File.class.php');
@@ -45,12 +45,19 @@ const TOK_KEEP = 4;
 const TOK_DEBUG = 8;
 
 
+/** @var map<string:map<object:int>> */
 private $_plugin = array();
+
 private $_endpos = array();
+
 private $_tok = array();
+
 private $_redo = array();
+
 private $_config = 0;
+
 private $_level = array(); // [ [ tok_startpos, tok_endpos, level, redo_count ], ... ]
+
 private $_lc = array();
 
 
@@ -120,14 +127,14 @@ public function hasTag($name) {
  * Plugin provider object must have method getPlugins(), e.g. handler.getPlugins() = { a: 2, b: 0 }.
  * Callback is handler.tok_a(param, body). Parse modes are:
  *
- *   0 = tokenized body (iTokPlugin::PARSE)
- *   2 = untokenized body (iTokPlugin::TEXT)
- *   4 = re-parse result (iTokPlugin::REDO)
- *   8 = use tokCall(name, param, body) instead of tok_name(param, body) (iTokPlugin::TOKCALL)
- *  16 = parameter is required (iTokPlugin::REQUIRE_PARAM)
- *  32 = no parameter (iTokPlugin::NO_PARAM)
- *  64 = body is required (iTokPlugin::REQUIRE_BODY)
- * 128 = no body (iTokPlugin::NO_BODY)
+ *   0 = tokenized body (TokPlugin::PARSE)
+ *   2 = untokenized body (TokPlugin::TEXT)
+ *   4 = re-parse result (TokPlugin::REDO)
+ *   8 = use tokCall(name, param, body) instead of tok_name(param, body) (TokPlugin::TOKCALL)
+ *  16 = parameter is required (TokPlugin::REQUIRE_PARAM)
+ *  32 = no parameter (TokPlugin::NO_PARAM)
+ *  64 = body is required (TokPlugin::REQUIRE_BODY)
+ * 128 = no body (TokPlugin::NO_BODY)
  * 256 = map string body (key=value|#|...) @see lib\kv2conf()
  * 512 = JSON body
  * 1024 = parameter is colon separated list e.g. {action:p1:p2:...} escape : with \:
@@ -136,18 +143,18 @@ public function hasTag($name) {
  * 8192 = body is array string e.g. {action:}p1|#|p2|#| ... {:action} escape |#| with \|#|
  * 16384 = body is xml
  *
- * 6 = untokenized body + re-parse result (iTokPlugin::TEXT | iTokPlugin::REDO)
+ * 6 = untokenized body + re-parse result (TokPlugin::TEXT | TokPlugin::REDO)
  *
  * If plugin parameter or argument needs parsing use handler.getPlugins() = { "name": { "parse": 2, "param": required }}.
  * 
  * @param object $handler
  */
-public function register(&$handler) {
+public function register($handler) {
 
-	$plugins = $this->handler->getPlugins($this);
+	$plugins = $handler->getPlugins($this);
 
-	foreach (array_keys($plugins) as $name) {
-  	$this->_plugin[$name] =& $handler;
+	foreach ($plugins as $name => $opt) {
+  	$this->_plugin[$name] = [ $handler, $opt ];
 	}
 }
 
@@ -158,8 +165,8 @@ public function register(&$handler) {
  * @param string $name
  * @param object $handler
  */
-public function setPlugin($name, &$obj) {
-	$this->_plugin[$name] =& $handler;
+public function setPlugin($name, $obj) {
+	$this->_plugin[$name] = [ $handler, TokPlugin::TOKCALL ];
 }
 
 
@@ -224,20 +231,18 @@ private function _join_tok($start, $end) {
 			$tp = null;
 
 			if (isset($this->_plugin[$name])) {
-				if (property_exists($this->_plugin[$name], 'tokPlugin')) {
-					$tp = $this->_plugin[$name]->tokPlugin[$name];
-				}
+				$tp = $this->_plugin[$name][1];
 
 				if (isset($this->_plugin['any'])) {
 					$param = $tok;
 					$name = 'any';
 				}
-				else if (is_null($tp) || $tp & iTokPlugin::TOKCALL) {
-					if (!method_exists($this->_plugin[$name], 'tokCall')) {
+				else if ($tp & TokPlugin::TOKCALL) {
+					if (!method_exists($this->_plugin[$name][0], 'tokCall')) {
 						throw new Exception('invalid plugin', "$name has no callback");
 					}
 				}
-				else if (!method_exists($this->_plugin[$name], 'tok_'.$name)) {
+				else if (!method_exists($this->_plugin[$name][0], 'tok_'.$name)) {
 					throw new Exception('invalid plugin', "$name missing or invalid");
 				}
 			}
@@ -273,7 +278,7 @@ private function _join_tok($start, $end) {
 				}
 				else if ($ep > 0) {
 
-					if ($tp & iTokPlugin::TEXT) {
+					if ($tp & TokPlugin::TEXT) {
 						$out = $this->_call_plugin($name, $param, $this->_merge_txt($i+1, $ep-1));
 					}
 					else { 
@@ -283,7 +288,7 @@ private function _join_tok($start, $end) {
 					$i = $ep;
 				}
 
-				if ($tp & iTokPlugin::REDO) {
+				if ($tp & TokPlugin::REDO) {
 					$this->_redo = array($i, $out);
 					return join('', $tok_out);
 				}
@@ -404,10 +409,10 @@ private function _buildin($action, $name, $param, $arg = null) {
 
 /**
  * Return plugin result = $plugin->tok_NAME($param, $arg).
- * If callback mode is not iTokPlugin::TOKCALL preprocess param and arg. Example:
+ * If callback mode is not TokPlugin::TOKCALL preprocess param and arg. Example:
  *
  * Convert param into vector and arg into map if plugin $name is configured with
- * iTokPlugin::KV_BODY | iTokPlugin::PARAM_CSLIST | iTokPlugin::REQUIRE_BODY | iTokPlugin::REQUIRE_PARAM 
+ * TokPlugin::KV_BODY | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::REQUIRE_PARAM 
  *
  * @throws rkphplib\Exception 'plugin parameter missing', 'invalid plugin parameter', 'plugin body missing', 'invalid plugin body'
  * @param string $name
@@ -417,62 +422,62 @@ private function _buildin($action, $name, $param, $arg = null) {
  */
 private function _call_plugin($name, $param, $arg = null) {	
 
-	if (!property_exists($this->_plugin[$name], 'tokPlugin') || $this->_plugin[$name]->tokPlugin[$name] & iTokPlugin::TOKCALL) {
-		return call_user_func(array(&$this->_plugin[$name], 'tokCall'), $name, $param, $arg);
+	if ($this->_plugin[$name][1] & TokPlugin::TOKCALL) {
+		return call_user_func(array($this->_plugin[$name][0], 'tokCall'), $name, $param, $arg);
 	}
 
-	$pconf = $this->_plugin[$name]->tokPlugin[$name];
+	$pconf = $this->_plugin[$name][1];
 	$plen = strlen($param);
 	$alen = strlen($arg);
 
-	if (($pconf & iTokPlugin::REQUIRE_PARAM) && $plen == 0) {
+	if (($pconf & TokPlugin::REQUIRE_PARAM) && $plen == 0) {
 		throw new Exception('plugin parameter missing', "plugin=$name");
 	}
-	else if (($pconf & iTokPlugin::NO_PARAM) && $plen > 0) {
+	else if (($pconf & TokPlugin::NO_PARAM) && $plen > 0) {
 		throw new Exception('invalid plugin parameter', "plugin=$name param=$param");
 	}
 
-	if (($pconf & iTokPlugin::REQUIRE_BODY) && $alen == 0) {
+	if (($pconf & TokPlugin::REQUIRE_BODY) && $alen == 0) {
 		throw new Exception('plugin body missing', "plugin=$name");
 	}
-	else if (($pconf & iTokPlugin::NO_BODY) && $alen > 0) {
+	else if (($pconf & TokPlugin::NO_BODY) && $alen > 0) {
 		throw new Exception('invalid plugin body', "plugin=$name arg=$arg");
 	}
 
-	if (($pconf & iTokPlugin::PARAM_LIST) || ($pconf & iTokPlugin::PARAM_CSLIST)) {
+	if (($pconf & TokPlugin::PARAM_LIST) || ($pconf & TokPlugin::PARAM_CSLIST)) {
 		require_once(__DIR__.'/lib/split_str.php');
-		$delim = ($pconf & iTokPlugin::PARAM_LIST) ? ':' : ',';
+		$delim = ($pconf & TokPlugin::PARAM_LIST) ? ':' : ',';
 		$param = lib\split_str($delim, $param);
 	}
 
-	if ($pconf & iTokPlugin::KV_BODY) {
+	if ($pconf & TokPlugin::KV_BODY) {
 		require_once(__DIR__.'/lib/kv2conf.php');
 		$arg = lib\kv2conf($arg);
 	}
-	else if ($pconf & iTokPlugin::JSON_BODY) {
+	else if ($pconf & TokPlugin::JSON_BODY) {
 		require_once(__DIR__.'/JSON.class.php');
 		$arg = JSON::decode($arg);
 	}
-	else if (($pconf & iTokPlugin::CSLIST_BODY) || ($pconf & iTokPlugin::LIST_BODY)) {
+	else if (($pconf & TokPlugin::CSLIST_BODY) || ($pconf & TokPlugin::LIST_BODY)) {
 		require_once(__DIR__.'/lib/split_str.php');
-		$delim = ($pconf & iTokPlugin::CSLIST_BODY) ? ',' : '|#|';
+		$delim = ($pconf & TokPlugin::CSLIST_BODY) ? ',' : '|#|';
 		$arg = lib\split_str($delim, $arg);
 	}
-	else if ($pconf & iTokPlugin::XML_BODY) {
+	else if ($pconf & TokPlugin::XML_BODY) {
 		require_once(__DIR__.'/XML.class.php');	
 		$arg = XML::toJSON($arg);
 	}
 
 	$res = '';
 
-	if ($pconf & iTokPlugin::NO_PARAM) {
-		$res = call_user_func(array(&$this->_plugin[$name], 'tok_'.$name), $arg);
+	if ($pconf & TokPlugin::NO_PARAM) {
+		$res = call_user_func(array($this->_plugin[$name][0], 'tok_'.$name), $arg);
 	}
-	else if ($pconf & iTokPlugin::NO_BODY) {
-		$res = call_user_func(array(&$this->_plugin[$name], 'tok_'.$name), $param);
+	else if ($pconf & TokPlugin::NO_BODY) {
+		$res = call_user_func(array($this->_plugin[$name][0], 'tok_'.$name), $param);
 	}
 	else {
-		$res = call_user_func(array(&$this->_plugin[$name], 'tok_'.$name), $param, $arg);
+		$res = call_user_func(array($this->_plugin[$name][0], 'tok_'.$name), $param, $arg);
 	}
 
 	return $res;
