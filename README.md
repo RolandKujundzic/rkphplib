@@ -67,7 +67,7 @@ require_once('src/Tokenizer.class.php');
 
 class Plugin {
 	private $n = 0;
-	public $tokPlugin = array('x' => 6); // change 6 to 0 or 2 and compare different output
+	public function getPlugins($tok) { return array('x' => 6); } // change 6 to 0 or 2 and compare different output
 	public function tok_x($param, $arg) { $this->n++; return "X".$this->n."($param)[$arg]"; }
 }
 
