@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/iTokPlugin.iface.php');
+require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/Exception.class.php');
 require_once(__DIR__.'/File.class.php');
 
@@ -14,7 +14,7 @@ use rkphplib\Exception;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class TBase implements iTokPlugin {
+class TBase implements TokPlugin {
 
 /** @var vector<bool> $_tf keep results of (nested) tok_tf evaluation */
 private $_tf = [ ];
@@ -30,18 +30,18 @@ private $_tok = null;
  * - t, true: REQUIRE_BODY, TEXT, REDO
  * - f, false: REQUIRE_BODY, TEXT, REDO, NO_PARAM
  *
- * @param Tokenizer &$tok
+ * @param Tokenizer $tok
  * @return map<string:int>
  */
-public function getPlugins(&$tok) {
-	$this->_tok =& $tok;
+public function getPlugins($tok) {
+	$this->_tok = $tok;
 
 	$plugin = [];
-	$plugin['tf'] = iTokPlugin::PARAM_LIST; 
-	$plugin['t'] = iTokPlugin::REQUIRE_BODY | iTokPlugin::TEXT | iTokPlugin::REDO;
-	$plugin['true'] = iTokPlugin::REQUIRE_BODY | iTokPlugin::TEXT | iTokPlugin::REDO; 
-	$plugin['f'] = iTokPlugin::REQUIRE_BODY | iTokPlugin::TEXT | iTokPlugin::REDO | iTokPlugin::NO_PARAM; 
-	$plugin['false'] = iTokPlugin::REQUIRE_BODY | iTokPlugin::TEXT | iTokPlugin::REDO | iTokPlugin::NO_PARAM;
+	$plugin['tf'] = TokPlugin::PARAM_LIST; 
+	$plugin['t'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
+	$plugin['true'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO; 
+	$plugin['f'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM; 
+	$plugin['false'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM;
 
 	return $plugin;
 }
