@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/iTokPlugin.iface.php');
+require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/Exception.class.php');
 
 use rkphplib\Exception;
@@ -13,7 +13,7 @@ use rkphplib\Exception;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class TTwig implements iTokPlugin {
+class TTwig implements TokPlugin {
 
 
 /**
@@ -22,31 +22,31 @@ class TTwig implements iTokPlugin {
  * - autoescape, block, do, embed, extends, filter, flush, for, from, if, import, include, macro, sandbox, set, 
  *   spaceless, use, verbatim, v
  *
- * @param Tokenizer &$tok
+ * @param Tokenizer $tok
  * @return map<string:int>
  */
-public function getPlugins(&$tok) {
+public function getPlugins($tok) {
 
 	$plugin = [
-		'autoescape' => iTokPlugin::TOKCALL,
-		'block' => iTokPlugin::TOKCALL,
-		'do' => iTokPlugin::TOKCALL,
-		'embed' => iTokPlugin::TOKCALL,
-		'extends' => iTokPlugin::TOKCALL,
-		'filter' => iTokPlugin::TOKCALL,
-		'flush' => iTokPlugin::TOKCALL,
-		'for' => iTokPlugin::TOKCALL,
-		'from' => iTokPlugin::TOKCALL,
-		'if' => iTokPlugin::TOKCALL,
-		'import' => iTokPlugin::TOKCALL,
-		'include' => iTokPlugin::TOKCALL,
-		'macro' => iTokPlugin::TOKCALL,
-		'sandbox' => iTokPlugin::TOKCALL,
-		'set' => iTokPlugin::TOKCALL,
-		'spaceless' => iTokPlugin::TOKCALL,
-		'use' => iTokPlugin::TOKCALL,
-		'verbatim' => iTokPlugin::TOKCALL,
-		'v' => iTokPlugin::REQUIRE_PARAM | iTokPlugin::NO_BODY
+		'autoescape' => TokPlugin::TOKCALL,
+		'block' => TokPlugin::TOKCALL,
+		'do' => TokPlugin::TOKCALL,
+		'embed' => TokPlugin::TOKCALL,
+		'extends' => TokPlugin::TOKCALL,
+		'filter' => TokPlugin::TOKCALL,
+		'flush' => TokPlugin::TOKCALL,
+		'for' => TokPlugin::TOKCALL,
+		'from' => TokPlugin::TOKCALL,
+		'if' => TokPlugin::TOKCALL,
+		'import' => TokPlugin::TOKCALL,
+		'include' => TokPlugin::TOKCALL,
+		'macro' => TokPlugin::TOKCALL,
+		'sandbox' => TokPlugin::TOKCALL,
+		'set' => TokPlugin::TOKCALL,
+		'spaceless' => TokPlugin::TOKCALL,
+		'use' => TokPlugin::TOKCALL,
+		'verbatim' => TokPlugin::TOKCALL,
+		'v' => TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY
 	];
 
 	return $plugin;
