@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/iTokPlugin.iface.php');
+require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/Exception.class.php');
 
 use rkphplib\Exception;
@@ -13,7 +13,7 @@ use rkphplib\Exception;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class TLanguage implements iTokPlugin {
+class TLanguage implements TokPlugin {
 
 private $_db;
 private $_sess;
@@ -26,13 +26,13 @@ private $_conf = array();
  * 
  *  language:init|get, txt, ptxt, dtxt
  * 
- * @param Tokenizer &$tok
+ * @param Tokenizer $tok
  * @return map <string:int>
  */
-public function getPlugins(&$tok) {
+public function getPlugins($tok) {
 	$plugin = [
-		'language:init' => iTokPlugin::REQUIRE_BODY | iTokPlugin::KV_BODY, 
-		'language:get' => iTokPlugin::NO_BODY,
+		'language:init' => TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY, 
+		'language:get' => TokPlugin::NO_BODY,
 		'txt' => 0,
 		'ptxt' => 0,
 		'dtxt' => 0,
