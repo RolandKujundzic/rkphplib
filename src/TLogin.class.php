@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/iTokLogin.iface.php');
+require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/Session.class.php');
 
 use rkphplib\Exception;
@@ -22,20 +22,25 @@ class TLogin {
  *
  *  login, login_init
  *
- * @param Tokenizer &$tok
+ * @param Tokenizer $tok
  * @return map<string:int>
  */
-public function getPlugins(&$tok) {
-	throw new Exception('ToDo');
+public function getPlugins($tok) {
+  $plugin = [];
+  $plugin['login'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+  $plugin['login_init'] = TokPlugin::KV_BODY;
+  return $plugin;
 }
 
 
 /**
  * Initialize/Check login session.
  *
- * @param map $p
+ * @param string $param
+ * @param map<string:string> $p
+ * @return ''
  */
-public function tok_login_init($p) {
+public function tok_login_init($param, $p) {
 	throw new Exception('ToDo');
 }
 
