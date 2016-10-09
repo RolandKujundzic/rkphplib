@@ -16,6 +16,7 @@ require_once(__DIR__.'/csv_explode.php');
  * Default values are [@@1="",","] and [@@2=$d1,$d2]. 
  * All keys and values are trimmed. Use Quote character ["] to preserve whitespace and delimiter.
  * Use double quote [""] to escape ["]. If $d1 is empty return array with $d2 as delimiter.
+ * If text is empty return empty array.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @param string $text
@@ -26,6 +27,10 @@ require_once(__DIR__.'/csv_explode.php');
  */
 function conf2kv($text, $d1 = '=', $d2 = '|#|', $ikv = array()) {
 	$ld1 = mb_strlen($d1);
+
+	if (empty($text)) {
+		return array();
+	}
 
 	if ($ld1 == 0 || mb_strpos($text, $d1) === false) {
 		$res = $text;
