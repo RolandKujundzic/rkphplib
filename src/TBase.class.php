@@ -29,6 +29,7 @@ private $_tok = null;
  * - tf: PARAM_LIST
  * - t, true: REQUIRE_BODY, TEXT, REDO
  * - f, false: REQUIRE_BODY, TEXT, REDO, NO_PARAM
+ * - find: 
  *
  * @param Tokenizer $tok
  * @return map<string:int>
@@ -42,8 +43,114 @@ public function getPlugins($tok) {
 	$plugin['true'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO; 
 	$plugin['f'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM; 
 	$plugin['false'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM;
+	$plugin['find'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM;
 
 	return $plugin;
+}
+
+
+/**
+ * Return self::findPath(file, self::getReqDir(true)). 
+ * If file is empty and dir is not set use file = dir and dir = ''.
+ * Examples {find:main.html} = {find:}main.html{:}
+ *
+ * - _REQUEST[dir] = a/b/c, b/test.html exists: a/b/test.html
+ * - _REQUEST[dir] = a/b/c, c/test.html exists: a/b/c/test.html
+ * - _REQUEST[dir] = a/b/c, ./test.html exists: test.html
+ *
+ * @define SETTINGS_REQ_DIR = 'dir' if not defined
+ * @see self::getReqDir
+ * @see self::findPath
+ * @param string $file
+ * @param string $dir (default = '')
+ * @return string self::findPath(file, self::getReqDir(true))
+ */
+public function tok_find($file, $dir = '') {
+
+	if (empty($file) && !empty($dir)) {
+		$file = $dir;
+		$dir = '';
+	}
+
+	if (empty($dir)) {
+		$dir = self::getReqDir(true);
+	}
+
+	return self::findPath($file, $dir);
+}
+
+
+/**
+ * Return $_REQUEST[SETTINGS_REQ_DIR]. If SETTINGS_REQ_DIR is undefined use 'dir'.
+ * If $use_dot_prefix = true return [.] (if result is empty) or prepend [./].
+ *
+ * @param bool $use_dot_prefix (default = false)
+ * @return string
+ */
+public static function getReqDir($use_dot_prefix = false) {
+
+	if (!defined('SETTINGS_REQ_DIR')) {
+		define('SETTINGS_REQ_DIR', 'dir');
+	}
+
+	if (empty($_REQUEST[SETTINGS_REQ_DIR])) {
+		$res = $use_dot_prefix ? '.' : '';
+	}
+	else {
+		$res = $use_dot_prefix ? './'.$_REQUEST[SETTINGS_REQ_DIR] : $_REQUEST[SETTINGS_REQ_DIR];
+	}
+
+	return $res;
+}
+
+
+/**
+ * Search path = (dir/file) in dir until found or dir = [.].
+ * Throw Exception if path is not relative or has [../] or [\].
+ * Return found path. 
+ *
+ * @throws
+ * @param string $file
+ * @param string $dir (default = '.')
+ * @return string
+ */
+public static function findPath($file, $dir = '.') {
+
+	if (mb_substr($dir, 0, 1) === '/' || mb_substr($dir, 0, 3) === './/') {
+		throw new Exception('invalid absolute directory path', $dir);
+  }
+
+	if (mb_strpos($dir, '../') !== false || mb_strpos($file, '../') !== false) {
+		throw new Exception('../ is forbidden in path', $dir.':'.$file);
+  }
+
+  if (mb_strpos($dir, '\\') !== false || mb_strpos($file, '\\') !== false) {
+		throw new Exception('backslash is forbidden in path', $dir.':'.$file);
+  }
+
+	$res = '';
+
+	while (!$res && mb_strlen($dir) > 0) {
+		$path = $dir.'/'.$file;
+
+		if (file_exists($path) && is_readable($path)) {
+			$res = $path;
+		}
+
+		$pos = mb_strrpos($dir, '/');
+		if ($pos > 0) {
+			$dir = mb_substr($dir, 0, $pos);
+		}
+		else {
+			$dir = '';
+		}
+	}
+
+  if (mb_substr($res, 0, 2) == './') {
+    $res = mb_substr($res, 2);
+  }
+
+	return $res;
 }
 
 
