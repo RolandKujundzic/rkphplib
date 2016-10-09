@@ -30,10 +30,10 @@ private static $pool = [];
  * $sqlite = Database::create('sqlite://[password]@path/to/file.sqlite');
  * 
  * @throws rkphplib\Exception
- * @param string $dsn (default = '', use setDSN() value)
+ * @param string $dsn
  * @return ADatabase
  */
-public static function create($dsn = '') {
+public static function create($dsn) {
 	$db = null;
 	
 	if (mb_substr($dsn, 0, 9) == 'mysqli://') {
@@ -48,39 +48,26 @@ public static function create($dsn = '') {
 		throw new Exception('invalid dsn', "dsn=$dsn");
 	}
 
-	if (!empty($dsn)) {
-		$db->setDSN($dsn);
-	}
-	else {
-		if (empty($this->dsn)) {
-			throw new Exception('empty dsn - call setDSN() first');
-		}
-
-		$db->setDSN($this->dsn);
-	}
+	$db->setDSN($dsn);
 
 	return $db;
 }
 
 
 /**
- * Singelton method. Return unused ADatabase object instance with current dsn from pool. Call setDSN() first.
+ * Singelton method. Return unused ADatabase object instance with current dsn from pool. 
  *
  * @throws rkphplib\Exception
- * @param string $dsn (default = '' = self::dsn)
+ * @param string $dsn 
  * @return ADatabase
  */
-public static function getInstance($dsn = '') {
+public static function getInstance($dsn) {
 
 	if (empty($dsn)) {
-		if (empty($this->dsn)) {
-			throw new Exception('empty dsn - set Databse::$dsn first');
-		}
-
-		$dsn = $this->dsn;
+		throw new Exception('empty dsn');
 	}
 
-	for ($i = 0; is_null($db) && $i < count($pool); $i++) {
+	for ($i = 0; $i < count(self::$pool); $i++) {
 		if (self::$pool[$i]->getDSN() == $dsn && !self::$pool[$i]->hasResultSet()) {
 			return self::$pool[$i];
 		}
