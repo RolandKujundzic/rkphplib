@@ -46,18 +46,15 @@ public function getPlugins($tok) {
  * Constructor. Create database connection.
  * 
  * @see Database::getInstance
- * @param string $dsn (default = '' = Database::$dsn | $settings_DSN)
+ * @param string $dsn (default = '', use SETTINGS_DSN if not empty)
  */
 public function __construct($dsn = '') {
 
-	if (empty($dsn)) {
-		if (empty(Database::$dsn)) {
-			global $settings_DSN;
-			Database::$dsn = $settings_DSN;
-		}
+	if (empty($dsn) && defined('SETTINGS_DSN')) {
+		$dsn = SETTINGS_DSN;
 	}
 
-	$this->db = Database::getInstance();
+	$this->db = Database::getInstance($dsn);
 }
 
 
