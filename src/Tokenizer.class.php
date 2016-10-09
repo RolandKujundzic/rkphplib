@@ -135,7 +135,7 @@ public function hasTag($name) {
  *  32 = no parameter (TokPlugin::NO_PARAM)
  *  64 = body is required (TokPlugin::REQUIRE_BODY)
  * 128 = no body (TokPlugin::NO_BODY)
- * 256 = map string body (key=value|#|...) @see lib\kv2conf()
+ * 256 = map string body (key=value|#|...) @see lib\conf2kv()
  * 512 = JSON body
  * 1024 = parameter is colon separated list e.g. {action:p1:p2:...} escape : with \:
  * 2048 = parameter is comma separated list e.g. {action:p1,p2,...} escape , with \,
@@ -451,8 +451,8 @@ private function _call_plugin($name, $param, $arg = null) {
 	}
 
 	if ($pconf & TokPlugin::KV_BODY) {
-		require_once(__DIR__.'/lib/kv2conf.php');
-		$arg = lib\kv2conf($arg);
+		require_once(__DIR__.'/lib/conf2kv.php');
+		$arg = lib\conf2kv($arg);
 	}
 	else if ($pconf & TokPlugin::JSON_BODY) {
 		require_once(__DIR__.'/JSON.class.php');
