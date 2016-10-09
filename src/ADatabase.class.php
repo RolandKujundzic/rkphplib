@@ -603,10 +603,11 @@ abstract public function dropTable($table);
 /**
  * Apply database specific escape function (fallback is self::escape).
  *
+ * @see self::escape
  * @param string $txt
  * @return string
  */
-abstract public function esc($txt);
+abstract public function esc($value);
 
 
 /**
@@ -714,16 +715,6 @@ abstract public function getTableChecksum($table, $native = false);
  * @return map<string:string>
  */
 abstract public function getTableStatus($table);
-
-
-/**
- * SQL Escape value.
- *
- * @see self::escape
- * @param string $value
- * @return string
- */
-abstract public function esc($value);
 
 
 /**
