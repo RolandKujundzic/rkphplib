@@ -8,20 +8,25 @@ use rkphplib\Exception;
 
 
 /**
- * Send redirect header and exit.
+ * Send redirect header and exit. 
  * 
  * @param string $url
+ * @param map<string:string> $p (extra parameter, default = [])
  */
-function redirect($url) {
+function redirect($url, $p = []) {
 	// avoid [index.php?dir=xxx] redirect loop
-	if (empty($_REQUEST['_lrl'])) {
-		if (strpos($url, '?') !== false) {
-			$url .= '&_lrl='.$md5;
-		}
-	}
-	else if ($_REQUEST['_lrl'] == $md5) {
+	$md5 = md5($url);
+	if (!empty($_REQUEST['_ld']) && $_REQUEST['_ld'] === $md5) {
 		throw new Exception('redirect loop', $url);
   }
+
+	// append parameter _ld for loop detection
+	$url .= mb_strpos($url, '?') ? '&_ld='.$md5 : '?_ld='.$md5;
+
+	// append optional parameter
+	foreach ($p as $key => $value) {
+		$url .= '&'.$key.'='.urlencode($value);
+	}
 
   // header('P3P: CP="CAO PSA OUR"'); // IE will not accept Frameset SESSIONS without this header 
 	session_write_close(); // avoid redirect delay 
