@@ -16,6 +16,9 @@ use rkphplib\Exception;
  */
 class TLogin {
 
+/* @var Session $sess */
+var $sess = null;
+
 
 /**
  * Return Tokenizer plugin list:
@@ -28,20 +31,38 @@ class TLogin {
 public function getPlugins($tok) {
   $plugin = [];
   $plugin['login'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
-  $plugin['login_init'] = TokPlugin::KV_BODY;
+  $plugin['login_check'] = TokPlugin::KV_BODY;
   return $plugin;
 }
 
 
 /**
- * Initialize/Check login session.
+ * Initialize/Check login session. Example:
+ * 
+ * {login_check:init} -> initialize but do not check authentication
+ * {login_check:}redirect_expired=...{:} -> check login authentication - if not found redirect to redirect_expired
  *
- * @param string $param
+ * @see Session::init
+ * @param string $param [|init]
  * @param map<string:string> $p
- * @return ''
+ * @return string javascript-login-refresh
  */
-public function tok_login_init($param, $p) {
-	throw new Exception('ToDo');
+public function tok_login_check($param, $p) {
+
+	$this->sess = new Session();
+	$this->sess->init($p);
+
+	$res = "<script>\n".$this->sess->getJSRefresh('login/ajax/refresh.php', '', 10)."\n</script>";
+
+	if ($param === 'init') {
+		return $res;
+	}
+
+	if (!$sess->hasMeta('start') || ($expired = $sess->hasExpired()))
+		throw new Exception('ToDo');
+	}
+
+	return $res;
 }
 
 
