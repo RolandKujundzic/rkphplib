@@ -57,11 +57,11 @@ public function init($conf) {
 		}
 	}
 
-	if ($this->hasExpired()) {
+	if (($expired = $this->hasExpired())) {
 		$this->destroy();
 
 		if (!empty($this->conf['redirect_expired'])) {
-			\rkphplib\lib\redirect($this->conf['redirect_expired']);
+			\rkphplib\lib\redirect($this->conf['redirect_expired'], [ 'expired' => $expired ]);
 		}
 		else {
 			throw new Exception('expired');
