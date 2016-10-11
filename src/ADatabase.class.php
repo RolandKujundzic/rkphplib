@@ -170,10 +170,6 @@ public static function splitDSN($dsn) {
 		throw new Exception('empty type');
 	}
 
-	if (empty($db['name'])) {
-		throw new Exception('empty name');
-	}
-
 	return $db;
 }
 
