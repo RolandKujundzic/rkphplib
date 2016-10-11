@@ -1,5 +1,8 @@
 <?php
 
+require_once(dirname(__DIR__).'/src/lib/config.php');
+
+
 $test_count = ['path' => '', 'num' => 0, 'ok' => 0, 'error' => 0, 't_ok' => 0, 't_error' => 0, 't_num' => 0, 't_pass' => 0, 't_fail' => 0,
 	'overview' => [ ] ];
 
