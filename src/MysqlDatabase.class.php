@@ -180,7 +180,20 @@ public function dropDatabase($dsn = '') {
 	$host = self::escape_name($db['host']);
 
 	$this->execute("DROP DATABASE IF EXISTS $name");
-	$this->execute("DROP USER IF EXISTS '$login'@'$host'");
+
+	try {
+		// give dummy privilege to make sure drop user does not fail even if uses does not exist
+		// ToDo: unecessary in MariaDB 10.1.3 and upwards: DROP USER IF EXISTS 'login'@'host'
+		$this->execute("GRANT USAGE ON *.* TO '$login'@'$host'"); 
+		$this->execute("DROP USER '$login'@'$host'");
+	}
+	catch (\Exception $e) {
+		if (property_exists($e, 'internal_message') && mb_substr($e->internal_message, 0, 15) === 'GRANT USAGE ON ') {
+			$e = new Exception('you have no grant privilege', $e->internal_message);
+		}
+
+		throw $e;
+	}
 }
 
 
@@ -223,7 +236,7 @@ public function createTable($conf) {
 
 	$query = "CREATE TABLE $tname (".join(",\n", $cols).join(",\n", $keys)."\n)";
 
-	throw new Exception('@ToDo ... ', $query);
+	throw new Exception('ToDo ... ', $query);
 }
 
 
