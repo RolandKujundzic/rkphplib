@@ -9,12 +9,13 @@ namespace rkphplib\lib;
  *
  *  SETTINGS_TIMEZONE = GMT
  *  SETTINGS_LANGUAGE = de
+ *  SETTINGS_SESSION = site
  *  SETTINGS_LOG_ERROR = /tmp/php.fatal
  *  SETTINGS_LOG_DEBUG = /tmp/php.warn
  *
  * Define:
  *
- *   RKPHPLIB_VERSION = 1.0
+ *  RKPHPLIB_VERSION = 1.0
  *
  * Register exception_handler and error_handler.
  *
@@ -38,6 +39,11 @@ date_default_timezone_set(SETTINGS_TIMEZONE);
 if (!defined('SETTINGS_LANGUAGE')) {
 	/** @define string SETTINGS_LANGUAGE = 'de' */
 	define('SETTINGS_LANGUAGE', 'de');
+}
+
+if (!defined('SETTINGS_SESSION')) {
+	/** @define string SETTINGS_SESSION = 'site' */
+	define('SETTINGS_SESSION', 'site');
 }
 
 if (!defined('SETTINGS_LOG_ERROR')) {
