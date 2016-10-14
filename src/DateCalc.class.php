@@ -19,7 +19,7 @@ class DateCalc {
 
 
 /**
- * Return localized month names ($settings_LANGUAGE = en|de|hr).
+ * Return localized month names (SETTINGS_LANGUAGE = en|de|hr, default = de).
  *
  * Month is from [1,12].
  *
@@ -28,7 +28,6 @@ class DateCalc {
  * @return string
  */
 public static function monthName($month) {
-  global $settings_LANGUAGE;
 
   $month = ($month > 100000) ? intval(mb_substr($month, -2)) : intval($month);
 
@@ -36,7 +35,7 @@ public static function monthName($month) {
     throw new Exception('invalid month', $month);
   }
 
-  $lang = $settings_LANGUAGE;
+  $lang = defined(SETTINGS_LANGUAGE) && mb_strlen(SETTINGS_LANGUAGE) === 2 ? SETTINGS_LANGUAGE : 'de';
 
   $month_names = array();
 
