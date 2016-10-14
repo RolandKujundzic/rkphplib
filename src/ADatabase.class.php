@@ -404,7 +404,7 @@ public function hasQuery($qkey) {
 
 /**
  * Apply setQuery() for all hash values where key has [query.] prefix and value is not empty (qkey = key without prefix).
- * Use query.escape_name@table=test name to replace {:=table} with `test name`.
+ * Use query.escape_name@table=test name to replace {:=@table} with `test name`.
  *
  * @see ADatabase::setQuery()
  * @throws rkphplib\Exception if error
@@ -440,7 +440,7 @@ public function setQueryHash($conf_hash, $require_keys = '') {
 
 	foreach ($qlist as $qkey => $query) {
 		foreach ($replace as $rkey => $rval) {
-			$query = str_replace('{:='.$rkey.'}', $rval, $query);
+			$query = str_replace('{:=@'.$rkey.'}', $rval, $query);
 		}
 
 		$this->setQuery($qkey, $query);
