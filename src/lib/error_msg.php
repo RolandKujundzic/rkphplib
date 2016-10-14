@@ -8,7 +8,7 @@ require_once(__DIR__.'/log_error.php');
 /**
  * Return localized error message from error_msg.lang.php and save error to error_log.
  *
- * Adjust $settings_LANGUAGE and load __DIR__/error_msg.$lang.php, Example language file:
+ * Adjust SETTINGS_LANGUAGE (default = de) and load __DIR__/error_msg.$lang.php, Example language file:
  *
  * <?php
  *
@@ -24,15 +24,18 @@ require_once(__DIR__.'/log_error.php');
  * @return string
  */
 function error_msg($msg, $plist = array(), $log_error = 1) {
-	global $settings_LANGUAGE;
 
-	$msg_file = __DIR__.'/error_msg.'.$settings_LANGUAGE.'php';
+	if (!defined('SETTINGS_LANGUAGE')) {
+		define('SETTINGS_LANGUAGE', 'de');
+	}
+
+	$msg_file = __DIR__.'/error_msg.'.SETTINGS_LANGUAGE.'php';
 
 	if (file_exists($msg_file)) {
 		include_once($msg_file);
 
 		if (is_array($error_msg_map) && is_array($error_msg_map['@']) && is_array($error_msg_map[$msg])) {
-			$lpos = array_search($settings_LANGUAGE, $error_msg_map['@']);
+			$lpos = array_search(SETTINGS_LANGUAGE, $error_msg_map['@']);
 			$msg = $error_msg_map[$msg][$lpos];
 		}
 	}

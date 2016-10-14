@@ -8,18 +8,17 @@ require_once(__DIR__.'/config.php');
 /**
  * Log debug message.
  *
- * Disable debug log with $settings_LOG_DEBUG = 0,
- * Enable logging to default with $settings_LOG_DEBUG = 1 (default).
- * Enable logging to file with $settings_LOG_DEBUG = 'path/debug.log'.
+ * Disable debug log with SETTINGS_LOG_DEBUG = 0,
+ * Enable logging to default with SETTINGS_LOG_DEBUG = 1 (default).
+ * Enable logging to file with SETTINGS_LOG_DEBUG = 'path/debug.log'.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @param string $msg
  * @param bool $prepend_info (default = false, prepend timestamp and trace information)
  */
 function log_debug($msg, $prepend_info = false) {
-	global $settings_LOG_DEBUG;
 
-	if (!$settings_LOG_DEBUG) {
+	if (!defined(SETTINGS_LOG_DEBUG) || empty(SETTINGS_LOG_DEBUG)) {
 		return;
 	}
 
@@ -42,8 +41,8 @@ function log_debug($msg, $prepend_info = false) {
 		$log = $msg;
 	}
 
-	if (mb_strlen($settings_LOG_DEBUG) > 1) {
-		error_log($log."\n", 3, $settings_LOG_DEBUG);
+	if (mb_strlen(SETTINGS_LOG_DEBUG) > 1) {
+		error_log($log."\n", 3, SETTINGS_LOG_DEBUG);
 	}
 	else {
 		error_log($log);

@@ -5,12 +5,12 @@ namespace rkphplib\lib;
 /**
  * Configuration file.
  *
- * Set global $settings_* default values:
+ * Preset global defines SETTINGS_* with default values:
  *
- *  $settings_TIMEZONE = GMT
- *  $settings_LANGUAGE = de
- *  $settings_LOG_ERROR = /tmp/php.fatal
- *  $settings_LOG_DEBUG = /tmp/php.warn
+ *  SETTINGS_TIMEZONE = GMT
+ *  SETTINGS_LANGUAGE = de
+ *  SETTINGS_LOG_ERROR = /tmp/php.fatal
+ *  SETTINGS_LOG_DEBUG = /tmp/php.warn
  *
  * Define:
  *
@@ -28,30 +28,26 @@ namespace rkphplib\lib;
 // Force UTF-8 encoding
 mb_internal_encoding('UTF-8');
 
-if (!isset($settings_TIMEZONE)) {
-	/** @global string $settings_TIMEZONE = 'GMT' */
-	global $settings_TIMEZONE;
-	$settings_TIMEZONE = 'GMT';
+if (!defined('SETTINGS_TIMEZONE'))) {
+	/** @define string SETTINGS_TIMEZONE = 'GMT' */
+	define('SETTINGS_TIMEZONE', 'GMT');
 }
 
-date_default_timezone_set($settings_TIMEZONE);
+date_default_timezone_set(SETTINGS_TIMEZONE);
 
-if (!isset($settings_LANGUAGE)) {
-	/** @global string $settings_LANGUAGE = 'de' */
-	global $settings_LANGUAGE;
-	$settings_LANGUAGE = 'de';
+if (!defined('SETTINGS_LANGUAGE')) {
+	/** @define string SETTINGS_LANGUAGE = 'de' */
+	define('SETTINGS_LANGUAGE', 'de');
 }
 
-if (!isset($settings_LOG_ERROR)) {
-	/** @global string $settings_LOG_ERROR = 1 */
-	global $settings_LOG_ERROR;
-	$settings_LOG_ERROR = '/tmp/php.fatal';
+if (!defined('SETTINGS_LOG_ERROR')) {
+	/** @define string SETTINGS_LOG_ERROR = '/tmp/php.fatal' */
+	define('SETTINGS_LOG_ERROR', '/tmp/php.fatal');
 }
 
-if (!isset($settings_LOG_DEBUG)) {
-	/** @global string $settings_LOG_DEBUG = 1 */
-	global $settings_LOG_DEBUG;
-	$settings_LOG_DEBUG = '/tmp/php.warn';
+if (!defined('SETTINGS_LOG_DEBUG')) {
+	/** @define string SETTINGS_LOG_DEBUG = '/tmp/php.warn' */
+	define('SETTINGS_LOG_DEBUG', '/tmp/php.warn');
 }
 
 
