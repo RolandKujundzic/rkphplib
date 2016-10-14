@@ -242,7 +242,7 @@ private function _join_tok($start, $end) {
 						throw new Exception('invalid plugin', "$name has no callback");
 					}
 				}
-				else if (!method_exists($this->_plugin[$name][0], 'tok_'.$name)) {
+				else if (!method_exists($this->_plugin[$name][0], 'tok_'.$name) && !isset($this->_plugin["$name:$param"])) {
 					throw new Exception('invalid plugin', "$name missing or invalid");
 				}
 			}
@@ -426,9 +426,16 @@ private function _call_plugin($name, $param, $arg = null) {
 		return call_user_func(array($this->_plugin[$name][0], 'tokCall'), $name, $param, $arg);
 	}
 
+	$func = 'tok_'.$name;
 	$pconf = $this->_plugin[$name][1];
 	$plen = strlen($param);
 	$alen = strlen($arg);
+
+	if (!empty($this->_plugin["$name:$param"])) {
+		$func = 'tok_'.$name.'_'.$param;
+		$pconf = $this->_plugin["$name:$param"][1];
+		$plen = 0;
+	}
 
 	if (($pconf & TokPlugin::REQUIRE_PARAM) && $plen == 0) {
 		throw new Exception('plugin parameter missing', "plugin=$name");
@@ -471,13 +478,13 @@ private function _call_plugin($name, $param, $arg = null) {
 	$res = '';
 
 	if ($pconf & TokPlugin::NO_PARAM) {
-		$res = call_user_func(array($this->_plugin[$name][0], 'tok_'.$name), $arg);
+		$res = call_user_func(array($this->_plugin[$name][0], $func), $arg);
 	}
 	else if ($pconf & TokPlugin::NO_BODY) {
-		$res = call_user_func(array($this->_plugin[$name][0], 'tok_'.$name), $param);
+		$res = call_user_func(array($this->_plugin[$name][0], $func), $param);
 	}
 	else {
-		$res = call_user_func(array($this->_plugin[$name][0], 'tok_'.$name), $param, $arg);
+		$res = call_user_func(array($this->_plugin[$name][0], $func), $param, $arg);
 	}
 
 	return $res;
