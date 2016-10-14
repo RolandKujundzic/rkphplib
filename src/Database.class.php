@@ -55,7 +55,7 @@ public static function create($dsn) {
 
 
 /**
- * Singelton method. Return unused ADatabase object instance with current dsn from pool. 
+ * Singelton method. Return unused ADatabase object instance with dsn from pool. 
  *
  * @throws rkphplib\Exception
  * @param string $dsn 
