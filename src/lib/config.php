@@ -28,7 +28,7 @@ namespace rkphplib\lib;
 // Force UTF-8 encoding
 mb_internal_encoding('UTF-8');
 
-if (!defined('SETTINGS_TIMEZONE'))) {
+if (!defined('SETTINGS_TIMEZONE')) {
 	/** @define string SETTINGS_TIMEZONE = 'GMT' */
 	define('SETTINGS_TIMEZONE', 'GMT');
 }
