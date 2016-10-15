@@ -598,7 +598,7 @@ abstract public function dropDatabase($dsn = '');
  * - @multilang: e.g. name, desc = name_de, name_en, desc_de, desc_en
  * - @id: 1 = primary key int unsigned not null auto_increment, 2 = primary key int unsigned not null, 3 = primary key varchar(30) not null
  * - @status: 1 = tinyint unsigned + index
- * - @timestamp: 1 = since, 2 = last_change, 3 = since + last_change datetime cols
+ * - @timestamp: 1 = since, 2 = lchange, 3 = since + lchange datetime cols
  * - colname: TYPE:SIZE:DEFAULT:EXTRA, e.g. 
  *			"colname => int:11:1:33" = "colname int(11) UNSIGNED NOT NULL DEFAULT 1"
  * 			"colname => varchar:30:admin:9" = "colname varchar(30) NOT NULL DEFAULT 'admin', KEY (colname(20))"
