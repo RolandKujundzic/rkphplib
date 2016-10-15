@@ -335,9 +335,9 @@ public function _set_level($start, $end) {
 
 
 /**
- * Return {PLUGIN:PARAM}$arg{:PLUGIN}
- * @param string $tok (PLUGIN:PARAM)
+ * Return {PLUGIN:PARAM}$arg{:PLUGIN}.
  *
+ * @param string $tok (PLUGIN:PARAM)
  * @param string $arg (default = null = no argument)
  * @return string
  */
