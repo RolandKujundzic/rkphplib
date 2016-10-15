@@ -633,7 +633,7 @@ abstract public function esc($value);
 /**
  * Execute query (string or prepared statement).
  *
- * @param string|object $query
+ * @param string|vector $query
  * @param bool $use_result (default = false)
  */
 abstract public function execute($query, $use_result = false);
@@ -768,6 +768,7 @@ public function selectOne($query, $col = '') {
  * Name Variants:
  *
  *  - name = $this->select($this->getQuery(name, $replace), intval($opt))
+ *  - name:exec = $this->execute($this->getQuery(name, $replace), false)
  *  - name:one = $this->selectOne($this->getQuery(name, $replace), $opt)
  *  - name:column =  $this->selectColumn($this->getQuery(name, $replace), $opt) ($opt == '' == 'col')
  *  - name:hash = $this->selectHash($this->getQuery($name, $replace), $opt[0], $opt[1], false) ($opt == '' == [name, value ])
@@ -786,7 +787,10 @@ public function query($name, $replace = null, $opt = '') {
 		$do = mb_substr($name, $pos + 1);
 		$name = mb_substr($name, 0, $pos);
 
-		if ($do === 'one') {
+		if ($do === 'exec') {
+			return $this->execute($this->getQuery($name, $replace), false);
+		}
+		else if ($do === 'one') {
 			return $this->selectOne($this->getQuery($name, $replace), $opt);
 		}
 		else if ($do === 'column') {
