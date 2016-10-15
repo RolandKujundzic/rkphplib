@@ -656,9 +656,9 @@ abstract public function getRowNumber();
 /**
  * Return column values.
  *
- * @param string $query
+ * @param string|vector $query
  * @param string $colname (default = col)
- * @return array
+ * @return vector
  */
 abstract public function selectColumn($query, $colname = 'col');
 
@@ -678,7 +678,7 @@ abstract public function getTableDesc($table);
 /**
  * Return hash values (key, value columns).
  *
- * @param string $query
+ * @param string|vector $query
  * @param string $key_col (default = name)
  * @param string $value_col (defualt = value)
  * @param bool $ignore_double (default = false)
@@ -690,7 +690,7 @@ abstract public function selectHash($query, $key_col = 'name', $value_col = 'val
 /**
  * Return query result row $rnum.
  *
- * @param string $query
+ * @param string|vector $query
  * @param int $rnum (default = 0)
  * @return hash
  */
@@ -702,7 +702,7 @@ abstract public function selectRow($query, $rnum = 0);
  *
  * If $res_count > 0 throw error if column count doesn't match.
  *
- * @param string $query
+ * @param string|vector $query
  * @param int $res_count (default = 0)
  * @return table
  */
@@ -747,13 +747,83 @@ public function seek($offset) {
  * Return query hash (single row).
  * 
  * @throw rkphplib\Exception if rownum != 1 
- * @param string $query
+ * @param string|vector $query
  * @param string $col (default = '')
  * @return array|string 
  */
 public function selectOne($query, $col = '') {
 	$dbres = $this->select($query, 1);
 	return empty($col) ? $dbres[0] : $dbres[0][$col];
+}
+
+
+/**
+ * Shortcut for select[One|Column|Hash|Row](getQuery(name, r), n).
+ * If n == -1 return false if there is no result otherwise if there is
+ * one result return map and throw exception if there is more than one result.
+ * Name Variants:
+ *
+ *  - name = $this->select($this->getQuery(name, $replace), intval($opt))
+ *  - name:one = $this->selectOne($this->getQuery(name, $replace), $opt)
+ *  - name:column =  $this->selectColumn($this->getQuery(name, $replace), $opt) ($opt == '' == 'col')
+ *  - name:hash = $this->selectHash($this->getQuery($name, $replace), $opt[0], $opt[1], false) ($opt == '' == [name, value ])
+ *  - name:row = $this->selectRow($this->getQuery($name, $replace), intval($opt)) 
+ *
+ * @throws
+ * @param string $name query key
+ * @param map<string:string> $replace (default = null)
+ * @param int|string $opt (default = '')
+ * @return false|string|vector<string>|map<string:string>
+ */
+public function query($name, $replace = null, $opt = '') {
+
+	if (($pos = mb_strpos($name, ':')) > 0) {
+		// selectDo ...
+		$do = mb_substr($name, $pos + 1);
+		$name = mb_substr($name, 0, $pos);
+
+		if ($do === 'one') {
+			return $this->selectOne($this->getQuery($name, $replace), $opt);
+		}
+		else if ($do === 'column') {
+			if ($opt === '') {
+				$opt = 'col';
+			}
+
+			return $this->selectColumn($this->getQuery($name, $replace), $opt);
+		}
+		else if ($do === 'hash') {
+			if ($opt === '') {
+				$opt = [ 'name', 'value' ];
+			}
+			else if (!is_array($opt) || count($opt) !== 2) {
+				throw new Exception('invalid option', "name=$name opt: ".print_r($opt, true));
+			} 
+
+			return $this->selectHash($this->getQuery($name, $replace), $opt[0], $opt[1], false);
+		}
+		else if ($do === 'row') {
+			return $this->selectRow($this->getQuery($name, $replace), intval($opt));
+		}
+		else {
+			throw new Exception('invalid option', "name=$name opt: ".print_r($opt, true));
+		}
+	}
+
+	// select ...
+	$opt = intval($opt);
+
+	if ($opt > -1) {
+		return $this->select($this->getQuery($name, $replace), $opt);
+	}
+
+	// opt === -1
+	$dbres = $this->select($this->getQuery($name, $replace), 0);
+	if (count($dbres) > 1) {
+		throw new Exception('more than one result', $this->getQuery($name, $replace));
+	}
+
+	return (count($dbres) === 1) ? $dbres[0] : false;
 }
 
 
