@@ -4,7 +4,7 @@ namespace rkphplib;
 
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/Exception.class.php');
-require_once(__DIR__.'/File.class.php');
+require_once(__DIR__.'/lib/split_str.php');
 
 use rkphplib\Exception;
 
@@ -44,8 +44,46 @@ public function getPlugins($tok) {
 	$plugin['f'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM; 
 	$plugin['false'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM;
 	$plugin['find'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM;
+	$plugin['plugin'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::CSLIST_BODY;
 
 	return $plugin;
+}
+
+
+/**
+ * Load plugin class. Examples:
+ * 
+ * {plugin:}TLogin, TLanguage, PHPLIB:TShop, inc/abc.php:\custom\XY{:plugin} -> 
+ *   require_once(PATH_RKPHPLIB.'TLogin.class.php'); $this->tok->register(new \rkphplib\TLogin());
+ *   require_once(PATH_RKPHPLIB.'TLanguage.class.php'); $this->tok->register(new \rkphplib\TLanguage());
+ *   require_once(PATH_PHPLIB.'TShop.class.php'); $this->tok->register(new \phplib\TShop());
+ *   require_once('inc/abc.php', $this->tok->register(new \custom\XY());
+ *
+ * @param vector $p
+ * @return ''
+ */
+public function tok_plugin($p) {
+	
+	foreach ($p as $plugin) {
+
+		if (mb_strpos($plugin, ':') === false) {
+			require_once(PATH_RKPHPLIB.$plugin.'.class.php');
+			$obj = '\\rkphplib\\'.$plugin;
+		}
+		else {
+			list ($path, $obj) = explode(':', $plugin);
+
+			if (basename($path) === $path && defined("PATH_$path")) {
+				require_once(constant("PATH_$path").$obj);
+				$obj = '\\'.strtolower($path).'\\'.$obj;
+			}
+			else {
+				require_once($path);
+			}
+		}
+
+		$this->tok->register(new $obj());
+	}
 }
 
 
