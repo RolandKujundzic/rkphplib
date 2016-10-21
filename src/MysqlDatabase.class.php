@@ -155,7 +155,7 @@ public function close() {
 /**
  * 
  */
-public function createDatabase($dsn = '') {
+public function createDatabase($dsn = '', $opt = 'utf8') {
 	$db = $this->getDSN(true, $dsn);
 	$name = self::escape_name($db['name']);
 	$login = self::escape_name($db['login']);
@@ -164,7 +164,11 @@ public function createDatabase($dsn = '') {
 
 	$this->dropDatabase($dsn);
 
-	$this->execute("CREATE DATABASE ".$name);
+	if ($opt === 'utf8') {
+		$opt = " CHARACTER SET='utf8mb4' COLLATE='utf8mb4_unicode_ci'";
+	}
+
+	$this->execute("CREATE DATABASE ".$name.$opt);
 	$this->execute("GRANT ALL PRIVILEGES ON $name.* TO '$login'@'$host' IDENTIFIED BY '$pass'");
 	$this->execute("FLUSH PRIVILEGES");
 }

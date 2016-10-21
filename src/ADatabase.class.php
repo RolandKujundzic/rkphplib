@@ -554,8 +554,9 @@ abstract public function getInsertId();
  * Create database and account (drop if exists).
  *
  * @param string $dsn (default = '' = use internal)
+ * @param string $opt (default = 'utf8')
  */
-abstract public function createDatabase($dsn = '');
+abstract public function createDatabase($dsn = '', $opt = 'utf8');
 
 
 /**

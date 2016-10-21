@@ -496,7 +496,7 @@ public function getTableList($reload_cache = false) {
 /**
  *
  */
-public function createDatabase($dsn = '') {
+public function createDatabase($dsn = '', $opt = 'utf8') {
 	throw new Exception('ToDo ...');
 }
 
