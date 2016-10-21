@@ -100,7 +100,7 @@ public function tok_sql_name($name) {
  */
 public function tok_esc($param, $arg) {
 
-	if (!empty($param) && (isset($_REQUEST[$param]) || array_key_exists($_REQUEST[$param]))) {
+	if (!empty($param) && (isset($_REQUEST[$param]) || array_key_exists($param, $_REQUEST))) {
 		$arg = $_REQUEST[$param];
 	}
 
