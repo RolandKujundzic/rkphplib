@@ -647,7 +647,7 @@ abstract public function selectColumn($query, $colname = 'col');
  * Return table description. 
  *
  * Result hash keys are column names, values are arrays with column info
- * (e.g. mysql: { Type: 'double', Null: 'YES', Key: '', Default: '', Extra: '' }).
+ * (e.g. mysql: { type: 'double', is_null: true|false, key: '', default: '', extra: '' }).
  *
  * @param string $table
  * @return map
@@ -796,6 +796,65 @@ public static function columnList($cols, $prefix = '') {
 
 	return join(', ', $cnames);
 }
+
+
+/**
+ * Return insert|update query string. If type=update key '@where' = 'WHERE ...' is required in $kv.
+ *
+ * @param string $table
+ * @param string $type insert|update
+ * @param map<string:string> $kv
+ */
+public function buildQuery($table, $type, $kv = []) {
+
+	$p = $this->getTableDesc($table);
+	$key_list = [];
+	$val_list = [];
+
+	foreach ($p as $col => $cinfo) {
+		array_push($key_list, self::escape_name($col));
+
+		if (is_null($kv[$col]) || (!empty($kv[$col]) && $kv[$col] === 'NULL')) {
+			$val = 'NULL';
+		}
+		else if (isset($kv[$col])) {
+			$val = "'".self::escape($kv[$col])."'";
+		}
+		else if ($p['is_null'] || is_null($p['default']) || $p['default'] === 'NULL') {
+			$val = 'NULL';
+		}
+		else if ($p['default'] !== '') {
+			$val = "'".self::escape($p['default'])."'";
+		}
+
+		array_push($val_list, $val);
+	}
+
+	if ($type === 'insert') {
+		$res = 'INSERT INTO '.self::escape_name($table).' ('.join(', ', $key_list).') VALUES ('.join(', ', $val_list).')';
+	}
+	else if ($type == 'update') {
+		$res = 'UPDATE '.self::escape_name($table).' SET ';
+		for ($i = 0; $i < count($key_list); $i++) {
+			$res .= $key_list[$i].'='.$val_list[$i];
+			if ($i < count($key_list) - 1) {
+				$res .= ', ';
+			}
+		}
+
+		if (empty($kv['@where']) || mb_substr($kv['@where'], 0, 6) !== 'WHERE ') {
+			throw new Exception('missing @where');
+		}
+
+		$res .= $kv['@where'];
+	}
+	else {
+		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
+	}
+
+	return $res;
+}
+
 
 }
 
