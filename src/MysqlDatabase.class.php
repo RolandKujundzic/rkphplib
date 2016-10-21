@@ -3,6 +3,8 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/ADatabase.class.php');
+require_once(__DIR__.'/File.class.php');
+require_once(__DIR__.'/lib/execute.php');
 
 use rkphplib\Exception;
 
@@ -198,6 +200,24 @@ public function dropDatabase($dsn = '') {
 
 		throw $e;
 	}
+}
+
+
+/**
+ *
+ */
+public function saveDump($file, $opt = null) {
+  throw new Exception('ToDo ...');
+}
+
+
+/**
+ *
+ */
+public function loadDump($file) {
+	File::exists($file, true);
+	$dsn = $this->getDSN(true);
+	lib\execute("mysql -h ".$dsn['host']." -u '".$dsn['login']."' -p'".$dsn['password']."' '".$dsn['name']."' < '".$file."'");
 }
 
 

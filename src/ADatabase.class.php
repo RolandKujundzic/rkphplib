@@ -93,7 +93,7 @@ public function setDSN($dsn) {
  * @throws rkphplib\Exception if $dsn was not set
  * @param bool $split (default = false) 
  * @param string $dsn (default = '')
- * @return string 
+ * @return string|map 
  */
 public function getDSN($split = false, $dsn = '') {
 
@@ -565,6 +565,25 @@ abstract public function createDatabase($dsn = '', $opt = 'utf8');
  * @param string $dsn (default = '' = use internal)
  */
 abstract public function dropDatabase($dsn = '');
+
+
+/**
+ * Export database dump into file. Options:
+ *
+ * - tables: table1, table2, ...
+ *
+ * @param string $file
+ * @param map $opt (default = null = full database dump)
+ */
+abstract public function saveDump($file, $opt = null);
+
+
+/**
+ * Import database dump.
+ *
+ * @param string $file
+ */
+abstract public function loadDump($file);
 
 
 /**

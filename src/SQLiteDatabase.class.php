@@ -512,6 +512,22 @@ public function dropDatabase($dsn = '') {
 /**
  *
  */
+public function saveDump($file, $opt = null) {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
+ *
+ */
+public function loadDump($file) {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
+ *
+ */
 public function createTable($conf) {
 	throw new Exception('ToDo ...');
 }
