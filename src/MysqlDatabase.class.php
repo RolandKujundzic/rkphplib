@@ -717,7 +717,12 @@ public function getTableList($reload_cache = false) {
 
 
 /**
- * Return table description.
+ * Return table description. Column map is:
+ *
+ * - type: double, ...
+ * - is_null: true|false
+ * - default: null, 0, ...
+ * - extra: 
  * 
  * @param string $table
  * @return map<string:map> keys are column names
@@ -733,8 +738,14 @@ public function getTableDesc($table) {
 
 	foreach ($db_res as $info) {
 		$colname = $info['Field'];
-		unset($info['Field']);
-		$res[$colname] = $info;
+		$cinfo = [];
+		$cinfo['type'] = $info['Type'];
+		$cinfo['is_null'] = $info['Null'] === 'YES';
+		$cinfo['key'] = $info['Key'];
+		$cinfo['default'] = $info['Default'];
+		$cinfo['extra'] = $info['Extra'];
+
+		$res[$colname] = $cinfo;
 	}
 
 	$this->_cache['DESC:'.$table] = $res;
