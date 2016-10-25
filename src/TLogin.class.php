@@ -58,7 +58,7 @@ public function tok_login_check($param, $p) {
 		return $res;
 	}
 
-	if (!$sess->hasMeta('start') || ($expired = $sess->hasExpired()))
+	if (!$this->sess->hasMeta('start') || ($expired = $this->sess->hasExpired())) {
 		throw new Exception('ToDo');
 	}
 
@@ -73,7 +73,26 @@ public function tok_login_check($param, $p) {
  * @return string
  */
 public function tok_login($key) {
-	throw new Exception('ToDo');
+	return 'ToDo';
 }
+
+
+/**
+ * Create login table.
+ * 
+ * @param string $table
+ */
+public function createTable($table) {
+	$tconf = [];
+	$tconf['@table'] = $table;
+	$tconf['@id'] = 1;
+	$tconf['@timestamp'] = 3;
+	$tconf['login'] = 'varchar(50):::1';
+	$tconf['password'] = 'varchar(50):::';
+	$tconf['auth'] = 'varchar(30):::';
+
+	$this->db->createTable($tconf);
+}
+
 
 }
