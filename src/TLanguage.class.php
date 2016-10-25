@@ -4,21 +4,31 @@ namespace rkphplib;
 
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/Exception.class.php');
+require_once(__DIR__.'/Database.class.php');
+require_once(__DIR__.'/Session.class.php');
 
 use rkphplib\Exception;
 
 
 /**
- * Multilanguage plugin.
+ * Multilanguage plugin. Use Database and Session (site.language).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 class TLanguage implements TokPlugin {
 
-private $_db;
-private $_sess;
-private $_cache = array();
-private $_conf = array();
+/** @var ADatabase $db */
+private $db = null;
+
+/** @var Session $sess */
+private $sess = null;
+
+/** @var map $conf */
+private $conf = [];
+
+/** @var Tokenizer $tok */
+private $tok = null;
+
 
 
 /**
@@ -30,12 +40,15 @@ private $_conf = array();
  * @return map <string:int>
  */
 public function getPlugins($tok) {
+
+	$this->tok = $tok;
+
 	$plugin = [
 		'language:init' => TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY, 
 		'language:get' => TokPlugin::NO_BODY,
+		'language' => 0,
 		'txt' => 0,
-		'ptxt' => 0,
-		'dtxt' => 0,
+		'ptxt' => TokPlugin::LIST_BODY
 	];
 
 	return $plugin;
@@ -43,361 +56,252 @@ public function getPlugins($tok) {
 
 
 /**
- * Set database connection string
+ * Prepare database connection.
  * 
- * @param string $dsn
+ * @param string $dsn (default = SETTINGS_DSN)
+ * @param map $opt (default = [ 'table' => 'language', 'language' => SETTINGS_LANGUAGE, 'default' => 'txt' ])
+ * @param string $language (default = SETTINGS_LANGUAGE)
  */
-public function setDSN($dsn) {
-  $this->_db = new Database();
-  $this->_db->setDSN($dsn);
+public function setDSN($dsn = SETTINGS_DSN, $opt = [ 'table' => 'language', 'use' => SETTINGS_LANGUAGE, 'default' => 'txt' ]) {
 
-  $this->_db->setQuery('select', "SELECT * FROM {:=table} WHERE id='{:=id}' {:=_or_dir_path}");
-  $this->_db->setQuery('insert', "INSERT INTO {:=table} (last, id, dir, txt, {:=lang}) VALUES (now(), '{:=id}', '{:=dir}', '{:=txt}', '{:=txt}')");
-  $this->_db->setQuery('update', "UPDATE {:=table} SET last=now(), dir='{:=dir}', {:=lang}='{:=txt}' WHERE id='{:=id}'");
-  $this->_db->setQuery('update_dir', "UPDATE {:=table} SET dir='' WHERE id='{:=id}'");
+	$this->db = Database::getInstance($dsn);
+	
+	$query_map = [
+		'@query_prefix' => '',
+
+		'escape_name@table' => $opt['table'], 
+		'escape_name@use' => $opt['use'],
+		'escape_name@default' => $opt['default'],
+
+		'select' => "SELECT {:=@use} AS lang, {:=@default} AS default, txt FROM {:=@table} WHERE id='{:=id}'",
+		'insert' => "INSERT INTO {:=@table} (id, lchange, txt) VALUES ('{:=id}', NOW(), '{:=txt}')",
+		'delete' => "DELETE FROM {:=@table} WHERE id='{:=id}'"
+	];
+
+	$this->db->setQueryHash($query_map);
+
+	if (!$this->db->hasTable($opt['table'])) {
+		$this->db->createTable($opt['table']);
+	}
 }
 
 
 /**
- * Add [language|locale|txt|ptxt|dtxt:] plugins. 
+ * Create language table.
+ * 
+ * @param string $table (default = 'language')
+ * @param vector<string[2]> $language_list (default = [ de, en ])
  */
-public function addTo(&$tok) {
-  $tok->setPlugin('language', $this);
-  $tok->setPlugin('locale', $this);
-  $tok->setPlugin('txt', $this);
-  $tok->setPlugin('ptxt', $this);
-  $tok->setPlugin('dtxt', $this);
+public function createTable($table = 'language', $language_list = [ 'de', 'en' ]) {
+	$tconf = [];
+	$tconf['@table'] = $table;
+	$tconf['@id'] = 'varchar:50::3';
+	$tconf['@timestamp'] = 2;
+	$tconf['txt'] = 'text:::1';
+
+	foreach ($language_list as $lang) {
+		$tconf[$lang] = 'text:::1';
+	}
+
+	$this->db->createTable($tconf);
+}	
+
+
+/**
+ * Save language to session object (name=$name, scope=docroot and unlimited=1).
+ * Update SESSION_LANGUAGE to $language if necessary. 
+ * 
+ * @throws
+ * @see Session
+ * @param string $language
+ * @param string $name (default = language)
+ */
+public function initSession($language, $name = 'language') {
+
+	if (empty($language) || mb_strlen($language) !== 2) {
+		throw new Exception('invalid language', "language=$language");
+	}
+
+	$this->sess = new Session();
+	$this->sess->init([ 'name' => $name, 'scope' => 'docroot', 'unlimited' => 1 ]);
+
+	if (!$this->sess->has('language') || !$this->sess->get('language') !== $language) {
+		$this->sess->set('language', $language);
+		define('SESSION_LANGUAGE', $language);
+	}
 }
 
 
 /**
- * Return session language.
+ * Initialize language plugin. Update SETTINGS_LANGUAGE. Parameter:
+ * 
+ *  table: language (default)
+ *  dsn: SETTINGS_DSN (default)
+ *  txt: language inside txt plugin (default = SETTINGS_LANGUAGE)
+ *  default: 'txt' (default)
+ *  untranslated: mark untranslaged, e.g. keep (return {txt:$param}$arg{:txt}, 
+ *    <font style="background-color:red">{:=txt}</font>) (default = '' = return $arg)
+ *  use: switch language e.g. {get:language} (default = '' = use p.default)
+ *
+ * @throws  
+ * @param map<string:string> $p
+ * @return ''
+ */
+public function tok_language_init($p) {
+
+	$default = [ 'table' => 'language', 'dsn' => SETTINGS_DSN, 'txt' => SETTINGS_LANGUAGE, 'default' => 'txt', 'use' => '', 'untranslated' => '' ];
+
+	foreach ($default as $key => $value) {
+		if (empty($p[$key])) {
+			$p[$key] = $value;
+		}
+	}
+
+	$p['use'] = empty($p['use']) ? $p['default'] : $p['use'];
+	$this->setDSN($p['dsn'], $p);
+	$this->initSession($p['use'], $p['table']);
+	$this->conf = $p;
+
+	return '';
+}
+
+
+/**
+ * Return current language (SETTINGS_LANGUAGE).
  *
  * @return string
  */
 public function tok_language_get() {
 
-  if (!is_object($this->_sess)) {
-    throw new Exception('use language:init first');
-  }
+	if (is_null($this->sess) || !$this->sess->has('language')) {
+		return SETTINGS_LANGUAGE;
+	}
 
-  $res = $this->_sess->ndGet();
-
-  if (strlen($res) != 2) {
-    lib_abort('use [language:] first');
-  }
-
-  return $res;
+	return $this->sess->get('language');
 }
 
 
 /**
- * Initialize language plugin. Parameter:
+ * Return txt|ptxt id. Translation id is either $param or md5(remove_whitespace($txt)) (unless $txt == '=id').
  * 
- *  session.timeout_url:
- *  session.ttl: 36000
- *  table: language
- *  keep_txt: yes (=default) | no
- *  use: nl (switch to nl)
- *  mark: colorize all tagged texts ('no' or 'rrggbb' value)
- *  default: de (default language - use domain_suffix for auto detection)
- *  txt: de (no translation use text inside txt filter)
- *  
- * @param hash $p
- */
-public function tok_language_init() {
-
-  $this->_sess = new Session();
-  $p['session.timeout_url'] = '';
-  $p['session.ttl'] = 36000;
-  $this->_sess->ndInit($p, 'language');
-
-  $this->_conf['table'] = empty($p['table']) ? 'language' : $p['table'];
-  $this->_conf['keep_txt'] = (empty($p['keep_txt']) || $p['keep_txt'] != 'no') ? true : false;
-  $this->_conf['txt'] = empty($p['txt']) ? '' : $p['txt'];
-
-  if (is_object($this->_db)) {
-    $this->_db->setQueryHash($p);
-  }
-
-  $curr = $this->_sess->ndGet();
-
-  if (!empty($p['use'])) {
-    if ($curr != $p['use']) {
-      $this->_sess->ndSet($p['use']);
-      $curr = $p['use'];
-    }
-  }
-
-  if (!empty($p['marker'])) {
-  	if ($p['marker'] == 'no') {
-  		$this->_sess->ndDel('marker');
-  	}
-  	else if (preg_match('/^[0-9abcdef]{6}$/i', $p['marker'])) {
-  		$this->_sess->ndSet($p['marker'], 'marker');
-  	}
-  }
-  
-  if (empty($curr)) {
-    if (!empty($p['default'])) {
-
-      if ($p['default'] == 'domain_suffix') {
-        $domain = getenv('HTTP_HOST');
-        $s3 = substr($domain, -3);
-        $s4 = substr($domain, -4);
-
-        if ($s4 == '.com' || $s3 == '.uk') {
-          $p['default'] = 'en';
-        }
-        else if ($s4 == '.xxx' || $s3 == '.xx' || $s4 == '.org' || $s4 == '.net') {
-        	$p['default'] = 'de';
-        }
-        else {
-          $lang2 = strtolower(substr($domain, -2));
-					if ($lang2 == '0' || intval($lang2) > 0) {
-						// DOMAIN = IP
-						$lang2 = 'de';
-					}
-
-					$p['default'] = $lang2;
-        }
-      }
-
-      $this->_sess->ndSet($p['default']);
-      $curr = $p['default'];
-    }
-    else {
-      lib_abort('empty use and default key');
-    }
-  }
-
-  Language::set($curr);
-}
-
-
-/**
- * 
- */
-public function tokCall($action, $param, $arg) {
-  $res = '';
-
-  if ($action == 'language') {
-    if ($param == 'get') {
-      $res = $this->_get_language();
-    }
-    else if ($param == 'map') {
-      $res = $this->_language_map(trim($arg));
-    }
-    else {
-      $this->_language(lib_arg2hash($arg));
-    }
-  }
-  else if (!is_object($this->_sess)) {
-    lib_abort("use [language:] plugin before [$action:]");
-  }
-
-  if ($action == 'txt') {
-    $res = $this->_txt($param, $arg);
-  }
-  else if ($action == 'locale') {
-    $res = $this->_locale($param);
-  }
-  else if ($action == 'dtxt') {
-    $res = $this->_dtxt($param, $arg);
-  }
-  else if ($action == 'ptxt') {
-    // {ptxt:}xxx $p1x yyy $p2x zzz|#|p1|#|p2{:ptxt}
-    $p = lib_arg2array($arg);
-    $res = $this->_txt($param, array_shift($p));
-
-    for ($i = 0; $i < count($p); $i++) {
-      $res = str_replace('$p'.($i + 1).'x', $p[$i], $res);
-    }
-  }
-
-  return $res;
-}
-
-
-/**
- * Return [locale:currency|vat] value. 
- * 
- * @param string $param currency|vat
+ * @throws
+ * @param string $param
+ * @param string $txt
  * @return string
  */
-private function _locale($param) {
-  $res = '';
+public function getTxtId($param, $txt) {
 
-  if ($param == 'currency') {
-    $res = Language::currency();
-  }
-  else if ($param == 'vat') {
-    $res = Language::vat();
-  }
+	if (!empty($param)) {
+		$id = $param;
+	}
+	else {
+		$txt_id = preg_replace("/[\s]+/", '', $txt);
 
-  return $res;
+		if (mb_substr($txt, 0, 1) === '=') {
+			$id = mb_substr($txt_id, 1);
+		}
+		else if (!empty($txt_id)) {
+			$id = $txt_id;
+		}
+		else {
+			throw new Exception('empty txt id');
+		}
+	}
+
+	return $id;
 }
 
 
 /**
- * Return translation. Translation id is either $param or md5(stripped($arg)) (if $arg is =XXX use XXX as id).
+ * Return translation. Select language or default based on getTxtId(). 
+ * If Text is not translated return untranslated(). If text has changed
+ * remove translation in database. Text $txt must be static otherwise use tok_ptxt(). 
+ * Examples:
+ *
+ * - {txt:}Hallo {get:firstname} {get:lastname}{:txt} -> invalid !!
+ * - {txt:}Hallo{:txt} -> id = md5('Hallo')
+ * - {txt:hi}Hallo{:txt} -> id = hi
+ * - {txt:}=hi{:txt} -> id = hi 
+ *
+ * @throws
+ * @see getTxtId
+ * @see untranslated
+ * @see tok_ptxt
+ * @param string $param custom id or empty
+ * @param string $txt default text or empty
+ * @return string
+ */
+public function tok_txt($param, $txt) {
+
+	$id = $this->getTxtId($param, $txt);
+
+	if (($trans = $this->db->query('select', [ 'id' => $id ], -1)) === false) {
+		// no translation - insert untranslated text and return raw
+		$this->db->query('insert:exec', [ 'id' => $id, 'txt' => $txt ]);
+		return $this->untranslated('txt', $param, $txt);
+	}
+
+	if ($trans['txt'] !== $txt) {
+		// text has changed: remove translation, insert untranslated text and return raw
+		$this->db->query('delete:exec', [ 'id' => $id ]);
+		$this->db->query('insert:exec', [ 'id' => $id, 'txt' => $txt ]);
+		return $this->untranslated('txt', $param, $txt);
+	}
+
+	$res = $trans['lang'];
+	if (empty($res)) {
+		$res = empty($trans['default']) ? $this->untranslated('txt', $param, $txt) : $trans['default'];
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return translation of text with parameters. Example:
  * 
+ * {ptxt:}Hallo $p1x $p2x|#|{get:firstname}|#|{get:lastname}{:ptxt} -> {txt:}Hallo $p1x $p2x{:txt} 
+ *   with replacement $p1x={get:firstname} and $p2x={get:lastname}
+ * 
+ * @see txt
+ * @param string $param
+ * @param vector $p
+ * @return string
+ */
+public function tok_ptxt($param, $p) {
+	$res = $this->tok_txt($param, array_shift($p));
+
+	for ($i = 0; $i < count($p); $i++) {
+		$res = str_replace('$p'.($i + 1).'x', $p[$i], $res);
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return string. If conf.untranslated is empty return $arg.
+ * If conf.untranslated=keep return {$action:$param}$arg{:$action}.
+ * Otherwise replace {:=txt} in conf.untranslated and return.
+ *
+ * @throws
+ * @param string $action
  * @param string $param
  * @param string $arg
  * @return string
  */
-private function _txt($param, $arg) {
+public function untranslated($action, $param, $arg) {
 
-  $dir = empty($_REQUEST['dir']) ? '' : $_REQUEST['dir'];
-
-  if (!empty($param)) {
-  	$id = $param;
-  }
-  else if (substr($arg, 0, 1) == '=') {
-  	$id = substr($arg, 1);
-  	$arg = '';
-  }
-  else {
-  	$id = md5(preg_replace("/[\s]+/", '', $arg));
-  }
-
-  $lang = $this->_sess->ndGet();
-  $ckey = $id.'_'.$lang;
-  $res = '';
-
-  if (!empty($this->_conf['txt']) && $this->_conf['txt'] == $lang) {
-  	if (($marker = $this->_sess->ndGet('marker'))) {
-  		$arg = '<font style="background-color:#'.$marker.'">'.$arg.'</font>';
-  	}
-		
-  	return $arg;
-  }
-
-  if (count($this->_cache) == 0) {
-    $this->_fill_cache($id, $lang);
-  }
-
-  if (!empty($this->_cache[$ckey])) {
-    $res = $this->_cache[$ckey];
-  }
-  else {
-    // try to update dir
-    $replace = array('table' => $this->_conf['table'], 'id' => $id);
-    $this->_db->execute($this->_db->getQuery('update_dir', $replace));
-
-    if ($this->_conf['keep_txt']) {
-    	if (!$param && !$arg) {
-    		$res = '';
-    	}
-    	else {
-    		$res = TokMarker::getPluginTxt('txt', $param, $arg);
-      	lib_warn("($dir:$id) not found - res=[$res] param=[$param] arg=[$arg]");
-    	}
-    }
-    else {
-      $res = $arg;
-    }
-  }
-
-  if (($marker = $this->_sess->ndGet('marker'))) {
-  	$res = '<font style="background-color:#'.$marker.'">'.$res.'</font>';
-  }    
-  
-  return $res;
-}
-
-
-//-----------------------------------------------------------------------------
-private function _dtxt($param, $arg) {
-
-  if (strlen($param) == 0 && strlen($arg) == 0) {
-    return '';
-  }
-
-  $dir = empty($_REQUEST['dir']) ? '' : $_REQUEST['dir'];
-  $id = empty($param) ? '_'.md5(preg_replace("/[\s]+/", '', $arg)) : '_'.$param;  
-  $lang = $this->_sess->ndGet();
-  $ckey = $id.'_'.$lang;
-
-  if (count($this->_cache) == 0) {
-    $this->_fill_cache($id, $lang);
-  }
-  
-  if (!isset($this->_cache[$ckey]) && !empty($arg)) {
-		$replace = array('table' => $this->_conf['table'], 'id' => $id, 
-			'dir' => $dir, 'lang' => $lang, 'txt' => $arg, '_or_dir_path' => '');
-
-		// is might still be defined ... for other directory ...
-		$dbres = $this->_db->select($this->_db->getQuery('select', $replace));
-		if (count($dbres) > 0) {
-			$this->_cache[$ckey] = $dbres[0][$lang];
-
-			if ($dbres[0]['dir'] != '' && $dbres[0]['dir'] != $replace['dir']) {
-        $replace['txt'] = $dbres[0][$lang];
-				$replace['dir'] = '';
-        $this->_db->execute($this->_db->getQuery('update', $replace));
-     	}
-		}
-    else {
-    	$this->_db->execute($this->_db->getQuery('insert', $replace));
-      $this->_cache[$ckey] = $arg;
-    }
-  }
-
-  $res = '';
-
-  if (!isset($this->_cache[$ckey])) {
-    lib_warn("_dtxt: unkown ckey [$ckey] = [$param][$arg]");    
-  }
-  else {
-    $res = $this->_cache[$ckey];
-  }
-  
-  return $res;
-}
-
-
-//-----------------------------------------------------------------------------
-private function _fill_cache($id, $lang) {
-
-  $dir = empty($_REQUEST['dir']) ? '' : $_REQUEST['dir'];
-  $dir_path = $dir;
-  $where_dir = '';
-
-  while ($dir_path && ($pos = strrpos($dir_path, '/')) > 0) {
-    $where_dir .= " OR dir='".$dir_path."'";
-    $dir_path = substr($dir_path, 0, $pos);
-  }
-
-  $where_dir .= " OR dir='".$dir_path."' OR dir=''";
-
-  $replace = array('table' => $this->_conf['table'], 'id' => $id, '_or_dir_path' => $where_dir);
-  $db_res = $this->_db->select($this->_db->getQuery('select', $replace));
-
-  // see: Language::get() too
-  $alias = array('ba' => 'hr', 'rs' => 'hr', 'us' => 'en', 'uk' => 'en');
-
-  for ($i = 0; $i < count($db_res); $i++) {
-    $ckey = $db_res[$i]['id'].'_'.$lang;
-
-    if (!empty($db_res[$i][$lang])) {
-      $this->_cache[$ckey] = $db_res[$i][$lang];
-    }
-    else if (isset($alias[$lang])) {
-      $al = $alias[$lang];
-
-      if (!empty($db_res[$i][$al])) {
-        $this->_cache[$ckey] = $db_res[$i][$al];
-      }
-    }
-    
-    if (!isset($this->_cache[$ckey])) {
-      $this->_cache[$ckey] = $db_res[$i]['txt'];
-    }
-  }
+	if (empty($this->conf['untranslated'])) {
+		return $arg;
+	}
+	else if ($this->conf['untranslated'] === 'keep') {
+		return $tok->getPluginTxt($action.$tok->rx[2].$param, $arg);
+	}
+	else {
+		return str_replace('{:=txt}', $arg, $this->conf['untranslated']);
+	}
 }
 
 
 }
-
-?>
