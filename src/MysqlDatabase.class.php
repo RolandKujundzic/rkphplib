@@ -3,6 +3,8 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/ADatabase.class.php');
+require_once(__DIR__.'/File.class.php');
+require_once(__DIR__.'/lib/execute.php');
 
 use rkphplib\Exception;
 
@@ -155,7 +157,7 @@ public function close() {
 /**
  * 
  */
-public function createDatabase($dsn = '') {
+public function createDatabase($dsn = '', $opt = 'utf8') {
 	$db = $this->getDSN(true, $dsn);
 	$name = self::escape_name($db['name']);
 	$login = self::escape_name($db['login']);
@@ -164,7 +166,11 @@ public function createDatabase($dsn = '') {
 
 	$this->dropDatabase($dsn);
 
-	$this->execute("CREATE DATABASE ".$name);
+	if ($opt === 'utf8') {
+		$opt = " CHARACTER SET='utf8mb4' COLLATE='utf8mb4_unicode_ci'";
+	}
+
+	$this->execute("CREATE DATABASE ".$name.$opt);
 	$this->execute("GRANT ALL PRIVILEGES ON $name.* TO '$login'@'$host' IDENTIFIED BY '$pass'");
 	$this->execute("FLUSH PRIVILEGES");
 }
@@ -194,6 +200,24 @@ public function dropDatabase($dsn = '') {
 
 		throw $e;
 	}
+}
+
+
+/**
+ *
+ */
+public function saveDump($file, $opt = null) {
+  throw new Exception('ToDo ...');
+}
+
+
+/**
+ *
+ */
+public function loadDump($file) {
+	File::exists($file, true);
+	$dsn = $this->getDSN(true);
+	lib\execute("mysql -h ".$dsn['host']." -u '".$dsn['login']."' -p'".$dsn['password']."' '".$dsn['name']."' < '".$file."'");
 }
 
 
@@ -717,7 +741,12 @@ public function getTableList($reload_cache = false) {
 
 
 /**
- * Return table description.
+ * Return table description. Column map is:
+ *
+ * - type: double, ...
+ * - is_null: true|false
+ * - default: null, 0, ...
+ * - extra: 
  * 
  * @param string $table
  * @return map<string:map> keys are column names
@@ -733,8 +762,14 @@ public function getTableDesc($table) {
 
 	foreach ($db_res as $info) {
 		$colname = $info['Field'];
-		unset($info['Field']);
-		$res[$colname] = $info;
+		$cinfo = [];
+		$cinfo['type'] = $info['Type'];
+		$cinfo['is_null'] = $info['Null'] === 'YES';
+		$cinfo['key'] = $info['Key'];
+		$cinfo['default'] = $info['Default'];
+		$cinfo['extra'] = $info['Extra'];
+
+		$res[$colname] = $cinfo;
 	}
 
 	$this->_cache['DESC:'.$table] = $res;

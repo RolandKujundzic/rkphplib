@@ -496,7 +496,7 @@ public function getTableList($reload_cache = false) {
 /**
  *
  */
-public function createDatabase($dsn = '') {
+public function createDatabase($dsn = '', $opt = 'utf8') {
 	throw new Exception('ToDo ...');
 }
 
@@ -505,6 +505,22 @@ public function createDatabase($dsn = '') {
  *
  */
 public function dropDatabase($dsn = '') {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
+ *
+ */
+public function saveDump($file, $opt = null) {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
+ *
+ */
+public function loadDump($file) {
 	throw new Exception('ToDo ...');
 }
 
