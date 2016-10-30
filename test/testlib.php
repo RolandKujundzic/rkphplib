@@ -198,9 +198,9 @@ function fc($path) {
 	require_once($php_file);
 
 	$csm = false;
-    if (($pos = strpos($func, '::')) !== false) {
-        $class = substr($func, 0, $pos);
-        $method = substr($func, $pos + 2);
+	if (($pos = strpos($func, '::')) !== false) {
+		$class = substr($func, 0, $pos);
+		$method = substr($func, $pos + 2);
 		$csm = true;
 	}
 
