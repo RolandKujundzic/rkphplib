@@ -19,14 +19,14 @@ use rkphplib\Exception;
  *
  * Tag {action:param}body{:action} will be replaced with result of Plugin->tok_action(param, body).
  * Tag parameter and body are optional, e.g. {action:} or {action:param}. If body is empty close tag {:action} is 
- * not required.
+ * not required. Escaped Tag is: &#123;action&#58;param&#125; (html-utf8-escape).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 class Tokenizer {
 
-/** @var vector $rx Token expression (regular expression for start+end token, prefix, delimiter, suffix) */
-public $rx = array("/\{([a-zA-Z0-9_]*\:.*?)\}/s", '{', ':', '}');
+/** @var vector $rx Token expression (regular expression for start+end token, prefix, delimiter, suffix, esc-prefix, esc-delimiter, esc-suffix) */
+public $rx = array("/\{([a-zA-Z0-9_]*\:.*?)\}/s", '{', ':', '}', '&#123;', '&#58;', '&#125;');
 
 /** @var string $file Token data from $file - defined if load($file) was used */
 public $file = '';
@@ -629,6 +629,54 @@ private function _update_level() {
       $k++;
     }
 	}
+}
+
+
+/**
+ * Return escaped string. Replace $rx[1..3] with rx[4..6].
+ * Example: {action:param} = &#123;action&#58;param&#125;
+ *
+ * @param string $txt
+ * @param vector<string> $rx (default = null = use $this->rx)
+ * @return string
+ */
+public function escape($txt, $rx = null) {
+
+	if (is_null($rx)) {
+		$rx = $this->rx;
+	}
+
+	if (($p1 = mb_strpos($txt, $rx[1])) === false || 
+			($p2 = mb_strpos($txt, $rx[2], $p1 + 1)) === false ||
+			($p3 = mb_strpos($txt, $rx[3], $p2 + 1)) === false) {
+		return $txt;
+	}
+
+	$tok = preg_split($rx[0], $txt, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+	if (count($tok) === 1) {
+		return $txt;
+	}
+
+	for ($i = 1; $i < count($tok); $i = $i + 2) {
+		$tok[$i] = $rx[4].str_replace($rx[2], $rx[5], $tok[$i]).$rx[6];
+	}
+
+  return join('', $tok);
+}
+
+
+/**
+ * Return unescaped string. Replace $rx[4..6] with rx[1..3].
+ * Example: &#123;action&#58;param&#125; = {action:param}
+ *
+ * @param string $txt
+ * @return string
+ */
+public function unescape($txt, $rx = null) {
+	$rx = [ '', $this->rx[4], $this->rx[5], $this->rx[6], $this->rx[1], $this->rx[2], $this->rx[3] ];
+	$rx[0] = '/'.preg_quote($this->rx[4]).'([a-zA-Z0-9_]*'.preg_quote($this->rx[5]).'.*?)'.preg_quote($this->rx[6]).'/s';
+	return $this->escape($txt, $rx);
 }
 
 
