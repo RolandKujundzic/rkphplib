@@ -45,8 +45,194 @@ public function getPlugins($tok) {
 	$plugin['false'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM;
 	$plugin['find'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM;
 	$plugin['plugin'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::CSLIST_BODY;
+	$plugin['escape'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['unescape'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['encode'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['decode'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['get'] = 0;
 
 	return $plugin;
+}
+
+
+/**
+ * Return request value. Apply Tokenizer::escape to output.
+ * If _REQUEST[name] is not set return _FILES[name]['name'] if set.
+ * IF _REQUEST[name] is array and count == 1 return array element.
+ * If _REQUEST[name] is array and name is [a.b] and _REQUEST[a][b] exists return _REQUEST[a][b].
+ * If not found return empty string.
+ *
+ * @tok {get:a}, _REQUEST['a'] = 7: 7
+ * @tok {get:a}, _REQUEST['a'] = '-{x:}-': -&#123;x&#58;&#125;-
+ * @tok {get:a}, !isset(_REQUEST['a']) && _FILES['a']['name'] = test.jpg: test.jpg
+ * @tok {get:a.x}, _REQUEST['a'] = [ 'x' => 5, 'y' => 10 ]: 5
+ * @tok {get:a}, _REQUEST['a'] = [ 3 ]: 3
+ * @tok {get:a}, _REQUEST['a'] = [ 1, 2, 3 ]: '' 
+ *
+ * @param string $param
+ * @param string $arg
+ * @return string
+ */
+public function tok_get($param, $arg) {
+	$key = empty($arg) ? $param : trim($arg);
+	$res = '';
+
+	if (isset($_REQUEST[$key])) {
+		if (is_array($_REQUEST[$key])) {
+			if (count($_REQUEST[$key]) === 1 && isset($_REQUEST[$key][0])) {
+				$res = $_REQUEST[$key];
+			}
+		}
+		else {
+			$res = $_REQUEST[$key];
+		}
+	
+		$res = $this->_tok->escape($res);
+	}
+	else if (isset($_FILES[$key]) && !empty($_FILES[$key]['name'])) {
+		$res = $this->_tok->escape($_FILES[$key]['name']);
+	}
+	else if (($pos = mb_strpos($key, '.')) !== false) {
+		$key1 = mb_substr($key, 0, $pos);
+		$key2 = mb_substr($key, $pos + 1);
+
+		if (isset($_REQUEST[$key1]) && is_array($_REQUEST[$key1]) && isset($_REQUEST[$key1][$key2])) {
+			$res = $_REQUEST[$key1][$key2];
+		}
+
+		$res = $this->_tok->escape($res);
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return escaped value. Parameter:
+ * 
+ * - js: same as javascript encodeURIcomponent = rawurlencode without "!,*,',(,)"
+ * - tok: Tokenizer->escape $txt
+ * - html: replace [ '&lt;', '&gt;', '&quot;' ] with [ '<', '>', '"' ]
+ *
+ * @tok {escape:tok}{x:}{:escape} = &#123;x&#58;&#125; 
+ * @tok {escape:js}-_.|~!*'();:@&=+$,/?%#[]{:escape} = -_.%7C~!*'()%3B%3A%40%26%3D%2B%24%2C%2F%3F%25%23%5B%5D
+ * @tok {escape:html}<a href="abc">{:escape} = &lt;a href=&quot;abc&quot;&gt;
+ *  
+ * @throws
+ * @param string $param
+ * @param string $txt
+ * @return string
+ */
+public function tok_escape($param, $txt) {
+	$res = $txt;
+
+	if ($param == 'tok_html') {
+		$res = $this->_tok->escape($txt);
+	}
+	else if ($param == 'js') {
+		// exclude "!,*,',(,)" to make it same as javascript encodeURIcomponent()
+		$res = strtr(rawurlencode($txt), [ '%21' => '!', '%2A' => '*', '%27' => "'", '%28' => '(', '%29' => ')' ])
+	}
+	else if ($param == 'html') {
+		$res = str_replace('<', '&lt;', $txt);
+		$res = str_replace('>', '&gt;', $res);
+		$res = str_replace('"', '&quot;', $res);
+	}
+	else {
+		throw new Exception('invalid parameter', $param);
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return unescaped value. Parameter:
+ * 
+ * - tok: Tokenizer->unescape $txt
+ * - js: rawurldecode($txt)
+ * - html: replace [ '&lt;', '&gt;', '&quot;' ] with [ '<', '>', '"' ]
+ *
+ * @tok {unescape:tok}&#123;x&#58;&#125;{:unescape} = {x:} 
+ * @tok {unescape:html}&lt;a href=&quot;abc&quot;&gt;{:unescape} = <a href="abc">
+ * @tok {unescape:js}-_.%7C~!*'()%3B%3A%40%26%3D%2B%24%2C%2F%3F%25%23%5B%5D{:unescape} = -_.|~!*'();:@&=+$,/?%#[]
+ * 
+ * @throws 
+ * @param string $param
+ * @param string $txt
+ * @return string
+ */
+public function tok_unescape($param, $txt) {
+	$res = '';
+
+	if ($param == 'tok_html') {
+		$res = $this->_tok->unescape($txt);
+  }
+	else if ($param == 'js') {
+		$res = rawurldecode($txt);
+	}
+  else if ($param == 'html') {
+    $res = str_replace('&lt;', '<', $txt);
+    $res = str_replace('&gt;', '>', $res);
+    $res = str_replace('&quot;', '"', $res);
+  }
+	else {
+		throw new Exception('invalid parameter', $param);
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return encoded text. Parameter:
+ *
+ * - base64: base64 encode $txt
+ *
+ * @tok {escape:base64}hello{:escape} = aGVsbG8=
+ *
+ * @throws
+ * @param string $param
+ * @param string $txt
+ * @return string
+ */
+public function tok_encode($param, $txt) {
+	$res = '';
+
+  if ($param == 'base64') {
+    $res = base64_encode($txt);
+  }
+	else {
+		throw new Exception('invalid parameter', $param);
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return decoded text. Parameter:
+ *
+ * - base64: base64 decode $txt
+ *
+ * @tok {escape:base64}aGVsbG8={:escape} = hello
+ *
+ * @throws
+ * @param string $param
+ * @param string $txt
+ * @return string
+ */
+public function tok_decode($param, $txt) {
+	$res = '';
+
+  if ($param == 'base64') {
+    $res = base64_decode($txt);
+  }
+	else {
+		throw new Exception('invalid parameter', $param);
+	}
+
+	return $res;
 }
 
 
@@ -82,7 +268,7 @@ public function tok_plugin($p) {
 			}
 		}
 
-		$this->tok->register(new $obj());
+		$this->_tok->register(new $obj());
 	}
 }
 
