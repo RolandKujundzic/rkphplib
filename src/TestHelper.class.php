@@ -347,14 +347,14 @@ public function compare($msg, $out_list, $ok_list) {
 		}
 	}
 
-  if ($err == 0 && $ok == $n) {
+	if ($err == 0 && $ok == $n) {
 		$this->_log("$n/$n OK");
-  	$this->_tc['ok']++;
+		$this->_tc['ok']++;
 	}
-  else {
-    $this->_log("$ok/$n OK and $err ERROR");
-  	$this->_tc['error']++;
-  }
+	else {
+		$this->_log("$ok/$n OK and $err ERROR");
+		$this->_tc['error']++;
+	}
 }
 
 
@@ -386,14 +386,14 @@ public function compareHash($msg, $out, $ok) {
 
 	$n = count($ok);
 
-  if ($err) {
-    $this->_log(($n - $err)."/$n OK and $err ERROR");
-  	$this->_tc['error']++;
+	if ($err) {
+		$this->_log(($n - $err)."/$n OK and $err ERROR");
+  		$this->_tc['error']++;
 	}
-  else {
+	else {
 		$this->_log("$n/$n OK");
-  	$this->_tc['ok']++;
-  }
+		$this->_tc['ok']++;
+	}
 }
 
 
@@ -609,6 +609,7 @@ public function runTokenizer($num, $plugin_list) {
 		}
 	}
 }
+
 
 }
 
