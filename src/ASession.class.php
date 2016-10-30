@@ -107,7 +107,7 @@ public function getConf($key) {
 /**
  * Set session configuration. Use $conf = [] to initialize. Required Parameter:
  *
- *  name: Session Name - required
+ *  name|table: Session Name - required
  *  scope: file|dir|subdir|host|docroot (default = docroot)
  *  inactive: seconds of inactivity. Session expires after lchange + inactive. Range [1-21600] (default = 7200 = 2 h)
  *	ttl: time to live in seconds. Session expires after start + ttl. Range [1, 345600] (default = 172800 = 48 h)
@@ -130,7 +130,12 @@ protected function setConf($conf) {
 	}
 
 	if (empty($conf['name'])) {
-		throw new Exception('name is empty');
+		if (!empty($conf['table'])) {
+			$conf['name'] = $conf['table'];
+		}
+		else {
+			throw new Exception('name is empty');
+		}
 	}
 
 	$this->conf['name'] = $conf['name'];
