@@ -131,7 +131,7 @@ public function tok_escape($param, $txt) {
 	}
 	else if ($param == 'js') {
 		// exclude "!,*,',(,)" to make it same as javascript encodeURIcomponent()
-		$res = strtr(rawurlencode($txt), [ '%21' => '!', '%2A' => '*', '%27' => "'", '%28' => '(', '%29' => ')' ])
+		$res = strtr(rawurlencode($txt), [ '%21' => '!', '%2A' => '*', '%27' => "'", '%28' => '(', '%29' => ')' ]);
 	}
 	else if ($param == 'html') {
 		$res = str_replace('<', '&lt;', $txt);
