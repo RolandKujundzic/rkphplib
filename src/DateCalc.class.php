@@ -35,7 +35,7 @@ public static function monthName($month) {
     throw new Exception('invalid month', $month);
   }
 
-  $lang = defined(SETTINGS_LANGUAGE) && mb_strlen(SETTINGS_LANGUAGE) === 2 ? SETTINGS_LANGUAGE : 'de';
+  $lang = defined('SETTINGS_LANGUAGE') && mb_strlen(SETTINGS_LANGUAGE) === 2 ? SETTINGS_LANGUAGE : 'de';
 
   $month_names = array();
 
