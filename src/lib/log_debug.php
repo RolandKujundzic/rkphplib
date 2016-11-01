@@ -18,7 +18,7 @@ require_once(__DIR__.'/config.php');
  */
 function log_debug($msg, $prepend_info = false) {
 
-	if (!defined(SETTINGS_LOG_DEBUG) || empty(SETTINGS_LOG_DEBUG)) {
+	if (!defined('SETTINGS_LOG_DEBUG') || empty(SETTINGS_LOG_DEBUG)) {
 		return;
 	}
 
