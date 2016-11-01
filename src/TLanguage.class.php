@@ -44,8 +44,8 @@ public function getPlugins($tok) {
 	$this->tok = $tok;
 
 	$plugin = [
-		'language:init' => TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY, 
-		'language:get' => TokPlugin::NO_BODY,
+		'language:init' => TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY, 
+		'language:get' => TokPlugin::NO_PARAM | TokPlugin::NO_BODY,
 		'language' => 0,
 		'txt' => 0,
 		'ptxt' => TokPlugin::LIST_BODY
@@ -79,10 +79,7 @@ public function setDSN($dsn = SETTINGS_DSN, $opt = [ 'table' => 'language', 'use
 	];
 
 	$this->db->setQueryHash($query_map);
-
-	if (!$this->db->hasTable($opt['table'])) {
-		$this->db->createTable($opt['table']);
-	}
+	$this->createTable($opt['table']);
 }
 
 
@@ -93,6 +90,11 @@ public function setDSN($dsn = SETTINGS_DSN, $opt = [ 'table' => 'language', 'use
  * @param vector<string[2]> $language_list (default = [ de, en ])
  */
 public function createTable($table = 'language', $language_list = [ 'de', 'en' ]) {
+
+	if ($this->db->hasTable($table)) {
+		return;
+	}
+
 	$tconf = [];
 	$tconf['@table'] = $table;
 	$tconf['@id'] = 'varchar:50::3';
