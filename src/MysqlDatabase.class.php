@@ -250,13 +250,79 @@ public function createTable($conf) {
 		else if ($id_mode === 3) {
 			array_push($cols, 'id varchar(30) NOT NULL');
 		}
-		else {
-			throw new Exception('invalid primary key id', 'id=['.$conf['@id'].'] use (1,2,3)');
+		else if ($id_mode === 0 && !isset($conf['id'])) {
+			$conf['id'] = $conf['@id'];
 		}
 
 		array_push($keys, 'PRIMARY KEY (id)');
-		unset($conf['@id']);
 	}
+
+	if (!empty($conf['@status'])) {
+		$status = intval($conf['@status']);
+
+		if ($status === 1) {
+			array_push($cols, 'status tinyint UNSIGNED');
+		}
+		else {
+			$conf['status'] = $conf['@status'];
+		}
+
+		array_push($keys, 'INDEX (status)');
+	}
+
+	if (!empty($conf['@timestamp'])) {
+		$ts = intval($conf['@timestamp']);
+
+		if ($ts === 1) {
+			array_push($cols, 'since DATETIME NOT NULL DEFAULT NOW()');
+		}
+		else if ($ts === 2) {
+			array_push($cols, 'lchange DATETIME NOT NULL DEFAULT NOW()');
+		}
+		else if ($ts === 3) {
+			array_push($cols, 'since DATETIME NOT NULL DEFAULT NOW()');
+			array_push($cols, 'lchange DATETIME NOT NULL DEFAULT NOW()');
+		}
+		else {
+			throw new Exception('invalid configuration', '@timestamp=['.$ts.'] use 1,2 or 3');
+		}
+	}
+
+	foreach ($conf as $name => $value) {
+		if (mb_substr($value, 0, 1) === '@') {
+			continue;
+		}
+
+		$opt = explode(':', $value);
+		$sql = $name.' '.$opt[0];
+
+		if (!empty($opt[1])) {
+			$sql .= '('.intval($opt[1]).')';
+		}
+
+		if (!empty($opt[2])) {
+			$sql .= ' DEFAULT '.$opt[2];
+		}
+
+		if (!empty($opt[3])) {
+			$o = intval($opt[3]);
+		}
+
+		array_push($cols, $sql);
+	}
+
+/*
+ * - @language: e.g. de, en, ... (optional)
+ * - @multilang: e.g. name, desc = name_de, name_en, desc_de, desc_en
+ * - colname: TYPE:SIZE:DEFAULT:EXTRA, e.g. 
+ *      "colname => int:11:1:33" = "colname int(11) UNSIGNED NOT NULL DEFAULT 1"
+ *      "colname => varchar:30:admin:9" = "colname varchar(30) NOT NULL DEFAULT 'admin', KEY (colname(20))"
+ *      "colname => varchar:50::5" = "colname varchar(50) NOT NULL, UNIQUE (colname(20))"
+ *      "colname => enum::a,b:1" = "colname enum('a', 'b') NOT NULL"
+ *      "colA:colB" => unique" = "UNIQUE KEY ('colA', 'colB')"
+ *      "colA:colB:colC" => foreign:192" = "FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE"
+ *      EXTRA example: NOT_NULL|INDEX, NOT_NULL|UNIQUE, INDEX, ...
+*/
 
 	$query = "CREATE TABLE $tname (".join(",\n", $cols).join(",\n", $keys)."\n)";
 
