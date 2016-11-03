@@ -39,6 +39,10 @@ const DELETE_CASCADE = 64;
 /** @const FOREIGN KEY ... ON UPDATE CASCADE */
 const UPDATE_CASCADE = 128;
 
+/** @const AUTO_INCREMENT */
+const AUTO_INCREMENT = 256;
+
+
 
 /** @var bool $use_prepared */
 public static $use_prepared = false;
@@ -57,9 +61,6 @@ protected $_query = [];
 
 /** @var map $_qinfo */
 protected $_qinfo = [];
-
-/** @var map $_create_conf */
-protected $_create_conf = [];
 
 
 
@@ -613,12 +614,7 @@ abstract public function loadDump($file);
 /**
  * Create table (drop if exists). Parameter examples:
  * 
- * - @table: tablename (optional)
- * - @language: e.g. de, en, ... (optional)
- * - @multilang: e.g. name, desc = name_de, name_en, desc_de, desc_en
- * - @id: 1 = primary key int unsigned not null auto_increment, 2 = primary key int unsigned not null, 3 = primary key varchar(30) not null
- * - @status: 1 = tinyint unsigned + index
- * - @timestamp: 1 = since, 2 = lchange, 3 = since + lchange datetime cols
+ * - @table|language|multilang|id|status|timestamp: see parseCreateTableConf
  * - colname: TYPE:SIZE:DEFAULT:EXTRA, e.g. 
  *			"colname => int:11:1:33" = "colname int(11) UNSIGNED NOT NULL DEFAULT 1"
  * 			"colname => varchar:30:admin:9" = "colname varchar(30) NOT NULL DEFAULT 'admin', KEY (colname(20))"
@@ -627,9 +623,74 @@ abstract public function loadDump($file);
  *			"colA:colB" => unique" = "UNIQUE KEY ('colA', 'colB')"
  *			"colA:colB:colC" => foreign:192" = "FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE"
  *			EXTRA example: NOT_NULL|INDEX, NOT_NULL|UNIQUE, INDEX, ...
+ *
+ * @throws
+ * @see parseCreateTableConf
  * @param map<string:string> $conf
  */
 abstract public function createTable($conf);
+
+
+/**
+ * Resolve create column shortcuts. Modify $conf parameter. Example:
+ *
+ * @table: table name, required, replace with escaped tablename 
+ *
+ * @language: e.g. de, en, ...
+ * @multilang: e.g. name, desc = name_de, name_en, desc_de, desc_en
+ *
+ * @id: 1=[id, int:::291 ], 2=[id, int:::35], 3=[id, varchar:30::3]
+ * @status: 1=[status, tinyint:::9]
+ * @timestamp: 1=[since, datetime::NOW():1], 2=[lchange, datetime::NOW():1], 3=[since, datetime::NOW():1, lchange, datetime::NOW():1]
+ *
+ * @throws
+ * @see createTable
+ * @param map<string:string> $conf
+ */
+protected function parseCreateTableConf($conf) {
+
+  $shortcut = [
+    '@id' => [
+      '1' => [ 'id', 'int:::291' ],
+      '2' => [ 'id', 'int:::35' ],
+      '3' => [ 'id', 'varchar:30::3' ]],
+    '@status' => [
+			'1' => [ 'status', 'tinyint:::9' ]],
+    '@timestamp' => [ 
+      '1' => [ 'since', 'datetime::NOW():1' ],
+      '2' => [ 'lchange', 'datetime::NOW():1' ],
+      '3' => [ 'since', 'datetime::NOW():1', 'lchange', 'datetime::NOW():1' ]]
+  ];
+
+  if (empty($conf['@table'])) {
+    throw new Exception('missing tablename', 'empty @table');
+  }
+
+	if (!empty($conf['@language']) && !empty($conf['@multilang'])) {
+		throw new Exception('ToDo: language + multilang');
+	}
+
+  $conf['@table'] = self::escape_name($conf['@table']);
+
+	foreach ($conf as $key => $value) {
+		if ($key === '@table' || mb_substr($key, 0, 1) !== '@') {
+			continue;
+		}
+
+		if (!isset($shortcut[$key]) || !isset($shortcut[$key][$value])) {
+			throw new Exception('invalid createTable shortcut', "$key=$value");
+		}
+		
+		$add_cols = $shortcut[$key][$value];
+
+		for ($i = 0; $i < count($add_cols); $i = $i + 2) {
+			$col = $add_cols[$i];
+			$conf[$col] = $add_cols[$i + 1];
+		}
+
+		unset($conf[$key]);
+	}
+}
 
 
 /**

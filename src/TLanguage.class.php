@@ -97,8 +97,8 @@ public function createTable($table = 'language', $language_list = [ 'de', 'en' ]
 
 	$tconf = [];
 	$tconf['@table'] = $table;
-	$tconf['@id'] = 'varchar:50::3';
 	$tconf['@timestamp'] = 2;
+	$tconf['id'] = 'varchar:50::3';
 	$tconf['txt'] = 'text:::1';
 
 	foreach ($language_list as $lang) {
