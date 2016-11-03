@@ -3,6 +3,7 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
+require_once(__DIR__.'/lib/split_str.php');
 
 use rkphplib\Exception;
 
@@ -612,27 +613,50 @@ abstract public function loadDump($file);
 
 
 /**
- * Create table (drop if exists). Parameter examples:
+ * Return create table query. Parameter examples:
  * 
  * - @table|language|multilang|id|status|timestamp: see parseCreateTableConf
  * - colname: TYPE:SIZE:DEFAULT:EXTRA, e.g. 
  *			"colname => int:11:1:33" = "colname int(11) UNSIGNED NOT NULL DEFAULT 1"
  * 			"colname => varchar:30:admin:9" = "colname varchar(30) NOT NULL DEFAULT 'admin', KEY (colname(20))"
  *			"colname => varchar:50::5" = "colname varchar(50) NOT NULL, UNIQUE (colname(20))"
- *			"colname => enum::a,b:1" = "colname enum('a', 'b') NOT NULL"
- *			"colA:colB" => unique" = "UNIQUE KEY ('colA', 'colB')"
- *			"colA:colB:colC" => foreign:192" = "FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE"
+ *			"colname => enum:'a','b'::1" = "colname enum('a', 'b') NOT NULL"
+ *			"colA:colB" => 4" = "UNIQUE ('colA', 'colB')"
+ *			"colA:colB:colC" => 208" = "FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE"
  *			EXTRA example: NOT_NULL|INDEX, NOT_NULL|UNIQUE, INDEX, ...
  *
  * @throws
  * @see parseCreateTableConf
  * @param map<string:string> $conf
+ * @return string
  */
-abstract public function createTable($conf);
+abstract public static function createTableQuery($conf);
 
 
 /**
- * Resolve create column shortcuts. Modify $conf parameter. Example:
+ * Create table (drop if exists).
+ *
+ * @see createTableQuery
+ * @param map<string:string> $conf
+ */
+public function createTable($conf) {
+
+	if (empty($conf['@table'])) {
+    throw new Exception('missing tablename', 'empty @table');
+  }
+ 
+	$tname = self::escape_name($conf['@table']);
+
+	if ($this->hasTable($tname)) {
+		$this->dropTable($tname);
+		$query = self::createTableQuery($conf);
+		$this->db->execute($query);
+	}
+}
+
+
+/**
+ * Return map with resolved shortcuts (@...). Only "@table" is kept. Example:
  *
  * @table: table name, required, replace with escaped tablename 
  *
@@ -646,8 +670,15 @@ abstract public function createTable($conf);
  * @throws
  * @see createTable
  * @param map<string:string> $conf
+ * @return map<string:string>
  */
-protected function parseCreateTableConf($conf) {
+public static function parseCreateTableConf($conf) {
+
+	if (empty($conf['@table'])) {
+    throw new Exception('missing tablename', 'empty @table');
+  }
+ 
+	$conf['@table'] = self::escape_name($conf['@table']);
 
   $shortcut = [
     '@id' => [
@@ -662,15 +693,24 @@ protected function parseCreateTableConf($conf) {
       '3' => [ 'since', 'datetime::NOW():1', 'lchange', 'datetime::NOW():1' ]]
   ];
 
-  if (empty($conf['@table'])) {
-    throw new Exception('missing tablename', 'empty @table');
-  }
-
 	if (!empty($conf['@language']) && !empty($conf['@multilang'])) {
-		throw new Exception('ToDo: language + multilang');
-	}
+		$lang_suffix = \rkphplib\lib\split_str(',', $conf['@language']);
+		$lang_cols = \rkphplib\lib\split_str(',', $conf['@multilang']);
+		unset($conf['@language']);
+		unset($conf['@multilang']);
 
-  $conf['@table'] = self::escape_name($conf['@table']);
+		foreach ($lang_cols as $col) {
+			if (empty($conf[$col])) {
+				throw new Exception('missing column definition', $col);
+			}
+
+			foreach ($lang_suffix as $suffix) {
+				$conf[$col.'_'.$suffix] = $conf[$col];
+			}
+
+			unset($conf[$col]);
+		}
+	}
 
 	foreach ($conf as $key => $value) {
 		if ($key === '@table' || mb_substr($key, 0, 1) !== '@') {
@@ -690,6 +730,8 @@ protected function parseCreateTableConf($conf) {
 
 		unset($conf[$key]);
 	}
+
+	return $conf;
 }
 
 

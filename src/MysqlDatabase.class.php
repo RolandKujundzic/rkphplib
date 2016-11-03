@@ -224,9 +224,9 @@ public function loadDump($file) {
 /**
  * 
  */
-public function createTable($conf) {
+public static function createTableQuery($conf) {
 
-	$this->parseCreateTableConf($conf);
+	$conf = self::parseCreateTableConf($conf);
 
 	$tname = $conf['@table'];
 	unset($conf['@table']);
@@ -234,45 +234,91 @@ public function createTable($conf) {
 	$cols = [];
 	$keys = [];
 
-	throw new Exception('ToDo ... ', print_r($conf, true));
-
-/*
-const NOT_NULL = 1;
-const PRIMARY = 2;
-const UNIQUE = 4;
-const INDEX = 8;
-const FOREIGN = 16;
-const UNSIGNED = 32;
-const DELETE_CASCADE = 64;
-const UPDATE_CASCADE = 128;
-*/
-
 	foreach ($conf as $name => $value) {
 		if (mb_substr($value, 0, 1) === '@') {
-			continue;
+			throw new Exception('invalid column description', "$name=$value");
 		}
 
 		$opt = explode(':', $value);
-		$sql = $name.' '.$opt[0];
 
-		if (!empty($opt[1])) {
-			$sql .= '('.intval($opt[1]).')';
+		if (count($opt) === 4) {
+			// e.g. "colname => varchar:30:admin:9" = "colname varchar(30) NOT NULL DEFAULT 'admin', INDEX (colname(20))"
+			$sql = $name.' '.$opt[0];
+			$index = $name;
+
+			if (!empty($opt[1])) {
+				if (($pos = mb_strpos($opt[1], '|')) !== false) {
+					$sql .= '('.mb_substr($opt[1], $pos).')';
+					$index = $name.'('.mb_substr($opt[1], $pos + 1).')';
+				}
+				else {
+					$sql .= '('.$opt[1].')';
+				}
+			}
+
+			$o = empty($opt[3]) ? 0 : intval($opt[3]);
+
+			if ($o & self::UNSIGNED) {
+				$sql .= ' UNSIGNED';
+			}
+
+			if ($o & self::NOT_NULL) {
+				$sql .= ' NOT NULL';
+			}
+
+			if ($o & self::AUTO_INCREMENT) {
+				$sql .= ' AUTO_INCREMENT';
+			}
+
+			if (!empty($opt[2])) {
+				$sql .= ' DEFAULT '.$opt[2];
+			}
+
+			array_push($cols, $sql);
+
+			if ($o & self::PRIMARY) {
+				array_push($keys, 'PRIMARY KEY ('.$index.')');
+			}
+
+			if ($o & self::UNIQUE) {
+				array_push($keys, 'UNIQUE ('.$index.')');
+			}
+
+			if ($o & self::INDEX) {
+				array_push($keys, 'INDEX ('.$index.')');
+			}
 		}
+		else if (count($opt) === 1) {
+			if ($opt[0] & self::FOREIGN) {
+				// e.g. "colA:colB:colC" => 208" = "FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE"
+				list ($ca, $tb, $cb) = explode(':', $name);
+				$sql = 'FOREIGN KEY ('.$ca.') REFERENCES '.$tb.'('.$cb.')';
 
-		if (!empty($opt[2])) {
-			$sql .= ' DEFAULT '.$opt[2];
+				if ($opt[0] & self::DELETE_CASCADE) {
+					$sql .= 'ON DELETE CASCADE';
+				}
+
+				if ($opt[0] & self::UPDATE_CASCADE) {
+					$sql .= 'ON UPDATE CASCADE';
+				}
+
+				array_push($keys, $sql);
+			}
+			else if (count($opt) === 1 && $opt[0] === 'unique') {
+				array_push($keys, 'UNIQUE ('.join(',', explode(':', $name)).')');
+			}
 		}
-
-		if (!empty($opt[3])) {
-			$o = intval($opt[3]);
-		}
-
-		array_push($cols, $sql);
 	}
 
-	$query = "CREATE TABLE $tname (".join(",\n", $cols).join(",\n", $keys)."\n)";
+	$query = "CREATE TABLE $tname (\n".join(",\n", $cols);
 
-	throw new Exception('ToDo ... ', $query);
+	if (count($keys) > 0) {
+		$query .= ",\n".join(",\n", $keys);
+  }
+
+	$query .= "\n)";
+
+	return $query;
 }
 
 

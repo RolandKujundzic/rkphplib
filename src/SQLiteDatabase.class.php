@@ -528,7 +528,7 @@ public function loadDump($file) {
 /**
  *
  */
-public function createTable($conf) {
+public static function createTableQuery($conf) {
 	throw new Exception('ToDo ...');
 }
 
