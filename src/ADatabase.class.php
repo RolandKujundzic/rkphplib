@@ -1067,7 +1067,7 @@ public function buildQuery($table, $type, $kv = []) {
 			throw new Exception('missing @where');
 		}
 
-		$res .= $kv['@where'];
+		$res .= ' '.$kv['@where'];
 	}
 	else {
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
