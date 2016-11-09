@@ -42,7 +42,6 @@ public function __construct($opt = []) {
 		'use_cache' => '',
 		'log' => null,
 		'passive' => true,
-		'blocking' => true,
 		'ssl' => true,
 		'port' => 21,
 		'timeout' => 30 ];
@@ -87,9 +86,11 @@ public function open($host, $user, $pass) {
 	if ($this->ftp === false) {
 		throw new Exception('FTP connect failed', 'host='.$this->conf['host'].' port='.$this->conf['port']);
 	}
-	
+
 	if (!@ftp_login($this->ftp, $this->conf['login'], $this->conf['password'])) {
-		throw new Exception('FTP login failed', 'login='.$this->conf['login'].' password='.mb_substr($this->conf['password'], 0, 2).'***');
+		$ssl_msg = $this->conf['ssl'] ? ' - try without ssl' : ' - try with ssl';
+		throw new Exception('FTP login failed'.$ssl_msg, 'login='.$this->conf['login'].' password='.
+			mb_substr($this->conf['password'], 0, 2).'***');
 	}
 	
 	if ($this->conf['passive'] && !@ftp_pasv($this->ftp, true)) {
@@ -208,21 +209,14 @@ public function put($local_file, $remote_file) {
 
 	$this->_log("upload $local_file as $remote_file");	
 
-	if ($this->conf['blocking']) {
-		if (!@ftp_put($this->ftp, $remote_file, $local_file, FTP_BINARY)) {
-			throw new Exception('put file failed', "local_file=$local_file remote_file=$remote_file");
-		}
+	$ret = @ftp_nb_put($this->ftp, $remote_file, $local_file, FTP_BINARY);
+
+	while ($ret === FTP_MOREDATA) {
+		$ret = @ftp_nb_continue($this->ftp);
 	}
-	else {
-		$ret = @ftp_nb_put($this->ftp, $remote_file, $local_file, FTP_BINARY, FTP_AUTORESUME);
 
-		while ($ret === FTP_MOREDATA) {
-			$ret = @ftp_nb_continue($this->ftp);
-		}
-
-		if ($ret !== FTP_FINISHED) {
-			throw new Exception('put file failed', "local_file=$local_file remote_file=$remote_file");
-		}
+	if ($ret !== FTP_FINISHED) {
+		throw new Exception('put file failed', "local_file=$local_file remote_file=$remote_file");
 	}
 
 	$this->cache[$remote_file] = [ File::md5($local_file), File::size($local_file), File::lastModified($local_file) ];
@@ -274,6 +268,7 @@ public function getDir($remote_path, $local_path) {
 				File::remove($local_path.'/'.$info['name']);
 			}
 
+			print "link: ".$info['link']." - ".$local_path.'/'.$info['name']."\n";
 			FSEntry::link($info['link'], $local_path.'/'.$info['name'], false);
 		}
 		else if ($info['type'] === 'd') {
@@ -292,28 +287,23 @@ public function getDir($remote_path, $local_path) {
  */
 public function get($remote_file, $local_file) {
 
-	if (File::exists($local_file) && $this->hasCache($remote_file, File::md5($local_file))) {
+	$lfile = File::exists($local_file);
+
+	if ($lfile && $this->hasCache($remote_file, File::md5($local_file))) {
 		$this->_log($remote_file.' exists');
 		return;
 	}
 
 	$this->_log("download $remote_file as $local_file");
 
-	if ($this->conf['blocking']) {
-		if (!@ftp_get($this->ftp, $local_file, $remote_file, FTP_BINARY)) {
-			throw new Exception('FTP download failed', "local_file=$local_file remote_file=$remote_file");
-		}
+	$ret = @ftp_nb_get($this->ftp, $local_file, $remote_file, FTP_BINARY);
+
+	while ($ret === FTP_MOREDATA) {
+		$ret = @ftp_nb_continue($this->ftp);
 	}
-	else {
-		$ret = @ftp_nb_get($this->ftp, $local_file, $remote_file, FTP_BINARY, FTP_AUTORESUME);
 
-		while ($ret === FTP_MOREDATA) {
-			$ret = @ftp_nb_continue($this->ftp);
-		}
-
-		if ($ret !== FTP_FINISHED) {
-			throw new Exception('FTP download failed', "local_file=$local_file remote_file=$remote_file");
-		}
+	if ($ret !== FTP_FINISHED) {
+		throw new Exception('FTP download failed', "local_file=$local_file remote_file=$remote_file");
 	}
 
 	$this->cache[$remote_file] = [ File::md5($local_file), File::size($local_file), File::lastModified($local_file) ];
@@ -355,7 +345,6 @@ public function useCache($cache) {
  * - log: default = null = no output | true = STDOUT | file pointer
  * - passive: default = true (connection mode)
  * - use_cache: default = '' (file:abc.ser = use serialized cache file)
- * - blocking: default = true (put|get mode)
  * - port: default = 21
  * - timeout: default = 30 (connection timeout)
  *
