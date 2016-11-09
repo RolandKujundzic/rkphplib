@@ -24,8 +24,9 @@ public static $CHMOD_ABORT = true;
 
 
 /**
- * Create symlink.
- * 
+ * Create symlink. If is ok if target does not exist.
+ * Link directory must exist. 
+ *
  * @param string $target
  * @param string $link
  * @param boolean $target_basename
@@ -44,10 +45,6 @@ public static function link($target, $link, $target_basename = false) {
 	if (FSEntry::isDir($link, false)) {
 		throw new Exception('remove existing directory', "link=$link target=$target");
   }
-
-	if (!FSEntry::isFile($target, false)) {
-		FSEntry::isDir($target);
-	}
 
 	if ($target_basename) {
 		if (!@symlink(basename($target), $link)) {
