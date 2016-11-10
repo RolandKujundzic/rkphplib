@@ -268,8 +268,8 @@ public function getDir($remote_path, $local_path) {
 				File::remove($local_path.'/'.$info['name']);
 			}
 
-			print "link: ".$info['link']." - ".$local_path.'/'.$info['name']."\n";
-			FSEntry::link($info['link'], $local_path.'/'.$info['name'], false);
+			$this->_log("link ".$info['link']." ".$local_path.'/'.$info['name']);
+			FSEntry::link($info['link'], $local_path.'/'.$info['name']);
 		}
 		else if ($info['type'] === 'd') {
 			$this->getDir($path, $local_path.'/'.$info['name']);
@@ -342,7 +342,7 @@ public function useCache($cache) {
  * Set options. Default options:
  *
  * - host & login & password: if all three values are set auto execute open(host, login, password)
- * - log: default = null = no output | true = STDOUT | file pointer
+ * - log: default = null = no output | true (or 1) = STDOUT | file pointer
  * - passive: default = true (connection mode)
  * - use_cache: default = '' (file:abc.ser = use serialized cache file)
  * - port: default = 21
@@ -354,7 +354,7 @@ public function setConf($conf) {
 
 	foreach ($conf as $key => $value) {
 		if (array_key_exists($key, $this->conf)) {
-			if ($key === 'log' && $value === true) {
+			if ($key === 'log' && ($value === true || $value === '1' || $value === 1)) {
 				$this->conf['log'] = STDOUT;
 			}
 			else {
@@ -480,6 +480,12 @@ public function ls($directory) {
 		unset($info['time']);
 
 		$mode = mb_substr($info['priv'], 0, 1);
+
+		if (($mode === '-' || $mode === 'd') && count($chunks) > 9) {
+			// basename contains whitespace		
+			$pos = mb_strpos($entry, $info['name']);
+			$info['name'] = mb_substr($entry, $pos);
+		}
 
 		if ($mode === '-') {
 			$info['type'] = 'f';
