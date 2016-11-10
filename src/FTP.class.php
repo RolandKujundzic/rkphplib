@@ -440,6 +440,18 @@ public function close() {
 
 
 /**
+ * Return escaped path. Put backslash before whitespace.
+ * 
+ * @param string $path
+ * @return string
+ */
+public static function escapePath($path) {
+	$res = str_replace(' ', '\\ ', $path);
+	return $res;
+}
+
+
+/**
  * Return directory listing. If recursive is true return tree.
  * Return empty map if directory is empty.
  * 
@@ -453,7 +465,7 @@ public function ls($directory) {
 		throw new Exception('empty directory', 'use [.] or [/]');
 	}
 
-	if (($lsout = @ftp_rawlist($this->ftp, '-a '.$directory)) === false) {
+	if (($lsout = @ftp_rawlist($this->ftp, '-a '.self::escapePath($directory))) === false) {
 		throw new Exception('invalid directory', $directory);
 	}
 
