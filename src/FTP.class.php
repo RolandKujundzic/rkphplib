@@ -220,6 +220,7 @@ public function put($local_file, $remote_file) {
 	}
 
 	$this->cache[$remote_file] = [ File::md5($local_file), File::size($local_file), File::lastModified($local_file) ];
+	$this->updateCache();
 }
 
 
@@ -307,6 +308,7 @@ public function get($remote_file, $local_file) {
 	}
 
 	$this->cache[$remote_file] = [ File::md5($local_file), File::size($local_file), File::lastModified($local_file) ];
+	$this->updateCache();
 }
 
 
@@ -324,17 +326,22 @@ public function useCache($cache) {
 	}
 
 	if (mb_substr($cache, 0, 5) === 'file:') {
-		$this->conf['use_cache'] = $cache;
 		$this->cache = [];
 		
 		$cache_file = mb_substr($cache, 5);
 		if ($cache_file && File::exists($cache_file)) {
 			$this->cache = File::unserialize($cache_file);
 		}
+		else if (!Dir::exists(dirname($cache_file))) {
+			Dir::create(dirname($cache_file), 0, true);
+		}
 	}
 	else {
 		throw new Exception('invalid cache', $cache);
 	}
+
+	$this->conf['cache_load'] = microtime(true);
+	$this->conf['use_cache'] = $cache;
 }
 
 
@@ -413,6 +420,28 @@ public function __destruct() {
 
 
 /**
+ * Update serialized cache file if last cache save > 10 sec or force = true.
+ *
+ * @param bool $force (default = false)
+ */
+private function updateCache($force = false) {
+
+	if (empty($this->conf['use_cache']) || count($this->cache) === 0) {
+		return;
+	}
+
+	if (!$force && microtime(true) - $this->conf['cache_load'] < 10) {
+		return;
+	}
+
+	if (mb_substr($this->conf['use_cache'], 0, 5) === 'file:') {
+		File::serialize(mb_substr($this->conf['use_cache'], 5), $this->cache);
+		$this->conf['cache_load'] = microtime(true);
+	}
+}
+
+
+/**
  * Close FTP connection. 
  */
 public function close() {
@@ -421,11 +450,7 @@ public function close() {
 		return;
 	}
 
-	if (!empty($this->conf['use_cache']) && count($this->cache) > 0) {
-		if (mb_substr($this->conf['use_cache'], 0, 5) === 'file:') {
-			File::serialize(mb_substr($this->conf['use_cache'], 5), $this->cache);
-		}
-	}
+	$this->updateCache(true);
 	
 	if ($this->ftp) {
 		if (!@ftp_close($this->ftp)) {
