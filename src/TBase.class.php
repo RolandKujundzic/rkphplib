@@ -5,6 +5,7 @@ namespace rkphplib;
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/Exception.class.php');
 require_once(__DIR__.'/lib/split_str.php');
+require_once(__DIR__.'/File.class.php');
 
 use rkphplib\Exception;
 
@@ -50,8 +51,200 @@ public function getPlugins($tok) {
 	$plugin['encode'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['decode'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['get'] = 0;
+	$plugin['include'] = TokPlugin::REDO;
+	$plugin['if'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 
 	return $plugin;
+}
+
+
+/**
+ * Include file. Tokenize output.
+ * 
+ * @tok {include:}a.html{:include} = return content of a.html
+ * @tok {include:required}a.html{:include} = throw error if file does not exist
+ * 
+ * @param string $param
+ * @param string $file
+ * @return string
+ */
+public function tok_include($param, $file) {
+
+	if (!File::exists($file)) {
+		if ($param === 'required') {
+			throw new Exception('include missing', $file);
+		}
+		else {
+			return '';
+		}
+	}
+
+	return File::load($file);
+}
+
+
+/**
+ * Check condition and return true or false block. Beware: all plugins inside if
+ * will be execute before condition comparision - use {tf:} and {true|false:} to
+ * avoid this.
+ * 
+ * {if:|eq|ne|in|in_set|le|lt|ge|gt}condition(s)|#|true|#|false{:if}
+ *
+ * {if:}abc|#|true|#|false{:if} = true
+ * {if:}|#|true|#|false{:if} = false
+ * {if:eq:abc}abc|#|true{:if} = true
+ * {if:eq:abc}|#|true{:if} = ""
+ * {if:ne:abc}abc|#|true|#|false{:if} = false
+ * {if:ne:abc}|#|true{:if} = true
+ * {if:in:2,5}3|#|true|#|false{:if} = false 
+ * {if:in:2,5}2|#|true|#|false{:if} = true
+ * {if:in_set:3}2,5|#|true|#|false{:if} = false
+ * {if:in_set:5}2,5|#|true|#|false{:if} = true 
+ * {if:le}2|#|3|#|true|#|false{:if} = true - same as {if:le:2}3|#|true|#|false{:if}
+ * {if:lt:3}2|#|true|#|false{:if} = false - same as {if:lt}3|#|2|#|true|#|false{:if}
+ * {if:ge}2|#|3|#|true|#|false{:if} = false - same as {if:ge:2}3|#|true|#|false{:if}
+ * {if:gt:3}2|#|true|#|false{:if} = true - same as {if:gt}3|#|2|#|true|#|false{:if}
+ * {if:and:2}1|#|1|#|true|#|false{:if} = true
+ * {if:or:3}0|#|0|#|1|#|true|#|false{:if} = true
+ * {if:cmp}a|#|a|#|b|#|c|#|true|#|false{:if} = false - same as {if:cmp:and}...
+ * {if:cmp:or}a|#|a|#|b|#|c|#|true|#|false{:if} = true
+ *
+ * @throws 
+ * @param string $param
+ * @param string $arg
+ * @return string
+ */
+public function tok_if($param, $p) {
+	
+	if (!empty($param)) {
+		list ($do, $param) = \rkphplib\lib\split_str(':', $param, 2);
+	}
+	else {
+		$do = '';
+	}
+
+	$p_num = count($p);
+
+	if ($p_num < 2) {
+		throw new Exception('invalid if', "do=$do param=$param p=".print_r($p, true));
+	}
+	else if ($p_num === 2) {
+		array_push($p, '');
+	}
+
+	if ($do === '') {
+		$res = empty($p[0]) ? $p[2] : $p[1];
+	}
+	else if ($do === 'eq') {
+		$res = ($param === $p[0]) ? $p[1] : $p[2];
+	}
+	else if ($do === 'ne') {
+		$res = ($param === $p[0]) ? $p[2] : $p[1];
+  }
+	else if ($do === 'in') {
+		$set = \rkphplib\lib\split_str(',', $param);
+		$res = in_array($p[0], $set) ? $p[1] : $p[2];
+  }
+	else if ($do === 'if_in_set') {
+		$set = \rkphplib\lib\split_str(',', $param);
+		$res = in_array($param, $set) ? $p[1] : $p[2];
+	}
+	else if ($do === 'le' || $do === 'lt' || $do === 'ge' || $do === 'gt') {
+
+		if (!empty($param)) {
+			array_shift($p, $param);
+		}
+
+		if ($p_num % 2 == 1) {
+			array_push($p, '');
+			$p_num++;
+		}
+
+		if ($p_num != 4) {
+			throw new Exception('invalid if', "do=$do param=$param p=".print_r($p, true));
+		}
+
+		if ($do === 'le') {
+			$res = ($p[0] <= $p[1]) ? $p[2] : $p[3];
+		}
+		else if ($do === 'lt') {
+			$res = ($p[0] < $p[1]) ? $p[2] : $p[3];
+		}
+		else if ($do === 'ge') {
+			$res = ($p[0] >= $p[1]) ? $p[2] : $p[3];
+		}
+		else if ($do === 'gt') {
+			$res = ($p[0] > $p[1]) ? $p[2] : $p[3];
+		}
+	}
+	else if ($do === 'and' || $do === 'or') {
+
+		$cnum = intval($param);
+
+		if ($cnum + 1 === $p_num) {
+			array_push($p, '');
+			$p_num++;
+		}
+
+		if ($cnum < 2 || $cnum + 2 != $p_num) {
+			throw new Exception('invalid if', "do=$do param=$param p=".print_r($p, true));
+		}
+
+		if ($do === 'or') {
+			$cmp = false;
+
+			for ($i = 0; !$cmp && $i < $cnum; $i++) {
+				if (!empty($p[$i])) {
+					$cmp = true;
+				}
+			}
+		}
+		else if ($do === 'and')  {
+			$cmp = true;
+
+			for ($i = 0; $cmp && $i < $cnum; $i++) {
+				if (empty($p[$i])) {
+					$cmp = false;
+				}
+			}
+		}
+
+		$res = $cmp ? $p[$p_num - 2] : $p[$p_num - 1];
+	}
+  else if ($do === 'cmp') {
+
+		if ($p_num % 2 == 1) {
+			array_push($p, '');
+			$p_num++;
+		}
+
+		if ($p_num < 4) {
+			throw new Exception('invalid if', "do=$do param=$param p=".print_r($p, true));
+		}
+
+		if (empty($param) || $param === 'and') {
+			$cmp = true;
+
+			for ($i = 0; $cmp && $i < $pnum - 3; $i = $i + 2) {
+				if ($p[$i] != $p[$i + 1]) {
+					$cmp = false;
+				}
+			}
+		}
+		else if ($param === 'or') {
+			$cmp = false;
+
+			for ($i = 0; !$cmp && $i < $pnum - 3; $i = $i + 2) {
+				if ($p[$i] == $p[$i + 1]) {
+					$cmp = true;
+				}
+			}
+		}
+
+		$res = ($cmp) ? $p[$pnum - 2] : $p[$pnum - 1];
+	}
+
+	return $res;
 }
 
 
