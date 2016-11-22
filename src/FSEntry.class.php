@@ -174,9 +174,8 @@ public static function isFile($path, $abort = true, $is_readable = true) {
     return true;
   }
 
-  if ($abort) {
-		$msg = is_link($path) ? 'broken link' : 'invalid file path';
-		throw new Exception($msg, $path);
+  if ($abort && !is_link($path)) {
+		throw new Exception('invalid file path', $path);
   }
 
   return false;
