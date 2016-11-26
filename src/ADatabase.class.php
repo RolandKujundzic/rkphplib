@@ -63,6 +63,69 @@ protected $_query = [];
 /** @var map $_qinfo */
 protected $_qinfo = [];
 
+/** @var string $_oid object identifier - see getId() */
+protected $_oid = '';
+
+
+
+/**
+ * Return md5 hash base on dsn and $query_map (see setQueryHash).
+ * 
+ * @throws
+ * @param map $query_map (default = null)
+ * @return string 
+ */
+public static function computeId($dsn, $query_map = null) {
+	
+	if (empty($dsn)) {
+		throw new Exception('empty database source name');
+	}
+
+	$res = md5($dsn);
+
+	if (is_null($query_map)) {
+		return $res;
+	}
+
+	if (!is_array($query_map) || count($query_map) < 1) {
+		throw new Exception('invalid query map', print_r($query_map, true));
+	}
+
+	foreach ($query_map as $key => $value) {
+		$res = md5($res.':'.md5($key).':'.md5($value));
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return md5 identifier. If setQueryHash() was used it is the same as computeId(DSN, QUERY_MAP).
+ * Otherwise return identifier based on setDSN() and setQuery().
+ *
+ * @throws
+ * @return string
+ */
+public function getId() {
+
+	if (!empty($this->_oid)) {
+		return $this->_oid;
+	}
+
+	if (empty($dsn)) {
+		throw new Exception('empty database source name');
+	}
+
+	$res = md5($this->_dsn);
+
+	foreach ($this->_query as $key => $value) {
+		$res = md5($res.':'.md5($key).':'.md5($value));
+	}
+
+	$this->_oid = $res;
+
+	return $res;
+}
 
 
 /**
@@ -451,6 +514,8 @@ public function setQueryHash($conf_hash, $require_keys = '') {
 
 		$this->setQuery($qkey, $query);
 	}
+
+	$this->_oid = self::computeId($this->_dsn, $conf_hash);
 }
 
 
@@ -649,9 +714,10 @@ public function createTable($conf) {
 
 	if ($this->hasTable($tname)) {
 		$this->dropTable($tname);
-		$query = self::createTableQuery($conf);
-		$this->db->execute($query);
 	}
+
+	$query = $this->createTableQuery($conf);
+	$this->execute($query);
 }
 
 
