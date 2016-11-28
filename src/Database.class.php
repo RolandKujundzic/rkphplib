@@ -4,6 +4,7 @@ namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
 require_once(__DIR__.'/ADatabase.class.php');
+require_once(__DIR__.'/lib/split_str.php');
 
 use rkphplib\Exception;
 
@@ -85,7 +86,9 @@ public static function setMap($query_map) {
 
 
 /**
- * Return select result. Throw exception if result has more than one row.
+ * Return select result. Throw exception if result has more than one row. 
+ * Use column alias "split_cs_list" to split comma separated value (if query was 
+ * "SELECT GROUP_CONCAT(name) AS split_cs_list ...").
  *
  * @throws
  * @param string $qkey
@@ -99,8 +102,26 @@ public static function get($qkey, $replace) {
 	}
 
 	$db = self::$pool[self::$map];
-	$dbres = $db->select($db->getQuery($qkey, $replace), 1);
-	return $dbres[0];
+	$query = $db->getQuery($qkey, $replace);
+	$dbres = $db->select($query);
+	$res = [];
+
+	if (count($dbres) > 1) {
+		throw new Exception('more than one row in result set', $qkey);
+	}
+	else if (count($dbres) === 1) {
+		$res = $dbres[0];
+
+		if (count($res) === 1 && !empty($res['split_cs_list'])) {
+			if (mb_strlen($res['split_cs_list']) === 1024 && mb_stripos($query, 'group_concat') > 0) {
+				throw new Exception('increase group_concat_max_len');
+			}
+
+			$res = \rkphplib\lib\split_str(',', $res['split_cs_list']);
+		}
+	}
+
+	return $res;
 }
 
 
