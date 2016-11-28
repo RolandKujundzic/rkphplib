@@ -30,7 +30,7 @@ var $sess = null;
  */
 public function getPlugins($tok) {
   $plugin = [];
-  $plugin['login'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+  $plugin['login'] = TokPlugin::NO_BODY;
   $plugin['login_check'] = TokPlugin::KV_BODY;
   return $plugin;
 }
