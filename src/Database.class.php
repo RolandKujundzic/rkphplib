@@ -16,9 +16,6 @@ use rkphplib\Exception;
  */
 class Database {
 
-/** @var string $dsn Database connection string */
-private static $dsn = null;
-
 /** @var <vector:ADatabase> $pool Database connection pool */
 private static $pool = [];
 
@@ -31,12 +28,21 @@ private static $pool = [];
  * $sqlite = Database::create('sqlite://[password]@path/to/file.sqlite');
  * 
  * @throws rkphplib\Exception
- * @param string $dsn
+ * @param string $dsn (default = '' = use SETTINGS_DSN)
+ * @param map $query_map (default = null)
  * @return ADatabase
  */
-public static function create($dsn) {
+public static function create($dsn = '', $query_map = null) {
 	$db = null;
+
+	if (empty($dsn) && defined('SETTINGS_DSN')) {
+		$dsn = SETTINGS_DSN;
+	}
 	
+	if (empty($dsn)) {
+		throw new Exception('empty dsn');
+	}
+
 	if (mb_substr($dsn, 0, 9) == 'mysqli://') {
 		require_once(__DIR__.'/MysqlDatabase.class.php');
 		$db = new MysqlDatabase();
@@ -51,6 +57,10 @@ public static function create($dsn) {
 
 	$db->setDSN($dsn);
 
+	if (!is_null($query_map)) {
+		$db->setQueryHash($query_map);
+	}
+
 	return $db;
 }
 
@@ -59,11 +69,15 @@ public static function create($dsn) {
  * Singelton method. Return unused ADatabase object instance with dsn from pool. 
  *
  * @throws rkphplib\Exception
- * @param string $dsn 
+ * @param string $dsn (default = '' = use SETTINGS_DSN) 
  * @param map $query_map (default = null)
  * @return ADatabase
  */
-public static function getInstance($dsn, $query_map = null) {
+public static function getInstance($dsn = '', $query_map = null) {
+
+	if (empty($dsn) && defined('SETTINGS_DSN')) {
+		$dsn = SETTINGS_DSN;
+	}
 
 	if (empty($dsn)) {
 		throw new Exception('empty dsn');
@@ -77,12 +91,7 @@ public static function getInstance($dsn, $query_map = null) {
 		}
 	}
 
-	array_push(self::$pool, self::create($dsn));
-
-	if (!is_null($query_map)) {
-		self::$pool[$i]->setQueryHash($query_map);
-	}
-
+	array_push(self::$pool, self::create($dsn, $query_map));
 	return self::$pool[$i];
 }
 
