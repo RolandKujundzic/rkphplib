@@ -867,8 +867,16 @@ public function getTableChecksum($table, $native = false) {
 		return $this->_db->selectOne('CHECKSUM TABLE '.$tname, 'Checksum');
 	}
 
+	// default size GROUP_CONCAT result (=1024) must be increased to at least #TABLE_ENTRIES * 34
+	$gcml = intval($this->db->selectOne("SHOW GLOBAL VARIABLES LIKE 'group_concat_max_len'", 'Value'));
+	$gcml_min = 34 * intval($this->db->selectOne("SELECT COUNT(*) AS anz FROM $tname", 'anz'));
+
+	if ($gcml < $gcml_min) {
+		$this->db->execute("SET SESSION group_concat_max_len=$gcml_min");
+	}
+
 	$column_names = join(',', array_keys(getTableDesc($table)));
-	return $this->_db->selectOne("SELECT MD5(GROUP_CONCAT(CONCAT_WS('|',$column_names) SEPARATOR '|#|')) AS md5 FROM $tname", 'md5');
+	$res = $this->_db->selectOne("SELECT MD5(GROUP_CONCAT(MD5(CONCAT_WS('|',$column_names)))) AS md5 FROM $tname", 'md5');
 }
 
 
