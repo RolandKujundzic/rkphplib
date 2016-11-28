@@ -16,6 +16,9 @@ use rkphplib\Exception;
  */
 class Database {
 
+/** @var int $map_id $pool[$map_id] is db connection for get() after setMap() */
+public static $map = null;
+
 /** @var <vector:ADatabase> $pool Database connection pool */
 private static $pool = [];
 
@@ -62,6 +65,61 @@ public static function create($dsn = '', $query_map = null) {
 	}
 
 	return $db;
+}
+
+
+/**
+ * Set query map.
+ *
+ * @param map @query_map
+ */
+public static function setMap($query_map) {
+
+	if (!isset($query_map['@query_prefix'])) {
+		$query_map['@query_prefix'] = '';
+	}
+
+	self::getInstance('', $query_map);
+	self::$map = count(self::$pool) - 1;
+}
+
+
+/**
+ * Return select result. Throw exception if result has more than one row.
+ *
+ * @throws
+ * @param string $qkey
+ * @param map $replace
+ * @return map 
+ */
+public static function get($qkey, $replace) {
+
+	if (is_null(self::$map)) {
+		throw new Exception('call setMap first');
+	}
+
+	$db = self::$pool[self::$map];
+	$dbres = $db->select($db->getQuery($qkey, $replace), 1);
+	return $dbres[0];
+}
+
+
+/**
+ * Return select result.
+ *
+ * @throws
+ * @param string $qkey
+ * @param map $replace
+ * @return table
+ */
+public static function select($qkey, $replace) {
+
+	if (is_null(self::$map)) {
+		throw new Exception('call setMap first');
+	}
+
+	$db = self::$pool[self::$map];
+	return $db->select($db->getQuery($qkey, $replace));
 }
 
 
