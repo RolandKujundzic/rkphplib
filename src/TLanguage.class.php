@@ -63,8 +63,6 @@ public function getPlugins($tok) {
  * @param string $language (default = SETTINGS_LANGUAGE)
  */
 public function setDSN($dsn = SETTINGS_DSN, $opt = [ 'table' => 'language', 'use' => SETTINGS_LANGUAGE, 'default' => 'txt' ]) {
-
-	$this->db = Database::getInstance($dsn);
 	
 	$query_map = [
 		'@query_prefix' => '',
@@ -78,7 +76,7 @@ public function setDSN($dsn = SETTINGS_DSN, $opt = [ 'table' => 'language', 'use
 		'delete' => "DELETE FROM {:=@table} WHERE id='{:=id}'"
 	];
 
-	$this->db->setQueryHash($query_map);
+	$this->db = Database::getInstance($dsn, $query_map);
 	$this->createTable($opt['table']);
 }
 
