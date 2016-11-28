@@ -44,7 +44,7 @@ public function getPlugins($tok) {
 	$plugin['true'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO; 
 	$plugin['f'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM; 
 	$plugin['false'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM;
-	$plugin['find'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM;
+	$plugin['find'] = TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['plugin'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::CSLIST_BODY;
 	$plugin['escape'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['unescape'] = TokPlugin::REQUIRE_PARAM;
@@ -479,21 +479,16 @@ public function tok_plugin($p) {
  * @see self::getReqDir
  * @see self::findPath
  * @param string $file
- * @param string $dir (default = '')
+ * @param string $file2 (default = '')
  * @return string self::findPath(file, self::getReqDir(true))
  */
-public function tok_find($file, $dir = '') {
+public function tok_find($file, $file2 = '') {
 
-	if (empty($file) && !empty($dir)) {
-		$file = $dir;
-		$dir = '';
+	if (empty($file) && !empty($file2)) {
+		$file = $file2;
 	}
 
-	if (empty($dir)) {
-		$dir = self::getReqDir(true);
-	}
-
-	return self::findPath($file, $dir);
+	return self::findPath($file, self::getReqDir(true));
 }
 
 
