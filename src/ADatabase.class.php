@@ -494,7 +494,7 @@ public function setQueryHash($conf_hash, $require_keys = '') {
 	$qplen = mb_strlen($qprefix);
 
 	foreach ($conf_hash as $key => $value) {
-		if (mb_substr($key, 0, $qplen) === 'query.' && !empty(trim($value))) {
+		if (mb_substr($key, 0, $qplen) === $qprefix && !empty(trim($value))) {
 			$qkey = mb_substr($key, $qplen);
 
 			if (mb_substr($qkey, 0, 12) === 'escape_name@') {
