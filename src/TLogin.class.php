@@ -14,7 +14,7 @@ use rkphplib\Exception;
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
  */
-class TLogin {
+class TLogin implements TokPlugin {
 
 /* @var Session $sess */
 var $sess = null;
