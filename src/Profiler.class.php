@@ -10,7 +10,19 @@ use rkphplib\Exception;
 
 /**
  * PHP Profiler.
- *
+ * 
+ * function example() {
+ *   $prof = new \rkphplib\Profiler();
+ *   $prof->log('enter');
+ *   ...
+ *   $prof->log('before xyz');
+ *   ...
+ *   $prof->log('after xyz');
+ *   ...
+ *   $prof->log('exit');
+ *   $prof->writeLog();
+ * }
+ * 
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 class Profiler {
@@ -29,7 +41,7 @@ public function __construct() {
 	$this->_xlog['maxmem'] = $this->_xlog['memory'];
 	$this->_xlog['minmem'] = $this->_xlog['memory'];
 
-	$this->_xdebug_on = !empty(xdebug_get_profiler_filename());
+	$this->_xdebug_on = function_exists('\xdebug_get_profiler_filename') && !empty(\xdebug_get_profiler_filename());
 }
 
 
