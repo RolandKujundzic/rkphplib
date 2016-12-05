@@ -37,7 +37,7 @@ public static $DEFAULT_MODE = 0666;
 public static function find($file, $dir = '') {
 
 	if (empty($dir)) {
-		$dir = empty($_REQUEST['dir']) ? '.' : './'.$_REQUEST['dir'];
+		$dir = empty($_REQUEST[SETTINGS_REQ_DIR]) ? '.' : './'.$_REQUEST[SETTINGS_REQ_DIR];
 
 		if (mb_substr($dir, 0, 3) == './/') {
 			throw new Exception('path is not relative', "dir=[$dir]");
