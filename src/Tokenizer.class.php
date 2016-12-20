@@ -310,7 +310,7 @@ private function _join_tok($start, $end) {
 public function getLevel() {
 
 	if (count($this->_lc) !== 4) {
-		throw new Exception('tokenizer error', '_lc is not set');
+		throw new Exception('tokenizer error', '_lc is invalid: '.print_r($this->_lc, true));
 	}
 
 	return $this->_lc[2];
