@@ -237,7 +237,7 @@ try {
 			$remote_json_str = File::fromURL($json_query);
 			$remote_json = JSON::decode($remote_json_str);
 		}
-		catch (Exception $e) {
+		catch (\Exception $e) {
 			throw new Exception('failed to retrive file information', "query=$json_query result=$remote_json_str");
 		}
 
@@ -275,7 +275,7 @@ try {
 
 	$this->is_synchronized = 1;
 }
-catch (Exception $e) {
+catch (\Exception $e) {
 	if (!empty(self::$sync['abort'])) {
 		throw $e;
 	}
