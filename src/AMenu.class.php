@@ -43,7 +43,7 @@ public function getPlugins($tok) {
 	$plugin = [];
 	$plugin['menu'] = TokPlugin::NO_PARAM;
 	$plugin['menu:add'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
-	$plugin['menu:conf'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['menu:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST;
 	return $plugin;
 }
 
