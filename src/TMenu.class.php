@@ -3,7 +3,7 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'AMenu.class.php');
+require_once(__DIR__.'/AMenu.class.php');
 
 
 /**
@@ -67,7 +67,7 @@ public function tok_menu($tpl) {
  * @param int $pos
  * @return string
  */
-private function level_n(0) {
+private function level_n($pos) {
 	$curr_level = 0;
 	$res = '';
 
