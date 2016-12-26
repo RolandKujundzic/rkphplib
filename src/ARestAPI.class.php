@@ -388,7 +388,7 @@ public function out($o, $code = 200) {
 		try {
 			$output = XML::fromJSON($o);
 		}
-		catch (Exception $e) {
+		catch (\Exception $e) {
 			$this->error(lib\error_msg('XML::fromJSON error: p1x', array($e->getMessage())), self::ERR_JSON_TO_XML);
 		}
 
