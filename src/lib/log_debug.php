@@ -27,7 +27,7 @@ function log_debug($msg, $prepend_info = false) {
 		$log = '['.date('YdmHis', $ts).'.'.(1000 * round((float)$msec, 3));
 
 		if (!empty($_SERVER['REMOTE_ADDR'])) { 
-			$log .= $_SERVER['REMOTE_ADDR'];
+			$log .= '@'.$_SERVER['REMOTE_ADDR'];
 		}
 
 		if (isset($_SERVER['SCRIPT_FILENAME']) && isset($_SERVER['QUERY_STRING'])) {
