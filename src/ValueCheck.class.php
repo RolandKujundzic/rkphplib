@@ -312,7 +312,7 @@ public static function maxDaysOld($value, $days) {
     	$res = false;
 		}
 	}
-	catch (Exception $e) {
+	catch (\Exception $e) {
 		$res = false;
 	}
 
@@ -335,7 +335,7 @@ public static function date_greater($value, $max_date, $hms_compare = false) {
 		$res = $hms_compare ? DateCalc::date2unix($value) > DateCalc::date2unix($max_date) : 
 			DateCalc::sql_date($value, '') > DateCalc::sql_date($max_date, '');
 	}
-	catch (Exception $e) {
+	catch (\Exception $e) {
 		$res = false;
 	}
 
