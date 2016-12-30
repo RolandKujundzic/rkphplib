@@ -58,7 +58,7 @@ private $_config = 0;
 
 private $_level = array(); // [ [ tok_startpos, tok_endpos, level, redo_count ], ... ]
 
-private $_lc = array();
+private $_last_level_pos = -1;
 
 
 
@@ -92,7 +92,7 @@ public function load($file) {
 public function setText($txt) {
 	$this->_tok = preg_split($this->rx[0], $txt, -1, PREG_SPLIT_DELIM_CAPTURE);
 	$this->_endpos = $this->_compute_endpos($this->_tok);
-	$this->_compute_level();
+	$this->_compute_level(false);
 }
 
 
@@ -179,10 +179,11 @@ public function toString() {
 	$this->_redo = array();
 	$out = $this->_join_tok(0, count($this->_tok));
 
-	while (count($this->_redo) == 2) {	
+	while (count($this->_redo) == 2) {
+		// parse redo_text + rest_text	
 		$this->_tok = preg_split($this->rx[0], $this->_redo[1].$this->_merge_txt($this->_redo[0] + 1, count($this->_tok) - 1), -1, PREG_SPLIT_DELIM_CAPTURE);
 		$this->_endpos = $this->_compute_endpos($this->_tok);
-		$this->_update_level();
+		$this->_compute_level(true);
 		$this->_redo = array();
 		$out .= $this->_join_tok(0, count($this->_tok));
 	}
@@ -192,7 +193,7 @@ public function toString() {
 
 
 /**
- * Recursive $_tok parser.
+ * Recursive $_tok parser. If redo return parsed text before redo.
  * 
  * @throws rkphplib\Exception 'invalid plugin'
  * @param int $start
@@ -239,11 +240,19 @@ private function _join_tok($start, $end) {
 				}
 				else if ($tp & TokPlugin::TOKCALL) {
 					if (!method_exists($this->_plugin[$name][0], 'tokCall')) {
-						throw new Exception('invalid plugin', "$name has no callback");
+						throw new Exception('invalid plugin', "$name has no tokCall() method");
 					}
 				}
-				else if (!method_exists($this->_plugin[$name][0], 'tok_'.$name) && !isset($this->_plugin["$name:$param"])) {
-					throw new Exception('invalid plugin', "$name missing or invalid");
+				else if (!method_exists($this->_plugin[$name][0], 'tok_'.$name)) {
+					// check if tok_NAME_PARAM or tok_NAME_PARAM1 exists
+					$name2 = $name.':'.$param;
+					if (($pos = mb_strpos($param, ':')) > 0) {
+						$name2 = $name.':'.mb_substr($param, 0, $pos);
+					}
+
+					if (!isset($this->_plugin[$name2])) {
+						throw new Exception('invalid plugin', "no tok_$name() callback method");
+					}
 				}
 			}
 			else {
@@ -265,9 +274,12 @@ private function _join_tok($start, $end) {
 				if ($ep == -1) {
 					$out = $this->_buildin($buildin, $name, $param);
 				}
-				else if ($ep > 0) {
+				else if ($ep > $i) {
 					$out = $this->_buildin($buildin, $name, $param, $this->_merge_txt($i+1, $ep-1));
 					$i = $ep;
+				}
+				else {
+					throw new Exception('invalid endpos', "i=$i ep=$ep");
 				}
 			}
 			else {
@@ -276,16 +288,19 @@ private function _join_tok($start, $end) {
 				if ($ep == -1) {
 					$out = $this->_call_plugin($name, $param);
 				}
-				else if ($ep > 0) {
+				else if ($ep > $i) {
 
 					if ($tp & TokPlugin::TEXT) {
-						$out = $this->_call_plugin($name, $param, $this->_merge_txt($i+1, $ep-1));
+						$out = $this->_call_plugin($name, $param, $this->_merge_txt($i + 1, $ep - 1));
 					}
 					else { 
 						$out = $this->_call_plugin($name, $param, $this->_join_tok($i + 1, $ep));
 					}
 
 					$i = $ep;
+				}
+				else {
+					throw new Exception('invalid endpos', "i=$i ep=$ep");
 				}
 
 				if ($tp & TokPlugin::REDO) {
@@ -305,31 +320,90 @@ private function _join_tok($start, $end) {
 /**
  * Return plugin level.
  *
+ * @param string $plugin
  * @return int
  */
-public function getLevel() {
+public function getLevel($plugin) {
+	$level = 0;
 
-	if (count($this->_lc) !== 4) {
-		throw new Exception('tokenizer error', '_lc is invalid: '.print_r($this->_lc, true));
+	for ($i = $this->_last_level_pos; !$level && $i > 0; $i--) {
+		$end = $this->_level[$i][1];
+		if ($this->_tok[$end] === ':'.$plugin) {
+			$level = $this->_level[$i][2];
+		}
 	}
 
-	return $this->_lc[2];
+	if (!$level) {
+		throw new Exception('tokenizer error', "getLevel($plugin) failed - _last_level_pos=".$this->_last_level_pos."\n".$this->dump());
+	}
+
+	return $level;
 }
 
 
 /**
- * Set level. Copy _level[i] to _lc where _level[i][0] = start and _level[i][1] = end.
+ * Return tokenizer dump (level, endpos, tok). Flag:
+ * 
+ * 1 = _level
+ * 2 = _endpos
+ * 4 = _tok
+ *
+ * @param int $flag (default = 7 = 1 | 2 | 4 = _level + _endpos + _tok)
+ * @return string
+ */
+public function dump($flag = 7) {
+	$res = '';
+
+	if ($flag & 1) {
+		$res .= "\n_level:\n";
+		for ($i = 0; $i < count($this->_level); $i++) {
+			$l = $this->_level[$i];
+			$res .= sprintf("%3d: [%3d,%3d,%3d,%3d]\n", $i, $l[0], $l[1], $l[2], $l[3]);
+		}
+	}
+
+	if ($flag & 2) {
+		$res .= "\n_endpos:\n";
+		for ($i = 1; $i < count($this->_endpos); $i = $i + 2) {
+			$res .= sprintf("%3d:%d\n", $i, $this->_endpos[$i]);
+		}
+	}
+
+	if ($flag & 4) {
+		$res .= "\n_tok:\n";
+		for ($i = 0; $i < count($this->_tok); $i++) {
+			$t = preg_replace("/\r?\n/", "\\n", trim($this->_tok[$i]));
+
+			if (mb_strlen($t) > 60) {
+				$res .= sprintf("%3d: %s ... %s\n", $i, mb_substr($t, 0, 20), mb_substr($t, -20));
+			}
+			else {
+				$res .= sprintf("%3d: %s\n", $i, $t);
+			}
+		}
+	}
+
+	return $res;
+}
+
+
+/**
+ * Set _last_level_pos.
  *
  * @param int $start
  * @param int $end
  */
-public function _set_level($start, $end) {
-	$this->_lc = array();
+private function _set_level($start, $end) {
+	$this->_last_level_pos = -1;
 
-	for ($i = count($this->_level) - 1; count($this->_lc) === 0 && $i > -1; $i--) {
-		if ($this->_level[$i][0] === $start && $this->_level[$i][1] === $end) {
-			$this->_lc = $this->_level[$i];
+	for ($i = count($this->_level) - 1; $this->_last_level_pos === -1 && $i > -1; $i--) {
+		if ($this->_level[$i][0] === $start && ($this->_level[$i][1] === $end || ($end === -1 && $this->_level[$i][1] === $start))) {
+			$this->_last_level_pos = $i;
 		}
+	}
+
+	if ($this->_last_level_pos === -1) {
+		throw new Exception('tokenizer error', "_set_level failed: start=$start end=$end\n".$this->dump());
 	}
 }
 
@@ -577,20 +651,30 @@ private function _compute_endpos($tok) {
 
 
 /**
- * Compute level. 
+ * Compute level. If update is true keep "done" part of level.
+ *
+ * @param bool $update 
  */
-private function _compute_level() {
+private function _compute_level($update = false) {
 
-	$this->_level = array();
-	$level = 1;
+	if ($update) {
+		$level = $this->_update_level();
+	}
+	else {
+		$this->_level = array();
+		$level = 1;
+	}
+
+	$this->_last_level_pos = -1;
 	$e = array();	
 
-	for ($i = 0; $i < count($this->_endpos); $i++) {
+	for ($i = 1; $i < count($this->_endpos); $i = $i + 2) {
 		if (count($e) > 0 && $i === end($e)) {
 			array_pop($e);
 			$level--;
 		}
 
+		// ignore ep == -3
 		$ep = $this->_endpos[$i];
 
 		if ($ep == -1) {
@@ -606,29 +690,35 @@ private function _compute_level() {
 
 
 /**
- * Update tok-start/end and redo counter in _level.
+ * Update _level. Keep only "done" part and update redo count. Return last level.
+ * 
+ * @return int 
  */
 private function _update_level() {
-	$r = $this->_level[count($this->_level) - 1][3];
 
-	for ($i = 0, $found = false; !$found && $i < count($this->_level); $i++) {
-		if ($this->_redo[0] === $this->_level[$i][1] && $r === $this->_level[$i][3]) {
+	for ($i = 0, $found = -1; $found === -1 && $i < count($this->_level); $i++) {
+		if ($this->_redo[0] === $this->_level[$i][1]) {
 			$found = $i;
 		}
 	}
 
-	$k = $found + 1;
-
-	for ($i = 0; $i < count($this->_endpos); $i++) {
-		$ep = $this->_endpos[$i];
-
-		if ($ep == -1 || $ep > 0) {
-			$this->_level[$k][0] = $i;
-			$this->_level[$k][1] = ($ep == -1) ? $i : $ep;  
-			$this->_level[$k][3] = $r + 1;
-      $k++;
-    }
+	if ($found === -1) {
+		throw new Exception('tokenizer error', "endpos ".$this->_redo[0]." not found in _level\n".$this->dump());
 	}
+
+	// update redo count
+	$this->_level[$found][3]++;
+
+	// keep only done levels
+	$this->_level = array_slice($this->_level, 0, $found + 1);
+
+	// prevent interference with level search 
+	for ($i = 0; $i < count($this->_level); $i++) {
+		$this->_level[$i][0] = 0;
+		$this->_level[$i][1] = 0;
+	}
+
+	return $this->_level[$found][2];
 }
 
 
