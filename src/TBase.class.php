@@ -594,7 +594,7 @@ public static function findPath($file, $dir = '.') {
 public function tok_tf($p, $arg) {
 	$tf = false;
 
-	$level = $this->_tok->getLevel(); 
+	$level = $this->_tok->getLevel('tf'); 
 	$ta = trim($arg);
 	$do = '';
 
@@ -740,7 +740,7 @@ public function tok_t($param, $arg) {
  * @return $out|empty
  */
 public function tok_true($val, $out) {
-	$level = $this->_get_level('true');
+	$level = $this->_tf_level();
 
 	return ((is_bool($this->_tf[$level]) && $this->_tf[$level]) || 
 		(is_string($this->_tf[$level]) && $this->_tf[$level] === $val) || 
@@ -752,18 +752,19 @@ public function tok_true($val, $out) {
  * Return current level.
  *
  * @throws rkphplib\Exception 'call tf first' 
- * @param string $tf 'true'|'false'
  * @return int
  */
-private function _get_level($tf) {
-	$level = $this->_tok->getLevel(); 
+private function _tf_level() {
+	$level = $this->_tok->getLevel('tf'); 
 
 	if (!isset($this->_tf[$level])) {
- 		throw new Exception('call tf first', "Level $level, Plugin [$tf:]");
+ 		throw new Exception('call tf first', "level=$level _tf: ".print_r($this->_tf, true)."\n".$this->_tok->dump());
 	}
 
-	for ($i = count($this->_tf) - 1; $i > $level - 1; $i--) {
-		array_pop($this->_tf);
+	foreach ($this->_tf as $key => $value) {
+		if ($key > $level) {
+			unset($this->_tf[$key]);
+		}
 	}
 
 	return $level;
@@ -785,7 +786,7 @@ public function tok_f($out) {
  * @return $out|empty
  */
 public function tok_false($out) {
-	$level = $this->_get_level('false');
+	$level = $this->_tf_level();
 	return (is_bool($this->_tf[$level]) && !$this->_tf[$level]) ? $out : '';
 }
 
