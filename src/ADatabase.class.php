@@ -112,7 +112,7 @@ public function getId() {
 		return $this->_oid;
 	}
 
-	if (empty($dsn)) {
+	if (empty($this->_dsn)) {
 		throw new Exception('empty database source name');
 	}
 
