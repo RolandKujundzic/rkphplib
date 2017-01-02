@@ -43,7 +43,7 @@ public function getPlugins($tok) {
 	$plugin = [];
 	$plugin['menu'] = TokPlugin::NO_PARAM;
 	$plugin['menu:add'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
-	$plugin['menu:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST;
+	$plugin['menu:conf'] = TokPlugin::REQUIRE_PARAM;
 	return $plugin;
 }
 
@@ -96,7 +96,6 @@ abstract public function tok_menu($tpl);
  * @param map $node
  */
 public function tok_menu_add($level, $node) {
-	$node = \rkphplib\lib\conf2kv($arg);
 	$level = intval($level);
 
 	if (!$level && !empty($node['level'])) {
