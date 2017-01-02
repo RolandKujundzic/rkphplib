@@ -229,6 +229,7 @@ private function _join_tok($start, $end) {
 			$name = trim(mb_substr($tok, 0, $pos));
 			$param = trim(mb_substr($tok, $pos + $dl));
 			$buildin = '';
+			$check_np = 0;
 			$tp = null;
 
 			if (isset($this->_plugin[$name])) {
@@ -244,13 +245,34 @@ private function _join_tok($start, $end) {
 					}
 				}
 				else if (!method_exists($this->_plugin[$name][0], 'tok_'.$name)) {
-					// check if tok_NAME_PARAM or tok_NAME_PARAM1 exists
-					$name2 = $name.':'.$param;
-					if (($pos = mb_strpos($param, ':')) > 0) {
-						$name2 = $name.':'.mb_substr($param, 0, $pos);
-					}
+					$check_np = 1;
+				}
+				else {
+					$check_np = 2;
+				}
 
-					if (!isset($this->_plugin[$name2])) {
+				if ($check_np) {
+					if (isset($this->_plugin[$name.$d.$param]) && method_exists($this->_plugin[$name.$d.$param][0], 'tok_'.$name.'_'.$param)) {
+						// allow name:param -> tok_name_param() 
+						$name = $name.$d.$param;
+						$tp = $this->_plugin[$name][1];
+						$param = '';
+					}
+					else if (($pos = mb_strpos($param, $d)) > 0) {
+						$n2 = $name.$d.mb_substr($param, 0, $pos);
+						$p2 = mb_substr($param, $pos + 1);
+
+						if (isset($this->_plugin[$n2]) && method_exists($this->_plugin[$n2][0], 'tok_'.$name.'_'.mb_substr($param, 0, $pos))) {
+							// allow name:param1:param2 -> tok_name_param1(param2) 
+							$name = $n2;
+							$param = $p2;
+							$tp = $this->_plugin[$name][1];
+						}
+						else if ($check_np === 1) {
+							throw new Exception('invalid plugin', "no tok_$name() callback method");
+						}
+					}
+					else if ($check_np === 1) {
 						throw new Exception('invalid plugin', "no tok_$name() callback method");
 					}
 				}
@@ -289,7 +311,6 @@ private function _join_tok($start, $end) {
 					$out = $this->_call_plugin($name, $param);
 				}
 				else if ($ep > $i) {
-
 					if ($tp & TokPlugin::TEXT) {
 						$out = $this->_call_plugin($name, $param, $this->_merge_txt($i + 1, $ep - 1));
 					}
@@ -505,10 +526,9 @@ private function _call_plugin($name, $param, $arg = null) {
 	$plen = strlen($param);
 	$alen = strlen($arg);
 
-	if (!empty($this->_plugin["$name:$param"])) {
-		$func = 'tok_'.$name.'_'.$param;
-		$pconf = $this->_plugin["$name:$param"][1];
-		$plen = 0;
+	if (($pos = mb_strpos($name, $this->rx[2])) > 0) {
+		// tok_name_param callback !
+		$func = 'tok_'.str_replace($this->rx[2], '_', $name);
 	}
 
 	if (($pconf & TokPlugin::REQUIRE_PARAM) && $plen == 0) {
