@@ -79,7 +79,7 @@ private function level_n($pos) {
 			$curr_level = $level;
 		}
 
-		if ($this->isActive($i)) {
+		if (isset($this->path[$i])) {
 			if ($node['type'] === 'b') {
 				$sublevel_tag = '{:=level_'.($curr_level + 1).'}';
 				$res .= str_replace($sublevel_tag, $this->level_n($i + 1), $this->level_html($i, $curr_level, true));
@@ -120,7 +120,7 @@ private function level_html($pos, $level, $is_active) {
 		$tpl = str_replace('{:='.$key.'}', $value, $tpl);
 	}
 
-	return $delimiter.$header.$html.$footer;
+	return $delimiter.$header.$tpl.$footer;
 }
 
 
