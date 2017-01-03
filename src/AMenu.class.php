@@ -26,6 +26,9 @@ protected $node = [];
 /** @var vector<int> $path */
 protected $path = [];
 
+/** @var Tokenizer $tok */
+protected $tok = null;
+
 /** @var int $ignore_level */
 private  $ignore_level = 0;
 
@@ -40,10 +43,13 @@ private  $ignore_level = 0;
  * @return map<string:int>
  */
 public function getPlugins($tok) {
+	$this->tok = $tok;
+
 	$plugin = [];
 	$plugin['menu'] = TokPlugin::NO_PARAM;
 	$plugin['menu:add'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['menu:conf'] = TokPlugin::REQUIRE_PARAM;
+
 	return $plugin;
 }
 
@@ -56,6 +62,18 @@ public function getPlugins($tok) {
  * @param string $value
  */
 public function tok_menu_conf($name, $value) {
+
+	if (mb_strpos($name, 'level_') === 0 && !empty($this->conf['level_6'])) {
+		// reset default configuration
+	  for ($i = 0; $i < 7; $i++) {
+  	  $ln = 'level_'.($i + 1);
+			$this->conf[$ln.'_header'] = '';
+			$this->conf[$ln.'_footer'] = '';
+			$this->conf[$ln.'_delimiter'] = '';
+			$this->conf[$ln] = '';
+			$this->conf[$ln.'_hi'] = '';
+  	}
+	}
 
 	if  (!isset($this->conf[$name])) {
 		throw new Exception('invalid configuration key', $name);
@@ -120,7 +138,7 @@ public function tok_menu_add($level, $node) {
 	if ($prev) {
 		if ($level === $prev['level'] + 1) {
 			$parent = $nc;
-			$prev_node['type'] = 'b'; // set previous node type to branch
+			$this->node[$nc - 1]['type'] = 'b'; // set previous node type to branch
 		}
 		else if ($level === $prev['level']) {
 			$parent = $prev['parent'];
