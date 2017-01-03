@@ -50,77 +50,49 @@ public function __construct() {
 public function tok_menu($tpl) {
 
 	if (!empty($tpl)) {
-		if (mb_strpos($tpl, '{:=level_1}') === false) {
-			throw new Exception('invalid level_1 template', 'no {:=level_1} tag in: '.$tpl);
-		}
-
-		$this->conf['level_1'] = $tpl;
+		$this->conf['menu'] = $tpl;
 	}
 
-	return $this->level_n(0);
+	$html = [ null ];
+
+	for ($i = 0; $i < count($this->node); $i++) {
+		$level = $this->node[$i]['level'];
+		$parent = $this->node[$i]['parent'];
+
+		if (!isset($html[$level])) {
+			$html[$level] = [];
+		}
+
+		if ($level == 1 || in_array($parent, $this->path)) {
+			array_push($html[$level], $this->node_html($i));
+		}
+	}
+
+	for ($i = 1; $i < count($html); $i++) {
+		$lname = 'level_'.$i;
+		$html[$i] = $this->conf[$lname.'_header'].join($this->conf[$lname.'_delimiter'], $html[$i]).$this->conf[$lname.'_footer'];
+	}
+
+	\rkphplib\lib\log_debug(print_r($html, true));
+
+	return '';
 }
 
 
 /**
- * Return level n html.
+ * Compute node html.
  * 
  * @param int $pos
- * @return string
  */
-private function level_n($pos) {
-	$curr_level = 0;
-	$res = '';
+private function node_html($pos) {
+	$node = $this->node[$pos];
+	$lname = 'level_'.$node['level'];
 
-	for ($i = $pos; $i < count($this->node); $i++) {
-		$node = $this->node[$i];
-		$level = $node['level'];
-
-		if (!$curr_level) {
-			$curr_level = $level;
-		}
-
-		if (isset($this->path[$i])) {
-			if ($node['type'] === 'b') {
-				$sublevel_tag = '{:=level_'.($curr_level + 1).'}';
-				$res .= str_replace($sublevel_tag, $this->level_n($i + 1), $this->level_html($i, $curr_level, true));
-			}
-			else {
-				$res .= $this->level_html($i, $curr_level, true);
-			}
-		}
-		else {
-			$res .= $this->level_html($i, $curr_level, false);
-		}
-	}
-
-	return $res;
-}
-
-
-/**
- * Return level html.
- * 
- * @param int $pos
- * @param int $level
- * @param bool $is_active
- * @return string
- */
-private function level_html($pos, $level, $is_active) {
-
-	$has_delimiter = (isset($this->node[$pos - 1]) && $this->node[$pos - 1]['level'] === $level) ? true : false;
-
-	$lname = 'level_'.$level;
-	$header = empty($this->conf[$lname.'_header']) ? '' : $this->conf[$lname.'_header'];
-	$delimiter = (!$has_delimiter || empty($this->conf[$lname.'_delimiter'])) ? '' : $this->conf[$lname.'_delimiter'];
-	$footer = empty($this->conf[$lname.'_footer']) ? '' : $this->conf[$lname.'_footer'];
 	$hi_name = empty($this->conf[$lname.'_hi']) ? $lname : $lname.'_hi';
-	$tpl = $is_active ? $this->conf[$hi_name] : $this->conf[$lname];
+	$tpl = isset($this->path[$pos]) ? $this->conf[$hi_name] : $this->conf[$lname];
+	$tpl = $this->tok->replaceTags($tpl, $node);
 
-	foreach ($this->node[$pos] as $key => $value) {
-		$tpl = str_replace('{:='.$key.'}', $value, $tpl);
-	}
-
-	return $delimiter.$header.$tpl.$footer;
+	return $tpl;
 }
 
 
