@@ -790,5 +790,23 @@ public function unescape($txt, $rx = null) {
 }
 
 
+/**
+ * Return $tpl with {:=key} (rx[1].$rx[2].'='.$key.$rx[3]) replaced by replace[key].
+ *
+ * @throws if tag not found
+ * @param string $tpl
+ * @param map $replace
+ * @return string
+ */
+public function replaceTags($tpl, $replace) {
+	foreach ($replace as $key => $value) {
+		$tag = $this->rx[1].$this->rx[2].'='.$key.$this->rx[3];
+		$tpl = str_replace($tag, $value, $tpl);
+	}
+
+	return $tpl;
+}
+
+
 }
 
