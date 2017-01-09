@@ -133,26 +133,27 @@ public function tok_menu_add($level, $node) {
 
 	$nc = count($this->node);
 	$prev = ($nc > 0) ? $this->node[$nc - 1] : null;
-	$parent = 0;
+	$node['id'] = $nc + 1;
+	$node['parent'] = 0;
 
 	if ($prev) {
 		if ($level === $prev['level'] + 1) {
-			$parent = $nc;
+			$node['parent'] = $prev['id'];
 			$this->node[$nc - 1]['type'] = 'b'; // set previous node type to branch
 		}
 		else if ($level === $prev['level']) {
-			$parent = $prev['parent'];
+			$node['parent'] = $prev['parent'];
 		}
 		else if ($level > $prev['level'] + 1) {
 			throw new Exception('invalid level', print_r($node, true));
 		}
 		else if ($level > 1) {
 			// level < $prev['level']
-			for ($i = $nc - 1; $parent === 0 && $i > 0; $i--) {
+			for ($i = $nc - 1; $node['parent'] === 0 && $i > 0; $i--) {
 				$predecessor = $this->node[$i];
 
 				if ($predecessor['level'] === $level) {
-					$parent = $predecessor['parent'];
+					$node['parent'] = $predecessor['parent'];
 				}
 			}
 		}
@@ -179,7 +180,6 @@ public function tok_menu_add($level, $node) {
 		throw new Exception('ToDo: if_priv');
 	}
 
-	$node['parent'] = $parent;
 	$node['level'] = $level;
 	$node['type'] = 'l';	// set to leaf first
 
