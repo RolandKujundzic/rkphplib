@@ -759,6 +759,7 @@ public static function parseCreateTableConf($conf) {
       '3' => [ 'since', 'datetime::NOW():1', 'lchange', 'datetime::NOW():1' ]]
   ];
 
+	// resolve multilanguage
 	if (!empty($conf['@language']) && !empty($conf['@multilang'])) {
 		$lang_suffix = \rkphplib\lib\split_str(',', $conf['@language']);
 		$lang_cols = \rkphplib\lib\split_str(',', $conf['@multilang']);
@@ -778,6 +779,7 @@ public static function parseCreateTableConf($conf) {
 		}
 	}
 
+	// resolve @... shortcuts
 	foreach ($conf as $key => $value) {
 		if ($key === '@table' || mb_substr($key, 0, 1) !== '@') {
 			continue;
