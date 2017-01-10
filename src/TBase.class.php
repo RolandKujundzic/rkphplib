@@ -51,19 +51,50 @@ public function getPlugins($tok) {
 	$plugin['encode'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['decode'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['get'] = 0;
-	$plugin['include'] = TokPlugin::REDO;
+	$plugin['include'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
+	$plugin['ignore'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['if'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
+	$plugin['keep'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
+	$plugin['load'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 
 	return $plugin;
 }
 
 
 /**
+ * Return empty string.
+ *
+ * @tok {ignore:}abc{:ignore} = [] 
+ * 
+ * @param string $txt
+ * @return empty-string
+ */
+public function tok_ignore($txt) {
+	return '';
+}
+
+
+/**
+ * Return un-parsed text.
+ *
+ * @tok {keep:}{find:a}{:keep} = {find:a}
+ * 
+ * @param string $txt
+ * @return string
+ */
+public function tok_keep($txt) {
+	return $txt;
+}
+
+
+/**
  * Include file. Tokenize output.
+ *
+ * @tok {include:}a.html{:include} = return tokenized content of a.html (throw error if file does not exist)
+ * @tok {include:optional}a.html{:include} = do not throw error if file does not exist (short version is "?" instead of optional)
+ * @tok {include:}{find:a.html}{:include} 
  * 
- * @tok {include:}a.html{:include} = return content of a.html
- * @tok {include:required}a.html{:include} = throw error if file does not exist
- * 
+ * @throws if file does not exists (unless param = ?) 
  * @param string $param
  * @param string $file
  * @return string
@@ -71,12 +102,36 @@ public function getPlugins($tok) {
 public function tok_include($param, $file) {
 
 	if (!File::exists($file)) {
-		if ($param === 'required') {
-			throw new Exception('include missing', $file);
-		}
-		else {
+		if ($param === 'optional' || $param === '?') {
 			return '';
 		}
+
+		throw new Exception('include file missing', $file);
+	}
+
+	return File::load($file);
+}
+
+
+/**
+ * Include raw file content.
+ * 
+ * @tok {load:}a.html{:load} = return raw content of a.html (throw error if file does not exist)
+ * @tok {load:optional}a.html{:load} = do not throw error if file does not exist (short version is "?" instead of optional)
+ * 
+ * @throws if file does not exists (unless param = ?) 
+ * @param string $param
+ * @param string $file
+ * @return string
+ */
+public function tok_load($param, $file) {
+
+	if (!File::exists($file)) {
+		if ($param === 'optional' || $param === '?') {
+			return '';
+		}
+
+		throw new Exception('load file missing', $file);
 	}
 
 	return File::load($file);
