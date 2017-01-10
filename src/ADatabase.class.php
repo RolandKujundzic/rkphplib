@@ -695,7 +695,102 @@ abstract public function loadDump($file);
  * @param map<string:string> $conf
  * @return string
  */
-abstract public static function createTableQuery($conf);
+public static function createTableQuery($conf) {
+
+	$conf = self::parseCreateTableConf($conf);
+
+	$tname = $conf['@table'];
+	unset($conf['@table']);
+
+	$cols = [];
+	$keys = [];
+
+	foreach ($conf as $name => $value) {
+		if (mb_substr($value, 0, 1) === '@') {
+			throw new Exception('invalid column description', "$name=$value");
+		}
+
+		$opt = explode(':', $value);
+
+		if (count($opt) === 4) {
+			// e.g. "colname => varchar:30:admin:9" = "colname varchar(30) NOT NULL DEFAULT 'admin', INDEX (colname(20))"
+			$sql = $name.' '.$opt[0];
+			$index = $name;
+
+			if (!empty($opt[1])) {
+				if (($pos = mb_strpos($opt[1], '|')) !== false) {
+					$sql .= '('.mb_substr($opt[1], $pos).')';
+					$index = $name.'('.mb_substr($opt[1], $pos + 1).')';
+				}
+				else {
+					$sql .= '('.$opt[1].')';
+				}
+			}
+
+			$o = empty($opt[3]) ? 0 : intval($opt[3]);
+
+			if ($o & self::UNSIGNED) {
+				$sql .= ' UNSIGNED';
+			}
+
+			if ($o & self::NOT_NULL) {
+				$sql .= ' NOT NULL';
+			}
+
+			if ($o & self::AUTO_INCREMENT) {
+				$sql .= ' AUTO_INCREMENT';
+			}
+
+			if (!empty($opt[2])) {
+				$sql .= ' DEFAULT '.$opt[2];
+			}
+
+			array_push($cols, $sql);
+
+			if ($o & self::PRIMARY) {
+				array_push($keys, 'PRIMARY KEY ('.$index.')');
+			}
+
+			if ($o & self::UNIQUE) {
+				array_push($keys, 'UNIQUE ('.$index.')');
+			}
+
+			if ($o & self::INDEX) {
+				array_push($keys, 'INDEX ('.$index.')');
+			}
+		}
+		else if (count($opt) === 1) {
+			if ($opt[0] & self::FOREIGN) {
+				// e.g. "colA:colB:colC" => 208" = "FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE"
+				list ($ca, $tb, $cb) = explode(':', $name);
+				$sql = 'FOREIGN KEY ('.$ca.') REFERENCES '.$tb.'('.$cb.')';
+
+				if ($opt[0] & self::DELETE_CASCADE) {
+					$sql .= 'ON DELETE CASCADE';
+				}
+
+				if ($opt[0] & self::UPDATE_CASCADE) {
+					$sql .= 'ON UPDATE CASCADE';
+				}
+
+				array_push($keys, $sql);
+			}
+			else if (count($opt) === 1 && $opt[0] === 'unique') {
+				array_push($keys, 'UNIQUE ('.join(',', explode(':', $name)).')');
+			}
+		}
+	}
+
+	$query = "CREATE TABLE $tname (\n".join(",\n", $cols);
+
+	if (count($keys) > 0) {
+		$query .= ",\n".join(",\n", $keys);
+  }
+
+	$query .= "\n)";
+
+	return $query;
+}
 
 
 /**
@@ -716,7 +811,7 @@ public function createTable($conf) {
 		$this->dropTable($tname);
 	}
 
-	$query = $this->createTableQuery($conf);
+	$query = self::createTableQuery($conf);
 	$this->execute($query);
 }
 
