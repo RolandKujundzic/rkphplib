@@ -17,9 +17,6 @@ use rkphplib\Exception;
  */
 class TBase implements TokPlugin {
 
-/** @var vector<bool> $_tf keep results of (nested) tok_tf evaluation */
-private $_tf = [ ];
-
 /** @var Tokenizer $_tok */
 private $_tok = null;
 
@@ -623,7 +620,7 @@ public static function findPath($file, $dir = '.') {
 
 /**
  * Evaluate condition. Use tf, t(rue) and f(alse) as control structure plugin. 
- * Evaluation result is saved in $_tf and reused in tok_t[true]() and tok_f[false]().
+ * Evaluation result is saved in _tok.callstack and reused in tok_t[true]() and tok_f[false]().
  * Merge p with split('|#|', $arg).
  *
  * @test:t1 p.length == 0: true if !empty($arg)
@@ -649,7 +646,8 @@ public static function findPath($file, $dir = '.') {
 public function tok_tf($p, $arg) {
 	$tf = false;
 
-	$level = $this->_tok->getLevel('tf'); 
+print "[tf]\n".$this->_tok->printCallStack()."\n";
+
 	$ta = trim($arg);
 	$do = '';
 
@@ -677,7 +675,7 @@ public function tok_tf($p, $arg) {
 	}
 
 	if (empty($do)) {
-		$this->_tf[$level] = $tf;
+		$this->_tok->setCallStack('tf', $tf);
 		return '';
 	}
 
@@ -773,7 +771,7 @@ public function tok_tf($p, $arg) {
 		}
 	}
 
-	$this->_tf[$level] = $tf;
+	$this->_tok->setCallStack('tf', $tf);
 	return '';
 }
 
@@ -788,41 +786,17 @@ public function tok_t($param, $arg) {
 
 
 /**
- * Return $out if top($_tf) = true or (is_string(top($_tf)) && $val = top($_tf)).
+ * Return $out if last tf from tok.callstack is: $tf = true or (is_string(top($tf)) && $val = top($tf)).
  *
  * @param string $val
  * @param string $out
  * @return $out|empty
  */
 public function tok_true($val, $out) {
-	$level = $this->_tf_level();
-
-	return ((is_bool($this->_tf[$level]) && $this->_tf[$level]) || 
-		(is_string($this->_tf[$level]) && $this->_tf[$level] === $val) || 
-		(is_array($this->_tf[$level]) && !empty($val) && in_array($val, $this->_tf[$level]))) ? $out : '';
-}
-
-
-/**
- * Return current level.
- *
- * @throws rkphplib\Exception 'call tf first' 
- * @return int
- */
-private function _tf_level() {
-	$level = $this->_tok->getLevel('tf'); 
-
-	if (!isset($this->_tf[$level])) {
- 		throw new Exception('call tf first', "level=$level _tf: ".print_r($this->_tf, true)."\n".$this->_tok->dump());
-	}
-
-	foreach ($this->_tf as $key => $value) {
-		if ($key > $level) {
-			unset($this->_tf[$key]);
-		}
-	}
-
-	return $level;
+	print "[t]\n".$this->_tok->printCallStack()."\n";
+	$tf = $this->_tok->getCallStack('tf');
+	return ((is_bool($tf) && $tf) || (is_string($tf) && $tf === $val) || 
+		(is_array($tf) && !empty($val) && in_array($val, $tf))) ? $out : '';
 }
 
 
@@ -836,13 +810,15 @@ public function tok_f($out) {
 
 
 /**
- * Return $out if top($_tf) = false.
+ * Return $out if last tf from tok.callstack is false.
+ *
  * @param string $out
  * @return $out|empty
  */
 public function tok_false($out) {
-	$level = $this->_tf_level();
-	return (is_bool($this->_tf[$level]) && !$this->_tf[$level]) ? $out : '';
+	print "[f]\n".$this->_tok->printCallStack()."\n";
+	$tf = $this->_tok->getCallStack('tf');
+	return (is_bool($tf) && !$tf) ? $out : '';
 }
 
 
