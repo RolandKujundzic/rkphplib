@@ -646,8 +646,6 @@ public static function findPath($file, $dir = '.') {
 public function tok_tf($p, $arg) {
 	$tf = false;
 
-print "[tf]\n".$this->_tok->printCallStack()."\n";
-
 	$ta = trim($arg);
 	$do = '';
 
@@ -671,6 +669,7 @@ print "[tf]\n".$this->_tok->printCallStack()."\n";
 	}
 	else if (count($p) > 1) {
 		$do = array_shift($p);
+		// even if arg is empty we need [] as ap - e.g. {tf:cmp:}{:tf} = true
 		$ap = array_merge($p, lib\split_str('|#|', $arg));
 	}
 
@@ -793,7 +792,6 @@ public function tok_t($param, $arg) {
  * @return $out|empty
  */
 public function tok_true($val, $out) {
-	print "[t]\n".$this->_tok->printCallStack()."\n";
 	$tf = $this->_tok->getCallStack('tf');
 	return ((is_bool($tf) && $tf) || (is_string($tf) && $tf === $val) || 
 		(is_array($tf) && !empty($val) && in_array($val, $tf))) ? $out : '';
@@ -816,7 +814,6 @@ public function tok_f($out) {
  * @return $out|empty
  */
 public function tok_false($out) {
-	print "[f]\n".$this->_tok->printCallStack()."\n";
 	$tf = $this->_tok->getCallStack('tf');
 	return (is_bool($tf) && !$tf) ? $out : '';
 }
