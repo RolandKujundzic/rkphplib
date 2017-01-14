@@ -90,7 +90,7 @@ public function printCallStack() {
 			$res .= ($j > 0) ? ', '.$cs_row[$j][0] : $cs_row[$j][0];
 	
 			if ($cs_row[$j][1] !== null) {
-				$res .= ':'.$cs_row[$j][1];
+				$res .= ':'.json_encode($cs_row[$j][1]);
 			}
 		}
 
@@ -102,45 +102,46 @@ public function printCallStack() {
 
 
 /**
- * Set value to first found name from end of callstack. Return true on success.
+ * Set value to first found name from end of callstack. 
  * 
- * @return bool
+ * @throws if name is not found in callstack
  */
 public function setCallStack($name, $value) {
 	$cs_rownum = count($this->_callstack);
 
-	for ($i = $cs_rownum - 1; $i > 0; $i--) {
+	for ($i = $cs_rownum - 1; $i >= 0; $i--) {
 		$cs_row = $this->_callstack[$i];
-		for ($j = count($cs_row) - 1; $j > 0; $j--) {
+		for ($j = count($cs_row) - 1; $j >= 0; $j--) {
 			if ($cs_row[$j][0] === $name) {
 				$this->_callstack[$i][$j][1] = $value;
-				return true;
+				return;
 			}
 		}
 	}
 
-	return false;
+	throw new Exception('plugin missing in callstack', "set $name=$value");
 }
 
 
 /**
- * Get value of first found name from end of callstack. Return null if not found.
+ * Get value of first found name from end of callstack. 
  * 
- * @return any|null
+ * @throws if name is not found in callstack
+ * @return any
  */
 public function getCallStack($name) {
 	$cs_rownum = count($this->_callstack);
 
-	for ($i = $cs_rownum - 1; $i > 0; $i--) {
+	for ($i = $cs_rownum - 1; $i >= 0; $i--) {
 		$cs_row = $this->_callstack[$i];
-		for ($j = count($cs_row) - 1; $j > 0; $j--) {
+		for ($j = count($cs_row) - 1; $j >= 0; $j--) {
 			if ($cs_row[$j][0] === $name) {
 				return $cs_row[$j][1];
 			}
 		}
 	}
 
-	return null;
+	throw new Exception('plugin missing in callstack', "get $name");
 }
 
 
