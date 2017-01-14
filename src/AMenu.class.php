@@ -149,7 +149,7 @@ public function tok_menu_add($level, $node) {
 		}
 		else if ($level > 1) {
 			// level < $prev['level']
-			for ($i = $nc - 1; $node['parent'] === 0 && $i > 0; $i--) {
+			for ($i = $nc - 1; $node['parent'] === 0 && $i >= 0; $i--) {
 				$predecessor = $this->node[$i];
 
 				if ($predecessor['level'] === $level) {
