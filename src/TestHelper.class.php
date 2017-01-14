@@ -2,6 +2,7 @@
 
 namespace rkphplib;
 
+require_once(__DIR__.'/lib/log_debug.php');
 require_once(__DIR__.'/FSEntry.class.php');
 require_once(__DIR__.'/File.class.php');
 
