@@ -112,6 +112,7 @@ private static function _error_msg($err_no) {
  *
  * Throw error if failed. Wrapper of json_encode().
  *
+ * @throws
  * @param object $obj
  * @param int $options (default = 448 = JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT)
  * @param int $depth (default = 512)
@@ -130,26 +131,18 @@ public static function encode($obj, $options = 448, $depth = 512) {
 
 /**
  * Return json decoded $txt.
- * 
+ *
+ * @throws 
  * @param string $txt
  * @param bool $assoc (default = true = return hash)
  * @return hash|object
  */
-public static function decode($txt, $assoc = true) { // , $cast_to = null) {
+public static function decode($txt, $assoc = true) {
 	$res = json_decode($txt, $assoc);
 
 	if (($err_no = json_last_error())) {
 		throw new Exception("JSON.decode failed", self::_error_msg($err_no));
 	}
-
-/* @under_construction no deep casting yet in JsonMapper ??? might work with php7 type hinting
-	if (!is_null($cast_to)) {
-		// other approach: $res = unserialize(preg_replace('@^O:8:"stdClass":@', 'O:7:"ClassName":', serialize($res)));
-		require_once(dirname(__DIR__).'/other/jsonmapper/JsonMapper.php');
-		$mapper = new \JsonMapper();
-		$res = $mapper->map($res, $cast_to);
-	}
-*/
 
 	return $res;
 }
