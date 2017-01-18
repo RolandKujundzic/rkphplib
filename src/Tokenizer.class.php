@@ -620,7 +620,7 @@ private function _call_plugin($name, $param, $arg = null) {
 	}
 	else if ($pconf & TokPlugin::XML_BODY) {
 		require_once(__DIR__.'/XML.class.php');	
-		$arg = XML::toJSON($arg);
+		$arg = XML::toMap($arg);
 	}
 
 	$res = '';
