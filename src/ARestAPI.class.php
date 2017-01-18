@@ -137,7 +137,7 @@ public function parse() {
 		}
 		else if (strpos($r['content-type'], 'application/xml') !== false) {
 			// e.g. Content-type: application/xml; UTF-8
-			$this->_req = XML::toJSON($input);
+			$this->_req = XML::toMap($input);
 			$input = '';
 		}
 		else if (strpos($r['content-type'], 'application/json') !== false) {
@@ -386,10 +386,10 @@ public function out($o, $code = 200) {
 
 	if (!empty($_SERVER['HTTP_ACCEPT']) && $_SERVER['HTTP_ACCEPT'] == 'application/xml') {
 		try {
-			$output = XML::fromJSON($o);
+			$output = XML::fromMap($o);
 		}
 		catch (\Exception $e) {
-			$this->error(lib\error_msg('XML::fromJSON error: p1x', array($e->getMessage())), self::ERR_JSON_TO_XML);
+			$this->error(lib\error_msg('XML::fromMap error: p1x', array($e->getMessage())), self::ERR_JSON_TO_XML);
 		}
 
 		header('Content-Type: application/xml');
