@@ -3,6 +3,7 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
+require_once(__DIR__.'/JSON.class.php');
 require_once(__DIR__.'/XML.class.php');
 
 use rkphplib\Exception;
@@ -11,7 +12,8 @@ use rkphplib\Exception;
 /**
  * API call wrapper. Use constructor or set() for configuration. 
  * After exec($data) result is saved in $this->result|info|status.
- * If $this->status != 200 call has failed. 
+ * If $this->status != 200 call has failed. Default header are
+ * { Content-Type: application/json, Accept: application/json, Accept-Charset: utf-8 }
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
@@ -30,14 +32,11 @@ protected $url = '';
 /** @var string $auth [request|header|basic_auth] (default = request) */
 protected $auth = 'request';
 
-/** @var string $content [application/json|application/xml|image/jpeg|...] */
-protected $content = '';
-
-/** @var string $accept [application/json|application/jsonp|application/xml|...] (default = application/json) */
-protected $accept = 'application/json';
-
 /** @var string $token e.g. iSFxH73p91Klm */
 protected $token = '';
+
+/** @var map $header (default: { Content-Type: application/json, Accept: application/json, Accept-Charset: utf-8 }) */
+protected $header = [ 'Content-Type' => 'application/json', 'Accept' => 'application/json', 'Accept-Charset' => 'utf-8' ];
 
 /** @var map|string $result */
 public $result = null;
@@ -47,6 +46,9 @@ public $info = null;
 
 /** @var int $status */
 public $status = null;
+
+/** @var string $dump */
+public $dump = '';
 
 
 
@@ -70,25 +72,40 @@ public function __construct($opt = []) {
  *  - url: required e.g. https://domain.tld/api/v1.0
  *  - token: required e.g. iSFxH73p91Klm
  *  - auth:  request|header|basic_auth
- *  - content: GET/POST or php://input (application/json or application/xml)
- *  - accept: Result format (application/json = default, application/jsonp, or application/xml)
+ *  - content: same as header[Content-Type] e.g. application/json=default|application/xml|image/jpeg|...
+ *  - accept: same as header[Accept] = result format e.g application/json=default|application/xml|...
+ *  - header: e.g. [ 'Content-Type' => 'application/json', ... ]
  *
  * @param string $name
  * @param string $value
  */
 public function set($name, $value) {
-	$allow = [ 'method' => [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ], 'uri' => null, 'url' => null, 'token' => null, 
-		'auth' => [ 'request', 'header', 'basic_auth' ], 'content' => null, 'accept' => null ];
 
-	if (!array_key_exists($name, $allow)) {
-		throw new Exception('invalid name', "$name=$value");
+	if ($name == 'content') {
+		$this->header['Content-Type'] = $value;
 	}
-
-	if (is_array($allow[$name]) && !in_array($value, $allow[$name])) {
-		throw new Exception('invalid value', "$name=$value");
+	else if ($name == 'accept') {
+		$this->header['Accept'] = $value;
 	}
+	else if ($name == 'header') {
+		foreach ($value as $hkey => $hval) {
+			$this->header[$hkey] = $hval;
+		}
+	}
+	else {
+		$allow = [ 'method' => [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ], 'uri' => null, 'url' => null, 'token' => null, 
+			'auth' => [ 'request', 'header', 'basic_auth' ] ];
 
-	$this->$name = $value;
+		if (!array_key_exists($name, $allow)) {
+			throw new Exception('invalid name', "$name=$value");
+		}
+
+		if (is_array($allow[$name]) && !in_array($value, $allow[$name])) {
+			throw new Exception('invalid value', "$name=$value");
+		}
+
+		$this->$name = $value;
+	}
 }
 
 
@@ -101,7 +118,7 @@ public function set($name, $value) {
  * @return bool (status=200 true, otherwise false)
  */
 public function call($method, $uri, $data = null) {
-	$this->set('method', $method);
+	$this->set('method', strtoupper($method));
 	$this->set('uri', $uri);
 	return $this->exec($data);
 } 
@@ -112,8 +129,10 @@ public function call($method, $uri, $data = null) {
  * 
  * If set('auth', 'basic_auth') use set('token, 'login:password').
  * Use set('accept', 'application/xml') and set('content', 'application/xml') to send and receive xml.
+ * If data is map it will be auto-converted to content. If data is string use xml if content=application/xml or 
+ * json_encode(...) for default content (application/json). If accept is application/json auto-convert result to map.
  *
- * @param map|string $data use xml if content=application/xml (default = null)
+ * @param map|string $data 
  * @return bool (status=200 true, otherwise false)
  */
 public function exec($data = null) {
@@ -125,8 +144,8 @@ public function exec($data = null) {
 		}
 	}
 
-	$ch = curl_init();
-	$header = array();
+	$header = $this->header;
+	$options = [];
 
 	if (!empty($this->token)) {
 		if (empty($this->auth)) {
@@ -136,70 +155,92 @@ public function exec($data = null) {
 			$data['api_token'] = $this->token;
 		}
 		else if ($this->auth == 'header') {
-			array_push($header, 'X-AUTH-TOKEN: '.$this->token);
+			$header['X-AUTH-TOKEN'] = $this->token;
 		}
 		else if ($this->auth == 'basic_auth') {
-			curl_setopt($ch, CURLOPT_USERPWD, $conf['api_token']);
+			$options['USERPWD'] = $conf['api_token'];
 		}
 	}
 
-	if (!empty($this->accept)) {
-		array_push($header, 'ACCEPT: '.$this->accept);
+	$uri_append = '';
+
+	if ($this->method != 'GET' && $this->method != 'POST') {
+		$header['X-HTTP-Method-Override'] = $this->method;
 	}
 
-	if (!empty($this->content)) {
-		array_push($header, 'CONTENT-TYPE: '.$this->content);
-		if (is_string($data)) {
-			// raw data request
-			array_push($header, 'X-HTTP-Method-Override: '.$this->method);
+	if ($this->method == 'GET') {
+		$options['HTTPGET'] = true;
+	}
+	else if ($this->method == 'POST') {
+		$options['POST'] = true;
+	}
+	else {
+		$options['CUSTOMREQUEST'] = $this->method;
+	}
 
-			if ($this->content == 'application/xml' && is_array($data)) {
-				$data = XML::fromJSON($data);
+	if ($data !== null) {
+		if ($this->method == 'GET') {
+			if (is_array($data) && count($data) > 0) {
+				$uri_append = '?'.http_build_query($data);
+			}
+		}
+		else {
+			if (is_array($data)) {
+				if ($this->header['Content-Type'] == 'application/xml') {
+					$data = XML::fromMap($data);
+				}
+				else if ($this->header['Content-Type'] == 'application/json') {
+					$data = JSON::encode($data); 
+				}
+				else if ($this->header['Content-Type'] == 'application/x-www-form-urlencoded') {
+					$data = http_build_query($data);
+				}
+				else {
+					throw new Exception('invalid content type for array data', print_r($this->header, true));
+				}
 			}
 
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+			$options['POSTFIELDS'] = $data;
+			$header['Content-Length'] = strlen($data);
 		}
 	}
 
 	if (count($header) > 0) {
-		curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
-	}
-	
-	$uri_append = '';
+		$header_lines = [];
 
-	if ($this->method == 'GET') {
-		if (is_array($data) && count($data) > 0) {
-			$uri_append = '?'.http_build_query($data);
-		}
-	}
-	else {
-		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $this->method);
-
-		if (($this->method == 'PUT' || $this->method == 'DELETE') && is_array($data) && count($data) > 0) {
-			$data = http_build_query($data);
+		foreach ($header as $key => $value) {
+			array_push($header_lines, $key.': '.$value);
 		}
 
-		if (!is_null($data)) {
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-		}
+		$options['HTTPHEADER'] = $header_lines;
 	}
 
-	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($ch, CURLOPT_URL, $this->url.'/'.$this->uri.$uri_append);
+	$options['SSL_VERIFYPEER'] = false;
+	$options['SSL_VERIFYHOST'] = false;
+	$options['RETURNTRANSFER'] = true;
+
+	$url = (mb_substr($this->uri, 0, 1) == '/' || mb_substr($this->url, -1) == '/') ? $this->url.$this->uri : $this->url.'/'.$this->uri;
+	$options['URL'] = $url.$uri_append;
+
+	$ch = curl_init();
+
+	foreach ($options as $key => $value) {
+		curl_setopt($ch, constant('CURLOPT_'.$key), $value);
+	}
 
 	$this->result = curl_exec($ch);
 	$this->info = curl_getinfo($ch);
 	$this->status = intval($this->info['http_code']);
-
+	$success = $this->status >= 200 && $this->status < 300;
 	curl_close($ch);
-
-	if ($this->accept == 'application/json') {
-		$this->result = json_decode($this->result, true);
+	
+	$this->dump = print_r($options, true);
+	
+	if ($this->header['Accept'] == 'application/json') {
+		$this->result = JSON::decode($this->result);
 	}
 
-	return $this->status === 200;
+	return $success;
 }
 
 
