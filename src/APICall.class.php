@@ -68,7 +68,7 @@ public function __construct($opt = []) {
  * Configure api call. Parameter:
  *
  *  - method: GET|POST|PUT|DELETE|PATCH
- *  - uri: request path e.g. some/action
+ *  - uri|path: request path e.g. some/action
  *  - url: required e.g. https://domain.tld/api/v1.0
  *  - token: required e.g. iSFxH73p91Klm
  *  - auth:  request|header|basic_auth
@@ -80,6 +80,10 @@ public function __construct($opt = []) {
  * @param string $value
  */
 public function set($name, $value) {
+
+	if ($name == 'path') {
+		$name = 'uri';
+	}
 
 	if ($name == 'content') {
 		$this->header['Content-Type'] = $value;
