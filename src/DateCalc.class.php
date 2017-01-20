@@ -3,15 +3,29 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
-require_once(__DIR__.'/lib/config.php');
 
 use rkphplib\Exception;
 
 
+if (!defined('SETTINGS_TIMEZONE')) {
+  /** @define string SETTINGS_TIMEZONE = 'CET' */
+  define('SETTINGS_TIMEZONE', 'CET');
+}
+
+if (!@date_default_timezone_get()) {
+  date_default_timezone_set(SETTINGS_TIMEZONE);
+}
+
+if (!defined('SETTINGS_LANGUAGE')) {
+  /** @define string SETTINGS_LANGUAGE = 'de' */
+  define('SETTINGS_LANGUAGE', 'de');
+}
+
+
 /**
- * Date calculation helper class.
- *
- * All methods are static.
+ * Date calculation helper class. All methods are static.
+ * Define SETTINGS_TIMEZONE = CET and SETTINGS_LANGUAGE = de if unset.
+ * Set date_default_timezone_set(SETTINGS_TIMEZONE) if unset.
  *
  * @author Roland Kujundzic <roland@inkoeln.com>
  */
