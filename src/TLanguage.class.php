@@ -9,9 +9,15 @@ require_once(__DIR__.'/Session.class.php');
 
 use rkphplib\Exception;
 
+if (!defined('SETTINGS_LANGUAGE')) {
+  /** @define string SETTINGS_LANGUAGE = 'de' */
+  define('SETTINGS_LANGUAGE', 'de');
+}
+
 
 /**
  * Multilanguage plugin. Use Database and Session (site.language).
+ * Set SETTINGS_LANGUAGE = de if unset.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
@@ -109,7 +115,7 @@ public function createTable($table = 'language', $language_list = [ 'de', 'en' ]
 
 /**
  * Save language to session object (name=$name, scope=docroot and unlimited=1).
- * Update SESSION_LANGUAGE to $language if necessary. 
+ * Update SESSION_LANGUAGE to $language if not defined. 
  * 
  * @throws
  * @see Session
@@ -127,7 +133,6 @@ public function initSession($language, $name = 'language') {
 
 	if (!$this->sess->has('language') || !$this->sess->get('language') !== $language) {
 		$this->sess->set('language', $language);
-		define('SESSION_LANGUAGE', $language);
 	}
 }
 
