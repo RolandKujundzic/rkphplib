@@ -258,6 +258,7 @@ public function runFuncTest($path) {
 	}
 	else {
 	  $this->_tc['error']++;
+		throw new Exception("Test failed: runFuncTest($path)");
 	}
 }
 
