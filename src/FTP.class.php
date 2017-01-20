@@ -497,7 +497,7 @@ public function ls($directory) {
 	$pdir = ($directory === '/') ? '/' : $directory.'/';
 	$res = [];
 
-	// lsout: [0] => -rwxrwxrwx    1 1000       ogulo          265535 Apr 19  2016 716238.jpg ...
+	// lsout: [0] => -rwxrwxrwx    1 1000       user          265535 Apr 19  2016 716238.jpg ...
 	$dir = null;
 	$parent_dir = null;
 
