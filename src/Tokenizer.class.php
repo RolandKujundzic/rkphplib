@@ -4,7 +4,6 @@ namespace rkphplib;
 
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/Exception.class.php');
-require_once(__DIR__.'/lib/config.php');
 require_once(__DIR__.'/File.class.php');
 
 use rkphplib\Exception;
