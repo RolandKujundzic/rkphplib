@@ -7,10 +7,10 @@ namespace rkphplib\lib;
  *
  * Preset global defines SETTINGS_* with default values:
  *
- *  SETTINGS_TIMEZONE = GMT
+ *  SETTINGS_TIMEZONE = CET
  *  SETTINGS_LANGUAGE = de
- *  SETTINGS_LOG_ERROR = /tmp/php.fatal
- *  SETTINGS_LOG_DEBUG = /tmp/php.warn
+ *
+ * Set date_default_timezone_set('GMT') if unset and mb_internal_encoding('UTF-8').
  *
  * Define:
  *
@@ -29,27 +29,18 @@ namespace rkphplib\lib;
 mb_internal_encoding('UTF-8');
 
 if (!defined('SETTINGS_TIMEZONE')) {
-	/** @define string SETTINGS_TIMEZONE = 'GMT' */
-	define('SETTINGS_TIMEZONE', 'GMT');
+	/** @define string SETTINGS_TIMEZONE = 'CET' */
+	define('SETTINGS_TIMEZONE', 'CET');
 }
 
-date_default_timezone_set(SETTINGS_TIMEZONE);
+if (!@date_default_timezone_get()) {
+	date_default_timezone_set(SETTINGS_TIMEZONE);
+}
 
 if (!defined('SETTINGS_LANGUAGE')) {
 	/** @define string SETTINGS_LANGUAGE = 'de' */
 	define('SETTINGS_LANGUAGE', 'de');
 }
-
-if (!defined('SETTINGS_LOG_ERROR')) {
-	/** @define string SETTINGS_LOG_ERROR = '/tmp/php.fatal' */
-	define('SETTINGS_LOG_ERROR', '/tmp/php.fatal');
-}
-
-if (!defined('SETTINGS_LOG_DEBUG')) {
-	/** @define string SETTINGS_LOG_DEBUG = '/tmp/php.warn' */
-	define('SETTINGS_LOG_DEBUG', '/tmp/php.warn');
-}
-
 
 // global define
 define('RKPHPLIB_VERSION', 1.0);
