@@ -2,7 +2,10 @@
 
 namespace rkphplib\lib;
 
-require_once(__DIR__.'/config.php');
+if (!defined('SETTINGS_LOG_DEBUG')) {
+  /** @define string SETTINGS_LOG_DEBUG = '/tmp/php.warn' */
+	define('SETTINGS_LOG_DEBUG', '/tmp/php.warn');
+}
 
 
 /**
@@ -11,6 +14,8 @@ require_once(__DIR__.'/config.php');
  * Disable debug log with SETTINGS_LOG_DEBUG = 0,
  * Enable logging to default with SETTINGS_LOG_DEBUG = 1 (default).
  * Enable logging to file with SETTINGS_LOG_DEBUG = 'path/debug.log'.
+ * Overwrite default define('SETTINGS_LOG_DEBUG', '/tmp/php.warn')
+ * before inclusion of this file.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @param string $msg
