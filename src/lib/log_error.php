@@ -2,7 +2,10 @@
 
 namespace rkphplib\lib;
 
-require_once(__DIR__.'/config.php');
+if (!defined('SETTINGS_LOG_ERROR')) {
+  /** @define string SETTINGS_LOG_ERROR = '/tmp/php.fatal' */
+  define('SETTINGS_LOG_ERROR', '/tmp/php.fatal');
+}
 
 
 /**
@@ -11,6 +14,8 @@ require_once(__DIR__.'/config.php');
  * Disable logging with SETTINGS_LOG_ERROR = 0,
  * Enable logging to default with SETTINGS_LOG_ERROR = 1 (default).
  * Enable logging to file with SETTINGS_LOG_ERROR = 'path/error.log'.
+ * Overwrite default define('SETTINGS_LOG_ERROR', '/tmp/php.fatal')
+ * before inclusion of this file.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @param string $msg
