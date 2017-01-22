@@ -7,10 +7,10 @@ namespace rkphplib\lib;
  *
  * Preset global defines SETTINGS_* with default values:
  *
- *  SETTINGS_TIMEZONE = CET
+ *  SETTINGS_TIMEZONE = Auto-Detect (e.g. CET)
  *  SETTINGS_LANGUAGE = de
  *
- * Set date_default_timezone_set('GMT') if unset and mb_internal_encoding('UTF-8').
+ * Set date_default_timezone_set(SETTINGS_TIMEZONE) if unset and mb_internal_encoding('UTF-8').
  *
  * Define:
  *
@@ -29,12 +29,12 @@ namespace rkphplib\lib;
 mb_internal_encoding('UTF-8');
 
 if (!defined('SETTINGS_TIMEZONE')) {
-	/** @define string SETTINGS_TIMEZONE = 'CET' */
-	define('SETTINGS_TIMEZONE', 'CET');
+  /** @define string SETTINGS_TIMEZONE = Auto-Detect */
+  date_default_timezone_set(@date_default_timezone_get());
+  define('SETTINGS_TIMEZONE', date_default_timezone_get());
 }
-
-if (!@date_default_timezone_get()) {
-	date_default_timezone_set(SETTINGS_TIMEZONE);
+else {
+  date_default_timezone_set(SETTINGS_TIMEZONE);
 }
 
 if (!defined('SETTINGS_LANGUAGE')) {

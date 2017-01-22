@@ -8,11 +8,11 @@ use rkphplib\Exception;
 
 
 if (!defined('SETTINGS_TIMEZONE')) {
-  /** @define string SETTINGS_TIMEZONE = 'CET' */
-  define('SETTINGS_TIMEZONE', 'CET');
+  /** @define string SETTINGS_TIMEZONE = Auto-Detect */
+	date_default_timezone_set(@date_default_timezone_get());
+  define('SETTINGS_TIMEZONE', date_default_timezone_get());
 }
-
-if (!@date_default_timezone_get()) {
+else {
   date_default_timezone_set(SETTINGS_TIMEZONE);
 }
 
