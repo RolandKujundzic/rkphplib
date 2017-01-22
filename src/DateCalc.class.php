@@ -623,13 +623,22 @@ public static function prevMonth($month, $year = 0) {
 
 
 /**
- * Return last day of month.
+ * Return last day of month. If year or month is empty use current.
  * 
  * @param int $month
  * @param int $year
  * @return int
  */
 public static function lastDay($month, $year) {
+
+	if (empty($month)) {
+		$month = date('n');
+	}
+
+ 	if (empty($year)) {
+		$year = date('y');
+	}
+
 	$res = date("t", mktime(0, 0, 0, $month, 1, $year));
 	return intval($res);
 }
