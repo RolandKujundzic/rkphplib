@@ -684,6 +684,7 @@ public static function end($fh) {
  *
  * @param filehandle $fh
  * @param int $maxlen (default = 8192)
+ * @return string|false
  */
 public static function readLine($fh, $maxlen = 8192) {
 	$res = fgets($fh, $maxlen);
