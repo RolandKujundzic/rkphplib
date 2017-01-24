@@ -35,6 +35,7 @@ function _composer() {
 	fi
 
 	if test "$1" = "init"; then
+		php composer.phar require symfony/yaml
 		php composer.phar require --dev apigen/apigen
 		php composer.phar require --dev phpunit/phpunit
 		# php composer.phar require --dev phpdocumentor/phpdocumentor
