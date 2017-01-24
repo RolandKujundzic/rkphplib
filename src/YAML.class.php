@@ -34,8 +34,8 @@ public static function load($file) {
  * @param multi-map $object
  */
 public static function save($file, $object) {
-	$dumper = new \Symfony\Component\Yaml\Dumper();
-	File::save($file, $dumper->dump($object, 40, 2, \Symfony\Component\Yaml\Yaml::DUMP_OBJECT)); 
+	$dumper = new \Symfony\Component\Yaml\Dumper(2);
+	File::save($file, $dumper->dump($object, 40));
 }
 
 }
