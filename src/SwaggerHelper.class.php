@@ -169,6 +169,9 @@ private function getKeyValue($p, $name) {
 
 		$res = $name.'={"'.join('", "', $arr).'"}';
 	}
+	else if (is_bool($p[$name])) {
+		$res = $p[$name] ? $name.'=true' : $name.'=false';
+	}
 	else {
 		$res = $name.'="'.str_replace('"', '\"', trim($p[$name])).'"';
 	}
