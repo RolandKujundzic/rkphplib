@@ -28,7 +28,7 @@ class Yaml {
  */
 public static function load($file) {
   $parser = new \Symfony\Component\Yaml\Parser();
-	return $parser->parse(File::load($yaml_file));
+	return $parser->parse(File::load($file));
 }
 
 
