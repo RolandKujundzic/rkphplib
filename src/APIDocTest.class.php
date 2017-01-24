@@ -135,7 +135,7 @@ private function _parser_set_name($name) {
 	}
 
 	if (!isset($this->config[$name]['example'])) {
-		$this->config[$name]['example'] = [ 'header' => [], 'body' => [], 'query' => [] ];
+		$this->config[$name]['example'] = [ 'header' => [], 'body' => [], 'path' => [] ];
 	}
 }
 
@@ -165,7 +165,7 @@ private function _scan_swagger($line) {
 
 
 /**
- * Scan for body, header and query paraemter.
+ * Scan for body, header and path paraemter.
  *
  * @param string $line
  */
@@ -308,7 +308,7 @@ public function call($name, $example = 0) {
 		throw new Exception('ToDo: merge examples');
 	}
 
-	if (isset($data['query'])) {
+	if (isset($data['path'])) {
 		while (preg_match('/\{(.+?)\}/', $path, $match)) {
 			$key = $match[1];
 
