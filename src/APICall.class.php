@@ -114,6 +114,33 @@ public function set($name, $value) {
 
 
 /**
+ * Return set value. 
+ *
+ * @throws
+ * @param string $name
+ * @return any
+ */
+public function get($name) {
+
+	if ($name == 'path') {
+		$name = 'uri';
+	}
+
+	if (isset($this->header[$name])) {
+		$res = $this->header[$name];
+	}
+	else if (property_exists($this, $name)) {
+		$res = $this->$name;
+	}
+	else {
+		throw new Exception('invalid name or unset header', "$name");
+	}
+
+	return $res;
+}
+
+
+/**
  * Short for set('method', $method); set('uri', $uri); exec($data).
  *
  * @param string $method see set('method', ...)
