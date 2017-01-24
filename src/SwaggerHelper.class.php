@@ -4,15 +4,10 @@ namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
 require_once(__DIR__.'/File.class.php');
+require_once(__DIR__.'/YAML.class.php');
 require_once(__DIR__.'/Dir.class.php');
 
 use \rkphplib\Exception;
-use \rkphplib\File;
-
-if (File::exists('vendor/autoload.php')) {
-	require_once('vendor/autoload.php');
-}
-
 
 
 /**
@@ -45,8 +40,7 @@ public $last_schema = '';
  * @return multi-map
  */
 public function loadYaml($yaml_file) {
-	$parser = new \Symfony\Component\Yaml\Parser();
-	$this->sobj = $parser->parse(File::load($yaml_file));
+	$this->sobj = YAML::load($yaml_file);
 	return $this->sobj;
 }
 
