@@ -4,14 +4,11 @@ namespace rkphplib;
 
 require_once(__DIR__.'/File.class.php');
 
-if (File::exists('vendor/autoload.php')) {
-  require_once('vendor/autoload.php');
-}
-
 
 /**
  * Load and Convert yaml files. Requires symphony/yaml:
  *
+ * require_once('vendor/autoload.php');
  * shell> composer require symfony/yaml 
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
