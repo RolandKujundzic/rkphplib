@@ -73,7 +73,8 @@ public function setSWG($name, $value) {
  *
  * - save_in: directory_path (don't return annotations)
  * - save_as: file path (don't return annotations)
- *
+ * - code_header: prepend to php files created in save_as if set
+ * 
  * @param map $options = [] 
  * @return map - keys are method_path
  */
@@ -94,8 +95,9 @@ public function getAnnotations($options = []) {
 		foreach ($methods as $m) {
 			if (isset($p[$m])) {
 				if (!empty($options['save_in'])) {
+					$code_header = empty($options['code_header']) ? '' : '<'."?php\n\ninclude_once('".$options['code_header']."');\n\n";
 					$file = $options['save_in'].'/'.$m.str_replace(['/', '{', '}'], ['@', '', ''], $path).'.php';
-					$code = '<'."?php\n\ninclude_once('header.php');\n\n".$this->getSWG()."/**\n".$this->parsePath($m, $path, $p[$m]).
+					$code = '<'."?php\n\n".$code_header.$this->getSWG()."/**\n".$this->parsePath($m, $path, $p[$m]).
 						"\n */\n\$apiDT->call('".$this->last_schema."');\n";
 					File::save($file, $code);
 					$path_doc[$m.'_'.$path] = $file;
