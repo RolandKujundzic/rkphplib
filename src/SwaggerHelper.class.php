@@ -10,7 +10,7 @@ use \rkphplib\Exception;
 use \rkphplib\File;
 
 if (File::exists('vendor/autoload.php')) {
-	require 'vendor/autoload.php';
+	require_once('vendor/autoload.php');
 }
 
 
@@ -32,6 +32,9 @@ private $sobj = [];
 
 /** @var map $swg - swg info, header, ... */
 private $swg = [];
+
+/** @var string $last_schema */
+public $last_schema = '';
 
 
 
@@ -92,7 +95,8 @@ public function getAnnotations($options = []) {
 			if (isset($p[$m])) {
 				if (!empty($options['save_in'])) {
 					$file = $options['save_in'].'/'.$m.str_replace(['/', '{', '}'], ['@', '', ''], $path).'.php';
-					$code = "<?php\n\n".$this->getSWG()."/**\n".$this->parsePath($m, $path, $p[$m])."\n */\n";
+					$code = '<'."?php\n\ninclude_once('header.php');\n\n".$this->getSWG()."/**\n".$this->parsePath($m, $path, $p[$m]).
+						"\n */\n\$apiDT->call('".$this->last_schema."');\n";
 					File::save($file, $code);
 					$path_doc[$m.'_'.$path] = $file;
 				}
@@ -150,8 +154,24 @@ private function getKeyValue($p, $name) {
 		return $res;
 	}
 
+	if ($name == 'schema') {
+		print "ignore schema ...\n";
+		return '';
+	}
+
 	if (is_array($p[$name])) {
-		$res = $name.'={"'.join('", "', trim($p[$name])).'"}';
+		$arr = [];
+
+		foreach ($p[$name] as $value) {
+			if (!is_string($value)) {
+				throw new Exception('unexpected array', "name=$name p: ".print_r($p, true));
+			}
+
+			$value = str_replace('"', '\"', trim($value));
+			array_push($arr, $value);
+		}
+
+		$res = $name.'={"'.join('", "', $arr).'"}';
 	}
 	else {
 		$res = $name.'="'.str_replace('"', '\"', trim($p[$name])).'"';
@@ -272,6 +292,7 @@ private function parseResponses($p) {
 private function parsePath($method, $path, $p) {
 
 	$this->log("$method:$path ...");
+	$this->last_schema = '';
 
 	$swg = [];
 
@@ -300,6 +321,7 @@ private function parsePath($method, $path, $p) {
 	if ($schema) {
 		$definition = $this->parseDefinitions($schema);
 		$swg_call = ' * @SWGCall="'.$schema.'"'."\n *\n";
+		$this->last_schema = $schema;
 	}
 
 	if (isset($p['responses'])) {
