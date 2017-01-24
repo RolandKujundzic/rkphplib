@@ -18,7 +18,7 @@ if (File::exists('vendor/autoload.php')) {
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class Yaml {
+class YAML {
 
 /**
  * Return yaml file converted to php multi-map.
