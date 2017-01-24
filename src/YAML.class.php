@@ -4,8 +4,6 @@ namespace rkphplib;
 
 require_once(__DIR__.'/File.class.php');
 
-use \rkphplib\File;
-
 if (File::exists('vendor/autoload.php')) {
   require_once('vendor/autoload.php');
 }
