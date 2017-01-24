@@ -46,7 +46,8 @@ private $parser = [ 'line' => '', 'custom' => '', 'json' => '', 'name' => '' ];
  * - php_file: default = $_SERVER[0]
  * - config_file: default = File::basename($_SERVER[0]).'.config.json'
  * - swagger_file: default = File::basename($_SERVER[0]).'.swagger.json'
- * 
+ * - swagger_bin: default = ./vendor/bin/swagger
+ *
  * @param map $opt = [] 
  */
 public function __construct($opt = []) {
@@ -57,6 +58,7 @@ public function __construct($opt = []) {
 	$default['php_file'] = $_SERVER['argv'][0];
 	$default['config_file'] = $dir.'/'.$base.'.config.json';
 	$default['swagger_file'] = $dir.'/'.$base.'.swagger.json';
+	$default['swagger_bin'] = $dir.'/vendor/bin/swagger';
 
 	$this->options = $opt;
 
@@ -382,13 +384,12 @@ private function _check_output($out, $check) {
  */
 public function updateSwaggerFile() {
 	print "\nrecreate ".$this->options['swagger_file']."\n\n";
-	$swagger_bin = './vendor/bin/swagger';
 
-	if (File::exists($swagger_bin)) {
-		\rkphplib\lib\execute($swagger_bin." '".$this->options['php_file']."' --output '".$this->options['swagger_file']."'");
+	if (File::exists($this->options['swagger_bin'])) {
+		\rkphplib\lib\execute($this->options['swagger_bin']." '".$this->options['php_file']."' --output '".$this->options['swagger_file']."'");
 	}
 	else {
-		throw new Exception('swagger not found', 'missing '.$swagger_bin);
+		throw new Exception('swagger not found', 'missing '.$this->options['swagger_bin']);
 	}
 }
 
