@@ -217,13 +217,22 @@ public function exec($data = null) {
 		}
 		else {
 			if (is_array($data)) {
-				if ($this->header['Content-Type'] == 'application/xml') {
+				if (!isset($this->header['Content-Type'])) {
+					throw new Exception('Content-type is not set');
+				}
+
+				$ct = $this->header['Content-Type'];
+				if (is_array($ct)) {
+					throw new Exception('Content-type is array', print_r($ct, true));
+				}
+
+				if ($ct == 'application/xml') {
 					$data = XML::fromMap($data);
 				}
-				else if ($this->header['Content-Type'] == 'application/json') {
+				else if ($ct == 'application/json') {
 					$data = JSON::encode($data); 
 				}
-				else if ($this->header['Content-Type'] == 'application/x-www-form-urlencoded') {
+				else if ($ct == 'application/x-www-form-urlencoded') {
 					$data = http_build_query($data);
 				}
 				else {
