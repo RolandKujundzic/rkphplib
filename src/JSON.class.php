@@ -141,7 +141,8 @@ public static function decode($txt, $assoc = true) {
 	$res = json_decode($txt, $assoc);
 
 	if (($err_no = json_last_error())) {
-		throw new Exception("JSON.decode failed", self::_error_msg($err_no));
+		$txt = (mb_strlen($txt) > 80) ? substr($txt, 0, 30).' ... '.substr($txt, -30) : $txt;
+		throw new Exception("JSON.decode failed", self::_error_msg($err_no)."\nJSON=[".$txt."]");
 	}
 
 	return $res;
