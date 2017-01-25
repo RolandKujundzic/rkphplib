@@ -71,26 +71,129 @@ public function __construct($opt = []) {
 
 
 /**
- * Extract $value from [$name="$value"] or [$name={"$value"] in $text.
- * 
- * @throws
+ * Return value of key if found in text. If required and not found or empty throw exception.
+ * If not required and not found return empty string. Example:
+ *
+ * key="value" or key={"v1", "v2", ...} 
+ *
+ * @throws 
+ * @param string $txt
  * @param string $key
- * @param string $text
  * @param bool $required = true
- * @return string
+ * @return string|vector|empty-string
  */
-protected function get_value($key, $text, $required = true) {
+private function get_value($key, $text, $required = true) {
 
-	if (!$required && mb_strpos($text, $key) === false) {
-		return '';
+	if (preg_match('/^[ \*]*'.$key.'\=(.+),?$/', $text, $match)) {
+		$res = $this->get_vector($match[1]);
+
+		if ((is_array($res) && count($res) == 0 && $required) || (is_string($res) && mb_strlen($res) == 0)) {
+			throw new Exception('empty value', "key=$key text=$text");
+		}
+
+		return $res;
+	}
+	else if ($required) {
+		throw new Exception('missing value', "key=$key text=$text");
 	}
 
-	$rx = $required ? '.+' : '.*';
-	if (!preg_match('/[\{\,]?\s*'.$key.'\=\{?"('.$rx.'?)"/', $text, $match)) {
-		throw new Exception('could not find parameter value', "search [$key] in [$text]");
+	return '';
+}
+
+
+/**
+ * If $txt != {.*} return $txt. Otherwise parse vector.
+ *
+ * @param string $txt
+ * @return string|vector
+ */
+private function get_vector($txt) {
+
+	$txt = trim($txt);
+	if (mb_substr($txt, -1) == ',') {
+		$txt = mb_substr($txt, 0, -1);
 	}
 
-	return $match[1];
+	$first_char = mb_substr($txt, 0, 1);
+	$last_char = mb_substr($txt, -1);
+
+	if ($first_char === '{' && $last_char !== '}') {
+		throw new Exception("invalid multiline entry", $txt);
+	}
+
+	if ($first_char === '"' && $last_char !== '"') {
+		throw new Exception("invalid multiline entry", $txt);
+	}
+
+	if ($first_char !== '{' && $last_char !== '}') {
+		if ($first_char === '"' && $last_char === '"') {
+			$txt = mb_substr($txt, 1, -1);
+		}
+
+		return $txt;
+	}
+
+	$txt = trim(mb_substr($txt, 1, -1));
+	$res = [];
+	$n = 0;
+
+	while ($n < 20 && preg_match('/^"(.*?)"[, ]*(.*)$/', $txt, $match)) {
+		array_push($res, $match[1]);
+		$txt = $match[2];
+		$n++;
+	}
+
+	if ($n == 20 || mb_strlen($txt) > 0) {
+		throw new Exception("vector scan failed", "n=$n txt=[$txt] res=".print_r($res, true));
+	}
+
+	return $res;
+}
+
+
+/**
+ * Scan $line for "$name(... KEY="VALUE" ...). Return false or map of key value pairs.
+ * 
+ * @param string $line
+ * @param string $name
+ * @return map|false $value
+ */
+private function get_map($line, $name) {
+  $map = false;
+
+	if (($pos = mb_strpos($line, '@SWG\\'.$name.'(')) === false) {
+		return $map;
+	}
+
+	$line = trim(mb_substr($line, $pos + 5));
+	$rxs = '/^'.$name.'\(([a-zA-Z0-9]+?)\=';
+	$rxe = '[, ]*(.*)\),?$/';
+	$n = 0;
+
+	$schema_def = '@SWG\Schema(ref="#/definitions/';
+	$sdl = mb_strlen($schema_def);
+
+	if (($pos = mb_strpos($line, $schema_def)) !== false && ($pos2 = mb_strpos($line, '")', $pos + $sdl)) !== false) {
+		$line = mb_substr($line, 0, $pos).'schema="'.mb_substr($line, $pos + $sdl, $pos2 - $pos - $sdl).'"'.mb_substr($line, $pos2 + 2);
+	}
+
+  while ((preg_match($rxs.'"(.*?)"'.$rxe, $line, $match) || preg_match($rxs.'(\{.+?\})'.$rxe, $line, $match) ||
+				preg_match($rxs.'([a-zA-Z0-9\.\+\-]+)'.$rxe, $line, $match)) && $n < 20) {
+    if ($map === false) {
+      $map = [];
+    }
+
+		$map[$match[1]] = $this->get_vector($match[2]);
+
+		$line = $name.'('.$match[3].')';
+		$n++;
+  }
+
+	if ($n == 20 || $line !== $name.'()') {
+		throw new Exception("map scan failed", "name=$name line=[$line] map=".print_r($map, true));
+	}
+
+	return $map;
 }
 
 
@@ -141,26 +244,25 @@ private function _parser_set_name($name) {
 
 
 /**
- * Extract host, schema, prefix, consumes and produces from line.
+ * Set global swagger paramter.
  * 
- * @param string $line
+ * @param map $p
  */
-private function _scan_swagger($line) {
-	$host = $this->get_value('host', $line);
-	$schema = $this->get_value('schemes', $line);
-	$prefix = $this->get_value('basePath', $line, false);
-
-	if (empty($schema)) {
-		throw new Exception('empty schema');
+private function _set_swagger($p) {
+	$required = [ 'host', 'schemes', 'consumes', 'produces' ];
+	foreach ($required as $key) {
+		if (empty($p[$key])) {
+			throw new Exception('missing or empty parameter', "key=$key");
+		}
 	}
 
-	if (empty($host)) {
-		throw new Exception('empty host');
-	}
+	$host = $p['host'];
+	$schemes = $p['schemes'];
+	$prefix = isset($p['basePath']) ? $p['basePath'] : '';
 
-	$this->config['@api'] = [ 'header' => [], 'url' => $schema.'://'.$host.$prefix ];
-	$this->config['@api']['header']['Accept'] = $this->get_value('consumes', $line);
-	$this->config['@api']['header']['Content-Type'] = $this->get_value('produces', $line);
+	$this->config['@api'] = [ 'header' => [], 'url' => $schemes[0].'://'.$host.$prefix ];
+	$this->config['@api']['header']['Accept'] = $p['consumes'];
+	$this->config['@api']['header']['Content-Type'] = $p['produces'];
 }
 
 
@@ -173,11 +275,15 @@ private function _scan_swg($line) {
 
 	$name = $this->parser['name'];
 
-	if (preg_match('/\*.+?Property\(property\="(.+?)".+?default\="(.+?)"/', $line, $match)) {
-		$this->config[$name]['example']['body'][$match[1]] = $match[2];
+	if (($map = $this->get_map($line, 'Property')) !== false) {
+		if (!empty($map['property']) && isset($map['default'])) {	
+			$this->config[$name]['example']['body'][$map['property']] = $map['default'];
+		}
 	}
-	else if (preg_match('/\*.+?Parameter\(in\="(.+?)".+?name\="(.+?)".+?default\="(.+?)"/', $line, $match)) {
-		$this->config[$name]['example'][$match[1]][$match[2]] = $match[3];
+	else if (($map = $this->get_map($line, 'Parameter')) !== false) {
+		if (!empty($map['in']) && !empty($map['name']) && isset($map['default'])) {
+			$this->config[$name]['example'][$map['in']][$map['name']] = $map['default'];
+		}
 	}
 	else if (($val = $this->get_value('consumes', $line, false))) {
 		$this->config[$name]['example']['header']['Accept'] = $val;
@@ -216,8 +322,8 @@ public function updateConfigFile() {
 			$this->parser['custom'] = $match[1];
 			$this->parser['json'] = $match[2];
 		}
-		else if (preg_match('/\*\s+@SWG\\\Swagger\((.+?)\)/', $line, $match)) {
-			$this->_scan_swagger($match[1]);
+		else if (($map = $this->get_map($line, 'Swagger')) !== false) {
+			$this->_set_swagger($map);
 		}
 		else if ($this->parser['name']) {
 			$this->_scan_swg($line);
@@ -270,6 +376,31 @@ private function _check_config($name) {
 
 
 /**
+ * Return header map {$hname: value}. If $name[example] header is not set
+ * use $name[@api] header.
+ *
+ * @param string $name
+ * @param string $hname
+ * @return map ($name, $value)
+ */
+private function _get_header($name, $hname) {
+	$value = '';
+
+	if (!empty($this->config[$name]['example']['header'][$hname])) {
+		$value = $this->config[$name]['example']['header'][$hname];
+	}
+	else if (!empty($config['@api']['header'][$hname])) {
+		$value = $this->config['@api']['header'][$hname];
+	}
+	else {
+		throw new Exception('no such header', "name=$name header=$hname");
+	}
+	
+	return [ $name => $value ];
+}
+
+
+/**
  * Execute api call with:
  *
  * - url: config['@api']['url']
@@ -293,12 +424,7 @@ public function call($name, $example = 0) {
 
 	$use_header = [ 'Content-Type', 'Accept' ];
 	foreach ($use_header as $hkey) {
-		if (!empty($cx['example']['header'][$hkey])) {
-			$api->set('header', [ $hkey => $cx['example']['header'][$hkey] ]);
-		}
-		else if ($config['@api']['header'][$hkey]) {
-			$api->set('header', [ $hkey => $config['@api']['header'][$hkey] ]);
-		}
+		$api->set('header', $this->_get_header($name, $hkey));
 	}
 
 	$path = $cx['call']['path'];
@@ -312,11 +438,11 @@ public function call($name, $example = 0) {
 		while (preg_match('/\{(.+?)\}/', $path, $match)) {
 			$key = $match[1];
 
-			if (empty($data[$key])) {
-				throw new Exception('invalid configuration', "could not get name=$name key=$key dump: ".print_r($data, true));
+			if (empty($data['path'][$key])) {
+				throw new Exception('invalid configuration', "empty value path=$path key=$key dump: ".print_r($data, true));
 			}
 
-			$path = str_replace('{'.$key.'}', $data[$key], $path);
+			$path = str_replace('{'.$key.'}', $data['path'][$key], $path);
 		}
 	}
 
@@ -395,4 +521,5 @@ public function updateSwaggerFile() {
 
 
 }
+
 
