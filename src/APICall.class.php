@@ -81,6 +81,14 @@ public function __construct($opt = []) {
  */
 public function set($name, $value) {
 
+	if (!is_string($name)) {
+		throw new Exception('name is not string', print_r($name, true));
+	}
+
+	if ($name != 'header' && !is_string($value)) {
+		throw new Exception('value is not string', "$name: ".print_r($value, true));
+	}
+
 	if ($name == 'path') {
 		$name = 'uri';
 	}
@@ -93,6 +101,10 @@ public function set($name, $value) {
 	}
 	else if ($name == 'header') {
 		foreach ($value as $hkey => $hval) {
+			if (!is_string($hval)) {
+				throw new Exception('header value is not string', print_r($hval, true));
+			}
+
 			$this->header[$hkey] = $hval;
 		}
 	}
