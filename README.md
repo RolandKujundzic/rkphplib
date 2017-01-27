@@ -17,10 +17,11 @@ Autoload library via composer.
 ```php
 <?php
 
-require 'vendor/autoload.php';
+require_once('vendor/rklib/rkphplib/src/lib/config.php');
+// require 'vendor/autoload.php';
 
-print $settings_TIMEZONE."\n";
-print $settings_LANGUAGE."\n";
+print SETTINGS_TIMEZONE."\n";
+print SETTINGS_LANGUAGE."\n";
 ```
 
 File and Dir example.
@@ -48,10 +49,7 @@ require_once('src/DateCalc.class.php');
 
 use rkphplib\DateCalc;
 
-print "3rd month in german: ".DateCalc::monthName(3)."\n";
-
-$settings_LANGUAGE = 'en';
-print "3rd month in english: ".DateCalc::monthName(3)."\n";
+print "3rd month in ".SETTINGS_LANGUAGE.": ".DateCalc::monthName(3)."\n";
 
 $sql_date = '2016-07-18 15:30:00';
 print "SQL Date $sql_date: de_format=".DateCalc::formatDateTimeStr('de', $sql_date, 'sql').", timestamp=".DateCalc::sqlTS('2016-07-18 15:30:00')."\n";
