@@ -494,6 +494,28 @@ public function getTableList($reload_cache = false) {
 
 
 /**
+ * Return last error info. Custom error values:
+ *
+ * - no_such_table 
+ *
+ * @return null|vector [custom_error, native_error, native_error_code ]
+ */
+public function getError() {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
+ * Return number of affected rows of last execute query.
+ * 
+ * @return int
+ */
+public function getAffectedRows() {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
  *
  */
 public function createDatabase($dsn = '', $opt = 'utf8') {
