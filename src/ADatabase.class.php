@@ -605,6 +605,153 @@ abstract public function getDatabaseList($reload_cache = false);
 
 
 /**
+ * Return table name vector.
+ * 
+ * @param boolean $reload_cache
+ * @return vector
+ */
+abstract public function getTableList($reload_cache = false);
+
+
+/**
+ * Return last error message. Values:
+ *
+ * - no_such_table 
+ *
+ * @return null|vector [custom_error, native_error, native_error_code ]
+ */
+abstract public function getError();
+
+
+/**
+ * Return number of affected rows of last execute query.
+ * 
+ * @return int
+ */
+abstract public function getAffectedRows();
+
+
+/**
+ * Return next id for table. Create table_seq as sequence table by default.
+ * Name use_table with '@' prefix (e.g. @table_id) to use a single table for all sequences.
+ * The sequence table use_table will be auto-created.
+ *  
+ * @throws
+ * @param string $table
+ * @param string $use_table = '' = $table.'_seq'
+ * @return int
+ */
+public function nextId($table, $use_table = '') {
+
+	if (empty($table)) {
+		throw new Exception('empty table name');
+	}
+
+	$where = '';
+
+	if (mb_substr($use_table, 0, 1) === '@') {
+		$where = " WHERE tname='".self::escape($table)."'";
+		$use_table = mb_substr($use_table, 1);
+		if (mb_strlen($use_table) > 50) {
+			throw new Exception('table name too lang', "table=$table (max 50 char)");
+		}
+	}
+
+	if (empty($use_table)) {
+		$use_table = $table.'_seq';
+	}
+
+	$table_seq = self::escape_name($use_table);
+
+	try {
+		$this->execute("UPDATE $table_seq SET id = LAST_INSERT_ID(id + 1)".$where);
+		$id = $this->getInsertId();
+	}
+	catch (\Exception $e) {
+		$last_error = $this->getError();
+
+		if ($last_error && $last_error[0] == 'no_such_table') {
+			// create missing sequence table and entry with value = 0 ...
+			if (empty($where)) {
+				// id = unsigned int not null primary key default 0
+				$this->createTable([ '@table' => $use_table, 'id' => 'int::0:35' ]);
+				$this->execute("INSERT INTO $table_seq (id) VALUES (0)");
+			}
+			else {
+				// tname = varchar(50) not null primary key, id = unsigned int not null default 0
+				$this->createTable([ '@table' => $use_table, 'tname' => 'varchar:50::3', 'id' => 'int::0:32' ]);
+				$this->execute("INSERT INTO $table_seq (tname, id) VALUES ('".self::escape($table)."', 0)");
+			}
+
+			$this->execute("UPDATE $table_seq SET id = LAST_INSERT_ID(id + 1)".$where);
+			$id = $this->getInsertId();
+		}
+		else if ($where && $this->getAffectedRows() === 0) {
+			// create missing sequence table entry with value = 0 ...
+			$this->execute("INSERT INTO $table_seq (tname, id) VALUES ('".self::escape($table)."', 0)");
+			$this->execute("UPDATE $table_seq SET id = LAST_INSERT_ID(id + 1)".$where);
+			$id = $this->getInsertId();
+		}
+		else {
+			throw $e;
+		}
+	}
+
+	if ($id < 1) {
+		throw new Exception('invalid id', "id=$id table=$table use_table=$use_table");
+	}
+
+	return $id;
+}
+
+
+/**
+ * Return unique id for string rid. Auto-create and use table.
+ * 
+ * @throws
+ * @param string $rid
+ * @param string $use_table = rid_alias
+ * @return int
+ */
+public function nextIdAlias($rid, $use_table = 'rid_alias') {
+	
+	if (empty($rid)) {
+		throw new Exception('empty rid');
+	}
+
+	if (empty($use_table)) {
+		throw new Exception('empty table name');
+	}
+
+	$seq = '@nextIdAlias_seq';
+
+	if ($rid === $seq) {
+		throw new Exception('invalid rid', 'rid='.$seq.' is forbidden');
+	}
+
+	$tname = self::escape_name($use_table);	
+	$id = 0;
+
+	if (!$this->hasTable($use_table)) {
+		$this->createTable([ '@table' => $use_table, 'rid' => 'varchar:50::3', 'id' => 'int::0:31' ]);
+		$this->execute("INSERT INTO $tname (rid, id) VALUES ('$seq', 0)");
+	}
+	else {
+		$id = intval($this->selectOne("SELECT id FROM $tname WHERE rid='".self::escape($rid).'"'));
+	}
+
+	if (empty($id)) {
+		$this->execute("INSERT INTO $tname (rid, id) VALUES ('".self::escape($rid)."', 0)");
+		$this->insert("UPDATE $tname SET id = LAST_INSERT_ID(id + 1) WHERE rid='$seq'");
+		$id = $this->getInsertId();
+		$this->insert("UPDATE $tname SET id = LAST_INSERT_ID(id + 1) WHERE rid='$seq'");
+	}
+
+	return $id;
+}
+
+
+/**
  * True if database exists.
  * 
  * @param string $name
@@ -616,21 +763,17 @@ public function hasDatabase($name) {
 
 
 /**
- * Return table name vector.
- * 
- * @param boolean $reload_cache
- * @return vector
- */
-abstract public function getTableList($reload_cache = false);
-
-
-/**
  * True if table exists.
  * 
+ * @throws if empty table name
  * @param string $name
  * @return boolean
  */
 public function hasTable($name) {
+	if (empty($name)) {
+		throw new Exception('empty table name');
+	}
+
 	return in_array($name, $this->getTableList());
 }
 
