@@ -129,16 +129,20 @@ public function getId() {
 
 
 /**
- * Set database connect string. 
+ * Set database connect string. If empty use default SETTINGS_DSN. 
  *
  * Examples:
  * mysqli://user:password@tcp+localhost/dbname
  * sqlite://[password]@path/to/file.sqlite
  * 
  * @throws rkphplib\Exception if $dsn is empty or connection is already open and $dsn has changed
- * @param string $dsn
+ * @param string $dsn = '' = use SETTINGS_DSN if defined
  */
-public function setDSN($dsn) {
+public function setDSN($dsn = '') {
+
+	if (empty($dsn) && defined('SETTINGS_DSN')) {
+		$dsn = SETTINGS_DSN;
+	}
 
 	if (!$dsn) {
 		throw new Exception('empty database source name');
