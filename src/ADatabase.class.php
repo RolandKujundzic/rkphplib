@@ -679,7 +679,7 @@ public function nextId($table, $use_table = '') {
 			}
 			else {
 				// name = varchar(50) not null primary key, id = unsigned int not null default 0
-				$this->createTable([ '@table' => $use_table, 'name' => 'varchar:50::3', 'id' => 'int::0:32' ]);
+				$this->createTable([ '@table' => $use_table, 'name' => 'varchar:50::3', 'id' => 'int::0:40' ]);
 				$this->execute("INSERT INTO $table_seq (name, id) VALUES ('".self::escape($table)."', 0)");
 			}
 
