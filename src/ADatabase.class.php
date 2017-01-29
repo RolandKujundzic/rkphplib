@@ -650,7 +650,7 @@ public function nextId($table, $use_table = '') {
 	$where = '';
 
 	if (mb_substr($use_table, 0, 1) === '@') {
-		$where = " WHERE tname='".self::escape($table)."'";
+		$where = " WHERE name='".self::escape($table)."'";
 		$use_table = mb_substr($use_table, 1);
 		if (mb_strlen($use_table) > 50) {
 			throw new Exception('table name too lang', "table=$table (max 50 char)");
@@ -678,9 +678,9 @@ public function nextId($table, $use_table = '') {
 				$this->execute("INSERT INTO $table_seq (id) VALUES (0)");
 			}
 			else {
-				// tname = varchar(50) not null primary key, id = unsigned int not null default 0
-				$this->createTable([ '@table' => $use_table, 'tname' => 'varchar:50::3', 'id' => 'int::0:32' ]);
-				$this->execute("INSERT INTO $table_seq (tname, id) VALUES ('".self::escape($table)."', 0)");
+				// name = varchar(50) not null primary key, id = unsigned int not null default 0
+				$this->createTable([ '@table' => $use_table, 'name' => 'varchar:50::3', 'id' => 'int::0:32' ]);
+				$this->execute("INSERT INTO $table_seq (name, id) VALUES ('".self::escape($table)."', 0)");
 			}
 
 			$this->execute("UPDATE $table_seq SET id = LAST_INSERT_ID(id + 1)".$where);
@@ -688,7 +688,7 @@ public function nextId($table, $use_table = '') {
 		}
 		else if ($where && $this->getAffectedRows() === 0) {
 			// create missing sequence table entry with value = 0 ...
-			$this->execute("INSERT INTO $table_seq (tname, id) VALUES ('".self::escape($table)."', 0)");
+			$this->execute("INSERT INTO $table_seq (name, id) VALUES ('".self::escape($table)."', 0)");
 			$this->execute("UPDATE $table_seq SET id = LAST_INSERT_ID(id + 1)".$where);
 			$id = $this->getInsertId();
 		}
@@ -723,28 +723,33 @@ public function nextIdAlias($rid, $use_table = 'rid_alias') {
 		throw new Exception('empty table name');
 	}
 
-	$seq = '@nextIdAlias_seq';
+	$seq = 'nextIdAliasSeq';
 
 	if ($rid === $seq) {
 		throw new Exception('invalid rid', 'rid='.$seq.' is forbidden');
 	}
 
-	$tname = self::escape_name($use_table);	
+	$tname = self::escape_name($use_table);
+	$rid = self::escape($rid);
 	$id = 0;
 
-	if (!$this->hasTable($use_table)) {
-		$this->createTable([ '@table' => $use_table, 'rid' => 'varchar:50::3', 'id' => 'int::0:31' ]);
-		$this->execute("INSERT INTO $tname (rid, id) VALUES ('$seq', 0)");
+	try {
+		$id = $this->selectOne("SELECT id FROM $tname WHERE name='$rid'", 'id');
 	}
-	else {
-		$id = intval($this->selectOne("SELECT id FROM $tname WHERE rid='".self::escape($rid).'"'));
+	catch (\Exception $e) {
+		$last_error = $this->getError();
+
+		if (($last_error && $last_error[0] == 'no_such_table') || ($e->getMessage() == 'no result')) {
+			$id = $this->nextId($seq, '@'.$use_table);
+			$this->execute("INSERT INTO $tname (name, id) VALUES ('$rid', '$id')");
+		}
+		else {
+			throw $e;
+		}
 	}
 
-	if (empty($id)) {
-		$this->execute("INSERT INTO $tname (rid, id) VALUES ('".self::escape($rid)."', 0)");
-		$this->insert("UPDATE $tname SET id = LAST_INSERT_ID(id + 1) WHERE rid='$seq'");
-		$id = $this->getInsertId();
-		$this->insert("UPDATE $tname SET id = LAST_INSERT_ID(id + 1) WHERE rid='$seq'");
+	if ($id < 1) {
+		throw new Exception('invalid id', "id=$id rid=$rid use_table=$tname");
 	}
 
 	return $id;
@@ -1135,7 +1140,8 @@ abstract public function selectRow($query, $rnum = 0);
 
 
 /**
- * Return query result table. 
+ * Return query result table. If res_count > 0 and result is empty
+ * throw "no result" error message. 
  *
  * If $res_count > 0 throw error if column count doesn't match.
  *
