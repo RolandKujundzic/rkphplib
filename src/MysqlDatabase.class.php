@@ -363,8 +363,10 @@ public function selectHash($query, $key_col = 'name', $value_col = 'value', $ign
 
 
 /**
- * Execute select query.
+ * Execute select query. If res_count > 0 and result is empty
+ * throw "no result" error message.
  *
+ * @throws
  * @param string $query 
  * @param int $res_count
  * @return table
@@ -407,7 +409,12 @@ private function _fetch($query, $rbind = null, $rcount = 0) {
 	$res = array();
 
 	if ($rcount > 0 && $rnum != $rcount) {
-		throw new Exception('unexpected number of rows', "$rnum != $rcount query=$query");
+		if ($rnum == 0) {
+			throw new Exception('no result', "$rcount rows expected - query=$query");
+		}
+		else {
+			throw new Exception('unexpected number of rows', "$rnum != $rcount query=$query");
+		}
 	}
 
 	if ($rcount < 0 && -1 * $rcount > $rnum) {
@@ -568,7 +575,12 @@ private function _fetch_stmt($stmt, $rbind = null, $rcount = 0) {
 	$res = array();
 
 	if ($rcount > 0 && $rnum != $rcount) {
-		throw new Exception('unexpected number of rows', $rnum.' != '.$rcount);
+		if ($rnum == 0) {
+			throw new Exception('no result', $rcount.' rows expected');
+		}
+		else {
+			throw new Exception('unexpected number of rows', $rnum.' != '.$rcount);
+		}
 	}
 
 	if ($rcount < 0 && -1 * $rcount > $rnum) {
