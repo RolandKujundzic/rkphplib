@@ -363,8 +363,10 @@ public function selectHash($query, $key_col = 'name', $value_col = 'value', $ign
 
 
 /**
- * Execute select query.
+ * Execute select query. If res_count > 0 and result is empty
+ * throw "no result" error message.
  *
+ * @throws
  * @param string $query 
  * @param int $res_count
  * @return table
@@ -407,7 +409,12 @@ private function _fetch($query, $rbind = null, $rcount = 0) {
 	$res = array();
 
 	if ($rcount > 0 && $rnum != $rcount) {
-		throw new Exception('unexpected number of rows', "$rnum != $rcount query=$query");
+		if ($rnum == 0) {
+			throw new Exception('no result', "$rcount rows expected - query=$query");
+		}
+		else {
+			throw new Exception('unexpected number of rows', "$rnum != $rcount query=$query");
+		}
 	}
 
 	if ($rcount < 0 && -1 * $rcount > $rnum) {
@@ -568,7 +575,12 @@ private function _fetch_stmt($stmt, $rbind = null, $rcount = 0) {
 	$res = array();
 
 	if ($rcount > 0 && $rnum != $rcount) {
-		throw new Exception('unexpected number of rows', $rnum.' != '.$rcount);
+		if ($rnum == 0) {
+			throw new Exception('no result', $rcount.' rows expected');
+		}
+		else {
+			throw new Exception('unexpected number of rows', $rnum.' != '.$rcount);
+		}
 	}
 
 	if ($rcount < 0 && -1 * $rcount > $rnum) {
@@ -698,6 +710,37 @@ public function getTableList($reload_cache = false) {
 
 
 /**
+ * Return number of affected rows of last execute query.
+ * 
+ * @return int
+ */
+public function getAffectedRows() {
+	return $this->_db->affected_rows;
+}
+
+
+/**
+ * Return last error info. Custom error values:
+ *
+ * - no_such_table 
+ *
+ * @return null|vector [custom_error, native_error, native_error_code ]
+ */
+public function getError() {
+
+	if (!$this->_db->errno) {
+		return null;
+	}
+
+	$map = [ 1146 => 'no_such_table' ];
+
+	$error = isset($map[$this->_db->errno]) ? $map[$this->_db->errno] : '';
+
+	return  [ $error, $this->_db->error, $this->_db->errno ];
+}
+
+
+/**
  * Return table description. Column map is:
  *
  * - type: double, ...
@@ -745,7 +788,7 @@ public function getTableDesc($table) {
 public function getInsertId() {
 
 	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) === 0) {
-		throw new Exception('no_id');
+		throw new Exception('no_id', $this->_db->insert_id);
 	}
 
 	return $this->_db->insert_id;

@@ -177,8 +177,10 @@ public function selectHash($query, $key_col = 'name', $value_col = 'value', $ign
 
 
 /**
- * Execute table and return result.
+ * Execute table and return result. If res_count > 0 and result is empty
+ * throw "no result" error message.
  *
+ * @throws
  * @param string $query
  * @param int $res_count
  * @return table
@@ -218,7 +220,12 @@ private function _fetch($query, $rbind = null, $rcount = 0) {
 	$res = array();
 
 	if ($rcount > 0 && $rnum != $rcount) {
-		throw new Exception('unexpected number of rows', $rnum.' != '.$rcount);
+		if ($rnum == 0) {
+			throw new Exception('no result', $rcount.' rows expected');
+		}
+		else {
+			throw new Exception('unexpected number of rows', $rnum.' != '.$rcount);
+		}
 	}
 
 	if ($rcount < 0 && -1 * $rcount > $rnum) {
@@ -358,7 +365,12 @@ private function _fetch_stmt($stmt, $rbind = null, $rcount = 0) {
 	$res = array();
 
 	if ($rcount > 0 && $rnum != $rcount) {
-		throw new Exception('unexpected number of rows', $rnum.' != '.$rcount);
+		if ($rnum == 0) {
+			throw new Exception('no result', $rcount.' rows expected');
+		}
+		else {
+			throw new Exception('unexpected number of rows', $rnum.' != '.$rcount);
+		}
 	}
 
 	if ($rcount < 0 && -1 * $rcount > $rnum) {
@@ -490,6 +502,28 @@ public function getDatabaseList($reload_cache = false) {
  */
 public function getTableList($reload_cache = false) {
 	throw new Exception('ToDo ...');	
+}
+
+
+/**
+ * Return last error info. Custom error values:
+ *
+ * - no_such_table 
+ *
+ * @return null|vector [custom_error, native_error, native_error_code ]
+ */
+public function getError() {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
+ * Return number of affected rows of last execute query.
+ * 
+ * @return int
+ */
+public function getAffectedRows() {
+	throw new Exception('ToDo ...');
 }
 
 

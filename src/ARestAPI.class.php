@@ -4,13 +4,62 @@ namespace rkphplib;
 
 require_once(__DIR__.'/XML.class.php');
 require_once(__DIR__.'/lib/error_msg.php');
-// require_once(__DIR__.'/lib/log_debug.php');
 
-
+// ToDo: Accept-Language: de_DE + OpenID Connect | OAUTH2
+// http://de.slideshare.net/jcleblanc/securing-restful-apis-using-oauth-2-and-openid-connect
+// https://github.com/jcleblanc/oauth
+// https://github.com/thephpleague/oauth2-server
+// https://github.com/bshaffer/oauth2-server-php + https://github.com/bshaffer/oauth2-demo-php
 
 /**
  * Abstract rest api class.
  *
+ * Avaliable HTTP methods are GET (retrieve), HEAD, POST (create new), PUT (update), PATCH (modify use with JSON|XML Patch - see
+ * http://jsonpatch.com/), DELETE (return status 200 or 404), OPTIONS (return SWAGGER path).  
+ * 
+ *
+ * Status Code Success:
+ * - 200 (OK): e.g. GET /visit/:id (return list of customer visits, allow pagination, sorting and filtering)
+ * - 201 (Created): e.g. POST /customer (create customer and set 'Location' header with link to /customers/{id})
+ * - 202 (Accepted): operation has been initialized - result must be requested separely
+ * - 204 (No Content): 
+ * - 205 (Reset Content):
+ * - 206 (Partial Content):
+ * - 208 (Already Reported):
+ *
+ * Status Code Error (Client is responsible):
+ * - 400 (Bad Request): request failed
+ * - 401 (Unauthorized): 
+ * - 403 (Forbidden): invalid url (no such api call)
+ * - 404 (Not Found): resource not found e.g. GET /customer/:id but id is not found
+ * - 405 (Method Not Allowed): invalid method (will send "Allow" Header with valid methods, e.g. Allow: GET, HEAD, PUT, DELETE)
+ * - 409 (Conflict): e.g. POST /customer but unique parameter email already exists
+ * - 406 (Not Acceptable): invalid data submited (will send "Content-Type" Header as hint)
+ * - 408 (Request Timeout): 
+ * - 409 (Conflict):
+ * - 410 (Gone): This API call is deprecated and has been removed
+ * - 411 (Length Required): missing „Content-Length“ in Request
+ * - 412 (Precondition Failed): use „If-Match“-Header
+ * - 413 (Request Entity Too Large): 
+ * - 415 (Unsupported Media Type):
+ * - 416 (Requested range not satisfiable):
+ * - 417 (Expectation Failed): use „Expect“-Header
+ * - 422 (Unprocessable Entity): validation failed
+ * - 423 (Locked): right now not available
+ * - 424 (Failed Dependency):
+ * - 426 (Upgrade Required): you must use SSL
+ * - 428 (Precondition Required): e.g. we need ETag-Header for file removal
+ * - 429 (Too Many Requests):
+ * - 431 (Request Header Fields Too Large): 
+ *
+ * Status Code Error (Server is responsible):
+ * - 500 (Internal Server Error): 
+ * - 501 (Not Implemented):
+ * - 503 (Service Unavailable): send „Retry-After“-Header
+ * - 504 (Gateway Time-out):
+ * 
+ * Status Code (custom): 900 - 999 available
+ * 
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 abstract class ARestAPI {
@@ -23,8 +72,8 @@ const ERR_INVALID_ROUTE = -3;
 
 const ERR_JSON_TO_XML = -4;
 
-/** @var map $req Request data */
-protected $_req = array();
+/** @var map $request */
+protected $request = array();
 
 /** @var map $priv Request data */
 protected $_priv = array();
@@ -35,15 +84,37 @@ public static $xml_root = '<api></api>';
 
 
 /**
+ * Use php buildin webserver as API server. Return routing script source.
+ * Start webserver on port 10080 and route https from 10443:
+ * 
+ * php -S localhost:10080 www/api/routing.php
+ *
+ * Enable https://localhost:10443/ with stunnel (e.g. stunnel3 -d 10443 -r 10080)
+ *
+ * @return string
+ */
+public static function phpAPIServer() {
+
+	$index_php = $_SERVER['argv'][0];
+
+	$php = '<'.'?php'."\n\n// Start API server: php -S localhost:10080 ".dirname($index_php)."/routing.php\n".
+		'if (preg_match(\'/\.(?:png|jpg|jpeg|gif)$/\', $_SERVER["REQUEST_URI"])) {'."\n\treturn false;\n}\nelse {\n\t".
+		'include __DIR__.\'/index.php\';'."\n}\n";
+
+	return $php;
+}
+
+
+/**
  * Return apache .htaccess configuration. 
  *
  * Allow GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS from anywhere.
  * Redirect everything to index.php. Unsupported: CONNECT, TRACE. 
  *
- * @param string $api_script
+ * @param string $api_script = /api/index.php
  * @return string
  */
-public static function apacheHtaccess($api_script = '/api/v1.0/index.php') {
+public static function apacheHtaccess($api_script = '/api/index.php') {
 	$res = <<<END
 Header add Access-Control-Allow-Origin "*"
 Header add Access-Control-Allow-Headers "origin, x-requested-with, content-type"
@@ -61,10 +132,10 @@ END;
 /**
  * Return nginx location configuration.
  *
- * @param string $api_script
+ * @param string $api_script = /api/index.php
  * @return string
  */
-public static function nginxLocation($api_script = '/api/v1.0/index.php') {
+public static function nginxLocation($api_script = '/api/index.php') {
 	$dir = dirname($api_script);
 	$res = <<<END
 location {$dir} {
@@ -102,7 +173,7 @@ public static function getRequestMethod() {
 /**
  * Parse request and api_token.
  *
- * Fill $_req with merged data from _GET, _POST and php://input.
+ * Fill this.request with merged data from _GET, _POST and php://input.
  * Input is parsed as Query-String unless either context-type "application/xml" or "application/json" is set.
  *
  *  Content-type: application/xml = XML Input
@@ -111,13 +182,14 @@ public static function getRequestMethod() {
  *  Request_Method: POST = use $_POST
  *  Request_Method: PUT, DELETE, PATCH, HEAD, OPTIONS = use _REQUEST 
  *
- * Pass authentication token ($_req[api_token]) via _GET|_POST[api_token] (auth=request), _SERVER[HTTP_X_AUTH_TOKEN] (auth=header)
+ * Pass authentication token (request[api_token]):
+ * 	- _GET|_POST[api_token] (auth=request), _SERVER[HTTP_X_AUTH_TOKEN] (auth=header)
  * or basic authentication ($_req[api_token] = $_SERVER[PHP_AUTH_USER]:$_SERVER[PHP_AUTH_PW], auth=basic_auth).
  * If no credentials are passed exit with "401 - basic auth required".
  *
  * @return map keys: method, input, ip, content-type, auth, post, get, request
  */
-public function parse() {
+public function parse($options = [ 'Accept' => 'application/json' ]) {
 
 	$this->_req = array();
 
@@ -191,14 +263,6 @@ public function parse() {
 
 
 /**
- * Process api request.
- * 
- * Call $this->parse() and $this->route(). 
- */
-abstract public function run();
-
-
-/**
  * Run api call.
  *
  * @param map $req required keys: api_call
@@ -215,6 +279,14 @@ public function call($req, $priv = array()) {
 	$method = $this->_req['api_call'];
 	$this->$method();
 }
+
+
+/**
+ * Process api request.
+ * 
+ * Call $this->parse() and $this->route(). 
+ */
+abstract public function run();
 
 
 /**
