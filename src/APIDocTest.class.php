@@ -392,10 +392,14 @@ private function _get_header($name, $hname) {
 	else if (!empty($config['@api']['header'][$hname])) {
 		$value = $this->config['@api']['header'][$hname];
 	}
-	else {
+	else if (in_array($hname, $this->config[$name]['input_check']['required'])) {
 		throw new Exception('no such header', "name=$name header=$hname");
 	}
-	
+
+	if (is_array($value) && count($value) == 1) {
+		$value = $value[0];
+	}
+
 	return [ $name => $value ];
 }
 
@@ -421,17 +425,20 @@ public function call($name, $example = 0) {
 	$cx = $this->config[$name];
 
 	$api = new \rkphplib\APICall([ 'url' => $this->config['@api']['url'] ]);
-
-	$use_header = [ 'Content-Type', 'Accept' ];
-	foreach ($use_header as $hkey) {
-		$api->set('header', $this->_get_header($name, $hkey));
-	}
-
 	$path = $cx['call']['path'];
 	$data = $cx['example'];
 
 	if ($example > 0) {
-		throw new Exception('ToDo: merge examples');
+		$ekey = 'example'.$example;
+
+		foreach ($cx[$ekey]['body'] as $key => $value) {
+			$data['body'][$key] = $value;
+		}
+	}
+
+	$use_header = array_merge([ 'Content-Type', 'Accept' ], array_keys($data['header']));
+	foreach ($use_header as $hkey) {
+		$api->set('header', $this->_get_header($name, $hkey));
 	}
 
 	if (isset($data['path'])) {
@@ -449,10 +456,13 @@ public function call($name, $example = 0) {
 	$api->set('method', $cx['call']['method']);
 	$api->set('uri', $path);
 
-	print $api->get('method').": ".$path." ... ";
-
-	if (!$api->exec($data)) {
-		throw new Exception('api call failed', "path=$path status=".$api->status." dump:\n".$api->dump);
+	try {
+		if (!$api->exec($data['body'])) {
+			throw new Exception('api call failed', "path=$path status=".$api->status." dump:\n".$api->dump."\nresult: ".print_r($api->result, true));
+		}
+	}
+	catch (\Exception $e) {
+		throw new Exception('api call failed - '.$e->getMessage(), "path=$path status=".$api->status." dump:\n".$api->dump."\nresult: ".print_r($api->result, true));
 	}
 
 	$res = $api->result;
