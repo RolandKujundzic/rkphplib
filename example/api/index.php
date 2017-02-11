@@ -15,13 +15,6 @@ use \rkphplib\File;
  */
 class APIExample extends ARestAPI {
 
-  public static function apiMap() {
-    return [
-			'postSignup' => ['POST', 'signup/user_type/locale', 1], // signup/:user_type/:locale - user_type and locale are parameter
-      'getSomeAction' => ['GET', 'some/action', 2], // some/action/:id or some/action&id=7 
-      'putSomething' => ['PUT', 'something', 1]]; // something/:id
-  }
-
   public function checkToken() {
     if ($this->_req['api_token'] != 'test:test') { $this->out(['error' => 'invalid api token'], 400); }
     return ['allow' => ['getSomeAction']];
@@ -29,20 +22,24 @@ class APIExample extends ARestAPI {
 
   public function run() {
     $this->parse(); // log or check $r if necessary
-		$priv = $this->checkToken(); // check $this->req['api_token'] and return privileges
     $this->route(static::allow(static::apiMap(), $priv['allow'])); // set _req.api_call if authorized
+
+		$priv = $this->checkToken(); // check $this->req['api_token'] and return privileges
     $method = $this->_req['api_call'];
     $this->$method();
   }
 
-	protected function postSignup() {
+	// POST: signup/:user_type/:locale - two parameter
+	protected function postSignup($user_type, $locale) {
     $this->out($this->_req);
 	}
 
-	protected function putSomething() {
+	// PUT: something/:id - one parameter
+	protected function putSomething($id) {
     $this->out($this->_req);
 	}
 
+	// GET: some/action - no parameter
   protected function getSomeAction() {
     $this->out($this->_req);
   }
@@ -58,6 +55,8 @@ $api = new APIExample();
 if (!empty($_SERVER['argv'][0])) {
 	require_once(PATH_RKPHPLIB.'File.class.php');
 
+	print __DIR__."\n";
+
 	$index_php = $_SERVER['argv'][0];
 
 	if (!File::exists(__DIR__.'.htaccess')) {
@@ -70,9 +69,10 @@ if (!empty($_SERVER['argv'][0])) {
 
 	print "\nApache2: Use ".dirname(__DIR__)." as document root\n";
 	print 'PHP buildin Webserver: php -S localhost:10080 '.dirname($index_php)."/routing.php\n";
-	print "Authorization: basic auth (e.g. http://test:test@localhost:10080/some/action\n\n";
+	print "Authorization: basic auth (e.g. http://test:test@localhost:10080/some/action)\n\n";
 }
 else {
+	error_log(print_r($_SERVER, true), 3, '/tmp/php.log');
 	$api->run();
 }
 
