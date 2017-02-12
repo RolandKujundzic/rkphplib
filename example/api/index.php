@@ -15,18 +15,12 @@ use \rkphplib\File;
  */
 class APIExample extends ARestAPI {
 
-  public function checkToken() {
-    if ($this->_req['api_token'] != 'test:test') { $this->out(['error' => 'invalid api token'], 400); }
-    return ['allow' => ['getSomeAction']];
-  }
+  public function checkRequest() {
+	  if (empty($this->request['api_token']) || $this->request['api_token'] != 'test:test') { 
+			throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 400);
+		}
 
-  public function run() {
-    $this->parse(); // log or check $r if necessary
-    $this->route(static::allow(static::apiMap(), $priv['allow'])); // set _req.api_call if authorized
-
-		$priv = $this->checkToken(); // check $this->req['api_token'] and return privileges
-    $method = $this->_req['api_call'];
-    $this->$method();
+		// check priv of $this->request['api_call'] ...
   }
 
 	// POST: signup/:user_type/:locale - two parameter

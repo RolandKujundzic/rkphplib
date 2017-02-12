@@ -11,7 +11,8 @@ namespace rkphplib;
 
 require_once(__DIR__.'/XML.class.php');
 require_once(__DIR__.'/JSON.class.php');
-require_once(__DIR__.'/lib/error_msg.php');
+require_once(__DIR__.'/lib/log_error.php');
+require_once(__DIR__.'/lib/translate.php');
 
 
 
@@ -62,49 +63,7 @@ public function __construct($message, $error_no, $http_error = 400, $internal_me
  *
  * Avaliable HTTP methods are GET (retrieve), HEAD, POST (create new), PUT (update), PATCH (modify use with JSON|XML Patch - see
  * http://jsonpatch.com/), DELETE (return status 200 or 404), OPTIONS (return SWAGGER path).  
- * 
- * Status Code Success:
- * - 200 (OK): e.g. GET /visit/:id (return list of customer visits, allow pagination, sorting and filtering)
- * - 201 (Created): e.g. POST /customer (create customer and set 'Location' header with link to /customers/{id})
- * - 202 (Accepted): operation has been initialized - result must be requested separely
- * - 204 (No Content): 
- * - 205 (Reset Content):
- * - 206 (Partial Content):
- * - 208 (Already Reported):
- *
- * Status Code Error (Client is responsible):
- * - 400 (Bad Request): request failed
- * - 401 (Unauthorized): 
- * - 403 (Forbidden): invalid url (no such api call)
- * - 404 (Not Found): resource not found e.g. GET /customer/:id but id is not found
- * - 405 (Method Not Allowed): invalid method (will send "Allow" Header with valid methods, e.g. Allow: GET, HEAD, PUT, DELETE)
- * - 409 (Conflict): e.g. POST /customer but unique parameter email already exists
- * - 406 (Not Acceptable): invalid data submited (will send "Content-Type" Header as hint)
- * - 408 (Request Timeout): 
- * - 409 (Conflict):
- * - 410 (Gone): This API call is deprecated and has been removed
- * - 411 (Length Required): missing „Content-Length“ in Request
- * - 412 (Precondition Failed): use „If-Match“-Header
- * - 413 (Request Entity Too Large): 
- * - 415 (Unsupported Media Type):
- * - 416 (Requested range not satisfiable):
- * - 417 (Expectation Failed): use „Expect“-Header
- * - 422 (Unprocessable Entity): validation failed
- * - 423 (Locked): right now not available
- * - 424 (Failed Dependency):
- * - 426 (Upgrade Required): you must use SSL
- * - 428 (Precondition Required): e.g. we need ETag-Header for file removal
- * - 429 (Too Many Requests):
- * - 431 (Request Header Fields Too Large): 
- *
- * Status Code Error (Server is responsible):
- * - 500 (Internal Server Error): 
- * - 501 (Not Implemented):
- * - 503 (Service Unavailable): send „Retry-After“-Header
- * - 504 (Gateway Time-out):
- * 
- * Status Code (custom): 900 - 999 available
- * 
+ *  
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 abstract class ARestAPI {
@@ -112,8 +71,8 @@ abstract class ARestAPI {
 const ERR_UNKNOWN = 1;
 const ERR_INVALID_API_CALL = 2;
 const ERR_INVALID_ROUTE = 3;
-const ERR_JSON_TO_XML = 4;
-const ERR_PHP = 5;
+const ERR_PHP = 4;
+const ERR_CODE = 5;
 const ERR_INVALID_INPUT = 6;
 
 
@@ -208,7 +167,18 @@ public static function getRequestMethod() {
 		$method = $_SERVER['HTTP_X_HTTP_METHOD'];
 	}
 
-	return strtolower($method);
+
+	if (empty($method)) {
+		throw new RestServerException('empty method', self::ERR_INVALID_INPUT, 400);
+	}
+
+	$method = strtolower($method);
+
+	if (!in_array($this->request['method'], $this->options['allow_method'])) {
+		throw new RestServerException('invalid method', self::ERR_INVALID_INPUT, 400, 'method='.$method);
+	}
+
+	return $method;
 }
 
 
@@ -224,7 +194,7 @@ public static function getRequestMethod() {
 public static function getContentType() {
 
 	if (empty($_SERVER['CONTENT_TYPE'])) {
-		throw new RestServerException(lib\error_msg('empty $p1x header', [ 'Content-Type' ]), self::ERR_INVALID_INPUT, 400);
+		throw new RestServerException('empty Content-Type header', self::ERR_INVALID_INPUT);
 	}
 
 	$type = strtolower($_SERVER['CONTENT_TYPE']);
@@ -264,7 +234,7 @@ public static function getContentType() {
 		$input = 'urlencoded';
 	}
 	else {
-		throw new RestServerException(lib\error_msg('unknown content-type [$p1x]', [ $type ]), self::ERR_INVALID_INPUT, 400);
+		throw new RestServerException('unknown content-type', self::ERR_INVALID_INPUT, 400, "type=$type");
 	}
 
 	return [ $type, $input ];
@@ -289,8 +259,8 @@ public function errorHandler($errNo, $errStr, $errFile, $errLine) {
     return;
   }
 
-	$msg = lib\error_msg('PHP ERROR [$p1x] $p2x (on line $p3x in file $p4x)', [ $errNo, $errStr, $errLine, $errFile ]);
-	$this->out([ 'error' => $msg, 'error_code' => self::ERR_PHP ], 500);
+	$this->out([ 'error' => "PHP ERROR [$errNo] $errStr", 'error_code' => self::ERR_PHP, 
+		'error_info' => "file=$errFile line=$errLine" ], 500);
 }
 
 
@@ -315,6 +285,7 @@ public function exceptionHandler($e) {
  * - Accept: allowed Content-Type (default = [application/json, application/xml, application/octet-stream, image|text|audio|video/*])
  * - allow_method = [ PUT, GET, POST, DELETE, PATCH, HEAD, OPTIONS ]
  * - xml_root: XML Root node of api result (default = '<api></api>')
+ * - allow_auth = [ header, request, basic_auth, oauth2 ]
  *
  * @param map $options 
  */
@@ -325,6 +296,8 @@ public function __construct($options) {
 		'image/*', 'text/*', 'video/*', 'audio/*' ];
 
 	$this->options['allow_method'] = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS' ];
+
+	$this->options['allow_auth'] = [ 'header', 'request', 'basic_auth', 'oauth2' ];
 
 	$this->options['xml_root'] = '<api></api>';
 
@@ -341,49 +314,56 @@ public function __construct($options) {
  *  - _SERVER[HTTP_X_AUTH_TOKEN] (auth=header)
  *  - basic authentication, token = $_SERVER[PHP_AUTH_USER]:$_SERVER[PHP_AUTH_PW] (auth=basic_auth)
  *  - OAuth2 Token = Authorization header (auth=oauth2)
- *
  * 
- * @exit If no credentials are passed exit with "401 - basic auth required"
- * @throws
+ * Default options.allow_auth is [ header, request, oauth2, basic_auth ]
+ * 
+ * @exit If no credentials are passed basic_auth is allowed and required exit with "401 - basic auth required"
+ * @param bool $force_basic_auth = true
+ * @return vector<string,string> [ token, auth ] 
  */
-public function getApiToken() {
+public function getApiToken($force_basic_auth = true) {
+	$res = [ '', '' ];
 
-	if (!empty($_REQUEST['api_token'])) {
-		$this->request['token'] = $_REQUEST['api_token'];
-		$this->request['auth'] = 'request';
+	$allow_basic_auth = in_array('basic_auth', $this->options['allow_auth']);
+
+	if (!empty($_REQUEST['api_token']) && in_array('request', $this->options['allow_auth'])) {
+		$res = [ $_REQUEST['api_token'], 'request' ];
 	}
-	else if (!empty($_SERVER['HTTP_X_AUTH_TOKEN'])) {
-		$this->request['token'] = trim($_SERVER['HTTP_X_AUTH_TOKEN']);
-		$this->request['auth'] = 'header';
+	else if (!empty($_SERVER['HTTP_X_AUTH_TOKEN']) && in_array('header', $this->options['allow_auth'])) {
+		$res = [ $_SERVER['HTTP_X_AUTH_TOKEN'], 'header' ];
 	}
-	else if (!empty($_SERVER['AUTHORIZATION'])) {
-		$this->request['token'] = trim($_SERVER['HTTP_X_AUTH_TOKEN']);
-		$this->request['auth'] = 'oauth2';
+	else if (!empty($_SERVER['AUTHORIZATION']) && in_array('oauth2', $this->options['allow_auth'])) {
+		$res = [ $_SERVER['HTTP_AUTHORIZATION'], 'oauth2' ];
 	}
-	else if (!empty($_SERVER['PHP_AUTH_USER']) && !empty($_SERVER['PHP_AUTH_PW'])) {
-		$this->request['token'] = $_SERVER['PHP_AUTH_USER'].':'.$_SERVER['PHP_AUTH_PW'];
-		$this->request['auth'] = 'basic_auth';
+	else if (!empty($_SERVER['PHP_AUTH_USER']) && !empty($_SERVER['PHP_AUTH_PW']) && $allow_basic_auth) {
+		$res = [ $_SERVER['PHP_AUTH_USER'].':'.$_SERVER['PHP_AUTH_PW'], 'basic_auth' ];
 	}
-	else if (!isset($_SERVER['PHP_AUTH_USER'])) {
+	else if ($force_basic_auth && $allow_basic_auth) {
 		header('WWW-Authenticate: Basic realm="REST API"');
 		header('HTTP/1.0 401 Unauthorized');
-		echo 'Please enter REST API basic authentication credentials';
+		print lib\translate('Please enter REST API basic authentication credentials');
 		exit;
 	}
+
+	list ($this->request['token'], $this->request['auth']) = $res;
+
+	return $res;
 }
 
 
 /**
- * Fill this.request, set keys: ip, method, input (json, xml, image, post or get), map, data (if type=image)
- * Parse _GET, _POST and php://input depending on (Content-Type header and Accept option).
+ * Parse _GET, _POST and php://input (= Input) depending on (Content-Type header and Accept option).
  *
  * Content-type: application/xml = XML decode Input
  * Content-type: application/json = JSON decode Input
  * Content-type: application/x-www-form-urlencoded = Input is Query-String
  *
  * Request_Method: GET = use $_GET
- * Request_Method: POST = use $_POST
- * Request_Method: PUT, DELETE, PATCH, HEAD, OPTIONS = use _REQUEST 
+ * Request_Method: POST(, PUT, DELETE, PATCH, HEAD, OPTIONS) = use $_POST
+ *
+ * Set this.request keys:
+ *
+ * ip, method, data, map, content-type and input-type
  *
  * @throws
  */
@@ -394,16 +374,11 @@ public function parse() {
 	$this->request['data'] = null;
 	$this->request['map'] = [];
 
-	if (!in_array($this->request['method'], $this->options['allow_method'])) {
-		throw new RestServerException(lib\error_msg('invalid method [$p1x]', [ $this->request['method'] ]), 
-			self::ERR_INVALID_INPUT, 400);
-	}
-
 	list ($this->request['content-type'], $this->request['input-type']) = self::getContentType(); 
 
 	if (!in_array($this->request['content-type'], $this->options['Accept'])) {
-		throw new RestServerException(lib\error_msg('invalid content-type [$p1x]', [ $this->request['content-type'] ]), 
-			self::ERR_INVALID_INPUT, 400);
+		throw new RestServerException('invalid content-type', self::ERR_INVALID_INPUT, 400, 
+			'type='.$this->request['content-type'].' allowed='.join(', ', $this->options['Accept']));
 	}
 
 	if (($input = file_get_contents('php://input'))) {
@@ -421,14 +396,14 @@ public function parse() {
 		}
 	}
 
-	if ($this->request['method'] == 'POST' && count($_POST) > 0) {
-		$this->request['map'] = array_merge($this->request['map'], $_POST, $_GET);
-	}
-	else if ($this->request['method'] == 'GET' && count($_GET) > 0) {
+	if (count($_GET) > 0) {
+		// always use query parameter
 		$this->request['map'] = array_merge($this->request['map'], $_GET);
 	}
-	else if (count($_REQUEST) > 0) {
-		$this->request['map'] = array_merge($this->request['map'], $_REQUEST);
+
+	if ($this->request['method'] != 'GET' && count($_POST) > 0) {
+		// use post data unless method is GET
+		$this->request['map'] = array_merge($this->request['map'], $_POST);
 	}
 }
 
@@ -444,55 +419,11 @@ public function call($req, $priv = array()) {
 	$this->_priv = $priv;
 
 	if (empty($this->_req['api_call']) || !method_exists($this, $this->_req['api_call'])) {
-		$this->error(lib\error_msg('invalid api call p1x', array($this->_req['api_call'])), self::ERR_INVALID_API_CALL);
+		throw new RestServerException('invalid api call', self::ERR_INVALID_API_CALL, 400, 'api_call='.$this->request['api_call']);
 	}
 
 	$method = $this->_req['api_call'];
 	$this->$method();
-}
-
-
-/**
- * Process api request.
- * 
- * Call $this->parse() and $this->route(). 
- */
-abstract public function run();
-
-
-/**
- * Return all possible api calls.
- * 
- * Return: [ api_method => [http_method, url, has_id], ... ]
- *
- * http_method = GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS
- * url = e.g. a/b/c
- * has_id = 0|1|2, 0 = no id, 1 = only url/:id, 2 = url/:id and url + _req[id]
- * 
- * @return map e.g. ['postUser' => ['POST', 'user', 0], 'getUser' => ['GET', 'user', 2], ... ] 
- */
-abstract public static function apiMap();
-
-
-/**
- * Return allowed keys from complete_map. Example:
- * 
- * static::allow(static::apiMap(), $allow)
- *
- * @param map $complete_map
- * @param vector $allow
- * @return $amp
- */
-public static function allow($complete_map, $allow) {
-	$res = [];
-
-	foreach ($allow as $key) {
-		if (isset($complete_map[$key])) {
-			$res[$key] = $complete_map[$key];
-		}
-	}
-
-	return $res;
 }
 
 
@@ -519,97 +450,59 @@ protected function _call_custom($method, $plist = array()) {
 
 
 /**
- * Check $_req[api_token] and return api user configuration.
- *
- * API Configuration is list with allowed method calls and further configuration (e.g. allowed cols, ...)
- *
- * Return keys: 
- *  - allow = list of allowed api calls
- * 
- * @exit this::out(lib\error_msg(...)) if error
- * @return map 
- */
-abstract public function checkToken();
-
-
-/**
  * Determine api call from url and request method.
  *
- * Set $this->_req[api_call] (e.g. getXaYbZc if URL= xa/yb/zc and getXyYbZc() exists) and 
- * $this->_req[api_id] ([] or [ $id1, ... ] if /url/:id1/:id2/... is found).
- * Return api method call and other route information.
+ * Set request.path, request.method, request.api_call 
+ * (e.g. getXaYbZc if URL=xa/yb/zc and getXyYbZc() exists) 
+ * and request.api_call_parameter 
+ * (e.g. [ $id1, id2 ] if URL=/do/:id1/:id2 and getDo() exists).
  * 
- * @exit this::out(lib\error_msg('invalid route')) if no route is found
- * @param map $api_map allowed api calls e.g. static::allow(static::apiMap(), $allow)
- * @return map keys: method, url, base.
+ * @throws if route does not exists and $must_exist is true
+ * @param bool $must_exists = true
+ * @return bool return true if route exists
  */
-public function route($api_map) {
+public function route($must_exists = true) {
 
-	$r = array();
-	$r['method'] = static::getRequestMethod();
-	$r['url'] = $_SERVER['REQUEST_URI'];
+	$method = static::getRequestMethod();
+	$url = $_SERVER['REQUEST_URI'];
 
-	if (($pos = mb_strpos($r['url'], '?')) > 0) {
-		$r['url'] = substr($r['url'], 0, $pos);
+	if (($pos = mb_strpos($url, '?')) > 0) {
+		$url = substr($url, 0, $pos);
 	}
 
-	if (substr($r['url'], 0, 1) == '/') {
-		$r['url'] = substr($r['url'], 1);
+	if (substr($url, 0, 1) == '/') {
+		$url = substr($url, 1);
 	}
 
-	$api_map = static::apiMap();
-	$func_list = [];
-	$path = explode('/', ucwords($r['url'], '/'));
+	$this->request['path'] = $url;
+	if (!isset($this->request['method'])) {
+		$this->request['method'] = $method;
+	}
 
-
-	$func_id = '';
+	$path = explode('/', ucwords($url, '/'));
+	$func_param = [];
 	$func = '';
 
-	foreach ($api_map as $fname => $fconf) {
+	while (count($path) > 0 && !$func) {
+		$fname = $method.join('', $path);
 
-		if ($fconf[0] != $r['method']) {
-			continue;
-		}
-
-		if ($fconf[1] == $r['url']) {
+		if (method_exists($this, $fname)) {
 			$func = $fname;
-			break;
 		}
-		else if ($parent_url && ($fconf[2] == 1 || $fconf[2] == 2) && $fconf[1] == $parent_url) {
-			$func_id = $fname;
+		else {
+			array_unshift($func_param, array_pop($path));
 		}
 	}
 
-	if ($func) {
-		$this->_req['api_call'] = $func;
+	if (!empty($func)) {
+		$this->request['api_call'] = $func;
+		$this->request['api_call_parameter'] = (count($func_param) > 0) ? $func_param : [];
 	}
-	else if ($func_id) {
-		$this->_req['api_id'] = basename($r['url']);
-		$this->_req['api_call'] = $func_id;
-		$r['url'] = $parent_url;
-	}
-
-	if (empty($this->_req['api_call']) || !method_exists($this, $this->_req['api_call'])) {
-		$this->error(lib\error_msg('invalid route p1x:/p2x', array($r['method'], $r['url'])), self::ERR_INVALID_ROUTE);
+	else if ($must_exist) {
+		throw new RestServerException('invalid route', self::ERR_INVALID_INPUT, 400, "url=$url method=$method");
 	}
 
-	error_log(print_r($r, true), 3, '/tmp/php.log');
-
-	return $r;
-}
-
-
-/**
- * Return api error message. Example:
- * 
- * $this->error('error message') = $this->out(['error' => 'error message', 'error_code' => 1], 400)
- * $this->error(lib\error_msg('error msg p1x', array('unknown')), 4) = $this->out(['error' => 'error msg unknown', 'error_code' => 4], 400)
- *
- * @param string $msg
- * @param int $error_code (default = -1 = unknown error)
- */
-public function error($msg, $error_code = -1) {
-	$this->out([ 'error' => $msg, 'error_code' => $error_code ], 400);
+	return !empty($func);
 }
 
 
@@ -619,43 +512,118 @@ public function error($msg, $error_code = -1) {
  * Default result format is JSON (change with HTTP_ACCEPT: application/xml to XML).
  * Overwrite for custom modification. 
  *
+ * If error occured return error (localized error message), error_code and error_info and send http code >= 400.
+ * 
  * @param map $o
  * @param int $code (default = 200, use 400 if error)
  * @exit print JSON|JSONP|XML
  */
 public function out($o, $code = 200) {
 
-	$is_jsonp = empty($this->_req['jsonpCallback']) ? false : true;
+	$jsonp = empty($this->request['map']['jsonpCallback']) ? '' : $this->request['map']['jsonpCallback'];
 
 	if (!empty($_SERVER['HTTP_ACCEPT']) && $_SERVER['HTTP_ACCEPT'] == 'application/xml') {
-		try {
-			$output = XML::fromMap($o);
-		}
-		catch (\Exception $e) {
-			$this->error(lib\error_msg('XML::fromMap error: p1x', array($e->getMessage())), self::ERR_JSON_TO_XML);
-		}
-
 		header('Content-Type: application/xml');
+		$output = XML::fromMap($o);
 	}
-	else if ($is_jsonp) {
+	else if (!empty($jsonp)) {
 		header('Content-Type: application/javascript');
-		$output = $this->_req['jsonpCallback'].'('.json_encode($o, 448).')';
+		$output = $jsonp.'('.JSON::encode($o).')';
 	}
 	else {
 		header('Content-Type: application/json');
-		$output = json_encode($o, 448);
+		$output = JSON::encode($o);
 	}
 
-	if ($code == 200) {
-		header('Status: 200 OK');
+	// 2xx = OK, 4xx = Client Error, 5xx = Server Error
+	$status_code = [ '200' => 'OK', '201' => 'Created', '202' => 'Accepted', '204' => 'No Content',
+		'205' => 'Reset Content', '206' => 'Partial Content', '208' => 'Already Reported', 
+ 		'400' => 'Bad Request', '401' => 'Unauthorized', '403' => 'Forbidden', '404' => 'Not Found',
+ 		'405' => 'Method Not Allowed', '406' => 'Not Acceptable', '408' => 'Request Timeout',
+ 		'409' => 'Conflict', '410' => 'Gone', '411' => 'Length Required', '412' => 'Precondition Failed',
+ 		'413' => 'Request Entity Too Large', '415' => 'Unsupported Media Type', '416' => 'Requested range not satisfiable',
+		'417' => 'Expectation Failed', '422' => 'Unprocessable Entity', '423' => 'Locked',
+		'424' => 'Failed Dependency', '426' => 'Upgrade Required', '428' => 'Precondition Required',
+ 		'429' => 'Too Many Requests', '431' => 'Request Header Fields Too Large', 
+		'500' => 'Internal Server Error', '501' => 'Not Implemented', '503' => 'Service Unavailable',
+		'504' => 'Gateway Time-out' ];
+ 
+	if (!isset($status_code[$code])) {
+		if ($code >= 400) {
+			header('Status: 501 Not Implemented');
+		}
+		else {
+			throw new RestServerException('invalid http status code', self::ERR_CODE, 500, "code=$code");
+		}
 	}
-	else if ($code == 400) {
-		header('Status: 400 Bad Request');
+	else {
+		header('Status: '.$code.' '.$status_code[$code]);
 	}
+
+	$this->logResult($code, $o, $output);
 
 	header('Content-Length: '.mb_strlen($output));
 	print $output;
 	exit(0);
+}
+
+
+/**
+ * Process api request. Example: 
+ *
+ * request = [ 'method' => 'get', 'path' => 'user/3832', 'api_call' => 'getUser', api_call_parameter => [ 3832 ] ]
+ * call this.getUser(3832)  (up to three parameter otherwise use array as first parameter)
+ * 
+ * Call $this->parse() and $this->route(). 
+ */
+public function run() {
+	$this->getApiToken(); 
+	$this->parse();
+	$this->route(); 
+  $this->checkRequest();
+	$method = $this->request['api_call'];
+
+	$p = $this->request['api_call_parameter'];
+	$pn = count($p);
+
+	if ($pn > 3) {
+		$this->$method($p);
+	}
+	else if ($pn == 3) {
+		$this->$method($p[0], $p[1], $p[2]);
+	}
+	else if ($pn == 2) {
+		$this->$method($p[0], $p[1]);
+	}
+	else if ($pn == 1) {
+		$this->$method($p[0]);
+	}
+	else {
+		$this->$method();
+	}
+}
+
+
+/**
+ * Check if request.api_token is valid and request.route call is allowed.
+ *
+ * @throws if api_token is invalid or access is forbidden
+ */
+abstract public function checkRequest();
+
+
+/**
+ * Overwrite for api logging. This function calls lib\log_error if $code >= 400.
+ *
+ * @param int $code
+ * @param map $p
+ * @param string $out
+ */
+public function checkRequest($code, $p, $out) {
+	if ($code >= 400) {
+		$info = empty($p['error_info']) ? '' : "\n".$p['error_info'];
+		lib\log_error("API ERROR ".$p['error_code']."/$code: ".$p['error'].$info);
+	}
 }
 
 
