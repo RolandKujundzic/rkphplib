@@ -11,6 +11,7 @@ namespace rkphplib;
 
 require_once(__DIR__.'/XML.class.php');
 require_once(__DIR__.'/JSON.class.php');
+require_once(__DIR__.'/File.class.php');
 require_once(__DIR__.'/lib/log_error.php');
 require_once(__DIR__.'/lib/translate.php');
 
@@ -58,8 +59,8 @@ public function __construct($message, $error_no, $http_error = 400, $internal_me
  * }
  *
  * $rs = new MyRestServer();
- * set_exception_handler(call_user_func($rs, 'exceptionHandler'));
- * set_error_handler(call_user_func($rs, 'errorHandler'));
+ * set_exception_handler([$rs, 'exceptionHandler']);
+ * set_error_handler([$rs, 'errorHandler']);
  *
  * Avaliable HTTP methods are GET (retrieve), HEAD, POST (create new), PUT (update), PATCH (modify use with JSON|XML Patch - see
  * http://jsonpatch.com/), DELETE (return status 200 or 404), OPTIONS (return SWAGGER path).  
@@ -167,18 +168,11 @@ public static function getRequestMethod() {
 		$method = $_SERVER['HTTP_X_HTTP_METHOD'];
 	}
 
-
 	if (empty($method)) {
 		throw new RestServerException('empty method', self::ERR_INVALID_INPUT, 400);
 	}
 
-	$method = strtolower($method);
-
-	if (!in_array($this->request['method'], $this->options['allow_method'])) {
-		throw new RestServerException('invalid method', self::ERR_INVALID_INPUT, 400, 'method='.$method);
-	}
-
-	return $method;
+	return strtolower($method);
 }
 
 
@@ -193,8 +187,8 @@ public static function getRequestMethod() {
  */
 public static function getContentType() {
 
-	if (empty($_SERVER['CONTENT_TYPE'])) {
-		throw new RestServerException('empty Content-Type header', self::ERR_INVALID_INPUT);
+	if (empty($_SERVER['CONTENT_TYPE']) && empty($_SERVER['HTTP_CONTENT_LENGTH'])) {
+		return [ '', '' ];
 	}
 
 	$type = strtolower($_SERVER['CONTENT_TYPE']);
@@ -244,7 +238,7 @@ public static function getContentType() {
 /**
  * Catch all php errors. Activate with:
  *
- * set_error_handler(call_user_func($this, 'errorHandler'));
+ * set_error_handler([$this, 'errorHandler']);
  *
  * @exit 500:ERR_PHP 
  * @param int $errNo
@@ -265,7 +259,9 @@ public function errorHandler($errNo, $errStr, $errFile, $errLine) {
 
 
 /**
- * Catch all Exceptions.
+ * Catch all Exceptions. Activate with:
+ *
+ * set_exception_handler([$this, 'errorHandler']);
  * 
  * @param Exception $e
  */
@@ -283,19 +279,19 @@ public function exceptionHandler($e) {
  * Set Options:
  *
  * - Accept: allowed Content-Type (default = [application/json, application/xml, application/octet-stream, image|text|audio|video/*])
- * - allow_method = [ PUT, GET, POST, DELETE, PATCH, HEAD, OPTIONS ]
+ * - allow_method = [ put, get, post, delete, patch, head, options ]
  * - xml_root: XML Root node of api result (default = '<api></api>')
  * - allow_auth = [ header, request, basic_auth, oauth2 ]
  *
- * @param map $options 
+ * @param map $options = []
  */
-public function __construct($options) {
+public function __construct($options = []) {
 	$this->options = [];
 
 	$this->options['Accept'] = [ 'application/json', 'application/xml', 'application/octet-stream', 
 		'image/*', 'text/*', 'video/*', 'audio/*' ];
 
-	$this->options['allow_method'] = [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS' ];
+	$this->options['allow_method'] = [ 'get', 'post', 'put', 'delete', 'patch', 'head', 'options' ];
 
 	$this->options['allow_auth'] = [ 'header', 'request', 'basic_auth', 'oauth2' ];
 
@@ -363,23 +359,15 @@ public function getApiToken($force_basic_auth = true) {
  *
  * Set this.request keys:
  *
- * ip, method, data, map, content-type and input-type
+ * ip, data, map, content-type and input-type
  *
  * @throws
  */
 public function parse() {
 
 	$this->request['ip'] = empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR'];
-	$this->request['method'] = static::getRequestMethod();
 	$this->request['data'] = null;
 	$this->request['map'] = [];
-
-	list ($this->request['content-type'], $this->request['input-type']) = self::getContentType(); 
-
-	if (!in_array($this->request['content-type'], $this->options['Accept'])) {
-		throw new RestServerException('invalid content-type', self::ERR_INVALID_INPUT, 400, 
-			'type='.$this->request['content-type'].' allowed='.join(', ', $this->options['Accept']));
-	}
 
 	if (($input = file_get_contents('php://input'))) {
 		if ($this->request['input-type'] == 'data') {
@@ -409,47 +397,6 @@ public function parse() {
 
 
 /**
- * Run api call.
- *
- * @param map $req required keys: api_call
- * @param map $priv
- */
-public function call($req, $priv = array()) {
-	$this->_req = $req;
-	$this->_priv = $priv;
-
-	if (empty($this->_req['api_call']) || !method_exists($this, $this->_req['api_call'])) {
-		throw new RestServerException('invalid api call', self::ERR_INVALID_API_CALL, 400, 'api_call='.$this->request['api_call']);
-	}
-
-	$method = $this->_req['api_call'];
-	$this->$method();
-}
-
-
-/**
- * If priv.custom is set and private method _$_priv.custom_$method() exists execute it.
- * You can not use reference parameter in plist. Example:
- *
- * $this->_call_custom('postUserOrder', array($p, $user));
- *
- * @param string $method
- * @param vector $plist
- */
-protected function _call_custom($method, $plist = array()) {
-
-	if (empty($this->_priv['custom'])) {
-		return;
-	}
-
-	$cc = '_'.$this->_priv['custom'].'_'.$method;
-	if (method_exists($this, $cc)) {
-		call_user_func_array(array($this, $cc), $plist);
-	}
-}
-
-
-/**
  * Determine api call from url and request method.
  *
  * Set request.path, request.method, request.api_call 
@@ -458,12 +405,12 @@ protected function _call_custom($method, $plist = array()) {
  * (e.g. [ $id1, id2 ] if URL=/do/:id1/:id2 and getDo() exists).
  * 
  * @throws if route does not exists and $must_exist is true
- * @param bool $must_exists = true
+ * @param bool $must_exist = true
  * @return bool return true if route exists
  */
-public function route($must_exists = true) {
+public function route($must_exist = true) {
 
-	$method = static::getRequestMethod();
+	$method = $this->request['method'];
 	$url = $_SERVER['REQUEST_URI'];
 
 	if (($pos = mb_strpos($url, '?')) > 0) {
@@ -475,9 +422,6 @@ public function route($must_exists = true) {
 	}
 
 	$this->request['path'] = $url;
-	if (!isset($this->request['method'])) {
-		$this->request['method'] = $method;
-	}
 
 	$path = explode('/', ucwords($url, '/'));
 	$func_param = [];
@@ -569,6 +513,28 @@ public function out($o, $code = 200) {
 
 
 /**
+ * Set request.method, request.content-type and request.input-type.
+ *
+ * @throws if invalid
+ */
+public function checkMethodContent() {
+	$this->request['method'] = self::getRequestMethod();
+
+	if (!in_array($this->request['method'], $this->options['allow_method'])) {
+		throw new RestServerException('invalid method', self::ERR_INVALID_INPUT, 400, 'method='.$this->request['method'].
+			' allowed='.join(', ', $this->options['allow_method']));
+	}
+
+	list ($this->request['content-type'], $this->request['input-type']) = self::getContentType(); 
+
+	if (!empty($this->request['content-type']) && !in_array($this->request['content-type'], $this->options['Accept'])) {
+		throw new RestServerException('invalid content-type', self::ERR_INVALID_INPUT, 400, 
+			'type='.$this->request['content-type'].' allowed='.join(', ', $this->options['Accept']));
+	}
+}
+
+
+/**
  * Process api request. Example: 
  *
  * request = [ 'method' => 'get', 'path' => 'user/3832', 'api_call' => 'getUser', api_call_parameter => [ 3832 ] ]
@@ -577,6 +543,7 @@ public function out($o, $code = 200) {
  * Call $this->parse() and $this->route(). 
  */
 public function run() {
+	$this->checkMethodContent();
 	$this->getApiToken(); 
 	$this->parse();
 	$this->route(); 
@@ -619,13 +586,39 @@ abstract public function checkRequest();
  * @param map $p
  * @param string $out
  */
-public function checkRequest($code, $p, $out) {
+public function logResult($code, $p, $out) {
 	if ($code >= 400) {
 		$info = empty($p['error_info']) ? '' : "\n".$p['error_info'];
 		lib\log_error("API ERROR ".$p['error_code']."/$code: ".$p['error'].$info);
 	}
+
+	$logfile = '/tmp/api/'.date('YmdHis').'-'.$code.'-'.$this->request['auth'].'-'.$this->request['api_call'].'.json';
+	File::save($logfile, JSON::encode($this->request));
 }
 
+
+/**
+ * If priv.custom is set and private method _$_priv.custom_$method() exists execute it.
+ * You can not use reference parameter in plist. Example:
+ *
+ * $this->_call_custom('postUserOrder', array($p, $user));
+ *
+ * @param string $method
+ * @param vector $plist
+ */
+/**
+protected function _call_custom($method, $plist = array()) {
+
+  if (empty($this->_priv['custom'])) {
+    return;
+  }
+
+  $cc = '_'.$this->_priv['custom'].'_'.$method;
+  if (method_exists($this, $cc)) {
+    call_user_func_array(array($this, $cc), $plist);
+  }
+}
+*/
 
 }
 

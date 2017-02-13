@@ -4,6 +4,7 @@ define('PATH_RKPHPLIB', __DIR__.'/../../src/');
 
 require_once(PATH_RKPHPLIB.'ARestAPI.class.php');
 
+use \rkphplib\RestServerException;
 use \rkphplib\ARestAPI;
 use \rkphplib\File;
 
@@ -16,7 +17,7 @@ use \rkphplib\File;
 class APIExample extends ARestAPI {
 
   public function checkRequest() {
-	  if (empty($this->request['api_token']) || $this->request['api_token'] != 'test:test') { 
+	  if (empty($this->request['token']) || $this->request['token'] != 'test:test') { 
 			throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 400);
 		}
 
@@ -25,17 +26,17 @@ class APIExample extends ARestAPI {
 
 	// POST: signup/:user_type/:locale - two parameter
 	protected function postSignup($user_type, $locale) {
-    $this->out($this->_req);
+    $this->out($this->request);
 	}
 
 	// PUT: something/:id - one parameter
 	protected function putSomething($id) {
-    $this->out($this->_req);
+    $this->out($this->request);
 	}
 
 	// GET: some/action - no parameter
   protected function getSomeAction() {
-    $this->out($this->_req);
+    $this->out($this->request);
   }
 }
 
@@ -66,7 +67,8 @@ if (!empty($_SERVER['argv'][0])) {
 	print "Authorization: basic auth (e.g. http://test:test@localhost:10080/some/action)\n\n";
 }
 else {
-	error_log(print_r($_SERVER, true), 3, '/tmp/php.log');
+	set_error_handler([$api, 'errorHandler']);
+	set_exception_handler([$api, 'exceptionHandler']);
 	$api->run();
 }
 
