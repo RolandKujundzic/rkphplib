@@ -7,6 +7,15 @@ if (!defined('SETTINGS_LOG_ERROR')) {
   define('SETTINGS_LOG_ERROR', '/tmp/php.fatal');
 }
 
+if (!defined('SETTINGS_TIMEZONE')) {
+  /** @define string SETTINGS_TIMEZONE = Auto-Detect */
+  date_default_timezone_set(@date_default_timezone_get());
+  define('SETTINGS_TIMEZONE', date_default_timezone_get());
+}
+else {
+  date_default_timezone_set(SETTINGS_TIMEZONE);
+}
+
 
 /**
  * Log error message (add timestamp and trace information).
@@ -45,8 +54,13 @@ function log_error($msg) {
 	$i = 1;
 
 	foreach($trace as $t) {
-		$log .= "\n#$i ".$t['file'] ."(" .$t['line']."): "; 
-
+		if (!empty($t['file'])) {
+			$log .= "\n#$i ".$t['file'] ."(" .$t['line']."): "; 
+		}
+		else {
+			$log .= '???'.print_r($t, true).'???';
+		}
+	
 		if (!empty($t['class'])) {
 			$log .= $t['class'] . "->"; 
 		}
