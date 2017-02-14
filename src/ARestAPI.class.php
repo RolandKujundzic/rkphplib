@@ -285,7 +285,8 @@ public function exceptionHandler($e) {
  * - allow_method = [ put, get, post, delete, patch, head, options ]
  * - xml_root: XML Root node of api result (default = '<api></api>')
  * - allow_auth = [ header, request, basic_auth, oauth2 ]
- * - log_dir = [] (if not empty log ok requests to this directory) 
+ * - log_dir = '' (if set save requests to this directory) 
+ * - trace_dir = '' (if set save traced requests to this directory)
  *
  * @param map $options = []
  */
@@ -302,6 +303,8 @@ public function __construct($options = []) {
 	$this->options['xml_root'] = '<api></api>';
 
 	$this->options['log_dir'] = '';
+
+	$this->options['trace_dir'] = '';
 
 	foreach ($options as $key => $value) {
 		$this->options[$key] = $value;
@@ -423,6 +426,13 @@ public function route($must_exist = true) {
 		$url = substr($url, 0, $pos);
 	}
 
+	if ($_SERVER['SCRIPT_NAME'] != $_SERVER['REQUEST_URI']) {
+		$base = dirname($_SERVER['SCRIPT_NAME']);
+		if (mb_strpos($url, $base) === 0) {
+			$url = mb_substr($url, mb_strlen($base)); 
+		}
+	}
+
 	if (substr($url, 0, 1) == '/') {
 		$url = substr($url, 1);
 	}
@@ -448,8 +458,14 @@ public function route($must_exist = true) {
 		$this->request['api_call'] = $func;
 		$this->request['api_call_parameter'] = (count($func_param) > 0) ? $func_param : [];
 	}
-	else if ($must_exist) {
-		throw new RestServerException('invalid route', self::ERR_INVALID_INPUT, 400, "url=$url method=$method");
+	else {
+		if ($must_exist) {
+			throw new RestServerException('invalid route', self::ERR_INVALID_INPUT, 400, "url=$url method=$method");
+		}
+		else {
+			$this->request['api_call'] = '';
+			$this->request['api_call_parameter'] = [];
+		}
 	}
 
 	return !empty($func);
@@ -541,6 +557,23 @@ public function checkMethodContent() {
 	if (!empty($this->request['content-type']) && !in_array($this->request['content-type'], $this->options['Accept'])) {
 		throw new RestServerException('invalid content-type', self::ERR_INVALID_INPUT, 400, 
 			'type='.$this->request['content-type'].' allowed='.join(', ', $this->options['Accept']));
+	}
+}
+
+
+/**
+ * Log api request.
+ */
+public function trace() {
+	$this->checkMethodContent();
+	$this->getApiToken(); 
+	$this->parse();
+	$this->route(false);
+	$config = $this->checkRequest();
+
+	if (!empty($this->options['trace_dir'])) {
+		$logfile = $this->options['trace_dir'].'/'.$this->request['api_call'].date('YmdHis').'.json';
+		File::save($logfile, JSON::encode($this->request));
 	}
 }
 
