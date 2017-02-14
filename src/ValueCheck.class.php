@@ -3,6 +3,7 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/DateCalc.class.php');
+require_once(__DIR__.'/lib/split_str.php');
 
 
 /**
@@ -11,6 +12,43 @@ require_once(__DIR__.'/DateCalc.class.php');
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 class ValueCheck {
+
+
+/**
+ *
+ */
+public static function run($key, $value, $check) {
+	if (!is_array($check)) {
+		$check = rkphplib\lib\split_str(':', $check);
+	}
+
+	$method = array_shift($check);
+
+	if (!method_exists(self, $method)) {
+		throw new Exception('no such check', "key=$key value=[$value] check=[$check]");
+	}
+
+	$pn = count($check);
+	$res = false;
+
+	if ($pn > 3) {
+		$res = self::$method($value, $check);
+	}
+	else if ($pn == 3) {
+		$res = self::$method($value, $check[0], $check[1], $check[2]);
+	}
+	else if ($pn == 2) {
+		$res = self::$method($value, $check[0], $check[1]);
+	}
+	else if ($pn == 1) {
+		$res = self::$method($value, $check[0]);
+	}
+	else {
+		$res = self::$method($value);
+	}
+
+	return $res;
+}
 
 
 /**
@@ -58,6 +96,9 @@ public static function isMatch($value, $rx) {
 
   if (mb_substr($rx, 0, 1) != '/' && mb_substr($rx, -1) != '/') {
 		$rx = '/'.$rx.'/';
+	}
+	else {
+		$rx = self::getMatch($rx);
 	}
 
   return preg_match($rx, $value);
