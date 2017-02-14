@@ -21,22 +21,22 @@ class APIExample extends ARestAPI {
 			throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 400);
 		}
 
-		// check priv of $this->request['api_call'] ...
+		return [];
   }
 
 	// POST: signup/:user_type/:locale - two parameter
 	protected function postSignup($user_type, $locale) {
-    $this->out($this->request);
+    return $this->request;
 	}
 
 	// PUT: something/:id - one parameter
 	protected function putSomething($id) {
-    $this->out($this->request);
+    return $this->request;
 	}
 
 	// GET: some/action - no parameter
   protected function getSomeAction() {
-    $this->out($this->request);
+   	return $this->request;
   }
 }
 

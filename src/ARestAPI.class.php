@@ -460,7 +460,8 @@ public function route($must_exist = true) {
  * Return api call result. 
  *
  * Default result format is JSON (change with HTTP_ACCEPT: application/xml to XML).
- * Overwrite for custom modification. 
+ * Overwrite for custom modification. If request.status is set and $code == 200 use 
+ * request.status instead of $code. 
  *
  * If error occured return error (localized error message), error_code and error_info and send http code >= 400.
  * 
@@ -469,6 +470,10 @@ public function route($must_exist = true) {
  * @exit print JSON|JSONP|XML
  */
 public function out($o, $code = 200) {
+
+	if ($code == 200 && !empty($this->request['status'])) {
+		$code = $this->request['status'];
+	}
 
 	$jsonp = empty($this->request['map']['jsonpCallback']) ? '' : $this->request['map']['jsonpCallback'];
 
@@ -588,6 +593,7 @@ public function run() {
 		$res = $this->$post_process($res);
 	}
 
+	$this->out($res);
 }
 
 
