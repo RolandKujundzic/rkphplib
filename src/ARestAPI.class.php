@@ -64,6 +64,9 @@ public function __construct($message, $error_no, $http_error = 400, $internal_me
  *
  * Avaliable HTTP methods are GET (retrieve), HEAD, POST (create new), PUT (update), PATCH (modify use with JSON|XML Patch - see
  * http://jsonpatch.com/), DELETE (return status 200 or 404), OPTIONS (return SWAGGER path).  
+ * 
+ * Subclass and implement checkRequest() and api callback methods ($method$Path e.g. getSomeAction, postUser, ... ).
+ * Api callback methods throw exceptions on error and return result. 
  *  
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
@@ -177,7 +180,7 @@ public static function getRequestMethod() {
 
 
 /**
- * Parse Content-Type header, check options.allow and return normalized Content-Type and Input-Type.
+ * Parse Content-Type header and return normalized Content-Type and Input-Type.
  *
  * Input-Type: data, xml, json, urlencoded
  * Normalized Content-Type: application/xml|json|octet-stream|x-www-form-urlencoded, image|text|video|audio/*
@@ -282,6 +285,7 @@ public function exceptionHandler($e) {
  * - allow_method = [ put, get, post, delete, patch, head, options ]
  * - xml_root: XML Root node of api result (default = '<api></api>')
  * - allow_auth = [ header, request, basic_auth, oauth2 ]
+ * - log_dir = [] (if not empty log ok requests to this directory) 
  *
  * @param map $options = []
  */
@@ -296,6 +300,8 @@ public function __construct($options = []) {
 	$this->options['allow_auth'] = [ 'header', 'request', 'basic_auth', 'oauth2' ];
 
 	$this->options['xml_root'] = '<api></api>';
+
+	$this->options['log_dir'] = '';
 
 	foreach ($options as $key => $value) {
 		$this->options[$key] = $value;
@@ -547,36 +553,82 @@ public function run() {
 	$this->getApiToken(); 
 	$this->parse();
 	$this->route(); 
-  $this->checkRequest();
-	$method = $this->request['api_call'];
+  $config = $this->checkRequest();
 
+	$this->prepareApiCall($config);	
+
+	if (!empty($config['call_before'])) {
+		$pre_process = $config['call_before'];
+		$this->$pre_process();
+	}
+
+	$method = $this->request['api_call'];
 	$p = $this->request['api_call_parameter'];
 	$pn = count($p);
+	$res = null;
 
 	if ($pn > 3) {
-		$this->$method($p);
+		$res = $this->$method($p);
 	}
 	else if ($pn == 3) {
-		$this->$method($p[0], $p[1], $p[2]);
+		$res = $this->$method($p[0], $p[1], $p[2]);
 	}
 	else if ($pn == 2) {
-		$this->$method($p[0], $p[1]);
+		$res = $this->$method($p[0], $p[1]);
 	}
 	else if ($pn == 1) {
-		$this->$method($p[0]);
+		$res = $this->$method($p[0]);
 	}
 	else {
-		$this->$method();
+		$res = $this->$method();
 	}
+
+	if (!empty($config['call_after'])) {
+		$post_process = $config['call_after'];
+		$res = $this->$post_process($res);
+	}
+
 }
 
 
 /**
- * Check if request.api_token is valid and request.route call is allowed.
+ * Prepare api call. Subclass this method if you need to intercept.
+ * Apply request.map operations according to p.set, p.preset, p.check map
+ * and p.required vector.
  *
- * @throws if api_token is invalid or access is forbidden
+ * @see this.checkRequest() 
+ * @param map $p
  */
-abstract public function checkRequest();
+private function prepareApiCall($p) {
+
+	$map = (empty($p['set']) && is_array($p['set'])) ? [] : $p['set'];
+
+	if (!empty($p['preset']) && is_array($p['preset'])) {
+		foreach ($p['preset'] as $key => $value) {
+			if (!isset($this->request['map'][$key]) && !isset($map[$key])) {
+				$map[$key] = $value;
+			}
+    }
+  }
+
+  if (!empty($p['required'])) {
+    foreach ($p['required'] as $key) {
+			if (empty($this->request['map'][$key])) {
+      	throw new RestServerException('missing required parameter', self::ERR_INVALID_INPUT, 403, 'parameter='.$key);
+			}
+    }
+  }
+
+  if (!empty($p['check'])) {
+    foreach ($p['check'] as $key => $check) {
+			if (isset($this->request['map'][$key])) {
+				if (!ValueCheck::run($key, $value, $check)) {
+      		throw new RestServerException('parameter check failed', self::ERR_INVALID_INPUT, 403, $key.'=['.$value.'] check='.$check);
+				}
+			}
+		}
+	}
+}
 
 
 /**
@@ -587,38 +639,37 @@ abstract public function checkRequest();
  * @param string $out
  */
 public function logResult($code, $p, $out) {
+
 	if ($code >= 400) {
 		$info = empty($p['error_info']) ? '' : "\n".$p['error_info'];
 		lib\log_error("API ERROR ".$p['error_code']."/$code: ".$p['error'].$info);
 	}
-
-	$logfile = '/tmp/api/'.date('YmdHis').'-'.$code.'-'.$this->request['auth'].'-'.$this->request['api_call'].'.json';
-	File::save($logfile, JSON::encode($this->request));
+	else if (!empty($this->options['log_dir'])) {
+		$logfile = $this->options['log_dir'].'/'.date('YmdHis').'-'.$code.'-'.$this->request['auth'].'-'.$this->request['api_call'].'.json';
+		File::save($logfile, JSON::encode($this->request));
+	}
 }
 
 
 /**
- * If priv.custom is set and private method _$_priv.custom_$method() exists execute it.
- * You can not use reference parameter in plist. Example:
+ * Check if request.api_token is valid and request.route call is allowed.
+ * Return map with preset, set, required, optional, check, call_before and call_after keys. Example:
  *
- * $this->_call_custom('postUserOrder', array($p, $user));
+ * - preset = { country: germany, ... }
+ * - set = { owner: 173, ... }
+ * - required = [ firstname, lastname, ... ]
+ * - optional = [ age, ... ]
+ * - check = { email: isEmail, ... } - @see ValueCheck
+ * - call_before = if set call $this->$call_before() before request.api_call 
+ * - call_after = if set call $this->$call_after($output) after request.api_call
  *
- * @param string $method
- * @param vector $plist
+ * Apply preset|set|required|optional|check to request.map.
+ *
+ * @throws if api_token is invalid or access is forbidden
+ * @return map 
  */
-/**
-protected function _call_custom($method, $plist = array()) {
+abstract public function checkRequest();
 
-  if (empty($this->_priv['custom'])) {
-    return;
-  }
-
-  $cc = '_'.$this->_priv['custom'].'_'.$method;
-  if (method_exists($this, $cc)) {
-    call_user_func_array(array($this, $cc), $plist);
-  }
-}
-*/
 
 }
 
