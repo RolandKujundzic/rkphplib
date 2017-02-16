@@ -266,7 +266,7 @@ private function _join_tok($start, $end) {
 		throw new Exception('invalid status - call setText() first');
 	}
 
-	\rkphplib\lib\log_debug("enter _join_tok - start=$start end=$end");
+	// \rkphplib\lib\log_debug("enter _join_tok - start=$start end=$end");
 	$tok_out = array();
 
 	for ($i = $start; $i < $end; $i++) {
@@ -297,7 +297,7 @@ private function _join_tok($start, $end) {
 	$res = join('', $tok_out);
 	array_pop($this->_callstack);
 
-	\rkphplib\lib\log_debug("end _join_tok (i=$i) - return:\n[$res]\n");
+	// \rkphplib\lib\log_debug("end _join_tok (i=$i) - return:\n[$res]\n");
 	return $res;
 }
 
@@ -401,9 +401,9 @@ private function _join_tok_plugin(&$i) {
 	}
 	else {
 		if ($ep == -1) {
-			\rkphplib\lib\log_debug("no arg: name=$name param=[$param] i=$i ep=$ep");
+			// \rkphplib\lib\log_debug("no arg: name=$name param=[$param] i=$i ep=$ep");
 			$out = $this->_call_plugin($name, $param);
-			\rkphplib\lib\log_debug("out:\n[$out]\n");
+			// \rkphplib\lib\log_debug("out:\n[$out]\n");
 		}
 		else if ($ep > $i) {
 			if ($tp & TokPlugin::TEXT) {
@@ -412,13 +412,13 @@ private function _join_tok_plugin(&$i) {
 			}
 			else {
 				// parse argument with recursive _join_tok call ...
-				\rkphplib\lib\log_debug("compute arg of $name with recursion: start=$i+1 end=$ep\n");
+				// \rkphplib\lib\log_debug("compute arg of $name with recursion: start=$i+1 end=$ep\n");
 				$arg = $this->_join_tok($i + 1, $ep);
 			}
  
-			\rkphplib\lib\log_debug("arg: name=$name param=[$param] arg=[$arg] i=$i ep=$ep");
+			// \rkphplib\lib\log_debug("arg: name=$name param=[$param] arg=[$arg] i=$i ep=$ep");
 			$out = $this->_call_plugin($name, $param, $arg);
- 			\rkphplib\lib\log_debug("set i=$ep - out:\n[$out]\n");
+ 			// \rkphplib\lib\log_debug("set i=$ep - out:\n[$out]\n");
 
 			$i = $ep; // modify loop position
 		}
