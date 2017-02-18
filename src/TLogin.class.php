@@ -31,7 +31,7 @@ var $sess = null;
 public function getPlugins($tok) {
   $plugin = [];
   $plugin['login'] = TokPlugin::NO_BODY;
-  $plugin['login_check'] = TokPlugin::KV_BODY;
+  $plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
   return $plugin;
 }
 
@@ -39,41 +39,33 @@ public function getPlugins($tok) {
 /**
  * Initialize/Check login session. Example:
  * 
- * {login_check:init} -> initialize but do not check authentication
- * {login_check:}redirect_expired=...{:} -> check login authentication - if not found redirect to redirect_expired
+ * {login_check:}redirect_login=...{:} -> check login authentication - if not found or expired redirect to redirect_login
  *
  * @see Session::init
  * @param string $param [|init]
  * @param map<string:string> $p
  * @return string javascript-login-refresh
  */
-public function tok_login_check($param, $p) {
-
+public function tok_login_check($p) {
 	$this->sess = new Session();
 	$this->sess->init($p);
-
-	$res = "<script>\n".$this->sess->getJSRefresh('login/ajax/refresh.php', '', 10)."\n</script>";
-
-	if ($param === 'init') {
-		return $res;
-	}
-
-	if (!$this->sess->hasMeta('start') || ($expired = $this->sess->hasExpired())) {
-		throw new Exception('ToDo');
-	}
-
-	return $res;
+	return "<script>\n".$this->sess->getJSRefresh('login/ajax/refresh.php', '', 10)."\n</script>";
 }
 
 
 /**
- * Return login key value.
+ * Return login key value. If key is empty return yes if login[id] is set.
  *
  * @param string $key
  * @return string
  */
 public function tok_login($key) {
-	return 'ToDo';
+
+	if (empty($key)) {
+		return $this->sess->has('id') ? 'yes' : '';
+	}
+
+	return $this->sess->get($key);
 }
 
 
