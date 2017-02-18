@@ -3,6 +3,7 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
+require_once(__DIR__.'/lib/split_str.php');
 require_once(__DIR__.'/lib/redirect.php');
 
 use rkphplib\Exception;
@@ -113,6 +114,7 @@ public function getConf($key) {
  *  inactive: seconds of inactivity. Session expires after lchange + inactive. Range [1-21600] (default = 7200 = 2 h)
  *	ttl: time to live in seconds. Session expires after start + ttl. Range [1, 345600] (default = 172800 = 48 h)
  *  unlimited: optional - if set use inactive=21600 and ttl=345600
+ *  allow_dir: login
  *  redirect_login: 
  *  redirect_forbidden:
  *  required: id, type (if one required session parameter is empty redirect to login page)
@@ -124,53 +126,44 @@ public function getConf($key) {
  */
 protected function setConf($conf) {
 
-	$default = [ 'name' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => 0, 
-		'redirect_login' => '',  'redirect_forbidden' => '', 'required' => [ 'id', 'type' ];
+	$default = [ 'name' => '', 'table' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => 0, 
+		'redirect_login' => '',  'redirect_forbidden' => '', 'required' => [ 'id', 'type' ], 'allow_dir' => [ 'login' ] ];
 
 	foreach ($default as $key => $value) {
-		$this->conf[$key] = $value;
+		$this->conf[$key] = isset($conf[$key]) ? $conf[$key] : $value;
 	}
 
-	if (empty($conf['name'])) {
-		if (!empty($conf['table'])) {
-			$conf['name'] = $conf['table'];
+	if (empty($this->conf['name'])) {
+		if (!empty($this->conf['table'])) {
+			$this->conf['name'] = $this->conf['table'];
 		}
 		else {
 			throw new Exception('name is empty');
 		}
 	}
 
-	$this->conf['name'] = $conf['name'];
-
-	if (isset($conf['scope'])) {
-		$allow_scope = array('script', 'dir', 'subdir', 'host', 'docroot');
-		if (!in_array($conf['scope'], $allow_scope)) {
-			throw new Exception('no such scope', $conf['scope']);
-		}
-
-		$this->conf['scope'] = $conf['scope'];
+	$allow_scope = array('script', 'dir', 'subdir', 'host', 'docroot');
+	if (!in_array($this->conf['scope'], $allow_scope)) {
+		throw new Exception('no such scope', $this->conf['scope']);
 	}
 
-	if (isset($conf['required'])) {
-		$this-conf['required'] = \rkphplib\lib\split_str(',', $conf['required'], true);
-	}
+	$this->conf['required'] = \rkphplib\lib\split_str(',', $this->conf['required'], true);
+	$this->conf['allow_dir'] = \rkphplib\lib\split_str(',', $this->conf['allow_dir'], true);
 
 	$time_keys = [ 'inactive' => [1, 21600], 'ttl' => [1, 345600] ];
 
-	if (!empty($conf['unlimited'])) {
-		$conf['inactive'] = 21600;
-		$conf['ttl'] = 345600;
+	if (!empty($this->conf['unlimited'])) {
+		$this->conf['inactive'] = 21600;
+		$this->conf['ttl'] = 345600;
 	}
 
 	foreach ($time_keys as $key => $range) {
-		if (isset($conf[$key])) {
-			$sec = intval($conf[$key]);
+		if (isset($this->conf[$key])) {
+			$sec = intval($this->conf[$key]);
 
 			if ($sec < $range[0] || $sec > $range[1]) {
 				throw new Exception("parameter $key outside of range", $sec." not in [".$range[0].",".$range[1]."]");
 			}
-
-			$this->conf[$key] = $conf[$key];
 		}
 	}
 }
@@ -254,7 +247,7 @@ public function redirectLogin($reason, $p = []) {
   $this->destroy();
 
   if (!empty($this->conf['redirect_login'])) {
-    \rkphplib\lib\redirect($this->conf['redirect_login'], $p);
+		\rkphplib\lib\redirect($this->conf['redirect_login'], $p);
   }
   else {
     throw new Exception($reason);
