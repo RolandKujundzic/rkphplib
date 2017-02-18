@@ -112,8 +112,9 @@ public function getConf($key) {
  *  inactive: seconds of inactivity. Session expires after lchange + inactive. Range [1-21600] (default = 7200 = 2 h)
  *	ttl: time to live in seconds. Session expires after start + ttl. Range [1, 345600] (default = 172800 = 48 h)
  *  unlimited: optional - if set use inactive=21600 and ttl=345600
- *  redirect_expired: 
+ *  redirect_login: 
  *  redirect_forbidden:
+ *  required: id, type (if one required session parameter is empty redirect to login page)
  * 
  *  Check inactive and ttl with hasExpired().
  *
@@ -123,7 +124,7 @@ public function getConf($key) {
 protected function setConf($conf) {
 
 	$default = [ 'name' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => 0, 
-		'redirect_expired' => '',  'redirect_forbidden' => '' ];
+		'redirect_login' => '',  'redirect_forbidden' => '', 'required' => [ 'id', 'type' ];
 
 	foreach ($default as $key => $value) {
 		$this->conf[$key] = $value;
@@ -147,6 +148,10 @@ protected function setConf($conf) {
 		}
 
 		$this->conf['scope'] = $conf['scope'];
+	}
+
+	if (isset($conf['required'])) {
+		$this-conf['required'] = \rkphplib\lib\split_str(',', $conf['required'], true);
 	}
 
 	$time_keys = [ 'inactive' => [1, 21600], 'ttl' => [1, 345600] ];
