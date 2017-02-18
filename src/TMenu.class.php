@@ -73,7 +73,7 @@ public function tok_menu($tpl) {
 		$html[$i] = $this->conf[$lname.'_header'].join($this->conf[$lname.'_delimiter'], $html[$i]).$this->conf[$lname.'_footer'];
 	}
 
-	\rkphplib\lib\log_debug(print_r($html, true));
+	// \rkphplib\lib\log_debug(print_r($html, true));
 
 	return '';
 }
