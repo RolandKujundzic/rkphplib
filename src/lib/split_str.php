@@ -7,15 +7,39 @@ namespace rkphplib\lib;
  * Split string at delimiter.
  *
  * Remove quotes from parts, trim parts, allow backslash escaped delimiter char.
+ * If txt is vector return txt (with trimmed elements, apply ignore_empty and limit).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @param string $delim
- * @param string $txt
+ * @param string|vector $txt
  * @param boolean $ignore_empty (default = false)
  * @param int $limit (default = -1)
  * @return array
  */
 function split_str($delim, $txt, $ignore_empty = false, $limit = -1) {
+
+	if (is_array($txt)) {
+		$arr = [];
+		$n = 0;
+
+		foreach ($txt as $key => $value) {
+			$value = trim($value);
+
+			if ($ignore_empty && strlen($value) == 0) {
+				continue;
+			}
+
+			if ($limit > 0 && $n > $limit) {
+				$last = array_pop($arr);
+				$value = $last.$delim.$value;
+			}
+
+			array_push($arr, $value);
+			$n++;
+		}
+
+		return $arr;
+	}
 
 	$esc = '\\';
 	$dl = strlen($delim);
