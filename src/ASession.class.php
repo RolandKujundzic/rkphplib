@@ -225,13 +225,13 @@ public function validScope() {
  * @exit redirect to conf.redirect_forbidden 
  */
 public function redirectForbidden() {
-  
-  if (!empty($this->conf['redirect_forbidden'])) {
-    \rkphplib\lib\redirect($this->conf['redirect_forbidden']);
-  }
-  else {
-    throw new Exception('forbidden');
-  }
+
+	if (!empty($this->conf['redirect_forbidden'])) {
+		\rkphplib\lib\redirect($this->conf['redirect_forbidden']);
+	}
+	else {
+		throw new Exception('forbidden');
+	}
 }
 
 
@@ -244,14 +244,14 @@ public function redirectForbidden() {
  * @param map $p = []
  */
 public function redirectLogin($reason, $p = []) {
-  $this->destroy();
+	$this->destroy();
 
-  if (!empty($this->conf['redirect_login'])) {
+	if (!empty($this->conf['redirect_login'])) {
 		\rkphplib\lib\redirect($this->conf['redirect_login'], $p);
-  }
-  else {
-    throw new Exception($reason);
-  }
+	}
+	else {
+		throw new Exception($reason);
+	}
 }
 
 
