@@ -3,7 +3,6 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/ASession.class.php');
-require_once(__DIR__.'/lib/redirect.php');
 
 use rkphplib\Exception;
 
@@ -19,7 +18,9 @@ class Session extends ASession {
 
 
 /**
- * Initialize session. Parameter: name, scope(=docroot), ttl(=172800), inactive(=7200), redirect_[forbidden|expired](='').
+ * Initialize session. Parameter: name, scope(=docroot), ttl(=172800), inactive(=7200), redirect_[forbidden|login](='').
+ * If required session parameter does not exist redirect to redirect_login or throw exception.
+ * 
  * @param map $conf
  */
 public function init($conf) {
@@ -48,24 +49,31 @@ public function init($conf) {
 
 	$this->initMeta();
 
-	if (!$this->validScope()) {
-		if (!empty($this->conf['redirect_forbidden'])) {
-			\rkphplib\lib\redirect($this->conf['redirect_forbidden']);
+	if (!empty($_REQUEST[SETTINGS_REQ_DIR])) {
+		$dir = $_REQUEST[SETTINGS_REQ_DIR];
+
+		foreach ($this->conf['allow_dir'] as $allow_dir) {
+			if (!empty($allow_dir) && mb_strpos($dir, $allow_dir) === 0) {
+				// we are in login-free directory - return without checks
+				return;
+			} 
 		}
-		else {
-			throw new Exception('forbidden');
+	}
+
+	if (!$this->validScope()) {
+		$this->redirectForbidden();
+	}
+
+	if (count($this->conf['required']) > 0) {
+		foreach ($this->conf['required'] as $name) {
+    	if (empty($_SESSION[$skey][$name])) {
+				$this->redirectLogin('no_login');
+			}
 		}
 	}
 
 	if (($expired = $this->hasExpired())) {
-		$this->destroy();
-
-		if (!empty($this->conf['redirect_expired'])) {
-			\rkphplib\lib\redirect($this->conf['redirect_expired'], [ 'expired' => $expired ]);
-		}
-		else {
-			throw new Exception('expired');
-		}
+		$this->redirectLogin('expired', [ 'expired' => $expired ]);
 	}
 }
 
@@ -100,7 +108,7 @@ public function destroy() {
 	$skey_meta = $this->sessKey(true);
 
 	unset($_SESSION[$skey]);
-	unset($_SESSIOn[$skey_meta]);
+	unset($_SESSION[$skey_meta]);
 }
 
 
