@@ -3,6 +3,7 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
+require_once(__DIR__.'/lib/redirect.php');
 
 use rkphplib\Exception;
 
@@ -221,6 +222,43 @@ public function validScope() {
 	}
 
 	return $ok;
+}
+
+
+/**
+ * If conf.redirect_forbidden is set redirect otherwise throw exception. 
+ *
+ * @throws if conf.redirect_forbidden is empty
+ * @exit redirect to conf.redirect_forbidden 
+ */
+public function redirectForbidden() {
+  
+  if (!empty($this->conf['redirect_forbidden'])) {
+    \rkphplib\lib\redirect($this->conf['redirect_forbidden']);
+  }
+  else {
+    throw new Exception('forbidden');
+  }
+}
+
+
+/**
+ * If conf.redirect_login is set redirect otherwise throw exception.
+ *
+ * @throws if conf.redirect_login is empty
+ * @exit redirect to conf.redirect_login
+ * @param string $reason
+ * @param map $p = []
+ */
+public function redirectLogin($reason, $p = []) {
+  $this->destroy();
+
+  if (!empty($this->conf['redirect_login'])) {
+    \rkphplib\lib\redirect($this->conf['redirect_login'], $p);
+  }
+  else {
+    throw new Exception($reason);
+  }
 }
 
 
