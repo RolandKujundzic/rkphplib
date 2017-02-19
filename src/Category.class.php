@@ -68,10 +68,15 @@ END;
  *
  * Don't change "@id" and "pid" in conf. For multilanguage use "@language" => 'de, en, ...' and "@multilang" => 'name'.
  *
- * @param map $conf
+ * @param map $conf = null = use default
  * @see ADatabase::createTable()
  */
-public function createTable($conf = [ '@table' => 'category', '@id' => 1, 'pid' => 'int:::32', 'name' => 'varchar:255::1' ]) {
+public function createTable($conf = null) {
+
+	if (is_null($conf)) {
+		$conf = [ '@table' => 'category', '@id' => 1, 'pid' => 'int:::32', 'name' => 'varchar:255::1' ];
+	}
+
 	$this->db->createTable($conf);
 }
 
