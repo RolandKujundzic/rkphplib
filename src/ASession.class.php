@@ -134,8 +134,8 @@ protected function setConf($conf) {
 	}
 
 	if (empty($this->conf['name'])) {
-		if (!empty($this->conf['table'])) {
-			$this->conf['name'] = $this->conf['table'];
+		if (!empty($conf['table'])) {
+			$this->conf['name'] = $conf['table'];
 		}
 		else {
 			throw new Exception('name is empty');
