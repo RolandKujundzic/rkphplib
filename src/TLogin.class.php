@@ -32,6 +32,7 @@ public function getPlugins($tok) {
   $plugin = [];
   $plugin['login'] = TokPlugin::NO_BODY;
   $plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
+  $plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
   return $plugin;
 }
 
@@ -50,6 +51,19 @@ public function tok_login_check($p) {
 	$this->sess = new Session();
 	$this->sess->init($p);
 	return "<script>\n".$this->sess->getJSRefresh('login/ajax/refresh.php', '', 10)."\n</script>";
+}
+
+
+/**
+ * Compare login with database. Example:
+ *
+ * {login_auth:}login={get:login}|#|password={get:password}{:login_auth}
+ *
+ * @param map $p
+ */
+public function tok_login_auth($p) {
+	$table = $this->sess->get('table');
+	$this->createTable($table);
 }
 
 
@@ -85,7 +99,7 @@ public function createTable($table) {
 	$tconf['@timestamp'] = 3;
 	$tconf['login'] = 'varchar(50):::1';
 	$tconf['password'] = 'varchar(50):::';
-	$tconf['auth'] = 'varchar(30):::';
+	$tconf['type'] = 'varchar(30):admin::9';
 
 	$this->db->createTable($tconf);
 }
