@@ -95,14 +95,11 @@ public function setDSN($dsn = SETTINGS_DSN, $opt = [ 'table' => 'language', 'use
  */
 public function createTable($table = 'language', $language_list = [ 'de', 'en' ]) {
 
-	if ($this->db->hasTable($table)) {
-		return;
-	}
-
 	$tconf = [];
 	$tconf['@table'] = $table;
 	$tconf['@timestamp'] = 2;
-	$tconf['id'] = 'varchar:50::3';
+	$tconf['id'] = 'varchar:35::3';
+	$tconf['dir'] = 'varchar:255::8';
 	$tconf['txt'] = 'text:::1';
 
 	foreach ($language_list as $lang) {
