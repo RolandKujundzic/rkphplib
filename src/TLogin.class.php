@@ -60,12 +60,16 @@ public function tok_login_check($p) {
  * @return string
  */
 public function tok_login($key) {
+	$res = '';
 
-	if (empty($key)) {
-		return $this->sess->has('id') ? 'yes' : '';
+	if (!empty($key)) {
+		$res = $this->sess->get($key);
 	}
-
-	return $this->sess->get($key);
+	else if ($this->sess->has('id')) {
+		$res = 'yes';
+	}
+	
+	return $res;
 }
 
 
