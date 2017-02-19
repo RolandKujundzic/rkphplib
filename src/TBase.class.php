@@ -662,9 +662,12 @@ public function tok_tf($p, $arg) {
 		else if ($p[0] === 'set') {
 			$tf = lib\split_str('|#|', $arg);
 		}
-		else {
+		else if (!empty($p[0]) && in_array($p[0], [ 'cmp', 'set', 'in_arr', 'in', 'in_set', 'and', 'or', 'cmp_and', 'cmp_or' ])) {
 			$do = $p[0];
 			$ap = lib\split_str('|#|', $arg);
+		}
+		else {
+			throw new Exception('invalid operator', 'use cmp');
 		}
 	}
 	else if (count($p) > 1) {
@@ -693,8 +696,20 @@ public function tok_tf($p, $arg) {
 			throw new Exception("invalid tf:$do", 'ap=['.join('|', $ap).']');
 		}
 
-		$fva = floatval($ap[0]);
-		$fvb = floatval($ap[1]);
+		if (!is_numeric($ap[0]) || !is_numeric($ap[1])) {
+			if ($do == 'eq' || $do == 'ne') {
+				// eq and ne can be used for non-numeric string comparison too - backward compatibility - better use cmp
+				$fva = $ap[0];
+				$fvb = $ap[1];
+			}
+			else {
+				throw new Exception("invalid number comparison", '{tf:'.$do.':'.$ap[0].'}'.$ap[1].'{:tf}');
+			}
+		}
+		else { 
+			$fva = floatval($ap[0]);
+			$fvb = floatval($ap[1]);
+		}
 
 		if ($do == 'eq') {
 			$tf = ($fva === $fvb); 
@@ -745,7 +760,7 @@ public function tok_tf($p, $arg) {
 				$tf = !empty($ap[$i]);
 			}
 		}
-		else if ($do == 'and') {
+		else {
 			for ($i = 0, $tf = true; $tf && $i < $apn; $i++) {
 				$tf = !empty($ap[$i]);
 			}
@@ -763,7 +778,7 @@ public function tok_tf($p, $arg) {
 				$tf = ($ap[$i] == $ap[$i + 1]);
 			}
 		}
-		else if ($do == 'cmp_and') {
+		else {
 			for ($i = 0, $tf = true; $tf && $i < $apn - 1; $i = $i + 2) {
 				$tf = ($ap[$i] == $ap[$i + 1]);
 			}
