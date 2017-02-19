@@ -59,7 +59,7 @@ END;
 
 
 /**
- * Create category table. Default conf:
+ * Create category table. Default:
  *
  * - @table=category
  * - @id=1
@@ -68,13 +68,16 @@ END;
  *
  * Don't change "@id" and "pid" in conf. For multilanguage use "@language" => 'de, en, ...' and "@multilang" => 'name'.
  *
- * @param map $conf = null = use default
  * @see ADatabase::createTable()
+ * @param string $table = category
+ * @param map $custom_cols = []
  */
-public function createTable($conf = null) {
+public function createTable($table = 'category', $custom_cols = []) {
 
-	if (is_null($conf)) {
-		$conf = [ '@table' => 'category', '@id' => 1, 'pid' => 'int:::32', 'name' => 'varchar:255::1' ];
+	$conf = [ '@table' => $table, '@id' => 1, 'pid' => 'int:::32', 'name' => 'varchar:255::1' ];
+
+	foreach ($custom_cols as $key => $value) {
+		$conf[$key] = $value;
 	}
 
 	$this->db->createTable($conf);
