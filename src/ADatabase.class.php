@@ -674,12 +674,12 @@ public function nextId($table, $use_table = '') {
 			// create missing sequence table and entry with value = 0 ...
 			if (empty($where)) {
 				// id = unsigned int not null primary key default 0
-				$this->createTable([ '@table' => $use_table, 'id' => 'int::0:35' ]);
+				$this->createTable([ '@table' => $use_table, 'id' => 'int::0:35' ], true);
 				$this->execute("INSERT INTO $table_seq (id) VALUES (0)");
 			}
 			else {
 				// name = varchar(50) not null primary key, id = unsigned int not null default 0
-				$this->createTable([ '@table' => $use_table, 'name' => 'varchar:50::3', 'id' => 'int::0:40' ]);
+				$this->createTable([ '@table' => $use_table, 'name' => 'varchar:50::3', 'id' => 'int::0:40' ], true);
 				$this->execute("INSERT INTO $table_seq (name, id) VALUES ('".self::escape($table)."', 0)");
 			}
 
@@ -950,8 +950,9 @@ public static function createTableQuery($conf) {
  *
  * @see createTableQuery
  * @param map<string:string> $conf
+ * @param bool $drop_existing = false
  */
-public function createTable($conf) {
+public function createTable($conf, $drop_existing = false) {
 
 	if (empty($conf['@table'])) {
     throw new Exception('missing tablename', 'empty @table');
@@ -960,7 +961,13 @@ public function createTable($conf) {
 	$tname = self::escape_name($conf['@table']);
 
 	if ($this->hasTable($tname)) {
-		$this->dropTable($tname);
+		if ($drop_existing) {
+			$this->dropTable($tname);
+		}
+		else {
+			// ToDo: throw exception if $conf has changed
+			return;
+		}
 	}
 
 	$query = self::createTableQuery($conf);
