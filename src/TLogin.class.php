@@ -3,6 +3,7 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/TokPlugin.iface.php');
+require_once(__DIR__.'/Database.class.php');
 require_once(__DIR__.'/Session.class.php');
 
 use rkphplib\Exception;
@@ -18,6 +19,10 @@ class TLogin implements TokPlugin {
 
 /* @var Session $sess */
 var $sess = null;
+
+/* @var ADatabase $db */
+var $db = null;
+
 
 
 /**
@@ -62,8 +67,12 @@ public function tok_login_check($p) {
  * @param map $p
  */
 public function tok_login_auth($p) {
-	$table = $this->sess->get('table');
-	$this->createTable($table);
+	$do_auth = !empty($p['login']) && !empty($p['password']);
+
+	if (!$do_auth) {
+		$this->db = Database::getInstance(SETTINGS_DSN);
+		$this->createTable($this->sess->getConf('table'));
+	}
 }
 
 
