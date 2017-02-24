@@ -106,9 +106,9 @@ public function createTable($table) {
 	$tconf['@table'] = $table;
 	$tconf['@id'] = 1;
 	$tconf['@timestamp'] = 3;
-	$tconf['login'] = 'varchar(50):::1';
-	$tconf['password'] = 'varchar(50):::';
-	$tconf['type'] = 'varchar(30):admin::9';
+	$tconf['login'] = 'varchar:50::1';
+	$tconf['password'] = 'varchar:50::';
+	$tconf['type'] = 'varchar:30:admin:9';
 
 	$this->db->createTable($tconf);
 }
