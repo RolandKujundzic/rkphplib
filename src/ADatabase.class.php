@@ -894,7 +894,12 @@ public static function createTableQuery($conf) {
 			}
 
 			if (!empty($opt[2])) {
-				$sql .= ' DEFAULT '.$opt[2];
+				if (is_numeric($opt[2]) || mb_strpos($opt[2], '()') !== false) {
+					$sql .= " DEFAULT ".$opt[2];
+				}
+				else {
+					$sql .= " DEFAULT '".self::escape($opt[2])."'";
+				}
 			}
 
 			array_push($cols, $sql);
