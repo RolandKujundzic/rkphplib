@@ -139,21 +139,23 @@ private function log($message, $level) {
 
 
 /**
- * Return paths.$path.$method map. Use data.paths.__default as template:
+ * Return paths.$path.$method map. Use data.paths.__default.post as template:
  *
- * @throws if data[paths][__default][parameters] is not array
+ * @throws if data[paths][__default][post][parameters] is not array
  * @param vector $parameter
  * @return map
  */
 private function getMethod($parameter) {
 
-	if (!isset($this->data['path']) || !isset($this->data['path']['__default']) || 
-			!isset($this->data['path']['__default']['parameters']) ||
-			!is_array($this->data['path']['__default']['parameters'])) {
-		throw new Exception('missing data.paths.__default.parameters');
+	if (!isset($this->data['paths']) || 
+			!isset($this->data['paths']['__default']) || 
+			!isset($this->data['paths']['__default']['post']) || 
+			!isset($this->data['paths']['__default']['post']['parameters']) || 
+			!is_array($this->data['paths']['__default']['post']['parameters'])) {
+		throw new Exception('missing data.paths.__default.post.parameters');
 	}
 
-	$info = $this->data['path']['__default'];
+	$info = $this->data['paths']['__default']['post'];
 
 	foreach ($parameter as $name) {
 		array_push($info['parameters'], [ '$ref' => '#/parameters/path_'.$name ]); 
@@ -227,7 +229,6 @@ private function scan($file) {
 		}
 		else if (!$is_comment && preg_match('/^\/\/\s*@api\s+(.+)$/', $line, $match)) {
 			$api = lib\split_str(',', trim($match[1]));
-			print_r($api);
 			$set_api = true;
 		}
 		else if (!$is_comment && $route_rx && preg_match($route_rx, $line, $match)) {
@@ -262,6 +263,12 @@ private function scan($file) {
 public function update() {
 
 	$this->data = YAML::load($this->options['load_yaml']);
+
+	if (!is_array($this->data) || empty($this->data['swagger']) || empty($this->data['info']) ||
+			!is_array($this->data['info']) || empty($this->data['info']['title']) || empty($this->data['info']['description'])) {
+		throw new Exception('invalid swagger yaml file', $this->options['load_yaml']);
+	}
+
 	$this->indexPath();
 
 	foreach ($this->options['scan_files'] as $file) {
@@ -283,6 +290,7 @@ public function update() {
  *
  * - load_yaml = path to yaml template
  * - save_yaml = path to yaml output
+ * - route_rx = regular expression for route parsing (catch: method, path) - default = ''
  * - scan_files = list of (php)files with @api tags
  * - tags = map with prefix => tag 
  * - log_level = 1 (1,2,3)
@@ -293,6 +301,7 @@ public function __construct($options = [ 'log_level' => 1 ]) {
 	$this->options = [ 
 		'load_yaml' => '!',
 		'save_yaml' => '!',
+		'route_rx' => '',
 		'scan_files' => [],
 		'tags' => [],
 		'log_level' => 1 
