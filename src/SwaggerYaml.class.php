@@ -279,7 +279,7 @@ public function update() {
 		$this->setTags($this->options['tags']);
 	}
 
-	unset($this->data['paths']['@default']);
+	unset($this->data['paths']['__default']);
 
 	YAML::save($this->options['save_yaml'], $this->data);
 }
