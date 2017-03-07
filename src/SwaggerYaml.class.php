@@ -20,6 +20,15 @@ use \rkphplib\Exception;
  * - ignore = don't use in documentation
  * - prefer GET:/other/action = prefer this API call
  * - deprecated = API call is deprecated
+ * - param = e.g. param $user_id:body (@api_param user_id, ... must occure before)
+ *  
+ * Optional API-Annotations are "@api_desc", "@api_param".
+ *
+ * - api_desc: @api_desc [description]
+ * - api_summary: @api_summary [summary]
+ * - api_consumes: e.g. multipart/form-data
+ * - api_produces: e.g. image/jpeg
+ * - api_param: @api_param $name, $type, $required (1|0), $in (body|path|header), $default, $desc
  * 
  * @see YAML
  * @author Roland Kujundzic <roland@kujundzic.de>
@@ -34,35 +43,101 @@ public $data = [ 'parameters' => [], 'paths' => [] ];
 /** @var map $path_param - avoid adding same path with different parameter names */
 private $path_param = [ ];
 
+/** @var map $param - avoid adding same parameter */
+private $param = [];
+
 /** @var map $options */
 private $options = [];
 
 
 
 /**
- * Update path_param index of data.paths.
+ * Check parameter map. Add to param.
+ *
+ * @throws
+ * @param string $pname
+ * @param map $info
  */
-private function indexPath() {
-	foreach ($this->data['paths'] as $path => $ignore) {
-		$parameter = [];
+private function checkParameter($pname, $info) {
+	$keys = [ 'in', 'name', 'description', 'required', 'type', 'default', 'enum' ];
+	$required = [ 'in', 'name', 'type', 'required' ]; 
+	$allow_type = [ 'string', 'integer', 'file' ];
 
-		if (substr($path, 0, 1) != '/') {
-			$path = '/'.$path;
-		}
-
-		if (($pos = strpos($path, '/{')) > 0) {
-			$plist = explode('/', substr($path, $pos + 1));
-			$url = substr($path, 0, $pos);
-
-			foreach ($plist as $value) {
-				array_push($parameter, substr($value, 1, -1));
-			}
-		}
-
-		if (count($parameter) > 0) {
-			$this->path_param[$url] = [ count($parameter), $path ];
+	foreach ($info as $key => $value) {
+		if (!in_array($key, $keys)) {
+			throw new Exception('unkown parameter key', $key);
 		}
 	}
+
+	foreach ($required as $key) {
+		if (!isset($info[$key])) {
+			throw new Exception('missing required parameter key', $key);
+		}
+	}
+
+	if ($pname != $info['in'].'_'.$info['name']) {
+		throw new Exception('invalid parameter key', "pname=$pname in=".$info['in'].' name='.$info['name']);
+	}
+
+	if (!in_array($info['type'], $allow_type)) {
+		throw new Exception('invalid parameter type', $info['type']);
+	}
+
+	$info['required'] = !empty($info['required']); 
+	$name = $info['name'];
+
+	if (!isset($this->param[$name])) {
+		$this->param[$name] = $info;
+	}
+	else {
+		unset($info['in']);
+		foreach ($this->param[$name] as $key => $value) {
+			if ($info[$key] != $value) {
+				throw new Exception('parameter has changed', "$name.$key: [$value] != [".$info[$key].']');
+			}
+		}
+	}
+
+	if (isset($this->data['parameters'][$pname])) {
+		return;
+	}
+
+	$this->log("Define parameters.$pname", 3);
+	$this->data['parameters'][$pname] = $info;
+}
+
+
+/**
+ * Extract parameter names from path. Update path_param index. Return parameter list.
+ * 
+ * @return vector 
+ */
+private function pathParameter($path) {
+	$parameter = [];
+
+	if (substr($path, 0, 1) != '/') {
+		$path = '/'.$path;
+	}
+
+	if (($pos = strpos($path, '/{')) > 0) {
+		$plist = explode('/', substr($path, $pos + 1));
+		$url = substr($path, 0, $pos);
+
+		foreach ($plist as $value) {
+			array_push($parameter, substr($value, 1, -1));
+		}
+	}
+
+	if (count($parameter) > 0) {
+		if (isset($this->path_param[$url]) && $this->path_param[$url][0] == count($parameter) &&
+				$path != $this->path_param[$url][1]) {
+			throw new Exception('Path parameter have changed', "$url: $path != ".$this->path_param[$url][1]);
+		}
+
+		$this->path_param[$url] = array_merge([ count($parameter), $path ], $parameter);
+	}
+
+	return $parameter;
 }
 
 
@@ -78,32 +153,27 @@ private function indexPath() {
  *
  * @param string $method
  * @param string $path
+ * @param vector<string> $api
  */
-private function addPath($method, $path) {
-	$parameter = [];
+private function addPath($method, $path, $api) {
+
+	$method = strtolower($method);
 
 	if (substr($path, 0, 1) != '/') {
 		$path = '/'.$path;
 	}
 
-	if (($pos = strpos($path, '/{')) > 0) {
-		$plist = explode('/', substr($path, $pos + 1));
-		$url = substr($path, 0, $pos);
-
-		foreach ($plist as $value) {
-			array_push($parameter, substr($value, 1, -1));
-		}
-
-		if (isset($this->path_param[$url]) && $this->path_param[$url][0] == count($plist)) {
-			if ($path != $this->path_param[$url][1]) {
-				$this->log("Parameter Names have changed:\n  SRC: $path\n  API: ".$this->path_param[$url][1], 1);
-			}
-
-			return;
-		}
-
-		$this->path_param[$url] = count($plist);
+	if (in_array('internal', $api)) {
+		$this->log("SKIP internal $method:$path", 1);
+		return;
 	}
+	else if (in_array('ignore', $api)) {
+		$this->log("SKIP ignore $method:$path", 1);
+		return;
+	}
+
+	$api_info = $this->apiInfo($api);
+	$path_param = $this->pathParameter($path);
 
 	if (!isset($this->data['paths'][$path])) {
 		$this->data['paths'][$path] = [];
@@ -111,17 +181,212 @@ private function addPath($method, $path) {
 
 	if (!isset($this->data['paths'][$path][$method])) {
 		$this->log("Add $method:$path", 2);
-		$this->data['paths'][$path][$method] = $this->getMethod($parameter);
-	}
+		$info = $this->getMethod($path_param);
 
-	foreach ($parameter as $name) {
-		if (isset($this->data['parameters']['path_'.$name])) {
-			continue;
+		if (isset($api_info['parameters'])) {
+			foreach ($api_info['parameters'] as $ref) {
+				if (!in_array($ref, $info['parameters'])) {
+					array_push($info['parameters'], $ref);
+				}
+			}
+			unset($api_info['parameters']);
 		}
 
-		$this->log("Define parameters.path_$name", 3);
-		$this->data['parameters']['path_'.$name] = [ 'in' => 'path', 'name' => $name, 'required' => true, 'type' => 'string' ];
+		$this->data['paths'][$path][$method] = array_merge($info, $api_info);;
 	}
+}
+
+
+/**
+ * Parse @api[_xxx] information. Result map:
+ *
+ *  - description: text
+ *  - summary: text
+ *  - consumes: string
+ *  - parameter: 
+ *
+ * @param vector $api
+ * @return map
+ */
+private function apiInfo($api) {
+	$info = [];
+
+	foreach ($api as $value) {
+		if (strpos($value, 'desc:') === 0) {
+			$info['description'] = trim(substr($value, 5));
+		}
+		else if (strpos($value, 'summary:') === 0) {
+			$info['summary'] = trim(substr($value, 8));
+		}
+		else if (strpos($value, 'consumes:') === 0) {
+			$info['consumes'] = explode(':', trim(substr($value, 9)));
+		}
+		else if (strpos($value, 'produces:') === 0) {
+			$info['produces'] = explode(':', trim(substr($value, 9)));
+		}
+		else if (strpos($value, 'param $') === 0) {
+			$name = substr($value, 7);
+			$in = '';
+
+			if (($pos = strpos($name, ':')) !== false) {
+				list ($name, $in) = explode(':', $name);
+			}
+
+			$this->addExistingParameter($info, $name, $in);
+		}
+		else if (strpos($value, 'param:') === 0) {
+			$this->addNewParameter($info, \rkphplib\lib\split_str(',', substr($value, 6)));
+		}
+	}
+
+	return $info;
+}
+
+
+/**
+ * Add new parameter to info (and data[parameters]). 
+ * 
+ * @param map-reference &$info
+ * @param vector $pinfo (name, type, required, in, default, desc, extra)
+ */
+private function addNewParameter(&$info, $pinfo) {
+	if (count($pinfo) < 5 || !in_array($pinfo[3], [ 'body', 'header', 'path', 'get', 'post', 'formData' ])) {
+		throw new Exception('invalid parameter description', $value);
+	}
+
+	if ($pinfo[3] == 'body') {
+		$this->addToBody($info, $pinfo);
+		return;
+	}
+
+	if (!isset($info['parameters'])) {
+		$info['parameters'] = [];
+	}
+
+	$name = $pinfo[0];
+	$px = self::param2map($pinfo);
+
+	$pname = $pinfo[3].'_'.$name;
+	$this->checkParameter($pname, $px);
+	array_push($info['parameters'], [ '$ref' => '#/parameters/'.$pname ]);
+}
+
+
+/**
+ * Convert parameter vector (name, type, required, in, default, description, extra) to map.
+ * 
+ * @param vector $pinfo
+ * @return map
+ */
+private static function param2map($pinfo) {
+
+	$res = [ 
+		'name' => $pinfo[0],
+		'type' => $pinfo[1],
+		'required' => !empty($pinfo[2]), 
+		'in' => $pinfo[3]
+	];
+
+	if (count($pinfo) > 4 && strlen($pinfo[4]) > 0) {
+		$res['default'] = $pinfo[4];
+	}
+
+	if (count($pinfo) > 5) {
+		$res['description'] = $pinfo[5];
+	}
+
+	return $res;
+}
+
+
+/**
+ * Add existing parameter to info (and data[parameters]).
+ *
+ * @param map-reference &$info
+ * @param string $name
+ * @param string $in
+ */
+private function addExistingParameter(&$info, $name, $in) {
+
+	if ($in == 'body') {
+		$this->addToBody($info, [ $name ]);
+		return;
+	}
+
+	if (!isset($this->param[$name])) {
+		throw new Exception('parameter is not defined', $name);
+	}
+
+	if ($this->param[$name]['in'] != $in) {
+		$tmp = $this->param[$name];
+		$tmp['in'] = $in;
+		$this->log('Define parameters'.$in.'_'.$name, 3);
+		$this->data['parameters'][$in.'_'.$name] = $tmp;
+	}
+
+	if (!isset($info['parameters'])) {
+		$info['parameters'] = [];
+	}
+
+	array_push($info['parameters'], [ '$ref' => '#/parameters/'.$in.'_'.$name ]); 
+}
+
+
+/**
+ * Add parameter to body object.
+ *
+ * @param map-reference &$info
+ * @param vector $pinfo
+ */
+private function addToBody(&$info, $pinfo) {
+
+	if (!isset($info['parameters'])) {
+		$info['parameters'] = [];
+	}
+
+	$pos = -1;
+	for ($i = 0; $pos == -1 && $i < count($info['parameters']); $i++) {
+		if ($info['parameters'][$i]['name'] == 'body' && $info['parameters'][$i]['in'] == 'body') {
+			$pos = $i;
+		}
+	}
+
+	if ($pos == -1) {
+		$pos = count($info['parameters']);
+		$schema = [ 'type' => 'object', 'required' => [], 'properties' => [] ];
+		array_push($info['parameters'], [ 'name' => 'body', 'in' => 'body', 'required' => true, 'schema' => $schema ]);
+	}
+
+	$schema = $info['parameters'][$pos]['schema'];
+
+	if (count($pinfo) == 1) {
+		if (!isset($this->param[$name])) {
+			throw new Exception('parameter is not defined', $name);
+		}
+
+		$px = $this->param[$name];
+		$px['in'] = 'body';
+	}
+	else {
+		$px = self::param2map($pinfo);
+	}
+
+	$name = $px['name'];
+
+	unset($px['name']);
+	unset($px['in']);
+
+	if ($px['required']) {
+		array_push($schema['required'], $name);
+	}
+
+	$schema['properties'][$name] = $px;
+	$info['parameters'][$pos]['schema'] = $schema;
+
+	/*
+    schema:
+      $ref: '#/definitions/body_NAME1_NAME2'
+	*/
 }
 
 
@@ -231,6 +496,17 @@ private function scan($file) {
 			$api = lib\split_str(',', trim($match[1]));
 			$set_api = true;
 		}
+		else if (!$is_comment && count($api) > 0 && preg_match('/^\/\/\s*@api_(.+?)\s+(.+)$/', $line, $match)) {
+			// @api_[desc|summary|produces|consumes|param]
+			array_push($api, $match[1].': '.trim($match[2]));
+
+			if ($match[1] == 'exit') {
+				print_r($this->data);
+				exit(1);
+			}
+
+			$set_api = true;
+		}
 		else if (!$is_comment && $route_rx && preg_match($route_rx, $line, $match)) {
 			$method = strtolower($match[1]);
 			$path = substr($match[2], 1, -1);
@@ -239,18 +515,17 @@ private function scan($file) {
 				throw new Exception('@api tag missing in previous line', "method=$method path=$path line=$line");
 			}
 
-			if (in_array('internal', $api)) {
-				$this->log("SKIP internal $method:$path", 1);
-			}
-			else if (in_array('ignore', $api)) {
-				$this->log("SKIP ignore $method:$path", 1);
-			}
-			else {
-				$this->addPath($method, $path);
-			}
+			$this->addPath($method, $path, $api);
+			$api = [];
 		}
 
 		if (!$set_api && count($api) > 0) {
+			foreach ($api as $value) {
+				if (preg_match('/^route\s+([A-Z]+)\:(.+)/', $value, $match)) {
+					$this->addPath($match[1], trim($match[2]), $api);
+				}
+			}
+
 			$api = [];
 		}
 	}
@@ -269,7 +544,13 @@ public function update() {
 		throw new Exception('invalid swagger yaml file', $this->options['load_yaml']);
 	}
 
-	$this->indexPath();
+	foreach ($this->data['paths'] as $path => $ignore) {
+		$this->pathParameter($path);
+	}
+
+	foreach ($this->data['parameters'] as $pname => $info) {
+		$this->checkParameter($pname, $info);
+	}
 
 	foreach ($this->options['scan_files'] as $file) {
 		$this->scan($file);
