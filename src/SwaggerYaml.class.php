@@ -90,9 +90,8 @@ private function checkParameter($pname, $info) {
 		$this->param[$name] = $info;
 	}
 	else {
-		unset($info['in']);
 		foreach ($this->param[$name] as $key => $value) {
-			if ($info[$key] != $value) {
+			if ($key != 'in' && $info[$key] != $value) {
 				throw new Exception('parameter has changed', "$name.$key: [$value] != [".$info[$key].']');
 			}
 		}
