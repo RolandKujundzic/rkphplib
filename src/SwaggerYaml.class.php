@@ -251,7 +251,7 @@ private function apiInfo($api) {
  */
 private function addNewParameter(&$info, $pinfo) {
 	if (count($pinfo) < 5 || !in_array($pinfo[3], [ 'body', 'header', 'path', 'get', 'post', 'formData' ])) {
-		throw new Exception('invalid parameter description', $value);
+		throw new Exception('invalid parameter description', print_r($pinfo, true));
 	}
 
 	if ($pinfo[3] == 'body') {
