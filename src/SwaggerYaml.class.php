@@ -213,9 +213,15 @@ private function apiInfo($api) {
 	foreach ($api as $value) {
 		if (strpos($value, 'desc:') === 0) {
 			$info['description'] = trim(substr($value, 5));
+			if (substr($info['description'], -1) != '.') {
+				throw new Exception('api description must end with "."', print_r($api, true));
+			}
 		}
 		else if (strpos($value, 'summary:') === 0) {
 			$info['summary'] = trim(substr($value, 8));
+			if (substr($info['summary'], -1) == '.') {
+				throw new Exception('api summary must not end with "."', print_r($api, true));
+			}
 		}
 		else if (strpos($value, 'consumes:') === 0) {
 			$info['consumes'] = explode(':', trim(substr($value, 9)));
@@ -230,12 +236,23 @@ private function apiInfo($api) {
 			if (($pos = strpos($name, ':')) !== false) {
 				list ($name, $in) = explode(':', $name);
 			}
+			else {
+				throw new Exception('invalid parameter variable', "value=$value");
+			}
+
+			if (!in_array($in, [ 'body', 'header', 'path', 'query', 'formData' ])) {
+				throw new Exception('invalid parameter variable', "value=$value");
+			}
 
 			$this->addExistingParameter($info, $name, $in);
 		}
 		else if (strpos($value, 'param:') === 0) {
 			$this->addNewParameter($info, \rkphplib\lib\split_str(',', substr($value, 6)));
 		}
+	}
+
+	if (!isset($info['description']) && !empty($info['summary'])) {
+		$info['description'] = $info['summary'].'.';
 	}
 
 	return $info;
@@ -249,7 +266,7 @@ private function apiInfo($api) {
  * @param vector $pinfo (name, type, required, in, default, desc, extra)
  */
 private function addNewParameter(&$info, $pinfo) {
-	if (count($pinfo) < 5 || !in_array($pinfo[3], [ 'body', 'header', 'path', 'get', 'post', 'formData' ])) {
+	if (count($pinfo) < 5 || !in_array($pinfo[3], [ 'body', 'header', 'path', 'query', 'formData' ])) {
 		throw new Exception('invalid parameter description', print_r($pinfo, true));
 	}
 
@@ -306,6 +323,10 @@ private static function param2map($pinfo) {
  * @param string $in
  */
 private function addExistingParameter(&$info, $name, $in) {
+
+	if (empty($in) || empty($name)) {
+		throw new Exception('invalid parameter reference', "in=$in name=$name info: ".print_r($info, true));
+	}
 
 	if ($in == 'body') {
 		$this->addToBody($info, [ $name ]);
