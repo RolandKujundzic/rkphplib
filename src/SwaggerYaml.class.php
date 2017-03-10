@@ -66,7 +66,8 @@ private $last_api_call = '';
 private function checkParameter($pname, $info) {
 	$keys = [ 'in', 'name', 'description', 'required', 'type', 'default', 'enum' ];
 	$required = [ 'in', 'name', 'type', 'required' ]; 
-	$allow_type = [ 'string', 'integer', 'file' ];
+	# byte = base64 encoded characters, password = obscured input
+	$allow_type = [ 'string', 'integer', 'long', 'double', 'byte', 'binary', 'boolean', 'date', 'dateTime', 'file', 'password' ];
 
 	foreach ($info as $key => $value) {
 		if (!in_array($key, $keys)) {
