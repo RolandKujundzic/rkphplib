@@ -49,6 +49,11 @@ private $param = [];
 /** @var map $options */
 private $options = [];
 
+/** @var string $api_call - current api call */
+private $api_call = '';
+
+/** @var string $last_api_call - previous api call */
+private $last_api_call = '';
 
 
 /**
@@ -170,6 +175,18 @@ private function addPath($method, $path, $api) {
 		$this->log("SKIP ignore $method:$path", 1);
 		return;
 	}
+
+	$this->api_call = preg_replace('/[^0-9a-zA-Z]/', '', $method.$path);
+
+	if ($this->last_api_call && $this->last_api_call != $this->api_call) {
+		$dkey = 'body_'.$this->last_api_call;
+
+		if (isset($this->data['definitions'][$dkey]) && count($this->data['definitions'][$dkey]['required']) == 0) {
+			unset($this->data['definitions'][$dkey]['required']);
+		}
+	}
+
+	$this->last_api_call = $this->api_call;
 
 	$api_info = $this->apiInfo($api);
 	$path_param = $this->pathParameter($path);
@@ -364,6 +381,12 @@ private function addToBody(&$info, $pinfo) {
 		$info['parameters'] = [];
 	}
 
+	if (!isset($this->data['definitions'])) {
+		$this->data['definitions'] = [];
+	}
+
+	$dkey = 'body_'.$this->api_call;
+
 	$pos = -1;
 	for ($i = 0; $pos == -1 && $i < count($info['parameters']); $i++) {
 		if ($info['parameters'][$i]['name'] == 'body' && $info['parameters'][$i]['in'] == 'body') {
@@ -374,10 +397,13 @@ private function addToBody(&$info, $pinfo) {
 	if ($pos == -1) {
 		$pos = count($info['parameters']);
 		$schema = [ 'type' => 'object', 'required' => [], 'properties' => [] ];
-		array_push($info['parameters'], [ 'name' => 'body', 'in' => 'body', 'required' => true, 'schema' => $schema ]);
+		array_push($info['parameters'], [ 'name' => 'body', 'in' => 'body', 'required' => true ]);
+		$info['parameters'][$pos]['schema'] = [ '$ref' => '#/definitions/'.$dkey ];
 	}
 
-	$schema = $info['parameters'][$pos]['schema'];
+	if (isset($this->data['definitions'][$dkey])) {
+		$schema = $this->data['definitions'][$dkey];
+	}
 
 	if (count($pinfo) == 1) {
 		if (!isset($this->param[$name])) {
@@ -400,13 +426,10 @@ private function addToBody(&$info, $pinfo) {
 		array_push($schema['required'], $name);
 	}
 
-	$schema['properties'][$name] = $px;
-	$info['parameters'][$pos]['schema'] = $schema;
+	unset($px['required']);
 
-	/*
-    schema:
-      $ref: '#/definitions/body_NAME1_NAME2'
-	*/
+	$schema['properties'][$name] = $px;
+	$this->data['definitions'][$dkey] = $schema;
 }
 
 
