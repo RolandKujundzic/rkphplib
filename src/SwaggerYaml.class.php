@@ -29,7 +29,9 @@ use \rkphplib\Exception;
  * - api_consumes: e.g. multipart/form-data
  * - api_produces: e.g. image/jpeg
  * - api_param: @api_param $name, $type, $required (1|0), $in (body|path|header), $default, $desc
+ * - api_example: @api_example name=value[, name2=value2, ...]
  * 
+ * @see http://swagger.io/specification/ 
  * @see YAML
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
@@ -308,7 +310,12 @@ private function addNewParameter(&$info, $pinfo) {
 
 /**
  * Convert parameter vector (name, type, required, in, default, description, extra) to map.
- * 
+ * Extra examples:
+ *
+ *  - default:DEFAULT VALUE
+ *  - enum:A:B:C:D
+ *  - example:EXAMPLE, example:|\nMULTILINE\nEXAMPLE
+ *
  * @param vector $pinfo
  * @return map
  */
@@ -327,6 +334,14 @@ private static function param2map($pinfo) {
 
 	if (count($pinfo) > 5) {
 		$res['description'] = $pinfo[5];
+	}
+
+	if (count($pinfo) > 6) {
+		for ($i = 6; $i < count($pinfo); $i++) {
+			$tmp = \rkphplib\lib\split_str(':', $pinfo[$i]);
+			$key = array_shift($tmp);
+			$res[$key] = $tmp;
+		}
 	}
 
 	return $res;
