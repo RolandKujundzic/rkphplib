@@ -211,6 +211,19 @@ private function addPath($method, $path, $api) {
 			unset($api_info['parameters']);
 		}
 
+		if (isset($api_info['remove_param'])) {
+			foreach ($api_info['remove_param'] as $ref) {
+				for ($i = 0; $i < count($info['parameters']); $i++) {
+					if (isset($info['parameters'][$i]['$ref']) && strpos($info['parameters'][$i]['$ref'], '/'.$ref) > 0) {
+						array_splice($info['parameters'], $i, 1);
+						break;
+					}
+				}
+			}
+
+			unset($api_info['remove_param']);
+		}
+
 		$this->data['paths'][$path][$method] = array_merge($info, $api_info);;
 	}
 }
@@ -229,6 +242,7 @@ private function addPath($method, $path, $api) {
  */
 private function apiInfo($api) {
 	$info = [];
+	$remove_param = [];
 
 	foreach ($api as $value) {
 		if (strpos($value, 'desc:') === 0) {
@@ -248,6 +262,9 @@ private function apiInfo($api) {
 		}
 		else if (strpos($value, 'produces:') === 0) {
 			$info['produces'] = explode(':', trim(substr($value, 9)));
+		}
+		else if (strpos($value, 'no_ref ') === 0) {
+			array_push($remove_param, substr($value, 7));
 		}
 		else if (strpos($value, 'param $') === 0) {
 			$name = substr($value, 7);
@@ -273,6 +290,10 @@ private function apiInfo($api) {
 
 	if (!isset($info['description']) && !empty($info['summary'])) {
 		$info['description'] = $info['summary'].'.';
+	}
+
+	if (count($remove_param) > 0) {
+		$info['remove_param'] = $remove_param;
 	}
 
 	return $info;
@@ -340,7 +361,7 @@ private static function param2map($pinfo) {
 		for ($i = 6; $i < count($pinfo); $i++) {
 			$tmp = \rkphplib\lib\split_str(':', $pinfo[$i]);
 			$key = array_shift($tmp);
-			$res[$key] = $tmp;
+			$res[$key] = (count($tmp) == 1) ? $tmp[0] : $tmp; 
 		}
 	}
 
