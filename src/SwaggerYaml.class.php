@@ -617,6 +617,13 @@ private function scan($file) {
  */
 public function update() {
 
+	$required_opt = [ 'load_yaml', 'save_yaml' ];
+	foreach ($required_opt as $key) {
+		if (empty($this->options[$key])) {
+			throw new Exception('missing option '.$key);
+		}
+	}
+
 	$this->data = YAML::load($this->options['load_yaml']);
 
 	if (!is_array($this->data) || empty($this->data['swagger']) || empty($this->data['info']) ||
@@ -642,7 +649,106 @@ public function update() {
 
 	unset($this->data['paths']['__default']);
 
+	if (!empty($this->options['test_dir'])) {
+		$this->addResponses($this->options['test_dir']);
+	}
+
 	YAML::save($this->options['save_yaml'], $this->data);
+}
+
+
+/**
+ * Create result documentation. 
+ *
+ * @param string $method
+ * @param string $path
+ * @param int $status
+ * @param map $result
+ */
+public function result($method, $path, $status, $result) {
+	if (empty($this->options['test_dir'])) {
+		throw new Exception('Empty options.test_dir');
+	}
+
+	$method = strtolower($method);
+	$yaml_dir = $this->options['test_dir'].$path;
+	$yaml_file = $method.'.'.$status.'.yaml';
+
+	if (!Dir::exists($yaml_dir)) {
+		throw new Exception('no such directory '.$yaml_dir);
+	}
+
+	if (File::exists($yaml_dir.'/'.$yaml_file)) {
+		$this->log("use existing $yaml_dir/$yaml_file", 3);
+		return;
+	}
+
+	$name = 'result'.$status.'_'.$method.str_replace('/', '_', $path);
+	$yaml = [ $name => [ 'type' => 'object' ] ];
+	$prop = [];
+
+	foreach ($result as $key => $value) {
+		$type = '';
+
+		if (is_null($value)) {
+			$type = 'string';
+		}
+		else if (is_bool($value)) {
+			$type = 'boolean';
+		}
+		else if (is_integer($value)) {
+			$type = 'integer';
+		}
+		else if (is_float($value)) {
+			$type = 'float';
+		}
+		else if (is_string($value)) {
+			$type = 'string';
+		}
+		else {
+			throw new Exception('unmatched type', $key.': '.print_r($value, true));
+		}
+
+		$prop[$key] = [ 'type' => $type ];
+	}
+	
+	$yaml[$name]['properties'] = $prop;
+	$this->log("create $yaml_dir/$yaml_file", 3);
+	YAML::save($yaml_dir.'/'.$yaml_file, $yaml);
+}
+
+
+/**
+ * Scan options.test_dir for path1/path2/method.200.json.
+ */
+private function addResponses($test_dir) {
+
+	if (empty($this->options['test_dir'])) {
+		return;
+	}
+
+	foreach ($this->data['paths'] as $path => $pinfo) {
+		if (!Dir::exists($test_dir.$path)) {
+			continue;
+		}
+
+		foreach ($pinfo as $method => $info) {
+			foreach ($info['responses'] as $status => $rinfo) {
+				$yaml_file = $test_dir.$path.'/'.$method.'.'.$status.'.yaml';
+				if (File::exists($yaml_file)) {
+					$name = 'result'.$status.'_'.$method.str_replace('/', '_', $path);
+					if (!isset($rinfo['schema'])) {
+						$this->data['paths'][$path][$method]['responses'][$status]['schema'] = [ '$ref' => '#/definitions/'.$name ];
+						if (!isset($this->data['definitions'][$name])) {
+							$yaml = YAML::load($yaml_file);
+							$this->data['definitions'][$name] = $yaml[$name];
+							print "$method - $status - $path: $yaml_file\n";
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 
@@ -654,26 +760,25 @@ public function update() {
  * - route_rx = regular expression for route parsing (catch: method, path) - default = ''
  * - scan_files = list of (php)files with @api tags
  * - tags = map with prefix => tag 
- * - log_level = 1 (1,2,3)
+ * - log_level = 0 (0, 1,2,3)
+ * - test_dir: if set scan for methodPATH.[input|output].json
  *
  * @param map $options = = [ 'log_level' => 1 ]
  */
 public function __construct($options = [ 'log_level' => 1 ]) {
 	$this->options = [ 
-		'load_yaml' => '!',
-		'save_yaml' => '!',
+		'load_yaml' => '',
+		'save_yaml' => '',
 		'route_rx' => '',
 		'scan_files' => [],
 		'tags' => [],
-		'log_level' => 1 
+		'log_level' => 0,
+		'test_dir' => ''
 	];
 
 	foreach ($this->options as $key => $value) {
 		if (!empty($options[$key])) {
 			$this->options[$key] = $options[$key];
-		}
-		else if ($value == '!') {
-			throw new Exception('missing option '.$key);
 		}
 	}
 }
