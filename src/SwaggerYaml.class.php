@@ -224,6 +224,28 @@ private function addPath($method, $path, $api) {
 			unset($api_info['remove_param']);
 		}
 
+		if (isset($api_info['remove_security'])) {
+			$remove_security = $api_info['remove_security'];
+			unset($api_info['remove_security']);
+
+			foreach ($remove_security as $key) {
+				$n = -1;
+				for ($i = 0; $n == -1 && $i < count($info['security']); $i++) {
+					if (isset($info['security'][$i][$key])) {
+						$n = $i;
+					}
+				}
+
+				if ($n != -1) {
+					array_splice($info['security'], $n, 1);
+				}
+			}
+
+			if (count($info['security']) == 0) {
+				unset($info['security']);
+			}
+		}
+
 		$this->data['paths'][$path][$method] = array_merge($info, $api_info);;
 	}
 }
@@ -243,6 +265,7 @@ private function addPath($method, $path, $api) {
 private function apiInfo($api) {
 	$info = [];
 	$remove_param = [];
+	$remove_security = [];
 
 	foreach ($api as $value) {
 		if (strpos($value, 'desc:') === 0) {
@@ -265,6 +288,9 @@ private function apiInfo($api) {
 		}
 		else if (strpos($value, 'no_ref ') === 0) {
 			array_push($remove_param, substr($value, 7));
+		}
+		else if (strpos($value, 'no_security ') === 0) {
+			array_push($remove_security, substr($value, 12));
 		}
 		else if (strpos($value, 'param $') === 0) {
 			$name = substr($value, 7);
@@ -294,6 +320,10 @@ private function apiInfo($api) {
 
 	if (count($remove_param) > 0) {
 		$info['remove_param'] = $remove_param;
+	}
+
+	if (count($remove_security) > 0) {
+		$info['remove_security'] = $remove_security;
 	}
 
 	return $info;
@@ -658,14 +688,16 @@ public function update() {
 
 
 /**
- * Create result documentation. 
+ * Create result documentation. Return path to result.yaml.
  *
  * @param string $method
  * @param string $path
  * @param int $status
  * @param map $result
+ * @return string
  */
 public function result($method, $path, $status, $result) {
+
 	if (empty($this->options['test_dir'])) {
 		throw new Exception('Empty options.test_dir');
 	}
@@ -680,41 +712,91 @@ public function result($method, $path, $status, $result) {
 
 	if (File::exists($yaml_dir.'/'.$yaml_file)) {
 		$this->log("use existing $yaml_dir/$yaml_file", 3);
-		return;
+		return $yaml_dir.'/'.$yaml_file;
 	}
 
 	$name = 'result'.$status.'_'.$method.str_replace('/', '_', $path);
-	$yaml = [ $name => [ 'type' => 'object' ] ];
-	$prop = [];
+	$yaml = [];
 
-	foreach ($result as $key => $value) {
-		$type = '';
-
-		if (is_null($value)) {
-			$type = 'string';
-		}
-		else if (is_bool($value)) {
-			$type = 'boolean';
-		}
-		else if (is_integer($value)) {
-			$type = 'integer';
-		}
-		else if (is_float($value)) {
-			$type = 'float';
-		}
-		else if (is_string($value)) {
-			$type = 'string';
-		}
-		else {
-			throw new Exception('unmatched type', $key.': '.print_r($value, true));
-		}
-
-		$prop[$key] = [ 'type' => $type ];
-	}
-	
-	$yaml[$name]['properties'] = $prop;
+	$yaml[$name] = $this->getYamlType($result);
 	$this->log("create $yaml_dir/$yaml_file", 3);
 	YAML::save($yaml_dir.'/'.$yaml_file, $yaml);
+
+	return $yaml_dir.'/'.$yaml_file;
+}
+
+
+/**
+ * Return yaml type.
+ * 
+ * @param any $any
+ * @return map 
+ */
+private function getYamlType($any) {
+	$type = '';
+
+	if (is_null($any)) {
+		$type = [ 'type' => 'string' ];
+	}
+	else if (is_bool($any)) {
+		$type = [ 'type' => 'boolean' ];
+	}
+	else if (is_integer($any)) {
+		$type = [ 'type' => 'integer' ];
+	}
+	else if (is_float($any)) {
+		$type = [ 'type' => 'float' ];
+	}
+	else if (is_string($any)) {
+		$type = [ 'type' => 'string' ];
+	}
+	else if (is_array($any)) {
+		$type = $this->isMap($any) ? [ 'type' => 'object', 'properties' => $this->getYamlArray($any, 'properties') ] : [ 'type' => 'array', 'items' => $this->getYamlArray($any, 'items') ]; 
+	}
+	else {
+		throw new Exception('unmatched type', $key.': '.print_r($value, true));
+	}
+
+	return $type;
+}
+
+
+/**
+ * Return yaml swagger array description.
+ *
+ * @param array $arr
+ * @param string $type (items|properties)
+ * @return map
+ */
+private function getYamlArray($arr, $type) {
+	$res = [];
+
+	if ($type == 'properties') {
+		foreach ($arr as $key => $value) {
+			$res[$key] = $this->getYamlType($value);
+		}
+	}
+	else if ($type == 'items') {
+		// all array elements have same value
+		$res = (count($arr) > 0) ? $this->getYamlType($arr[0]) : '{}';
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return true if array is map.
+ *
+ * @param array $arr
+ * @return boolean
+ */
+private function isMap($arr) {
+	if (array() === $arr) {
+		return false;
+	}
+
+	return array_keys($arr) !== range(0, count($arr) - 1);
 }
 
 
