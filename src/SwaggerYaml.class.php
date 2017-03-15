@@ -5,6 +5,7 @@ namespace rkphplib;
 require_once(__DIR__.'/File.class.php');
 require_once(__DIR__.'/Dir.class.php');
 require_once(__DIR__.'/YAML.class.php');
+require_once(__DIR__.'/JSON.class.php');
 require_once(__DIR__.'/lib/split_str.php');
 
 use \rkphplib\Exception;
@@ -688,45 +689,6 @@ public function update() {
 
 
 /**
- * Create result documentation. Return path to result.yaml.
- *
- * @param string $method
- * @param string $path
- * @param int $status
- * @param map $result
- * @return string
- */
-public function result($method, $path, $status, $result) {
-
-	if (empty($this->options['test_dir'])) {
-		throw new Exception('Empty options.test_dir');
-	}
-
-	$method = strtolower($method);
-	$yaml_dir = $this->options['test_dir'].$path;
-	$yaml_file = $method.'.'.$status.'.yaml';
-
-	if (!Dir::exists($yaml_dir)) {
-		throw new Exception('no such directory '.$yaml_dir);
-	}
-
-	if (File::exists($yaml_dir.'/'.$yaml_file)) {
-		$this->log("use existing $yaml_dir/$yaml_file", 3);
-		return $yaml_dir.'/'.$yaml_file;
-	}
-
-	$name = 'result'.$status.'_'.$method.str_replace('/', '_', $path);
-	$yaml = [];
-
-	$yaml[$name] = $this->getYamlType($result);
-	$this->log("create $yaml_dir/$yaml_file", 3);
-	YAML::save($yaml_dir.'/'.$yaml_file, $yaml);
-
-	return $yaml_dir.'/'.$yaml_file;
-}
-
-
-/**
  * Return yaml type.
  * 
  * @param any $any
@@ -816,15 +778,19 @@ private function addResponses($test_dir) {
 
 		foreach ($pinfo as $method => $info) {
 			foreach ($info['responses'] as $status => $rinfo) {
-				$yaml_file = $test_dir.$path.'/'.$method.'.'.$status.'.yaml';
-				if (File::exists($yaml_file)) {
+				$status = intval($status);
+
+				if ($status < 200 || $status > 200) {
+					continue;
+				}
+
+				$ok_json = $test_dir.$path.'/'.$method.'.ok.json';
+				if (File::exists($ok_json)) {
 					$name = 'result'.$status.'_'.$method.str_replace('/', '_', $path);
 					if (!isset($rinfo['schema'])) {
 						$this->data['paths'][$path][$method]['responses'][$status]['schema'] = [ '$ref' => '#/definitions/'.$name ];
 						if (!isset($this->data['definitions'][$name])) {
-							$yaml = YAML::load($yaml_file);
-							$this->data['definitions'][$name] = $yaml[$name];
-							print "$method - $status - $path: $yaml_file\n";
+							$this->data['definitions'][$name] = $this->getYamlType(JSON::decode(File::load($ok_json)));
 						}
 					}
 				}
