@@ -12,6 +12,7 @@ namespace rkphplib;
 require_once(__DIR__.'/XML.class.php');
 require_once(__DIR__.'/JSON.class.php');
 require_once(__DIR__.'/File.class.php');
+require_once(__DIR__.'/Dir.class.php');
 require_once(__DIR__.'/lib/log_error.php');
 require_once(__DIR__.'/lib/translate.php');
 
@@ -286,7 +287,6 @@ public function exceptionHandler($e) {
  * - xml_root: XML Root node of api result (default = '<api></api>')
  * - allow_auth = [ header, request, basic_auth, oauth2 ]
  * - log_dir = '' (if set save requests to this directory) 
- * - trace_dir = '' (if set save traced requests to this directory)
  *
  * @param map $options = []
  */
@@ -304,10 +304,14 @@ public function __construct($options = []) {
 
 	$this->options['log_dir'] = '';
 
-	$this->options['trace_dir'] = '';
-
 	foreach ($options as $key => $value) {
 		$this->options[$key] = $value;
+	}
+
+	if (!empty($this->options['log_dir'])) {
+		Dir::exists($this->options['log_dir'], true);
+		$unique_id = sprintf("%08x", abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME_FLOAT'] . $_SERVER['REMOTE_PORT'])));
+		$this->options['log_prefix'] = $this->options['log_dir'].'/api_'.$unique_id;
 	}
 }
 
@@ -347,6 +351,7 @@ public function getApiToken($force_basic_auth = true) {
 		header('WWW-Authenticate: Basic realm="REST API"');
 		header('HTTP/1.0 401 Unauthorized');
 		print lib\translate('Please enter REST API basic authentication credentials');
+		$this->logRequest(401);
 		exit;
 	}
 
@@ -459,13 +464,8 @@ public function route($must_exist = true) {
 		$this->request['api_call_parameter'] = (count($func_param) > 0) ? $func_param : [];
 	}
 	else {
-		if ($must_exist) {
-			throw new RestServerException('invalid route', self::ERR_INVALID_INPUT, 400, "url=$url method=$method");
-		}
-		else {
-			$this->request['api_call'] = '';
-			$this->request['api_call_parameter'] = [];
-		}
+		$this->request['api_call'] = '';
+		$this->request['api_call_parameter'] = [];
 	}
 
 	return !empty($func);
@@ -540,11 +540,54 @@ public function out($o, $code = 200) {
 
 
 /**
+ * Save request and data from $_SERVER, $_GET, $_POST, php://input to options.log_dir.
+ * If options.log_dir is empty do nothing.
+ *
+ * @param string $stage e.g. in, 401, 200, ...
+ */
+protected function logRequest($stage) {
+
+	if (empty($this->options['log_dir'])) {
+		return;
+	}
+
+	if (!isset($this->request['_SERVER'])) {
+		$log_server = [ 'REQUEST_URI', 'SCRIPT_NAME' ];
+		$this->request['_SERVER'] = [];
+
+		foreach ($_SERVER as $key => $value) {
+			if (substr($key, 0, 5) == 'HTTP_' || in_array($key, $log_server)) {
+				$this->request['_SERVER'][$key] = $value;
+			}
+		}
+	}
+
+	if (!isset($this->request['_GET'])) {
+		$this->request['_GET'] = $_GET;
+	}
+
+	if (!isset($this->request['_POST'])) {
+		$this->request['_POST'] = $_POST;
+	}
+
+	if (!isset($this->request['_INPUT'])) {
+		$this->request['_INPUT'] = file_get_contents('php://input');
+	}
+
+	File::save($this->options['log_prefix'].'.'.$stage.'.json', JSON::encode($this->request));
+}
+
+
+/**
  * Set request.method, request.content-type and request.input-type.
  *
  * @throws if invalid
  */
 public function checkMethodContent() {
+
+	$this->request['remote'] = $_SERVER['REMOTE_ADDR'].':'.$_SERVER['REMOTE_PORT'];
+	$this->request['timestamp'] = date('Y-m-d H:i:s').':'.substr(microtime(), 2, 3);
+
 	$this->request['method'] = self::getRequestMethod();
 
 	if (!in_array($this->request['method'], $this->options['allow_method'])) {
@@ -562,19 +605,15 @@ public function checkMethodContent() {
 
 
 /**
- * Log api request.
+ * Read api request. Use options.log_dir to save parsed input.
+ * Use this.request to retrieve input (information). 
  */
-public function trace() {
+public function readInput() {
 	$this->checkMethodContent();
 	$this->getApiToken(); 
 	$this->parse();
-	$this->route(false);
-	$config = $this->checkRequest();
-
-	if (!empty($this->options['trace_dir'])) {
-		$logfile = $this->options['trace_dir'].'/'.$this->request['api_call'].date('YmdHis').'.json';
-		File::save($logfile, JSON::encode($this->request));
-	}
+	$this->route();
+	$this->logRequest('in');
 }
 
 
@@ -587,10 +626,13 @@ public function trace() {
  * Call $this->parse() and $this->route(). 
  */
 public function run() {
-	$this->checkMethodContent();
-	$this->getApiToken(); 
-	$this->parse();
-	$this->route(); 
+	$this->readInput();
+
+	if (empty($this->request['api_call'])) {
+		throw new RestServerException('invalid route', self::ERR_INVALID_INPUT, 400, 
+			"url=".$this->request['path']." method=".$this->request['method']);
+	}
+ 
   $config = $this->checkRequest();
 
 	$this->prepareApiCall($config);	
@@ -677,15 +719,13 @@ private function prepareApiCall($p) {
  * @param map $p
  * @param string $out
  */
-public function logResult($code, $p, $out) {
+protected function logResult($code, $p, $out) {
+
+	$this->logRequest($code);
 
 	if ($code >= 400) {
 		$info = empty($p['error_info']) ? '' : "\n".$p['error_info'];
 		lib\log_error("API ERROR ".$p['error_code']."/$code: ".$p['error'].$info);
-	}
-	else if (!empty($this->options['log_dir'])) {
-		$logfile = $this->options['log_dir'].'/'.date('YmdHis').'-'.$code.'-'.$this->request['auth'].'-'.$this->request['api_call'].'.json';
-		File::save($logfile, JSON::encode($this->request));
 	}
 }
 
