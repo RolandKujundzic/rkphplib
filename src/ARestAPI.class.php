@@ -272,7 +272,7 @@ public function errorHandler($errNo, $errStr, $errFile, $errLine) {
 public function exceptionHandler($e) {
   $msg = $e->getMessage();
 	$error_code = $e->getCode();
-	$http_code = property_exists($e, 'http_code') ? $e->http_code : 400; 
+	$http_code = (property_exists($e, 'http_code') && $e->http_code >= 400) ? $e->http_code : 400; 
   $internal = property_exists($e, 'internal_message') ? $e->internal_message : '';
 
 	$this->out([ 'error' => $e->getMessage(), 'error_code' => $e->getCode(), 'error_info' => $internal ], $http_code);
@@ -493,6 +493,8 @@ public function out($o, $code = 200) {
 
 	$jsonp = empty($this->request['map']['jsonpCallback']) ? '' : $this->request['map']['jsonpCallback'];
 
+	http_response_code($code);
+
 	if (!empty($_SERVER['HTTP_ACCEPT']) && $_SERVER['HTTP_ACCEPT'] == 'application/xml') {
 		header('Content-Type: application/xml');
 		$output = XML::fromMap($o);
@@ -504,31 +506,6 @@ public function out($o, $code = 200) {
 	else {
 		header('Content-Type: application/json');
 		$output = JSON::encode($o);
-	}
-
-	// 2xx = OK, 4xx = Client Error, 5xx = Server Error
-	$status_code = [ '200' => 'OK', '201' => 'Created', '202' => 'Accepted', '204' => 'No Content',
-		'205' => 'Reset Content', '206' => 'Partial Content', '208' => 'Already Reported', 
- 		'400' => 'Bad Request', '401' => 'Unauthorized', '403' => 'Forbidden', '404' => 'Not Found',
- 		'405' => 'Method Not Allowed', '406' => 'Not Acceptable', '408' => 'Request Timeout',
- 		'409' => 'Conflict', '410' => 'Gone', '411' => 'Length Required', '412' => 'Precondition Failed',
- 		'413' => 'Request Entity Too Large', '415' => 'Unsupported Media Type', '416' => 'Requested range not satisfiable',
-		'417' => 'Expectation Failed', '422' => 'Unprocessable Entity', '423' => 'Locked',
-		'424' => 'Failed Dependency', '426' => 'Upgrade Required', '428' => 'Precondition Required',
- 		'429' => 'Too Many Requests', '431' => 'Request Header Fields Too Large', 
-		'500' => 'Internal Server Error', '501' => 'Not Implemented', '503' => 'Service Unavailable',
-		'504' => 'Gateway Time-out' ];
- 
-	if (!isset($status_code[$code])) {
-		if ($code >= 400) {
-			header('Status: 501 Not Implemented');
-		}
-		else {
-			throw new RestServerException('invalid http status code', self::ERR_CODE, 500, "code=$code");
-		}
-	}
-	else {
-		header('Status: '.$code.' '.$status_code[$code]);
 	}
 
 	$this->logResult($code, $o, $output);
