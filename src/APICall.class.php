@@ -93,6 +93,10 @@ public function set($name, $value) {
 		$name = 'uri';
 	}
 
+	if ($name == 'method') {
+		$value = strtoupper($value);
+	}
+
 	if ($name == 'content') {
 		$this->header['Content-Type'] = $value;
 	}
@@ -201,7 +205,7 @@ public function exec($data = null) {
 			$header['X-AUTH-TOKEN'] = $this->token;
 		}
 		else if ($this->auth == 'basic_auth') {
-			$options['USERPWD'] = $conf['api_token'];
+			$options['USERPWD'] = $this->token;
 		}
 	}
 
