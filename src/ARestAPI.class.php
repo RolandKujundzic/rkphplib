@@ -379,6 +379,8 @@ public function getApiToken($force_basic_auth = true) {
  */
 public function parse() {
 
+	$this->request['timestamp'] = date('Y-m-d H:i:s').':'.substr(microtime(), 2, 3);
+	$this->request['port'] = empty($_SERVER['REMOTE_PORT']) ? '' : $_SERVER['REMOTE_PORT'];
 	$this->request['ip'] = empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR'];
 	$this->request['data'] = null;
 	$this->request['map'] = [];
@@ -399,13 +401,13 @@ public function parse() {
 	}
 
 	if (count($_GET) > 0) {
-		// always use query parameter
-		$this->request['map'] = array_merge($this->request['map'], $_GET);
+		// always use query parameter - but prefer map parameter
+		$this->request['map'] = array_merge($_GET, $this->request['map']);
 	}
 
 	if ($this->request['method'] != 'GET' && count($_POST) > 0) {
-		// use post data unless method is GET
-		$this->request['map'] = array_merge($this->request['map'], $_POST);
+		// always use post data unless method is GET - but prefer map parameter
+		$this->request['map'] = array_merge($_POST, $this->request['map']);
 	}
 }
 
@@ -561,9 +563,6 @@ protected function logRequest($stage) {
  * @throws if invalid
  */
 public function checkMethodContent() {
-
-	$this->request['remote'] = $_SERVER['REMOTE_ADDR'].':'.$_SERVER['REMOTE_PORT'];
-	$this->request['timestamp'] = date('Y-m-d H:i:s').':'.substr(microtime(), 2, 3);
 
 	$this->request['method'] = self::getRequestMethod();
 
