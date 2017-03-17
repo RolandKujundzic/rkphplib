@@ -231,6 +231,10 @@ public static function getContentType() {
 		$type = 'application/x-www-form-urlencoded';
 		$input = 'urlencoded';
 	}
+	else if (mb_strpos($type, 'multipart/form-data') !== false) {
+		$type = 'multipart/form-data';
+		$input = 'multipart';
+	}
 	else {
 		throw new RestServerException('unknown content-type', self::ERR_INVALID_INPUT, 400, "type=$type");
 	}
@@ -282,7 +286,8 @@ public function exceptionHandler($e) {
 /**
  * Set Options:
  *
- * - Accept: allowed Content-Type (default = [application/json, application/xml, application/octet-stream, image|text|audio|video/*])
+ * - Accept: allowed Content-Type (default = [application/json, application/xml, application/octet-stream, 
+ *    multipart/form-data, application/x-www-form-urlencoded, image|text|audio|video/*])
  * - allow_method = [ put, get, post, delete, patch, head, options ]
  * - xml_root: XML Root node of api result (default = '<api></api>')
  * - allow_auth = [ header, request, basic_auth, oauth2 ]
@@ -293,7 +298,7 @@ public function exceptionHandler($e) {
 public function __construct($options = []) {
 	$this->options = [];
 
-	$this->options['Accept'] = [ 'application/x-www-form-urlencoded', 
+	$this->options['Accept'] = [ 'application/x-www-form-urlencoded', 'multipart/form-data',
 		'application/json', 'application/xml', 'application/octet-stream', 
 		'image/*', 'text/*', 'video/*', 'audio/*' ];
 
@@ -399,14 +404,20 @@ public function parse() {
 			$this->request['map'] = JSON::decode($input);
 		}
 		else if ($this->request['input-type'] == 'urlencoded') {
-    	parse_str($input, $this->request['map']);
+			mb_parse_str($input, $this->request['map']);
+		}
+		else if ($this->request['input-type'] == 'multipart') {
+			throw new Exception('ToDo: parse multipart/form-data input');
 		}
 		else {
 			throw new Exception('unknown input type', "content=".$this->request['content-type']." input=".$this->request['input-type']);
 		}
 	}
 
-	if ($this->request['content-type'] == 'application/x-www-form-urlencoded') {
+	if ($this->request['content-type'] == 'multipart/form-data' && count($_FILES) > 0) {
+		$this->request['map'] = array_merge($_POST, $_FILES);
+	}
+	else if ($this->request['content-type'] == 'application/x-www-form-urlencoded') {
 		if ($this->request['method'] == 'get') {
 			$this->request['map'] = array_merge($this->request['map'], $_GET);
 		}
