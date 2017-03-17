@@ -15,6 +15,8 @@ use rkphplib\Exception;
  * If $this->status != 200 call has failed. Default header are
  * { Content-Type: application/json, Accept: application/json, Accept-Charset: utf-8 }
  *
+ * Set Content-type=application/x-www-form-urlencoded for ordinary GET/POST calls.
+ *
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
  */
@@ -36,7 +38,7 @@ protected $auth = 'request';
 protected $token = '';
 
 /** @var map $header (default: { Content-Type: application/json, Accept: application/json, Accept-Charset: utf-8 }) */
-protected $header = [ 'Content-Type' => 'application/json', 'Accept' => 'application/json', 'Accept-Charset' => 'utf-8' ];
+protected $header = [ 'CONTENT-TYPE' => 'application/json', 'ACCEPT' => 'application/json', 'ACCEPT-CHARSET' => 'utf-8' ];
 
 /** @var map|string $result */
 public $result = null;
@@ -98,18 +100,35 @@ public function set($name, $value) {
 	}
 
 	if ($name == 'content') {
-		$this->header['Content-Type'] = $value;
+		if (empty($value) && isset($this->header['CONTENT-TYPE'])) {
+			unset($this->header['CONTENT-TYPE']);
+		}
+		else {
+			$this->header['CONTENT-TYPE'] = $value;
+		}
 	}
 	else if ($name == 'accept') {
-		$this->header['Accept'] = $value;
+		if (empty($value) && isset($this->header['ACCEPT'])) {
+      unset($this->header['ACCEPT']);
+    }
+		else {
+			$this->header['ACCEPT'] = $value;
+		}
 	}
 	else if ($name == 'header') {
 		foreach ($value as $hkey => $hval) {
+			$hkey = strtoupper($hkey);
+
 			if (!is_string($hval)) {
 				throw new Exception('header value is not string', print_r($hval, true));
 			}
 
-			$this->header[$hkey] = $hval;
+			if (empty($hval) && isset($this->header[$hkey])) {
+				unset($this->header[$hkey]);
+			}
+			else {
+				$this->header[$hkey] = $hval;
+			}
 		}
 	}
 	else {
@@ -142,8 +161,10 @@ public function get($name) {
 		$name = 'uri';
 	}
 
-	if (isset($this->header[$name])) {
-		$res = $this->header[$name];
+	$uname = strtoupper($name);
+
+	if (isset($this->header[$uname])) {
+		$res = $this->header[$uname];
 	}
 	else if (property_exists($this, $name)) {
 		$res = $this->$name;
@@ -209,8 +230,6 @@ public function exec($data = null) {
 		}
 	}
 
-	$uri_append = '';
-
 	if ($this->method != 'GET' && $this->method != 'POST') {
 		$header['X-HTTP-Method-Override'] = $this->method;
 	}
@@ -225,21 +244,28 @@ public function exec($data = null) {
 		$options['CUSTOMREQUEST'] = $this->method;
 	}
 
+	$url = (mb_substr($this->uri, 0, 1) == '/' || mb_substr($this->url, -1) == '/') ? $this->url.$this->uri : $this->url.'/'.$this->uri;
+
 	if ($data !== null) {
 		if ($this->method == 'GET') {
 			if (is_array($data) && count($data) > 0) {
-				$uri_append = '?'.http_build_query($data);
+				if (($pos = strpos($url, '?')) === false) {
+					$url .= '?'.http_build_query($data);
+				}
+				else {
+					$url .= '&'.http_build_query($data);
+				}
 			}
 		}
 		else {
 			if (is_array($data)) {
-				if (!isset($this->header['Content-Type'])) {
-					throw new Exception('Content-type is not set');
+				if (!isset($this->header['CONTENT-TYPE'])) {
+					throw new Exception('Content-Type is not set');
 				}
 
-				$ct = $this->header['Content-Type'];
+				$ct = $this->header['CONTENT-TYPE'];
 				if (is_array($ct)) {
-					throw new Exception('Content-type is array', print_r($ct, true));
+					throw new Exception('Content-Type is array', print_r($ct, true));
 				}
 
 				if ($ct == 'application/xml') {
@@ -275,8 +301,7 @@ public function exec($data = null) {
 	$options['SSL_VERIFYHOST'] = false;
 	$options['RETURNTRANSFER'] = true;
 
-	$url = (mb_substr($this->uri, 0, 1) == '/' || mb_substr($this->url, -1) == '/') ? $this->url.$this->uri : $this->url.'/'.$this->uri;
-	$options['URL'] = $url.$uri_append;
+	$options['URL'] = $url;
 
 	$ch = curl_init();
 
@@ -292,7 +317,7 @@ public function exec($data = null) {
 	
 	$this->dump = print_r($options, true);
 	
-	if ($this->header['Accept'] == 'application/json') {
+	if ($this->header['ACCEPT'] == 'application/json') {
 		$this->result = JSON::decode($this->result);
 	}
 
