@@ -24,6 +24,16 @@ class APIExample extends ARestAPI {
 		return [];
   }
 
+	// PUT: multipart/form-data fileupload
+	protected function putFileUpload() {
+    return $this->request;
+	}
+
+	// POST: multipart/form-data fileupload
+	protected function postFileUpload() {
+    return $this->request;
+	}
+
 	// POST: signup/:user_type/:locale - two parameter
 	protected function postSignup($user_type, $locale) {
     return $this->request;
