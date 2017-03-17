@@ -7,7 +7,6 @@ require_once(PATH_RKPHPLIB.'ARestAPI.class.php');
 use \rkphplib\RestServerException;
 use \rkphplib\ARestAPI;
 use \rkphplib\File;
-use \rkphplib\Dir;
 
 
 /**
@@ -45,8 +44,6 @@ class APIExample extends ARestAPI {
 /**
  * M A I N 
  */
-
-Dir::create('/tmp/api');
 
 $api = new APIExample([ 'log_dir' => '/tmp/api' ]);
 
