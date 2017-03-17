@@ -163,7 +163,7 @@ END;
  * @return string
  */
 public static function getRequestMethod() {
-	$method = empty($_SERVER['REQUEST_METHOD']) ? 'GET' : $_SERVER['REQUEST_METHOD'];
+	$method = empty($_SERVER['REQUEST_METHOD']) ? 'get' : $_SERVER['REQUEST_METHOD'];
 
 	if (!empty($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
 		$method = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
@@ -293,7 +293,8 @@ public function exceptionHandler($e) {
 public function __construct($options = []) {
 	$this->options = [];
 
-	$this->options['Accept'] = [ 'application/json', 'application/xml', 'application/octet-stream', 
+	$this->options['Accept'] = [ 'application/x-www-form-urlencoded', 
+		'application/json', 'application/xml', 'application/octet-stream', 
 		'image/*', 'text/*', 'video/*', 'audio/*' ];
 
 	$this->options['allow_method'] = [ 'get', 'post', 'put', 'delete', 'patch', 'head', 'options' ];
@@ -310,8 +311,10 @@ public function __construct($options = []) {
 
 	if (!empty($this->options['log_dir'])) {
 		Dir::exists($this->options['log_dir'], true);
+		$log_dir = $this->options['log_dir'].'/'.date('Ym').'/'.date('dH');
 		$unique_id = sprintf("%08x", abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME_FLOAT'] . $_SERVER['REMOTE_PORT'])));
-		$this->options['log_prefix'] = $this->options['log_dir'].'/api_'.$unique_id;
+		Dir::create($log_dir, 0, true);
+		$this->options['log_prefix'] = $log_dir.'/api_'.$unique_id;
 	}
 }
 
@@ -398,16 +401,34 @@ public function parse() {
 		else if ($this->request['input-type'] == 'urlencoded') {
     	parse_str($input, $this->request['map']);
 		}
+		else {
+			throw new Exception('unknown input type', "content=".$this->request['content-type']." input=".$this->request['input-type']);
+		}
 	}
 
-	if (count($_GET) > 0) {
-		// always use query parameter - but prefer map parameter
-		$this->request['map'] = array_merge($_GET, $this->request['map']);
-	}
+	if ($this->request['content-type'] == 'application/x-www-form-urlencoded') {
+		if ($this->request['method'] == 'get') {
+			$this->request['map'] = array_merge($this->request['map'], $_GET);
+		}
+		else {
+			$this->request['map'] = array_merge($this->request['map'], $_POST);
 
-	if ($this->request['method'] != 'GET' && count($_POST) > 0) {
-		// always use post data unless method is GET - but prefer map parameter
-		$this->request['map'] = array_merge($_POST, $this->request['map']);
+			if (count($_GET) > 0) {
+				// always use query parameter - but prefer map parameter
+				$this->request['map'] = array_merge($_GET, $this->request['map']);
+			}
+		}
+	}
+	else {
+		if (count($_GET) > 0) {
+			// always use query parameter - but prefer map parameter
+			$this->request['map'] = array_merge($_GET, $this->request['map']);
+		}
+
+		if ($this->request['method'] != 'get' && count($_POST) > 0) {
+			// always use post data unless method is GET - but prefer map parameter
+			$this->request['map'] = array_merge($_POST, $this->request['map']);
+		}
 	}
 }
 
@@ -658,9 +679,9 @@ public function run() {
  */
 private function prepareApiCall($p) {
 
-	$map = (empty($p['set']) && is_array($p['set'])) ? [] : $p['set'];
+	$map = (isset($p['set']) && is_array($p['set'])) ? $p['set'] : [];
 
-	if (!empty($p['preset']) && is_array($p['preset'])) {
+	if (isset($p['preset']) && is_array($p['preset'])) {
 		foreach ($p['preset'] as $key => $value) {
 			if (!isset($this->request['map'][$key]) && !isset($map[$key])) {
 				$map[$key] = $value;
@@ -668,7 +689,7 @@ private function prepareApiCall($p) {
     }
   }
 
-  if (!empty($p['required'])) {
+  if (isset($p['required']) && is_array($p['required'])) {
     foreach ($p['required'] as $key) {
 			if (empty($this->request['map'][$key])) {
       	throw new RestServerException('missing required parameter', self::ERR_INVALID_INPUT, 403, 'parameter='.$key);
@@ -676,7 +697,7 @@ private function prepareApiCall($p) {
     }
   }
 
-  if (!empty($p['check'])) {
+  if (isset($p['check']) && is_array($P['check'])) {
     foreach ($p['check'] as $key => $check) {
 			if (isset($this->request['map'][$key])) {
 				if (!ValueCheck::run($key, $value, $check)) {
