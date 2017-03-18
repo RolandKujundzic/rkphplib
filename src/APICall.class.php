@@ -5,6 +5,7 @@ namespace rkphplib;
 require_once(__DIR__.'/Exception.class.php');
 require_once(__DIR__.'/JSON.class.php');
 require_once(__DIR__.'/XML.class.php');
+require_once(__DIR__.'/File.class.php');
 
 use rkphplib\Exception;
 
@@ -213,7 +214,8 @@ public function exec($data = null) {
 	}
 
 	$header = $this->header;
-	$options = [];
+	$options = [ 'FOLLOWLOCATION' => true, 'SSL_VERIFYPEER' => false, 
+		'SSL_VERIFYHOST' => false, 'RETURNTRANSFER' => true ];
 
 	if (!empty($this->token)) {
 		if (empty($this->auth)) {
@@ -246,53 +248,15 @@ public function exec($data = null) {
 
 	$url = (mb_substr($this->uri, 0, 1) == '/' || mb_substr($this->url, -1) == '/') ? $this->url.$this->uri : $this->url.'/'.$this->uri;
 
-	if ($data !== null) {
+	if ($data !== null && is_array($data) && count($data) > 0) {
 		if ($this->method == 'GET') {
-			if (is_array($data) && count($data) > 0) {
-				if (($pos = strpos($url, '?')) === false) {
-					$url .= '?'.http_build_query($data);
-				}
-				else {
-					$url .= '&'.http_build_query($data);
-				}
-			}
+			$url .= $this->curlGetData($url, $data);
 		}
 		else {
-			if (is_array($data)) {
-				if (!isset($this->header['CONTENT-TYPE'])) {
-					throw new Exception('Content-Type is not set');
-				}
-
-				$ct = $this->header['CONTENT-TYPE'];
-				if (is_array($ct)) {
-					throw new Exception('Content-Type is array', print_r($ct, true));
-				}
-
-				if ($ct == 'application/xml') {
-					$data = XML::fromMap($data);
-				}
-				else if ($ct == 'application/json') {
-					$data = JSON::encode($data); 
-				}
-				else if ($ct == 'application/x-www-form-urlencoded') {
-					$data = http_build_query($data);
-				}
-				else if ($ct == 'multipart/form-data') {
-					if ($this->method == 'POST') {
-						// use $data map
-					}
-					else {
-						// todo ...
-					}
-				}
-				else {
-					throw new Exception('invalid content type for array data', print_r($this->header, true));
-				}
-			}
-
-			$options['POSTFIELDS'] = $data;
+			$options['POSTFIELDS'] = $this->curlOtherData($data, $options);
 
 			if (is_string($data)) {
+				// binary length
 				$header['Content-Length'] = strlen($data);
 			}
 		}
@@ -307,10 +271,6 @@ public function exec($data = null) {
 
 		$options['HTTPHEADER'] = $header_lines;
 	}
-
-	$options['SSL_VERIFYPEER'] = false;
-	$options['SSL_VERIFYHOST'] = false;
-	$options['RETURNTRANSFER'] = true;
 
 	$options['URL'] = $url;
 
@@ -333,6 +293,77 @@ public function exec($data = null) {
 	}
 
 	return $success;
+}
+
+
+/**
+ * Return url encoded query string
+ *
+ * @param string $url
+ * @param map $data
+ * @return string 
+ */
+private function curlGetData($url, $data) {
+	$append = '';
+
+	if (is_array($data) && count($data) > 0) {
+		if (($pos = strpos($url, '?')) === false) {
+			$append = '?'.http_build_query($data);
+		}
+		else {
+			$append = '&'.http_build_query($data);
+		}
+	}
+
+	return $append;
+}
+
+
+/**
+ * Return encoded data. Options are modified if content is multipart/form-data.
+ * 
+ * @param map $data
+ * @param map-ref &$options
+ * @return string|map
+ */
+private function curlOtherData($data, &$options) {
+
+	if (!isset($this->header['CONTENT-TYPE'])) {
+		throw new Exception('Content-Type is not set');
+	}
+
+	$ct = $this->header['CONTENT-TYPE'];
+	if (is_array($ct)) {
+		throw new Exception('Content-Type is array', print_r($ct, true));
+	}
+
+	if ($ct == 'application/xml') {
+		$data = XML::fromMap($data);
+	}
+	else if ($ct == 'application/json') {
+		$data = JSON::encode($data); 
+	}
+	else if ($ct == 'application/x-www-form-urlencoded') {
+		$data = http_build_query($data);
+	}
+	else if ($ct == 'multipart/form-data') {
+		// convert "@file" to curl file object - this was not necessary prior to php7
+		foreach ($data as $key => $value) {
+			if (is_string($value) && mb_substr($value, 0, 1) == '@') {
+				$file = mb_substr($value, 1);
+				File::exists($file, true);
+				$data[$key] = new \CURLFile($file); 
+			}
+		}
+
+		$options['POST'] = true;
+		unset($options['CUSTOMREQUEST']);
+	}
+	else {
+		throw new Exception('invalid content type for array data', print_r($this->header, true));
+	}
+
+	return $data;
 }
 
 
