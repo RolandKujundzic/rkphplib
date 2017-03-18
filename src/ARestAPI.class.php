@@ -315,10 +315,9 @@ public function __construct($options = []) {
 	}
 
 	if (!empty($this->options['log_dir'])) {
-		Dir::exists($this->options['log_dir'], true);
 		$log_dir = $this->options['log_dir'].'/'.date('Ym').'/'.date('dH');
-		$unique_id = sprintf("%08x", abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME_FLOAT'] . $_SERVER['REMOTE_PORT'])));
 		Dir::create($log_dir, 0, true);
+		$unique_id = sprintf("%08x", abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME_FLOAT'] . $_SERVER['REMOTE_PORT'])));
 		$this->options['log_prefix'] = $log_dir.'/api_'.$unique_id;
 	}
 }
@@ -676,7 +675,21 @@ public function run() {
 		$res = $this->$post_process($res);
 	}
 
+	if ($res === null) {
+		$res = $this->apiCallNotImplemented();
+	}
+
 	$this->out($res);
+}
+
+
+/**
+ * Called if method has no result. Subclass if necessary.
+ * 
+ * @return this.request
+ */
+protected function apiCallNotImplemented() {
+	return $this->request;
 }
 
 
@@ -686,9 +699,9 @@ public function run() {
  * and p.required vector.
  *
  * @see this.checkRequest() 
- * @param map $p
+ * @param map $p configuration (set, preset, required, check)
  */
-private function prepareApiCall($p) {
+protected function prepareApiCall($p) {
 
 	$map = (isset($p['set']) && is_array($p['set'])) ? $p['set'] : [];
 
@@ -708,7 +721,7 @@ private function prepareApiCall($p) {
     }
   }
 
-  if (isset($p['check']) && is_array($P['check'])) {
+  if (isset($p['check']) && is_array($p['check'])) {
     foreach ($p['check'] as $key => $check) {
 			if (isset($this->request['map'][$key])) {
 				if (!ValueCheck::run($key, $value, $check)) {
