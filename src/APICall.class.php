@@ -32,7 +32,7 @@ protected $uri = '';
 /** @var string $url e.g. https://domain.tld/api/v1.0 */
 protected $url = '';
 
-/** @var string $auth [request|header|basic_auth] (default = request) */
+/** @var string $auth [request|header|basic_auth|cookie:name] (default = request) */
 protected $auth = 'request';
 
 /** @var string $token e.g. iSFxH73p91Klm */
@@ -215,7 +215,7 @@ public function exec($data = null) {
 
 	$header = $this->header;
 	$options = [ 'FOLLOWLOCATION' => true, 'SSL_VERIFYPEER' => false, 
-		'SSL_VERIFYHOST' => false, 'RETURNTRANSFER' => true ];
+		'SSL_VERIFYHOST' => false, 'RETURNTRANSFER' => true, 'BINARYTRANSFER' => true ];
 
 	if (!empty($this->token)) {
 		if (empty($this->auth)) {
@@ -229,6 +229,9 @@ public function exec($data = null) {
 		}
 		else if ($this->auth == 'basic_auth') {
 			$options['USERPWD'] = $this->token;
+		}
+		else if (mb_strpos($this->auth, 'cookie:') === 0) {
+			$options['COOKIE'] = mb_substr($this->auth, 7).'='.$this->token; 
 		}
 	}
 
