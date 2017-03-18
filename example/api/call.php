@@ -32,28 +32,35 @@ function apicall($conf, $data) {
 }
 
 
-/*
-apicall([
-	'uri' => '/some/action',
-	'method' => 'get',
-	'content' => '',
-	'accept' => ''
-], [ 'x' => 18, 'y' => 'yalla' ]);
-*/
+// test invalid route
+// apicall([ 'uri' => '/some/action/?a=hello&x=12', 'method' => 'get', 'content' => '', 'accept' => '' ]);
 
-/*
-apicall([
-	'uri' => 'some/action/?x=5&y=hello&z=hohoho',
-	'method' => 'get',
-	'content' => 'application/x-www-form-urlencoded',
-	'accept' => 'text/plain'
-], [ 'x' => 18, 'y' => 'yalla' ]);
-*/
+// valid GET route - data is appended to query (overwrite)
+// apicall([ 'uri' => '/user/388?a=hello&x=12', 'method' => 'get', 
+//	'content' => 'application/x-www-form-urlencoded', 'accept' => 'application/json' ], [ 'a' => 'yuck', 'x' =>5 ]);
 
-apicall([
-	'uri' => '/signup/user/de?x=5&y=hello',
-	'method' => 'post',
-	'content' => 'application/x-www-form-urlencoded',
-	'accept' => 'application/json'
-], [ 'x' => 18, 'z' => 'yalla' ]);
+// valid POST route - post is prefered to get - output is xml
+// apicall([ 'uri' => '/user/manager/en?x=3&z=5', 'accept' => 'application/xml', 'method' => 'post', 
+//	'content' => 'application/x-www-form-urlencoded' ], [ 'a' => 'hello', 'x' => 12 ]);  
+
+// change user 1 data
+// apicall([ 'uri' => '/user/1', 'method' => 'put', 'content' => 'application/json', 'accept' => '' ], 
+//	[ 'firstname' => 'John', 'lastname' => 'Doe' ]);
+
+// get user without id
+// apicall([ 'uri' => '/user' ]);
+
+// get user 17
+// apicall([ 'uri' => '/user/17' ]);
+
+// delete user file 132
+// apicall([ 'uri' => '/user/file/132', 'method' => 'delete' ]);
+
+// post file
+// apicall([ 'uri' => '/user/file', 'method' => 'post', 'accept' => 'application/json', 'content' => 'multipart/form-data' ], 
+//	[ 'uid' => 15, 'upload_type' => 'logo', 'upload' => file_get_contents('call.sh') ]);
+
+// change user file
+apicall([ 'uri' => '/user/file/4', 'method' => 'put', 'accept' => 'application/octet-stream', 'content' => 'multipart/form-data' ],
+	[ file_get_contents('call.sh') ]);
 
