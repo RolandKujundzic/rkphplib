@@ -277,13 +277,24 @@ public function exec($data = null) {
 				else if ($ct == 'application/x-www-form-urlencoded') {
 					$data = http_build_query($data);
 				}
+				else if ($ct == 'multipart/form-data') {
+					if ($this->method == 'POST') {
+						// use $data map
+					}
+					else {
+						// todo ...
+					}
+				}
 				else {
 					throw new Exception('invalid content type for array data', print_r($this->header, true));
 				}
 			}
 
 			$options['POSTFIELDS'] = $data;
-			$header['Content-Length'] = strlen($data);
+
+			if (is_string($data)) {
+				$header['Content-Length'] = strlen($data);
+			}
 		}
 	}
 
