@@ -8,7 +8,10 @@ use \rkphplib\APICall;
 
 
 /**
+ * Execute api call.
  *
+ * @param map $conf
+ * @param map|string $data
  */
 function apicall($conf, $data) {
 	$api_default = [ 
@@ -16,7 +19,6 @@ function apicall($conf, $data) {
 		'auth' => 'basic_auth',
 		'token' => 'test:test',
 	];
-
 
 	$api = new APICall(array_merge($api_default, $conf));
 
@@ -58,9 +60,17 @@ function apicall($conf, $data) {
 
 // post file
 // apicall([ 'uri' => '/user/file', 'method' => 'post', 'accept' => 'application/json', 'content' => 'multipart/form-data' ], 
+//	[ 'uid' => 15, 'upload_type' => 'logo', 'upload' => '@call.sh', 'file' => '@call.sh' ]);
+
+// post file as content (no _FILES on recipient side)
+// apicall([ 'uri' => '/user/file', 'method' => 'post', 'accept' => 'application/json', 'content' => 'multipart/form-data' ], 
 //	[ 'uid' => 15, 'upload_type' => 'logo', 'upload' => file_get_contents('call.sh') ]);
 
 // change user file
-apicall([ 'uri' => '/user/file/4', 'method' => 'put', 'accept' => 'application/octet-stream', 'content' => 'multipart/form-data' ],
-	[ file_get_contents('call.sh') ]);
+// apicall([ 'uri' => '/user/file/4', 'method' => 'put', 'accept' => 'application/json', 'content' => 'application/octet-stream' ],
+//	file_get_contents('call.sh'));
+
+// change user file
+// apicall([ 'uri' => '/user/file/4', 'method' => 'put', 'accept' => 'application/json', 'content' => 'multipart/form-data' ], 
+//	[ 'upload' => '@call.sh' ]);
 
