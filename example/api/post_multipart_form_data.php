@@ -5,12 +5,16 @@
 </head>
 <body>
 
+<form action="http://test:test@localhost:10080/user/file" method="post" enctype="multipart/form-data">
 
-<form action="http://test:test@localhost:10080/file/upload" method="post" enctype="multipart/form-data">
-<input type="hidden" name="x" value="10">
-<input type="hidden" name="y" value="html form">
+User: <input type="text" name="uid" size="6">
 
-File: <input type="file" name="image" />
+File-Type: <select name="upload_type">
+<option value="image">Image (Me)</option>
+<option value="logo">Company Logo</option>
+</select>
+
+File: <input type="file" name="upload" />
 
 <input type="submit" value="submit" />
         
