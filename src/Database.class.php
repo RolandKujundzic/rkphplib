@@ -17,12 +17,8 @@ use rkphplib\Exception;
  */
 class Database {
 
-/** @var int $map_id $pool[$map_id] is db connection for get() after setMap() */
-public static $map = null;
-
 /** @var <vector:ADatabase> $pool Database connection pool */
 private static $pool = [];
-
 
 
 /**
@@ -62,7 +58,7 @@ public static function create($dsn = '', $query_map = null) {
 	$db->setDSN($dsn);
 
 	if (!is_null($query_map)) {
-		$db->setQueryHash($query_map);
+		$db->setQueryMap($query_map);
 	}
 
 	return $db;
@@ -70,82 +66,8 @@ public static function create($dsn = '', $query_map = null) {
 
 
 /**
- * Set query map.
- *
- * @param map @query_map
- */
-public static function setMap($query_map) {
-
-	if (!isset($query_map['@query_prefix'])) {
-		$query_map['@query_prefix'] = '';
-	}
-
-	self::getInstance('', $query_map);
-	self::$map = count(self::$pool) - 1;
-}
-
-
-/**
- * Return select result. Throw exception if result has more than one row. 
- * Use column alias "split_cs_list" to split comma separated value (if query was 
- * "SELECT GROUP_CONCAT(name) AS split_cs_list ...").
- *
- * @throws
- * @param string $qkey
- * @param map $replace
- * @return map 
- */
-public static function get($qkey, $replace) {
-
-	if (is_null(self::$map)) {
-		throw new Exception('call setMap first');
-	}
-
-	$db = self::$pool[self::$map];
-	$query = $db->getQuery($qkey, $replace);
-	$dbres = $db->select($query);
-	$res = [];
-
-	if (count($dbres) > 1) {
-		throw new Exception('more than one row in result set', $qkey);
-	}
-	else if (count($dbres) === 1) {
-		$res = $dbres[0];
-
-		if (count($res) === 1 && !empty($res['split_cs_list'])) {
-			if (mb_strlen($res['split_cs_list']) === 1024 && mb_stripos($query, 'group_concat') > 0) {
-				throw new Exception('increase group_concat_max_len');
-			}
-
-			$res = \rkphplib\lib\split_str(',', $res['split_cs_list']);
-		}
-	}
-
-	return $res;
-}
-
-
-/**
- * Return select result.
- *
- * @throws
- * @param string $qkey
- * @param map $replace
- * @return table
- */
-public static function select($qkey, $replace) {
-
-	if (is_null(self::$map)) {
-		throw new Exception('call setMap first');
-	}
-
-	$db = self::$pool[self::$map];
-	return $db->select($db->getQuery($qkey, $replace));
-}
-
-
-/**
- * Singelton method. Return unused ADatabase object instance with dsn from pool. 
+ * Singelton method. Return unused ADatabase object instance with dsn from pool.
+ * Query map with no prefix.  
  *
  * @throws rkphplib\Exception
  * @param string $dsn (default = '' = use SETTINGS_DSN) 
@@ -176,7 +98,9 @@ public static function getInstance($dsn = '', $query_map = null) {
 
 
 /**
+ * Return pool size.
  *
+ * @return int
  */
 public static function getPoolSize() {
 	return count(self::$pool);
