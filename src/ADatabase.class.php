@@ -365,7 +365,6 @@ public function setQuery($qkey, $query, $info = []) {
 	}
 
 	$map['@query'] = join('', $tok);
-
 	$this->_query[$qkey] = $map;
 }
 
@@ -465,7 +464,7 @@ public function hasQuery($qkey) {
  * @param map $query_map
  */
 public function setQueryMap($query_map) {
-	foreach ($qlist as $qkey => $query) {
+	foreach ($query_map as $qkey => $query) {
 		$this->setQuery($qkey, $query);
 	}
 }
