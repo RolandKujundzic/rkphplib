@@ -60,8 +60,6 @@ public function __construct($message, $error_no, $http_error = 400, $internal_me
  * }
  *
  * $rs = new MyRestServer();
- * set_exception_handler([$rs, 'exceptionHandler']);
- * set_error_handler([$rs, 'errorHandler']);
  *
  * Avaliable HTTP methods are GET (retrieve), HEAD, POST (create new), PUT (update), PATCH (modify use with JSON|XML Patch - see
  * http://jsonpatch.com/), DELETE (return status 200 or 404), OPTIONS (return SWAGGER path).  
@@ -244,7 +242,7 @@ public static function getContentType() {
 
 	
 /**
- * Catch all php errors. Activate with:
+ * Catch all php errors. Activated in constructor:
  *
  * set_error_handler([$this, 'errorHandler']);
  *
@@ -267,7 +265,7 @@ public function errorHandler($errNo, $errStr, $errFile, $errLine) {
 
 
 /**
- * Catch all Exceptions. Activate with:
+ * Catch all Exceptions. Activated in constructor:
  *
  * set_exception_handler([$this, 'errorHandler']);
  * 
@@ -320,6 +318,9 @@ public function __construct($options = []) {
 		$unique_id = sprintf("%08x", abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME_FLOAT'] . $_SERVER['REMOTE_PORT'])));
 		$this->options['log_prefix'] = $log_dir.'/api_'.$unique_id;
 	}
+
+	set_error_handler([$this, 'errorHandler']);
+	set_exception_handler([$this, 'exceptionHandler']);
 }
 
 
@@ -703,13 +704,17 @@ protected function apiCallNotImplemented() {
  */
 protected function prepareApiCall($p) {
 
-	$map = (isset($p['set']) && is_array($p['set'])) ? $p['set'] : [];
-
 	if (isset($p['preset']) && is_array($p['preset'])) {
 		foreach ($p['preset'] as $key => $value) {
-			if (!isset($this->request['map'][$key]) && !isset($map[$key])) {
-				$map[$key] = $value;
+			if (!isset($this->request['map'][$key])) {
+				$this->request['map'][$key] = $value;
 			}
+    }
+  }
+
+	if (isset($p['set']) && is_array($p['set'])) {
+		foreach ($p['set'] as $key => $value) {
+			$this->request['map'][$key] = $value;
     }
   }
 
@@ -753,17 +758,16 @@ protected function logResult($code, $p, $out) {
 
 /**
  * Check if request.api_token is valid and request.route call is allowed.
- * Return map with preset, set, required, optional, check, call_before and call_after keys. Example:
+ * Return map with preset, set, required, check, call_before and call_after keys. Example:
  *
  * - preset = { country: germany, ... }
  * - set = { owner: 173, ... }
  * - required = [ firstname, lastname, ... ]
- * - optional = [ age, ... ]
  * - check = { email: isEmail, ... } - @see ValueCheck
  * - call_before = if set call $this->$call_before() before request.api_call 
  * - call_after = if set call $this->$call_after($output) after request.api_call
  *
- * Apply preset|set|required|optional|check to request.map.
+ * Apply preset|set|required|check to request.map.
  *
  * @throws if api_token is invalid or access is forbidden
  * @return map 
