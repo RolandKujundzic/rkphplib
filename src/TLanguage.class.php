@@ -70,16 +70,14 @@ public function getPlugins($tok) {
  */
 public function setDSN($dsn = SETTINGS_DSN, $opt = [ 'table' => 'language', 'use' => SETTINGS_LANGUAGE, 'default' => 'txt' ]) {
 	
+	$table = ADatabase::escape($opt['table']);
+	$default = ADatabase::escape($opt['default']);
+	$use = ADatabase::escape($opt['use']);
+
 	$query_map = [
-		'@query_prefix' => '',
-
-		'escape_name@table' => $opt['table'], 
-		'escape_name@use' => $opt['use'],
-		'escape_name@default' => $opt['default'],
-
-		'select' => "SELECT {:=@use} AS lang, {:=@default} AS default_lang, txt FROM {:=@table} WHERE id='{:=id}'",
-		'insert' => "INSERT INTO {:=@table} (id, lchange, txt) VALUES ('{:=id}', NOW(), '{:=txt}')",
-		'delete' => "DELETE FROM {:=@table} WHERE id='{:=id}'"
+		'select' => "SELECT $use AS lang, $default AS default_lang, txt FROM $table WHERE id='{:=id}'",
+		'insert' => "INSERT INTO $table (id, lchange, txt) VALUES ('{:=id}', NOW(), '{:=txt}')",
+		'delete' => "DELETE FROM $table WHERE id='{:=id}'"
 	];
 
 	$this->db = Database::getInstance($dsn, $query_map);
