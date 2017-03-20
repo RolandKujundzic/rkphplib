@@ -63,13 +63,10 @@ protected $_query = [];
 /** @var map $_qinfo */
 protected $_qinfo = [];
 
-/** @var string $_oid object identifier - see getId() */
-protected $_oid = '';
-
 
 
 /**
- * Return md5 hash base on dsn and $query_map (see setQueryHash).
+ * Return md5 hash base on dsn and $query_map (see setQueryMap).
  * 
  * @throws
  * @param map $query_map (default = null)
@@ -91,6 +88,8 @@ public static function computeId($dsn, $query_map = null) {
 		throw new Exception('invalid query map', print_r($query_map, true));
 	}
 
+	ksort($query_map);
+
 	foreach ($query_map as $key => $value) {
 		$res = md5($res.':'.md5($key).':'.md5($value));
 	}
@@ -100,31 +99,13 @@ public static function computeId($dsn, $query_map = null) {
 
 
 /**
- * Return md5 identifier. If setQueryHash() was used it is the same as computeId(DSN, QUERY_MAP).
- * Otherwise return identifier based on setDSN() and setQuery().
+ * Return md5 identifier. Same as self::computeId(getDSN(), getQueryMap()).
  *
  * @throws
  * @return string
  */
 public function getId() {
-
-	if (!empty($this->_oid)) {
-		return $this->_oid;
-	}
-
-	if (empty($this->_dsn)) {
-		throw new Exception('empty database source name');
-	}
-
-	$res = md5($this->_dsn);
-
-	foreach ($this->_query as $key => $value) {
-		$res = md5($res.':'.md5($key).':'.md5($value));
-	}
-
-	$this->_oid = $res;
-
-	return $res;
+	return self::computeId($this->_dsn, $this->_query);
 }
 
 
@@ -157,24 +138,30 @@ public function setDSN($dsn = '') {
 
 
 /**
- * Return (split = self::splitDSN()) database connect string.
+ * Return database connect string.
  *
  * @throws rkphplib\Exception if $dsn was not set
  * @param bool $split (default = false) 
  * @param string $dsn (default = '')
  * @return string|map 
  */
-public function getDSN($split = false, $dsn = '') {
+public function getDSN() {
 
-  if (empty($dsn)) {
-    if (empty($this->_dsn)) {
-      throw new Exception('call setDSN() first');
-    }
+	if (empty($this->_dsn)) {
+		throw new Exception('call setDSN() first');
+	}
 
-    $dsn = $this->_dsn;
-  }
+	return $this->_dsn;
+}
 
-	return $split ? self::splitDSN($dsn) : $dsn;
+
+/**
+ * Return this.query.
+ *
+ * @return map
+ */
+public function getQueryMap() {
+	return $this->_query;
 }
 
 
@@ -472,11 +459,24 @@ public function hasQuery($qkey) {
 
 
 /**
+ * Apply setQuery($key, value) for every key value pair in $query_map.
+ *
+ * @see ADatabase::setQuery()
+ * @param map $query_map
+ */
+public function setQueryMap($query_map) {
+	foreach ($qlist as $qkey => $query) {
+		$this->setQuery($qkey, $query);
+	}
+}
+
+
+/**
  * Apply setQuery() for all hash values where key has [query.] prefix and value is not empty (qkey = key without prefix).
  * Change/remove query prefix with conf_hash[@query_prefix].
  * Use query.escape_name@table=test name to replace {:=@table} with `test name`.
  *
- * @see ADatabase::setQuery()
+ * @see setQuery(), setQueryMap(), 
  * @throws rkphplib\Exception if error
  * @param map $conf_hash
  * @param empty|vectory $require_keys (default = '')
@@ -513,13 +513,11 @@ public function setQueryHash($conf_hash, $require_keys = '') {
 
 	foreach ($qlist as $qkey => $query) {
 		foreach ($replace as $rkey => $rval) {
-			$query = str_replace('{:=@'.$rkey.'}', $rval, $query);
+			$qlist[$key] = str_replace('{:=@'.$rkey.'}', $rval, $query);
 		}
-
-		$this->setQuery($qkey, $query);
 	}
 
-	$this->_oid = self::computeId($this->_dsn, $conf_hash);
+	$this->setQueryMap($qlist);
 }
 
 
