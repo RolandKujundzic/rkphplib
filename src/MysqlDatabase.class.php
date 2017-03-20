@@ -158,7 +158,7 @@ public function close() {
  * 
  */
 public function createDatabase($dsn = '', $opt = 'utf8') {
-	$db = $this->getDSN(true, $dsn);
+	$db = empty($dsn) ? self::splitDSN($this->_dsn) : self::splitDSN($dsn);
 	$name = self::escape_name($db['name']);
 	$login = self::escape_name($db['login']);
 	$pass = self::escape_name($db['password']);
@@ -180,7 +180,7 @@ public function createDatabase($dsn = '', $opt = 'utf8') {
  * 
  */
 public function dropDatabase($dsn = '') {
-	$db = $this->getDSN(true, $dsn);
+	$db = empty($dsn) ? self::splitDSN($this->_dsn) : self::splitDSN($dsn);
 	$name = self::escape_name($db['name']);
 	$login = self::escape_name($db['login']);
 	$host = self::escape_name($db['host']);
@@ -216,7 +216,7 @@ public function saveDump($file, $opt = null) {
  */
 public function loadDump($file) {
 	File::exists($file, true);
-	$dsn = $this->getDSN(true);
+	$dsn = self::splitDSN($this->_dsn);
 	lib\execute("mysql -h ".$dsn['host']." -u '".$dsn['login']."' -p'".$dsn['password']."' '".$dsn['name']."' < '".$file."'");
 }
 
