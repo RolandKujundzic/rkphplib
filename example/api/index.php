@@ -27,8 +27,6 @@ if (!empty($_SERVER['argv'][0])) {
 	print "Authorization: basic auth (e.g. http://test:test@localhost:10080/some/action)\n\n";
 }
 else {
-	set_error_handler([$api, 'errorHandler']);
-	set_exception_handler([$api, 'exceptionHandler']);
 	$api->run();
 }
 
