@@ -25,7 +25,13 @@ public static function run($key, $value, $check) {
 	$method = array_shift($check);
 
 	if (!method_exists(self, $method)) {
-		throw new Exception('no such check', "key=$key value=[$value] check=[$check]");
+		if (count($check) == 0 && mb_substr($method, 0, 2) == 'is') {
+			array_push($check, mb_substr($method, 2)); 
+			$method = 'isMatch';
+		}
+		else {
+			throw new Exception('no such check', "key=$key value=[$value] check=[$check]");
+		}
 	}
 
 	$pn = count($check);
