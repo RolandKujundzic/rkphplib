@@ -1199,7 +1199,9 @@ public function seek($offset) {
 
 
 /**
- * Return query hash (single row).
+ * Return query hash (single row). Throw exception if result has more than one row. 
+ * Use column alias "split_cs_list" to split comma separated value (if query was 
+ * "SELECT GROUP_CONCAT(name) AS split_cs_list ...").
  * 
  * @throw rkphplib\Exception if rownum != 1 
  * @param string|vector $query
@@ -1208,7 +1210,24 @@ public function seek($offset) {
  */
 public function selectOne($query, $col = '') {
 	$dbres = $this->select($query, 1);
-	return empty($col) ? $dbres[0] : $dbres[0][$col];
+
+	if (empty($col)) {
+		if (count($dbres[0]) === 1 && !empty($dbres[0]['split_cs_list'])) {
+			if (mb_strlen($dbres[0]['split_cs_list']) === 1024 && mb_stripos($query, 'group_concat') > 0) {
+				throw new Exception('increase group_concat_max_len');
+			}
+
+			$res = \rkphplib\lib\split_str(',', $dbres[0]['split_cs_list']);
+		}
+		else {
+			$res = $dbres[0];
+		}
+	}
+	else {
+		$res = $dbres[0][$col];
+	}
+
+	return $res;
 }
 
 
