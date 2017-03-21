@@ -77,7 +77,8 @@ const ERR_INVALID_ROUTE = 3;
 const ERR_PHP = 4;
 const ERR_CODE = 5;
 const ERR_INVALID_INPUT = 6;
-
+const ERR_NOT_IMPLEMENTED = 7;
+const ERR_CONFIGURATION = 8;
 
 /** @var map $options */
 protected $options = [];
@@ -154,43 +155,18 @@ END;
 
 
 /**
- * Return _SERVER.REQUEST_METHOD as lowerstring.
+ * Parse Content-Type header and set request.content-type and request.input-type.
  *
- * Overwrite with header "X-HTTP-METHOD[-OVERRIDE]".
- * 
- * @return string
- */
-public static function getRequestMethod() {
-	$method = empty($_SERVER['REQUEST_METHOD']) ? 'get' : $_SERVER['REQUEST_METHOD'];
-
-	if (!empty($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
-		$method = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
-	}
-	else if (!empty($_SERVER['HTTP_X_HTTP_METHOD'])) {
-		$method = $_SERVER['HTTP_X_HTTP_METHOD'];
-	}
-
-	if (empty($method)) {
-		throw new RestServerException('empty method', self::ERR_INVALID_INPUT, 400);
-	}
-
-	return strtolower($method);
-}
-
-
-/**
- * Parse Content-Type header and return normalized Content-Type and Input-Type.
- *
- * Input-Type: data, xml, json, urlencoded
- * Normalized Content-Type: application/xml|json|octet-stream|x-www-form-urlencoded, image|text|video|audio/*
+ * request.input-type: data, xml, json, urlencoded
+ * request.content-type: application/xml|json|octet-stream|x-www-form-urlencoded, image|text|video|audio/*
  *
  * @throws
- * @return vectory<string,string> [Normalized Content-Type, Input-Type] 
  */
-public static function getContentType() {
+private static function parseContentType() {
 
 	if (empty($_SERVER['CONTENT_TYPE']) && empty($_SERVER['HTTP_CONTENT_LENGTH'])) {
-		return [ '', '' ];
+		$this->request['content-type'] = '';
+		$this->request['input-type']) = '';
 	}
 
 	$type = strtolower($_SERVER['CONTENT_TYPE']);
@@ -237,7 +213,8 @@ public static function getContentType() {
 		throw new RestServerException('unknown content-type', self::ERR_INVALID_INPUT, 400, "type=$type");
 	}
 
-	return [ $type, $input ];
+	$this->request['content-type'] = $type;
+	$this->request['input-type']) = $input;
 }
 
 	
@@ -290,6 +267,10 @@ public function exceptionHandler($e) {
  * - xml_root: XML Root node of api result (default = '<api></api>')
  * - allow_auth = [ header, request, basic_auth, oauth2 ]
  * - log_dir = '' (if set save requests to this directory) 
+ * - auth_query = optional, default = SELECT id, config FROM api_user WHERE token='{:=token}' AND status=1
+ * 		if auth_dir is empty use api_user with token='default' as default.
+ * - auth_dir = use auth_dir/config.json as default configuration. If auth_query.config=auth_dir 
+ *		use auth_dir/config.ID.json. If auth_query is empty use auth_dir/config.MD5(token).json.
  *
  * @param map $options = []
  */
@@ -301,12 +282,11 @@ public function __construct($options = []) {
 		'image/*', 'text/*', 'video/*', 'audio/*' ];
 
 	$this->options['allow_method'] = [ 'get', 'post', 'put', 'delete', 'patch', 'head', 'options' ];
-
 	$this->options['allow_auth'] = [ 'header', 'request', 'basic_auth', 'oauth2' ];
-
 	$this->options['xml_root'] = '<api></api>';
-
 	$this->options['log_dir'] = '';
+	$this->options['auth_query'] = 'SELECT * FROM api_user WHERE token='{:=token}' AND status=1';
+	$this->options['auth_dir'] = '';
 
 	foreach ($options as $key => $value) {
 		$this->options[$key] = $value;
@@ -336,9 +316,8 @@ public function __construct($options = []) {
  * 
  * @exit If no credentials are passed basic_auth is allowed and required exit with "401 - basic auth required"
  * @param bool $force_basic_auth = true
- * @return vector<string,string> [ token, auth ] 
  */
-public function getApiToken($force_basic_auth = true) {
+private function checkApiToken($force_basic_auth = true) {
 	$res = [ '', '' ];
 
 	$allow_basic_auth = in_array('basic_auth', $this->options['allow_auth']);
@@ -364,8 +343,6 @@ public function getApiToken($force_basic_auth = true) {
 	}
 
 	list ($this->request['token'], $this->request['auth']) = $res;
-
-	return $res;
 }
 
 
@@ -407,10 +384,10 @@ public function parse() {
 			mb_parse_str($input, $this->request['map']);
 		}
 		else if ($this->request['input-type'] == 'multipart') {
-			throw new Exception('ToDo: parse multipart/form-data input');
+			throw new RestServerException('ToDo: parse multipart/form-data input', self::ERR_NOT_IMPLEMENTED, 501);
 		}
 		else {
-			throw new Exception('unknown input type', "content=".$this->request['content-type']." input=".$this->request['input-type']);
+			throw new RestServerException('unknown input type', self::ERR_NOT_IMPLEMENTED, 501, "content=".$this->request['content-type']." input=".$this->request['input-type']);
 		}
 	}
 
@@ -590,20 +567,33 @@ protected function logRequest($stage) {
 
 
 /**
- * Set request.method, request.content-type and request.input-type.
+ * Set request.method (as lowerstring), request.content-type and request.input-type.
+ * Overwrite method with header "X-HTTP-METHOD[-OVERRIDE]".
  *
  * @throws if invalid
  */
-public function checkMethodContent() {
+private function checkMethodContent() {
+	$method = empty($_SERVER['REQUEST_METHOD']) ? 'get' : $_SERVER['REQUEST_METHOD'];
 
-	$this->request['method'] = self::getRequestMethod();
+	if (!empty($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
+		$method = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
+	}
+	else if (!empty($_SERVER['HTTP_X_HTTP_METHOD'])) {
+		$method = $_SERVER['HTTP_X_HTTP_METHOD'];
+	}
+
+	if (empty($method)) {
+		throw new RestServerException('empty method', self::ERR_INVALID_INPUT, 400);
+	}
+
+	$this->request['method'] = strtolower($method);
 
 	if (!in_array($this->request['method'], $this->options['allow_method'])) {
 		throw new RestServerException('invalid method', self::ERR_INVALID_INPUT, 400, 'method='.$this->request['method'].
 			' allowed='.join(', ', $this->options['allow_method']));
 	}
 
-	list ($this->request['content-type'], $this->request['input-type']) = self::getContentType(); 
+	self::parseContentType(); 
 
 	if (!empty($this->request['content-type']) && !in_array($this->request['content-type'], $this->options['Accept'])) {
 		throw new RestServerException('invalid content-type', self::ERR_INVALID_INPUT, 400, 
@@ -618,7 +608,7 @@ public function checkMethodContent() {
  */
 public function readInput() {
 	$this->checkMethodContent();
-	$this->getApiToken(); 
+	$this->checkApiToken(); 
 	$this->parse();
 	$this->route();
 	$this->logRequest('in');
@@ -757,13 +747,14 @@ protected function logResult($code, $p, $out) {
 
 
 /**
- * Check if request.api_token is valid and request.route call is allowed.
+ * Subclass if you want custom authentication. Otherwise adjust option.auth_dir or option.auth_query
+ * if necessary. Check if request.api_token is valid and request.route call is allowed.
  * Return map with preset, set, required, check, call_before and call_after keys. Example:
  *
- * - preset = { country: germany, ... }
- * - set = { owner: 173, ... }
- * - required = [ firstname, lastname, ... ]
- * - check = { email: isEmail, ... } - @see ValueCheck
+ * - preset = { "country": "de", ... }
+ * - set = { "country": "de", ... }
+ * - input = { "firstname": ["1", ""], "age": ["0", ""], "email": ["1", "isEmail"], ... }
+ * - output = { "col": "alias", ... } or [ "col", ... ]
  * - call_before = if set call $this->$call_before() before request.api_call 
  * - call_after = if set call $this->$call_after($output) after request.api_call
  *
@@ -772,7 +763,99 @@ protected function logResult($code, $p, $out) {
  * @throws if api_token is invalid or access is forbidden
  * @return map 
  */
-abstract public function checkRequest();
+public function checkRequest() {
+
+	$user = $this->user_config();
+	$method = $this->request['method'];
+
+	if (!in_array($method, $user['config']['allow'])) {
+		throw new RestServerException('forbidden', self::ERR_INVALID_API_CALL, 403);
+	}
+
+	$res = $user['default'][$method];
+	$res['allow'] = $user['config']['allow'];
+
+	// overwrite default with custom
+	$use_keys = [ 'input', 'output', 'set', 'preset', 'call_before', 'call_after' ];
+	foreach ($use_keys as $key) {
+		if (isset($user['config'][$method][$key])) {
+			$res[$key] = $user['config'][$method][$key];
+		}
+	}
+
+	// resolve "@ref" keys
+	$use_keys = [ 'set', 'preset', 'input', 'output' ];
+	foreach ($use_keys as $key) {
+		if (isset($res[$key])) {
+			foreach ($res[$key] as $skey => $sval) {
+				if (mb_substr($skey, 0, 1) == '@') {
+					unset($res[$key][$skey]);
+					foreach ($user['default'][$key] as $dkey => $dval) {
+						$res[$key][$dkey] = $dval;
+					}
+				}
+			}
+		}
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return user data for current api call. Either options.auth_query or options.auth_dir (or both)
+ * must be defined.
+ *
+ * @throws
+ * @return map
+ */
+private function user_config() {
+
+	if (empty($this->request['token']) || strtolower($this->request['token']) == 'default') { 
+		throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 400);
+	}
+
+	if (!empty($this->options['auth_query'])) {
+		$db = Database::getInstance(SETTINGS_DSN, [ 'check_token' => $this->options['auth_query'] ]);
+		$user = $db->select($db->getQuery('check_token', $this->request));
+
+		if (count($user) != 1) {
+			throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 401);
+		}
+
+		$user['config'] = JSON::decode($user['config']);
+
+		if (!empty($this->options['auth_dir'])) {
+			$user['default'] = JSON::decode(File::load($this->options['auth_dir'].'/config.json'));
+
+			if (is_string($user['config']) && $user['config'] == 'auth_dir') {
+				$user['config'] = JSON::decode(File::load($this->options['auth_dir'].'/config.'.$user['id'].'.json'));
+			}
+		}
+		else {
+			$tmp = $db->selectOne($db->getQuery('check_token', [ 'token' => 'default' ]));
+			$user['default'] = JSON::decode($tmp['config']);
+		}
+	}
+	else if (!empty($this->options['auth_dir'])) {
+		$user_json = $this->options['auth_dir'].'/config.'.md5($this->request['token']).'.json';
+		if (!File::exists($user_json)) {
+			throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 401);
+		}
+
+		$user = JSON::decode(File::load($user_json));
+		$user['default'] = JSON::decode(File::load($this->options['auth_dir'].'/config.json'));
+	}
+	else {
+		throw new RestServerException('auth_query and auth_dir empty', self::ERR_CONFIGURATION, 501);
+	}
+
+	if (!is_array($user['default']) || !is_array($user['config']) || !isset($user['config']['allow']) || !is_array($user['config']['allow'])) {
+		throw new RestServerException('user_config invalid', self::ERR_CONFIGURATION, 501);
+	}
+
+	return $user;
+}
 
 
 }
