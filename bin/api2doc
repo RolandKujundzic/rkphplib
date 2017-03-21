@@ -11,6 +11,6 @@ if (empty($_SERVER['argv'][1])) {
 	die("\nSYNTAX: ".$_SERVER['argv'][0]." [path/to/config.json]\n\n\n");
 }
 
-$app = new \rkphplib\SwaggerYaml(\rkphplib\YAML::load($_SERVER['argv'][1]));
+$app = new \rkphplib\SwaggerYaml(\rkphplib\JSON::decode(\rkphplib\File::load($_SERVER['argv'][1])));
 $app->update();
 
