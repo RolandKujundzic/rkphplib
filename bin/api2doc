@@ -1,0 +1,16 @@
+#!/usr/bin/php
+<?php
+
+define('PATH_RKPHPLIB', __DIR__.'/../src/');
+
+require_once(PATH_RKPHPLIB.'SwaggerYaml.class.php');
+require_once('vendor/autoload.php');
+
+
+if (empty($_SERVER['argv'][1])) {
+	die("\nSYNTAX: ".$_SERVER['argv'][0]." [path/to/config.json]\n\n\n");
+}
+
+$app = new \rkphplib\SwaggerYaml(\rkphplib\YAML::load($_SERVER['argv'][1]));
+$app->update();
+
