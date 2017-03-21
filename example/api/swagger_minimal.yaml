@@ -8,17 +8,18 @@ host: localhost
 schemes:
   - https
 basePath: /api
+consumes:
+  - application/x-www-form-urlencoded
+  - multipart/form-data
+  - application/json
+  - application/xml
+  - application/octet-stream
 produces:
   - application/json
+	- application/xml
 paths:
   '__default':
     post:
-      consumes:
-        - application/x-www-form-urlencoded
-        - multipart/form-data
-        - application/json
-        - application/xml
-        - application/octet-stream
       produces:
         - application/json
         - application/xml
