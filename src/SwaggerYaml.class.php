@@ -194,7 +194,7 @@ private function addPath($method, $path, $api) {
 
 	$this->last_api_call = $this->api_call;
 
-	$api_info = $this->apiInfo($api);
+	$api_info = $this->apiInfo($api, $path);
 	$path_param = $this->pathParameter($path);
 
 	if (!isset($this->data['paths'][$path])) {
@@ -263,9 +263,10 @@ private function addPath($method, $path, $api) {
  *  - parameter: 
  *
  * @param vector $api
+ * @param string $path
  * @return map
  */
-private function apiInfo($api) {
+private function apiInfo($api, $path) {
 	$info = [];
 	$remove_param = [];
 	$remove_security = [];
@@ -313,7 +314,14 @@ private function apiInfo($api) {
 			$this->addExistingParameter($info, $name, $in);
 		}
 		else if (strpos($value, 'param:') === 0) {
-			$this->addNewParameter($info, \rkphplib\lib\split_str(',', substr($value, 6)));
+			$pval = trim(substr($value, 6));
+
+			if (substr($pval, 0, 1) == '@') {
+				$this->addParametersFromInput($info, $pval, $path);
+			}
+			else {
+				$this->addNewParameter($info, \rkphplib\lib\split_str(',', $pval));
+			}
 		}
 	}
 
@@ -330,6 +338,36 @@ private function apiInfo($api) {
 	}
 
 	return $info;
+}
+
+
+/**
+ * Add new parameters to info (and data[parameters]). Load parameter list
+ * from input.json.  
+ * 
+ * @param map-reference &$info
+ * @param string $pval file:nr:in
+ * @param string $path
+ */
+private function addParametersFromInput(&$info, $pval, $path) {
+	list ($file, $test_nr, $in) = explode(':', substr($pval, 1));
+
+	if (!in_array($in, [ 'body', 'header', 'path', 'query', 'formData' ])) {
+		throw new Exception('invalid parameter description', "pval=$pval");
+	}
+
+	if (empty($this->options['test_dir'])) {
+		throw new Exception('options.test_dir is empty');
+	}
+
+	$input_data = JSON::decode(File::load($this->options['test_dir'].$path.'/'.$file));
+	$data = $input_data[$test_nr];
+
+	foreach ($data as $key => $value) {
+		$tinfo = $this->getYamlType($value);
+		$pinfo = [ $key, $tinfo['type'], 0, $in, '', '', 'example:'.$value ]; 
+		$this->addNewParameter($info, $pinfo);
+	}
 }
 
 
@@ -392,7 +430,13 @@ private static function param2map($pinfo) {
 
 	if (count($pinfo) > 6) {
 		for ($i = 6; $i < count($pinfo); $i++) {
-			$tmp = \rkphplib\lib\split_str(':', $pinfo[$i]);
+			if (($pos = strpos($pinfo[$i], 'default:')) === 0 || ($pos = strpos($pinfo[$i], 'example:')) === 0) {
+				$tmp = \rkphplib\lib\split_str(':', $pinfo[$i], false, 2);
+			}
+			else {
+				$tmp = \rkphplib\lib\split_str(':', $pinfo[$i]);
+			}
+
 			$key = array_shift($tmp);
 			$res[$key] = (count($tmp) == 1) ? $tmp[0] : $tmp; 
 		}
@@ -882,7 +926,7 @@ public function __construct($options = [ 'log_level' => 1 ]) {
 	];
 
 	foreach ($this->options as $key => $value) {
-		if (!empty($options[$key])) {
+		if (isset($options[$key])) {
 			$this->options[$key] = $options[$key];
 		}
 	}
