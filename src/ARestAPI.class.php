@@ -690,7 +690,7 @@ protected function apiCallNotImplemented() {
  * and p.required vector.
  *
  * @see this.checkRequest() 
- * @param map $p configuration (set, preset, required, check)
+ * @param map $p configuration (set, preset, input)
  */
 protected function prepareApiCall($p) {
 
@@ -708,23 +708,19 @@ protected function prepareApiCall($p) {
     }
   }
 
-  if (isset($p['required']) && is_array($p['required'])) {
-    foreach ($p['required'] as $key) {
-			if (empty($this->request['map'][$key])) {
+  if (isset($p['input']) && is_array($p['input'])) {
+    foreach ($p['input'] as $key => $require_check) {
+			if (!empty($require_check[0]) && empty($this->request['map'][$key])) {
       	throw new RestServerException('missing required parameter', self::ERR_INVALID_INPUT, 403, 'parameter='.$key);
+			}
+
+			if (!empty($require_check[1]) && isset($this->request['map'][$key])) {
+				if (!ValueCheck::run($key, $this->request['map'][$key], $require_check[1])) {
+      		throw new RestServerException('parameter check failed', self::ERR_INVALID_INPUT, 403, $key.'=['.$this->request['map'][$key].'] check='.$require_check[1]);
+				}
 			}
     }
   }
-
-  if (isset($p['check']) && is_array($p['check'])) {
-    foreach ($p['check'] as $key => $check) {
-			if (isset($this->request['map'][$key])) {
-				if (!ValueCheck::run($key, $value, $check)) {
-      		throw new RestServerException('parameter check failed', self::ERR_INVALID_INPUT, 403, $key.'=['.$value.'] check='.$check);
-				}
-			}
-		}
-	}
 }
 
 
