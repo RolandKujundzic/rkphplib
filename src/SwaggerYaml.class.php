@@ -803,13 +803,13 @@ private function getYamlType($any) {
 		$type = [ 'type' => 'boolean' ];
 	}
 	else if (is_integer($any)) {
-		$type = [ 'type' => 'integer' ];
+		$type = [ 'type' => 'integer', 'example' => $any ];
 	}
 	else if (is_float($any)) {
-		$type = [ 'type' => 'float' ];
+		$type = [ 'type' => 'float', 'example' => $any ];
 	}
 	else if (is_string($any)) {
-		$type = [ 'type' => 'string' ];
+		$type = [ 'type' => 'string', 'example' => $any ];
 	}
 	else if (is_array($any)) {
 		$type = $this->isMap($any) ? [ 'type' => 'object', 'properties' => $this->getYamlArray($any, 'properties') ] : [ 'type' => 'array', 'items' => $this->getYamlArray($any, 'items') ]; 
