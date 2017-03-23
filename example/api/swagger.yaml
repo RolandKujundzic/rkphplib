@@ -1,0 +1,172 @@
+swagger: '2.0'
+info:
+    title: 'API Documentation'
+    version: 1.0.0
+    description: "Write your description here.\n"
+host: localhost
+schemes:
+    - https
+basePath: /api
+consumes:
+    - application/x-www-form-urlencoded
+    - multipart/form-data
+    - application/json
+    - application/xml
+    - application/octet-stream
+produces:
+    - application/json
+    - application/xml
+paths:
+    '/user/file/{id}':
+        put:
+            produces:
+                - application/json
+                - application/xml
+            parameters:
+                -
+                    $ref: '#/parameters/header_X-Auth-Token'
+                -
+                    $ref: '#/parameters/header_Accept-Charset'
+                -
+                    $ref: '#/parameters/header_Accept'
+                -
+                    $ref: '#/parameters/path_id'
+            responses:
+                200:
+                    description: success
+                400:
+                    description: error
+            consumes:
+                - application/octet-stream
+            summary: 'Replace user file'
+            description: 'Replace user file.'
+        delete:
+            produces:
+                - application/json
+                - application/xml
+            parameters:
+                -
+                    $ref: '#/parameters/header_X-Auth-Token'
+                -
+                    $ref: '#/parameters/header_Accept-Charset'
+                -
+                    $ref: '#/parameters/header_Accept'
+                -
+                    $ref: '#/parameters/path_id'
+            responses:
+                200:
+                    description: success
+                400:
+                    description: error
+            consumes:
+                - nothing
+            summary: 'Delete user file'
+            description: 'Delete user file.'
+    /user/file:
+        post:
+            produces:
+                - application/json
+                - application/xml
+            parameters:
+                -
+                    $ref: '#/parameters/header_X-Auth-Token'
+                -
+                    $ref: '#/parameters/header_Accept-Charset'
+                -
+                    $ref: '#/parameters/header_Accept'
+            responses:
+                200:
+                    description: success
+                400:
+                    description: error
+            consumes:
+                - multipart/form-data
+            summary: 'Upload user file'
+            description: 'Upload user file.'
+    '/user/{type}/{locale}':
+        post:
+            produces:
+                - application/json
+                - application/xml
+            parameters:
+                -
+                    $ref: '#/parameters/header_X-Auth-Token'
+                -
+                    $ref: '#/parameters/header_Accept-Charset'
+                -
+                    $ref: '#/parameters/header_Accept'
+                -
+                    $ref: '#/parameters/path_type'
+                -
+                    $ref: '#/parameters/path_locale'
+            responses:
+                200:
+                    description: success
+                400:
+                    description: error
+            consumes:
+                - application/x-www-form-urlencode
+            summary: 'Create User'
+            description: 'Create User.'
+    '/user/{id}':
+        put:
+            produces:
+                - application/json
+                - application/xml
+            parameters:
+                -
+                    $ref: '#/parameters/header_X-Auth-Token'
+                -
+                    $ref: '#/parameters/header_Accept-Charset'
+                -
+                    $ref: '#/parameters/header_Accept'
+                -
+                    $ref: '#/parameters/path_id'
+            responses:
+                200:
+                    description: success
+                400:
+                    description: error
+            summary: 'Update user'
+            description: 'Update user.'
+        get:
+            produces:
+                - application/json
+                - application/xml
+            parameters:
+                -
+                    $ref: '#/parameters/header_X-Auth-Token'
+                -
+                    $ref: '#/parameters/header_Accept-Charset'
+                -
+                    $ref: '#/parameters/header_Accept'
+                -
+                    $ref: '#/parameters/path_id'
+            responses:
+                200:
+                    description: success
+                400:
+                    description: error
+            consumes:
+                - nothing
+            summary: 'Return user data'
+            description: 'Return user data.'
+parameters:
+    header_X-Auth-Token:
+        in: header
+        name: X-Auth-Token
+        description: 'API access token'
+        required: true
+        type: string
+    header_Accept-Charset:
+        in: header
+        name: Accept-Charset
+        required: true
+        type: string
+        default: utf-8
+    header_Accept:
+        in: header
+        name: Accept
+        required: true
+        type: string
+        default: application/json
