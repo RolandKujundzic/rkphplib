@@ -28,7 +28,7 @@ php -S localhost:10081 post_multipart_form_data.php
 
 Create swagger yaml API documentation from annotations in ApiExample.class.php.
 
-* @api: first annotation, comma separated list (e.g. version 1.0, param $id[:header], no_ref, no_security, ...)
+* @api: first annotation, comma separated list (e.g. version 1.0, param $id[:header], no_ref NAME, no_security NAME, ...)
 * @api_summary: Summary
 * @api_desc: Description
 * @api_consumes: comma separated list (application/x-www-form-url-encoded, multipart/form-data)
