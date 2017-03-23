@@ -169,7 +169,7 @@ public function tok_load($param, $file) {
 public function tok_if($param, $p) {
 	
 	if (!empty($param)) {
-		list ($do, $param) = \rkphplib\lib\split_str(':', $param, 2);
+		list ($do, $param) = \rkphplib\lib\split_str(':', $param, false, 2);
 	}
 	else {
 		$do = '';
