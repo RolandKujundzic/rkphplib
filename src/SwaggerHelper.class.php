@@ -85,19 +85,30 @@ public function getAnnotations($options = []) {
 	$methods = [ 'post', 'get', 'put', 'delete' ];
 	$path_doc = [];
 
+	$code_header = empty($options['code_header']) ? '' : "include_once('".$options['code_header']."');\n\n";
+
+	if (!empty($options['save_as'])) {
+		$code_header = File::load($options['code_header']);
+		File::save($options['save_as'], trim($code_header)."\n\n".$this->getSWG());
+	}
+
 	foreach ($this->sobj['paths'] as $path => $p) {
 		foreach ($methods as $m) {
 			if (isset($p[$m])) {
+				$swg_doc = $this->parsePath($m, $path, $p[$m]);
+
 				if (!empty($options['save_in'])) {
-					$code_header = empty($options['code_header']) ? '' : "include_once('".$options['code_header']."');\n\n";
 					$file = $options['save_in'].'/'.$m.str_replace(['/', '{', '}'], ['@', '', ''], $path).'.php';
-					$code = '<'."?php\n\n".$code_header.$this->getSWG()."/**\n".$this->parsePath($m, $path, $p[$m]).
-						"\n */\n\$apiDT->call('".$this->last_schema."');\n";
+					$code = '<'."?php\n\n".$code_header.$this->getSWG()."/**\n".$swg_doc."\n */\n\$apiDT->call('".$this->last_schema."');\n";
 					File::save($file, $code);
 					$path_doc[$m.'_'.$path] = $file;
 				}
+				else if (!empty($options['save_as'])) {
+					File::append($options['save_as'], "\n\n/**\n".$swg_doc."\n */\n\$apiDT->call('".$this->last_schema."');\n");
+					$path_doc[$m.'_'.$path] = $options['save_as'];
+				}
 				else {
-					$path_doc[$m.'_'.$path] = $this->parsePath($m, $path, $p[$m]);
+					$path_doc[$m.'_'.$path] = $swg_doc;
 				}
 			}
 		}
@@ -125,7 +136,7 @@ private function getSWG($name = '') {
 		$res = $this->swg[$name];
 	}
 	else if (count($this->swg) > 0) {
-		$res = join("\n\n", $this->swg);
+		$res = join("\n", $this->swg);
 	}
 	else {
 		return $res;
@@ -163,8 +174,11 @@ private function getKeyValue($p, $name) {
 				throw new Exception('unexpected array', "name=$name p: ".print_r($p, true));
 			}
 
-			$value = str_replace('"', '\"', trim($value));
-			array_push($arr, $value);
+			$value = trim(str_replace('"', '\"', trim($value)));
+
+			if (mb_strlen($value) > 0) {
+				array_push($arr, $value);
+			}
 		}
 
 		$res = $name.'={"'.join('", "', $arr).'"}';
@@ -319,7 +333,7 @@ private function parsePath($method, $path, $p) {
 
 	if ($schema) {
 		$definition = $this->parseDefinitions($schema);
-		$swg_call = ' * @SWGCall="'.$schema.'"'."\n *\n";
+		$swg_call = ' * @SWGCall="'.$schema.'"'."\n";
 		$this->last_schema = $schema;
 	}
 
@@ -336,6 +350,7 @@ private function parsePath($method, $path, $p) {
 
 	$lines = preg_split("/\r?\n/", join(",\n", $swg));
 	$res = $swg_call.$input_check." * ".join("\n * ", $lines)."\n * )".$definition.$resp_schema;
+	$res = str_replace(" * ,\n", '', $res);
 
 	$this->log(" ... done\n");
 	return $res;
