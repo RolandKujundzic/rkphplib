@@ -15,7 +15,9 @@ use \rkphplib\Exception;
  * Create swagger yaml documentation. Every route needs "@api" Annotation. 
  * Annotation Parameter:
  * 
- * - route GET:/action = method=GET, endpoint=/action (optional if options.route_rx is used)
+ * - route GET:/action = method=GET, endpoint=/action (optional if options.route_rx captures file path,
+ * 		required if route_rx does not capture path/to/endpoint but e.g. pathToEndpoint)
+ * - route_rx_check = required for multiline block (1 = default) - use camel_case if "function methodPathToEndpoint(...)"
  * - version 1.0 = available since version 1.0
  * - internal = use only in "internal" documentation
  * - ignore = don't use in documentation
@@ -581,6 +583,7 @@ private function setTags($prefix_tag) {
 
 /**
  * Scan $file for @api-route or options.route_rx (after "@api") and call "$this->addPath($method, $path)".
+ * Either escape with // or *.
  *
  * @throws 
  * @param string $file 
@@ -589,6 +592,7 @@ private function scan($file) {
 	$lines = File::loadLines($file);
 	$is_comment = false; // true = we are inside multiline comment block
 	$route_rx = empty($this->options['route_rx']) ? '' : $this->options['route_rx'];
+	$rx_check = !empty($this->options['route_rx_check']);
 	$api = [];
 
 	foreach ($lines as $line) {
@@ -603,11 +607,13 @@ private function scan($file) {
 		else if ($is_comment && substr($line, 0, 2) === '*/') {
 			$is_comment = false;
 		}
-		else if (!$is_comment && preg_match('/^\/\/\s*@api\s+(.+)$/', $line, $match)) {
+		else if ((!$is_comment && preg_match('/^\/\/\s*@api\s+(.+)$/', $line, $match)) ||
+						($is_comment && $rx_check && preg_match('/^\s*\*\s*@api\s+(.+)$/', $line, $match))) {
 			$api = lib\split_str(',', trim($match[1]));
 			$set_api = true;
 		}
-		else if (!$is_comment && count($api) > 0 && preg_match('/^\/\/\s*@api_(.+?)\s+(.+)$/', $line, $match)) {
+		else if ((!$is_comment && count($api) > 0 && preg_match('/^\/\/\s*@api_(.+?)\s+(.+)$/', $line, $match)) ||
+						($is_comment && $rx_check && count($api) > 0 && preg_match('/^\s*\*\s*@api_(.+?)\s+(.+)$/', $line, $match))) {
 			// @api_[desc|summary|produces|consumes|param]
 			array_push($api, $match[1].': '.trim($match[2]));
 
@@ -619,18 +625,11 @@ private function scan($file) {
 			$set_api = true;
 		}
 		else if (!$is_comment && $route_rx && preg_match($route_rx, $line, $match)) {
-			$method = strtolower($match[1]);
-			$path = substr($match[2], 1, -1);
-
-			if (count($api) === 0) {
-				throw new Exception('@api tag missing in previous line', "method=$method path=$path line=$line");
-			}
-
-			$this->addPath($method, $path, $api);
+			$this->route_rx($match, $api);
 			$api = [];
 		}
 
-		if (!$set_api && count($api) > 0) {
+		if (!$rx_check && !$set_api && count($api) > 0) {
 			foreach ($api as $value) {
 				if (preg_match('/^route\s+([A-Z]+)\:(.+)/', $value, $match)) {
 					$this->addPath($match[1], trim($match[2]), $api);
@@ -640,6 +639,62 @@ private function scan($file) {
 			$api = [];
 		}
 	}
+}
+
+
+/**
+ * Execute $this->addPath($method, $path, $api) if $match check is successfull.
+ *
+ * @param vector $match
+ * @param map $api
+ */
+private function route_rx($match, $api) {
+	$rx_check = empty($this->options['route_rx_check']) ? '' : $this->options['route_rx_check'];
+	$method = strtolower($match[1]);
+	$path = $match[2];
+
+	if ((substr($path, 0, 1) == "'" && substr($path, -1) == "'") ||
+			(substr($path, 0, 1) == '"' && substr($path, -1) == '"')) {
+		$path = substr($path, 1, -1);
+	}
+
+	if (!empty($rx_check)) {
+		$old = [];
+
+		foreach ($api as $value) {
+			if (preg_match('/^route\s+([A-Z]+)\:(.+)/', $value, $match)) {
+				$old = [ $method, $path ];
+				$method = strtolower($match[1]);
+				$path = trim($match[2]);
+			}
+		}
+
+		if (count($old) != 2) {
+			throw new Exception('@api route is missing', "method=$method path=$path");
+		}
+
+		if ($rx_check == 'camel_case') {
+			// sanity check 
+			if ($method != $old[0]) {
+				throw new Exception('@api function name method mismatch', "method=$method path=$path route_rx: ".print_r($old, true));
+			}
+
+			// route GET:/user/{id}: /user/{id} use /user 
+			if (($pos = strpos($old[2], '/{')) !== false) {
+				$old[2] = substr($old[2], 0, $pos);
+			}
+
+			if ($path != join('', explode('/', ucwords($old[2], '/')))) {
+				throw new Exception('@api function name path mismatch', "method=$method path=$path route_rx: ".print_r($old, true));
+			}
+		}
+	}
+
+	if (count($api) === 0) {
+		throw new Exception('@api tag missing in previous line', "method=$method path=$path line=$line");
+	}
+
+	$this->addPath($method, $path, $api);
 }
 
 
@@ -806,6 +861,7 @@ private function addResponses($test_dir) {
  * - load_yaml = path to yaml template
  * - save_yaml = path to yaml output
  * - route_rx = regular expression for route parsing (catch: method, path) - default = ''
+ * - route_rx_check = 0|1 = default|camel_case (non-empty required if multiline comments are used)
  * - scan_files = list of (php)files with @api tags
  * - tags = map with prefix => tag 
  * - log_level = 0 (0, 1,2,3)
@@ -818,6 +874,7 @@ public function __construct($options = [ 'log_level' => 1 ]) {
 		'load_yaml' => '',
 		'save_yaml' => '',
 		'route_rx' => '',
+		'route_rx_check' => '1',
 		'scan_files' => [],
 		'tags' => [],
 		'log_level' => 0,
