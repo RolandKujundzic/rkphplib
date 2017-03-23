@@ -31,7 +31,7 @@ use \rkphplib\Exception;
  * - api_summary: @api_summary [summary]
  * - api_consumes: e.g. multipart/form-data
  * - api_produces: e.g. image/jpeg
- * - api_param: @api_param $name, $type, $required (1|0), $in (body|path|header), $default, $desc
+ * - api_param: @api_param $name, $type, $required (1|0), $in (body|formData|path|header|query), $default, $desc
  * - api_example: @api_example name=value[, name2=value2, ...]
  * 
  * @see http://swagger.io/specification/ 
