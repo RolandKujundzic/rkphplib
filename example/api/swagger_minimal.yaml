@@ -16,7 +16,7 @@ consumes:
   - application/octet-stream
 produces:
   - application/json
-	- application/xml
+  - application/xml
 paths:
   '__default':
     post:
@@ -38,7 +38,7 @@ paths:
 parameters:
   header_X-Auth-Token:
     in: header
-    name: Authorization
+    name: X-Auth-Token
     description: API access token
     required: true
     type: string
@@ -54,4 +54,3 @@ parameters:
     required: true
     type: string
     default: "application/json"
-
