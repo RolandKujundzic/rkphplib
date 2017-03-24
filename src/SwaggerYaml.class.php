@@ -894,7 +894,19 @@ private function addResponses($test_dir) {
 					if (!isset($rinfo['schema'])) {
 						$this->data['paths'][$path][$method]['responses'][$status]['schema'] = [ '$ref' => '#/definitions/'.$name ];
 						if (!isset($this->data['definitions'][$name])) {
-							$this->data['definitions'][$name] = $this->getYamlType(JSON::decode(File::load($ok_json)));
+							$json = JSON::decode(File::load($ok_json));
+
+							if (isset($this->options['use_response'])) {
+								$n = intval($this->options['use_response']) ;
+
+								if (!isset($json[$n])) {
+									throw new Exception('no response vector', "file=$ok_json use_response=$n");
+								}
+
+								$json = $json[$n];
+							}
+
+							$this->data['definitions'][$name] = $this->getYamlType($json);
 						}
 					}
 				}
@@ -915,6 +927,7 @@ private function addResponses($test_dir) {
  * - tags = map with prefix => tag 
  * - log_level = 0 (0, 1,2,3)
  * - test_dir: if set scan for methodPATH.[input|output].json
+ * - use_response: default = 0 (set only if method.ok.json is multi response vector)
  *
  * @param map $options = = [ 'log_level' => 1 ]
  */
@@ -927,7 +940,8 @@ public function __construct($options = [ 'log_level' => 1 ]) {
 		'scan_files' => [],
 		'tags' => [],
 		'log_level' => 0,
-		'test_dir' => ''
+		'test_dir' => '',
+		'use_response' => 0
 	];
 
 	foreach ($this->options as $key => $value) {
