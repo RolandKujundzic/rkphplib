@@ -69,14 +69,14 @@ private $last_api_call = '';
  * @param map $info
  */
 private function checkParameter($pname, $info) {
-	$keys = [ 'in', 'name', 'description', 'required', 'type', 'default', 'enum' ];
+	$keys = [ 'in', 'name', 'description', 'required', 'type', 'default', 'enum', 'example' ];
 	$required = [ 'in', 'name', 'type', 'required' ]; 
 	# byte = base64 encoded characters, password = obscured input
 	$allow_type = [ 'string', 'integer', 'long', 'double', 'byte', 'binary', 'boolean', 'date', 'dateTime', 'file', 'password' ];
 
 	foreach ($info as $key => $value) {
 		if (!in_array($key, $keys)) {
-			throw new Exception('unkown parameter key', $key);
+			throw new Exception('unkown parameter key', "key=$key value=$value info: ".print_r($info, true));
 		}
 	}
 
@@ -362,6 +362,11 @@ private function addParametersFromInput(&$info, $pval, $path) {
 
 	$input_data = JSON::decode(File::load($this->options['test_dir'].$path.'/'.$file));
 	$data = $input_data[$test_nr];
+
+	if (isset($data['header']) && is_array($data['header'])) {
+		$header = $data['header'];
+		unset($data['header']);
+	}
 
 	foreach ($data as $key => $value) {
 		$tinfo = $this->getYamlType($value);
@@ -839,7 +844,7 @@ private function getYamlArray($arr, $type) {
 	}
 	else if ($type == 'items') {
 		// all array elements have same value
-		$res = (count($arr) > 0) ? $this->getYamlType($arr[0]) : '{}';
+		$res = (count($arr) > 0) ? $this->getYamlType($arr[0]) : [ 'type' => 'object', 'properties' => [] ];
 	}
 
 	return $res;
