@@ -525,6 +525,7 @@ private function addToBody(&$info, $pinfo) {
 	}
 
 	if (count($pinfo) == 1) {
+		$name = $pinfo[0];
 		if (!isset($this->param[$name])) {
 			throw new Exception('parameter is not defined', $name);
 		}
