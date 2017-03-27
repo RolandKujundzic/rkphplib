@@ -6,6 +6,7 @@ require_once(__DIR__.'/Exception.class.php');
 require_once(__DIR__.'/JSON.class.php');
 require_once(__DIR__.'/XML.class.php');
 require_once(__DIR__.'/File.class.php');
+require_once(__DIR__.'/Dir.class.php');
 
 use rkphplib\Exception;
 
@@ -52,6 +53,9 @@ public $status = null;
 
 /** @var string $dump */
 public $dump = '';
+
+/** @var map $tags */
+public $tags = [];
 
 
 
@@ -367,6 +371,214 @@ private function curlOtherData($data, &$options) {
 	}
 
 	return $data;
+}
+
+
+/**
+ * Run api test(s). Load method.input.json save result as method.status.json and compare with
+ * method.ok.json. Input and ok files content is vector and last element is configuration. 
+ * Configuration parameter:
+ *
+ * - url: required 
+ * - test_num: default = 0
+ * - input_json: required, input file (get|post|put|delete).input.json
+ * - input_map: map - replace :TAG: with value (e.g. "header": { "Authorization": "Bearer !OAUTH2_TOKEN!" }
+ *
+ * @param map $config (default = [])
+ */
+public function test($config = []) {
+
+	if (empty($config['url'])) {
+		throw new Exception('url missing');
+	}
+
+	if (empty($config['input_json']) || !File::exists($config['input_json'])) {
+		throw new Exception('invalid input file');
+	}
+
+	$test_num = empty($config['test_num']) ? 0 : inval($config['test_num']);
+	$input_map = empty($config['input_map']) ? [] : $config['input_map']; 
+	list ($input, $input_opt) = $this->loadDataOptions($config['input_json'], $test_num, $input_map); 
+
+	$required = [ 'method', 'path' ];
+	foreach ($required as $key) {
+		if (empty($input_opt[$key])) {
+			throw new Exception('invalid input file: '.$key.' missing');
+		}
+	}
+	
+	$api = new APICall([ 'url' => $config['url'] ]);
+	$api->set('method', $input_opt['method']);
+	$api->set('uri', $input_opt['path']);
+
+	if (isset($input_opt['header'])) {
+		$api->set('header', $input_opt['header']);
+	}
+
+	if (!$api->exec($input)) {
+		throw new Exception('API test '.$api->get('method').':'.$api->get('uri').' failed: '.$api->status, 
+			'FILE: '.$config['input_json']."\nDUMP: ".$api->dump."\nRESULT: ".print_r($api->result, true)."\n\n");
+	}
+
+	$base = dirname($config['input_json']).'/'.$input_opt['method'].'.';
+  $output_json = $base.$api->status.'.json';
+  print $api->get('method').':'.$api->get('uri').'='.$api->status.', compare '.$output_json.' with '.basename($base).'ok.json ... ';
+
+	if (!empty($input_opt['export_tags'])) {
+		$this->exportTags($api->result, $input_opt['export_tags']);
+	}
+
+  File::save($output_json, JSON::encode($api->result));
+
+  $compare_json = $base.'ok.json';
+	list ($result_ok, $compare_opt) = $this->loadDataOptions($compare_json, $test_num, $input_map); 
+	$ignore = $this->compare_result($api->result, $result_ok, $compare_opt);
+
+	if (count($ignore) == 0) {
+	  print "ok\n";
+	}
+	else {
+		print "\n".join("\n", $ignore)."\nResult ok\n";
+	}
+
+  File::remove($output_json);
+}
+
+
+/**
+ * Export tag map.
+ * 
+ * @param map $data
+ * @param map $tag_list
+ * @return map
+ */
+private function exportTags($data, $tag_list) {
+	$tags = [];
+
+	foreach ($tag_list as $key => $tl_value) {
+		$prefix = '';
+
+		if (($pos = strpos($key, ':')) !== false) {
+			$prefix = substr($key, $pos + 1);
+			$key = substr($key, 0, $pos);
+		}
+
+		if (is_array($tl_value)) {
+			foreach ($tl_value as $lkey) {
+				$path = explode('.', $key.'.'.$lkey);
+
+				if (count($path) == 2) {
+					$value = $data[$path[0]][$path[1]];
+				}
+				else if (count($path) == 3) {
+					$value = $data[$path[0]][$path[1]][$path[2]];
+				}
+				else if (count($path) == 4) {
+					$value = $data[$path[0]][$path[1]][$path[2]][$path[3]];
+				}
+				else if (count($path) == 5) {
+					$value = $data[$path[0]][$path[1]][$path[2]][$path[3]][$path[4]];
+				}
+				else {
+					throw new Exception('export_tags depth > 5', "key=$key, lkey=$lkey, path=$path, prefix=$prefix"); 
+				}
+
+				$tags[$prefix.$lkey] = $value;
+			}
+		}
+		else {
+			$tags[$prefix.$key] = $data[$key];
+		}
+	}
+
+	foreach ($tags as $key => $value) {
+		$key = strtoupper($key);
+		$this->tags[$key] = $value;
+	}
+}
+
+	
+/**
+ * Compare $curr with $ok. Ignore keys set in $opt['dont_compare'].
+ * Return ignore message list. 
+ *
+ * @throws
+ * @param map $curr
+ * @param map $ok
+ * @param map $opt
+ * @return vector
+ */
+private function compare_result($curr, $ok, $opt) {
+
+	if (!isset($opt['key'])) {
+    $opt['key'] = [];
+  }
+
+	if (!isset($opt['ignore'])) {
+    $opt['ignore'] = [];
+  }
+
+	if (!is_array($curr) || !is_array($ok)) {
+		if ($curr !== $ok) {
+			$key = array_pop($opt['key']);
+			$path = join('.', $opt['key']);
+ 
+			if (isset($opt['dont_compare']) && empty($path) && !empty($opt['dont_compare'][$key])) {
+        array_push($opt['ignore'], "ignore $key: $curr != $ok");
+			}
+      else if (isset($opt['dont_compare']) && isset($opt['dont_compare'][$path]) && in_array($key, $opt['dont_compare'][$path])) {
+        array_push($opt['ignore'], "ignore $path.$key: $curr != $ok");
+			}
+			else {
+				throw new Exception('comparison failed', "$curr !== $ok (path=$path, key=$key)");
+			}
+		}
+	}
+	else {
+		foreach ($ok as $key => $value) {
+			if (isset($curr[$key])) {
+				array_push($opt['key'], $key);
+				$opt['ignore'] = $this->compare_result($curr[$key], $value, $opt);
+				array_pop($opt['key']);
+			}
+			else if (!array_key_exists($key, $curr) || !is_null($value)) {
+				throw new Exception('missing parameter', "$key = $value");
+			}
+		}
+	}
+
+	return $opt['ignore'];
+}
+
+
+/**
+ * Return data (json[0]) and options (json[last]). Apply replace (!TAG!).
+ * 
+ * @param string file
+ * @param int $pos = 0
+ * @param map replace = []
+ * @return vector<map:map>
+ */
+private function loadDataOptions($file, $pos = 0, $replace = []) {
+	$json_str = File::load($file);
+
+	foreach ($replace as $key => $value) {
+		$json_str = str_replace('!'.$key.'!', $value, $json_str);
+	}
+
+	foreach ($this->tags as $key => $value) {
+		$json_str = str_replace('!'.$key.'!', $value, $json_str);
+	}
+
+	$json = JSON::decode($json_str);
+
+	if (!is_array($json) || !isset($json[$pos]) || $pos >= count($json) - 1) {
+		throw new Exception("invalid json file $file (check test[$pos] and options");
+	}
+
+	$data = $json[$pos];
+	$options = array_pop($json);
+	return [ $data, $options ];
 }
 
 
