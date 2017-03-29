@@ -519,6 +519,10 @@ private function compare_result($curr, $ok, $opt) {
   }
 
 	if (!is_array($curr) || !is_array($ok)) {
+		if ($ok === "NULL") {
+			$ok = null;
+		}
+	
 		if ($curr !== $ok) {
 			$key = array_pop($opt['key']);
 			$path = join('.', $opt['key']);
