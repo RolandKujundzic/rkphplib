@@ -112,6 +112,16 @@ private function checkParameter($pname, $info) {
 		return;
 	}
 
+	if (isset($info['description']) && strlen($info['description']) == 0) {
+		// remove empty description
+		unset($info['description']);
+	}
+
+	if (isset($info['example']) && $info['type'] != 'object') {
+		// example only allowed in object properties
+		unset($info['example']);
+	}
+
 	$this->log("Define parameters.$pname", 3);
 	$this->data['parameters'][$pname] = $info;
 }
