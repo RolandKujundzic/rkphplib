@@ -370,8 +370,7 @@ private function addParametersFromInput(&$info, $pval, $path) {
 		throw new Exception('options.test_dir is empty');
 	}
 
-	$input_data = JSON::decode(File::load($this->options['test_dir'].$path.'/'.$file));
-	$data = $input_data[$test_nr];
+	$data = $this->loadJSON($this->options['test_dir'].$path.'/'.$file, intval($test_nr));
 
 	if (isset($data['header']) && is_array($data['header'])) {
 		$header = $data['header'];
@@ -383,6 +382,35 @@ private function addParametersFromInput(&$info, $pval, $path) {
 		$pinfo = [ $key, $tinfo['type'], 0, $in, '', '', 'example:'.$value ]; 
 		$this->addNewParameter($info, $pinfo);
 	}
+}
+
+
+/**
+ * Return json from $file. Replace !TAG!.
+ * 
+ * @param string $file
+ * @param int $test_nr
+ * @return map
+ */
+private function loadJSON($file, $test_nr) {
+	
+	$json_str = File::load($file);
+	$json = JSON::decode($json_str);
+	$last = count($json) - 1;
+
+	if (isset($json[$last]['tags'])) {
+		foreach ($json[$last]['tags'] as $key => $value) {
+			$json_str = str_replace('!'.$key.'!', $value, $json_str);
+		}
+
+		$json = JSON::decode($json_str);
+	}
+
+	if (!isset($json[$test_nr])) {
+		throw new Exception('invalid json vector', "element [$test_nr] not set");
+	}
+
+	return $json[$test_nr];
 }
 
 
@@ -905,16 +933,11 @@ private function addResponses($test_dir) {
 					if (!isset($rinfo['schema'])) {
 						$this->data['paths'][$path][$method]['responses'][$status]['schema'] = [ '$ref' => '#/definitions/'.$name ];
 						if (!isset($this->data['definitions'][$name])) {
-							$json = JSON::decode(File::load($ok_json));
-
 							if (isset($this->options['use_response'])) {
-								$n = intval($this->options['use_response']) ;
-
-								if (!isset($json[$n])) {
-									throw new Exception('no response vector', "file=$ok_json use_response=$n");
-								}
-
-								$json = $json[$n];
+								$json = $this->loadJSON($ok_json, intval($this->options['use_response']));
+							}
+							else {
+								$json = JSON::decode(File::load($ok_json));
 							}
 
 							$this->data['definitions'][$name] = $this->getYamlType($json);
