@@ -565,13 +565,21 @@ private function compare_result($curr, $ok, $opt) {
  */
 private function loadDataOptions($file, $pos = 0, $replace = []) {
 	$json_str = File::load($file);
+	$json_orig = JSON::decode($json_str);
+	$rtags = [];
 
 	foreach ($replace as $key => $value) {
-		$json_str = str_replace('!'.$key.'!', $value, $json_str);
+		if (mb_strpos($json_str, '!'.$key.'!') !== false) {
+			$json_str = str_replace('!'.$key.'!', $value, $json_str);
+			$rtags[$key] = $value;
+		}
 	}
 
 	foreach ($this->tags as $key => $value) {
-		$json_str = str_replace('!'.$key.'!', $value, $json_str);
+		if (mb_strpos($json_str, '!'.$key.'!') !== false) {
+			$json_str = str_replace('!'.$key.'!', $value, $json_str);
+			$rtags[$key] = $value;
+		}
 	}
 
 	$json = JSON::decode($json_str);
@@ -582,6 +590,30 @@ private function loadDataOptions($file, $pos = 0, $replace = []) {
 
 	$data = $json[$pos];
 	$options = array_pop($json);
+
+	if (count($rtags) > 0) {
+		$last = count($json_orig) - 1;
+		$update = false;
+
+		if (!isset($json_orig[$last]['tags'])) {
+			$json_orig[$last]['tags'] = $rtags;
+			$update = true;
+		}
+		else {
+			foreach ($rtags as $key => $value) {
+				// only add new tags - ignore value changes
+				if (!isset($json_orig[$last]['tags'][$key])) {
+					$json_orig[$last]['tags'][$key] = $value;
+					$update = true;
+				}
+			}
+		}
+
+		if ($update) {
+			File::save($file, JSON::encode($json_orig));
+		}
+	}
+
 	return [ $data, $options ];
 }
 
