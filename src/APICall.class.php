@@ -24,23 +24,30 @@ use rkphplib\Exception;
  */
 class APICall {
 
-/** @var string $method [GET|POST|PUT|DELETE|PATCH] (default = GET) */
-protected $method = 'GET';
-
-/** @var string $uri e.g. some/action */
-protected $uri = '';
-
-/** @var string $url e.g. https://domain.tld/api/v1.0 */
-protected $url = '';
-
-/** @var string $auth [request|header|basic_auth|cookie:name] (default = request) */
-protected $auth = 'request';
-
-/** @var string $token e.g. iSFxH73p91Klm */
-protected $token = '';
-
-/** @var map $header (default: { Content-Type: application/json, Accept: application/json, Accept-Charset: utf-8 }) */
-protected $header = [ 'CONTENT-TYPE' => 'application/json', 'ACCEPT' => 'application/json', 'ACCEPT-CHARSET' => 'utf-8' ];
+/** 
+ * @var map $opt default options: 
+ *
+ * - method = GET, (GET|POST|PUT|DELETE|PATCH)
+ * - uri = '', some/action (with or without leading /)
+ * - url = '', e.g. https://domain.tld/api/v1.0
+ * - auth = request, (request|header|basic_auth|cookie:name)
+ * - header = { Content-Type: application/json, Accept: application/json, Accept-Charset: utf-8 }
+ * - token = '', e.g. iSFxH73p91Klm
+ * - save = '', result save path
+ * - tags = [], use as default !TAG_REPLACE! in test() mode
+ * - decode = true, decode result if JSON/XML
+ */
+public $opt = [
+	'method' => 'GET', 
+	'uri' => '', 
+	'url' => '', 
+	'auth' => 'request', 
+	'token' => '', 
+	'header' => [ 'CONTENT-TYPE' => 'application/json', 'ACCEPT' => 'application/json', 'ACCEPT-CHARSET' => 'utf-8' ],
+	'save' => '',
+	'decode' => true,
+	'tags' => []
+	];
 
 /** @var map|string $result */
 public $result = null;
@@ -51,11 +58,11 @@ public $info = null;
 /** @var int $status */
 public $status = null;
 
+/** @var vector|null $error (if not decode error null, otherwiese [ error_message, error_object ] */
+public $error = null;
+
 /** @var string $dump */
 public $dump = '';
-
-/** @var map $tags */
-public $tags = [];
 
 
 
@@ -82,6 +89,8 @@ public function __construct($opt = []) {
  *  - content: same as header[Content-Type] e.g. application/json=default|application/xml|image/jpeg|...
  *  - accept: same as header[Accept] = result format e.g application/json=default|application/xml|...
  *  - header: e.g. [ 'Content-Type' => 'application/json', ... ]
+ *  - save_as: Save result here
+ *  - decode: decode JSON/XML result (default = true)
  *
  * @param string $name
  * @param string $value
@@ -105,19 +114,19 @@ public function set($name, $value) {
 	}
 
 	if ($name == 'content') {
-		if (empty($value) && isset($this->header['CONTENT-TYPE'])) {
-			unset($this->header['CONTENT-TYPE']);
+		if (empty($value) && isset($this->opt['header']['CONTENT-TYPE'])) {
+			unset($this->opt['header']['CONTENT-TYPE']);
 		}
 		else {
-			$this->header['CONTENT-TYPE'] = $value;
+			$this->opt['header']['CONTENT-TYPE'] = $value;
 		}
 	}
 	else if ($name == 'accept') {
-		if (empty($value) && isset($this->header['ACCEPT'])) {
-      unset($this->header['ACCEPT']);
+		if (empty($value) && isset($this->opt['header']['ACCEPT'])) {
+      unset($this->opt['header']['ACCEPT']);
     }
 		else {
-			$this->header['ACCEPT'] = $value;
+			$this->opt['header']['ACCEPT'] = $value;
 		}
 	}
 	else if ($name == 'header') {
@@ -128,17 +137,17 @@ public function set($name, $value) {
 				throw new Exception('header value is not string', print_r($hval, true));
 			}
 
-			if (empty($hval) && isset($this->header[$hkey])) {
-				unset($this->header[$hkey]);
+			if (empty($hval) && isset($this->opt['header'][$hkey])) {
+				unset($this->opt['header'][$hkey]);
 			}
 			else {
-				$this->header[$hkey] = $hval;
+				$this->opt['header'][$hkey] = $hval;
 			}
 		}
 	}
 	else {
 		$allow = [ 'method' => [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ], 'uri' => null, 'url' => null, 'token' => null, 
-			'auth' => [ 'request', 'header', 'basic_auth' ] ];
+			'auth' => [ 'request', 'header', 'basic_auth' ], 'save' => null, 'decode' => null ];
 
 		if (!array_key_exists($name, $allow)) {
 			throw new Exception('invalid name', "$name=$value");
@@ -148,7 +157,7 @@ public function set($name, $value) {
 			throw new Exception('invalid value', "$name=$value");
 		}
 
-		$this->$name = $value;
+		$this->opt[$name] = $value;
 	}
 }
 
@@ -168,14 +177,14 @@ public function get($name) {
 
 	$uname = strtoupper($name);
 
-	if (isset($this->header[$uname])) {
-		$res = $this->header[$uname];
+	if (isset($this->opt['header'][$uname])) {
+		$res = $this->opt['header'][$uname];
 	}
-	else if (property_exists($this, $name)) {
-		$res = $this->$name;
+	else if (isset($this->opt[$name])) {
+		$res = $this->opt[$name];
 	}
 	else {
-		throw new Exception('invalid name or unset header', "$name");
+		throw new Exception('invalid option name or unset header', "$name");
 	}
 
 	return $res;
@@ -212,51 +221,52 @@ public function exec($data = null) {
 
 	$required = [ 'method', 'uri', 'url' ];
 	foreach ($required as $key) {
-		if (empty($this->$key)) {
-			throw new Exception('missing parameter', $key);
+		if (empty($this->opt[$key])) {
+			throw new Exception('missing required option '.$key);
 		}
 	}
 
-	$header = $this->header;
+	$header = $this->opt['header'];
 	$options = [ 'FOLLOWLOCATION' => true, 'SSL_VERIFYPEER' => false, 
 		'SSL_VERIFYHOST' => false, 'RETURNTRANSFER' => true, 'BINARYTRANSFER' => true ];
 
-	if (!empty($this->token)) {
-		if (empty($this->auth)) {
+	if (!empty($this->opt['token'])) {
+		if (empty($this->opt['auth'])) {
 			throw new Exception('missing parameter', 'auth');
 		}
-		else if ($this->auth == 'request' && is_array($data)) {
-			$data['api_token'] = $this->token;
+		else if ($this->opt['auth'] == 'request' && is_array($data)) {
+			$data['api_token'] = $this->opt['token'];
 		}
-		else if ($this->auth == 'header') {
-			$header['X-AUTH-TOKEN'] = $this->token;
+		else if ($this->opt['auth'] == 'header') {
+			$header['X-AUTH-TOKEN'] = $this->opt['token'];
 		}
-		else if ($this->auth == 'basic_auth') {
-			$options['USERPWD'] = $this->token;
+		else if ($this->opt['auth'] == 'basic_auth') {
+			$options['USERPWD'] = $this->opt['token'];
 		}
-		else if (mb_strpos($this->auth, 'cookie:') === 0) {
-			$options['COOKIE'] = mb_substr($this->auth, 7).'='.$this->token; 
+		else if (mb_strpos($this->opt['auth'], 'cookie:') === 0) {
+			$options['COOKIE'] = mb_substr($this->opt['auth'], 7).'='.$this->opt['token']; 
 		}
 	}
 
-	if ($this->method != 'GET' && $this->method != 'POST') {
-		$header['X-HTTP-Method-Override'] = $this->method;
+	if ($this->opt['method'] != 'GET' && $this->opt['method'] != 'POST') {
+		$header['X-HTTP-Method-Override'] = $this->opt['method'];
 	}
 
-	if ($this->method == 'GET') {
+	if ($this->opt['method'] == 'GET') {
 		$options['HTTPGET'] = true;
 	}
-	else if ($this->method == 'POST') {
+	else if ($this->opt['method'] == 'POST') {
 		$options['POST'] = true;
 	}
 	else {
-		$options['CUSTOMREQUEST'] = $this->method;
+		$options['CUSTOMREQUEST'] = $this->opt['method'];
 	}
 
-	$url = (mb_substr($this->uri, 0, 1) == '/' || mb_substr($this->url, -1) == '/') ? $this->url.$this->uri : $this->url.'/'.$this->uri;
+	$url = (mb_substr($this->opt['uri'], 0, 1) == '/' || mb_substr($this->opt['url'], -1) == '/') ? 
+		$this->opt['url'].$this->opt['uri'] : $this->opt['url'].'/'.$this->opt['uri'];
 
 	if ($data !== null && is_array($data) && count($data) > 0) {
-		if ($this->method == 'GET') {
+		if ($this->opt['method'] == 'GET') {
 			$url .= $this->curlGetData($url, $data);
 		}
 		else {
@@ -294,9 +304,28 @@ public function exec($data = null) {
 	curl_close($ch);
 	
 	$this->dump = print_r($options, true);
-	
-	if ($this->header['ACCEPT'] == 'application/json') {
-		$this->result = JSON::decode($this->result);
+
+	if ($this->opt['decode']) {	
+		if ($this->opt['header']['ACCEPT'] == 'application/json') {
+			try {
+				$this->result = JSON::decode($this->result);
+			}
+			catch (\Exception $e) {
+				$this->error = [ 'json decode failed', $e ];
+			}
+		}
+		else if ($this->opt['header']['ACCEPT'] == 'application/xml') {
+			try {
+				$this->result = XML::toMap($this->result);
+			}
+			catch (\Exception $e) {
+				$this->error = [ 'xml decode failed', $e ];
+			}
+		}
+	}
+
+	if ($this->opt['save']) {
+		File::save($this->opt['save'], $this->result);
 	}
 
 	return $success;
@@ -335,11 +364,11 @@ private function curlGetData($url, $data) {
  */
 private function curlOtherData($data, &$options) {
 
-	if (!isset($this->header['CONTENT-TYPE'])) {
+	if (!isset($this->opt['header']['CONTENT-TYPE'])) {
 		throw new Exception('Content-Type is not set');
 	}
 
-	$ct = $this->header['CONTENT-TYPE'];
+	$ct = $this->opt['header']['CONTENT-TYPE'];
 	if (is_array($ct)) {
 		throw new Exception('Content-Type is array', print_r($ct, true));
 	}
@@ -367,7 +396,7 @@ private function curlOtherData($data, &$options) {
 		unset($options['CUSTOMREQUEST']);
 	}
 	else {
-		throw new Exception('invalid content type for array data', print_r($this->header, true));
+		throw new Exception('invalid content type for array data', print_r($this->opt['header'], true));
 	}
 
 	return $data;
@@ -422,26 +451,40 @@ public function test($config = []) {
 
 	$base = dirname($config['input_json']).'/'.$input_opt['method'].'.';
   $output_json = $base.$api->status.'.json';
-  print $api->get('method').':'.$api->get('uri').'='.$api->status.', compare '.$output_json.' with '.basename($base).'ok.json ... ';
 
 	if (!empty($input_opt['export_tags'])) {
 		$this->exportTags($api->result, $input_opt['export_tags']);
 	}
 
-  File::save($output_json, JSON::encode($api->result));
+	if (!empty($input_opt['result_md5'])) {
+		print $api->get('method').':'.$api->get('uri').'='.$api->status.', check md5 ... ';
 
-  $compare_json = $base.'ok.json';
-	list ($result_ok, $compare_opt) = $this->loadDataOptions($compare_json, $test_num, $input_map); 
-	$ignore = $this->compare_result($api->result, $result_ok, $compare_opt);
-
-	if (count($ignore) == 0) {
-	  print "ok\n";
+		if (md5($api->result) == $input_opt['result_md5']) {
+	  	print "ok\n";
+		}
+		else {
+			$save_as = $base.$api->status.'result';
+			File::save($save_as, $api->result);
+			throw new Exception('md5 mismatch: md5('.$save_as.') != '.$input_opt['result_md5']);
+		}
 	}
 	else {
-		print "\n".join("\n", $ignore)."\nResult ok\n";
-	}
+		print $api->get('method').':'.$api->get('uri').'='.$api->status.', compare '.$output_json.' with '.basename($base).'ok.json ... ';
+	  File::save($output_json, JSON::encode($api->result));
 
-  File::remove($output_json);
+	  $compare_json = $base.'ok.json';
+		list ($result_ok, $compare_opt) = $this->loadDataOptions($compare_json, $test_num, $input_map); 
+		$ignore = $this->compare_result($api->result, $result_ok, $compare_opt);
+
+		if (count($ignore) == 0) {
+	  	print "ok\n";
+		}
+		else {
+			print "\n".join("\n", $ignore)."\nResult ok\n";
+		}
+
+  	File::remove($output_json);
+	}
 }
 
 
@@ -493,7 +536,7 @@ private function exportTags($data, $tag_list) {
 
 	foreach ($tags as $key => $value) {
 		$key = strtoupper($key);
-		$this->tags[$key] = $value;
+		$this->opt['tags'][$key] = $value;
 	}
 }
 
@@ -575,7 +618,7 @@ private function loadDataOptions($file, $pos = 0, $replace = []) {
 		}
 	}
 
-	foreach ($this->tags as $key => $value) {
+	foreach ($this->opt['tags'] as $key => $value) {
 		if (mb_strpos($json_str, '!'.$key.'!') !== false) {
 			$json_str = str_replace('!'.$key.'!', $value, $json_str);
 			$rtags[$key] = $value;
@@ -612,6 +655,18 @@ private function loadDataOptions($file, $pos = 0, $replace = []) {
 		if ($update) {
 			File::save($file, JSON::encode($json_orig));
 		}
+	}
+
+	if (mb_strpos($json_str, '"!') !== false && mb_strpos($json_str, '!"') !== false && isset($options['tags'])) {
+		// this->opt['tags'] not set
+		foreach ($options['tags'] as $key => $value) {
+			if (mb_strpos($json_str, '!'.$key.'!') !== false) {
+				$json_str = str_replace('!'.$key.'!', $value, $json_str);
+			}
+		}
+
+		$json = JSON::decode($json_str);
+		$data = $json[$pos];
 	}
 
 	return [ $data, $options ];
