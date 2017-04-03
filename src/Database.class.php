@@ -108,6 +108,22 @@ public static function getPoolSize() {
 
 
 /**
+ * Return database pool info.
+ * @return vector
+ */
+public static function getInfo() {
+	$res = [];
+
+	for ($i = 0; $i < count(self::$pool); $i++) {
+		$info = [ 'id' => self::$pool[$i]->getId(), 'hasResultSet' => self::$pool[$i]->hasResultSet() ];
+		array_push($res, $info);
+	}
+
+	return $res;
+}
+
+
+/**
  * Prevent creating a new instance of the *Singleton* via the `new` operator.
  */
 protected function __construct() { }
