@@ -80,11 +80,11 @@ public static function computeId($dsn, $query_map = null) {
 
 	$res = md5($dsn);
 
-	if (is_null($query_map)) {
+	if (is_null($query_map) || (is_array($query_map) && count($query_map) === 0)) {
 		return $res;
 	}
 
-	if (!is_array($query_map) || count($query_map) < 1) {
+	if (!is_array($query_map)) {
 		throw new Exception('invalid query map', print_r($query_map, true));
 	}
 
