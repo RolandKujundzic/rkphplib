@@ -5,6 +5,7 @@ namespace rkphplib;
 require_once(__DIR__.'/lib/log_debug.php');
 require_once(__DIR__.'/FSEntry.class.php');
 require_once(__DIR__.'/File.class.php');
+require_once(__DIR__.'/JSON.class.php');
 
 
 
@@ -139,6 +140,11 @@ public function load($file) {
  * Print overall result.
  */
 public function result() {
+
+	if (count($this->_tc['overview']) == 0) {
+		return;
+	}
+
 	$overall = "Overall result of ".count($this->_tc['overview'])." Class/Function Tests:";
 	$msg = sprintf("%s\n%'=".mb_strlen($overall)."s\n", $overall, '');
 	$this->_log($msg, 2);
@@ -302,15 +308,19 @@ public function callTest($func, $arg, $result) {
 
 
 /**
- * Compare output with expected result. Result vector may contain lass keys than output (e.g. ignore date values).
+ * Compare output with expected result. Result vector may contain less keys than output (e.g. ignore date values).
  *
  * @param string $msg
  * @param vector<any> $out_list
- * @param vector<any> $ok_list
+ * @param vector<any> $ok_list ("@file[.json|.ser|.txt]" entry = load file)
  */
 public function compare($msg, $out_list, $ok_list) {
 	$this->_log($msg.": ", 0);
 	$this->_tc['num']++;
+
+	if (is_string($ok_list)) {
+		$ok_list = $this->getResult($ok_list);
+	}
 
 	$n = count($ok_list);
 	$err = 0;
@@ -318,7 +328,7 @@ public function compare($msg, $out_list, $ok_list) {
 
 	for ($i = 0; $i < $n; $i++) {
 		$t_out = $out_list[$i];
-		$t_ok = $ok_list[$i];
+		$t_ok = $this->getResult($ok_list[$i]);
 		$cmp = true;
 
 		if ((is_string($t_out) && is_string($t_ok)) || (is_numeric($t_out) && is_numeric($t_ok)) || (is_bool($t_out) && is_bool($t_ok))) {
@@ -372,6 +382,10 @@ public function compareHash($msg, $out, $ok) {
 	$this->_tc['num']++;
 	$err = 0;
 
+	if (is_string($ok)) {
+		$ok = $this->getResult($ok);
+	}
+
 	foreach ($ok as $key => $ok_val) {
 		if (!isset($out[$key])) {
 			$this->_error_cmp("(Missing $key)", '', $ok_val);
@@ -379,6 +393,8 @@ public function compareHash($msg, $out, $ok) {
 		}
 		else {
 			$out_val = $out[$key];
+			$ok_val = $this->getResult($ok_val);
+
 			if ($out_val !== $ok_val) {
 				$this->_error_cmp("(Compare $key)", $out_val, $ok_val);
 				$err++;
@@ -396,6 +412,38 @@ public function compareHash($msg, $out, $ok) {
 		$this->_log("$n/$n OK");
 		$this->_tc['ok']++;
 	}
+}
+
+
+/**
+ * If value is string with "@" prefix and [.json|.ser|.txt] suffix
+ * return file content. Otherwise return value.
+ *
+ * @param any
+ * @return any
+ */
+private function getResult($value) {
+
+	if (!is_string($value) || mb_substr($value, 0, 1) !== '@') {
+		return $value;
+	}
+
+	$file = mb_substr($value, 1);
+
+	if (mb_substr($file, -5) === '.json') {
+		$value = JSON::decode(File::load($file));
+	}
+	else if (mb_substr($file, -4) === '.ser') {
+		$value = File::unserialize($file);
+	}
+	else if (mb_substr($file, -4) === '.txt') {
+		$value = File::load($file);
+	}
+	else {
+		throw new Exception('invalid file suffix use [json|ser|txt]', "file=$file"); 
+	}
+
+	return $value;
 }
 
 
