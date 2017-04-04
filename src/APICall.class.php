@@ -445,8 +445,10 @@ public function test($config = []) {
 	}
 
 	if (!$api->exec($input)) {
-		throw new Exception('API test '.$api->get('method').':'.$api->get('uri').' failed: '.$api->status, 
-			'FILE: '.$config['input_json']."\nDUMP: ".$api->dump."\nRESULT: ".print_r($api->result, true)."\n\n");
+		if (empty($input_opt[$api->status.'_ok'])) {
+			throw new Exception('API test '.$api->get('method').':'.$api->get('uri').' failed: '.$api->status, 
+				'FILE: '.$config['input_json']."\nDUMP: ".$api->dump."\nRESULT: ".print_r($api->result, true)."\n\n");
+		}
 	}
 
 	$base = dirname($config['input_json']).'/'.$input_opt['method'].'.';
@@ -469,10 +471,10 @@ public function test($config = []) {
 		}
 	}
 	else {
-		print $api->get('method').':'.$api->get('uri').'='.$api->status.', compare '.$output_json.' with '.basename($base).'ok.json ... ';
-	  File::save($output_json, JSON::encode($api->result));
+		$compare_json = File::exists($base.$api->status.'.ok.json') ? $base.$api->status.'.ok.json' : $base.'ok.json';
+		print $api->get('method').':'.$api->get('uri').'='.$api->status.', compare '.$output_json.' with '.basename($compare_json).' ... ';
+		File::save($output_json, JSON::encode($api->result));
 
-	  $compare_json = $base.'ok.json';
 		list ($result_ok, $compare_opt) = $this->loadDataOptions($compare_json, $test_num, $input_map); 
 		$ignore = $this->compare_result($api->result, $result_ok, $compare_opt);
 
