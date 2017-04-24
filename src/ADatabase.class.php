@@ -526,7 +526,8 @@ public function setQueryHash($conf_hash, $require_keys = '') {
  * If abort is true abort if name doesn't match [a-zA-Z0-9_\.]+.
  *
  * @throws rkphplib\Exception if error
- * @param string
+ * @param string $name
+ * @param bool $abort = false
  * @return string
  */
 public static function escape_name($name, $abort = false) {
