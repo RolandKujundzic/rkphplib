@@ -6,6 +6,7 @@ namespace rkphplib;
  * Custom exception with two parameter constructor.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
+ * @copyright 2016 Roland Kujundzic
  *
  */
 class Exception extends \Exception {
@@ -21,8 +22,8 @@ public $internal_message = '';
  * @param string $internal_message error message detail
  */
 public function __construct($message, $internal_message = '') {
-  parent::__construct($message);
-  $this->internal_message = $internal_message;
+	parent::__construct($message);
+	$this->internal_message = $internal_message;
 }
 
 }
