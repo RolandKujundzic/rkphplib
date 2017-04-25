@@ -12,17 +12,21 @@ require_once(__DIR__.'/File.class.php');
  * All methods are static.
  * 
  * @author Roland Kujundzic <roland@kujundzic.de>
+ * @copyright 2016 Roland Kujundzic
  *
  */
 class Dir {
 
+/** @const int CREATE_TARGET_PATH */
 const CREATE_TARGET_PATH = 1;
+
+/** @const int REMOVE_EXISTING */
 const REMOVE_EXISTING = 2;
 
-/** @var octal default directory creation mode */
+/** @var int $DEFAULT_MODE octal, default directory creation mode is 0777 */
 public static $DEFAULT_MODE = 0777;
 
-/** @var bool directory copy behaviour */
+/** @var bool $SKIP_UNREADABLE directory copy behaviour */
 public static $SKIP_UNREADABLE = false;
 
 
@@ -389,8 +393,6 @@ private static function _has_suffix($file, $suffix_list) {
 
 /**
  * Return files in directory with suffix in suffix_list. 
- * 
- * @collect: split basename at [_] and return hash { basename: [file, file2, ...], ... }
  * 
  * @param string $path
  * @param array $suffix_list e.g. (jpg,png) or (.jpg,.png) - default = []
