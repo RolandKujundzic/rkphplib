@@ -18,6 +18,9 @@ class PDParser {
 /** @var array[string]string $class */
 private $class = []; 
 
+/** @var array[string]string $main */
+private $main = []; 
+
 /** @var array[string]array $function */
 private $function = [];
 
@@ -56,14 +59,16 @@ private $use = [];
  * @var array[string]array $tag List of tag definitions (tag = [is_multiline, is_unique, split_rules ])
  */
 private static $tag = [
-	'author'  => [ 0, 0, null ],
-	'throws'  => [ 0, 1, null ],
-	'desc'    => [ 1, 0, null ],
-	'example' => [ 1, 0, null ],
-	'see'     => [ 0, 0, null ],
-	'return'  => [ 0, 1, [ '/^([a-zA-Z0-9_\|\[\]\:\\\]+) ?(.*?)$/', 'type', 'desc' ] ],
-	'param'   => [ 0, 0, [ '/^([a-zA-Z0-9_\|\[\]\:\\\]+) \&?\$([a-zA-Z0-9_]+)(.*)$/', 'type', 'name', 'desc' ] ],
-	'var'     => [ 0, 1, [ '/^([a-zA-Z0-9_\|\[\]\:\\\]+) \$([a-zA-Z0-9_]+)(.*)$/', 'type', 'name', 'desc' ] ]
+	'author'    => [ 0, 0, [ '/^(.+) <(.+)>$/', 'name', 'email' ] ],
+	'copyright' => [ 0, 0, [ '/^([0-9\-]+) (.+)$/', 'year', 'organisation' ] ],
+	'throws'    => [ 0, 1, null ],
+	'desc'      => [ 1, 0, null ],
+	'example'   => [ 1, 0, null ],
+	'see'       => [ 0, 0, [ '/^([a-zA-Z0-9\-\.\:\/>\(\)]+) ?(.*)$/', 'uri', 'desc' ] ],
+	'return'    => [ 0, 1, [ '/^([a-zA-Z0-9_\|\[\]\:\\\]+) ?(.*?)$/', 'type', 'desc' ] ],
+	'param'     => [ 0, 0, [ '/^([a-zA-Z0-9_\|\[\]\:\\\]+) \&?\$([a-zA-Z0-9_]+)(.*)$/', 'type', 'name', 'desc' ] ],
+	'var'       => [ 0, 1, [ '/^([a-zA-Z0-9_\|\[\]\:\\\]+) \$([a-zA-Z0-9_]+)(.*)$/', 'type', 'name', 'desc' ] ],
+	'const'     => [ 0, 1, [ '/^([a-zA-Z0-9_\|\[\]\:\\\]+) \([A-Z0-9_]+)(.*)$/', 'type', 'name', 'desc' ] ]
 ];
 
 /** @var array $code */
@@ -103,8 +108,11 @@ public function parse($php_file) {
 		}
 	}
 
+	$this->checkFunctions();
+
 	$res = [];
 	$res['class'] = $this->class; 
+	$res['main'] = $this->main; 
 	$res['function'] = $this->function;
 	$res['var'] = $this->var;
 	$res['const'] = $this->const;
@@ -118,6 +126,38 @@ public function parse($php_file) {
 	$res['use'] = $this->use;
 
 	return $res;
+}
+
+
+/**
+ * Check if indent, and if "@throw" or "@return" are missing.
+ *
+ * @throws 
+ */
+private function checkFunctions() {
+	$has_throw = false;
+	$has_return = false;
+
+	for ($i = 0; $i < count($this->function); $i++) {
+		$info  = $this->function[$i];
+
+		for ($k = $info['code_start'] + 1; $k < $info['code_end'] - 1; $k++) {
+			$line = $this->code[$k];
+
+			if (!preg_match('/^[\t]+[\'"a-zA-Z0-9\$\}\)\/]/', $line) && strlen(trim($line)) > 0) {
+				throw new Exception('no tab indent in function '.$info['name'].' (line '.($k + 1).')', 
+					'ord(line[0])='.ord(substr($line, 0, 1))." line: [$line]");
+			}
+
+			if (preg_match('/^[\t]+throw new /', $line) && !isset($info['throws'])) {
+				throw new Exception('missing @throws in documentation of function '.$info['name']." (line ".$info['code_start'].')', $line);
+			}
+
+			if (preg_match('/^[\t]+return /', $line) && !isset($info['return'])) {
+				throw new Exception('missing @return in documentation of function '.$info['name']." (line ".$info['code_start'].')', $line);
+			}
+		}
+	}
 }
 
 
@@ -338,6 +378,9 @@ private function parseDocBlock() {
 		$desc['implements'] = ($info[3] == 'implements') ? $info[4] : '';
 		$desc = array_merge($tags, $desc);
 		$this->class = $desc;
+
+		$required_tag = [ 'author', 'desc', 'copyright' ];
+		$this->checkRequired([ 'author', 'desc', 'copyright' ], $desc);
 	}
 	else if ($type == 'method' || $type == 'abstract_method') {
 		$desc['name'] = $info[2];
@@ -347,6 +390,7 @@ private function parseDocBlock() {
 		$desc['static'] = intval($info[1] == 'static');
 		$desc['path'] = $desc['static'] ? $this->class['path'].'::'.$desc['name'] : $this->class['path'].'->'.$desc['name'];
 		$desc = array_merge($tags, $desc);
+		$this->checkParam($desc, $info[3]);
 		array_push($this->function, $desc);	
 	}
 	else if ($type == 'function') {
@@ -388,6 +432,63 @@ private function parseDocBlock() {
 
 	$this->doc_start = 0;
 	$this->doc_end = 0;
+}
+
+
+/**
+ * Compare function parameter with @param. Add default value and byRef to info[param].
+ *
+ * @param array[string]string &$info
+ * @param string $param_str
+ */
+private function checkParam(&$info, $param_str) {
+	$plist = explode(', ', $param_str);
+	$pinfo = isset($info['param']) ? $info['param'] : [];
+	$k = 0;
+
+	if (count($plist) != count($pinfo)) {
+		throw new Exception('parameter count', '@param: '.print_r($pinfo, true)."\nplist: ".print_r($plist, true));
+	}
+
+	foreach ($plist as $param) {
+		if (!preg_match('/^\&?\$([a-zA-Z0-9_]+) ?=? ?(.*)$/', $param, $match)) {
+			throw new Exception('invalid parameter '.$param, 'line='.$info['code_start'].' function='.$info['name']);
+		}
+
+		if ($pinfo[$k]['name'] != $match[1]) {
+			throw new Exception('parameter mismatch '.$match[1], '@param: '.print_r($pinfo[$k], true));
+		}
+
+		if (substr($param, 0, 1) == '&') {
+			$info['param'][$k]['byRef'] = 1;
+		}
+
+		if (!empty($match[2])) {
+			$info['param'][$k]['default'] = trim($match[2]);	
+			if (!empty($pinfo[$k]['desc']) && strpos($pinfo[$k]['desc'], 'default = ') !== false) {
+				throw new Exception('remove default from @param '.$pinfo[$k]['name'].' in function '.$info['name'], 
+					'line='.$info['code_start']);
+			}
+		}
+
+		$k++;
+	}
+}
+
+
+/**
+ * Throw exception if required tags are missing.
+ *
+ * @throws
+ * @param array $required_tags
+ * @param array[string]mixed $info
+ */
+private function checkRequired($required_tags, $info) {
+	foreach ($required_tags as $tag) {
+		if (!isset($info[$tag]) || empty($info[$tag])) {
+			throw new Exception('missing required tag @'.$tag.' in line '.$info['doc_start'].'-'.$info['doc_end']);
+		}
+	}
 }
 
 
@@ -533,7 +634,14 @@ private function setTagValue(&$map, $tname, $value) {
 			$value = [];
 			for ($i = 1; $i < count(self::$tag[$tname][2]); $i++) {
 				$key = self::$tag[$tname][2][$i];
-				$value[$key] = trim($tag_parts[$i]);
+				$tval = trim($tag_parts[$i]);
+
+				if ($key == 'desc' && empty($tval)) {
+					// ignore ...
+				}
+				else {
+					$value[$key] = $tval;
+				}
 			}
 		}
 		else {
