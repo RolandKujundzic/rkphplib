@@ -11,6 +11,7 @@ require_once(__DIR__.'/Exception.class.php');
  * All methods are static.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
+ * @copyright 2016 Roland Kujundzic
  *
  */
 class FSEntry {
@@ -76,9 +77,9 @@ public static function unlink($link) {
 /**
  * Return path info.
  *
- * @see pathinfo().
+ * @see pathinfo()
  * @param string $path
- * @param string $opt (PATHINFO_DIRNAME, PATHINFO_BASENAME, PATHINFO_EXTENSION, PATHINFO_FILENAME - default = '')
+ * @param string $opt PATHINFO_DIRNAME, PATHINFO_BASENAME, PATHINFO_EXTENSION, PATHINFO_FILENAME
  * @return string|array (if opt != '' otherwise array)
  */
 public static function path($path, $opt = '') {
@@ -130,7 +131,7 @@ public static function chmod($path, $mode) {
  *
  * @throws
  * @param string $path
- * @param bool $abort (default = true)
+ * @param bool $abort
  * @return bool
  */
 public static function isLink($path, $abort = true) {
@@ -156,11 +157,12 @@ public static function isLink($path, $abort = true) {
 
 /**
  * Check if file exists. 
+ * If abort is true throw error (default) otherwise return false.
  *
  * @throws
  * @param string $path
- * @param bool $abort (default = true) If abort is true throw error otherwise return false.
- * @param bool $is_readable (default = true)
+ * @param bool $abort 
+ * @param bool $is_readable
  * @return bool
  */
 public static function isFile($path, $abort = true, $is_readable = true) {
@@ -187,11 +189,12 @@ public static function isFile($path, $abort = true, $is_readable = true) {
 
 /**
  * Check if directory exists. 
+ * If abort is true throw error (default) otherwise return false.
  *
  * @throws
  * @param string $path
- * @param bool $abort (default = true) If abort is true throw error otherwise return false.
- * @param bool $is_readable (default = true)
+ * @param bool $abort
+ * @param bool $is_readable
  * @return bool
  */
 public static function isDir($path, $abort = true, $is_readable = true) {
@@ -222,16 +225,16 @@ public static function isDir($path, $abort = true, $is_readable = true) {
  *
  * @throws
  * @param string $path
- * @param bool $clearcache (default = false)
+ * @param bool $clearcache
  * @return array[string]string|false
  */
 public static function stat($path, $clearcache = false) {
 
-  if ($clearcache) {
-    clearstatcache();
-  }
+	if ($clearcache) {
+		clearstatcache();
+	}
 
-  if (($ss = stat($path)) === false) {
+	if (($ss = stat($path)) === false) {
 		throw new Exception("stat failed", $path);
 	}
 
@@ -255,7 +258,7 @@ public static function stat($path, $clearcache = false) {
 	$str .= (($p & 0x0004) ? 'r' : '-').(($p & 0x0002) ? 'w' : '-');
 	$str .= (($p & 0x0001) ? (($p & 0x0200) ? 't' : 'x') : (($p & 0x0200) ? 'T' : '-'));
 
-  $s = array();
+	$s = array();
 	$s['perms'] = array(
 		'umask' => sprintf("%04o", umask()),
 		'human' => $str,
