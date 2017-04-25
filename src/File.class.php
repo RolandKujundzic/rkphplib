@@ -13,6 +13,7 @@ require_once(__DIR__.'/lib/execute.php');
  * By default file locking is disabled (enable with self::$USE_FLOCK = true).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
+ * @copyright 2016 Roland Kujundzic
  *
  */
 class File {
@@ -32,7 +33,7 @@ public static $DEFAULT_MODE = 0666;
  *
  * @throws
  * @param string $file
- * @param string $dir (default = '', if empty use _REQUEST[dir])
+ * @param string $dir if empty (default) use _REQUEST[dir]
  * @return string
  */
 public static function find($file, $dir = '') {
@@ -82,10 +83,11 @@ public static function find($file, $dir = '') {
 
 /**
  * Return filecontent loaded from url.
+ * If required (default) abort if result has zero size.
  *
  * @throws
  * @param string $url
- * @param boolean $required (default = true, abort if zero size)
+ * @param boolean $required 
  * @return string
  */
 public static function fromURL($url, $required = true) {
@@ -127,7 +129,7 @@ public static function fromURL($url, $required = true) {
  *
  * @throws
  * @param string $file
- * @param int $offset (default = -1, start reading at byte offset)
+ * @param int $offset start reading at byte offset if >= 0
  * @return string
  */
 public static function load($file, $offset = -1) {
@@ -159,7 +161,7 @@ public static function load($file, $offset = -1) {
  *
  * @throws
  * @param string $file
- * @param int $offset (default = -1, start reading at byte offset)
+ * @param int $offset start reading at byte offset if >= 0
  * @return string
  */
 private static function _lload($file, $offset = -1) {
@@ -343,7 +345,7 @@ private static function _open_lock($file, $lock_mode, $open_mode) {
  *
  * @throws
  * @param string $file
- * @param bool $as_text (default = false)
+ * @param bool $as_text
  * @return int
  */
 public static function size($file, $as_text = false) {
@@ -388,7 +390,7 @@ public static function formatSize($bytes) {
  * Check if file exists.
  *
  * @param string $file
- * @param bool $required (default = true) 
+ * @param bool $required
  * @return bool
  */
 public static function exists($file, $required = false) {
@@ -435,10 +437,10 @@ public static function hasChanged($file, $md5_log) {
 
 
 /**
- * Return true if file changes within $watch seconds.
+ * Return true if file changes within $watch seconds (default = 15 sec, max = 300 sec).
  *
  * @param string $file
- * @param int $watch (default = 15, max = 300 seconds)
+ * @param int $watch
  * @return bool
  */
 public static function isChanging($file, $watch = 15) {
@@ -513,11 +515,11 @@ public static function save_rw($file, $data, $mode = 0) {
 
 
 /**
- * Delete file.
+ * Delete file. Abort if file does not exists (unless must_exist = false).
  *
  * @throws
  * @param string $file
- * @param bool $must_exist (default = true)
+ * @param bool $must_exist
  */
 public static function remove($file, $must_exist = true) {
 
@@ -619,9 +621,9 @@ public static function loadLines($file, $flags = 0) {
  * @throws
  * @param resource $fh file handle
  * @param array $data
- * @param string $delimiter char, default = ','
- * @param string $enclosure char, default = '"'
- * @param string $escape char, default = '\\'
+ * @param string $delimiter 
+ * @param string $enclosure 
+ * @param string $escape 
  */
 public static function writeCSV($fh, $data, $delimiter = ',', $enclosure = '"', $escape = '\\') {
 
@@ -663,7 +665,7 @@ public static function write($fh, $data) {
  *
  * @throws
  * @param resource $fh file handle
- * @param int $length (default = 8192)
+ * @param int $length
  * @return string|false
  */
 public static function read($fh, $length = 8192) {
@@ -700,7 +702,7 @@ public static function end($fh) {
  *
  * @throws
  * @param resource $fh file handle
- * @param int $maxlen (default = 8192)
+ * @param int $maxlen
  * @return string|false
  */
 public static function readLine($fh, $maxlen = 8192) {
@@ -741,9 +743,9 @@ public static function unserialize($file) {
  *
  * @throws
  * @param resource $fh file handle
- * @param string $delimiter char, default = ','
- * @param string $enclosure char, default = '"'
- * @param string $escape char, default = '\\'
+ * @param string $delimiter
+ * @param string $enclosure
+ * @param string $escape
  * @return array|null
  */
 public static function readCSV($fh, $delimiter = ',', $enclosure = '"', $escape = '\\') {
@@ -794,7 +796,7 @@ public static function close(&$fh) {
  * You might need to enable fileinfo extension (e.g. extension=php_fileinfo.dll).
  *
  * @param string $file
- * @param bool $use_only_suffix (default = false)
+ * @param bool $use_only_suffix
  * @return string
  */
 public static function mime($file, $use_only_suffix = false) {
@@ -827,7 +829,7 @@ public static function mime($file, $use_only_suffix = false) {
  * Return lowercase file name suffix (without dot - unless $keep_dot= true).
  * 
  * @param string $file
- * @param bool $keep_dot (default = false)
+ * @param bool $keep_dot
  * @return string
  */
 public static function suffix($file, $keep_dot = false) {
@@ -858,8 +860,8 @@ public static function suffix($file, $keep_dot = false) {
  * If rsuffix is set remove everything after rsuffix rpos (apply after remove_suffix). 
  *
  * @param string $file
- * @param bool $remove_suffix (default = false)
- * @param string $rsuffix (default = empty)
+ * @param bool $remove_suffix 
+ * @param string $rsuffix 
  * @return string
  */
 public static function basename($file, $remove_suffix = false, $rsuffix = '') {
@@ -883,8 +885,8 @@ public static function basename($file, $remove_suffix = false, $rsuffix = '') {
  *
  * @see File::basename(path, remove_suffix, rsuffix)
  * @param array $list
- * @param bool $remove_suffix (default = true)
- * @param string $rsuffix (default = '_')
+ * @param bool $remove_suffix 
+ * @param string $rsuffix 
  * @return array[string]array {base1: [file1, file2, ...], ... }
  */
 public static function basename_collect($list, $remove_suffix = true, $rsuffix = '_') {
@@ -933,7 +935,7 @@ public static function copy($source, $target, $mode = 0) {
  * @throws
  * @param string $source
  * @param string $target
- * @param int $mode octal, default = 0 = self::$DEFAULT_MODE
+ * @param int $mode octal, 0 = self::$DEFAULT_MODE
  */
 public static function move($source, $target, $mode = 0666) {
 
@@ -955,7 +957,7 @@ public static function move($source, $target, $mode = 0666) {
  *
  * @throws
  * @param string $path
- * @param bool $sql_ts (default = false) 
+ * @param bool $sql_ts 
  * @return int|string
  */
 public static function lastModified($path, $sql_ts = false) {
@@ -979,7 +981,7 @@ public static function lastModified($path, $sql_ts = false) {
  * Exit after send. If file does not exist send 404 not found.
  *
  * @param string $file
- * @param string|bool $disposition default = attachment
+ * @param string|bool $disposition
  * 
  */
 public static function httpSend($file, $disposition = 'attachment') {
@@ -1018,16 +1020,16 @@ public static function httpSend($file, $disposition = 'attachment') {
 		$fname = basename($file);
 		header('Content-Description: File Transfer');
 		header('Content-Disposition: '.$disposition.'; filename="'.$fname.'"');
-  	}
+	}
 
 	if ($fsize  > 1048576 * 50) {
 		// 50 MB+ ... flush the file ... otherwise the download dialog doesn't show up ...
- 		$fp = fopen($file, 'rb');
+		$fp = fopen($file, 'rb');
 
 		while (!feof($fp)) {
 			print fread($fp, 65536);
- 			flush();
- 		}
+			flush();
+		}
 
 		fclose($fp);
 	}
