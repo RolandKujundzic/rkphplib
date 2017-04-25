@@ -10,7 +10,7 @@ namespace rkphplib;
  */
 class Exception extends \Exception {
 
-/** @var string error message detail you don't want to expose */
+/** @var string $internal_message error message detail you don't want to expose */
 public $internal_message = '';
 
 

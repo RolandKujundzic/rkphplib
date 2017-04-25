@@ -4,9 +4,6 @@ namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
 
-use rkphplib\Exception;
-
-
 
 /**
  * Filesystem operations for files and directories.
@@ -18,7 +15,7 @@ use rkphplib\Exception;
  */
 class FSEntry {
 
-/** @var bool abort if chmod failed (CHMOD is only possible if you are owner or root) */
+/** @var bool $CHMOD_ABORT abort if chmod failed (CHMOD is only possible if you are owner or root) */
 public static $CHMOD_ABORT = true;
 
 
@@ -27,6 +24,7 @@ public static $CHMOD_ABORT = true;
  * Create symlink. If is ok if target does not exist.
  * Link directory must exist. 
  *
+ * @throws
  * @param string $target
  * @param string $link
  * @param boolean $target_basename
@@ -61,7 +59,8 @@ public static function link($target, $link, $target_basename = false) {
 
 /**
  * Remove link.
- * 
+ *
+ * @throws
  * @param string $link
  */
 public static function unlink($link) {
@@ -90,14 +89,15 @@ public static function path($path, $opt = '') {
 /**
  * Change $path mode.
  *
+ * @throws
  * @param string $path
- * @param octal $mode (default = 0)
+ * @param int $mode octal
  */
-public static function chmod($path, $mode = 0) {
+public static function chmod($path, $mode) {
 
 	if (mb_strlen(trim($path)) == 0) {
 		throw new Exception('empty path');
-  }
+	}
 
 	if (empty($mode)) {
 		throw new Exception('empty mode');
@@ -107,9 +107,9 @@ public static function chmod($path, $mode = 0) {
 		throw new Exception('chmod on non-existing path', $path);
 	}
 
-  if (($stat = stat($entry)) === false) {
+	if (($stat = stat($entry)) === false) {
 		throw new Exception('stat failed', $entry);
-  }
+	}
 
 	$has_priv = sprintf("0%o", 0777 & $stat['mode']);
 
@@ -128,8 +128,10 @@ public static function chmod($path, $mode = 0) {
 /**
  * True if $path is link.
  *
+ * @throws
  * @param string $path
  * @param bool $abort (default = true)
+ * @return bool
  */
 public static function isLink($path, $abort = true) {
 
@@ -155,6 +157,7 @@ public static function isLink($path, $abort = true) {
 /**
  * Check if file exists. 
  *
+ * @throws
  * @param string $path
  * @param bool $abort (default = true) If abort is true throw error otherwise return false.
  * @param bool $is_readable (default = true)
@@ -185,6 +188,7 @@ public static function isFile($path, $abort = true, $is_readable = true) {
 /**
  * Check if directory exists. 
  *
+ * @throws
  * @param string $path
  * @param bool $abort (default = true) If abort is true throw error otherwise return false.
  * @param bool $is_readable (default = true)
@@ -216,9 +220,10 @@ public static function isDir($path, $abort = true, $is_readable = true) {
 /**
  * Return file or directory stats.
  *
+ * @throws
  * @param string $path
  * @param bool $clearcache (default = false)
- * @return hash|false
+ * @return array[string]string|false
  */
 public static function stat($path, $clearcache = false) {
 
