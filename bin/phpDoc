@@ -1,0 +1,20 @@
+#!/usr/bin/php
+<?php
+
+define('PATH_RKPHPLIB', dirname(__DIR__).'/src/');
+
+print PATH_RKPHPLIB."\n";
+
+// require_once(PATH_RKPHPLIB.'lib/config.php');
+require_once(PATH_RKPHPLIB.'PhpDoc/PDParser.class.php');
+require_once(PATH_RKPHPLIB.'YAML.class.php');
+
+require_once('vendor/autoload.php');
+
+
+if (empty($_SERVER['argv'][1])) {
+	die("\nSYNTAX: ".$_SERVER['argv'][0]." [path/to/code.php]\n\n\n");
+}
+
+$parser = new \rkphplib\PhpDoc\PDParser();
+print \rkphplib\YAML::save('php://STDOUT', $parser->parse($_SERVER['argv'][1]));
