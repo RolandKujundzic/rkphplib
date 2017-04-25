@@ -42,7 +42,6 @@ if (!defined('SETTINGS_LANGUAGE')) {
 	define('SETTINGS_LANGUAGE', 'de');
 }
 
-// global define
 define('RKPHPLIB_VERSION', 1.0);
 
 
