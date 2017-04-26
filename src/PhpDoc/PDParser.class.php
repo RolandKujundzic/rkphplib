@@ -68,7 +68,7 @@ private static $tag = [
 	'return'    => [ 0, 1, [ '/^([a-zA-Z0-9_\|\[\]\:\\\]+) ?(.*?)$/', 'type', 'desc' ] ],
 	'param'     => [ 0, 0, [ '/^([a-zA-Z0-9_\|\[\]\:\\\]+) \&?\$([a-zA-Z0-9_]+)(.*)$/', 'type', 'name', 'desc' ] ],
 	'var'       => [ 0, 1, [ '/^([a-zA-Z0-9_\|\[\]\:\\\]+) \$([a-zA-Z0-9_]+)(.*)$/', 'type', 'name', 'desc' ] ],
-	'const'     => [ 0, 1, [ '/^([a-zA-Z0-9_\|\[\]\:\\\]+) \([A-Z0-9_]+)(.*)$/', 'type', 'name', 'desc' ] ]
+	'const'     => [ 0, 1, [ '/^([a-zA-Z0-9_\|\[\]\:\\\]+) ([A-Z0-9_]+)(.*)$/', 'type', 'name', 'desc' ] ]
 ];
 
 /** @var array $code */
@@ -261,7 +261,7 @@ private function getDocType() {
 	$match = [];
 
 	$func_rx = 'function ([a-zA-Z0-9_]+)\((.*?)\)';
-	$const_rx = '\$([A-Z0-9_]+) = (.+);$/';
+	$const_rx = '([A-Z0-9_]+) = (.+);$/';
 	$var_rx = '\&?\$([a-zA-Z0-9_]+) ?=? ?(.*);$/';
 
 	$in_class = !empty($this->class['name']);
@@ -405,26 +405,20 @@ private function parseDocBlock() {
 		$desc['scope'] = $info[0];
 		$desc['static'] = intval($info[1] == 'static');
 		$desc['name'] = $info[2];
+		$desc['type'] = $tags['var']['type'];
 		$desc['default'] = empty($info[3]) ? '' : $info[3];
 		$desc['path'] = $desc['static'] ? $this->class['path'].'::$'.$desc['name'] : $this->class['path'].'->$'.$desc['name'];
 
-		$tvar = $tags['var'];
-		if ($desc['name'] != $tvar['name']) {
-			throw new Exception('name != @var-name', 'name='.$desc['name'].' @var-name='.$tvar['name']);
-		}
-
-		$desc['type'] = $tags['var']['type'];
-
-		if (!empty($tags['var']['desc'])) {
-			if (empty($desc['desc'][0])) {
-				$desc['desc'][0] = $tags['var']['desc'];
-			}
-			else {
-				array_push($desc['desc'], $tags['var']['desc']);
-			}
-		}
-
+		$this->fixNameDesc($desc, $tags['var']);
 		array_push($this->var, $desc);
+	}
+	else if ($type == 'class_const') {
+		$desc['name'] = $info[1];
+		$desc['type'] = $tags['const']['type'];
+		$desc['value'] = $info[2]; 
+
+		$this->fixNameDesc($desc, $tags['const']);
+		array_push($this->const, $desc);
 	}
 	else {
 		die("\nToDo:\n$type:\n---\n".print_r($tags, true)."\n---\n".print_r($info, true)."\n");
@@ -432,6 +426,32 @@ private function parseDocBlock() {
 
 	$this->doc_start = 0;
 	$this->doc_end = 0;
+}
+
+
+/**
+ * Check if param name matches "@param". Fix description.
+ *
+ * @throws
+ * @param
+ * @param 
+ */
+private static function fixNameDesc(&$desc, $tags) {
+
+	if ($tags['name'] != $desc['name']) {
+		throw new Exception('name mismatch '.$desc['name'].' != '.$tags['name']);
+	}
+
+	if (empty($tags['desc'])) {
+		return;
+	}
+
+	if (empty($desc['desc'][0])) {
+		$desc['desc'][0] = $tags['desc'];
+	}
+	else {
+		array_push($desc['desc'], $tags['desc']);
+	}
 }
 
 
@@ -456,7 +476,7 @@ private function checkParam(&$info, $param_str) {
 		}
 
 		if ($pinfo[$k]['name'] != $match[1]) {
-			throw new Exception('parameter mismatch '.$match[1], '@param: '.print_r($pinfo[$k], true));
+			throw new Exception('parameter mismatch '.$match[1], "param $k of ($param_str) - @param: ".print_r($pinfo[$k], true));
 		}
 
 		if (substr($param, 0, 1) == '&') {
@@ -501,6 +521,8 @@ private function checkRequired($required_tags, $info) {
  */
 private function checkType($type, $line) {
 
+	static $native_object = [ 'DOMElement' ];
+
 	if (preg_match('/^array\[string\](.+)$/', $type, $match)) {
 		$this->checkType($match[1], $line);
 		return;
@@ -525,7 +547,7 @@ private function checkType($type, $line) {
 
 	$ctype = (substr($type, -2) == '[]') ? substr($type, 0, -2) : $type;
 
-	if (!in_array($ctype, $allow)) {
+	if (!in_array($ctype, $allow) && !in_array($ctype, $native_object)) {
 		// ToDo: allow class name
 		throw new Exception('invalid type '.$type, $line);
 	}
