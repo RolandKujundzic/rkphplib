@@ -72,8 +72,8 @@ public static function exists($path, $required = false) {
  *
  * Return Y-m-d H:i:s instead of unix timestamp if $sql_ts is true.
  *
- * @param string $file
- * @param bool $sql_ts (default = false) 
+ * @param string $path
+ * @param bool $sql_ts
  * @return int|string
  */
 public static function lastModified($path, $sql_ts = false) {
@@ -96,7 +96,7 @@ public static function lastModified($path, $sql_ts = false) {
  * Remove directory.
  *
  * @param string $path
- * @param boolean $must_exist (default = true)
+ * @param boolean $must_exist 
  */
 public static function remove($path, $must_exist = true) {
 
@@ -140,8 +140,8 @@ public static function remove($path, $must_exist = true) {
  * Use $recursive = true to create parent directories.
  * 
  * @param string $path
- * @param octal $mode (default = self.DEFAULT_MODE)
- * @param bool $recursive (default = false)
+ * @param octal $mode default is self.DEFAULT_MODE
+ * @param bool $recursive 
  */
 public static function create($path, $mode = 0, $recursive = false) {
 
@@ -226,7 +226,7 @@ public static function move($old_dir, $new_dir, $opt = 0) {
  *
  * @param string $source_dir
  * @param string $target_dir
- * @param string $link_root (default = '', if set keep links)
+ * @param string $link_root
  */
 public static function copy($source_dir, $target_dir, $link_root = '') {
 
@@ -395,8 +395,8 @@ private static function _has_suffix($file, $suffix_list) {
  * Return files in directory with suffix in suffix_list. 
  * 
  * @param string $path
- * @param array $suffix_list e.g. (jpg,png) or (.jpg,.png) - default = []
- * @param string $rel_dir (default = '') - if set remove rel_dir in every entry
+ * @param array $suffix_list e.g. (jpg,png) or (.jpg,.png)
+ * @param string $rel_dir if set remove rel_dir in every entry
  * @return array
  */
 public static function scanDir($path, $suffix_list = array(), $rel_dir = '') {
@@ -487,7 +487,7 @@ public static function size($path) {
 			$size += Dir::size($entry);
 		}
 		else if (FSEntry::isFile($entry, false)) {
-      $size += File::size($entry);
+			$size += File::size($entry);
 		}
 	}
 
