@@ -47,7 +47,7 @@ public static function exists($path, $required = false) {
 	}
 	else if ($pl > 4096) {
 		$error = "directory path too long ($pl)";
-		$path = mb_substr($path, 0, 40)." ... ".$mb_substr($path, -40);
+		$path = mb_substr($path, 0, 40)." ... ".mb_substr($path, -40);
 	}
 	else if (!is_dir($path)) {
 		$error = "no such directory";
@@ -83,7 +83,7 @@ public static function lastModified($path, $sql_ts = false) {
 	FSEntry::isDir($path);
 
 	if (($res = filemtime($path)) === false) {
-		throw new Exception('dir last modified failed', $file);
+		throw new Exception('dir last modified failed', $path);
 	}
 
 	if ($sql_ts) {
@@ -144,7 +144,7 @@ public static function remove($path, $must_exist = true) {
  * 
  * @throws
  * @param string $path
- * @param octal $mode default is self.DEFAULT_MODE
+ * @param int $mode octal, default is self.DEFAULT_MODE
  * @param bool $recursive
  * @return bool 
  */
@@ -179,7 +179,6 @@ public static function create($path, $mode = 0, $recursive = false) {
 			// try to fix "/../" in non-existing path problem
 			while (($pos = mb_strpos($path, '/../')) !== false) {
 				$path = dirname(mb_substr($path, 0, $pos)).'/'.mb_substr($path, $pos + 4);
-				$has_pdir_ref = true;
 			}
 
 			if (!empty($path)) {
