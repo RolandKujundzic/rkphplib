@@ -11,6 +11,7 @@ use rkphplib\Exception;
  * XML wrapper.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
+ * @copyright 2016 Roland Kujundzic
  *
  */
 class XML {
@@ -20,7 +21,7 @@ class XML {
  * Convert xml to map.
  *
  * @param string $xml
- * @return map
+ * @return array[string]string
  */
 public static function toMap($xml) {
 	$xml_obj = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
@@ -39,11 +40,11 @@ public static function toMap($xml) {
  *  XML::fromMap(['A', 'B', 'C']) =  <root><vector>A</vector><vector>B</vector><vector>C</vector></root> 
  *  XML::fromMap(['names' => ['A', 'B', 'C']]) = <root><names>A</names>...</root>
  *
- * @throws rkphplib\Exception
- * @param map|string $data
- * @param map $root (default = 'root')
- * @param map $xml (default = null = create DomDocument) 
- * @return string|xmlElement
+ * @throws
+ * @param array[string]string|string $data
+ * @param array[string]string $root
+ * @param object $xml needed for recursion
+ * @return string|DOMElement
  */
 public static function fromMap($data, $root = 'root', $xml = null) {
 
@@ -143,7 +144,7 @@ public static function fromMap($data, $root = 'root', $xml = null) {
 /**
  * Pretty print xml string.
  *
- * @throws if invalid xml 
+ * @throws 
  * @param string $xml_str
  * @return string
  */
@@ -154,10 +155,10 @@ public static function prettyPrint($xml_str) {
 	}
 
 	$dom = new \DomDocument();
-  $dom->preserveWhiteSpace = false;
-  $dom->formatOutput = true;
-  $dom->loadXML($xml_str);
-  return $dom->saveXML();
+	$dom->preserveWhiteSpace = false;
+	$dom->formatOutput = true;
+	$dom->loadXML($xml_str);
+	return $dom->saveXML();
 }
 
 
