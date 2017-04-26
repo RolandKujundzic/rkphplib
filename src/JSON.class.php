@@ -60,7 +60,7 @@ public static function utf8(&$data) {
 	if (is_string($data)) {
 		if (mb_detect_encoding($data, 'ISO-8859-1', true)) {
 			$data = utf8_encode($data);
-    }
+		}
 	}
 	else if (is_array($data)) {
 		foreach ($data as &$value) {
