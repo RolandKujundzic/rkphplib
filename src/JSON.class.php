@@ -149,79 +149,13 @@ public static function decode($txt, $assoc = true) {
 
 
 /**
- * Return pretty printed json. Use native JSON_PRETTY_PRINT as default.
+ * Return pretty printed json.
  *
- * @see http://stackoverflow.com/questions/6054033/pretty-printing-json-with-php
  * @param string $json
- * @param bool $custom 
  * @return string
  */
-public static function pretty_print($json, $custom = false) {
-
-	if (!$custom && ($json_object = json_decode($json))) {
-		return json_encode($json_object, 320|JSON_PRETTY_PRINT);
-	}
-
-	$result = '';
-	$level = 0;
-	$in_quotes = false;
-	$in_escape = false;
-	$ends_line_level = NULL;
-	$json_length = mb_strlen($json);
-
-	for ($i = 0; $i < $json_length; $i++) {
-		$char = $json[$i];
-		$new_line_level = NULL;
-		$post = "";
-
-		if ($ends_line_level !== NULL) {
-			$new_line_level = $ends_line_level;
-			$ends_line_level = NULL;
-		}
-
-		if ($in_escape) {
-			$in_escape = false;
-		}
-		else if ($char === '"') {
-			$in_quotes = !$in_quotes;
-		}
-		else if (!$in_quotes) {
-			switch ($char) {
-				case '}': case ']':
-					$level--;
-					$ends_line_level = NULL;
-					$new_line_level = $level;
-					break;
-
-				case '{': case '[':
-					$level++;
-				case ',':
-					$ends_line_level = $level;
-					break;
-
-				case ':':
-					$post = " ";
-					break;
-
-				case " ": case "\t": case "\n": case "\r":
-					$char = "";
-					$ends_line_level = $new_line_level;
-					$new_line_level = NULL;
-					break;
-			}
-		}
-		else if ($char === '\\') {
-			$in_escape = true;
-		}
-
-		if ($new_line_level !== NULL) {
-			$result .= "\n".str_repeat( "\t", $new_line_level );
-		}
-
-		$result .= $char.$post;
-	}
-
-	return $result;
+public static function pretty_print($json) {
+    return json_encode(json_decode($json), 320|JSON_PRETTY_PRINT);
 }
 
 
