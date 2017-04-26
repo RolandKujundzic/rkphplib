@@ -529,7 +529,7 @@ public static function remove($file, $must_exist = true) {
 
 	if (!unlink($file)) {
 		throw new Exception('file removal failed', $file);
-  }
+	}
 }
 
 
@@ -843,7 +843,7 @@ public static function suffix($file, $keep_dot = false) {
 			$res = mb_strtolower(mb_substr($file, $pos + 1));
 		}
 
- 		if (mb_strpos($res, '/') !== false) {
+		if (mb_strpos($res, '/') !== false) {
 			// ignore invalid suffix
 			$res = '';
 		}
