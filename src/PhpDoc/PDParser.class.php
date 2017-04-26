@@ -526,7 +526,7 @@ private function checkRequired($required_tags, $info) {
  */
 private function checkType($type, $line) {
 
-	static $native_object = [ 'DOMElement' ];
+	static $native_object = [ '\\DOMNode' ];
 
 	if (preg_match('/^array\[string\](.+)$/', $type, $match)) {
 		$this->checkType($match[1], $line);
