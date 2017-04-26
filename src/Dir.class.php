@@ -33,6 +33,7 @@ public static $SKIP_UNREADABLE = false;
 /**
  * Return true if directory exists.
  *
+ * @throws
  * @param string $path
  * @param bool $required
  * @return bool
@@ -60,8 +61,8 @@ public static function exists($path, $required = false) {
 			throw new Exception($error, $path);
 		}
 
-    return false;
-  }
+		return false;
+	}
 
 	return true;
 }
@@ -72,29 +73,31 @@ public static function exists($path, $required = false) {
  *
  * Return Y-m-d H:i:s instead of unix timestamp if $sql_ts is true.
  *
+ * @throws
  * @param string $path
  * @param bool $sql_ts
  * @return int|string
  */
 public static function lastModified($path, $sql_ts = false) {
 
-  FSEntry::isDir($path);
+	FSEntry::isDir($path);
 
-  if (($res = filemtime($path)) === false) {
-    throw new Exception('dir last modified failed', $file);
-  }
+	if (($res = filemtime($path)) === false) {
+		throw new Exception('dir last modified failed', $file);
+	}
 
-  if ($sql_ts) {
-    $res = date('Y-m-d H:i:s', $res);
-  }
+	if ($sql_ts) {
+		$res = date('Y-m-d H:i:s', $res);
+	}
 
-  return $res;
+	return $res;
 }
 
 
 /**
  * Remove directory.
  *
+ * @throws
  * @param string $path
  * @param boolean $must_exist 
  */
@@ -128,20 +131,22 @@ public static function remove($path, $must_exist = true) {
 		}
 	}
 
-  if (!rmdir($path) || FSEntry::isDir($path, false)) {
+	if (!rmdir($path) || FSEntry::isDir($path, false)) {
 		throw new Exception('remove directory failed', $path);
 	}
 }
 
 
 /**
- * Create directory. 
+ * Create directory. True if directory was created. False if already existed. 
  *
  * Use $recursive = true to create parent directories.
  * 
+ * @throws
  * @param string $path
  * @param octal $mode default is self.DEFAULT_MODE
- * @param bool $recursive 
+ * @param bool $recursive
+ * @return bool 
  */
 public static function create($path, $mode = 0, $recursive = false) {
 
@@ -150,24 +155,24 @@ public static function create($path, $mode = 0, $recursive = false) {
 	}
 
 	if ($path == '.' || FSEntry::isDir($path, false)) {
-		return;
+		return false;
 	}
 
-  if (empty($path)) {
-    throw new Exception("Empty directory path");
-  }
+	if (empty($path)) {
+		throw new Exception("Empty directory path");
+	}
 
 	if ($path != trim($path)) {
 		throw new Exception("No leading or trailing whitespace allowed",  $path);
-  }
+	}
 
 	if (mb_substr($path, -1) == '/') {
 		throw new Exception("No trailing / allowed", $path);
-  }
+	}
 
 	if (empty($mode)) {
 		throw new Exception("Empty create mode");
-  }
+	}
 
 	if (@mkdir($path, $mode, $recursive) === false) {
 		if (($pos = mb_strpos($path, '/../')) !== false) {
@@ -183,13 +188,16 @@ public static function create($path, $mode = 0, $recursive = false) {
 		}
 
 		throw new Exception("Failed to create directory", $path);
-  }
+	}
+
+	return true;
 }
 
 
 /**
  * Move directory.
  *
+ * @throws
  * @param string $old_dir
  * @param string $new_dir
  * @param int $opt (default = 0, e.g. Dir::CREATE_TARGET_PATH|Dir::REMOVE_EXISTING)
@@ -224,6 +232,7 @@ public static function move($old_dir, $new_dir, $opt = 0) {
  * 
  * Skip unreadable entries.
  *
+ * @throws
  * @param string $source_dir
  * @param string $target_dir
  * @param string $link_root
@@ -232,7 +241,7 @@ public static function copy($source_dir, $target_dir, $link_root = '') {
 
 	if (empty($source_dir)) {
 		throw new Exception("Source directory is empty");
-  }
+	}
 
 	if (empty($target_dir)) {
 		throw new Exception("Target directory is empty");
@@ -242,11 +251,11 @@ public static function copy($source_dir, $target_dir, $link_root = '') {
 
 	if (!FSEntry::isDir($target_dir, false)) {
 		Dir::create($target_dir, $s['perms']['octal']);
-  }
+	}
 
-  $entries = Dir::entries($source_dir);
-  foreach ($entries as $entry) {
-    $s = FSEntry::stat($entry);
+	$entries = Dir::entries($source_dir);
+	foreach ($entries as $entry) {
+		$s = FSEntry::stat($entry);
 
 		if ($s['filetype']['is_link'] && $link_root) {
 			if (($pos = mb_strpos($s['file']['realpath'], $link_root)) !== false && $pos == 0) {
@@ -256,7 +265,7 @@ public static function copy($source_dir, $target_dir, $link_root = '') {
 			}
 			else {
 				symlink($s['file']['realpath'], $target_dir.'/'.basename($entry));
-      }
+			}
 
 			continue;
 		}
@@ -267,7 +276,7 @@ public static function copy($source_dir, $target_dir, $link_root = '') {
 			}
 
 			throw new Exception("Entry is unreadable", $entry);
-    }
+		}
 
 		if ($s['filetype']['is_dir']) {
 			$target_subdir = $target_dir.'/'.basename($entry);
@@ -284,48 +293,49 @@ public static function copy($source_dir, $target_dir, $link_root = '') {
 /**
  * Return directory entries (with full path).
  * 
+ * @throws
  * @param string $path
  * @param int $type (0=any, 1=files, 2=directories)
  * @return array
  */
 public static function entries($path, $type = 0) {
 
-  if (mb_substr($path, -1) == '/') {
-    $path = mb_substr($path, 0, -1);
-  }
+	if (mb_substr($path, -1) == '/') {
+		$path = mb_substr($path, 0, -1);
+	}
 
-  FSEntry::isDir($path);
+	FSEntry::isDir($path);
 
-  if (!($dh = opendir($path))) {
+	if (!($dh = opendir($path))) {
 		throw new Exception('directory scan failed', $path);
-  }
+	}
 
-  $res = array();
+	$res = array();
 
-  while (false !== ($entry = readdir($dh))) {
+	while (false !== ($entry = readdir($dh))) {
 
-    if ($entry == '.' || $entry == '..') {
-      continue;
-    }
+		if ($entry == '.' || $entry == '..') {
+			continue;
+		}
 
-    if ($type > 0) {
-      if (FSEntry::isDir($path.'/'.$entry, false)) {
-        if ($type == 2) {
-          array_push($res, $path.'/'.$entry);
-        }
-      }
-      else if ($type == 1) {
-        array_push($res, $path.'/'.$entry);
-      }
-    }
-    else {
-      array_push($res, $path.'/'.$entry);
-    }
-  }
+		if ($type > 0) {
+			if (FSEntry::isDir($path.'/'.$entry, false)) {
+				if ($type == 2) {
+					array_push($res, $path.'/'.$entry);
+				}
+			}
+			else if ($type == 1) {
+				array_push($res, $path.'/'.$entry);
+			}
+		}
+		else {
+			array_push($res, $path.'/'.$entry);
+		}
+	}
 
-  closedir($dh);
+	closedir($dh);
 
-  return $res;
+	return $res;
 }
 
 
@@ -356,7 +366,7 @@ private static function _fix_suffix_list(&$suffix_list) {
 		}
 
 		$suffix_list[$i] = mb_strtolower($s);
-  }
+	}
 }
 
 
@@ -372,22 +382,22 @@ private static function _fix_suffix_list(&$suffix_list) {
  */
 private static function _has_suffix($file, $suffix_list) {
 
-  if (count($suffix_list) == 0) {
-    return true;
-  }
+	if (count($suffix_list) == 0) {
+		return true;
+	}
 
 	$file = mb_strtolower($file);
-  $l = mb_strlen($file);
+	$l = mb_strlen($file);
 
-  foreach ($suffix_list as $suffix) {
+	foreach ($suffix_list as $suffix) {
 		$suffix = mb_strtolower($suffix);
 
-    if (($pos = mb_strrpos($file, $suffix)) !== false && ($l - $pos == mb_strlen($suffix))) {
-      return true;
-    }
-  }
+		if (($pos = mb_strrpos($file, $suffix)) !== false && ($l - $pos == mb_strlen($suffix))) {
+			return true;
+		}
+	}
 
-  return false;
+	return false;
 }
 
 
@@ -403,21 +413,21 @@ public static function scanDir($path, $suffix_list = array(), $rel_dir = '') {
 
 	self::_fix_suffix_list($suffix_list);
 
-  $entries = Dir::entries($path);
-  $found = array();
+	$entries = Dir::entries($path);
+	$found = array();
 
-  foreach ($entries as $entry) {
-    if (FSEntry::isFile($entry, false) && in_array(File::suffix($entry), $suffix_list)) {
+	foreach ($entries as $entry) {
+		if (FSEntry::isFile($entry, false) && in_array(File::suffix($entry), $suffix_list)) {
 			if ($rel_dir) {
-	      array_push($found, str_replace($rel_dir, '', $entry));
+				array_push($found, str_replace($rel_dir, '', $entry));
 			}
 			else {
-	      array_push($found, $entry);
+				array_push($found, $entry);
 			}
-    }
-  }
+		}
+	}
 
-  return $found;
+	return $found;
 }
 
 
