@@ -39,11 +39,11 @@ public static function link($target, $link, $target_basename = false) {
 
 	if (FSEntry::isFile($link, false)) {
 		throw new Exception('remove existing file', "link=$link target=$target");
-  }
+	}
 
 	if (FSEntry::isDir($link, false)) {
 		throw new Exception('remove existing directory', "link=$link target=$target");
-  }
+	}
 
 	if ($target_basename) {
 		if (!@symlink(basename($target), $link)) {
@@ -68,7 +68,7 @@ public static function unlink($link) {
 
 	if (!is_link($link)) {
 		throw new Exception('no such link', "link=[$link]");
-  }
+	}
 
 	unlink($link);
 }
@@ -167,23 +167,23 @@ public static function isLink($path, $abort = true) {
  */
 public static function isFile($path, $abort = true, $is_readable = true) {
 
-  if (empty($path)) {
-    if ($abort) {
+	if (empty($path)) {
+		if ($abort) {
 			throw new Exception('empty file path');
-    }
+		}
 
-    return false;
-  }
+		return false;
+	}
 
-  if (file_exists($path) && !is_dir($path) && (!$is_readable || is_readable($path))) {
-    return true;
-  }
+	if (file_exists($path) && !is_dir($path) && (!$is_readable || is_readable($path))) {
+		return true;
+	}
 
-  if ($abort && !is_link($path)) {
+	if ($abort && !is_link($path)) {
 		throw new Exception('invalid file path', $path);
-  }
+	}
 
-  return false;
+	return false;
 }
 
 
@@ -199,24 +199,24 @@ public static function isFile($path, $abort = true, $is_readable = true) {
  */
 public static function isDir($path, $abort = true, $is_readable = true) {
 
-  if (empty($path)) {
-    if ($abort) {
+	if (empty($path)) {
+		if ($abort) {
 			throw new Exception('empty directory path');
-    }
+		}
 
-    return false;
-  }
+		return false;
+	}
 
-  if (is_dir($path) && (!$is_readable || is_readable($path))) {
-    return true;
-  }
+	if (is_dir($path) && (!$is_readable || is_readable($path))) {
+		return true;
+	}
 
-  if ($abort) {
+	if ($abort) {
 		$msg = is_link($path) ? 'broken link' : 'invalid directory path';
 		throw new Exception($msg, $path);
-  }
+	}
 
-  return false;
+	return false;
 }
 
 
