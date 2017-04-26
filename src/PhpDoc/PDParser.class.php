@@ -605,6 +605,12 @@ private function splitTags() {
 				if (!empty($res[$tname]['type'])) {
 					$this->checkType($res[$tname]['type'], "$lnum> $line");
 				}
+				else if (is_array($res[$tname])) {
+                    $last = count($res[$tname]) - 1;
+                    if (!empty($res[$tname][$last]['type'])) {
+                        $this->checkType($res[$tname][$last]['type'], "$lnum> $line");
+                    }
+                }
 			}
 			else {
 				if ($line != '@'.$tname) {
