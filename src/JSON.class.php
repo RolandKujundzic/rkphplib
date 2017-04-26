@@ -4,8 +4,6 @@ namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
 
-use rkphplib\Exception;
-
 
 /**
  * JSON wrapper. 
@@ -22,7 +20,7 @@ class JSON {
  *
  * If string are latin1 already no change should occur.
  *
- * @param any $data (referece)
+ * @param mixed &$data
  */
 public static function latin1(&$data) {
 
@@ -53,7 +51,7 @@ public static function latin1(&$data) {
  *
  * If strings are utf8 Umlaute (öäüß ÖÄÜ) will be broken.
  *
- * @param any $data (reference)
+ * @param mixed &$data
  */
 public static function utf8(&$data) {
 
