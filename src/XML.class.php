@@ -4,8 +4,6 @@ namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
 
-use rkphplib\Exception;
-
 
 /**
  * XML wrapper.
@@ -41,10 +39,10 @@ public static function toMap($xml) {
  *  XML::fromMap(['names' => ['A', 'B', 'C']]) = <root><names>A</names>...</root>
  *
  * @throws
- * @param array[string]string|string $data
- * @param array[string]string $root
+ * @param array[string]string|array|string $data
+ * @param string $root
  * @param object $xml needed for recursion
- * @return string|DOMElement
+ * @return string|\DOMNode
  */
 public static function fromMap($data, $root = 'root', $xml = null) {
 
