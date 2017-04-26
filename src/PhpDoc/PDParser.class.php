@@ -141,10 +141,14 @@ private function checkFunctions() {
 	for ($i = 0; $i < count($this->function); $i++) {
 		$info  = $this->function[$i];
 
+		if ($info['code_end'] < $info['code_start']) {
+			throw new Exception('invalid code end in function '.$info['name'], $info['code_start']."-".$info['code_end']);
+		}
+
 		for ($k = $info['code_start'] + 1; $k < $info['code_end'] - 1; $k++) {
 			$line = $this->code[$k];
 
-			if (!preg_match('/^[\t]+[\'"a-zA-Z0-9\$\}\)\/]/', $line) && strlen(trim($line)) > 0) {
+			if (!preg_match('/^[\t]+[\'"a-zA-Z0-9\$\}\)\/\\\]/', $line) && strlen(trim($line)) > 0) {
 				throw new Exception('no tab indent in function '.$info['name'].' (line '.($k + 1).')', 
 					'ord(line[0])='.ord(substr($line, 0, 1))." line: [$line]");
 			}
@@ -424,6 +428,7 @@ private function parseDocBlock() {
 		die("\nToDo:\n$type:\n---\n".print_r($tags, true)."\n---\n".print_r($info, true)."\n");
 	}
 
+	$this->last_type = $type;
 	$this->doc_start = 0;
 	$this->doc_end = 0;
 }
