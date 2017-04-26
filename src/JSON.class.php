@@ -11,6 +11,7 @@ use rkphplib\Exception;
  * JSON wrapper. 
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
+ * @copyright 2016 Roland Kujundzic
  *
  */
 class JSON {
@@ -114,8 +115,8 @@ private static function _error_msg($err_no) {
  *
  * @throws
  * @param object $obj
- * @param int $options (default = 448 = JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT)
- * @param int $depth (default = 512)
+ * @param int $options default is 448 = JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT)
+ * @param int $depth
  * @return string
  */
 public static function encode($obj, $options = 448, $depth = 512) {
@@ -130,12 +131,12 @@ public static function encode($obj, $options = 448, $depth = 512) {
 
 
 /**
- * Return json decoded $txt.
+ * Return json decoded $txt as map.
  *
  * @throws 
  * @param string $txt
- * @param bool $assoc (default = true = return hash)
- * @return hash|object
+ * @param bool $assoc
+ * @return array[string]string|object
  */
 public static function decode($txt, $assoc = true) {
 	$res = json_decode($txt, $assoc);
@@ -150,11 +151,11 @@ public static function decode($txt, $assoc = true) {
 
 
 /**
- * Return pretty printed json.
+ * Return pretty printed json. Use native JSON_PRETTY_PRINT as default.
  *
  * @see http://stackoverflow.com/questions/6054033/pretty-printing-json-with-php
  * @param string $json
- * @param bool $custom (default = false = use native JSON_PRETTY_PRINT)
+ * @param bool $custom 
  * @return string
  */
 public static function pretty_print($json, $custom = false) {
