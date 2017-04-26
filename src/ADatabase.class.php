@@ -13,34 +13,35 @@ use rkphplib\Exception;
  * Abstract database access wrapper class.
  * 
  * @author Roland Kujundzic <roland@kujundzic.de>
+ * @copyright 2016 Roland Kujundzic
  */
 abstract class ADatabase {
 
-/** @const NOT_NULL = NOT NULL column */
+/** @const int NOT_NULL = NOT NULL column */
 const NOT_NULL = 1;
 
-/** @const PRIMARY = PRIMARY KEY (column) */
+/** @const int PRIMARY = PRIMARY KEY (column) */
 const PRIMARY = 2;
 
-/** @const UNIQUE = UNQUE (column) */
+/** @const int UNIQUE = UNIQUE (column) */
 const UNIQUE = 4;
 
-/** @const INDEX = KEY (column) */
+/** @const int INDEX = KEY (column) */
 const INDEX = 8;
 
-/** @const FOREIGN = FOREIGN KEY (column) REFERENCES ... */
+/** @const int FOREIGN = FOREIGN KEY (column) REFERENCES ... */
 const FOREIGN = 16;
 
-/** @const FOREIGN KEY ... ON DELETE CASCADE */
+/** @const int UNSIGNED */
 const UNSIGNED = 32;
 
-/** @const FOREIGN KEY ... ON DELETE CASCADE */
+/** @const int DELETE_CASCADE */
 const DELETE_CASCADE = 64;
 
-/** @const FOREIGN KEY ... ON UPDATE CASCADE */
+/** @const int UPDATE_CASCADE */
 const UPDATE_CASCADE = 128;
 
-/** @const AUTO_INCREMENT */
+/** @const int AUTO_INCREMENT */
 const AUTO_INCREMENT = 256;
 
 
@@ -57,10 +58,10 @@ public static $charset = '';
 /** @var string $_dsn */
 protected $_dsn = null;
 
-/** @var map $_query */
+/** @var array[string]string $_query */
 protected $_query = [];
 
-/** @var map $_qinfo */
+/** @var array[string]array $_qinfo */
 protected $_qinfo = [];
 
 
@@ -69,7 +70,8 @@ protected $_qinfo = [];
  * Return md5 hash base on dsn and $query_map (see setQueryMap).
  * 
  * @throws
- * @param map $query_map (default = null)
+ * @param string $dsn
+ * @param array[string]string $query_map
  * @return string 
  */
 public static function computeId($dsn, $query_map = null) {
@@ -110,14 +112,14 @@ public function getId() {
 
 
 /**
- * Set database connect string. If empty use default SETTINGS_DSN. 
+ * Set database connect string. If dsn is empty use default SETTINGS_DSN. 
  *
  * Examples:
  * mysqli://user:password@tcp+localhost/dbname
  * sqlite://[password]@path/to/file.sqlite
  * 
- * @throws rkphplib\Exception if $dsn is empty or connection is already open and $dsn has changed
- * @param string $dsn = '' = use SETTINGS_DSN if defined
+ * @throws
+ * @param string $dsn 
  */
 public function setDSN($dsn = '') {
 
@@ -140,10 +142,8 @@ public function setDSN($dsn = '') {
 /**
  * Return database connect string.
  *
- * @throws rkphplib\Exception if $dsn was not set
- * @param bool $split (default = false) 
- * @param string $dsn (default = '')
- * @return string|map 
+ * @throws
+ * @return string 
  */
 public function getDSN() {
 
@@ -156,9 +156,9 @@ public function getDSN() {
 
 
 /**
- * Return this.query.
+ * Return query map.
  *
- * @return map
+ * @return array[string]string
  */
 public function getQueryMap() {
 	return $this->_query;
@@ -172,9 +172,9 @@ public function getQueryMap() {
  * type://login:password@protocol+host:port/name 
  * type://[password]@./file or type://@/path/to/file 
  *
- * @throws rkphplib\Exception if split failed
- * @string $dsn
- * @return map
+ * @throws 
+ * @param string $dsn
+ * @return array[string]string
  */
 public static function splitDSN($dsn) {
 
