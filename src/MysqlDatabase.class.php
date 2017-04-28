@@ -461,6 +461,10 @@ private function _fetch($query, $rbind = null, $rcount = 0) {
 					$this->_cache['FETCH:DOUBLE'] = array();
 				}
 
+				if (!isset($this->_cache['FETCH:DOUBLE'][$key])) {
+					$this->_cache['FETCH:DOUBLE'][$key] = 0;
+				}
+
 				$this->_cache['FETCH:DOUBLE'][$key]++;
 			}
 
