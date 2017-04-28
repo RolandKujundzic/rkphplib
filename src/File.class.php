@@ -654,7 +654,7 @@ public static function write($fh, $data) {
 		throw new Exception('invalid file handle');
 	}
 
-	if (fwrite($fh, $data) === false) {
+	if (($byte = fwrite($fh, $data)) === false || (strlen($data) > 0 && $byte == 0)) {
 		throw new Exception('could not write data', 'fh=['.$fh.'] data=['.mb_substr($data, 0, 40).' ... ]');
 	}
 }
