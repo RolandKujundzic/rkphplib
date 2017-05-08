@@ -175,7 +175,10 @@ private function parseCode() {
 		$this->line_num++;
 		$line = trim($line);
 
-		if ($line == '/*') {
+		if (($maxlen = mb_strlen($line)) > 120) {
+			throw new Exception('line '.$this->line_num." is too long ($maxlen > 120)", $line);
+		}
+		else if ($line == '/*') {
 			$multiline_comment = $this->line_num;
 		}
 		else if ($line == '*/') {
