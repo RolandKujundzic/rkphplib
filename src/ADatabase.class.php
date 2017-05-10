@@ -4,6 +4,7 @@ namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
 require_once(__DIR__.'/lib/split_str.php');
+require_once(__DIR__.'/lib/is_map.php');
 
 use rkphplib\Exception;
 
@@ -447,13 +448,50 @@ public function getQuery($qkey, $replace = null) {
 
 
 /**
- * True if query key exists.
+ * True if query key(s) exists.
  * 
- * @param string $qkey
+ * @param string|array $qkey
  * @return boolean
  */
 public function hasQuery($qkey) {
-	return isset($this->_query[$qkey]) ? false : true;
+	if (is_array($query)) {
+		$res = true;
+
+		for ($i = 0; $res && $i < count($qkey); $i++) {
+			$res = isset($this->_query[$qkey[$i]]);
+		}
+	}
+	else {
+		$res = isset($this->_query[$qkey]);
+	}
+
+	return $res;
+}
+
+
+/**
+ * True if every query key from query_map exists (with matching query).
+ * 
+ * @param array[string]string $query_map
+ * @return boolean
+ */
+public function hasQueryMap($query_map) {
+
+	if (!is_array($query_map)) {
+		return false;
+	}
+	else if (\rkphplib\lib\is_map($query_map)) {
+		return $this->hasQuery($query_map);
+	}
+	else {
+		foreach ($query_map as $qkey => $query) {
+			if (!isset($this->_query[$qkey]) || $query != $this->_query[$qkey]) {
+				return false;
+			}
+		}
+
+		return true;
+	}
 }
 
 
