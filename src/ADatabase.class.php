@@ -316,6 +316,10 @@ public function setQuery($qkey, $query, $info = []) {
 		throw new Exception('empty query key');
 	}
 
+	if (!is_string($qkey) || is_numeric($qkey)) {
+		throw new Exception('invalid query key', $qkey);
+	}
+
 	if (empty($query)) {
 		throw new Exception('empty query', $qkey);
 	}
