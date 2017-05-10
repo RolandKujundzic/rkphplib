@@ -5,6 +5,7 @@ namespace rkphplib;
 require_once(__DIR__.'/Exception.class.php');
 require_once(__DIR__.'/ADatabase.class.php');
 require_once(__DIR__.'/lib/split_str.php');
+require_once(__DIR__.'/lib/is_map.php');
 
 use rkphplib\Exception;
 
@@ -67,14 +68,14 @@ public static function create($dsn = '', $query_map = null) {
 
 /**
  * Singelton method. Return unused ADatabase object instance with dsn from pool.
- * Query map with no prefix.  
+ * Use query_map with no prefix. 
  *
- * @throws rkphplib\Exception
+ * @throws 
  * @param string $dsn (default = '' = use SETTINGS_DSN) 
- * @param map $query_map (default = null)
+ * @param null|map|vector $query_map (default = null)
  * @return ADatabase
  */
-public static function getInstance($dsn = '', $query_map = null) {
+public static function getInstance($dsn = '', $query_map = []) {
 
 	if (empty($dsn) && defined('SETTINGS_DSN')) {
 		$dsn = SETTINGS_DSN;
@@ -84,16 +85,37 @@ public static function getInstance($dsn = '', $query_map = null) {
 		throw new Exception('empty dsn');
 	}
 
-	$db_id = ADatabase::computeId($dsn, $query_map);
+	$found = []; 
 
 	for ($i = 0; $i < count(self::$pool); $i++) {
-		if (self::$pool[$i]->getId() == $db_id && !self::$pool[$i]->hasResultSet()) {
-			return self::$pool[$i];
+		if (self::$pool[$i]->getDSN() == $dsn && self::$pool[$i]->hasQueryMap($query_map)) {
+			array_push($found, $i);
+
+			if (!self::$pool[$i]->hasResultSet()) {
+				return self::$pool[$i];
+			}
 		}
 	}
 
-	array_push(self::$pool, self::create($dsn, $query_map));
-	return self::$pool[$i];
+	if (\rkphplib\lib\is_map($query_map)) {
+		array_push(self::$pool, self::create($dsn, $query_map));
+		return self::$pool[$i];
+	}
+	else if (count($found) > 0) {
+		// check if instance has become available ...
+		for ($i = 0; $i < count($found); $i++) {
+			if (!self::$pool[$i]->hasResultSet()) {
+				return self::$pool[$i];
+			}
+		}
+
+		// create new instance
+		array_push(self::$pool, self::create($dsn, self::$pool[$found[0]]->getQueryMap()));
+		return self::$pool[$i];	
+	}
+	else {
+		throw new Exception('no matching database instance', 'dsn='.$dsn.' query_map='.print_r($query_map, true));
+	}
 }
 
 
