@@ -484,6 +484,9 @@ public function hasQueryMap($query_map) {
 	if (!is_array($query_map)) {
 		return false;
 	}
+	else if (count($query_map) == 0) {
+		return true;
+	}
 	else if (\rkphplib\lib\is_map($query_map)) {
 		return $this->hasQuery($query_map);
 	}
