@@ -30,10 +30,10 @@ private static $pool = [];
  * 
  * @throws rkphplib\Exception
  * @param string $dsn (default = '' = use SETTINGS_DSN)
- * @param map $query_map (default = null)
+ * @param map $query_map
  * @return ADatabase
  */
-public static function create($dsn = '', $query_map = null) {
+public static function create($dsn = '', $query_map = []) {
 	$db = null;
 
 	if (empty($dsn) && defined('SETTINGS_DSN')) {
@@ -58,7 +58,7 @@ public static function create($dsn = '', $query_map = null) {
 
 	$db->setDSN($dsn);
 
-	if (!is_null($query_map)) {
+	if (count($query_map) > 0) {
 		$db->setQueryMap($query_map);
 	}
 
@@ -97,7 +97,7 @@ public static function getInstance($dsn = '', $query_map = []) {
 		}
 	}
 
-	if (\rkphplib\lib\is_map($query_map)) {
+	if (\rkphplib\lib\is_map($query_map, true)) {
 		array_push(self::$pool, self::create($dsn, $query_map));
 		return self::$pool[$i];
 	}
