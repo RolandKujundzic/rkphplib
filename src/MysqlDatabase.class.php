@@ -363,6 +363,16 @@ public function selectHash($query, $key_col = 'name', $value_col = 'value', $ign
 
 
 /**
+ * Return double keys from selectHash.
+ * 
+ * @return array[string]int
+ */
+public function getDoubles() {
+	return $this->_cache['FETCH:DOUBLE'];
+}
+
+
+/**
  * Execute select query. If res_count > 0 and result is empty
  * throw "no result" error message.
  *
