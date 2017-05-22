@@ -241,7 +241,7 @@ public static function splitDSN($dsn) {
  *
  * @throws 
  * @param string $qkey
- * @param map<string:any> $info
+ * @param array[string]string $info
  */
 public function setQueryInfo($qkey, $info) {
 	if (empty($qkey)) {
@@ -268,10 +268,10 @@ public function setQueryInfo($qkey, $info) {
  * Return query info map (or value if $ikey is set).
  *
  * @param string $qkey 
- * @param string $ikey (default = '')
+ * @param string $ikey
  * @see setQueryInfo()
  * @throws 
- * @return any|map<string:any> 
+ * @return mixed 
  */
 public function getQueryInfo($qkey, $ikey = '') {
 	if (empty($qkey)) {
@@ -305,10 +305,10 @@ public function getQueryInfo($qkey, $ikey = '') {
  * If tag is {:=^x} apply escape_name($value).
  * If tag is {:=_x} keep $value.
  *
- * @throws rkphplib\Exception if error
+ * @throws
  * @param string $qkey
  * @param string $query
- * @param map<string:any> $info (default = [], see setQueryInfo())
+ * @param array[string]string $info see setQueryInfo()
  */
 public function setQuery($qkey, $query, $info = []) {
 
@@ -381,8 +381,8 @@ public function setQuery($qkey, $query, $info = []) {
  *
  * @throws rkphlib\Exception if error
  * @param string $qkey
- * @param hash $replace
- * @return string|vector
+ * @param array[string]string $replace
+ * @return string|array
  */
 public function getQuery($qkey, $replace = null) {
 
@@ -506,7 +506,7 @@ public function hasQueryMap($query_map) {
  * Apply setQuery($key, value) for every key value pair in $query_map.
  *
  * @see ADatabase::setQuery()
- * @param map $query_map
+ * @param array[string]string $query_map
  */
 public function setQueryMap($query_map) {
 	foreach ($query_map as $qkey => $query) {
@@ -520,10 +520,10 @@ public function setQueryMap($query_map) {
  * Change/remove query prefix with conf_hash[@query_prefix].
  * Use query.escape_name@table=test name to replace {:=@table} with `test name`.
  *
- * @see setQuery(), setQueryMap(), 
- * @throws rkphplib\Exception if error
- * @param map $conf_hash
- * @param empty|vectory $require_keys (default = '')
+ * @see setQuery(), setQueryMap()
+ * @throws
+ * @param array[string]string $conf_hash
+ * @param array $require_keys
  */
 public function setQueryHash($conf_hash, $require_keys = '') {
 
@@ -596,12 +596,14 @@ public static function escape_name($name, $abort = false) {
 
 /**
  * Write lock tables.
- * @param vectory<string> $tables 
+ *
+ * @param array $tables 
  */
 abstract public function lock($tables);
 
 
 /**
+ * Unlock locked tables.
  *
  */
 abstract public function unlock();
@@ -609,8 +611,9 @@ abstract public function unlock();
 
 /**
  * Get named lock. Use releaseLock($name) to free.
- * @param string $name
+ *
  * @throws
+ * @param string $name
  */
 abstract public function getLock($name);
 
@@ -642,7 +645,7 @@ abstract public function hasResultSet();
  * Return database name vector.
  * 
  * @param boolean $reload_cache
- * @return vector
+ * @return array
  */
 abstract public function getDatabaseList($reload_cache = false);
 
@@ -651,17 +654,15 @@ abstract public function getDatabaseList($reload_cache = false);
  * Return table name vector.
  * 
  * @param boolean $reload_cache
- * @return vector
+ * @return array
  */
 abstract public function getTableList($reload_cache = false);
 
 
 /**
- * Return last error message. Values:
+ * Return last error message.
  *
- * - no_such_table 
- *
- * @return null|vector [custom_error, native_error, native_error_code ]
+ * @return array [custom_error, native_error, native_error_code ]
  */
 abstract public function getError();
 
@@ -830,7 +831,7 @@ public function hasTable($name) {
  * Return auto_increment column value if last 
  * query was insert and table has auto_increment column.
  *
- * @throw not_implemented|no_id
+ * @throws
  * @return int 
  */
 abstract public function getInsertId();
@@ -839,8 +840,8 @@ abstract public function getInsertId();
 /**
  * Create database and account (drop if exists).
  *
- * @param string $dsn (default = '' = use internal)
- * @param string $opt (default = 'utf8')
+ * @param string $dsn
+ * @param string $opt
  */
 abstract public function createDatabase($dsn = '', $opt = 'utf8');
 
@@ -848,18 +849,18 @@ abstract public function createDatabase($dsn = '', $opt = 'utf8');
 /**
  * Drop database and account (if exists).
  *
- * @param string $dsn (default = '' = use internal)
+ * @param string $dsn
  */
 abstract public function dropDatabase($dsn = '');
 
 
 /**
- * Export database dump into file. Options:
+ * Export database dump into file. Opt parameter:
  *
  * - tables: table1, table2, ...
  *
  * @param string $file
- * @param map $opt (default = null = full database dump)
+ * @param array[string]mixed $opt
  */
 abstract public function saveDump($file, $opt = null);
 
@@ -887,7 +888,7 @@ abstract public function loadDump($file);
  *
  * @throws
  * @see parseCreateTableConf
- * @param map<string:string> $conf
+ * @param array[string]string $conf
  * @return string
  */
 public static function createTableQuery($conf) {
@@ -997,8 +998,8 @@ public static function createTableQuery($conf) {
  * Create table (drop if exists).
  *
  * @see createTableQuery
- * @param map<string:string> $conf
- * @param bool $drop_existing = false
+ * @param array[string]string $conf
+ * @param bool $drop_existing
  */
 public function createTable($conf, $drop_existing = false) {
 
@@ -1026,19 +1027,18 @@ public function createTable($conf, $drop_existing = false) {
 /**
  * Return map with resolved shortcuts (@...). Only "@table" is kept. Example:
  *
- * @table: table name, required, replace with escaped tablename 
- *
- * @language: e.g. de, en, ...
- * @multilang: e.g. name, desc = name_de, name_en, desc_de, desc_en
- *
- * @id: 1=[id, int:::291 ], 2=[id, int:::35], 3=[id, varchar:30::3]
- * @status: 1=[status, tinyint:::9]
- * @timestamp: 1=[since, datetime::NOW():1], 2=[lchange, datetime::NOW():1], 3=[since, datetime::NOW():1, lchange, datetime::NOW():1]
+ * "@table": table name, required, replace with escaped tablename 
+ * "@language": e.g. de, en, ...
+ * "@multilang": e.g. name, desc = name_de, name_en, desc_de, desc_en
+ * "@id": 1=[id, int:::291 ], 2=[id, int:::35], 3=[id, varchar:30::3]
+ * "@status": 1=[status, tinyint:::9]
+ * "@timestamp": 1=[since, datetime::NOW():1], 2=[lchange, datetime::NOW():1], 
+ *   3=[since, datetime::NOW():1, lchange, datetime::NOW():1]
  *
  * @throws
  * @see createTable
- * @param map<string:string> $conf
- * @return map<string:string>
+ * @param array[string]string $conf
+ * @return array[string]string
  */
 public static function parseCreateTableConf($conf) {
 
@@ -1117,7 +1117,7 @@ abstract public function dropTable($table);
  * Apply database specific escape function (fallback is self::escape).
  *
  * @see self::escape
- * @param string $txt
+ * @param string $value
  * @return string
  */
 abstract public function esc($value);
@@ -1126,8 +1126,8 @@ abstract public function esc($value);
 /**
  * Execute query (string or prepared statement).
  *
- * @param string|vector $query
- * @param bool $use_result (default = false)
+ * @param string|array $query
+ * @param bool $use_result
  */
 abstract public function execute($query, $use_result = false);
 
@@ -1136,7 +1136,7 @@ abstract public function execute($query, $use_result = false);
  * Return next row (or NULL).
  * 
  * @throws if no resultset
- * @return map<string:string>|null
+ * @return array[string]string
  */
 abstract public function getNextRow();
 
@@ -1153,9 +1153,9 @@ abstract public function getRowNumber();
 /**
  * Return column values.
  *
- * @param string|vector $query
- * @param string $colname (default = col)
- * @return vector
+ * @param string|array $query
+ * @param string $colname
+ * @return array
  */
 abstract public function selectColumn($query, $colname = 'col');
 
@@ -1167,19 +1167,20 @@ abstract public function selectColumn($query, $colname = 'col');
  * (e.g. mysql: { type: 'double', is_null: true|false, key: '', default: '', extra: '' }).
  *
  * @param string $table
- * @return map
+ * @return array[string]string
  */
 abstract public function getTableDesc($table);
 
 
 /**
- * Return hash values (key, value columns).
+ * Return hash values (key, value columns). Use
+ * "id AS name, val AS value" in setQuery to make key_col and value_col match.
  *
- * @param string|vector $query
- * @param string $key_col (default = name)
- * @param string $value_col (defualt = value)
- * @param bool $ignore_double (default = false)
- * @return hash
+ * @param string|array $query
+ * @param string $key_col
+ * @param string $value_col
+ * @param bool $ignore_double
+ * @return array[string]string
  */
 abstract public function selectHash($query, $key_col = 'name', $value_col = 'value', $ignore_double = false);
 
@@ -1187,9 +1188,9 @@ abstract public function selectHash($query, $key_col = 'name', $value_col = 'val
 /**
  * Return query result row $rnum.
  *
- * @param string|vector $query
+ * @param string|array $query
  * @param int $rnum (default = 0)
- * @return hash
+ * @return array[string]string
  */
 abstract public function selectRow($query, $rnum = 0);
 
@@ -1200,9 +1201,9 @@ abstract public function selectRow($query, $rnum = 0);
  *
  * If $res_count > 0 throw error if column count doesn't match.
  *
- * @param string|vector $query
+ * @param string|array $query
  * @param int $res_count (default = 0)
- * @return table
+ * @return array
  */
 abstract public function select($query, $res_count = 0);
 
@@ -1211,7 +1212,7 @@ abstract public function select($query, $res_count = 0);
  * Return table data checksum.
  *
  * @param string $table
- * @param bool $native (default = false)
+ * @param bool $native
  * @return string
  */
 abstract public function getTableChecksum($table, $native = false);
@@ -1226,7 +1227,7 @@ abstract public function getTableChecksum($table, $native = false);
  * 
  * @param string $table 
  * @throws
- * @return map<string:string>
+ * @return array[string]string
  */
 abstract public function getTableStatus($table);
 
@@ -1246,10 +1247,10 @@ public function seek($offset) {
  * Use column alias "split_cs_list" to split comma separated value (if query was 
  * "SELECT GROUP_CONCAT(name) AS split_cs_list ...").
  * 
- * @throw rkphplib\Exception if rownum != 1 
- * @param string|vector $query
- * @param string $col (default = '')
- * @return array|string 
+ * @throws
+ * @param string|array $query
+ * @param string $col
+ * @return array|string
  */
 public function selectOne($query, $col = '') {
 	$dbres = $this->select($query, 1);
@@ -1284,14 +1285,15 @@ public function selectOne($query, $col = '') {
  *  - name:exec = $this->execute($this->getQuery(name, $replace), false)
  *  - name:one = $this->selectOne($this->getQuery(name, $replace), $opt)
  *  - name:column =  $this->selectColumn($this->getQuery(name, $replace), $opt) ($opt == '' == 'col')
- *  - name:hash = $this->selectHash($this->getQuery($name, $replace), $opt[0], $opt[1], false) ($opt == '' == [name, value ])
+ *  - name:hash = $this->selectHash($this->getQuery($name, $replace), 
+ *      $opt[0], $opt[1], false) ($opt == '' == [name, value ])
  *  - name:row = $this->selectRow($this->getQuery($name, $replace), intval($opt)) 
  *
  * @throws
  * @param string $name query key
- * @param map<string:string> $replace (default = null)
- * @param int|string $opt (default = '')
- * @return false|string|vector<string>|map<string:string>
+ * @param array[string]string $replace
+ * @param int|string $opt
+ * @return mixed
  */
 public function query($name, $replace = null, $opt = '') {
 
@@ -1383,8 +1385,8 @@ public static function escape($txt) {
  * Return comma separted list of columns. Example:
  * self::columnList(['a', 'b', 'c'], 'l') = 'l.a AS l_a, l.b AS l_b, l.c AS l_c'. 
  * 
- * @param vector $cols
- * @param string $prefix (default = '')
+ * @param array $cols
+ * @param string $prefix
  * @return string
  */
 public static function columnList($cols, $prefix = '') {
@@ -1414,7 +1416,7 @@ public static function columnList($cols, $prefix = '') {
  *
  * @param string $table
  * @param string $type insert|update
- * @param map<string:string> $kv
+ * @param array[string]string $kv
  */
 public function buildQuery($table, $type, $kv = []) {
 
