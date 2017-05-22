@@ -470,12 +470,13 @@ private static function fixNameDesc(&$desc, $tags) {
  * @param string $param_str
  */
 private function checkParam(&$info, $param_str) {
-	$plist = explode(', ', $param_str);
+	$plist = empty($param_str) ? [] : explode(', ', $param_str);
 	$pinfo = isset($info['param']) ? $info['param'] : [];
 	$k = 0;
 
 	if (count($plist) != count($pinfo)) {
-		throw new Exception('parameter count', '@param: '.print_r($pinfo, true)."\nplist: ".print_r($plist, true));
+		throw new Exception('parameter count', "@param: ".
+			print_r($pinfo, true)."\nplist: ".print_r($plist, true));
 	}
 
 	foreach ($plist as $param) {
