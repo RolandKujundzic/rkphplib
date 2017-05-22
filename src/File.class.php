@@ -105,10 +105,11 @@ public static function fromURL($url, $required = true) {
 	curl_setopt($cu, CURLOPT_FOLLOWLOCATION, true);
 
 	$res = curl_exec($cu);
-	$status = curl_getinfo($cu);
+	$info = curl_getinfo($cu);
+	$status = intval($info['http_code']);
 
-	if ($status['http_code'] != 200) {
-		throw new Exception('failed to retrieve file', "status=".$status['http_code']." url=$url");
+	if ($status < 200 || $status >= 300) {
+		throw new Exception('failed to retrieve file', "status=$status url=$url");
 	}
 
 	curl_close($cu);
