@@ -458,7 +458,7 @@ public function getQuery($qkey, $replace = null) {
  * @return boolean
  */
 public function hasQuery($qkey) {
-	if (is_array($query)) {
+	if (is_array($qkey)) {
 		$res = true;
 
 		for ($i = 0; $res && $i < count($qkey); $i++) {
