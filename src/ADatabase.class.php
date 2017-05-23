@@ -231,7 +231,7 @@ public static function splitDSN($dsn) {
 }
 
 
-/*
+/**
  * Set query extra information ($info), e.g.:
  * 
  * - type: select, insert, update, delete, alter, create, drop, show, ...
