@@ -37,4 +37,28 @@ $db3 = Database::getInstance(DSN);
 
 $th->compare('Database::getInfo', Database::getInfo(), "@getInfo.json");
 
+$dbx = [];
+$dbx_num = 10000;
+print "get $dbx_num database instances\n";
+
+$query_map = [ 'select' => "SELECT * FROM x", 'insert' => "INSERT INTO x (a, b) VALUES ('{:=a}', '{:=b}')" ];
+
+for ($i = 0; $i < $dbx_num; $i++) {
+	$dbx[$i] = Database::getInstance(DSN, $query_map);
+	
+}
+
+if (Database::getPoolSize() != 4) { 
+	throw new Exception("DatabasePool size = ".Database::getPoolSize()." != 4");
+}
+
+$id1 = $dbx[0]->getId();
+for ($i = 1; $i < $dbx_num; $i++) {
+	if ($id1 != $dbx[$i]->getId()) {
+		throw new Exception("dbx[0].id = $id1 != ".$dbx[$i]->getId()." = dbx[$i].id");
+	}
+}
+
+print "done.\n";
+
 $th->result();
