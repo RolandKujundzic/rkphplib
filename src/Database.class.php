@@ -88,7 +88,7 @@ public static function getInstance($dsn = '', $query_map = []) {
 	$found = []; 
 
 	for ($i = 0; $i < count(self::$pool); $i++) {
-		if (self::$pool[$i]->getDSN() == $dsn && self::$pool[$i]->hasQueryMap($query_map)) {
+		if (self::$pool[$i]->getDSN() == $dsn && self::$pool[$i]->hasQueries($query_map)) {
 			array_push($found, $i);
 
 			if (!self::$pool[$i]->hasResultSet()) {
