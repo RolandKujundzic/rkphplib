@@ -94,7 +94,7 @@ public static function computeId($dsn, $query_map = null) {
 	ksort($query_map);
 
 	foreach ($query_map as $key => $value) {
-		$res = md5($res.':'.md5($key).':'.md5($value));
+		$res = is_array($value) ? md5($res.':'.md5($key).':'.md5($value['@query'])) : md5($res.':'.md5($key).':'.md5($value));
 	}
 
 	return $res;
@@ -452,34 +452,40 @@ public function getQuery($qkey, $replace = null) {
 
 
 /**
- * True if query key(s) exists.
+ * True if query key exists. If query is not empty compare too.
  * 
- * @param string|array $qkey
+ * @param string $qkey
+ * @param string $query
  * @return boolean
  */
-public function hasQuery($qkey) {
-	if (is_array($qkey)) {
-		$res = true;
+public function hasQuery($qkey, $query = '') {
 
-		for ($i = 0; $res && $i < count($qkey); $i++) {
-			$res = isset($this->_query[$qkey[$i]]);
-		}
-	}
-	else {
-		$res = isset($this->_query[$qkey]);
+	if (!isset($this->_query[$qkey])) {
+		return false;
 	}
 
-	return $res;
+	if (empty($query)) {
+		return true;
+	}
+
+	$qkey_query = is_array($this->_query[$qkey]) ? $this->_query[$qkey]['@query'] : $this->_query[$qkey];
+
+	// don't compare '{:=a}' with {:=a}
+	$query = str_replace("'", '', $query);
+	$qkey_query = str_replace("'", '', $qkey_query);
+
+	return $query == $qkey_query;
 }
 
 
 /**
- * True if every query key from query_map exists (with matching query).
+ * True if every query key from query_map exists and if query_map is map (and not vector)
+ * all queries must be same.
  * 
- * @param array[string]string $query_map
+ * @param array $query_map
  * @return boolean
  */
-public function hasQueryMap($query_map) {
+public function hasQueries($query_map) {
 
 	if (!is_array($query_map)) {
 		return false;
@@ -488,17 +494,21 @@ public function hasQueryMap($query_map) {
 		return true;
 	}
 	else if (\rkphplib\lib\is_map($query_map)) {
-		return $this->hasQuery($query_map);
-	}
-	else {
 		foreach ($query_map as $qkey => $query) {
-			if (!isset($this->_query[$qkey]) || $query != $this->_query[$qkey]) {
+			if (!$this->hasQuery($qkey, $query)) {
 				return false;
 			}
 		}
-
-		return true;
 	}
+	else {
+		foreach ($query_map as $i => $qkey) {
+			if (!$this->hasQuery($qkey)) {
+				return false;
+			}
+		}
+	}
+
+	return true;
 }
 
 
