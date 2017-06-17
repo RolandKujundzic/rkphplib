@@ -4,8 +4,6 @@ namespace rkphplib;
 
 require_once(__DIR__.'/ASession.class.php');
 
-use rkphplib\Exception;
-
 
 /**
  * PHP Session wrapper ($_SESSION).
