@@ -6,9 +6,6 @@ require_once(__DIR__.'/ADatabase.class.php');
 require_once(__DIR__.'/File.class.php');
 require_once(__DIR__.'/lib/execute.php');
 
-use rkphplib\Exception;
-
-
 
 /**
  * MysqlDatabase implementation of ADatabase.
@@ -217,7 +214,7 @@ public function saveDump($file, $opt = null) {
 public function loadDump($file) {
 	File::exists($file, true);
 	$dsn = self::splitDSN($this->_dsn);
-	lib\execute("mysql -h ".$dsn['host']." -u '".$dsn['login']."' -p'".$dsn['password']."' '".$dsn['name']."' < '".$file."'");
+	\rkphplib\lib\execute("mysql -h ".$dsn['host']." -u '".$dsn['login']."' -p'".$dsn['password']."' '".$dsn['name']."' < '".$file."'");
 }
 
 
