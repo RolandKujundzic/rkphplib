@@ -7,8 +7,6 @@ require_once(__DIR__.'/File.class.php');
 require_once(__DIR__.'/YAML.class.php');
 require_once(__DIR__.'/Dir.class.php');
 
-use \rkphplib\Exception;
-
 
 /**
  * Convert swagger yaml file to zircote swagger annotations.
