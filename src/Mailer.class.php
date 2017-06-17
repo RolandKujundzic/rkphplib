@@ -3,9 +3,6 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/other/PHPMailer/PHPMailerAutoload.php');
-require_once(__DIR__.'/lib.php');
-
-use rkphplib\lib\Exception;
 
 
 /**
