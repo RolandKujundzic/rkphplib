@@ -4,8 +4,6 @@ namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
 
-use rkphplib\Exception;
-
 
 /**
  * En/Decryption helper class.
@@ -51,6 +49,8 @@ public function __construct($opt = array()) {
 			throw new Exception('Invalid configuration', "no such method: $m");
 		}
 	}
+
+	throw new Exception('yalla', 'yuck');
 }
 
 

@@ -7,7 +7,7 @@
 // https://github.com/bshaffer/oauth2-server-php + https://github.com/bshaffer/oauth2-demo-php
 
 
-namespace \rkphplib;
+namespace rkphplib;
 
 require_once(__DIR__.'/XML.class.php');
 require_once(__DIR__.'/JSON.class.php');
