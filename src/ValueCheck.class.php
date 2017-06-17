@@ -19,7 +19,7 @@ class ValueCheck {
  */
 public static function run($key, $value, $check) {
 	if (!is_array($check)) {
-		$check = rkphplib\lib\split_str(':', $check);
+		$check = \rkphplib\lib\split_str(':', $check);
 	}
 
 	$method = array_shift($check);
