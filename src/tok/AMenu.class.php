@@ -6,6 +6,8 @@ require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/../Exception.class.php');
 require_once(__DIR__.'/../lib/split_str.php');
 
+use \rkphplib\Exception;
+
 
 /**
  * Tokenizer base Menu plugin.
