@@ -7,7 +7,7 @@
 // https://github.com/bshaffer/oauth2-server-php + https://github.com/bshaffer/oauth2-demo-php
 
 
-namespace rkphplib;
+namespace \rkphplib;
 
 require_once(__DIR__.'/XML.class.php');
 require_once(__DIR__.'/JSON.class.php');
@@ -337,7 +337,7 @@ private function checkApiToken($force_basic_auth = true) {
 	else if ($force_basic_auth && $allow_basic_auth) {
 		header('WWW-Authenticate: Basic realm="REST API"');
 		header('HTTP/1.0 401 Unauthorized');
-		print lib\translate('Please enter REST API basic authentication credentials');
+		print \rkphplib\lib\translate('Please enter REST API basic authentication credentials');
 		$this->logRequest(401);
 		exit;
 	}
@@ -737,7 +737,7 @@ protected function logResult($code, $p, $out) {
 
 	if ($code >= 400) {
 		$info = empty($p['error_info']) ? '' : "\n".$p['error_info'];
-		lib\log_error("API ERROR ".$p['error_code']."/$code: ".$p['error'].$info);
+		\rkphplib\lib\log_error("API ERROR ".$p['error_code']."/$code: ".$p['error'].$info);
 	}
 }
 
