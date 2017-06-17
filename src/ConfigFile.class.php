@@ -1,6 +1,6 @@
 <?php
 
-namespace rkphplib;
+namespace \rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
 require_once(__DIR__.'/File.class.php');
@@ -33,7 +33,7 @@ public $file = '';
  * @return map
  */
 public function __construct($file) {
-	$this->conf = lib\conf2kv(File::load($file));
+	$this->conf = \rkphplib\lib\conf2kv(File::load($file));
 	$this->file = $file;
 }
 
