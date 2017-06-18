@@ -236,7 +236,7 @@ public function runFuncTest($path) {
 			$res = $this->_fc_function($func, $x);
 		}
 
-		$res = self::_res2str($res);
+		$res = self::res2str($res);
 		$msg = 'ok';
 
 		if ($res !== $ok) {
@@ -550,7 +550,7 @@ private function _fc_static_method($class, $method, $x) {
  * @param any $res
  * @return string
  */
-private static function _res2str($res) {
+public static function res2str($res) {
 	if (is_float($res) || is_int($res) || is_bool($res)) {
 		return $res;
 	}
