@@ -82,6 +82,111 @@ public static function find($file, $dir = '') {
 
 
 /**
+ * Load table data. If uri is file|http|https|binary://. Example options:
+ * 
+ *  File::loadTable('csv:file://test.csv', [ ',', '"' ])
+ *  File::loadTable('unserialize:file://test.ser')
+ *  File::loadTable('json:https://download.here/test.json')
+ *  File::loadTable('split:string://a|&|b|@|c|&|d', [ '|&|', '|@|' ]) 
+ *
+ * @throws 
+ * @param string $uri
+ * @param array $options
+ * @return array
+ */
+public static function loadTable($uri, $options = []) {
+
+	if (!preg_match('#^(csv|unserialize|json|split)\:(file|string|https?)\://#', substr($uri, 0, 20), $match)) {
+		throw new Exception('invalid uri', $uri);
+	}
+
+	$prefix = $match[1].':'.$match[2].'://';
+	$uri = substr($uri, strlen($prefix));
+	$type = $match[1];
+	$data = '';
+
+	if ($match[1] == 'csv') {
+		if (!isset($options[0])) {
+			$options[0] = ',';
+		}
+
+		if (!isset($options[1])) {
+			$options[1] = '"';
+		}
+
+		$table = File::loadCSV($uri, $options[0], $options[1]);
+	}
+	else if ($match[2] == 'file') {
+		$data = File::load($uri);
+	}
+	else if ($match[2] == 'string') {
+		$data = $uri;
+	}
+	else {
+		$data = File::fromURL($uri);
+		$type = $match[1];
+	}
+
+	if ($type == 'unserialize') {
+		$table = unserialize($data);
+	}
+	else if ($type == 'json') {
+		require_once(__DIR__.'/JSON.class.php');
+		$table = JSON::decode($data);
+	}
+	else if ($type == 'split') {
+		require_once(__DIR__.'/lib/split_table.php');
+
+		if (!isset($options[0])) {
+			$options[0] = '|&|';
+		}
+
+		if (!isset($options[1])) {
+			$options[1] = '|@|';
+		}
+
+		$table = \rkphplib\lib\split_table($data, $options[0], $options[1]);
+	}
+	else if ($type != 'csv') {
+		throw new Exception('invalid type', "uri=$uri type=$type");
+	}
+
+	return $table;
+}
+
+
+/**
+ * Load csv file. Ignore empty lines.
+ *
+ * @throws 
+ * @param string $file
+ * @param string $delimiter
+ * @param string $quote
+ * @param bool $trim
+ * @return array
+ */
+public static function loadCSV($file, $delimiter = ',', $quote = '"', $trim = true) {
+	$fh = File::open($file, 'rb');
+	$table = [];
+
+	while (($row = File::readCSV($fh, $delimiter, $quote))) {
+		if (count($row) == 0 || (count($row) == 1 && strlen(trim($row[0])) == 0)) {
+			continue;
+		}
+
+		for ($i = 0; $trim && $i < count($row); $i++) {
+			$row[$i] = trim($row[$i]);
+		}
+
+		array_push($table, $row);
+	}
+
+	File::close($fh);
+	return $table;
+}
+
+
+/**
  * Return filecontent loaded from url.
  * If required (default) abort if result has zero size.
  *
