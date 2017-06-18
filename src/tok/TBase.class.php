@@ -499,8 +499,8 @@ public function tok_plugin($p) {
 	foreach ($p as $plugin) {
 
 		if (mb_strpos($plugin, ':') === false) {
-			require_once(PATH_RKPHPLIB.$plugin.'.class.php');
-			$obj = '\\rkphplib\\'.$plugin;
+			require_once(PATH_RKPHPLIB.'tok/'.$plugin.'.class.php');
+			$obj = '\\rkphplib\\tok\\'.$plugin;
 		}
 		else {
 			list ($path, $obj) = explode(':', $plugin);
