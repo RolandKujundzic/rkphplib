@@ -528,7 +528,6 @@ public function tok_plugin($p) {
  * - _REQUEST[dir] = a/b/c, c/test.html exists: a/b/c/test.html
  * - _REQUEST[dir] = a/b/c, ./test.html exists: test.html
  *
- * @define SETTINGS_REQ_DIR = 'dir' if not defined
  * @see self::getReqDir
  * @see self::findPath
  * @param string $file
@@ -546,17 +545,13 @@ public function tok_find($file, $file2 = '') {
 
 
 /**
- * Return $_REQUEST[SETTINGS_REQ_DIR]. If SETTINGS_REQ_DIR is undefined use 'dir'.
- * If $use_dot_prefix = true return [.] (if result is empty) or prepend [./].
+ * Return $_REQUEST[SETTINGS_REQ_DIR]. If $use_dot_prefix = true return [.] 
+ * (if result is empty) or prepend [./].
  *
  * @param bool $use_dot_prefix (default = false)
  * @return string
  */
 public static function getReqDir($use_dot_prefix = false) {
-
-	if (!defined('SETTINGS_REQ_DIR')) {
-		define('SETTINGS_REQ_DIR', 'dir');
-	}
 
 	if (empty($_REQUEST[SETTINGS_REQ_DIR])) {
 		$res = $use_dot_prefix ? '.' : '';
