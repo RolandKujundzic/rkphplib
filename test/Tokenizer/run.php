@@ -7,9 +7,9 @@ if (!isset($th)) {
 	$th = new rkphplib\TestHelper();
 }
 
-require_once(dirname(dirname(__DIR__)).'/src/Tokenizer.class.php');
+require_once(dirname(dirname(__DIR__)).'/src/tok/Tokenizer.class.php');
 
-use \rkphplib\Tokenizer;
+use \rkphplib\tok\Tokenizer;
 
 
 $tx = new Tokenizer();
