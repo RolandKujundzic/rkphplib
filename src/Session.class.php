@@ -47,6 +47,10 @@ public function init($conf) {
 
 	$this->initMeta();
 
+	if (!defined('SETTINGS_REQ_DIR')) {
+		define('SETTINGS_REQ_DIR', 'dir');
+	}
+
 	if (!empty($_REQUEST[SETTINGS_REQ_DIR])) {
 		$dir = $_REQUEST[SETTINGS_REQ_DIR];
 
