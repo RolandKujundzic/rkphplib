@@ -1,12 +1,12 @@
 <?php
 
-namespace rkphplib;
+namespace rkphplib\tok;
 
 require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/Exception.class.php');
-require_once(__DIR__.'/lib/conf2kv.php');
+require_once(__DIR__.'/../Exception.class.php');
+require_once(__DIR__.'/../lib/split_str.php');
 
-use rkphplib\Exception;
+use \rkphplib\Exception;
 
 
 /**
@@ -165,7 +165,7 @@ public function tok_menu_add($level, $node) {
 	}
 
 	if (!empty($node['if_table'])) {
-		require_once(__DIR__.'/Database.class.php');
+		require_once(__DIR__.'/../Database.class.php');
 		$db = Database::getInstance();
 		$table_list = \rkphplib\lib\split_str(',', $node['if_table']);
 		foreach ($table_list as $table) {

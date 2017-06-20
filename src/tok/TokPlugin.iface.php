@@ -1,6 +1,6 @@
 <?php
 
-namespace rkphplib;
+namespace rkphplib\tok;
 
 
 /**

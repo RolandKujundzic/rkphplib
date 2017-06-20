@@ -4,8 +4,6 @@ namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
 
-use rkphplib\Exception;
-
 
 /**
  * IMAP/POP3 wrapper.

@@ -1,13 +1,14 @@
 <?php
 
-namespace rkphplib;
+namespace rkphplib\tok;
 
 require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/Exception.class.php');
-require_once(__DIR__.'/lib/split_str.php');
-require_once(__DIR__.'/File.class.php');
+require_once(__DIR__.'/../Exception.class.php');
+require_once(__DIR__.'/../lib/split_str.php');
+require_once(__DIR__.'/../File.class.php');
 
-use rkphplib\Exception;
+use \rkphplib\Exception;
+use \rkphplib\File;
 
 
 /**
@@ -140,7 +141,7 @@ public function tok_load($param, $file) {
  * will be execute before condition comparision - use {tf:} and {true|false:} to
  * avoid this.
  * 
- * {if:|eq|ne|in|in_set|le|lt|ge|gt}condition(s)|#|true|#|false{:if}
+ * {if:|eq|ne|in|in_set|le|lt|ge|gt|and|or|cmp|cmp:or}condition(s)|#|true|#|false{:if}
  *
  * {if:}abc|#|true|#|false{:if} = true
  * {if:}|#|true|#|false{:if} = false
@@ -660,11 +661,11 @@ public function tok_tf($p, $arg) {
 			$tf = empty($ta) ? false : $ta;
 		}
 		else if ($p[0] === 'set') {
-			$tf = lib\split_str('|#|', $arg);
+			$tf = \rkphplib\lib\split_str('|#|', $arg);
 		}
 		else if (!empty($p[0]) && in_array($p[0], [ 'cmp', 'set', 'in_arr', 'in', 'in_set', 'and', 'or', 'cmp_and', 'cmp_or' ])) {
 			$do = $p[0];
-			$ap = lib\split_str('|#|', $arg);
+			$ap = \rkphplib\lib\split_str('|#|', $arg);
 		}
 		else {
 			throw new Exception('invalid operator', 'use cmp');
@@ -673,7 +674,7 @@ public function tok_tf($p, $arg) {
 	else if (count($p) > 1) {
 		$do = array_shift($p);
 		// even if arg is empty we need [] as ap - e.g. {tf:cmp:}{:tf} = true
-		$ap = array_merge($p, lib\split_str('|#|', $arg));
+		$ap = array_merge($p, \rkphplib\lib\split_str('|#|', $arg));
 	}
 
 	if (empty($do)) {
@@ -744,11 +745,11 @@ public function tok_tf($p, $arg) {
 		}
 
 		if ($do == 'in') {
-			$set = lib\split_str(',', $ap[0]);
+			$set = \rkphplib\lib\split_str(',', $ap[0]);
 			$tf = in_array($ap[1], $set);
 		}
 		else {
-			$set = lib\split_str(',', $ap[1]);
+			$set = \rkphplib\lib\split_str(',', $ap[1]);
 			$tf = in_array($ap[0], $set);
 		}
 	}

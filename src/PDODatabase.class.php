@@ -4,9 +4,6 @@ namespace rkphplib;
 
 require_once(__DIR__.'/ADatabase.class.php');
 
-use rkphplib\Exception;
-
-
 
 /**
  * PDO implementation of ADatabase.

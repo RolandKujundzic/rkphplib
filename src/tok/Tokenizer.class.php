@@ -1,12 +1,12 @@
 <?php
 
-namespace rkphplib;
+namespace rkphplib\tok;
 
 require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/Exception.class.php');
-require_once(__DIR__.'/File.class.php');
+require_once(__DIR__.'/../Exception.class.php');
+require_once(__DIR__.'/../File.class.php');
 
-use rkphplib\Exception;
+use \rkphplib\File;
 
 
 /**
@@ -379,7 +379,7 @@ private function _join_tok_plugin(&$i) {
 			$buildin = 'debug';
 		}
 		else {
-			throw new Exception('invalid plugin', "$name:$param is undefined - config=".$this->_config);
+			throw new Exception('invalid plugin '.$name, "$name:$param is undefined - config=".$this->_config);
 		}
 	}
 
@@ -598,28 +598,30 @@ private function _call_plugin($name, $param, $arg = null) {
 		throw new Exception('invalid plugin body', "plugin=$name arg=$arg");
 	}
 
+	$src_dir = dirname(__DIR__);
+
 	if (($pconf & TokPlugin::PARAM_LIST) || ($pconf & TokPlugin::PARAM_CSLIST)) {
-		require_once(__DIR__.'/lib/split_str.php');
+		require_once($src_dir.'/lib/split_str.php');
 		$delim = ($pconf & TokPlugin::PARAM_LIST) ? ':' : ',';
-		$param = lib\split_str($delim, $param);
+		$param = \rkphplib\lib\split_str($delim, $param);
 	}
 
 	if ($pconf & TokPlugin::KV_BODY) {
-		require_once(__DIR__.'/lib/conf2kv.php');
-		$arg = lib\conf2kv($arg);
+		require_once($src_dir.'/lib/conf2kv.php');
+		$arg = \rkphplib\lib\conf2kv($arg);
 	}
 	else if ($pconf & TokPlugin::JSON_BODY) {
-		require_once(__DIR__.'/JSON.class.php');
-		$arg = JSON::decode($arg);
+		require_once($src_dir.'/JSON.class.php');
+		$arg = \rkphplib\JSON::decode($arg);
 	}
 	else if (($pconf & TokPlugin::CSLIST_BODY) || ($pconf & TokPlugin::LIST_BODY)) {
-		require_once(__DIR__.'/lib/split_str.php');
+		require_once($src_dir.'/lib/split_str.php');
 		$delim = ($pconf & TokPlugin::CSLIST_BODY) ? ',' : '|#|';
-		$arg = lib\split_str($delim, $arg);
+		$arg = \rkphplib\lib\split_str($delim, $arg);
 	}
 	else if ($pconf & TokPlugin::XML_BODY) {
-		require_once(__DIR__.'/XML.class.php');	
-		$arg = XML::toMap($arg);
+		require_once($src_dir.'/XML.class.php');	
+		$arg = \rkphplib\XML::toMap($arg);
 	}
 
 	$res = '';

@@ -1,12 +1,14 @@
 <?php
 
-namespace rkphplib;
+namespace rkphplib\tok;
 
 require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/Exception.class.php');
-require_once(__DIR__.'/Database.class.php');
+require_once(__DIR__.'/../Exception.class.php');
+require_once(__DIR__.'/../Database.class.php');
 
-use rkphplib\Exception;
+use \rkphplib\Exception;
+use \rkphplib\Database;
+use \rkphplib\ADatabase;
 
 
 /**
@@ -16,7 +18,7 @@ use rkphplib\Exception;
  */
 class TDatabase implements TokPlugin {
 
-/** @var ADatabase $db (default = null) */
+/** @var \rkphplib\ADatabase $db (default = null) */
 private $db = null;
 
 
@@ -62,7 +64,7 @@ public function __construct($dsn = '') {
  * Set database connection string.
  *
  * @tok {sql_name:}a b{:sql_name} -> `a b`
- * @see ADatabase::setDSN()
+ * @see \rkphplib\ADatabase::setDSN()
  * @param string $arg
  * @return empty string
  */
@@ -76,7 +78,7 @@ public function tok_sql_dsn($dsn) {
  * SQL Escape trim($name).
  *
  * @tok {sql_name:}a b{:sql_name} -> `a b`
- * @see ADatabase::escape_name
+ * @see \rkphplib\ADatabase::escape_name
  * @param string $name
  * @return string
  */

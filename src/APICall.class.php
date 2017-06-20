@@ -8,8 +8,6 @@ require_once(__DIR__.'/XML.class.php');
 require_once(__DIR__.'/File.class.php');
 require_once(__DIR__.'/Dir.class.php');
 
-use rkphplib\Exception;
-
 
 /**
  * API call wrapper. Use constructor or set() for configuration. 

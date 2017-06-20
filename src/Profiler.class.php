@@ -4,9 +4,6 @@ namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
 
-use rkphplib\Exception;
-
-
 
 /**
  * PHP Profiler.

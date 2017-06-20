@@ -33,7 +33,7 @@ public $file = '';
  * @return map
  */
 public function __construct($file) {
-	$this->conf = lib\conf2kv(File::load($file));
+	$this->conf = \rkphplib\lib\conf2kv(File::load($file));
 	$this->file = $file;
 }
 

@@ -1,6 +1,7 @@
 <?php
 
-namespace rkphplib;
+namespace rkphplib\tok;
+
 
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/AMenu.class.php');

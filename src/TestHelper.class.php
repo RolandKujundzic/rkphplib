@@ -601,8 +601,8 @@ public function runTokenizer($num, $plugin_list) {
 
 	list ($tdir, $rel_tdir) = $this->_test_dir();
 
-	$this->load('Tokenizer.class.php');
-	$tok = new Tokenizer(Tokenizer::TOK_DEBUG);
+	$this->load('tok/Tokenizer.class.php');
+	$tok = new \rkphplib\tok\Tokenizer(\rkphplib\tok\Tokenizer::TOK_DEBUG);
 
 	for ($i = 0; $i < count($plugin_list); $i++) {
 		$plugin = 'rkphplib\\'.$plugin_list[$i];

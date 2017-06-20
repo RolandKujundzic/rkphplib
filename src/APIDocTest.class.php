@@ -8,8 +8,6 @@ require_once(__DIR__.'/APICall.class.php');
 require_once(__DIR__.'/JSON.class.php');
 require_once(__DIR__.'/lib/execute.php');
 
-use \rkphplib\Exception;
-
 
 /**
  * Use APIDocTest class to create swagger documentation and test.json file from source code.
