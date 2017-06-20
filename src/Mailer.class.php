@@ -2,11 +2,11 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/other/PHPMailer/PHPMailerAutoload.php');
+require_once(__DIR__.'/other/PHPMailer/class.phpmailer.php');
 
 
 /**
- * Mailer - still under construction.
+ * Mailer.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
