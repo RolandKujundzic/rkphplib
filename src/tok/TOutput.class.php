@@ -18,17 +18,6 @@ use \rkphplib\File;
  */
 class TOutput implements TokPlugin {
 
-/*
-protected $p_table = array();
-protected $p_rownum = 0;
-protected $p_conf = array();
-protected $p_plugin_name;
-
-private $_p = array();
-private $_tpl = array();
-private $_reset = true;
-*/
-
 /** @var array $table */
 protected $table = [];
 
@@ -74,8 +63,8 @@ public function tok_output_conf($p) {
 			'rowbreak' => 0,
 			'rowbreak_html' => '</tr><tr>',
 			'rowbreak_fill' => '<td></td>',
-			'table.type' => 'split,|&|,|@|',			
-			'table.data' => 
+			'table.type' => '',			
+			'table.data' => '',
 			'table.url' => '',
 			'scroll.link' => '<a href="index.php?{:=keep}">{:=link}</a>',
 			'scroll.first' => '<img src="img/scroll/first.gif" border="0">',
@@ -113,9 +102,7 @@ public function tok_output_conf($p) {
  *  rowbreak= 0
  *  rowbreak_html= </tr><tr>
  *  rowbreak_fill= <td></td>
- *  template.loop= loop
- *  template.scroll= scroll
- *  table.type= split, |&|, |@| (or csv, unserialize and json)
+ *  table.type= (use: "split, |&|, |@|", "split, |&|, |@|, =", csv, unserialize or json)
  *  table.url= 
  *  table.data= 
  *  scroll.link= <a href="index.php?{:=keep}">{:=link}</a>
@@ -138,10 +125,6 @@ public function tok_output_conf($p) {
 public function tok_output_init($p) {
 	$this->tok_output_conf($p);
 
-  if ($this->conf['template.loop'] != 'loop' || $this->conf['template.search'] != 'search') {
-    $this->customTemplate();
-  }
-
   $this->fillTable();
 	$this->env['total'] = count($this->table);
 
@@ -155,6 +138,7 @@ public function tok_output_init($p) {
  *  pagebreak= conf.pagebreak
  *  total= #rows
  *  visible= #rows visible
+ *  cols= col_1, ... , col_n (if column names are not set)
  *  start= position of first visible row (= 0 if no pagebreak)
  *  end= position of last visible row (= #rows-1 if no pagebreak)
  *  last= 0 or start-1 if pagebreak and start > 0
@@ -246,7 +230,13 @@ private function computeScroll() {
 private function _scroll_link($key, $last) {
 
   $res = str_replace('{:=link}', $this->conf['scroll.'.$key], $this->conf['scroll.link']);
-  $keep = urlencode($this->conf['req.last']).'='.urlencode($last).$this->p_conf['keep'];
+
+  $keep = urlencode($this->conf['req.last']).'='.urlencode($last);
+	$keep_param = \rkphplib\lib\split_str(',', $this->conf['keep']);
+	foreach ($keep_param as $name) {
+		$name = 
+	}
+
   $res = str_replace('{:=keep}', $keep, $res);
 
 	if (strpos($res, '{:=last}') !== false) {
@@ -388,69 +378,6 @@ public function tokCall($action, $param, $arg) {
 
   return $res;
 }
-
-
-
-/**
- * Show custom template.
- */
-private function customTemplate() {
-
-  $cookie = empty($this->p_conf['template.cookie']) ? '' : $this->p_conf['template.cookie'];
-  $tpl_req= $this->p_conf['template'];
-  $tpl = '';
-
-  if (!$cookie) {
-    $this->p_conf['keep'] .= ','.$tpl_req;
-  }
-
-  if (!empty($_REQUEST[$tpl_req])) {
-    $tpl =  $_REQUEST[$tpl_req];
-
-    if ($cookie) {
-      setcookie($cookie, $tpl, time() + 3600 * 24 * 30);
-    }
-  }
-  else if (!empty($_COOKIE[$cookie])) {
-    $tpl = $_COOKIE[$cookie];
-    $_REQUEST[$tpl_req] = $tpl;
-  }
-
-  if (!$tpl) {
-    $tpl_list = explode(',', $this->p_conf['template.default']);
-
-    if (strpos($tpl_list[0], ':') !== false) {
-      for ($i = 0; !$tpl && $i < count($tpl_list); $i++) {
-        list ($num, $name) = explode(':', trim($tpl_list[$i]));
-
-        if ($this->p_rownum <= $num) {
-          $tpl = $name;
-        }
-      }
-    }
-    else {
-      $tpl = $tpl_list[0];
-    }
-
-    if (!$tpl) {
-      $tpl = $name;
-    }
-
-    $_REQUEST[$tpl_req] = $tpl;
-
-    if ($cookie) {
-      setcookie($cookie, $tpl, time() + 3600 * 24 * 30);
-    }
-  }
-
-  $tpl_param = array('pagebreak', 'rowbreak', 'rowbreak_html', 'rowbreak_fill');
-  foreach ($tpl_param as $key) {
-    if (isset($this->p_conf['template.'.$tpl.'.'.$key])) {
-      $this->p_conf[$key] = $this->p_conf['template.'.$tpl.'.'.$key];
-    }
-  }
-}
-
 
 
 /**
