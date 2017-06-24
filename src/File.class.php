@@ -88,6 +88,7 @@ public static function find($file, $dir = '') {
  *  File::loadTable('unserialize:file://test.ser')
  *  File::loadTable('json:https://download.here/test.json')
  *  File::loadTable('split:string://a|&|b|@|c|&|d', [ '|&|', '|@|' ]) 
+ *  File::loadTable('split:string://a=1|&|b=2|@|c=3|&|d=4', [ '|&|', '|@|', '=' ]) 
  *
  * @throws 
  * @param string $uri
@@ -137,15 +138,19 @@ public static function loadTable($uri, $options = []) {
 	else if ($type == 'split') {
 		require_once(__DIR__.'/lib/split_table.php');
 
-		if (!isset($options[0])) {
+		if (empty($options[0])) {
 			$options[0] = '|&|';
 		}
 
-		if (!isset($options[1])) {
+		if (empty($options[1])) {
 			$options[1] = '|@|';
 		}
 
-		$table = \rkphplib\lib\split_table($data, $options[0], $options[1]);
+		if (!isset($options[2])) {
+			$options[2] = '';
+		}
+
+		$table = \rkphplib\lib\split_table($data, $options[0], $options[1], $options[2]);
 	}
 	else if ($type != 'csv') {
 		throw new Exception('invalid type', "uri=$uri type=$type");
