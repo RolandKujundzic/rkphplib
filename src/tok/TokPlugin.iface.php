@@ -4,9 +4,10 @@ namespace rkphplib\tok;
 
 
 if (!defined('SETTINGS_REQ_DIR')) {
-	/** @const SETTINGS_REQ_DIR = dir if undefined */
+	/** @const SETTINGS_REQ_DIR = 'dir' if undefined */
 	define('SETTINGS_REQ_DIR', 'dir');
 }
+
 
 
 /**
