@@ -27,61 +27,6 @@ public static $DEFAULT_MODE = 0666;
 
 
 /**
- * Search file from subdir _REQUEST[dir] up to document root.
- * 
- * Return found filepath. Throw exception if _REQUES[dir] is not relative or filename has ../ or \.
- *
- * @throws
- * @param string $file
- * @param string $dir if empty (default) use _REQUEST[dir]
- * @return string
- */
-public static function find($file, $dir = '') {
-
-	if (empty($dir)) {
-		$dir = empty($_REQUEST[SETTINGS_REQ_DIR]) ? '.' : './'.$_REQUEST[SETTINGS_REQ_DIR];
-
-		if (mb_substr($dir, 0, 3) == './/') {
-			throw new Exception('path is not relative', "dir=[$dir]");
-		}
-	}
-
-	$path = $dir.'/'.$file;
-
-	if (mb_strpos($path, '../') !== false) {
-		throw new Exception('../ is forbidden in path', "dir=[$dir] file=[$file]");
-	}
-
-	if (mb_strpos($path, '\\') !== false) {
-		throw new Exception('backslash is forbidden in path', "dir=[$dir] file=[$file]");
-	}
-
-	$res = '';
-
-	while (!$res && mb_strlen($dir) > 0) {
-		$path = $dir.'/'.$file;
-
-		if (file_exists($path) && is_readable($path)) {
-			$res = $path;
-		}
-
-		if (($pos = mb_strrpos($dir, '/')) > 0) {
-			$dir = mb_substr($dir, 0, $pos);
-		}
-		else {
-			$dir = '';
-		}
-	}
-
-	if (mb_substr($res, 0, 2) == './') {
-		$res = mb_substr($res, 2);
-	}
-
-	return $res;
-}
-
-
-/**
  * Load table data. If uri is file|http|https|binary://. Example options:
  * 
  *  File::loadTable('csv:file://test.csv', [ ',', '"' ])
