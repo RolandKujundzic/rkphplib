@@ -19,23 +19,14 @@ if (!defined('SETTINGS_REQ_CRYPT')) {
 if (!defined('SETTINGS_CRYPT_SECRET')) {
   /** @const SETTINGS_CRYPT_SECRET = md5(Server + Module Info) if undefined */
   $tmp = function() {
-    $module_list = array_intersect([ 'zlib', 'date', 'pcre', 'mysqli' ], get_loaded_extensions());
-    $secret = md5(php_uname());
+    $module_list = array_intersect([ 'zlib', 'date' ], get_loaded_extensions());
+    $secret = md5(PHP_OS.'_'.php_uname('r'));
 
     foreach ($module_list as $name) {
       $secret .= md5(print_r(ini_get_all($name), true));
     }
 
-    $len = strlen($secret);
-    $real_secret = '';
-
-    for ($i = 0; $i < 120 && $i < $len - 1; $i++) {
-      if (substr($secret, $i, 1) != substr($secret, $i + 1, 1)) {
-        $real_secret .= substr($secret, $i, 1);
-      }
-    }
-
-    return $real_secret;
+    return $secret;
   };
 
   define('SETTINGS_CRYPT_SECRET', $tmp());
