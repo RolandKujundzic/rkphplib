@@ -26,3 +26,8 @@ $th->compare('loadTable(unserialize:file://test.ser)', [ $out ], [ $ok ]);
 $out = $th->res2str(File::loadTable('json:file://test.json'));
 $th->compare('loadTable(json:file://test.json)', [ $out ], [ $ok ]);
 
+$out = $th->res2str(File::loadTable('split:file://test1.txt', [ '|&|', '|@|' ]));
+$th->compare('loadTable(split:file://test1.txt)', [ $out ], [ '[["c11","c12"],["c21","c22"]]' ]);
+
+$out = $th->res2str(File::loadTable('split:file://test2.txt', [ '|&|', '|@|', '=' ]));
+$th->compare('loadTable(split:file://test2.txt)', [ $out ], [ '[{"c11":"a","c12":"b"},{"c21":"c","c22":"d"}]' ]);
