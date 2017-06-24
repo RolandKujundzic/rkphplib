@@ -11,6 +11,37 @@ use \rkphplib\Exception;
 use \rkphplib\File;
 
 
+if (!defined('SETTINGS_REQ_CRYPT')) {
+  /** @const SETTINGS_REQ_CRYPT = 'cx' if undefined */
+  define('SETTINGS_REQ_CRYPT', 'cx');
+}
+
+if (!defined('SETTINGS_CRYPT_SECRET')) {
+  /** @const SETTINGS_CRYPT_SECRET = md5(Server + Module Info) if undefined */
+  $tmp = function() {
+    $module_list = array_intersect([ 'zlib', 'date', 'pcre', 'mysqli' ], get_loaded_extensions());
+    $secret = md5(php_uname());
+
+    foreach ($module_list as $name) {
+      $secret .= md5(print_r(ini_get_all($name), true));
+    }
+
+    $len = strlen($secret);
+    $real_secret = '';
+
+    for ($i = 0; $i < 120 && $i < $len - 1; $i++) {
+      if (substr($secret, $i, 1) != substr($secret, $i + 1, 1)) {
+        $real_secret .= substr($secret, $i, 1);
+      }
+    }
+
+    return $real_secret;
+  };
+
+  define('SETTINGS_CRYPT_SECRET', $tmp());
+}
+
+
 /**
  * Basic Tokenizer plugins.
  *
@@ -20,6 +51,16 @@ class TBase implements TokPlugin {
 
 /** @var Tokenizer $_tok */
 private $_tok = null;
+
+
+/** 
+ * Constructor. Decode crypted query data.
+ */
+public function __construct() {
+	if (!empty($_REQUEST[SETTINGS_REQ_CRYPT])) {
+		self::decodeHash($_REQUEST[SETTINGS_REQ_CRYPT], true);
+	}
+}
 
 
 /**
@@ -54,6 +95,7 @@ public function getPlugins($tok) {
 	$plugin['if'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['keep'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['load'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
+	$plugin['link'] = TokPlugin::KV_BODY;
 
 	return $plugin;
 }
@@ -133,6 +175,75 @@ public function tok_load($param, $file) {
 	}
 
 	return File::load($file);
+}
+
+
+/**
+ * Return encoded link parameter (e.g. "_=index.php|#|dir=test|#|a=5" -> index.php?cx=ie84PGh3284).
+ * If parameter "_" is missing assume "_" = index.php.
+ *
+ * @param array[string]string
+ * @return string
+ */
+public function tok_link($p) {
+	$res = 'index.php?'.SETTINGS_REQ_CRYPT.'=';
+
+	if (!empty($p['_'])) {
+		$res  = $p['_'].'?'.SETTINGS_REQ_CRYPT.'=';
+		unset($p['_']);
+	}
+
+	return $res.self::encodeHash($p);
+}
+
+
+/**
+ * Convert map into encrypted string. 
+ *
+ * @param array[string]string $p
+ * @return string
+ */
+public static function encodeHash($p) {
+	$query_string = http_build_query($p);
+  $len = strlen($query_string);
+	$secret = SETTINGS_CRYPT_SECRET;
+  $slen = strlen($secret);
+
+  for ($i = 0; $i < $len; $i++) {
+		$query_string[$i] = chr(ord($query_string[$i]) ^ ord($secret[$i % $slen]));
+  }
+
+  return urlencode(base64_encode($query_string));
+}
+
+
+/**
+ * Decode data encoded with self::encodeHash.
+ *
+ * @param string $data
+ * @param bool export into _REQUEST
+ * @return hash
+ */
+public static function decodeHash($data, $export_into_req = false) {
+  $data = base64_decode(urldecode($data));
+	$len = strlen($data);
+	$secret = SETTINGS_CRYPT_SECRET;
+  $slen = strlen($secret);
+
+  for ($i = 0; $i < $len; $i++) {
+		$data[$i] = chr(ord($data[$i]) ^ ord($secret[$i % $slen]));
+  }
+
+	$res = array();
+	parse_str($data, $res);
+
+  if ($export_into_req) {
+		foreach ($res as $key => $value) {
+			$_REQUEST[$key] = $value;
+		}
+	}
+
+	return $res;
 }
 
 
