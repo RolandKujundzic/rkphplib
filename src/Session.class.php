@@ -5,6 +5,13 @@ namespace rkphplib;
 require_once(__DIR__.'/ASession.class.php');
 
 
+if (!defined('SETTINGS_REQ_DIR')) {
+	/** @const SETTINGS_REQ_DIR = 'dir' */
+	define('SETTINGS_REQ_DIR', 'dir');
+}
+
+
+
 /**
  * PHP Session wrapper ($_SESSION).
  *
@@ -46,10 +53,6 @@ public function init($conf) {
   }
 
 	$this->initMeta();
-
-	if (!defined('SETTINGS_REQ_DIR')) {
-		define('SETTINGS_REQ_DIR', 'dir');
-	}
 
 	if (!empty($_REQUEST[SETTINGS_REQ_DIR])) {
 		$dir = $_REQUEST[SETTINGS_REQ_DIR];
