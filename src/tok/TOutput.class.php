@@ -221,7 +221,7 @@ private function computeScroll() {
 
 
 /**
- * Return scroll link. Replace {:=link}, {:=keep} and {:=last} in conf[scroll.$key].
+ * Return scroll link. Replace {:=link}, {:=keep[_crypt]} and {:=last} in conf[scroll.$key].
  * 
  * @param string $key
  * @param int $last
@@ -233,11 +233,15 @@ private function _scroll_link($key, $last) {
 
   $keep = urlencode($this->conf['req.last']).'='.urlencode($last);
 	$keep_param = \rkphplib\lib\split_str(',', $this->conf['keep']);
+	$kv = [];
+
 	foreach ($keep_param as $name) {
-		$name = 
+		$value = $this->getValue($name);
+		$kv[$name] = $value;
 	}
 
-  $res = str_replace('{:=keep}', $keep, $res);
+  $res = str_replace('{:=keep}', http_build_query($kv), $res);
+  $res = str_replace('{:=keep_crypt}', TBase::encodeHash($kv), $res);
 
 	if (strpos($res, '{:=last}') !== false) {
 		$res = str_replace('{:=last}', $last, $res);
