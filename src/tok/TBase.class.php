@@ -86,7 +86,7 @@ public function getPlugins($tok) {
 	$plugin['if'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['keep'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['load'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
-	$plugin['link'] = TokPlugin::KV_BODY;
+	$plugin['link'] = TokPlugin::PARAM_CSLIST | TokPlugin::KV_BODY;
 
 	return $plugin;
 }
@@ -173,15 +173,22 @@ public function tok_load($param, $file) {
  * Return encoded link parameter (e.g. "_=index.php|#|dir=test|#|a=5" -> index.php?cx=ie84PGh3284).
  * If parameter "_" is missing assume "_" = index.php.
  *
+ * @param array
  * @param array[string]string
  * @return string
  */
-public function tok_link($p) {
+public function tok_link($name_list, $kv_list) {
 	$res = 'index.php?'.SETTINGS_REQ_CRYPT.'=';
 
 	if (!empty($p['_'])) {
 		$res  = $p['_'].'?'.SETTINGS_REQ_CRYPT.'=';
 		unset($p['_']);
+	}
+
+	foreach ($name_list as $name) {
+		if (isset($_REQUEST[$name]) && !isset($p[$name])) {
+			$p[$name] = $_REQUEST[$name];
+		}
 	}
 
 	return $res.self::encodeHash($p);
