@@ -6,6 +6,7 @@ require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/../Exception.class.php');
 require_once(__DIR__.'/../File.class.php');
 require_once(__DIR__.'/../lib/split_str.php');
+require_once(__DIR__.'/../lib/is_map.php');
 
 use \rkphplib\Exception;
 use \rkphplib\File;
@@ -27,6 +28,10 @@ protected $env = [];
 /** @var array[string]string $conf */
 protected $conf = [];
 
+/** @var Tokenizer $tok */
+private $tok = null;
+
+
 
 /**
  * Register output plugin {output:conf|init|loop}.
@@ -35,11 +40,170 @@ protected $conf = [];
  * @return map<string:int>
  */
 public function getPlugins($tok) {
+	$this->tok = $tok;
+
 	$plugin = [];
 	$plugin['output:conf'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['output:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['output:loop'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
+	$plugin['output:header'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
+	$plugin['output:footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
+	$plugin['output:empty'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	return $plugin;
+}
+
+
+/**
+ * Show if table is empty.
+ *
+ * @param string $tpl
+ * @return string
+ */
+public function tok_output_empty($tpl) {
+	if ($this->env['total'] > 0) {
+		return '';
+	}
+
+	return $tpl;
+}
+
+
+/**
+ * Show if table is not empty.
+ *
+ * @param string $tpl
+ * @return string
+ */
+public function tok_output_header($tpl) {
+	if ($this->env['total'] == 0) {
+		return '';
+	}
+
+	return $tpl;
+}
+
+
+/**
+ * Show if table is not empty.
+ *
+ * @param string $tpl
+ * @return string
+ */
+public function tok_output_footer($tpl) {
+	if ($this->env['total'] == 0) {
+		return '';
+	}
+
+	return $tpl;
+}
+
+
+/**
+ * Show if table is not empty. Concat $tpl #env.total. Replace {:=tag} with row value.
+ * Default tags are array_keys(row[0]) ({:=0} ... {:=n} if vector or {:=key} if map).
+ * If conf.table.columns=col_1n use {:=col_1} ... {:=col_n} as tags. If col.table.columns=first_list
+ * use values from row[0] as tags. Otherwise assume conf.table.columns is a comma separted list
+ * of tag names.
+ *
+ * @throws
+ * @param string $arg
+ * @return string
+ */
+private function tok_output_loop($tpl) {
+	if ($this->env['total'] == 0) {
+		return '';
+	}
+
+	$start = $this->env['start'];
+	$is_map = false;
+	$tags = [];
+
+	if (empty($this->conf['table.columns']) || $this->conf['table.columns'] == 'array_keys') {
+		$tags = array_keys($this->table[$start]);
+		$is_map = true;
+	}
+	else if ($this->conf['table.columns'] == 'col_1n') {
+		for ($i = 0; $i < count($this->table[$start]); $i++) {
+			array_push($tags, 'col_'.$i);
+		}
+	}
+	else if ($this->conf['table.columns'] == 'first_line') {
+		$tags = $this->table[0];
+	}
+	else {
+		$tags = \rkphplib\lib\split_str(',', $this->conf['table.columns']);
+		$is_map = \rkphplib\lib\is_map($this->table[$start]);
+	}
+
+	if (count($tags) == 0 || strlen($tags[0]) == 0) {
+		throw new Exception('invalid table columns', 'table.columns='.$this->conf['table.columns'].' tags: '.print_r($tags, true));
+	}
+
+	$lang = empty($this->conf['language']) ? '' : $this->conf['language'];
+
+	for ($i = $start; $i <= $this->env['end']; $i++) {
+    $row = $this->table[$i];
+    $row['rowpos'] = $last + $i;
+    $row['rownum'] = $last + $i + 1;
+
+		$replace = [];
+
+		if (!$is_map) {
+			$j = 0;
+			foreach ($row[$i] as $key => $value) {
+				if ($j >= count($tags) - 1) {
+					throw new Exception('invalid tag', "i=$i j=$j key=$key value=$value tags: ".print_r($tags, true)); 
+				}
+
+				$tag = $tags[$j];
+				$replace[$tag] = $value;
+				$j++;
+			}
+		}
+		else {
+			for ($j = 0; $j < count($tags); $j++) {
+				$tag = $tags[$j];
+		
+				if (mb_strpos($tag, '.') > 0) {
+					throw new Exception("todo: replace $tag");
+				}
+				else if (!isset($row[$i][$tag]) && !array_key_exists($tag, $row[$i])) {
+					throw new Exception('invalid tag '.$tag, "row[$i]: ".print_r($row[$i], true));
+				}
+
+				$replace[$tag] = $row[$i][$tag];
+			}
+		}
+
+		array_push($output, $this->tok->replaceTags($tpl, $replace));
+
+    if ($rowbreak > 0 && $i > 0 && (($i + 1) % $rowbreak) == 0 && $i + 1 != count($this->p_table)) {
+      array_push($output, str_replace('{:=row}', (($i + 1) / $rowbreak), $this->p_conf['rowbreak_html']));
+    }
+  }
+
+  if ($rowbreak > 0) {
+    $fill_rest = $i % $rowbreak;
+
+    for ($j = $fill_rest; $j > 0 && $j < $rowbreak; $j++) {
+      array_push($output, $this->p_conf['rowbreak_fill']);
+      $i++;
+    }
+    
+    $pb = empty($this->p_conf['pagebreak']) ? 0 : intval($this->p_conf['pagebreak']);
+    
+    if ($pb > $rowbreak && $i < $pb && !empty($this->p_conf['pagebreak_fill']) && $this->p_conf['pagebreak_fill'] == 'yes') {
+    	for ($j = $i; $j < $pb; $j++) {
+    		if ($j % $rowbreak == 0) {
+      		array_push($output, $this->p_conf['rowbreak_html']);    			
+    		}   		
+      	array_push($output, $this->p_conf['rowbreak_fill']);    		
+    	} 
+   	}	
+  }
+
+  $res = join('', $output);
+  return $res;
 }
 
 
@@ -58,11 +222,11 @@ public function tok_output_conf($p) {
 			'req.last' => 'last',
 			'req.rownum' => 'rownum',
 			'keep' => SETTINGS_REQ_DIR,
-			'hash_cols' => '',
 			'pagebreak' => 0,
 			'rowbreak' => 0,
 			'rowbreak_html' => '</tr><tr>',
 			'rowbreak_fill' => '<td></td>',
+			'table.columns' => 'array_keys',
 			'table.type' => '',			
 			'table.data' => '',
 			'table.url' => '',
@@ -103,7 +267,8 @@ public function tok_output_conf($p) {
  *  rowbreak_html= </tr><tr>
  *  rowbreak_fill= <td></td>
  *  table.type= (use: "split, |&|, |@|", "split, |&|, |@|, =", csv, unserialize or json)
- *  table.url= 
+ *  table.columns= array_keys (or: col_1n / first_list / tag1, ... )
+ *  table.url= (e.g. path/to/file = file://path/to/file or http[s]://...) 
  *  table.data= 
  *  scroll.link= <a href="index.php?{:=keep}">{:=link}</a>
  *  scroll.first= <img src="img/scroll/first.gif" border="0">
@@ -314,22 +479,9 @@ protected function fillTable() {
  *  show= use show.xxx template for init + output
  */
 public function tokCall($action, $param, $arg) {
-  $res = '';
+   $rows = count($this->p_table);
 
-  if ($action != $this->p_plugin_name) {
-    return $res;
-  }
-
-  $rows = count($this->p_table);
-
-  else if ($param == 'show') {
-    $res = $this->_show(lib_arg2hash($arg));
-  }
-  else if (substr($param, 0, 5) == 'show.') {
-    $key = substr($param, 5);
-    $this->_tpl[$key] = trim($arg);
-  }
-  else if (substr($param, 0, 5) == 'conf.') {
+  if (substr($param, 0, 5) == 'conf.') {
     $key = substr($param, 5);
     $this->p_conf[$key] = trim($arg);
   }
@@ -378,30 +530,6 @@ public function tokCall($action, $param, $arg) {
   }
   else {
   	lib_abort("invalid parameter [$param]");
-  }
-
-  return $res;
-}
-
-
-/**
- * Use conf.show_init for _init() and conf.show_loop for loop.
- * Return conf.show_header + conf.show_loop + conf.show_footer.
- * Replace parameter in header, footer and loop block.
- * 
- * @param hash
- */
-private function _show($p) {
-  $res = '';
-
-  $this->_reset = true;
-
-  $this->_init(TokMarker::replace($this->_tpl['init'], $p));
-
-  if ($this->p_rownum > 0) {
-    $res = TokMarker::replace($this->_tpl['header'], $p).
-       $this->_loop(TokMarker::replace($this->_tpl['loop'], $p)).
-       TokMarker::replace($this->_tpl['footer'], $p);
   }
 
   return $res;
@@ -468,180 +596,6 @@ private function _info($arg) {
 
 /**
  * 
- * @param array $row
- * @param array $lang_cols
- * @return array
- */
-private function _language_fix($row, $lang_cols) {
-
-  $cols = array_keys($row);
-
-  foreach ($cols as $col) {
-
-    if (substr($col, -3, 1) != '_') {
-      continue;
-    }
-
-    $base = substr($col, 0, -3);
-    if (isset($row[$base]) || !isset($lang_cols[$base])) {
-      continue;
-    }
-
-    for ($i = 0; !isset($row[$base]) && $i < count($lang_cols[$base]); $i++) {
-      $lc = $base.'_'.$lang_cols[$base][$i];
-
-      if (strlen($row[$lc]) > 0) {
-        $row[$base] = $row[$lc];
-      }
-    }
-
-    if (!isset($row[$base])) {
-      // all entries are empty ...
-      $row[$base] = '';
-    }
-  }
-
-  return $row;
-}
-
-
-/**
- * 
- * @param array $cols
- * @return array
- */
-private function _language_cols($cols) {
-
-  if (empty($this->p_conf['language'])) {
-    return array();
-  }
-
-  $lang_suffix = lib_str2array($this->p_conf['language']);
-
-  if (count($lang_suffix) < 1 || empty($lang_suffix[0])) {
-    return array();
-  }
-
-  if (count($lang_suffix) < 2 || $lang_suffix[0] == $lang_suffix[1]) {
-    // if we have no fallback language use fallback en, de, ... 
-    $lang_suffix[1] = ($lang_suffix[0] == 'en') ? 'de' : 'en';
-  }
-
-  $lcol = array();
-  foreach ($cols as $col) {
-
-    if (substr($col, -3, 1) != '_') {
-      continue;
-    }
-
-    if (!in_array(substr($col, -2), $lang_suffix)) {
-      continue;
-    }
-
-    $base = substr($col, 0, -3);
-    if (!isset($lcol[$base])) {
-      $lcol[$base] = 0;
-    }
-
-    $lcol[$base]++;
-  }
-
-  $res = array();
-  foreach ($lcol as $base => $num) {
-    if ($num > 1) {
-      $res[$base] = $lang_suffix;
-    }
-  }
-
-  return $res;
-}
-
-
-/**
- * 
- * @param string $arg
- * @return string
- */
-private function _loop($arg) {
-
-  if (!empty($this->p_conf['loop_tag'])) {
-    $arg = str_replace($this->p_conf['loop_tag'], ':=', $arg);
-  }
-
-  $this->_reset = true;
-
-  if (count($this->_p) == 0) {
-    lib_abort('call ['.$this->p_plugin_name.':init] first');
-  }
-
-  if (count($this->p_table) == 0) {
-    return '';
-  }
-
-  $rowbreak = $this->p_conf['rowbreak'];
-  $last = $this->p_conf['last'];
-
-  $output = array();
-  $lang_cols = array();
-
-  $erase_tags = (!empty($this->p_conf['erase_tags']) && $this->p_conf['erase_tags'] == 'yes') ? 
-    true : false;
-  $erase_tags_with = ($erase_tags && !empty($this->p_conf['erase_tags_with'])) ? 
-    $this->p_conf['erase_tags_with'] : '';
-
-  for ($i = 0; $i < count($this->p_table); $i++) {
-    $row = $this->p_table[$i];
-    $row['rowpos'] = $last + $i;
-    $row['rownum'] = $last + $i + 1;
-
-    if ($i == 0) {
-      $lang_cols = $this->_language_cols(array_keys($row));
-    }
-
-    if (count($lang_cols) > 0) {
-      $row = $this->_language_fix($row, $lang_cols);
-    }
-
-    $entry = TokMarker::replace($arg, $row, $erase_tags, $erase_tags_with);
-
-    if (strpos($entry, '{:=_column_hash}') !== false) {
-      $entry = str_replace('{:=_column_hash}', lib_hash2arg($row), $entry);
-    }
-
-    array_push($output, $entry);
-
-    if ($rowbreak > 0 && $i > 0 && (($i + 1) % $rowbreak) == 0 && $i + 1 != count($this->p_table)) {
-      array_push($output, str_replace('{:=row}', (($i + 1) / $rowbreak), $this->p_conf['rowbreak_html']));
-    }
-  }
-
-  if ($rowbreak > 0) {
-    $fill_rest = $i % $rowbreak;
-
-    for ($j = $fill_rest; $j > 0 && $j < $rowbreak; $j++) {
-      array_push($output, $this->p_conf['rowbreak_fill']);
-      $i++;
-    }
-    
-    $pb = empty($this->p_conf['pagebreak']) ? 0 : intval($this->p_conf['pagebreak']);
-    
-    if ($pb > $rowbreak && $i < $pb && !empty($this->p_conf['pagebreak_fill']) && $this->p_conf['pagebreak_fill'] == 'yes') {
-    	for ($j = $i; $j < $pb; $j++) {
-    		if ($j % $rowbreak == 0) {
-      		array_push($output, $this->p_conf['rowbreak_html']);    			
-    		}   		
-      	array_push($output, $this->p_conf['rowbreak_fill']);    		
-    	} 
-   	}	
-  }
-
-  $res = join('', $output);
-  return $res;
-}
-
-
-/**
- * 
  * @return string
  */
 private function _scroll_jump_html() {
@@ -689,4 +643,3 @@ private function _scroll_jump_html() {
 
 }
 
-?>
