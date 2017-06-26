@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+
+<body>
+
+<pre>Show csv file test2.csv (with , as delimiter)</pre>
+{dboutput:init}
+table.columns= first_line|#|
+table.url= ../File/test1.csv|#|
+table.type= csv, ;|#|
+{:dboutput}
+
+{dboutput:header}
+<table border="1">
+<tr>
+	<th>{:=KNr}.</th>
+	<th>{:=Vorname}</th>
+	<th>{:=Name}</th>
+</tr>
+{:dboutput}
+{dboutput:loop}
+<tr>
+	<td>{:=KNr}</td>
+	<td>{:=Vorname}</td>
+	<td>{:=Name}</td>
+</tr>
+{:dboutput}
+{dboutput:footer}
+</table>
+{:dboutput}
+
+</body>
+</html>

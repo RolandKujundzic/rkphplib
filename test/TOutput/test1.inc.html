@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+
+<body>
+
+<pre>Show csv file ../File/test1.csv (with ; as delimiter)</pre>
+{dboutput:init}
+table.columns= col_1n|#|
+table.url= ../File/test1.csv|#|
+table.type= csv, ;|#|
+{:dboutput}
+
+{dboutput:header}
+<table border="1">
+<tr>
+	<th>{:=col_1}</th>
+	<th>{:=col_2}</th>
+	<th>{:=col_3}</th>
+	<th>{:=col_4}</th>
+</tr>
+{:dboutput}
+{dboutput:loop}
+<tr>
+	<td>{:=col_1}</td>
+	<td>{:=col_2}</td>
+	<td>{:=col_3}</td>
+	<td>{:=col_4}</td>
+</tr>
+{:dboutput}
+{dboutput:footer}
+</table>
+{:dboutput}
+
+</body>
+</html>
