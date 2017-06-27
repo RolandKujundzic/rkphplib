@@ -25,7 +25,7 @@ function redirect($url, $p = []) {
 
 	// append optional parameter
 	foreach ($p as $key => $value) {
-		$url .= '&'.$key.'='.urlencode($value);
+		$url .= '&'.$key.'='.rawurlencode($value);
 	}
 
   // header('P3P: CP="CAO PSA OUR"'); // IE will not accept Frameset SESSIONS without this header 
