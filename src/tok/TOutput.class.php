@@ -49,6 +49,8 @@ public function getPlugins($tok) {
 	$plugin['output:header'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
 	$plugin['output:footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
 	$plugin['output:empty'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['output'] = 0; // no callback for base plugin
+
 	return $plugin;
 }
 
@@ -109,7 +111,7 @@ public function tok_output_footer($tpl) {
  * @param string $arg
  * @return string
  */
-private function tok_output_loop($tpl) {
+public function tok_output_loop($tpl) {
 	if ($this->env['total'] == 0) {
 		return '';
 	}
@@ -140,17 +142,18 @@ private function tok_output_loop($tpl) {
 	}
 
 	$lang = empty($this->conf['language']) ? '' : $this->conf['language'];
+	$output = [];
 
 	for ($i = $start; $i <= $this->env['end']; $i++) {
     $row = $this->table[$i];
-    $row['rowpos'] = $last + $i;
-    $row['rownum'] = $last + $i + 1;
 
 		$replace = [];
+    $replace['rowpos'] = $this->env['last'] + $i;
+    $replace['rownum'] = $this->env['last'] + $i + 1;
 
 		if (!$is_map) {
 			$j = 0;
-			foreach ($row[$i] as $key => $value) {
+			foreach ($row as $key => $value) {
 				if ($j >= count($tags) - 1) {
 					throw new Exception('invalid tag', "i=$i j=$j key=$key value=$value tags: ".print_r($tags, true)); 
 				}
@@ -167,37 +170,38 @@ private function tok_output_loop($tpl) {
 				if (mb_strpos($tag, '.') > 0) {
 					throw new Exception("todo: replace $tag");
 				}
-				else if (!isset($row[$i][$tag]) && !array_key_exists($tag, $row[$i])) {
-					throw new Exception('invalid tag '.$tag, "row[$i]: ".print_r($row[$i], true));
+				else if (!isset($row[$tag]) && !array_key_exists($tag, $row)) {
+					throw new Exception('invalid tag '.$tag, "row[$i]: ".print_r($row, true));
 				}
 
-				$replace[$tag] = $row[$i][$tag];
+				$replace[$tag] = $row[$tag];
 			}
 		}
 
 		array_push($output, $this->tok->replaceTags($tpl, $replace));
 
-    if ($rowbreak > 0 && $i > 0 && (($i + 1) % $rowbreak) == 0 && $i + 1 != count($this->p_table)) {
-      array_push($output, str_replace('{:=row}', (($i + 1) / $rowbreak), $this->p_conf['rowbreak_html']));
-    }
-  }
+		if ($this->env['rowbreak'] > 0 && $i > 0 && (($i + 1) % $this->env['rowbreak']) == 0 && $i != $this->env['end']) {
+			$rowbreak_html = str_replace('{:=row}', (($i + 1) / $this->env['rowbreak']), $this->conf['rowbreak_html']);
+			array_push($output, $rowbreak_html); 
+		}
+	}
 
-  if ($rowbreak > 0) {
-    $fill_rest = $i % $rowbreak;
+	if ($this->env['rowbreak'] > 0) {
+		$fill_rest = $i % $this->env['rowbreak'];
 
-    for ($j = $fill_rest; $j > 0 && $j < $rowbreak; $j++) {
-      array_push($output, $this->p_conf['rowbreak_fill']);
-      $i++;
-    }
+		for ($j = $fill_rest; $j > 0 && $j < $this->env['rowbreak']; $j++) {
+			array_push($output, $this->conf['rowbreak_fill']);
+			$i++;
+		}
     
-    $pb = empty($this->p_conf['pagebreak']) ? 0 : intval($this->p_conf['pagebreak']);
-    
-    if ($pb > $rowbreak && $i < $pb && !empty($this->p_conf['pagebreak_fill']) && $this->p_conf['pagebreak_fill'] == 'yes') {
-    	for ($j = $i; $j < $pb; $j++) {
-    		if ($j % $rowbreak == 0) {
-      		array_push($output, $this->p_conf['rowbreak_html']);    			
-    		}   		
-      	array_push($output, $this->p_conf['rowbreak_fill']);    		
+		if ($this->env['pagebreak'] > $this->env['rowbreak'] && $i < $this->env['pagebreak'] && 
+				!empty($this->conf['pagebreak_fill']) && !empty($this->conf['pagebreak_fill'])) {
+			for ($j = $i; $j < $this->env['pagebreak']; $j++) {
+				if ($j % $this->env['rowbreak'] == 0) {
+					array_push($output, $this->conf['rowbreak_html']);    			
+				}
+
+				array_push($output, $this->conf['rowbreak_fill']);    		
     	} 
    	}	
   }
@@ -223,6 +227,7 @@ public function tok_output_conf($p) {
 			'req.rownum' => 'rownum',
 			'keep' => SETTINGS_REQ_DIR,
 			'pagebreak' => 0,
+			'pagebreak_fill' => 1,
 			'rowbreak' => 0,
 			'rowbreak_html' => '</tr><tr>',
 			'rowbreak_fill' => '<td></td>',
@@ -247,9 +252,7 @@ public function tok_output_conf($p) {
 	}
 
 	foreach ($p as $key => $value) {
-		if (!isset($this->conf[$key])) {
-			$this->conf[$key] = $value;
-		}
+		$this->conf[$key] = $value;
 	}
 }
 
@@ -261,8 +264,8 @@ public function tok_output_conf($p) {
  *  req.last= last
  *  req.rownum= rownum
  *  keep= SETTINGS_REQ_DIR (comma separated list)
- *  hash_cols= 
  *  pagebreak= 0
+ *  pagebreak_fill= 1
  *  rowbreak= 0
  *  rowbreak_html= </tr><tr>
  *  rowbreak_fill= <td></td>
@@ -292,6 +295,7 @@ public function tok_output_init($p) {
 
   $this->fillTable();
 	$this->env['total'] = count($this->table);
+	$this->env['rowbreak'] = intval($this->conf['rowbreak']);
 
   $this->computePagebreak();
 }
@@ -449,8 +453,8 @@ protected function fillTable() {
 		throw new Exception('empty table.type');
 	}
 
-	$table_type = \rkphplib\lib\split_str($this->conf['table.type']);
-	$uri = array_shift($table_type);
+	$table_type = \rkphplib\lib\split_str(',', $this->conf['table.type']);
+	$uri = array_shift($table_type).':'.$uri;
 
 	$this->table = File::loadTable($uri, $table_type);
 }
