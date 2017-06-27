@@ -396,7 +396,7 @@ private function _scroll_link($key, $last) {
 
   $res = str_replace('{:=link}', $this->conf['scroll.'.$key], $this->conf['scroll.link']);
 
-  $keep = urlencode($this->conf['req.last']).'='.urlencode($last);
+  $keep = rawurlencode($this->conf['req.last']).'='.rawurlencode($last);
 	$keep_param = \rkphplib\lib\split_str(',', $this->conf['keep']);
 	$kv = [];
 
