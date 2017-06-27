@@ -80,13 +80,13 @@ public function encode($data, $keys = null) {
 
 
 /**
- * Return urlencode(base64_encode($str)).
+ * Return rawurlencode(base64_encode($str)).
  *
  * @param string $str
  * @return string
  */
 public static function wrap_urlenc_base64($str) {
-	return urlencode(base64_encode($str));
+	return rawurlencode(base64_encode($str));
 }
 
 
@@ -143,13 +143,13 @@ public static function unwrap_no($str) {
 
 
 /**
- * Return base64_decode(urldecode($str)).
+ * Return base64_decode(rawurldecode($str)).
  *
  * @param string $str
  * @return string
  */
 public static function unwrap_urlenc_base64($str) {
-	return base64_decode(urldecode($str));
+	return base64_decode(rawurldecode($str));
 }
 
 
