@@ -231,7 +231,7 @@ try {
 			$this->scanJSON();
 		}
 
-		$json_query = $server_bin.'?format='.$this->json_format.'&path='.urlencode($this->remote_path);
+		$json_query = $server_bin.'?format='.$this->json_format.'&path='.rawurlencode($this->remote_path);
 
 		try {
 			$remote_json_str = File::fromURL($json_query);
@@ -257,7 +257,7 @@ try {
 	}
 	else {
 		$this->scanFile();
-		$remote_json = JSON::decode(File::fromURL($server_bin.'?path='.urlencode($this->remote_path)));
+		$remote_json = JSON::decode(File::fromURL($server_bin.'?path='.rawurlencode($this->remote_path)));
 
 		if (empty($remote_json['md5'])) {
 			throw new Exception('remote md5 missing', print_r($remote_json, true));
