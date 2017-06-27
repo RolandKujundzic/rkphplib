@@ -13,5 +13,10 @@ $tok->register($tbase);
 $toutput = new \rkphplib\tok\TOutput();
 $tok->register($toutput);
 
-$tok->load($t_base->tok_find('layout.inc.html'));
+if (!isset($_REQUEST['t'])) {
+	$_REQUEST['t'] = 1;
+}
+
+$test_html = 'test'.intval($_REQUEST['t']).'.inc.html';
+$tok->load($test_html);
 print $tok->toString();
