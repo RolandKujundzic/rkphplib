@@ -211,7 +211,7 @@ public static function encodeHash($p) {
 		$query_string[$i] = chr(ord($query_string[$i]) ^ ord($secret[$i % $slen]));
   }
 
-  return urlencode(base64_encode($query_string));
+  return rawurlencode(base64_encode($query_string));
 }
 
 
@@ -223,7 +223,7 @@ public static function encodeHash($p) {
  * @return hash
  */
 public static function decodeHash($data, $export_into_req = false) {
-  $data = base64_decode(urldecode($data));
+  $data = base64_decode(rawurldecode($data));
 	$len = strlen($data);
 	$secret = SETTINGS_CRYPT_SECRET;
   $slen = strlen($secret);
