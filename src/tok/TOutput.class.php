@@ -43,8 +43,10 @@ public function getPlugins($tok) {
 	$this->tok = $tok;
 
 	$plugin = [];
+	$plugin['output:set'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['output.get'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['output:conf'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
-	$plugin['output:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['output:init'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['output:loop'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
 	$plugin['output:header'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
 	$plugin['output:footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
@@ -52,6 +54,46 @@ public function getPlugins($tok) {
 	$plugin['output'] = 0; // no callback for base plugin
 
 	return $plugin;
+}
+
+
+/**
+ * Set conf.name=value.
+ *
+ * @param string $name
+ * @param string $value
+ * @return ''
+ */
+public function tok_output_set($name, $value) {
+	$this->conf[$name] = $value;
+	return '';
+}
+
+
+/**
+ * Get env ($name = key) or conf key ($name = conf.key) value.
+ *
+ * @throws
+ * @param string $name
+ * @return string
+ */
+public function tok_output_get($name) {
+
+	if (mb_substr($name, 0, 5) == 'conf.') {
+		$name = mb_substr($name, 5);
+
+		if (!isset($this->conf[$name])) {
+			throw new Exception('No such conf key', $name);
+		}
+		
+		return $this->conf[$name];
+	}
+	
+	if (!isset($this->env[$name])) {
+		throw new Exception('No such env key', $name);
+	}
+
+	return $this->env[$name];
 }
 
 
@@ -79,6 +121,24 @@ public function tok_output_empty($tpl) {
 public function tok_output_header($tpl) {
 	if ($this->env['total'] == 0) {
 		return '';
+	}
+
+	if (!empty($this->env['tags'][0]) && $this->tok->hasReplaceTags($tpl, [ $this->env['tags'][0] ])) {
+		$replace = [];
+
+		for ($i = 0; $i < count($this->env['tags']); $i++) {
+			$tag = $this->env['tags'][$i];
+
+			if ($this->conf['table.columns'] == 'col_1n') {
+				// A=chr(65) ... Z=chr(90) AA ... AZ ... ZA .. ZZ
+				$replace[$tag] = ($i < 26) ? chr($i + 65) : chr((intval($i / 26) - 1) + 65).chr(($i % 26) + 65);
+			}
+			else {
+				$replace[$tag] = $tag;
+  		}
+
+			$tpl = $this->tok->replaceTags($tpl, $replace);
+  	}
 	}
 
 	return $tpl;
@@ -117,30 +177,6 @@ public function tok_output_loop($tpl) {
 	}
 
 	$start = $this->env['start'];
-	$is_map = false;
-	$tags = [];
-
-	if (empty($this->conf['table.columns']) || $this->conf['table.columns'] == 'array_keys') {
-		$tags = array_keys($this->table[$start]);
-		$is_map = true;
-	}
-	else if ($this->conf['table.columns'] == 'col_1n') {
-		for ($i = 0; $i < count($this->table[$start]); $i++) {
-			array_push($tags, 'col_'.$i);
-		}
-	}
-	else if ($this->conf['table.columns'] == 'first_line') {
-		$tags = $this->table[0];
-	}
-	else {
-		$tags = \rkphplib\lib\split_str(',', $this->conf['table.columns']);
-		$is_map = \rkphplib\lib\is_map($this->table[$start]);
-	}
-
-	if (count($tags) == 0 || strlen($tags[0]) == 0) {
-		throw new Exception('invalid table columns', 'table.columns='.$this->conf['table.columns'].' tags: '.print_r($tags, true));
-	}
-
 	$lang = empty($this->conf['language']) ? '' : $this->conf['language'];
 	$output = [];
 
@@ -151,21 +187,23 @@ public function tok_output_loop($tpl) {
     $replace['rowpos'] = $this->env['last'] + $i;
     $replace['rownum'] = $this->env['last'] + $i + 1;
 
-		if (!$is_map) {
+		if (!$this->env['is_map']) {
 			$j = 0;
 			foreach ($row as $key => $value) {
-				if ($j >= count($tags) - 1) {
-					throw new Exception('invalid tag', "i=$i j=$j key=$key value=$value tags: ".print_r($tags, true)); 
+				if ($j >= count($this->env['tags'])) {
+					throw new Exception('invalid tag', "i=$i j=$j key=$key value=$value tags: ".
+						print_r($this->env['tags'], true).' row: '.print_r($row, true)); 
 				}
 
-				$tag = $tags[$j];
+				$tag = $this->env['tags'][$j];
 				$replace[$tag] = $value;
 				$j++;
 			}
 		}
 		else {
-			for ($j = 0; $j < count($tags); $j++) {
-				$tag = $tags[$j];
+			$tag_num = count($this->env['tags']);
+			for ($j = 0; $j < $tag_num; $j++) {
+				$tag = $this->env['tags'][$j];
 		
 				if (mb_strpos($tag, '.') > 0) {
 					throw new Exception("todo: replace $tag");
@@ -181,8 +219,8 @@ public function tok_output_loop($tpl) {
 		array_push($output, $this->tok->replaceTags($tpl, $replace));
 
 		if ($this->env['rowbreak'] > 0 && $i > 0 && (($i + 1) % $this->env['rowbreak']) == 0 && $i != $this->env['end']) {
-			$rowbreak_html = str_replace('{:=row}', (($i + 1) / $this->env['rowbreak']), $this->conf['rowbreak_html']);
-			array_push($output, $rowbreak_html); 
+			$rowbreak_html = $this->tok->replaceTags($this->conf['rowbreak_html'], [ 'row' =>  ($i + 1) / $this->env['rowbreak'] ]);
+			array_push($output, $rowbreak_html);
 		}
 	}
 
@@ -224,7 +262,6 @@ public function tok_output_conf($p) {
 		$this->conf = [
 			'reset' => 1,
 			'req.last' => 'last',
-			'req.rownum' => 'rownum',
 			'keep' => SETTINGS_REQ_DIR,
 			'pagebreak' => 0,
 			'pagebreak_fill' => 1,
@@ -262,7 +299,6 @@ public function tok_output_conf($p) {
  *
  *  reset= 1
  *  req.last= last
- *  req.rownum= rownum
  *  keep= SETTINGS_REQ_DIR (comma separated list)
  *  pagebreak= 0
  *  pagebreak_fill= 1
@@ -293,11 +329,40 @@ public function tok_output_conf($p) {
 public function tok_output_init($p) {
 	$this->tok_output_conf($p);
 
+	$this->env['is_map'] = false;
+	$this->env['tags'] = [];
+
   $this->fillTable();
+
+	if ($this->conf['table.columns'] == 'first_line') {
+		$this->env['tags'] = array_shift($this->table);
+	}
+
 	$this->env['total'] = count($this->table);
 	$this->env['rowbreak'] = intval($this->conf['rowbreak']);
 
   $this->computePagebreak();
+
+	$start = $this->env['start'];
+
+	if (empty($this->conf['table.columns']) || $this->conf['table.columns'] == 'array_keys') {
+		$this->env['tags'] = array_keys($this->table[$start]);
+		$this->env['is_map'] = true;
+	}
+	else if ($this->conf['table.columns'] == 'col_1n') {
+		for ($i = 1; $i <= count($this->table[$start]); $i++) {
+			array_push($this->env['tags'], 'col_'.$i);
+		}
+	}
+	else if (count($this->env['tags']) == 0) {
+		$this->env['tags'] = \rkphplib\lib\split_str(',', $this->conf['table.columns']);
+		$this->env['is_map'] = \rkphplib\lib\is_map($this->table[$start]);
+	}
+
+	if (count($this->env['tags']) == 0 || strlen($this->env['tags'][0]) == 0) {
+		throw new Exception('invalid table columns', 'table.columns='.$this->conf['table.columns'].' tags: '.
+			print_r($this->env['tags'], true));
+	}
 }
 
 
@@ -330,7 +395,7 @@ private function computePagebreak() {
 		return;
 	}
 
-	$last = $pagebreak ? $this->getValue('last') : 0;
+	$last = $pagebreak ? intval($this->getValue('last')) : 0;
 
 	if ($last < 0) {
 		throw new Exception('scroll error', "last=$last < 0");
@@ -375,7 +440,7 @@ private function computeScroll() {
 	if ($this->env['last'] + $this->env['pagebreak'] < $this->env['total']) {
 		$this->env['next_pos'] = $this->env['last'] + $this->env['pagebreak'];
 		$this->env['scroll_next'] = $this->_scroll_link('next', $this->env['next_pos']);
-		$this->env['scroll_last'] = $this->_scroll_link('last', ($this->env['page_num'] - 1) * $this->env['page_break']);
+		$this->env['scroll_last'] = $this->_scroll_link('last', ($this->env['page_num'] - 1) * $this->env['pagebreak']);
 	}
 	else {
 		$this->env['next_pos'] = 0;
@@ -384,8 +449,56 @@ private function computeScroll() {
 	}
 
 	if (!empty($this->conf['scroll.jump']) && $this->conf['scroll.jump_num'] > 0) {
-		$this->env['scroll_jump'] = $this->_scroll_jump_html();
+		$this->env['scroll_jump'] = $this->getScrollJumpHtml();
 	}
+}
+
+
+/**
+ * Return scroll jump html.
+ * 
+ * @return string
+ */
+private function getScrollJumpHtml() {
+
+	$pbreak = $this->conf['pagebreak'];
+	$jn = $this->conf['scroll.jump_num'];
+	$j2 = intval($jn / 2);
+	$cpage = $this->env['page'];
+	$lpage = $this->env['page_num'];
+
+	$jfpage = min($cpage - $j2, $lpage - $jn + 1);
+	$jfpage = max(1, $jfpage); 
+	$jlpage = min($lpage, $jfpage + $jn - 1);
+
+	$res = '';
+
+	for ($i = $jfpage; $i <= $jlpage; $i++) {
+		if ($i != $cpage) {
+			$jump = $this->_scroll_link('jump', (($i - 1) * $pbreak));
+    }
+		else {
+			$jump = $this->conf['scroll.jump_active'];
+		}
+
+		$jump = $this->tok->replaceTags($jump, [ 'page' => $i ]);
+		$jump = $this->tok->replaceTags($jump, [ 'min' => ($i - 1) * $pbreak + 1 ]);
+
+		if ($i * $pbreak <= $this->env['total']) {
+			$jump = $this->tok->replaceTags($jump, [ 'max' => $i * $pbreak ]);
+    }
+    else {
+      $jump = $this->tok->replaceTags($jump, [ 'max' => $this->env['total'] ]);
+    }
+
+    if ($i > $jfpage) {
+      $res .= $this->conf['scroll.jump_delimiter'];
+    }
+
+    $res .= $jump;
+  }
+
+  return $res;
 }
 
 
@@ -398,8 +511,6 @@ private function computeScroll() {
  */
 private function _scroll_link($key, $last) {
 
-  $res = str_replace('{:=link}', $this->conf['scroll.'.$key], $this->conf['scroll.link']);
-
   $keep = rawurlencode($this->conf['req.last']).'='.rawurlencode($last);
 	$keep_param = \rkphplib\lib\split_str(',', $this->conf['keep']);
 	$kv = [];
@@ -409,12 +520,12 @@ private function _scroll_link($key, $last) {
 		$kv[$name] = $value;
 	}
 
-  $res = str_replace('{:=keep}', http_build_query($kv), $res);
-  $res = str_replace('{:=keep_crypt}', TBase::encodeHash($kv), $res);
-
-	if (strpos($res, '{:=last}') !== false) {
-		$res = str_replace('{:=last}', $last, $res);
-	}
+	$res = $this->tok->replaceTags($this->conf['scroll.link'], [
+		'link' => $this->conf['scroll.'.$key],
+		'keep' => http_build_query($kv), 
+		'keep_crypt' => TBase::encodeHash($kv),
+		'last' => $last
+	]);
 
   return $res;
 }
@@ -457,191 +568,6 @@ protected function fillTable() {
 	$uri = array_shift($table_type).':'.$uri;
 
 	$this->table = File::loadTable($uri, $table_type);
-}
-
-
-
-
-
-
-/**
- * Render output. Examples:
- * 
- *	{output:init} = initialize
- *  rconf = set conf (clear existing)
- *  conf = add to conf
- *  conf.xxx = set conf key xxx
- *  show.xxx = template for show (init, header, loop, footer)
- *  env.xxx = get env key xxx
- *  get = get conf key value
- *  loop = table row template
- *  yes = show if output table is not empty
- *  no = show if output table is empty 
- *  info = replace tags in scroll block
- *  row_N = show Nth row
- *  first_row = show first row
- *  show= use show.xxx template for init + output
- */
-public function tokCall($action, $param, $arg) {
-   $rows = count($this->p_table);
-
-  if (substr($param, 0, 5) == 'conf.') {
-    $key = substr($param, 5);
-    $this->p_conf[$key] = trim($arg);
-  }
-  else if (substr($param, 0, 4) == 'env.') {
-    $key = substr($param, 4);
-
-    if (!isset($this->_p[$key])) {
-      lib_abort("no such parameter _p[$key]", print_r($this->_p, true));
-    }
-
-    $res = $this->_p[$key];
-  }
-  else if ($param == 'get') {
-    $key = trim($arg);
-
-    if (!isset($this->p_conf[$key])) {
-      lib_abort('unknown parameter ['.$key.'] call ['.$this->p_plugin_name.':init|conf] first');
-    }
-
-    $res = $this->p_conf[$key];
-  }
-  else if ($param == 'loop') {
-    $res = $this->_loop($arg);
-  }
-  else if ($param == 'rownum') {
-    $res = $this->p_rownum;
-  }
-  else if ($param == 'yes') {
-  	if ($rows > 0) {
-	    $res = $arg;
-  	}
-  }
-  else if ($param == 'no') {
-  	if ($rows == 0) {
-	    $res = $arg;
-  	}
-  }
-  else if ($param == 'info') {
-    $res = $this->_info($arg);
-  }
-  else if ($param == 'first_row') {
-    $res = $this->_row($arg, 0);
-  }
-  else if (substr($param, 0, 4) == 'row_') {
-    $res = $this->_row($arg, intval(substr($param, 4)) - 1);
-  }
-  else {
-  	lib_abort("invalid parameter [$param]");
-  }
-
-  return $res;
-}
-
-
-
-/**
- * Return row template
- * 
- * @param string $arg
- * @param int $num (0, 1, ... n-1)
- * @return string
- */
-private function _row($arg, $num = 0) {
-
-  if ($num < 0 || $num >= count($this->p_table)) {
-    return '';
-  }
-
-  if (count($this->_p) == 0) {
-    lib_abort('call ['.$this->p_plugin_name.':init] first');
-  }
-
-  if (count($this->p_table) == 0) {
-    return '';
-  }
-
-  $res = $arg;
-
-  foreach ($this->p_table[$num] as $key => $value) {
-    $res = str_replace('{:='.$key.'}', $value, $res);
-  }
-
-  return $res;
-}
-
-
-/**
- * Return scroll info template.
- * 
- * @param string $arg
- * @return string
- */
-private function _info($arg) {
-
-  if (count($this->_p) == 0) {
-    lib_abort('call ['.$this->p_plugin_name.':init] first');
-  }
-
-  if (count($this->p_table) == 0) {
-    return '';
-  }
-
-  $res = $arg;
-
-  foreach ($this->_p as $key => $value) {
-    $res = str_replace('{:='.$key.'}', $value, $res);
-  }
-
-  return $res;
-}
-
-
-/**
- * 
- * @return string
- */
-private function _scroll_jump_html() {
-
-  $pbreak = $this->p_conf['pagebreak'];
-  $jn = $this->p_conf['scroll.jump_num'];
-  $j2 = intval($jn / 2);
-  $cpage = $this->_p['page'];
-  $lpage = $this->_p['page_num'];
-
-  $jfpage = min($cpage - $j2, $lpage - $jn + 1);
-  $jfpage = max(1, $jfpage); 
-  $jlpage = min($lpage, $jfpage + $jn - 1);
-  $res = '';
-
-  for ($i = $jfpage; $i <= $jlpage; $i++) {
-
-    if ($i != $cpage) {
-      $jump = $this->_scroll_link('jump', (($i - 1) * $pbreak));
-    }
-    else {
-      $jump = $this->p_conf['scroll.jump_active'];
-    }
-
-    $jump = str_replace('{:=page}', $i, $jump);
-    $jump = str_replace('{:=min}', (($i - 1) * $pbreak + 1), $jump);
-
-    if ($i * $pbreak <= $this->p_rownum) {
-      $jump = str_replace('{:=max}', ($i * $pbreak), $jump);
-    }
-    else {
-      $jump = str_replace('{:=max}', $this->p_rownum, $jump);
-    }
-
-    if ($i > $jfpage) {
-      $res .= $this->p_conf['scroll.jump_delimiter'];
-    }
-
-    $res .= $jump;
-  }
-
-  return $res;
 }
 
 
