@@ -168,6 +168,39 @@ public function setText($txt) {
 
 
 /**
+ * Return true all tags (e.g. {:=TAG}) exist in $txt.
+ * 
+ * @throws
+ * @param string|array $txt
+ * @param array $tags
+ * @return bool
+ */
+public function hasReplaceTags($txt, $tags) {
+
+	if (empty($txt) || mb_strpos($txt, $this->rx[2].'=') === false) {
+		return false;
+	}
+
+	$found = 0;
+
+	for ($i = 0; $i < count($tags); $i++) {
+		$tag = $tags[$i];
+
+		if (empty($tag)) {
+			throw new Exception('invalid replace tag', "tag=[$tag]");
+		}
+
+		$tag = $this->rx[1].$this->rx[2].'='.$tag.$this->rx[3];
+		if (mb_strpos($txt, $tag) !== false) {
+			$found++;
+		}
+	}
+
+	return $found > 0 && $found == $i;
+}
+
+
+/**
  * Return true if tag {$name:...} exists.
  * 
  * @param string $name
