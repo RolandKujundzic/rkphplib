@@ -6,30 +6,67 @@
 <body>
 
 <pre>Show csv file test2.csv (with , as delimiter)</pre>
-{dboutput:init}
+{output:init}
 table.columns= first_line|#|
-table.url= ../File/test1.csv|#|
-table.type= csv, ;|#|
-{:dboutput}
+table.url= test2.csv|#|
+table.type= csv, \,|#|
+{:output}
 
-{dboutput:header}
+{output:header}
 <table border="1">
 <tr>
-	<th>{:=KNr}.</th>
+	<th>{:=KNr}</th>
 	<th>{:=Vorname}</th>
 	<th>{:=Name}</th>
 </tr>
-{:dboutput}
-{dboutput:loop}
+{:output}
+{output:loop}
 <tr>
 	<td>{:=KNr}</td>
 	<td>{:=Vorname}</td>
 	<td>{:=Name}</td>
 </tr>
-{:dboutput}
-{dboutput:footer}
+{:output}
+{output:footer}
 </table>
-{:dboutput}
+{:output}
+
+<pre>Same as above but use rowbreak=3</pre>
+
+{output:init}
+reset=0|#|
+rowbreak=3|#|
+rowbreak_fill= <td colspan="3">&nbsp;</td>|#|
+{:output}
+
+<table border="1">
+<tr>
+{output:loop}
+	<td>{:=KNr}</td>
+	<td>{:=Vorname}</td>
+	<td>{:=Name}</td>
+{:output}
+</tr>
+</table>
+
+
+<pre>Same as above but use rowbreak=0, pagebreak=2, show navigation</pre>
+
+{output:init}
+reset=0|#|
+rowbreak=0|#|
+pagebreak=2|#|
+{:output}
+
+<table border="1">
+{output:loop}
+<tr>
+	<td>{:=KNr}</td>
+	<td>{:=Vorname}</td>
+	<td>{:=Name}</td>
+</tr>
+{:output}
+</table>
 
 </body>
 </html>

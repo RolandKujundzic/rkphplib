@@ -1,5 +1,6 @@
 <?php
 
+require_once('../../src/lib/config.php');
 require_once('../../src/tok/Tokenizer.class.php');
 require_once('../../src/tok/TBase.class.php');
 require_once('../../src/tok/TOutput.class.php');
