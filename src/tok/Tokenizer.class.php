@@ -813,11 +813,12 @@ public function unescape($txt, $rx = null) {
  * @throws if tag not found
  * @param string $tpl
  * @param map $replace
+ * @param string $prefix
  * @return string
  */
-public function replaceTags($tpl, $replace) {
+public function replaceTags($tpl, $replace, $prefix = '') {
 	foreach ($replace as $key => $value) {
-		$tag = $this->rx[1].$this->rx[2].'='.$key.$this->rx[3];
+		$tag = $this->rx[1].$this->rx[2].'='.$prefix.$key.$this->rx[3];
 		$tpl = str_replace($tag, $value, $tpl);
 	}
 
