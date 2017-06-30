@@ -156,6 +156,11 @@ public function tok_output_footer($tpl) {
 		return '';
 	}
 
+	if (isset($this->env['scroll'])) {
+		$tpl = $this->tok->replaceTags($tpl, $this->env['scroll'], 'scroll.');
+	}
+
+	error_log($tpl."\n", 3, '/tmp/php.fatal');
 	return $tpl;
 }
 
@@ -429,28 +434,30 @@ private function computePagebreak() {
 private function computeScroll() {
 
 	if ($this->env['last'] > 0) {
-		$this->env['scroll_first'] = $this->scroll_link('first', 0);
-		$this->env['scroll_prev'] = $this->_scroll_link('prev', ($this->env['last'] - $this->env['pagebreak']));
+		$scroll['first'] = $this->_scroll_link('first', 0);
+		$scroll['prev'] = $this->_scroll_link('prev', ($this->env['last'] - $this->env['pagebreak']));
 	}
 	else {
-		$this->env['scroll_first'] = $this->conf['scroll.no_first'];
-		$this->env['scroll_prev'] = $this->conf['scroll.no_prev'];
+		$scroll['first'] = $this->conf['scroll.no_first'];
+		$scroll['prev'] = $this->conf['scroll.no_prev'];
 	}
 
 	if ($this->env['last'] + $this->env['pagebreak'] < $this->env['total']) {
 		$this->env['next_pos'] = $this->env['last'] + $this->env['pagebreak'];
-		$this->env['scroll_next'] = $this->_scroll_link('next', $this->env['next_pos']);
-		$this->env['scroll_last'] = $this->_scroll_link('last', ($this->env['page_num'] - 1) * $this->env['pagebreak']);
+		$scroll['next'] = $this->_scroll_link('next', $this->env['next_pos']);
+		$scroll['last'] = $this->_scroll_link('last', ($this->env['page_num'] - 1) * $this->env['pagebreak']);
 	}
 	else {
 		$this->env['next_pos'] = 0;
-		$this->env['scroll_next'] = $this->conf['scroll.no_next'];
-		$this->env['scroll_last'] = $this->conf['scroll.no_last'];
+		$scroll['next'] = $this->conf['scroll.no_next'];
+		$scroll['last'] = $this->conf['scroll.no_last'];
 	}
 
 	if (!empty($this->conf['scroll.jump']) && $this->conf['scroll.jump_num'] > 0) {
-		$this->env['scroll_jump'] = $this->getScrollJumpHtml();
+		$scroll['jump'] = $this->getScrollJumpHtml();
 	}
+
+	$this->env['scroll'] = $scroll;
 }
 
 
