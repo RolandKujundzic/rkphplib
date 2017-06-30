@@ -52,18 +52,45 @@ rowbreak_fill= <td colspan="3">&nbsp;</td>|#|
 
 <pre>Same as above but use rowbreak=0, pagebreak=2, show navigation</pre>
 
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" 
+	integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+
+{output:conf}
+scroll.link= <a href="index.php?{:=keep}">{:=link}</a>|#|
+scroll.first= <i class="fa fa-angle-double-left"></i>|#|
+scroll.prev= <i class="fa fa-angle-left"></i>|#|
+scroll.next= <i class="fa fa-angle-right"></i>|#|
+scroll.last= <i class="fa fa-angle-double-right"></i>|#|
+scroll.no_first= <i class="fa fa-angle-double-left"></i>|#|
+scroll.no_prev= <i class="fa fa-angle-left"></i>|#|
+scroll.no_next= <i class="fa fa-angle-right"></i>|#|
+scroll.no_last= <i class="fa fa-angle-double-right"></i>|#|
+scroll.jump= {:=min} - {:=max}|#|
+scroll.jump_active= <b>{:=min} - {:=max}</b>|#|
+scroll.jump_delimiter= &nbsp;|&nbsp;|#|
+scroll.jump_num= 4|#|
+{:output}
+
 {output:init}
 reset=0|#|
 rowbreak=0|#|
 pagebreak=2|#|
 {:output}
 
-<table border="1">
+<table border="1" style="min-width:40%">
 {output:loop}
 <tr>
 	<td>{:=KNr}</td>
 	<td>{:=Vorname}</td>
 	<td>{:=Name}</td>
+</tr>
+{:output}
+{output:footer}
+<tr>
+	<td colspan="3" align="center" style="text-align:justify;padding:1ch 2ch 0.8ch 2ch;line-height:0">
+		{:=scroll.first} {:=scroll.prev} <span style="display:inline-block">{:=scroll.jump}</span> {:=scroll.next} {:=scroll.last} 
+		<span style="width:100%;height:1px;display:inline-block;"> </span>
+	</td>
 </tr>
 {:output}
 </table>
