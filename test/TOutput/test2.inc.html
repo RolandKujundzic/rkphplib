@@ -55,18 +55,45 @@ rowbreak_fill= <td colspan="3">&nbsp;</td>|#|
 <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" 
 	integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 
+<style>
+td.output_scroll {
+	text-align:justify;
+	padding:1ch 2ch 0.8ch 2ch;
+	line-height:0;
+}
+
+a i.fa {
+	color:black;
+	font-size:20px;
+}
+
+span.scroll_jump {
+	display:inline-block;
+}
+
+span.scroll_jump a {
+	color:#666666;
+	text-decoration:none;
+}
+
+i.fa.off {
+	color:#999999;
+	font-size:20px;
+}
+</style>
+
 {output:conf}
-scroll.link= <a href="index.php?{:=keep}">{:=link}</a>|#|
+scroll.link= <a href="?{:=keep_crypt}">{:=link}</a>|#|
 scroll.first= <i class="fa fa-angle-double-left"></i>|#|
 scroll.prev= <i class="fa fa-angle-left"></i>|#|
 scroll.next= <i class="fa fa-angle-right"></i>|#|
 scroll.last= <i class="fa fa-angle-double-right"></i>|#|
-scroll.no_first= <i class="fa fa-angle-double-left"></i>|#|
-scroll.no_prev= <i class="fa fa-angle-left"></i>|#|
-scroll.no_next= <i class="fa fa-angle-right"></i>|#|
-scroll.no_last= <i class="fa fa-angle-double-right"></i>|#|
+scroll.no_first= <i class="fa fa-angle-double-left off"></i>|#|
+scroll.no_prev= <i class="fa fa-angle-left off"></i>|#|
+scroll.no_next= <i class="fa fa-angle-right off"></i>|#|
+scroll.no_last= <i class="fa fa-angle-double-right off"></i>|#|
 scroll.jump= {:=min} - {:=max}|#|
-scroll.jump_active= <b>{:=min} - {:=max}</b>|#|
+scroll.jump_active= {:=min} - {:=max}|#|
 scroll.jump_delimiter= &nbsp;|&nbsp;|#|
 scroll.jump_num= 4|#|
 {:output}
@@ -75,6 +102,7 @@ scroll.jump_num= 4|#|
 reset=0|#|
 rowbreak=0|#|
 pagebreak=2|#|
+keep=t|#|
 {:output}
 
 <table border="1" style="min-width:40%">
@@ -87,8 +115,8 @@ pagebreak=2|#|
 {:output}
 {output:footer}
 <tr>
-	<td colspan="3" align="center" style="text-align:justify;padding:1ch 2ch 0.8ch 2ch;line-height:0">
-		{:=scroll.first} {:=scroll.prev} <span style="display:inline-block">{:=scroll.jump}</span> {:=scroll.next} {:=scroll.last} 
+	<td colspan="3" align="center" class="output_scroll">
+		{:=scroll.first} {:=scroll.prev} <span class="scroll_jump">{:=scroll.jump}</span> {:=scroll.next} {:=scroll.last} 
 		<span style="width:100%;height:1px;display:inline-block;"> </span>
 	</td>
 </tr>
