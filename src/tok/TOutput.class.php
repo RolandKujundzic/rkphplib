@@ -518,13 +518,14 @@ private function getScrollJumpHtml() {
  */
 private function _scroll_link($key, $last) {
 
-  $keep = rawurlencode($this->conf['req.last']).'='.rawurlencode($last);
+	$kv = [ $this->conf['req.last'] => rawurlencode($last) ];
 	$keep_param = \rkphplib\lib\split_str(',', $this->conf['keep']);
-	$kv = [];
 
 	foreach ($keep_param as $name) {
-		$value = $this->getValue($name);
-		$kv[$name] = $value;
+		if (isset($_REQUEST[$name])) {
+			$value = $this->getValue($name);
+			$kv[$name] = $value;
+		}
 	}
 
 	$res = $this->tok->replaceTags($this->conf['scroll.link'], [
