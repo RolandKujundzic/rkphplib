@@ -110,6 +110,14 @@ public function getTableStatus($table) {
 
 
 /**
+ *
+ */
+public function setFirstRow($offset) {
+	throw new Exception('ToDo');
+}
+
+
+/**
  * Return next row (or NULL).
  * 
  * @throws if no resultset
