@@ -100,7 +100,7 @@ private function _connect() {
 	}
 
 	if (!empty($dsn['port'])) {
-		$this->_db = mysqli_init();
+		$this->_db = \mysqli_init();
 		if (!$this->_db->real_connect($dsn['host'], $dsn['login'], $dsn['password'], $dsn['name'], $dsn['port'])) {
 			throw new Exception('Failed to connect to MySQL ('.$this->_db->connect_errno.')', $this->_db->connect_error);
 		}
@@ -255,6 +255,16 @@ public function execute($query, $use_result = false) {
 				throw new Exception('failed to use query result', $query."\n(".$this->_db->errno.') '.$this->_db->error);
 			}
 		}
+	}
+}
+
+
+/**
+ *
+ */
+public function setFirstRow($offset) {
+	if (!$this->_dbres->data_seek($offset)) {
+		throw new Exception('failed to scroll to position '.$offset.' in database result set');
 	}
 }
 
