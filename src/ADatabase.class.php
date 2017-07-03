@@ -1140,6 +1140,13 @@ abstract public function execute($query, $use_result = false);
 
 
 /**
+ * Adjust result pointer to first row for getNextRow().
+ *
+ * @param int $offset 0 ... #rows-1
+ */
+abstract public function setFirstRow($offset);
+
+/**
  * Return next row (or NULL).
  * 
  * @throws if no resultset
