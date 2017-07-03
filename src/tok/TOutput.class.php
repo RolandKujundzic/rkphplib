@@ -4,12 +4,10 @@ namespace rkphplib\tok;
 
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/../Exception.class.php');
-require_once(__DIR__.'/../File.class.php');
 require_once(__DIR__.'/../lib/split_str.php');
 require_once(__DIR__.'/../lib/is_map.php');
 
 use \rkphplib\Exception;
-use \rkphplib\File;
 
 
 /**
@@ -310,6 +308,8 @@ public function tok_output_conf($p) {
  *  rowbreak= 0
  *  rowbreak_html= </tr><tr>
  *  rowbreak_fill= <td></td>
+ *  query= (use Database if set)
+ *  query.dsn= (use SETTINGS_DSN if empty)
  *  table.type= (use: "split, |&|, |@|", "split, |&|, |@|, =", csv, unserialize or json)
  *  table.columns= array_keys (or: col_1n / first_list / tag1, ... )
  *  table.url= (e.g. path/to/file = file://path/to/file or http[s]://...) 
@@ -334,19 +334,58 @@ public function tok_output_conf($p) {
 public function tok_output_init($p) {
 	$this->tok_output_conf($p);
 
-	$this->env['is_map'] = false;
-	$this->env['tags'] = [];
+  $this->computePagebreak();
 
-  $this->fillTable();
+	if (!empty($this->conf['query'])) {
+		$this->selectData();
+	}
+	else {
+	  $this->fillTable();
+	}
+
+	$this->computeEnv();
+
+	if ($this->env['pagebreak'] > 0) {
+		$this->computeScroll();
+	}
+}
+
+
+/**
+ * Compute missing env keys (this->table is filled):
+ *
+ *  is_map= true|false
+ *  rowbreak= 0 
+ *  visible= #rows visible
+ *  end= position of last visible row (= #rows-1 if no pagebreak)
+ *  page_num= #pages
+ *  tags= 
+ *  next_pos= int
+ *
+ */
+private function computeEnv() {
+
+	$this->env['is_map'] = false;
+	$this->env['rowbreak'] = intval($this->conf['rowbreak']);
+	$this->env['tags'] = [];
 
 	if ($this->conf['table.columns'] == 'first_line') {
 		$this->env['tags'] = array_shift($this->table);
+		$this->env['total']--;
 	}
 
-	$this->env['total'] = count($this->table);
-	$this->env['rowbreak'] = intval($this->conf['rowbreak']);
+	if ($this->env['pagebreak'] == 0) {
+		$this->env['visible'] = $this->env['total'];
+		$this->env['end'] = $this->env['total'] - 1;
+		$this->env['page_num'] = 1;
+		return;
+	}
 
-  $this->computePagebreak();
+	$this->env['end'] = ($this->env['last'] + $this->env['pagebreak'] < $this->env['total']) ?
+		$this->env['last'] + $this->env['pagebreak'] - 1 : $this->env['total'] - 1;
+
+  $this->env['visible'] = $this->env['end'] - $this->env['start'] + 1;
+	$this->env['page_num'] = ceil($this->env['total'] / $this->env['pagebreak']);
 
 	$start = $this->env['start'];
 
@@ -375,14 +414,9 @@ public function tok_output_init($p) {
  * Compute pagebreak. Set env keys:
  * 
  *  pagebreak= conf.pagebreak
- *  total= #rows
- *  visible= #rows visible
- *  cols= col_1, ... , col_n (if column names are not set)
  *  start= position of first visible row (= 0 if no pagebreak)
- *  end= position of last visible row (= #rows-1 if no pagebreak)
  *  last= 0 or start-1 if pagebreak and start > 0
- *  page= 1
- *  page_num= 1
+ *  page= 1 or last/pagebreak + 1
  *
  */
 private function computePagebreak() {
@@ -391,12 +425,9 @@ private function computePagebreak() {
 	$this->env['pagebreak'] = $pagebreak;
 
 	if ($pagebreak == 0) {
-		$this->env['visible'] = $this->env['total'];
 		$this->env['start'] = 0;
-		$this->env['end'] = $this->env['total'] - 1;
 		$this->env['last'] = 0;
 		$this->env['page'] = 1;
-		$this->env['page_num'] = 1;
 		return;
 	}
 
@@ -410,26 +441,20 @@ private function computePagebreak() {
 		throw new Exception('scroll error', "last % pagebreak = $last % $pagebreak != 0 or last != intval(last/pagebreak) * pagebreak");
 	}
 
-  $this->env['last'] = $last;
   $this->env['start'] = $last;
-  $this->env['end'] = ($last + $pagebreak < $this->env['total']) ? $last + $pagebreak - 1 : $this->env['total'] - 1;
-  $this->env['visible'] = $this->env['end'] - $this->env['start'] + 1;
+  $this->env['last'] = $last;
 	$this->env['page'] = ($last / $pagebreak) + 1;
-	$this->env['page_num'] = ceil($this->env['total'] / $pagebreak);
-
-	$this->computeScroll();
 }
 
 
 /**
- * Set scroll keys in this.env:
+ * Compute env.scroll keys:
  *
- *  scroll_first= link
- *  scroll_prev= link
- *  next_pos= int
- *  scroll_next= link
- *  scroll_last= link
- *  scroll_jump= html
+ *  scroll.first= link
+ *  scroll.prev= link
+ *  scroll.next= link
+ *  scroll.last= link
+ *  scroll.jump= html
  */
 private function computeScroll() {
 
@@ -553,7 +578,33 @@ protected function getValue($name) {
 
 
 /**
+ * Load data with select query.
+ *
+ */
+protected function selectData() {
+	require_once(__DIR__.'/../Database.class.php');
+
+	$dsn = empty($this->conf['query.dsn']) ? '' : $this->conf['query.dsn'];
+
+	$db = \rkphplib\Database::getInstance($dsn, [ 'output' => $this->conf['query'] ]); 
+	$db->execute($db->getQuery('output', $_REQUEST));
+
+	$this->env['total'] = $db->getRowNumber();
+	$start = $this->env['start'];
+	$db->setFirstRow($start);
+	$this->table = [];
+	$n = $start;
+
+	while (($row = $db->getNextRow()) && $n <= $this->env['end']) {
+		array_push($this->table, $row);
+		$n++;
+	}
+}
+
+
+/**
  * Load table data from table.data or retrieve from table.url = file|http[s]://.
+ * Set env.total.
  *
  */
 protected function fillTable() {
@@ -575,7 +626,10 @@ protected function fillTable() {
 	$table_type = \rkphplib\lib\split_str(',', $this->conf['table.type']);
 	$uri = array_shift($table_type).':'.$uri;
 
-	$this->table = File::loadTable($uri, $table_type);
+	require_once(__DIR__.'/../File.class.php');
+	$this->table = \rkphplib\File::loadTable($uri, $table_type);
+
+	$this->env['total'] = count($this->table);
 }
 
 
