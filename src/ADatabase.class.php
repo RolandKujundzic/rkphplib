@@ -326,7 +326,7 @@ public function setQuery($qkey, $query, $info = []) {
 	}
 
 	if (mb_strpos($query, '{:=') === false) {
-		$this->_query[$qkey] = $query;
+		$this->_query[$qkey] = [ '@query' => $query ];
 		return;
 	}
 
@@ -1153,6 +1153,13 @@ abstract public function setFirstRow($offset);
  * @return array[string]string
  */
 abstract public function getNextRow();
+
+
+/**
+ * Free result of execute(QUERY, true).
+ *
+ */
+abstract public function freeResult();
 
 
 /**
