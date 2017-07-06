@@ -59,6 +59,24 @@ for ($i = 1; $i < $dbx_num; $i++) {
 	}
 }
 
+$db = Database::getInstance(DSN);
+$db->createTable([ '@table' => 'user', '@id' => '1', '@status' => '1', '@timestamp' => '1',
+	'name' => 'varchar:30::', 'age' => 'int:::33' ]);
+
+$A_Z = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+$a_z = 'abcdefghijklmnopqrstuvwxyz';
+
+for ($i = 0; $i < 99; $i++) {
+	$name = substr($A_Z, rand(0, 25), 1);
+	
+	for ($j = 0; $j < rand(5,12); $j++) {
+		$name .= substr($a_z, rand(0, 25), 1);
+	}
+
+	$age = rand(14,87);
+	$db->execute("INSERT INTO user (name, age) VALUES ('$name', '$age')");
+}
+
 print "done.\n";
 
 $th->result();
