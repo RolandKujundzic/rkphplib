@@ -180,10 +180,16 @@ public function tok_output_loop($tpl) {
 	}
 
 	$start = $this->env['start'];
+	$end = $this->env['end'];
 	$lang = empty($this->conf['language']) ? '' : $this->conf['language'];
 	$output = [];
 
-	for ($i = $start; $i <= $this->env['end']; $i++) {
+	if (!empty($this->conf['query']) && $this->env['pagebreak'] > 0) {
+		$start = 0;
+		$end = $this->env['end'] % $this->env['pagebreak'];
+	}
+
+	for ($i = $start; $i <= $end; $i++) {
     $row = $this->table[$i];
 
 		$replace = [];
@@ -221,7 +227,7 @@ public function tok_output_loop($tpl) {
 
 		array_push($output, $this->tok->replaceTags($tpl, $replace));
 
-		if ($this->env['rowbreak'] > 0 && $i > 0 && (($i + 1) % $this->env['rowbreak']) == 0 && $i != $this->env['end']) {
+		if ($this->env['rowbreak'] > 0 && $i > 0 && (($i + 1) % $this->env['rowbreak']) == 0 && $i != $end) {
 			$rowbreak_html = $this->tok->replaceTags($this->conf['rowbreak_html'], [ 'row' =>  ($i + 1) / $this->env['rowbreak'] ]);
 			array_push($output, $rowbreak_html);
 		}
@@ -390,7 +396,7 @@ private function computeEnv() {
 	$start = $this->env['start'];
 
 	if (empty($this->conf['table.columns']) || $this->conf['table.columns'] == 'array_keys') {
-		$this->env['tags'] = array_keys($this->table[$start]);
+		$this->env['tags'] = isset($this->table[0]) ? array_keys($this->table[0]) : array_keys($this->table[$start]);
 		$this->env['is_map'] = true;
 	}
 	else if ($this->conf['table.columns'] == 'col_1n') {
@@ -591,7 +597,6 @@ protected function selectData() {
 
 	$this->env['total'] = $db->getRowNumber();
 	$db->setFirstRow($this->env['start']);
-	$this->env['start'] = 0;
 	$this->table = [];
 	$n = ($this->env['pagebreak'] > 0) ? 0 : -100000;
 
