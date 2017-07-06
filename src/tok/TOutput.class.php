@@ -378,14 +378,14 @@ private function computeEnv() {
 		$this->env['visible'] = $this->env['total'];
 		$this->env['end'] = $this->env['total'] - 1;
 		$this->env['page_num'] = 1;
-		return;
 	}
+	else {
+		$this->env['end'] = ($this->env['last'] + $this->env['pagebreak'] < $this->env['total']) ?
+			$this->env['last'] + $this->env['pagebreak'] - 1 : $this->env['total'] - 1;
 
-	$this->env['end'] = ($this->env['last'] + $this->env['pagebreak'] < $this->env['total']) ?
-		$this->env['last'] + $this->env['pagebreak'] - 1 : $this->env['total'] - 1;
-
-  $this->env['visible'] = $this->env['end'] - $this->env['start'] + 1;
-	$this->env['page_num'] = ceil($this->env['total'] / $this->env['pagebreak']);
+	  $this->env['visible'] = $this->env['end'] - $this->env['start'] + 1;
+		$this->env['page_num'] = ceil($this->env['total'] / $this->env['pagebreak']);
+	}
 
 	$start = $this->env['start'];
 
@@ -578,7 +578,7 @@ protected function getValue($name) {
 
 
 /**
- * Load data with select query.
+ * Load data with select query. Extract only data we are displaying.
  *
  */
 protected function selectData() {
@@ -587,18 +587,20 @@ protected function selectData() {
 	$dsn = empty($this->conf['query.dsn']) ? '' : $this->conf['query.dsn'];
 
 	$db = \rkphplib\Database::getInstance($dsn, [ 'output' => $this->conf['query'] ]); 
-	$db->execute($db->getQuery('output', $_REQUEST));
+	$db->execute($db->getQuery('output', $_REQUEST), true);
 
 	$this->env['total'] = $db->getRowNumber();
-	$start = $this->env['start'];
-	$db->setFirstRow($start);
+	$db->setFirstRow($this->env['start']);
+	$this->env['start'] = 0;
 	$this->table = [];
-	$n = $start;
+	$n = ($this->env['pagebreak'] > 0) ? 0 : -100000;
 
-	while (($row = $db->getNextRow()) && $n <= $this->env['end']) {
+	while (($row = $db->getNextRow()) && $n < $this->env['pagebreak']) {
 		array_push($this->table, $row);
 		$n++;
 	}
+
+	$db->freeResult();
 }
 
 
