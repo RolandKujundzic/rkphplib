@@ -129,6 +129,14 @@ public function getNextRow() {
 
 
 /**
+ *
+ */
+public function freeResult() {
+	throw new Exception('ToDo');
+}
+
+
+/**
  * Return number of rows in resultset.
  * 
  * @throws if no resultset
