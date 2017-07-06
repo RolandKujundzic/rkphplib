@@ -251,7 +251,7 @@ public function execute($query, $use_result = false) {
 		}
 
 		if ($use_result) {
-			if (($this->_dbres = $this->_db->use_result()) === false) {
+			if (($this->_dbres = $this->_db->store_result()) === false) {
 				throw new Exception('failed to use query result', $query."\n(".$this->_db->errno.') '.$this->_db->error);
 			}
 		}
@@ -293,17 +293,31 @@ public function getNextRow() {
 	}
 
 	if (is_null($row)) {
-		if ($is_prepared) {
-			$this->_dbres->close();
-		}
-		else {
-			$this->_dbres->free();
-		}
-
-		$this->_dbres = null;
+		$this->freeResult();
 	}
 
 	return $row;
+}
+
+
+/**
+ *
+ */
+public function freeResult() {
+	if (is_null($this->_dbres)) {
+		return;
+	}
+
+	$is_prepared = $this->_dbres instanceof mysqli_stmt;
+
+	if ($is_prepared) {
+		$this->_dbres->close();
+	}
+	else {
+		$this->_dbres->free();
+	}
+
+	$this->_dbres = null;
 }
 
 
