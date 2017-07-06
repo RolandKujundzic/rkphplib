@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table.example1 {
+	position:absolute;
+}
+
+table.example2 {
+	position:absolute;
+	left:50%;
+	min-width:40%
+}
+</style>
+</head>
+
+<body>
+
+<pre>SELECT * FROM user</pre>
+{output:init}
+query= SELECT * FROM user|#|
+query.dsn= mysqli://unit_test:magic123@tcp+localhost/unit_test|#|
+{:output}
+
+{output:header}
+<table border="1" class="example1">
+<tr>
+	<th>Name</th>
+	<th>Age</th>
+</tr>
+{:output}
+{output:loop}
+<tr>
+	<td>{:=name}</td>
+	<td>{:=age}</td>
+</tr>
+{:output}
+{output:footer}
+</table>
+{:output}
+
+
+<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" 
+	integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+
+<style>
+td.output_scroll {
+	text-align:justify;
+	padding:1ch 2ch 0.8ch 2ch;
+	line-height:0;
+}
+
+a i.fa {
+	color:black;
+	font-size:20px;
+}
+
+span.scroll_jump {
+	display:inline-block;
+}
+
+span.scroll_jump a {
+	color:#666666;
+	text-decoration:none;
+}
+
+i.fa.off {
+	color:#999999;
+	font-size:20px;
+}
+</style>
+
+{output:conf}
+scroll.link= <a href="?{:=keep_crypt}">{:=link}</a>|#|
+scroll.first= <i class="fa fa-angle-double-left"></i>|#|
+scroll.prev= <i class="fa fa-angle-left"></i>|#|
+scroll.next= <i class="fa fa-angle-right"></i>|#|
+scroll.last= <i class="fa fa-angle-double-right"></i>|#|
+scroll.no_first= <i class="fa fa-angle-double-left off"></i>|#|
+scroll.no_prev= <i class="fa fa-angle-left off"></i>|#|
+scroll.no_next= <i class="fa fa-angle-right off"></i>|#|
+scroll.no_last= <i class="fa fa-angle-double-right off"></i>|#|
+scroll.jump= {:=min} - {:=max}|#|
+scroll.jump_active= {:=min} - {:=max}|#|
+scroll.jump_delimiter= &nbsp;|&nbsp;|#|
+scroll.jump_num= 4|#|
+{:output}
+
+{output:init}
+reset=0|#|
+pagebreak=10|#|
+keep=t|#|
+{:output}
+
+<table border="1" class="example2">
+<tr>
+	<td colspan="5">SELECT * FROM user - use pagebreak=10, show navigation</td>
+</tr>
+{output:loop}
+<tr>
+	<td>{:=id}</td>
+	<td>{:=since}</td>
+	<td>{:=status}</td>
+	<td>{:=name}</td>
+	<td>{:=age}</td>
+</tr>
+{:output}
+{output:footer}
+<tr>
+	<td colspan="5" align="center" class="output_scroll">
+		{:=scroll.first} {:=scroll.prev} <span class="scroll_jump">{:=scroll.jump}</span> {:=scroll.next} {:=scroll.last} 
+		<span style="width:100%;height:1px;display:inline-block;"> </span>
+	</td>
+</tr>
+{:output}
+</table>
+
+</body>
+</html>
