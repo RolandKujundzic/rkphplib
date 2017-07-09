@@ -51,7 +51,7 @@ public function __construct() {
 	if (!empty($_REQUEST[SETTINGS_REQ_CRYPT])) {
 		self::decodeHash($_REQUEST[SETTINGS_REQ_CRYPT], true);
 	}
-	else if (strlen($_SERVER['QUERY_STRING']) > 2 && strpos($_SERVER['QUERY_STRING'], '=') === false) {
+	else if (isset($_SERVER['QUERY_STRING']) && strlen($_SERVER['QUERY_STRING']) > 2 && strpos($_SERVER['QUERY_STRING'], '=') === false) {
 		self::decodeHash($_SERVER['QUERY_STRING'], true);
 	}
 }
