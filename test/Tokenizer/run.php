@@ -18,20 +18,28 @@ use \rkphplib\tok\Tokenizer;
  */
 class TOutput {
 
+private $mode;
+
+public function __construct($mode = 'A') {
+	$this->mode = $mode;
+}
+
 public function getPlugins($tok) {
-  $plugin = [];
+	$plugin = [];
 
-  $plugin['output_header'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
-  $plugin['output_loop']   = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
-  $plugin['output_footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
+	if ($this->mode == 'A') {
+		$plugin['output_header'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+		$plugin['output_loop']   = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
+		$plugin['output_footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::TEXT;
+	}
+	else if ($this->mode == 'B') {
+		$plugin['output:header'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+		$plugin['output:loop']   = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
+		$plugin['output:footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::TEXT;
+		$plugin['output'] = 0;
+	}
 
-/*
-  $plugin['output:header'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
-  $plugin['output:loop']   = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
-  $plugin['output:footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
-  $plugin['output'] = 0;
-*/
-  return $plugin;
+	return $plugin;
 }
 
 public function tok_output_header($txt) {
@@ -70,10 +78,15 @@ $tx->setText('1{x:a}2{y:b}3{:x}4{z:}5');
 $th->compare('TOK_DEBUG', [ $tx->toString() ], [ '1{debug:x:a}2{y:b}3{:debug}4{debug:z:}5' ]); 
 
 $tx = new Tokenizer(Tokenizer::TOK_DEBUG);
-$toutput = new TOutput();
+$toutput = new TOutput('A');
 $tx->register($toutput);
-// $tx->setText('{output:header}{x:}{:output} - {output:loop}{x:}{:output} - {output:footer}{x:}{:output}');
 $tx->setText('{output_header:}{x:}{:output_header} - {output_loop:}{x:}{:output_loop} - {output_footer:}{x:}{:output_footer}');
-$th->compare('TOK_REDO/TOutput', [ $tx->toString() ], [ 'yalla' ]);
+$th->compare('TOK_REDO/TOutput', [ $tx->toString() ], [ 'h[{debug:x:}] - l[X] - f[{x:}]' ]);
+
+$tx = new Tokenizer(Tokenizer::TOK_DEBUG);
+$toutput = new TOutput('B');
+$tx->register($toutput);
+$tx->setText('{output:header}{x:}{:output} - {output:loop}{x:}{:output} - {output:footer}{x:}{:output}');
+$th->compare('TOK_REDO/TOutput', [ $tx->toString() ], [ 'h[{debug:x:}] - l[X] - f[{x:}]' ]);
 
 $th->runTokenizer(1, array());
