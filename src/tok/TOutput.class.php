@@ -41,13 +41,13 @@ public function getPlugins($tok) {
 	$this->tok = $tok;
 
 	$plugin = [];
-	$plugin['output:set'] = TokPlugin::REQUIRE_PARAM;
-	$plugin['output.get'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+	$plugin['output:set']  = TokPlugin::REQUIRE_PARAM;
+	$plugin['output.get']  = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['output:conf'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['output:init'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
-	$plugin['output:loop'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
-	$plugin['output:header'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
-	$plugin['output:footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
+	$plugin['output:loop']   = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
+	$plugin['output:header'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
+	$plugin['output:footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
 	$plugin['output:empty'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['output'] = 0; // no callback for base plugin
 
