@@ -63,6 +63,11 @@ public function getPlugins($tok) {
  * @return ''
  */
 public function tok_output_set($name, $value) {
+
+	if (count($this->conf) == 0) {
+		$this->tok_output_conf([]);
+	}
+
 	$this->conf[$name] = $value;
 	return '';
 }
