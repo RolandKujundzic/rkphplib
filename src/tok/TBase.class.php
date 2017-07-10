@@ -770,12 +770,27 @@ public function tok_tf($p, $arg) {
 		else if ($p[0] === 'set') {
 			$tf = \rkphplib\lib\split_str('|#|', $arg);
 		}
-		else if (!empty($p[0]) && in_array($p[0], [ 'cmp', 'set', 'in_arr', 'in', 'in_set', 'and', 'or', 'cmp_and', 'cmp_or' ])) {
-			$do = $p[0];
-			$ap = \rkphplib\lib\split_str('|#|', $arg);
+		else if (!empty($p[0])) {
+			if (in_array($p[0], [ 'cmp', 'set', 'in_arr', 'in', 'in_set', 'and', 'or', 'cmp_and', 'cmp_or' ])) {
+				$do = $p[0];
+				$ap = \rkphplib\lib\split_str('|#|', $arg);
+			}
+			else if (in_array($p[0], [ 'eq', 'ne', 'lt', 'gt', 'le', 'ge' ])) {
+				$do = $p[0];
+				$tmp = \rkphplib\lib\split_str('|#|', $arg);
+				$ap = [];
+
+				foreach ($tmp as $value) {
+					$value = strpos($value, '.') ? floatval($value) : intval($value);
+					array_push($ap, $value);
+				}
+			}
+			else {
+				throw new Exception('invalid operator', 'arg=['.$arg.'] p: '.print_r($p, true));
+			}
 		}
 		else {
-			throw new Exception('invalid operator', 'use cmp');
+			throw new Exception('invalid operator', 'arg=['.$arg.'] p: '.print_r($p, true));
 		}
 	}
 	else if (count($p) > 1) {
