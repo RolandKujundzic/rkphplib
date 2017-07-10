@@ -346,6 +346,8 @@ private function _join_tok($start, $end) {
 private function _join_tok_plugin(&$i) {
 	$tok = $this->_tok[$i];
 
+	// \rkphplib\lib\log_debug("_join_tok_plugin($i): tok=".mb_substr($tok, 0, 60));
+
 	// call plugin if registered ...
 	$d  = $this->rx[2];
 	$dl = mb_strlen($d);
@@ -465,6 +467,7 @@ private function _join_tok_plugin(&$i) {
 		$old_tok = $this->_tok;
 		$old_endpos = $this->_endpos;
 
+		// \rkphplib\lib\log_debug("REDO:\n---\n$out\n---\n");
 		$this->setText($out);
 		$out = $this->_join_tok(0, count($this->_tok));
 		
