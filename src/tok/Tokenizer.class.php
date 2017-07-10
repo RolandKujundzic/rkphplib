@@ -300,7 +300,7 @@ private function _join_tok($start, $end) {
 		throw new Exception('invalid status - call setText() first');
 	}
 
-	// \rkphplib\lib\log_debug("enter _join_tok - start=$start end=$end");
+	// \rkphplib\lib\log_debug("enter _join_tok - start=$start end=$end\ntok: ".print_r($this->_tok, true)."\nendpos: ".print_r($this->_endpos, true));
 	$tok_out = array();
 
 	for ($i = $start; $i < $end; $i++) {
