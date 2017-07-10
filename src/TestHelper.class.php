@@ -127,13 +127,18 @@ public function load($file) {
 
 	FSEntry::isDir($rkphplib);
 
-	if (!FSEntry::isFile($rkphplib.'/'.$file, false)) {
-		$file = 'src/'.$file;
+	$path_prefix = [ '', 'src', 'src/tok', 'src/lib', 'src/doc' ];
+	$php_file = '';
+
+	foreach ($path_prefix as $prefix) {
+		$php_file = str_replace('//', '/', $rkphplib.'/'.$prefix.'/'.$file);
+		if (FSEntry::isFile($php_file, false)) {
+			break;
+		}
 	}
 
-	FSEntry::isFile($rkphplib.'/'.$file);
-
-	require_once($rkphplib.'/'.$file);
+	FSEntry::isFile($php_file);
+	require_once($php_file);
 }
 
 
@@ -606,7 +611,7 @@ public function runTokenizer($num, $plugin_list) {
 	$tok = new \rkphplib\tok\Tokenizer(\rkphplib\tok\Tokenizer::TOK_DEBUG);
 
 	for ($i = 0; $i < count($plugin_list); $i++) {
-		$plugin = 'rkphplib\\'.$plugin_list[$i];
+		$plugin = 'rkphplib\\tok\\'.$plugin_list[$i];
 		$this->load($plugin_list[$i].'.class.php');
 		$tok->register(new $plugin());
 	}
