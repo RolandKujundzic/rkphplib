@@ -8,6 +8,7 @@ require_once(__DIR__.'/../File.class.php');
 require_once(__DIR__.'/../lib/execute.php');
 
 use \rkphplib\Exception;
+use \rkphplib\FSEntry;
 use \rkphplib\File;
 use \rkphplib\Dir;
 
@@ -171,18 +172,24 @@ public function resize($source, $target) {
 	}
 
   $resize_dir = str_replace([ '>', '<', '!' ], [ 'g', 'l', 'x' ], $resize);
-	$target_dir = dirname($this->conf['target']);
-	$this->conf['target'] = $target_dir.'/'.$resize_dir.'/'.basename($this->conf['target']);
+	$target_dir = dirname($this->conf['target']).'/'.$resize_dir;
+	$this->conf['target'] = $target_dir.'/'.basename($this->conf['target']);
 
 	if (File::exists($this->conf['target']) && !empty($this->conf['use_cache'])) {
 		return;
   }
 
-  Dir::create($target_dir, 0777);
+  Dir::create($target_dir, 0777, true);
 
-	$r = [ 'resize' => $resize, 'source' => $this->conf['source'], 'target' => $this->conf['target'] ];
-	\rkphplib\lib\execute($this->_conf['convert.resize'], $r); 
-  FSEntry::chmod($target, 0666);
+	if ($this->conf['module'] == 'convert') {
+		$r = [ 'resize' => $resize, 'source' => $this->conf['source'], 'target' => $this->conf['target'] ];
+		\rkphplib\lib\execute($this->conf['convert.resize'], $r); 
+	}
+	else if ($this->conf['module'] == 'gdlib') {
+		throw new Exception('todo');
+	}
+
+ 	FSEntry::chmod($this->conf['target'], 0666);
 }
 
 
