@@ -90,8 +90,68 @@ public function getPlugins($tok) {
 	$plugin['keep'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['load'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['link'] = TokPlugin::PARAM_CSLIST | TokPlugin::KV_BODY;
+	$plugin['toupper'] = TokPlugin::NO_PARAM;
+	$plugin['tolower'] = TokPlugin::NO_PARAM;
+	$plugin['join'] = TokPlugin::KV_BODY;
 
 	return $plugin;
+}
+
+
+/**
+ * Join array $p. Delimiter is either param or $p[0].
+ * Non-join param values are: ignore_empty.
+ *
+ * @param string $param
+ * @param array $p
+ * @return string
+ */
+public function tok_join($param, $p) {
+	$delimiter = $param;
+	$ignore_empty = false;
+
+	if ($param == 'ignore_empty') {
+		$delimiter = array_shift($p);
+		$ignore_empty = true;
+	}
+
+	$res = '';
+
+	for ($i = 0; $i < count($p); $i++) {
+		if ($ignore_empty && empty($p[$i])) {
+			continue;
+		}
+
+		if ($res) {
+			$res .= $delimiter;
+		}
+
+		$res .= $p[$i];
+	}
+
+	return $res;
+}
+
+
+/**
+ * Convert all characters in $txt into lowercase.
+ *
+ * @param string $txt
+ * @return string
+ */
+public function tok_tolower($txt) {
+	return mb_strtolower($txt);
+}
+
+
+/**
+ * Convert all characters in $txt into uppercase.
+ *
+ * @param string $txt
+ * @return string
+ */
+public function tok_toupper($txt) {
+	return mb_strtoupper($txt);
 }
 
 
@@ -176,15 +236,15 @@ public function tok_load($param, $file) {
  * Return encoded link parameter (e.g. "_=index.php|#|dir=test|#|a=5" -> index.php?cx=ie84PGh3284).
  * If parameter "_" is missing assume "_" = index.php.
  *
- * @param array
- * @param array[string]string
+ * @param array $name_list
+ * @param array[string]string $p
  * @return string
  */
-public function tok_link($name_list, $kv_list) {
+public function tok_link($name_list, $p) {
 	$res = 'index.php?'.SETTINGS_REQ_CRYPT.'=';
 
-	if (!empty($p['_'])) {
-		$res  = $p['_'].'?'.SETTINGS_REQ_CRYPT.'=';
+	if (isset($p['_'])) {
+		$res  = empty($p['_']) ? '?' : $p['_'].'?'.SETTINGS_REQ_CRYPT.'=';
 		unset($p['_']);
 	}
 
