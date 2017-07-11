@@ -829,5 +829,16 @@ public function replaceTags($tpl, $replace, $prefix = '') {
 }
 
 
+/**
+ * Return {:=$name}.
+ *
+ * @param string $name
+ * @return string
+ */
+public function getTag($name) {
+	return $this->rx[1].$this->rx[2].'='.$name.$this->rx[3];
+}
+
+
 }
 
