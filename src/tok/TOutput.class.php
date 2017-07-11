@@ -18,7 +18,7 @@ use \rkphplib\Exception;
 class TOutput implements TokPlugin {
 
 /** @var array $table */
-protected $table = [];
+protected $table = null;
 
 /** @var array[string]string $env */
 protected $env = [];
@@ -27,7 +27,7 @@ protected $env = [];
 protected $conf = [];
 
 /** @var Tokenizer $tok */
-private $tok = null;
+protected $tok = null;
 
 
 
@@ -107,11 +107,26 @@ public function tok_output_get($name) {
  * @return string
  */
 public function tok_output_empty($tpl) {
-	if ($this->env['total'] > 0) {
+	if (!$this->isEmpty()) {
 		return '';
 	}
 
 	return $tpl;
+}
+
+
+/**
+ * Return true if table is empty.
+ *
+ * @return bool
+ */
+private function isEmpty() {
+
+	if (is_null($this->table)) {
+		$this->tok_output_init([]);
+	}
+
+	return $this->env['total'] == 0;
 }
 
 
@@ -122,7 +137,7 @@ public function tok_output_empty($tpl) {
  * @return string
  */
 public function tok_output_header($tpl) {
-	if ($this->env['total'] == 0) {
+	if ($this->isEmpty()) {
 		return '';
 	}
 
@@ -155,7 +170,7 @@ public function tok_output_header($tpl) {
  * @return string
  */
 public function tok_output_footer($tpl) {
-	if ($this->env['total'] == 0) {
+	if ($this->isEmpty()) {
 		return '';
 	}
 
@@ -180,7 +195,7 @@ public function tok_output_footer($tpl) {
  * @return string
  */
 public function tok_output_loop($tpl) {
-	if ($this->env['total'] == 0) {
+	if ($this->isEmpty()) {
 		return '';
 	}
 
