@@ -114,7 +114,7 @@ public function tok_picture_src($p) {
 	}
 
 	if (!empty($this->conf['resize'])) {
-		$this->resize($this->conf['source'], $this->conf['target']);
+		$this->resize();
 	}
 
 	$img =  $this->conf['target'];
@@ -142,7 +142,8 @@ private function computeImgSource() {
 	}
 
 	if (empty($this->conf['source']) || !File::exists($this->conf['source'])) {
-		$default = $this->conf['picture_dir'].'/'.$this->conf['default'];
+		$default = (basename($this->conf['default']) == $this->conf['default']) ?
+			$this->conf['picture_dir'].'/'.$this->conf['default'] : $this->conf['default'];
 
 		if (!File::exists($default)) {
 			if (empty($this->conf['ignore_missing'])) {
@@ -158,13 +159,11 @@ private function computeImgSource() {
 
 
 /**
- * Resize source to target. 
+ * Resize conf.source to conf.target according to conf.resize. 
  *
  * @see http://www.imagemagick.org/script/convert.php
- * @param string $source
- * @param string $target
  */
-public function resize($source, $target) {
+public function resize() {
 	$resize = $this->conf['resize'];
 
 	if (!preg_match('/^([0-9]+)x([0-9]+)[\<\>\!]?$/', $resize)) {
@@ -172,14 +171,17 @@ public function resize($source, $target) {
 	}
 
   $resize_dir = str_replace([ '>', '<', '!' ], [ 'g', 'l', 'x' ], $resize);
-	$target_dir = dirname($this->conf['target']).'/'.$resize_dir;
-	$this->conf['target'] = $target_dir.'/'.basename($this->conf['target']);
+
+	if (basename(dirname($this->conf['target'])) != $resize_dir) {
+		$target_dir = dirname($this->conf['target']).'/'.$resize_dir;
+		$this->conf['target'] = $target_dir.'/'.basename($this->conf['target']);
+	}
 
 	if (File::exists($this->conf['target']) && !empty($this->conf['use_cache'])) {
 		return;
   }
 
-  Dir::create($target_dir, 0777, true);
+  Dir::create(dirname($this->conf['target']), 0777, true);
 
 	if ($this->conf['module'] == 'convert') {
 		$r = [ 'resize' => $resize, 'source' => $this->conf['source'], 'target' => $this->conf['target'] ];
