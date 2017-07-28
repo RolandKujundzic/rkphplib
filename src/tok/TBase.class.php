@@ -321,7 +321,7 @@ public static function decodeHash($data, $export_into_req = false) {
 		}
 	}
 
-	\rkphplib\lib\log_debug("decodeHash: ".print_r($res, true));
+	// \rkphplib\lib\log_debug("decodeHash: ".print_r($res, true));
 	return $res;
 }
 

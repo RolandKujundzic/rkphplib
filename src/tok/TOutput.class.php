@@ -612,7 +612,8 @@ protected function selectData() {
 
 	$dsn = empty($this->conf['query.dsn']) ? '' : $this->conf['query.dsn'];
 
-	$db = \rkphplib\Database::getInstance($dsn, [ 'output' => $this->conf['query'] ]); 
+	$db = \rkphplib\Database::getInstance($dsn, [ 'output' => $this->conf['query'] ]);
+	// \rkphplib\lib\log_debug("TOutput::selectData> ".$db->getQuery('output', $_REQUEST));
 	$db->execute($db->getQuery('output', $_REQUEST), true);
 
 	$this->env['total'] = $db->getRowNumber();
