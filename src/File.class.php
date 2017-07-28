@@ -106,21 +106,34 @@ public static function loadTable($uri, $options = []) {
 
 
 /**
- * Load csv file. Ignore empty lines.
+ * Load csv file. Ignore empty lines. If last parameter is callback function instead
+ * of bool do $trim($row). If callback returns row push row to table.
  *
  * @throws 
  * @param string $file
  * @param string $delimiter
  * @param string $quote
- * @param bool $trim
+ * @param bool|callable $trim
  * @return array
  */
 public static function loadCSV($file, $delimiter = ',', $quote = '"', $trim = true) {
 	$fh = File::open($file, 'rb');
 	$table = [];
 
+	$callback = (!is_bool($trim) && is_callable($trim)) ? $trim : null;
+
 	while (($row = File::readCSV($fh, $delimiter, $quote))) {
 		if (count($row) == 0 || (count($row) == 1 && strlen(trim($row[0])) == 0)) {
+			continue;
+		}
+
+		if (!is_null($callback)) {
+			$res = $callback($row);
+
+			if ($res) {
+				array_push($table, $row);
+			}
+
 			continue;
 		}
 
