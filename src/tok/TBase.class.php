@@ -93,6 +93,7 @@ public function getPlugins($tok) {
 	$plugin['toupper'] = TokPlugin::NO_PARAM;
 	$plugin['tolower'] = TokPlugin::NO_PARAM;
 	$plugin['join'] = TokPlugin::KV_BODY;
+	$plugin['esc'] = 0;
 
 	return $plugin;
 }
@@ -236,6 +237,12 @@ public function tok_load($param, $file) {
  * Return encoded link parameter (e.g. "_=index.php|#|dir=test|#|a=5" -> index.php?cx=ie84PGh3284).
  * If parameter "_" is missing assume "_" = index.php.
  *
+ * {link:}dir=a/b/c|#|t=382{:link} -> index.php?cx=eiEveLHO83821
+ * {link:}_=|#|dir=a/b/c|#|t=382{:link} -> ?eiEveLHO83821
+ * {link:}@=a/b/c|#|t=382{:link} -> ?eiEveLHO83821
+ * {link:@,t} -> {link:}@={get:dir}|#|t={get:t}{:link} -> index.php?cx=eiEveLHO83821
+ * {link:dir,t} -> {link:}dir={get:dir}|#|t={get:t}{:link} -> ?eiEveLHO83821
+ *
  * @param array $name_list
  * @param array[string]string $p
  * @return string
@@ -247,8 +254,18 @@ public function tok_link($name_list, $p) {
 		$res  = empty($p['_']) ? '?' : $p['_'].'?'.SETTINGS_REQ_CRYPT.'=';
 		unset($p['_']);
 	}
+	else if (isset($p['@'])) {
+		$p[SETTINGS_REQ_DIR] = $p['@'];
+		$res = '?';
+		unset($p['@']);
+	}
 
 	foreach ($name_list as $name) {
+		if ($name == '@') {
+			$name = SETTINGS_REQ_DIR;
+			$res = '?';
+		}
+
 		if (isset($_REQUEST[$name]) && !isset($p[$name])) {
 			$p[$name] = $_REQUEST[$name];
 		}
@@ -304,6 +321,7 @@ public static function decodeHash($data, $export_into_req = false) {
 		}
 	}
 
+	\rkphplib\lib\log_debug("decodeHash: ".print_r($res, true));
 	return $res;
 }
 
@@ -470,6 +488,21 @@ public function tok_if($param, $p) {
 	}
 
 	return $res;
+}
+
+
+/**
+ * Return escaped argument. If argument is empty use trim($_REQUEST[param]).
+ *  
+ * @param string $param
+ * @param string $arg
+ * @return string
+ */
+public function tok_esc($param, $arg) {
+	require_once(PATH_RKPHPLIB.'ADatabase.class.php');
+
+	$arg = (empty($param) || !isset($_REQUEST[$param])) ? $arg : trim($_REQUEST[$param]);
+  return "'".\rkphplib\ADatabase::escape($arg)."'";
 }
 
 
