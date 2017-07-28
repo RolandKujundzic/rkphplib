@@ -93,6 +93,7 @@ public static function path($path, $opt = '') {
  * @throws
  * @param string $path
  * @param int $mode octal
+ * @return bool
  */
 public static function chmod($path, $mode) {
 
@@ -113,9 +114,18 @@ public static function chmod($path, $mode) {
 	}
 
 	$has_priv = sprintf("0%o", 0777 & $stat['mode']);
+	$res = false;
 
 	if ($has_priv != decoct($mode)) {
-		if (!chmod($entry, $mode)) {
+		$res = true;
+		try {
+			$res = chmod($entry, $mode);
+		}
+		catch(\Exception $e) {
+			$res = false;
+		}
+
+		if (!$res) {
 			if (!self::$CHMOD_ABORT) {
 				return;
 			}
@@ -123,6 +133,8 @@ public static function chmod($path, $mode) {
 			throw new Exception('chmod failed', "$entry to $mode");
 		}
 	}
+
+	return $res;
 }
 
 
