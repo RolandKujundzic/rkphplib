@@ -162,11 +162,11 @@ END;
  *
  * @throws
  */
-private static function parseContentType() {
+private function parseContentType() {
 
 	if (empty($_SERVER['CONTENT_TYPE']) && empty($_SERVER['HTTP_CONTENT_LENGTH'])) {
 		$this->request['content-type'] = '';
-		$this->request['input-type']) = '';
+		$this->request['input-type'] = '';
 	}
 
 	$type = strtolower($_SERVER['CONTENT_TYPE']);
@@ -214,7 +214,7 @@ private static function parseContentType() {
 	}
 
 	$this->request['content-type'] = $type;
-	$this->request['input-type']) = $input;
+	$this->request['input-type'] = $input;
 }
 
 	
@@ -285,7 +285,7 @@ public function __construct($options = []) {
 	$this->options['allow_auth'] = [ 'header', 'request', 'basic_auth', 'oauth2' ];
 	$this->options['xml_root'] = '<api></api>';
 	$this->options['log_dir'] = '';
-	$this->options['auth_query'] = 'SELECT * FROM api_user WHERE token='{:=token}' AND status=1';
+	$this->options['auth_query'] = "SELECT * FROM api_user WHERE token='{:=token}' AND status=1";
 	$this->options['auth_dir'] = '';
 
 	foreach ($options as $key => $value) {
@@ -593,7 +593,7 @@ private function checkMethodContent() {
 			' allowed='.join(', ', $this->options['allow_method']));
 	}
 
-	self::parseContentType(); 
+	$this->parseContentType(); 
 
 	if (!empty($this->request['content-type']) && !in_array($this->request['content-type'], $this->options['Accept'])) {
 		throw new RestServerException('invalid content-type', self::ERR_INVALID_INPUT, 400, 
@@ -784,7 +784,7 @@ public function checkRequest() {
 	foreach ($use_keys as $key) {
 		if (isset($res[$key])) {
 			foreach ($res[$key] as $skey => $sval) {
-				if (mb_substr($skey, 0, 1) == '@') {
+				if (mb_substr($skey, 0, 1) == '@') {
 					unset($res[$key][$skey]);
 					foreach ($user['default'][$key] as $dkey => $dval) {
 						$res[$key][$dkey] = $dval;
