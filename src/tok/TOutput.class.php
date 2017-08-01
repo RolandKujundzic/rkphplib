@@ -395,6 +395,15 @@ private function computeEnv() {
 	$this->env['rowbreak'] = intval($this->conf['rowbreak']);
 	$this->env['tags'] = [];
 
+	if (count($this->table) == 0) {
+		// no output ...
+		$this->env['page_num'] = 0;
+		$this->env['visible'] = 0;
+		$this->env['start'] = 0;
+		$this->env['end'] = 0;
+		return;
+	}
+
 	if ($this->conf['table.columns'] == 'first_line') {
 		$this->env['tags'] = array_shift($this->table);
 		$this->env['total']--;
@@ -617,8 +626,16 @@ protected function selectData() {
 	$db->execute($db->getQuery('output', $_REQUEST), true);
 
 	$this->env['total'] = $db->getRowNumber();
-	$db->setFirstRow($this->env['start']);
 	$this->table = [];
+
+	if ($this->env['start'] >= $this->env['total']) {
+		// out of range ... show nothing ...
+		$this->env['total'] = 0;
+		$db->freeResult();
+		return;
+	}
+
+	$db->setFirstRow($this->env['start']);
 	$n = ($this->env['pagebreak'] > 0) ? 0 : -100000;
 
 	while (($row = $db->getNextRow()) && $n < $this->env['pagebreak']) {
