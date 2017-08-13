@@ -13,6 +13,7 @@ require_once(__DIR__.'/XML.class.php');
 require_once(__DIR__.'/JSON.class.php');
 require_once(__DIR__.'/File.class.php');
 require_once(__DIR__.'/Dir.class.php');
+require_once(__DIR__.'/Database.class.php');
 require_once(__DIR__.'/lib/log_error.php');
 require_once(__DIR__.'/lib/translate.php');
 
@@ -169,7 +170,7 @@ private function parseContentType() {
 		$this->request['input-type'] = '';
 	}
 
-	$type = strtolower($_SERVER['CONTENT_TYPE']);
+	$type = empty($_SERVER['CONTENT_TYPE']) ? 'application/json' : strtolower($_SERVER['CONTENT_TYPE']);
 	$input = '';
 
 	// mb_strpos is necessary because "Content-type: application/xml; UTF-8" is valid header
@@ -263,7 +264,9 @@ public function exceptionHandler($e) {
  *
  * - Accept: allowed Content-Type (default = [application/json, application/xml, application/octet-stream, 
  *    multipart/form-data, application/x-www-form-urlencoded, image|text|audio|video/*])
+ * - allow_route = [], e.g. [ get/token ]
  * - allow_method = [ put, get, post, delete, patch, head, options ]
+ * - force_basic_auth = true
  * - xml_root: XML Root node of api result (default = '<api></api>')
  * - allow_auth = [ header, request, basic_auth, oauth2 ]
  * - log_dir = '' (if set save requests to this directory) 
@@ -271,22 +274,26 @@ public function exceptionHandler($e) {
  * 		if auth_dir is empty use api_user with token='default' as default.
  * - auth_dir = use auth_dir/config.json as default configuration. If auth_query.config=auth_dir 
  *		use auth_dir/config.ID.json. If auth_query is empty use auth_dir/config.MD5(token).json.
+ * - internal_error = false
  *
  * @param map $options = []
  */
 public function __construct($options = []) {
 	$this->options = [];
 
-	$this->options['Accept'] = [ 'application/x-www-form-urlencoded', 'multipart/form-data',
+	$this->options['accept'] = [ 'application/x-www-form-urlencoded', 'multipart/form-data',
 		'application/json', 'application/xml', 'application/octet-stream', 
 		'image/*', 'text/*', 'video/*', 'audio/*' ];
 
+	$this->options['allow_route'] = [];
 	$this->options['allow_method'] = [ 'get', 'post', 'put', 'delete', 'patch', 'head', 'options' ];
 	$this->options['allow_auth'] = [ 'header', 'request', 'basic_auth', 'oauth2' ];
 	$this->options['xml_root'] = '<api></api>';
 	$this->options['log_dir'] = '';
 	$this->options['auth_query'] = "SELECT * FROM api_user WHERE token='{:=token}' AND status=1";
 	$this->options['auth_dir'] = '';
+	$this->options['force_basic_auth'] = true;
+	$this->options['internal_error'] = false;
 
 	foreach ($options as $key => $value) {
 		$this->options[$key] = $value;
@@ -312,12 +319,11 @@ public function __construct($options = []) {
  *  - basic authentication, token = $_SERVER[PHP_AUTH_USER]:$_SERVER[PHP_AUTH_PW] (auth=basic_auth)
  *  - OAuth2 Token = Authorization header (auth=oauth2)
  * 
- * Default options.allow_auth is [ header, request, oauth2, basic_auth ]
+ * Default options.allow_auth is [ header, request, oauth2, basic_auth ].
  * 
  * @exit If no credentials are passed basic_auth is allowed and required exit with "401 - basic auth required"
- * @param bool $force_basic_auth = true
  */
-private function checkApiToken($force_basic_auth = true) {
+private function checkApiToken() {
 	$res = [ '', '' ];
 
 	$allow_basic_auth = in_array('basic_auth', $this->options['allow_auth']);
@@ -334,7 +340,7 @@ private function checkApiToken($force_basic_auth = true) {
 	else if (!empty($_SERVER['PHP_AUTH_USER']) && !empty($_SERVER['PHP_AUTH_PW']) && $allow_basic_auth) {
 		$res = [ $_SERVER['PHP_AUTH_USER'].':'.$_SERVER['PHP_AUTH_PW'], 'basic_auth' ];
 	}
-	else if ($force_basic_auth && $allow_basic_auth) {
+	else if ($this->options['force_basic_auth'] && $allow_basic_auth) {
 		header('WWW-Authenticate: Basic realm="REST API"');
 		header('HTTP/1.0 401 Unauthorized');
 		print \rkphplib\lib\translate('Please enter REST API basic authentication credentials');
@@ -506,6 +512,10 @@ public function out($o, $code = 200) {
 
 	http_response_code($code);
 
+	if (!$this->options['internal_error'] && isset($o['error_info'])) {
+		unset($o['error_info']);
+	}
+
 	if (!empty($_SERVER['HTTP_ACCEPT']) && $_SERVER['HTTP_ACCEPT'] == 'application/xml') {
 		header('Content-Type: application/xml');
 		$output = XML::fromMap($o);
@@ -595,9 +605,9 @@ private function checkMethodContent() {
 
 	$this->parseContentType(); 
 
-	if (!empty($this->request['content-type']) && !in_array($this->request['content-type'], $this->options['Accept'])) {
+	if (!empty($this->request['content-type']) && !in_array($this->request['content-type'], $this->options['accept'])) {
 		throw new RestServerException('invalid content-type', self::ERR_INVALID_INPUT, 400, 
-			'type='.$this->request['content-type'].' allowed='.join(', ', $this->options['Accept']));
+			'type='.$this->request['content-type'].' allowed='.join(', ', $this->options['accept']));
 	}
 }
 
@@ -761,7 +771,19 @@ protected function logResult($code, $p, $out) {
  */
 public function checkRequest() {
 
+	if (empty($this->request['token']) || strtolower($this->request['token']) == 'default') { 
+		if (!empty($this->options['allow_route'])) {
+			$route = mb_strtolower($this->request['method']).'/'.$this->request['path'];
+			if (in_array($route, $this->options['allow_route'])) {
+				return [];
+			}
+		}
+
+		throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 400);
+	}
+
 	$user = $this->user_config();
+
 	$method = $this->request['method'];
 
 	if (!in_array($method, $user['config']['allow'])) {
@@ -799,17 +821,13 @@ public function checkRequest() {
 
 
 /**
- * Return user data for current api call. Either options.auth_query or options.auth_dir (or both)
- * must be defined.
+ * Return user data for current api call. Either options.auth_query or 
+ * options.auth_dir (or both) must be defined. 
  *
  * @throws
  * @return map
  */
 private function user_config() {
-
-	if (empty($this->request['token']) || strtolower($this->request['token']) == 'default') { 
-		throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 400);
-	}
 
 	if (!empty($this->options['auth_query'])) {
 		$db = Database::getInstance(SETTINGS_DSN, [ 'check_token' => $this->options['auth_query'] ]);
