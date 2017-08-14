@@ -13,6 +13,7 @@ require_once(__DIR__.'/XML.class.php');
 require_once(__DIR__.'/JSON.class.php');
 require_once(__DIR__.'/File.class.php');
 require_once(__DIR__.'/Dir.class.php');
+require_once(__DIR__.'/ValueCheck.class.php');
 require_once(__DIR__.'/Database.class.php');
 require_once(__DIR__.'/lib/log_error.php');
 require_once(__DIR__.'/lib/translate.php');
@@ -32,6 +33,7 @@ public $http_code = 400;
 
 /** @var string error $internal_mesage error detail you don't want to expose */
 public $internal_message = '';
+
 
 
 /**
@@ -65,8 +67,9 @@ public function __construct($message, $error_no, $http_error = 400, $internal_me
  * Avaliable HTTP methods are GET (retrieve), HEAD, POST (create new), PUT (update), PATCH (modify use with JSON|XML Patch - see
  * http://jsonpatch.com/), DELETE (return status 200 or 404), OPTIONS (return SWAGGER path).  
  * 
- * Subclass and implement checkRequest() and api callback methods ($method$Path e.g. getSomeAction, postUser, ... ).
- * Api callback methods throw exceptions on error and return result. 
+ * Implement api callback methods ($method$Path e.g. getSomeAction, postUser, ... ).
+ * Api callback methods throw exceptions on error and return result.
+ * Subclass setUser(), setUserConfig() if necessary.
  *  
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
@@ -86,6 +89,12 @@ protected $options = [];
 
 /** @var map $request */
 protected $request = [];
+
+/** @var map current user data */
+protected $user = [];
+
+/** @var map user configuration */
+protected $config = [];
 
 
 
@@ -264,16 +273,13 @@ public function exceptionHandler($e) {
  *
  * - Accept: allowed Content-Type (default = [application/json, application/xml, application/octet-stream, 
  *    multipart/form-data, application/x-www-form-urlencoded, image|text|audio|video/*])
- * - allow_route = [], e.g. [ get/token ]
+ * - allow_api_call = [], e.g. [ getToken ] = allow GET /token without valid token
  * - allow_method = [ put, get, post, delete, patch, head, options ]
  * - force_basic_auth = true
  * - xml_root: XML Root node of api result (default = '<api></api>')
  * - allow_auth = [ header, request, basic_auth, oauth2 ]
  * - log_dir = '' (if set save requests to this directory) 
- * - auth_query = optional, default = SELECT id, config FROM api_user WHERE token='{:=token}' AND status=1
- * 		if auth_dir is empty use api_user with token='default' as default.
- * - auth_dir = use auth_dir/config.json as default configuration. If auth_query.config=auth_dir 
- *		use auth_dir/config.ID.json. If auth_query is empty use auth_dir/config.MD5(token).json.
+ * - auth_query = optional, e.g. SELECT id, token, config FROM api_user WHERE token='{:=token}' AND valid > NOW() AND status=1
  * - internal_error = false
  *
  * @param map $options = []
@@ -285,13 +291,12 @@ public function __construct($options = []) {
 		'application/json', 'application/xml', 'application/octet-stream', 
 		'image/*', 'text/*', 'video/*', 'audio/*' ];
 
-	$this->options['allow_route'] = [];
+	$this->options['allow_api_call'] = [];
 	$this->options['allow_method'] = [ 'get', 'post', 'put', 'delete', 'patch', 'head', 'options' ];
 	$this->options['allow_auth'] = [ 'header', 'request', 'basic_auth', 'oauth2' ];
 	$this->options['xml_root'] = '<api></api>';
 	$this->options['log_dir'] = '';
-	$this->options['auth_query'] = "SELECT * FROM api_user WHERE token='{:=token}' AND status=1";
-	$this->options['auth_dir'] = '';
+	$this->options['auth_query'] = "SELECT * FROM api_user WHERE token='{:=token}' AND valid > NOW() AND status=1";
 	$this->options['force_basic_auth'] = true;
 	$this->options['internal_error'] = false;
 
@@ -626,14 +631,24 @@ public function readInput() {
 
 
 /**
+ * Define this.config[default] and this.config[token].
+ *
+ */
+abstract protected function setConfig();
+
+
+/**
  * Process api request. Example: 
  *
  * request = [ 'method' => 'get', 'path' => 'user/3832', 'api_call' => 'getUser', api_call_parameter => [ 3832 ] ]
  * call this.getUser(3832)  (up to three parameter otherwise use array as first parameter)
  * 
- * Call $this->parse() and $this->route(). 
+ * Call $this->parse() and $this->route().
+ *
+ * @throws 
  */
 public function run() {
+	$this->setConfig();
 	$this->readInput();
 
 	if (empty($this->request['api_call'])) {
@@ -641,12 +656,13 @@ public function run() {
 			"url=".$this->request['path']." method=".$this->request['method']);
 	}
  
-  $config = $this->checkRequest();
+	$this->setUser();
+	$this->setUserConfig();
+	$this->prepareApiCall();
+	$this->checkRequest();
 
-	$this->prepareApiCall($config);	
-
-	if (!empty($config['call_before'])) {
-		$pre_process = $config['call_before'];
+	if (!empty($user['config']['call_before'])) {
+		$pre_process = $user['config']['call_before'];
 		$this->$pre_process();
 	}
 
@@ -671,8 +687,8 @@ public function run() {
 		$res = $this->$method();
 	}
 
-	if (!empty($config['call_after'])) {
-		$post_process = $config['call_after'];
+	if (!empty($user['config']['call_after'])) {
+		$post_process = $user['config']['call_after'];
 		$res = $this->$post_process($res);
 	}
 
@@ -695,40 +711,23 @@ protected function apiCallNotImplemented() {
 
 
 /**
- * Prepare api call. Subclass this method if you need to intercept.
- * Apply request.map operations according to p.set, p.preset, p.check map
- * and p.required vector.
- *
- * @see this.checkRequest() 
- * @param map $p configuration (set, preset, input)
+ * Prepare api call. Apply this.user.config.preset and this.user.config.set 
+ * to this.request.map.
+ * 
  */
-protected function prepareApiCall($p) {
+protected function prepareApiCall() {
 
-	if (isset($p['preset']) && is_array($p['preset'])) {
-		foreach ($p['preset'] as $key => $value) {
+	if (isset($this->user['config']['preset']) && is_array($this->user['config']['preset'])) {
+		foreach ($this->user['config']['preset'] as $key => $value) {
 			if (!isset($this->request['map'][$key])) {
 				$this->request['map'][$key] = $value;
 			}
     }
   }
 
-	if (isset($p['set']) && is_array($p['set'])) {
-		foreach ($p['set'] as $key => $value) {
+	if (isset($this->user['config']['set']) && is_array($this->user['config']['set'])) {
+		foreach ($this->user['config']['set'] as $key => $value) {
 			$this->request['map'][$key] = $value;
-    }
-  }
-
-  if (isset($p['input']) && is_array($p['input'])) {
-    foreach ($p['input'] as $key => $require_check) {
-			if (!empty($require_check[0]) && empty($this->request['map'][$key])) {
-      	throw new RestServerException('missing required parameter', self::ERR_INVALID_INPUT, 403, 'parameter='.$key);
-			}
-
-			if (!empty($require_check[1]) && isset($this->request['map'][$key])) {
-				if (!ValueCheck::run($key, $this->request['map'][$key], $require_check[1])) {
-      		throw new RestServerException('parameter check failed', self::ERR_INVALID_INPUT, 403, $key.'=['.$this->request['map'][$key].'] check='.$require_check[1]);
-				}
-			}
     }
   }
 }
@@ -753,83 +752,67 @@ protected function logResult($code, $p, $out) {
 
 
 /**
- * Subclass if you want custom authentication. Otherwise adjust option.auth_dir or option.auth_query
- * if necessary. Check if request.api_token is valid and request.route call is allowed.
- * Return map with preset, set, required, check, call_before and call_after keys. Example:
+ * Return this.request.map.key value.
  *
- * - preset = { "country": "de", ... }
- * - set = { "country": "de", ... }
- * - input = { "firstname": ["1", ""], "age": ["0", ""], "email": ["1", "isEmail"], ... }
- * - output = { "col": "alias", ... } or [ "col", ... ]
- * - call_before = if set call $this->$call_before() before request.api_call 
- * - call_after = if set call $this->$call_after($output) after request.api_call
- *
- * Apply preset|set|required|check to request.map.
- *
- * @throws if api_token is invalid or access is forbidden
- * @return map 
+ * @param string $key
+ * @return string
  */
-public function checkRequest() {
-
-	if (empty($this->request['token']) || strtolower($this->request['token']) == 'default') { 
-		if (!empty($this->options['allow_route'])) {
-			$route = mb_strtolower($this->request['method']).'/'.$this->request['path'];
-			if (in_array($route, $this->options['allow_route'])) {
-				return [];
-			}
-		}
-
-		throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 400);
-	}
-
-	$user = $this->user_config();
-
-	$method = $this->request['method'];
-
-	if (!in_array($method, $user['config']['allow'])) {
-		throw new RestServerException('forbidden', self::ERR_INVALID_API_CALL, 403);
-	}
-
-	$res = $user['default'][$method];
-	$res['allow'] = $user['config']['allow'];
-
-	// overwrite default with custom
-	$use_keys = [ 'input', 'output', 'set', 'preset', 'call_before', 'call_after' ];
-	foreach ($use_keys as $key) {
-		if (isset($user['config'][$method][$key])) {
-			$res[$key] = $user['config'][$method][$key];
-		}
-	}
-
-	// resolve "@ref" keys
-	$use_keys = [ 'set', 'preset', 'input', 'output' ];
-	foreach ($use_keys as $key) {
-		if (isset($res[$key])) {
-			foreach ($res[$key] as $skey => $sval) {
-				if (mb_substr($skey, 0, 1) == '@') {
-					unset($res[$key][$skey]);
-					foreach ($user['default'][$key] as $dkey => $dval) {
-						$res[$key][$dkey] = $dval;
-					}
-				}
-			}
-		}
-	}
-
-	return $res;
+public function get($key) {
+	return isset($this->request['map'][$key]) ? $this->request['map'][$key] : '';
 }
 
 
 /**
- * Return user data for current api call. Either options.auth_query or 
- * options.auth_dir (or both) must be defined. 
+ * Apply required and check to api parameter.
  *
- * @throws
- * @return map
+ * @throws if parameter is invalid
  */
-private function user_config() {
+protected function checkRequest() {
 
-	if (!empty($this->options['auth_query'])) {
+	if (isset($this->user['config']['required']) && is_array($this->user['config']['required'])) {
+		foreach ($this->user['config']['required'] as $key) {
+			if (empty($this->request['map'][$key])) {
+      	throw new RestServerException('missing required parameter '.$key, self::ERR_INVALID_INPUT, 403, 'parameter='.$key);
+			}
+		}
+	}
+
+	if (isset($this->user['config']['check']) && is_array($this->user['config']['check'])) {
+		foreach ($this->user['config']['check'] as $key => $check) {
+			if (!ValueCheck::run($key, call_user_func([ $this, 'get' ]), $check)) {
+      	throw new RestServerException('parameter check failed', self::ERR_INVALID_INPUT, 403, "$key=$check");
+			}
+		}
+	}
+}
+
+
+/**
+ * Set this.user (this.user.config.allow). Check if request.token if valid. Check if api_call is allowed. 
+ * If token or options.auth_query is empty user has only token and config keys. 
+ * 
+ * @throws
+ */
+protected function setUser() {
+
+	if (!isset($this->config['default']) || !is_array($this->config['default']) || !is_array($this->config['default']['allow'])) {
+		throw new RestServerException('config.default missing or invalid', self::ERR_CODE, 501);
+	}
+
+	$token = $this->request['token'];
+	$api_call = $this->request['api_call'];
+	$user = [ 'token' => $token, 'config' => [] ];
+
+	if (empty($token)) {
+		if (!empty($this->options['allow_api_call']) && in_array($api_call, $this->options['allow_api_call'])) {
+			$this->user = [ 'token' => $token, 'config' => [ 'allow' => [ $api_call ] ] ];
+			return;
+		}
+		else {
+			throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 401);
+		}
+	}
+	else if (!empty($this->options['auth_query'])) {
 		$db = Database::getInstance(SETTINGS_DSN, [ 'check_token' => $this->options['auth_query'] ]);
 		$user = $db->select($db->getQuery('check_token', $this->request));
 
@@ -837,38 +820,70 @@ private function user_config() {
 			throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 401);
 		}
 
-		$user['config'] = JSON::decode($user['config']);
-
-		if (!empty($this->options['auth_dir'])) {
-			$user['default'] = JSON::decode(File::load($this->options['auth_dir'].'/config.json'));
-
-			if (is_string($user['config']) && $user['config'] == 'auth_dir') {
-				$user['config'] = JSON::decode(File::load($this->options['auth_dir'].'/config.'.$user['id'].'.json'));
-			}
-		}
-		else {
-			$tmp = $db->selectOne($db->getQuery('check_token', [ 'token' => 'default' ]));
-			$user['default'] = JSON::decode($tmp['config']);
+		if (!empty($user['config'])) {
+			$this->config[$token] = JSON::decode($user['config']);
 		}
 	}
-	else if (!empty($this->options['auth_dir'])) {
-		$user_json = $this->options['auth_dir'].'/config.'.md5($this->request['token']).'.json';
-		if (!File::exists($user_json)) {
-			throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 401);
+
+	$allow = isset($this->config[$token]) && isset($this->config[$token]['allow']) ? 
+		$this->config[$token]['allow'] : $this->config['default']['allow'];
+
+	if (!in_array($api_call, $allow)) {
+		throw new RestServerException('forbidden', self::ERR_INVALID_API_CALL, 403);
+	}
+
+	$this->user = $user;
+}
+
+
+/**
+ * Set this.user.config = checks for current api call. Merge this.config[default] 
+ * with this.user[config]. User config keys:
+ *
+ * - set = { "country": "de", ... }
+ * - preset = { "country": "de", ... }
+ * - required = [ "firstname", "lastname", ... ]
+ * - check = { "firstname": ["1", ""], "age": ["0", ""], "email": ["1", "isEmail"], ... }
+ * - call_before = if set call $this->$call_before() before request.api_call 
+ * - call_after = if set call $this->$call_after($output) after request.api_call
+ * - output = { "col": "alias", ... } or [ "col", ... ]
+ *
+ * @throws
+ */
+protected function setUserConfig() {
+
+	$token = $this->request['token'];
+	$api_call = $this->request['api_call'];
+
+	if (!isset($this->config['default'][$api_call])) {
+		throw new RestServerException('missing config.default.'.$api_call, self::ERR_INVALID_API_CALL, 501);
+	}
+
+	$this->user['config'] = $this->config['default'][$api_call];
+
+	if (!isset($this->config[$token]) && !isset($this->config[$token][$api_call])) {
+		return;
+	}
+
+	$use_keys = [ 'set', 'preset', 'check', 'required', 'call_before', 'call_after', 'output' ];
+	$default = $this->config['default'][$api_call];
+	$custom = $this->config[$token][$api_call];
+
+	if (!isset($this->user['config']) || !is_array($this->user['config'])) {
+		$this->user['config'] = [];
+	}
+
+	foreach ($use_keys as $key) {
+		if (!isset($custom[$key]) && !isset($default[$key])) {
+			// ignore $key
 		}
-
-		$user = JSON::decode(File::load($user_json));
-		$user['default'] = JSON::decode(File::load($this->options['auth_dir'].'/config.json'));
+		else if (isset($custom[$key])) {
+			$this->user['config'][$key] = $custom[$key];
+		}
+		else if (isset($default[$key])) {
+			$this->user['config'][$key] = $default[$key];
+		}
 	}
-	else {
-		throw new RestServerException('auth_query and auth_dir empty', self::ERR_CONFIGURATION, 501);
-	}
-
-	if (!is_array($user['default']) || !is_array($user['config']) || !isset($user['config']['allow']) || !is_array($user['config']['allow'])) {
-		throw new RestServerException('user_config invalid', self::ERR_CONFIGURATION, 501);
-	}
-
-	return $user;
 }
 
 
