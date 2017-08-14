@@ -15,9 +15,33 @@ class ValueCheck {
 
 
 /**
+ * Run check.
  *
+ * @param string $key
+ * @param string|callable $value
+ * @param string $check
+ * @return bool
  */
 public static function run($key, $value, $check) {
+	$condition = '';
+
+	if (($start = mb_strpos($key, '[')) > 0 && ($end = mb_strrpos($key, ']')) > $start + 1) {
+		// e.g. column[table=test] -> key=column condition=[table=test]
+		$condition = mb_substr($key, $start + 1, $end - $start);
+		$key = mb_substr($key, 0, $start);
+	}
+
+	if (($start = mb_strpos($key, '.')) > 0) {
+		// e.g. email.1, email.2 
+		$key = mb_substr(0, $key);
+	}
+
+	if (is_callable($value)) {
+		$value = $value($key);
+	}
+
+	\rkphplib\lib\log_warn("key=[$key] value=[$value] check=[$check]");
+
 	if (!is_array($check)) {
 		$check = \rkphplib\lib\split_str(':', $check);
 	}
