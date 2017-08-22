@@ -246,8 +246,13 @@ public function errorHandler($errNo, $errStr, $errFile, $errLine) {
     return;
   }
 
-	$this->out([ 'error' => "PHP ERROR [$errNo] $errStr", 'error_code' => self::ERR_PHP, 
-		'error_info' => "file=$errFile line=$errLine" ], 500);
+	$result = [ 'error' => "PHP ERROR [$errNo] $errStr", 
+		'error_code' => self::ERR_PHP, 
+		'error_info' => "file=$errFile line=$errLine",
+		'api_call' => $this->request['api_call']
+	];
+
+	$this->out($result, 500);
 }
 
 
@@ -264,7 +269,13 @@ public function exceptionHandler($e) {
 	$http_code = (property_exists($e, 'http_code') && $e->http_code >= 400) ? $e->http_code : 400; 
   $internal = property_exists($e, 'internal_message') ? $e->internal_message : '';
 
-	$this->out([ 'error' => $e->getMessage(), 'error_code' => $e->getCode(), 'error_info' => $internal ], $http_code);
+	$result = [ 'error' => $e->getMessage(), 
+		'error_code' => $e->getCode(), 
+		'error_info' => $internal,
+		'api_call' => $this->request['api_call']
+	];
+
+	$this->out($result, $http_code);
 }
 
 
