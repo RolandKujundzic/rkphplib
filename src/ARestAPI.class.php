@@ -790,7 +790,7 @@ protected function checkRequest() {
 
 	if (isset($this->user['config']['check']) && is_array($this->user['config']['check'])) {
 		foreach ($this->user['config']['check'] as $key => $check) {
-			if (!ValueCheck::run($key, call_user_func([ $this, 'get' ]), $check)) {
+			if (!ValueCheck::run($key, call_user_func([ $this, 'get' ], $key), $check)) {
       	throw new RestServerException('parameter check failed', self::ERR_INVALID_INPUT, 403, "$key=$check");
 			}
 		}
