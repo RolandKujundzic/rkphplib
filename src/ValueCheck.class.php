@@ -14,6 +14,7 @@ require_once(__DIR__.'/lib/split_str.php');
 class ValueCheck {
 
 
+
 /**
  * Run check.
  *
@@ -27,8 +28,20 @@ public static function run($key, $value, $check) {
 
 	if (($start = mb_strpos($key, '[')) > 0 && ($end = mb_strrpos($key, ']')) > $start + 1) {
 		// e.g. column[table=test] -> key=column condition=[table=test]
-		$condition = mb_substr($key, $start + 1, $end - $start);
+		$condition = mb_substr($key, $start + 1, $end - $start - 1);
 		$key = mb_substr($key, 0, $start);
+
+		if (preg_match('/^([a-zA-Z0-9\_]+)\=([a-zA-Z0-9\_]+)$/', $condition, $match)) {
+			$key2 = $match[1];
+			$key2_value = is_callable($value) ? $value($key2) : isset($_REQUEST[$key2]) ? $_REQUEST[$key2] : '';
+
+			if ($key2_value == $match[2]) {
+				return self::run($key, $value, $check);
+			}
+			else {
+				return false;
+			}
+		}
 	}
 
 	if (($start = mb_strpos($key, '.')) > 0) {
@@ -40,7 +53,7 @@ public static function run($key, $value, $check) {
 		$value = $value($key);
 	}
 
-	\rkphplib\lib\log_warn("key=[$key] value=[$value] check=[$check]");
+	\rkphplib\lib\log_debug("key=[$key] value=[$value] check=[$check]");
 
 	if (!is_array($check)) {
 		$check = \rkphplib\lib\split_str(':', $check);
@@ -48,13 +61,13 @@ public static function run($key, $value, $check) {
 
 	$method = array_shift($check);
 
-	if (!method_exists(self, $method)) {
+	if (!method_exists(__CLASS__, $method)) {
 		if (count($check) == 0 && mb_substr($method, 0, 2) == 'is') {
 			array_push($check, mb_substr($method, 2)); 
 			$method = 'isMatch';
 		}
 		else {
-			throw new Exception('no such check', "key=$key value=[$value] check=[$check]");
+			throw new Exception('no such check: '.$method, "key=$key value=[$value] check=[".join (':', $check)."]");
 		}
 	}
 
@@ -238,21 +251,44 @@ public static function isUStIdNr($value, $cc) {
 
 
 /**
- * True if value is HH:MM[:SS] or HH.MM[.SS] and HH=[0-23], MM=[0-59] and SS=[0-59].
+ * Return parameter array.
+ * 
+ * @param string $p1
+ * @param string $p1
+ * @param string $p1
+ * @return array
+ */
+public static function getParameterArray($p1 = null, $p2 = null, $p3 = null) {
+	$arr = [];
+
+	if (is_array($p1)) {
+		$arr = $p1;
+	}
+	else if ($p2 === null && $p3 === null) {
+		$arr = [ $p1 ];
+	}
+	else if ($p3 === null) {
+		$arr = [ $p1, $p2 ];
+	}
+	else {
+		$arr = [ $p1, $p2, $p3 ];
+	}
+
+	return $arr;
+}
+
+
+/**
+ * True if value is in self::getParameterArray(p1, p2, p3).
+ *
  * @param string $value
+ * @param string $p1
+ * @param string $p2
+ * @param string $p3
  * @return boolean
  */
-public static function isTime($value) {
-	$res = false;
-
-	if (preg_match("/^([0-9]{2})[\.\:]([0-9]{2})$/", $value, $date)) {
-		$res = $date[1] >= 0 && $date[1] < 24 && $date[2] >= 0 && $date[2] < 60;
-	}
-	else if (preg_match("/^([0-9]{2})[\.\:]([0-9]{2})[\.\:]([0-9]{2})$/", $value, $date)) {
-		$res = $date[1] >= 0 && $date[1] < 24 && $date[2] >= 0 && $date[2] < 60 && $date[3] >= 0 && $date[3] < 60;
-	}
-
-	return $res;
+public static function Enum($value, $p1 = null, $p2 = null, $p3 = null) {
+	return in_array($value, self::getParameterArray($p1, $p2, $p3));
 }
 
 
