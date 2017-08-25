@@ -36,10 +36,11 @@ public static function run($key, $value, $check) {
 			$key2_value = is_callable($value) ? $value($key2) : isset($_REQUEST[$key2]) ? $_REQUEST[$key2] : '';
 
 			if ($key2_value == $match[2]) {
+				$value = is_callable($value) ? $value : isset($_REQUEST[$key]) ? $_REQUEST[$key] : '';
 				return self::run($key, $value, $check);
 			}
 			else {
-				return false;
+				return true;
 			}
 		}
 	}
