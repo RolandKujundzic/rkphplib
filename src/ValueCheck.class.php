@@ -288,7 +288,7 @@ public static function getParameterArray($p1 = null, $p2 = null, $p3 = null) {
  * @param string $p3
  * @return boolean
  */
-public static function Enum($value, $p1 = null, $p2 = null, $p3 = null) {
+public static function isEnum($value, $p1 = null, $p2 = null, $p3 = null) {
 	return in_array($value, self::getParameterArray($p1, $p2, $p3));
 }
 
