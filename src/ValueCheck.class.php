@@ -124,7 +124,7 @@ public static function getMatch($name) {
 		'Variable' => '/^[0-9A-Z_]+$/i',
 		'PLZ' => '/^[0-9]{5}$/');
 
-  return isset($rx[$name]) ? $rx['name'] : '';
+  return isset($rx[$name]) ? $rx[$name] : '';
 }
 
 
@@ -139,10 +139,10 @@ public static function isMatch($value, $rx) {
   $res = '';
 
   if (mb_substr($rx, 0, 1) != '/' && mb_substr($rx, -1) != '/') {
-		$rx = '/'.$rx.'/';
+		$rx = self::getMatch($rx);
 	}
 	else {
-		$rx = self::getMatch($rx);
+		$rx = '/'.$rx.'/';
 	}
 
   return preg_match($rx, $value);
