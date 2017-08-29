@@ -825,11 +825,12 @@ protected function setUser() {
 	}
 	else if (!empty($this->options['auth_query'])) {
 		$db = Database::getInstance(SETTINGS_DSN, [ 'check_token' => $this->options['auth_query'] ]);
-		$user = $db->select($db->getQuery('check_token', $this->request));
-
-		if (count($user) != 1) {
+		$dbres = $db->select($db->getQuery('check_token', $this->request));
+		if (count($dbres) != 1) {
 			throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 401);
 		}
+
+		$user = $dbres[0];
 
 		if (!empty($user['config'])) {
 			$this->config[$token] = JSON::decode($user['config']);
