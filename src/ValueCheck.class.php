@@ -107,6 +107,7 @@ public static function run($key, $value, $check) {
 public static function getMatch($name) {
 	$rx = array(
 		'Required' => '/^.+$/',
+		'Boolean' => '/^(1|0)$/',
 		'Int' => '/^\-?[1-9][0-9]*$/',
 		'UInt' => '/^[1-9][0-9]*$/',
 		'Integer' => '/^[1-9][0-9]*$/',
