@@ -319,7 +319,7 @@ public function __construct($options = []) {
 		$log_dir = $this->options['log_dir'].'/'.date('Ym').'/'.date('dH');
 		Dir::create($log_dir, 0, true);
 		$unique_id = sprintf("%08x", abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME_FLOAT'] . $_SERVER['REMOTE_PORT'])));
-		$this->options['log_prefix'] = $log_dir.'/api_'.$unique_id;
+		$this->options['log_prefix'] = $log_dir.'/api_'.date('is').'_'.$unique_id;
 	}
 
 	set_error_handler([$this, 'errorHandler']);
@@ -637,6 +637,12 @@ public function readInput() {
 	$this->checkApiToken(); 
 	$this->parse();
 	$this->route();
+
+	if (empty($this->request['token']) && !empty($this->request['map']['api_token'])) {
+		$this->request['token'] = $this->request['map']['api_token'];
+		unset($this->request['map']['api_token']);
+	}
+
 	$this->logRequest('in');
 }
 
