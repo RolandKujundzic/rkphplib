@@ -33,10 +33,10 @@ public static function run($key, $value, $check) {
 
 		if (preg_match('/^([a-zA-Z0-9\_]+)\=([a-zA-Z0-9\_]+)$/', $condition, $match)) {
 			$key2 = $match[1];
-			$key2_value = is_callable($value) ? $value($key2) : isset($_REQUEST[$key2]) ? $_REQUEST[$key2] : '';
+			$key2_value = is_callable($value) ? $value($key2) : (isset($_REQUEST[$key2]) ? $_REQUEST[$key2] : '');
 
 			if ($key2_value == $match[2]) {
-				$value = is_callable($value) ? $value : isset($_REQUEST[$key]) ? $_REQUEST[$key] : '';
+				$value = is_callable($value) ? $value : (isset($_REQUEST[$key]) ? $_REQUEST[$key] : '');
 				return self::run($key, $value, $check);
 			}
 			else {
@@ -53,8 +53,6 @@ public static function run($key, $value, $check) {
 	if (is_callable($value)) {
 		$value = $value($key);
 	}
-
-	\rkphplib\lib\log_debug("key=[$key] value=[$value] check=[$check]");
 
 	if (!is_array($check)) {
 		$check = \rkphplib\lib\split_str(':', $check);
@@ -91,6 +89,8 @@ public static function run($key, $value, $check) {
 		$res = self::$method($value);
 	}
 
+	\rkphplib\lib\log_debug("key=[$key] value=[$value] check=[".join(':', $check)."] method=[$method] res=[$res]");
+
 	return $res;
 }
 
@@ -107,7 +107,8 @@ public static function run($key, $value, $check) {
 public static function getMatch($name) {
 	$rx = array(
 		'Required' => '/^.+$/',
-		'Boolean' => '/^(1|0)$/',
+		'Bool' => '/^(1|0|)$/',
+		'Boolean' => '/^(1|0|)$/',
 		'Int' => '/^\-?[1-9][0-9]*$/',
 		'UInt' => '/^[1-9][0-9]*$/',
 		'Integer' => '/^[1-9][0-9]*$/',
