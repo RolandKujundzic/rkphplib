@@ -950,20 +950,31 @@ public static function basename($file, $remove_suffix = false, $rsuffix = '') {
 
 
 /**
- * Transform filename array into hash.
+ * Transform filename array into hash. Default options:
  *
- * @see File::basename(path, remove_suffix, rsuffix)
+ * - remove_suffix: true
+ * - remove_prefix: ''
+ * - rsuffix: _
+ *
+ * @see File::basename(path, options)
  * @param array $list
- * @param bool $remove_suffix 
- * @param string $rsuffix 
+ * @param array $options
  * @return array[string]array {base1: [file1, file2, ...], ... }
  */
-public static function basename_collect($list, $remove_suffix = true, $rsuffix = '_') {
+public static function basename_collect($list, $options = []) {
+
+	$default_options = [ 'remove_suffix' => true, 'remove_prefix' => '', 'rsuffix' => '_' ];
+
+	foreach ($default_options as $key => $value) {
+		if (!isset($options[$key])) {
+			$options[$key] = $default_options[$key];
+		}
+	}
 
 	$res = array();
 
 	foreach ($list as $val) {
-		$base = self::basename($val, $remove_suffix, $rsuffix);
+		$base = self::basename($val, $options['remove_suffix'], $options['rsuffix']);
 
 		if (!isset($res[$base])) {
 			$res[$base] = array();
@@ -972,7 +983,20 @@ public static function basename_collect($list, $remove_suffix = true, $rsuffix =
 		array_push($res[$base], $val);
 	}
 
-	sort($res);
+	foreach ($res as $key => $img_list) {
+		if ($options['remove_prefix']) {
+			$rpl = mb_strlen($options['remove_prefix']);
+
+			for ($i = 0; $i < count($img_list); $i++) {
+				if (mb_substr($img_list[$i], 0, $rpl) == $options['remove_prefix']) {
+					$img_list[$i] = mb_substr($img_list[$i], $rpl);
+				}
+			}
+		}
+
+		sort($img_list);
+		$res[$key] = $img_list;
+	}
 
 	return $res;
 }
