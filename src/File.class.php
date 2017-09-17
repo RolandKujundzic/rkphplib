@@ -972,6 +972,8 @@ public static function basename_collect($list, $remove_suffix = true, $rsuffix =
 		array_push($res[$base], $val);
 	}
 
+	sort($res);
+
 	return $res;
 }
 
