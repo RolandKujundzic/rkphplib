@@ -283,15 +283,15 @@ public function tok_link($name_list, $p) {
  */
 public static function encodeHash($p) {
 	$query_string = http_build_query($p);
-  $len = strlen($query_string);
+	$len = strlen($query_string);
 	$secret = SETTINGS_CRYPT_SECRET;
-  $slen = strlen($secret);
+	$slen = strlen($secret);
 
-  for ($i = 0; $i < $len; $i++) {
+	for ($i = 0; $i < $len; $i++) {
 		$query_string[$i] = chr(ord($query_string[$i]) ^ ord($secret[$i % $slen]));
-  }
+	}
 
-  return rawurlencode(base64_encode($query_string));
+	return rawurlencode(base64_encode($query_string));
 }
 
 
@@ -303,19 +303,19 @@ public static function encodeHash($p) {
  * @return hash
  */
 public static function decodeHash($data, $export_into_req = false) {
-  $data = base64_decode(rawurldecode($data));
+	$data = base64_decode(rawurldecode($data));
 	$len = strlen($data);
 	$secret = SETTINGS_CRYPT_SECRET;
-  $slen = strlen($secret);
+	$slen = strlen($secret);
 
-  for ($i = 0; $i < $len; $i++) {
+	for ($i = 0; $i < $len; $i++) {
 		$data[$i] = chr(ord($data[$i]) ^ ord($secret[$i % $slen]));
-  }
+	}
 
 	$res = array();
 	parse_str($data, $res);
 
-  if ($export_into_req) {
+	if ($export_into_req) {
 		foreach ($res as $key => $value) {
 			$_REQUEST[$key] = $value;
 		}
@@ -383,11 +383,11 @@ public function tok_if($param, $p) {
 	}
 	else if ($do === 'ne') {
 		$res = ($param === $p[0]) ? $p[2] : $p[1];
-  }
+	}
 	else if ($do === 'in') {
 		$set = \rkphplib\lib\split_str(',', $param);
 		$res = in_array($p[0], $set) ? $p[1] : $p[2];
-  }
+	}
 	else if ($do === 'if_in_set') {
 		$set = \rkphplib\lib\split_str(',', $param);
 		$res = in_array($param, $set) ? $p[1] : $p[2];
@@ -454,7 +454,7 @@ public function tok_if($param, $p) {
 
 		$res = $cmp ? $p[$p_num - 2] : $p[$p_num - 1];
 	}
-  else if ($do === 'cmp') {
+	else if ($do === 'cmp') {
 
 		if ($p_num % 2 == 1) {
 			array_push($p, '');
@@ -492,7 +492,7 @@ public function tok_if($param, $p) {
 
 
 /**
- * Return escaped argument. If argument is empty use trim($_REQUEST[param]).
+ * Return escaped argument ('$arg'). If argument is empty use trim($_REQUEST[param]).
  *  
  * @param string $param
  * @param string $arg
@@ -502,7 +502,7 @@ public function tok_esc($param, $arg) {
 	require_once(PATH_RKPHPLIB.'ADatabase.class.php');
 
 	$arg = (empty($param) || !isset($_REQUEST[$param])) ? $arg : trim($_REQUEST[$param]);
-  return "'".\rkphplib\ADatabase::escape($arg)."'";
+	return "'".\rkphplib\ADatabase::escape($arg)."'";
 }
 
 
@@ -618,15 +618,15 @@ public function tok_unescape($param, $txt) {
 
 	if ($param == 'tok_html') {
 		$res = $this->_tok->unescape($txt);
-  }
+	}
 	else if ($param == 'js') {
 		$res = rawurldecode($txt);
 	}
-  else if ($param == 'html') {
-    $res = str_replace('&lt;', '<', $txt);
-    $res = str_replace('&gt;', '>', $res);
-    $res = str_replace('&quot;', '"', $res);
-  }
+	else if ($param == 'html') {
+		$res = str_replace('&lt;', '<', $txt);
+		$res = str_replace('&gt;', '>', $res);
+		$res = str_replace('&quot;', '"', $res);
+	}
 	else {
 		throw new Exception('invalid parameter', $param);
 	}
@@ -650,9 +650,9 @@ public function tok_unescape($param, $txt) {
 public function tok_encode($param, $txt) {
 	$res = '';
 
-  if ($param == 'base64') {
-    $res = base64_encode($txt);
-  }
+	if ($param == 'base64') {
+		$res = base64_encode($txt);
+	}
 	else {
 		throw new Exception('invalid parameter', $param);
 	}
@@ -676,9 +676,9 @@ public function tok_encode($param, $txt) {
 public function tok_decode($param, $txt) {
 	$res = '';
 
-  if ($param == 'base64') {
-    $res = base64_decode($txt);
-  }
+	if ($param == 'base64') {
+		$res = base64_decode($txt);
+	}
 	else {
 		throw new Exception('invalid parameter', $param);
 	}
@@ -783,15 +783,15 @@ public static function findPath($file, $dir = '.') {
 
 	if (mb_substr($dir, 0, 1) === '/' || mb_substr($dir, 0, 3) === './/') {
 		throw new Exception('invalid absolute directory path', $dir);
-  }
+	}
 
 	if (mb_strpos($dir, '../') !== false || mb_strpos($file, '../') !== false) {
 		throw new Exception('../ is forbidden in path', $dir.':'.$file);
-  }
+	}
 
-  if (mb_strpos($dir, '\\') !== false || mb_strpos($file, '\\') !== false) {
+	if (mb_strpos($dir, '\\') !== false || mb_strpos($file, '\\') !== false) {
 		throw new Exception('backslash is forbidden in path', $dir.':'.$file);
-  }
+	}
 
 	$res = '';
 
@@ -811,9 +811,9 @@ public static function findPath($file, $dir = '.') {
 		}
 	}
 
-  if (mb_substr($res, 0, 2) == './') {
-    $res = mb_substr($res, 2);
-  }
+	if (mb_substr($res, 0, 2) == './') {
+		$res = mb_substr($res, 2);
+	}
 
 	return $res;
 }
