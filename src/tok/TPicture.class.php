@@ -78,6 +78,12 @@ public function tok_picture_init($p) {
 	}
 }
 
+private function log($msg) {
+	if (!empty($_REQUEST['debug'])) {
+		print "<pre>log: $msg</pre>";
+	}
+}
+
 
 /**
  * Return picture source path. Apply conversion if configured. Parameter:
@@ -97,7 +103,7 @@ public function tok_picture_init($p) {
  */
 public function tok_picture_src($p) {
 
-  $conf = $this->conf;
+	$conf = $this->conf;
 
 	foreach ($p as $key => $value) {
 		$this->conf[$key] = $value;
@@ -123,7 +129,7 @@ public function tok_picture_src($p) {
 		$img = str_replace($this->conf['abs_path'], $this->conf['rel_path'], $img);
 	}
  
-  return $img;
+	return $img;
 }
     
 
@@ -140,6 +146,8 @@ private function computeImgSource() {
 	if (!empty($this->conf['name'])) {
 		$this->conf['source'] = $this->conf['picture_dir'].'/'.$this->conf['name'];
 	}
+
+	$this->log(print_r($this->conf, true));
 
 	if (empty($this->conf['source']) || !File::exists($this->conf['source'])) {
 		$default = (basename($this->conf['default']) == $this->conf['default']) ?
