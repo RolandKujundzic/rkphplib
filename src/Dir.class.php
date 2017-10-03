@@ -249,7 +249,7 @@ public static function copy($source_dir, $target_dir, $link_root = '') {
 	$s = FSEntry::stat($source_dir);
 
 	if (!FSEntry::isDir($target_dir, false)) {
-		Dir::create($target_dir, $s['perms']['octal']);
+		Dir::create($target_dir, $s['perms']['octal'], true);
 	}
 
 	$entries = Dir::entries($source_dir);
@@ -279,7 +279,7 @@ public static function copy($source_dir, $target_dir, $link_root = '') {
 
 		if ($s['filetype']['is_dir']) {
 			$target_subdir = $target_dir.'/'.basename($entry);
-			Dir::create($target_subdir, $s['perms']['octal']);
+			Dir::create($target_subdir, $s['perms']['octal'], true);
 			Dir::copy($entry, $target_subdir, $link_root);
 		}
 		else if ($s['filetype']['is_file']) {
