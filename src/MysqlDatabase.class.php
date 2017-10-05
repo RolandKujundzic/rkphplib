@@ -416,6 +416,42 @@ public function select($query, $res_count = 0) {
 
 
 /**
+ * @see ADatabase::multiQuery()
+ */
+public function multiQuery($query) {
+
+	if (self::$use_prepared) {
+		throw new Exception('multiQuery does not work in prepared query mode');
+	}
+
+	$this->_connect();
+
+	if (($dbres = $this->_db->multi_query($query)) === false) {
+		throw new Exception('multi query failed', $query."\n(".$this->_db->errno.') '.$this->_db->error);
+	}
+	
+	$res = [];
+
+	do {
+
+		if (($dbres = $this->_db->store_result()) === false) {
+			continue;
+		}
+
+		$rows = [];
+
+		while (($row = $dbres->fetch_assoc())) {
+			array_push($rows, $row);
+		}
+
+		array_push($res, $rows);
+	} while ($this->_db->more_results() && $this->_db->next_result());
+
+	return (count($res) == 1) ? array_pop($res) : $res;
+}
+
+
+/**
  * Execute select query and fetch result. 
  * 
  * Return result table if $rbind = null.

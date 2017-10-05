@@ -645,5 +645,13 @@ public function releaseLock($name) {
 }
 
 
+/**
+ *
+ */
+public function multiQuery($query) {
+  throw new Exception('@ToDo ... ');
+}
+
+
 }
 

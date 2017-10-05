@@ -1297,6 +1297,19 @@ public function selectOne($query, $col = '') {
 
 
 /**
+ * Execute multiple queries concatenated by semicolon.
+ * Does not work in prepared statement mode (this.use_prepared = true).
+ * Return vector of result hashes. If vector has only one result hash
+ * return result hash.
+ *
+ * @param string $query
+ * @throws
+ * @return array
+ */
+abstract public function multiQuery($query);
+
+
+/**
  * Shortcut for select[One|Column|Hash|Row](getQuery(name, r), n).
  * If n == -1 return false if there is no result otherwise if there is
  * one result return map and throw exception if there is more than one result.
