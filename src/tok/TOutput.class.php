@@ -210,11 +210,11 @@ public function tok_output_loop($tpl) {
 	}
 
 	for ($i = $start; $i <= $end; $i++) {
-    $row = $this->table[$i];
+		$row = $this->table[$i];
 
 		$replace = [];
-    $replace['rowpos'] = $this->env['last'] + $i;
-    $replace['rownum'] = $this->env['last'] + $i + 1;
+		$replace['rowpos'] = $this->env['last'] + $i;
+		$replace['rownum'] = $this->env['last'] + $i + 1;
 
 		if (!$this->env['is_map']) {
 			$j = 0;
@@ -269,12 +269,12 @@ public function tok_output_loop($tpl) {
 				}
 
 				array_push($output, $this->conf['rowbreak_fill']);    		
-    	} 
-   	}	
-  }
+			}
+		}	
+	}
 
-  $res = join('', $output);
-  return $res;
+	$res = join('', $output);
+	return $res;
 }
 
 
@@ -360,7 +360,7 @@ public function tok_output_conf($p) {
 public function tok_output_init($p) {
 	$this->tok_output_conf($p);
 
-  $this->computePagebreak();
+	$this->computePagebreak();
 
 	if (!empty($this->conf['query'])) {
 		$this->selectData();
@@ -470,14 +470,14 @@ private function computePagebreak() {
 
 	if ($last < 0) {
 		throw new Exception('scroll error', "last=$last < 0");
-  }
+	}
 
-  if ($last % $pagebreak != 0 || $last != intval($last / $pagebreak) * $pagebreak) {
+	if ($last % $pagebreak != 0 || $last != intval($last / $pagebreak) * $pagebreak) {
 		throw new Exception('scroll error', "last % pagebreak = $last % $pagebreak != 0 or last != intval(last/pagebreak) * pagebreak");
 	}
 
-  $this->env['start'] = $last;
-  $this->env['last'] = $last;
+	$this->env['start'] = $last;
+	$this->env['last'] = $last;
 	$this->env['page'] = ($last / $pagebreak) + 1;
 }
 
@@ -543,7 +543,7 @@ private function getScrollJumpHtml() {
 	for ($i = $jfpage; $i <= $jlpage; $i++) {
 		if ($i != $cpage) {
 			$jump = $this->_scroll_link('jump', (($i - 1) * $pbreak));
-    }
+		}
 		else {
 			$jump = $this->conf['scroll.jump_active'];
 		}
@@ -553,19 +553,19 @@ private function getScrollJumpHtml() {
 
 		if ($i * $pbreak <= $this->env['total']) {
 			$jump = $this->tok->replaceTags($jump, [ 'max' => $i * $pbreak ]);
-    }
-    else {
-      $jump = $this->tok->replaceTags($jump, [ 'max' => $this->env['total'] ]);
-    }
+		}
+		else {
+			$jump = $this->tok->replaceTags($jump, [ 'max' => $this->env['total'] ]);
+		}
 
-    if ($i > $jfpage) {
-      $res .= $this->conf['scroll.jump_delimiter'];
-    }
+		if ($i > $jfpage) {
+			$res .= $this->conf['scroll.jump_delimiter'];
+		}
 
-    $res .= $jump;
-  }
+		$res .= $jump;
+	}
 
-  return $res;
+	return $res;
 }
 
 
@@ -595,7 +595,7 @@ private function _scroll_link($key, $last) {
 		'last' => $last
 	]);
 
-  return $res;
+	return $res;
 }
 
 
