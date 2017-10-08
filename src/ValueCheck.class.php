@@ -16,7 +16,7 @@ class ValueCheck {
 
 
 /**
- * Run check.
+ * Run check if value is not empty.
  *
  * @param string $key
  * @param string|callable $value
@@ -52,6 +52,10 @@ public static function run($key, $value, $check) {
 
 	if (is_callable($value)) {
 		$value = $value($key);
+	}
+
+	if (strlen($value) == 0) {
+		return true;
 	}
 
 	if (!is_array($check)) {
