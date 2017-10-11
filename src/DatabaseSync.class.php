@@ -2,78 +2,215 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/Database.class.php');
+require_once(PATH_RKPHPLIB.'Database.class.php');
+require_once(PATH_RKPHPLIB.'Exception.class.php');
 
-use rkphplib\Exception;
 
 
 /**
- * Synchronize entries from remote to local database.
+ * Syncronize local database with remote database.
+ * Retrieve only partial data.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 class DatabaseSync {
 
-/** @var ADatabase $remote_db */
-protected $remote_db;
-
 /** @var ADatabase $local_db */
-protected $local_db;
+protected $local_db = null;
 
-/** @var map $fkey_map foreign key map */
-protected $fkey_map;
+/** @var ADatabase $remote_db */
+protected $remote_db = null;
+
+/** @var config */
+private $config = [ 'table' => '', 'id_col' => 'id', 'id' => '' ];
+
+/** @var map $cache */
+private $cache = [];
+
 
 
 /**
- * Set remote and local database connect string.
+ * Initialize database connections. Options:
  *
- * @param string $remote
- * @param string $local
+ * - remote_dsn: 
+ * - local_dsn: 
+ *
  */
-public function setLocalRemoteDSN($remote, $local) {
-    $this->remote_db = Database::getInstance($remote);
-    $this->local_db = Database::getInstance($local);
+public function __construct($options) {
+	$required = [ 'local_dsn', 'remote_dsn' ];
+
+	foreach ($required as $key) {
+		if (empty($options[$key])) {
+			throw new Exception('empty option '.$key);
+		}
+	}
+
+	$this->local_db = Database::getInstance($options['local_dsn']);
+	$this->remote_db = Database::getInstance($options['remote_dsn']);
 }
 
 
 /**
- * Example: [ 'user.id' => [ 'car.owner', 'invoice.customer' ], 'car.id' => [ 'car_usage.cid' ], ... ]
+ * Set configuration value (trim). Keys: table, id.
+ * Return value.
+ *
+ * @param string $key
+ * @param string $value
+ * @return string 
+ * @throws
  */
-public function setForeignKeyMap($fkey_map) {
-    $this->fkey_map = $fkey_map;
+public function set($key, $value) {
+
+	if (!isset($this->config[$key])) {
+		throw new Exception('no such configuration key '.$key);
+	}
+
+	$value = trim($value);
+
+	if (empty($value)) {
+		if (isset($this->config[$key])) {
+			return $this->config[$key];
+		}
+
+		throw new Exception('empty configuration key '.$key.' value');
+	}
+
+	$this->config[$key] = $value;
+
+	return $value;
 }
 
 
 /**
- * Synchronize remote entry where table.column = value.
+ * Get configuration value.
+ */
+public function get($key) {
+
+	if (!isset($this->config[$key])) {
+		throw new Exception('no such configuration key '.$key);
+	}
+
+	$value = $this->config[$key];
+
+	if (empty(trim($value))) {
+		throw new Exception('empty configuration key '.$key.' value');
+	}
+
+	return $value;
+}
+
+
+/**
+ * Return true if local table is superset of remote table.
+ *
+ * @param string $table (optional)
+ * @return bool
+ */
+public function compareTable($table = '') {
+	$remote_desc = $this->remote_db->getTableDesc($table);
+	$local_desc = $this->remote_db->getTableDesc($table);
+	$table = $this->set('table', $table);
+
+	foreach ($remote_desc as $col => $info) {
+		if (!isset($local_desc[$col])) {
+			return false;
+		}
+
+		foreach ($info as $key => $value) {
+			if ($local_desc[$col][$key] != $value) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+
+/**
+ * Sync entry from remote to local database. If custom_data is set
+ * overwrite remote data with custom data. If $id value column is
+ * not id use table.column_name as $table.
  *
  * @param string $table
- * @param string $column
- * @param string $value
+ * @param int $id
+ * @param array $custom_data
+ * @throws
  */
-public function syncEntry($table, $column, $value) {
-    $select_qkey = 'select_'.$table.'_'.$column;
-    $fkm_id = $table.'.'.$column;
-    $table = ADatabase::escape_name($table);
-    $column = ADatabase::escape_name($value);
-    $select_query = "SELECT * FROM $table WHERE $column='{:=value}'";
+public function syncEntry($table = '', $id = '', $custom_data = []) {
 
-    $this->remote_db->setQuery($select_qkey, $select_query);
-    $this->local_db->setQuery($select_qkey, $select_query);
+	$id_col = 'id';
+	if (($pos = strpos($table, '.')) > 0) {
+		$table = substr($table, 0, $pos);
+		$id_col = self::escape_name(substr($table, $pos + 1));
+	}
 
-    $fkey_map = isset($this->fkey_map[$fkm_id]) ? $this->fkey_map[$fkm_id] : [];
+	$table = $this->set('table', $table);
+	$id_col = $this->set('id_col', $id_col);
+	$id = $this->set('id', $id);
 
-    $this->remote_db->execute($this->remote_db->getQuery($select_qkey, [ 'value' => $value ]));
-    while (($row = $this->remote_db->getNextRow())) {
-        $lrow = $this->local_db->select($this->local_db->getQuery($select_qkey, [ 'value' => $value ]));
+	$r = [ '_table' => $table, 'id' => $id, '_id_col' => $id_col ];
+	$query = "SELECT * FROM {:=_table} WHERE {:=_id_col}={:=id}";
 
-        if (count($lrow) == 1) {
+	$this->remote_db->setQuery('select_remote', $query);
+	$remote = array_merge($this->remote_db->selectOne($this->remote_db->getQuery('select_remote', $r)), $custom_data);
 
-        }
-        else {
+	$this->local_db->setQuery('select_local', $query);
+	$tmp = $this->local_db->select($this->local_db->getQuery('select_local', $r));
+	$local = (count($tmp) == 1) ? $tmp[0] : [];
 
-        }
-    }
+	if ($this->compareRows($remote, $local)) {
+		$this->log("$table.{$id_col}=$id ok");
+	}
+	else {
+		$type = 'insert';
+		if (count($local) == 1) {
+			$type = 'update';
+			$remote['@where'] = "WHERE $id_col={:=id}";
+		}
+
+		$this->log("$table.{$id_col}=$id $type");
+		$query = $this->local_db->buildQuery($table, $type, $remote);
+		$this->local_db->execute($query);
+	}
+
+	$references = $this->local_db->getReferences($table, $id_col);
+
+	foreach ($references as $ref) {
+		$r = [ '_table' => $ref[0], '_id_col' => $ref[1], 'id' => $id ];
+		$dbres = $this->remote_db->select($this->remote_db->getQuery('select_remote', $r));
+		foreach ($dbres as $row) {
+			$this->syncEntry($ref[0], $row['id']);
+		}
+	}
+}
+
+
+/**
+ * Return true if values in $a are the same in $b.
+ *
+ * @param array $a
+ * @param array $b
+ * @return bool
+ */
+private function compareRows($a, $b) {
+	foreach ($a as $key => $value) {
+		if (!array_key_exists($key, $b) || $b[$key] != $value) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
+/**
+ * Print message.
+ *
+ * @param string $message
+ */
+protected function log($message) {
+	print $message."\n";
 }
 
 
