@@ -784,6 +784,11 @@ public function getTableList($reload_cache = false) {
  *
  */
 public function getReferences($table, $column = 'id') {
+	$ckey = "FOREIGN_KEY_REFERENCES:$table.$column";
+	if (isset($this->_cache[$ckey])) {
+		return $this->_cache[$ckey];
+	}
+
   $dsn = self::splitDSN($this->_dsn);
 	$db_name = $dsn['name'];
 
@@ -796,9 +801,18 @@ public function getReferences($table, $column = 'id') {
 	$res = [];
 
 	foreach ($dbres as $row) {
-		array_push($res, [ $row['TABLE_NAME'], $row['COLUMN_NAME'] ]);
-	}
+		$r_table = $row['TABLE_NAME'];
+		$r_col = $row['COLUMN_NAME'];
 
+    if (!isset($res[$r_table])) {
+      $res[$r_table] = [ $r_col ];
+    }
+    else {
+      array_push($res[$r_table], $r_col);
+    }
+  }
+
+	$this->_cache[$ckey] = $res;
 	return $res;
 }
 
