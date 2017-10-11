@@ -174,13 +174,31 @@ public function syncEntry($table = '', $id = '', $custom_data = []) {
 		$this->local_db->execute($query);
 	}
 
+	$this->syncForeignKeyReferences($table, $id_col, $id);
+}
+
+
+/**
+ * Recursive loop syncEntry - syncForeignKeyReferences.
+ *
+ * @param string $table
+ * @param string $id_col
+ * @param string $id
+ */
+private function syncForeignKeyReferences($table, $id_col, $id) {
+
 	$references = $this->local_db->getReferences($table, $id_col);
 
-	foreach ($references as $ref) {
-		$r = [ '_table' => $ref[0], '_id_col' => $ref[1], 'id' => $id ];
-		$dbres = $this->remote_db->select($this->remote_db->getQuery('select_remote', $r));
-		foreach ($dbres as $row) {
-			$this->syncEntry($ref[0], $row['id']);
+	foreach ($references as $r_table => $r_cols) {
+		if (count($r_cols) == 1) {
+			$r = [ '_table' => $r_table, '_id_col' => $r_cols[0], 'id' => $id ];
+			$dbres = $this->remote_db->select($this->remote_db->getQuery('select_remote', $r));
+			foreach ($dbres as $row) {
+				$this->syncEntry($r_table, $row['id']);
+			}
+		}
+		else {
+			print "ToDo: $r_table has ".join(', ', $r_cols)."\n";
 		}
 	}
 }
