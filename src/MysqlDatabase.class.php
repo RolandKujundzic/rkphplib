@@ -781,6 +781,29 @@ public function getTableList($reload_cache = false) {
 
 
 /**
+ *
+ */
+public function getReferences($table, $column = 'id') {
+  $dsn = self::splitDSN($this->_dsn);
+	$db_name = $dsn['name'];
+
+	$query = "SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE ".
+		"WHERE REFERENCED_TABLE_NAME='".self::escape_name($table)."' AND REFERENCED_COLUMN_NAME='".
+		self::escape($column)."' AND TABLE_SCHEMA='$db_name' AND CONSTRAINT_SCHEMA='$db_name' ".
+		"AND REFERENCED_TABLE_SCHEMA='$db_name'";
+
+	$dbres = $this->select($query);
+	$res = [];
+
+	foreach ($dbres as $row) {
+		array_push($res, [ $row['TABLE_NAME'], $row['COLUMN_NAME'] ]);
+	}
+
+	return $res;
+}
+
+
+/**
  * Return number of affected rows of last execute query.
  * 
  * @return int

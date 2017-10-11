@@ -1194,6 +1194,16 @@ abstract public function getTableDesc($table);
 
 
 /**
+ * Return table (table, colum) with foreign key references to $table.$column.
+ *
+ * @param string $table
+ * @param string $column
+ * @return array 
+ */
+abstract public function getReferences($table, $column = 'id');
+
+
+/**
  * Return hash values (key, value columns). Use
  * "id AS name, val AS value" in setQuery to make key_col and value_col match.
  *
@@ -1451,6 +1461,7 @@ public static function columnList($cols, $prefix = '') {
  * @param string $table
  * @param string $type insert|update
  * @param array[string]string $kv
+ * @return string
  */
 public function buildQuery($table, $type, $kv = []) {
 

@@ -520,6 +520,14 @@ public function getTableList($reload_cache = false) {
 
 
 /**
+ *
+ */
+public function getReferences($table, $column = 'id') {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
  * Return last error info. Custom error values:
  *
  * - no_such_table 
