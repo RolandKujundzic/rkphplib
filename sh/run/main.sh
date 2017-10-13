@@ -5,7 +5,8 @@ composer)
 	_composer $2
 	;;
 test)
-	_test
+	# run all tests
+	php test/run.php
 	;;
 docs)
 	_apigen_doc

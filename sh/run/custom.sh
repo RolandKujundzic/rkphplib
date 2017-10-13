@@ -1,21 +1,6 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-function _docs() {
-	# create apigen documentation
-	test -d docs/api && rm -rf docs/api
-	vendor/apigen/apigen/bin/apigen generate -s ./src -d ./docs/api
-}
-
-
-#------------------------------------------------------------------------------
-function _test() {
-	# run all tests
-	php test/run.php
-}
-
-
-#------------------------------------------------------------------------------
 function _ubuntu() {
 	test -f /usr/bin/apt-get || _abort "apt-get not found"
 	echo "Install php + mysql + nginx"
@@ -51,5 +36,4 @@ function _docker_osx {
 	echo 'docker run -it -v $PWD:/var/www/html/rkphplib -p 80:80 --name rkphplib rolandkujundzic/ubuntu_trusty_dev bash'
 	echo
 }
-
 

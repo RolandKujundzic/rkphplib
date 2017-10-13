@@ -1,24 +1,5 @@
 #!/bin/bash
-MERGE2RUN="syntax abort composer mb_check rm custom main"
-
-
-#------------------------------------------------------------------------------
-# Abort with SYNTAX: message.
-#
-# @global APP, APP_DESC
-# @param message
-#------------------------------------------------------------------------------
-function _syntax {
-	echo -e "\nSYNTAX: $APP $1\n" 1>&2
-
-	if ! test -z "$APP_DESC"; then
-		echo -e "$APP_DESC\n\n" 1>&2
-	else
-		echo 1>&2
-	fi
-
-	exit 1
-}
+MERGE2RUN="abort apigen_doc composer confirm mb_check rm abort custom main"
 
 
 #------------------------------------------------------------------------------
@@ -33,12 +14,50 @@ function _abort {
 
 
 #------------------------------------------------------------------------------
+# Create apigen documentation for php project.
+#
+# @param source directory (optional, default = src)
+# @param doc directory (optional, default = docs/api)
+# @require _composer _abort _confirm _rm
+#------------------------------------------------------------------------------
+function _apigen_doc {
+
+	if ! test -d vender/apigen/apigen; then
+		_composer init
+	fi
+
+	local SRC_DIR=./src
+	local DOC_DIR=./docs/api
+
+	if ! test -z "$1"; then
+		SRC_DIR="$1"
+	fi
+
+	if ! test -z "$2"; then
+		DOC_DIR="$2"
+	fi
+
+	if ! test -d "$SRC_DIR"; then
+		_abort "no such directory [$SRC_DIR]"
+	fi
+
+	if test -d "$DOC_DIR"; then
+		_confirm "Remove existing documentation directory [$DOC_DIR] ?"
+		if test "$CONFIRM" = "y"; then
+			_rm "$DOC_DIR"
+		fi
+	fi
+
+	vendor/apigen/apigen/bin/apigen generate -s "$SRC_DIR" -d "$DOC_DIR"
+}
+
+#------------------------------------------------------------------------------
 # Install composer (getcomposer.org). If no parameter is given ask for action
 # or execute default action (install composer if missing otherwise update) after
 # 10 sec. 
 #
 # @param [install|update|remove] (empty = default = update or install)
-# @require rm
+# @require _abort _rm
 #------------------------------------------------------------------------------
 function _composer {
 	local DO="$1"
@@ -129,6 +148,27 @@ function _composer {
 
 
 #------------------------------------------------------------------------------
+# Show "message  Press y or n  " and wait for key press. 
+# Set CONFIRM=y if y key was pressed. Otherwise set CONFIRM=n if any other 
+# key was pressed or 10 sec expired.
+#
+# @param string message
+# @export CONFIRM
+#------------------------------------------------------------------------------
+function _confirm {
+	CONFIRM=n
+
+	echo -n "$1  y [n]  "
+	read -n1 -t 10 CONFIRM
+	echo
+
+	if test "$CONFIRM" != "y"; then
+		CONFIRM=n
+  fi
+}
+
+
+#------------------------------------------------------------------------------
 # Show where php string function needs to change to mb_* version.
 #------------------------------------------------------------------------------
 function _mb_check {
@@ -141,7 +181,7 @@ function _mb_check {
 	# do not use ereg*
 	MB_FUNCTIONS="parse_str split stripos stristr strlen strpos strrchr strrichr strripos strrpos strstr strtolower strtoupper strwidth substr_count substr"
 
-	for a in $MB_FUNCTIONS
+	local a=; for a in $MB_FUNCTIONS
 	do
 		FOUND=`grep -d skip -r --include=*.php $a'(' src | grep -v 'mb_'$a'('`
 
@@ -158,7 +198,7 @@ function _mb_check {
 #
 # @param path_list
 # @param int (optional - abort if set and path is invalid)
-# @require abort
+# @require _abort
 #------------------------------------------------------------------------------
 function _rm {
 
@@ -166,7 +206,7 @@ function _rm {
 		_abort "Empty remove path list"
 	fi
 
-	for a in $1
+	local a=; for a in $1
 	do
 		if ! test -f $a && ! test -d $a
 		then
@@ -182,17 +222,13 @@ function _rm {
 
 
 #------------------------------------------------------------------------------
-function _docs() {
-	# create apigen documentation
-	test -d docs/api && rm -rf docs/api
-	vendor/apigen/apigen/bin/apigen generate -s ./src -d ./docs/api
-}
-
-
+# Abort with error message.
+#
+# @param abort message
 #------------------------------------------------------------------------------
-function _test() {
-	# run all tests
-	php test/run.php
+function _abort {
+	echo -e "\nABORT: $1\n\n" 1>&2
+	exit 1
 }
 
 
@@ -234,13 +270,13 @@ function _docker_osx {
 }
 
 
-
 case $1 in
 composer)
 	_composer $2
 	;;
 test)
-	_test
+	# run all tests
+	php test/run.php
 	;;
 docs)
 	_apigen_doc
