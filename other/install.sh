@@ -34,19 +34,10 @@ function _git_clone {
 
 
 #
-function _update_JsonMapper {
-	_log "Update JsonMapper"
-	mkdir jsonmapper
-	cp source/jsonmapper/src/JsonMapper/Exception.php jsonmapper/
-	cp source/jsonmapper/src/JsonMapper.php jsonmapper/
-}
-
-
-#
 function _update_PHPMailer {
 	_log "Update PHPMailer"
-	cp source/PHPMailer/*.php PHPMailer/
-	cp -r source/PHPMailer/extras PHPMailer/
+	test -d PHPMailer || mkdir PHPMailer
+	cp source/PHPMailer/src/*.php PHPMailer/ || _abort "cp source/PHPMailer/*.php PHPMailer/"
 }
 
 
@@ -60,21 +51,14 @@ fi
 
 test -d source || mkdir source
 
-
 case $1 in
 PHPMailer)
 	_git_clone PHPMailer PHPMailer
   ;;
-JsonMapper)
-	_git_clone jsonmapper cweiske
-	;;
 *)
-  echo -e "\nSYNTAX: $0 [PHPMailer|JsonMapper] [[update]]\n\n" 1>&2
+  echo -e "\nSYNTAX: $0 [PHPMailer]\n\n" 1>&2
   exit 1
 esac
 
-if test "$2" = "update"
-then
-	_update_$1
-fi
+_update_$1
 
