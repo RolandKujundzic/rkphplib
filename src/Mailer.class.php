@@ -2,7 +2,11 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/other/PHPMailer/class.phpmailer.php');
+require_once(dirname(__DIR__).'/other/PHPMailer/Exception.php');
+require_once(dirname(__DIR__).'/other/PHPMailer/PHPMailer.php');
+require_once(dirname(__DIR__).'/other/PHPMailer/SMTP.php');
+
+use PHPMailer\PHPMailer\PHPMailer;
 
 
 /**
@@ -12,13 +16,17 @@ require_once(__DIR__.'/other/PHPMailer/class.phpmailer.php');
  */
 class Mailer {
 
-private $_mail = null;
-
-// force always same recpient
+/** @var string $always_to force always same recpient */
 public static $always_to = '';
 
-// force always same sender
+/** @var string $always_from force always same sender */
 public static $always_from = '';
+
+/** @var PHPMailer $_mailer */
+private $_mailer = null;
+
+/** @var array $typ_email count doubles */
+private $typ_email = [ 'recipient' => '' ];
 
 
 
@@ -56,8 +64,99 @@ public static function isValidEmail($email, $throw_error = false) {
 
 
 /**
- * Check email and name. Split "Username" <user@example.com> into email and name.
+ * Set sender (required). Use Mailer::$always_from for global from change.
+ *
+ * @throws
+ * @param string $email (From Property)
+ * @param string $name (FromName Property default = '')
+ * @param string $sender (Sender email / Return-Path - default = '' = From) 
+ */
+public function setFrom($email, $name = '', $sender = '') {
+  list ($email, $name) = $this->_email_name($email, $name);
+
+  if (!empty(self::$always_from)) {
+		self::isValidEmail($always_from, true);
+    $email = self::$always_from;
+  }
+
+	$this->_mailer->setFrom($email, $name, empty($sender));
+
+	if (!empty($sender)) {
+		self::isValidEmail($sender, true);
+		$this->_mailer->Sender = $sender;
+	}
+}
+
+
+/**
+ * Set Recipient Adress (required). Use Mailer::$always_to = xxx for global 
+ * recipient redirection.
  * 
+ * @param string 
+ * @param string 
+ */
+public function setTo($email, $name = '') {
+
+  if (!empty(self::$always_to)) {
+		self::isValidEmail($always_to, true);
+    $email = self::$always_to;
+  }
+
+  $this->_add_address('to', $email, $name);
+}
+
+
+/**
+ * Set Cc Adress. If called multiple times address list will be used.
+ * 
+ * @param string $email
+ * @param string $name
+ * 
+ */
+public function setCc($email, $name = '') {
+
+	if (!empty(self::$always_to)) {
+		return;
+	}
+
+	$this->_add_address('cc', $email, $name);
+}
+
+
+/**
+ * Set Bcc Adress. If called multiple times address list will be used.
+ * 
+ * @param string $email
+ * @param string $name
+ * 
+ */
+public function setBcc($email, $name = '') {
+
+	if (!empty(self::$always_to)) {
+		return;
+	}
+
+	$this->_add_address('bcc', $email, $name);
+}
+
+
+/**
+ * Set ReplyTo Adress. If called multiple times address list will be used.
+ * From is added automatically as ReplyTo - an error will occure if you add it manually.
+ * Default is Sender Adress.
+ * 
+ * @param string $email
+ * @param string $name 
+ */
+public function setReplyTo($email, $name = '') {
+	$this->_add_address('ReplyTo', $email, $name);
+}
+
+
+/**
+ * Check email and name. Split "Username" <user@example.com> into email and name.
+ *
+ * @throws 
  * @param string $email
  * @param string $name
  * @return array (email, name)
@@ -84,59 +183,80 @@ private function _email_name($email, $name) {
 
 
 /**
- * Set who the message is to be sent from (required). Use Mailer::$always_from for global
- * from change.
- *
- * @param string $email (From Property)
- * @param string $name (FromName Property default = '')
- * @param string $sender (Sender email / Return-Path - default = '' = From) 
+ * Add address 
+ * 
+ * @param string $typ to|cc|bcc|ReplyTo
+ * @param string $email
+ * @param string $name
  */
-public function setFrom($email, $name = '', $sender = '') {
-  list ($email, $name) = $this->_email_name($email, $name);
+private function _add_address($typ, $email, $name) {
 
-  if (!empty(self::$always_from)) {
-		self::isValidEmail($always_from, true);
-    $email = self::$always_from;
+	if (empty($name) && strpos($email, ',')) {
+		$email_name_list = array();
+
+		$email_list = explode(',', $email);
+		foreach ($email_list as $email) {
+			$email = trim($email);
+			$email_name_list[$email] = '';
+		}
+	}
+	else if (!empty($email)) {
+		$email_name_list = array($email => $name);
+	}
+	else {
+		throw new Exception("Empty email", "name=[$name] typ=[$typ]");
   }
 
-	$set_sender_address = empty($sender);
+	foreach ($email_name_list as $ex => $nx) {
+		list ($email, $name) = $this->_email_name($ex, $nx);
 
-	$this->_mail->setFrom($email, $name, $set_sender_address);
+		$lc_email = mb_strtolower($email);
 
-	if ($set_sender_adress) {
-		self::isValidEmail($sender, true);
-		$this->_mail->Sender = $sender;
+		if (isset($this->typ_email[$typ]) && in_array($lc_email, $this->typ_email[$typ])) {
+			// don't add same email to same type twice
+			continue;
+		}
+
+		if ($typ != 'ReplyTo') {
+			if (in_array($lc_email, $this->typ_email['recipient'])) {
+				// don't add same email twice
+				continue;
+			}
+			else {
+				array_push($this->typ_email['recipient'], $lc_email);
+			}
+		}
+
+		if ($typ == 'to') {
+			$ok = $this->_mailer->AddAddress($email, $name);
+		}
+		else if ($typ == 'cc') {
+			$ok = $this->_mailer->AddCC($email, $name);
+		}
+		else if ($typ == 'bcc') {
+			$ok = $this->_mailer->AddBCC($email, $name);
+		}
+		else if ($typ == 'ReplyTo') {
+			$ok = $this->_mailer->AddReplyTo($email, $name);
+		}
+		else {
+			throw new Exception("invalid typ [$typ]");
+		}
+
+		if (!$ok) {
+			throw new Exception("invalid email [$email]", "typ=[$typ] name=[$name]");
+		}
+
+		if (!isset($this->typ_email[$typ])) {
+			$this->typ_email[$typ] = [];
+		}
+
+		array_push($this->typ_email[$typ], $lc_email);
 	}
 }
 
 
-/**
- * Set Recipient Adress (required). Use Mailer::$always_to = xxx for global 
- * recipient redirection.
- * 
- * @param string 
- * @param string 
- */
-public function setTo($email, $name = '') {
-
-  if (!empty(self::$always_to)) {
-		self::isValidEmail($always_to, true);
-    $email = self::$always_to;
-  }
-
-  $this->_add_address('to', $email, $name);
-}
-
-
 /*
-
-//Set an alternative reply-to address
-$mail->addReplyTo('replyto@example.com', 'First Last');
-
-
-//Set who the message is to be sent to
-$mail->addAddress('whoto@example.com', 'John Doe');
-
 
 //Set the subject line
 $mail->Subject = 'PHPMailer mail() test';
