@@ -4,7 +4,6 @@ namespace rkphplib;
 
 require_once(dirname(__DIR__).'/other/PHPMailer/Exception.php');
 require_once(dirname(__DIR__).'/other/PHPMailer/PHPMailer.php');
-require_once(dirname(__DIR__).'/other/PHPMailer/SMTP.php');
 
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -22,6 +21,9 @@ public static $always_to = '';
 /** @var string $always_from force always same sender */
 public static $always_from = '';
 
+/** @var array|string $smtp smtp-host (string) or smtp-configuration (array) */
+public static $smtp = null;
+
 /** @var PHPMailer $_mailer */
 private $_mailer = null;
 
@@ -31,11 +33,81 @@ private $typ_email = [ 'recipient' => '' ];
 
 
 /**
- *
+ * Use PHPMailer with exceptions in utf-8 mode.
  */
 public function __construct() {
-	// use PHPMailer with exceptions
   $this->_mailer = new PHPMailer(true);
+	$this->_mailer->CharSet = 'utf-8';
+}
+
+
+/**
+ * Change PHPMailer parameter. Parameter List:
+ *
+ *	- CharSet: utf-8 (=default) | iso-8859-1
+ *  - Priority: null (=default) | 1 (= High) | 3 (= Normal) | 5 (= low)
+ *  - Encoding: 8bit (= default) | 7bit | binary | base64 | quoted-printable
+ *  - Hostname: empty = default = auto-detect (= try: $_SERVER['SERVER_NAME'], gethostname(), php_uname('n') or 'localhost.localdomain')
+ *
+ * @param string $key
+ * @param string $value
+ */
+public function setMailer($key, $value) {
+	$allow = [ 'CharSet', 'Priority', 'Encoding', 'Hostname' ];
+
+	if (!in_array($key, $allow)) {
+		throw new Exception("Invalid Mailer parameter [$key]");
+	}
+
+	$this->_mailer->$key = $value;
+}
+
+
+/**
+ * Return PHPMailer parameter. 
+ *
+ * @see setMailer
+ * @param string
+ * @return string
+ */
+public function getMailer($key) {
+	$allow = [ 'CharSet', 'Priority', 'Encoding', 'Hostname' ];
+	if (!in_array($key, $allow)) {
+		throw new Exception("Invalid Mailer parameter [$key]");
+	}
+
+	return $this->_mailer->$key;
+}
+
+
+/**
+ * Return array of attachments.
+ *
+ * @return array
+ */
+public function getAttachments() {
+	return $this->_mailer->getAttachments();
+}
+
+
+/**
+ * Return last message id.
+ *
+ * @return string
+ */
+public function getLastMessageID() {
+	return $this->_mailer->getLastMessageID();
+}
+
+
+/**
+ * Return encoded string. Encoding is base64, 7bit, 8bit, binary or 'quoted-printable.
+ *
+ * @param string $str
+ * @param string encoding $encoding
+ */
+public function encodeString($str, $encoding = 'base64') {
+	return $this->_mailer->encodeString($str, $encoding);
 }
 
 
@@ -60,6 +132,109 @@ public static function isValidEmail($email, $throw_error = false) {
 	}
 
 	return $res;
+}
+
+
+/**
+ * Embed Image.
+ *  
+ * @throws
+ * @param string $file
+ * @param string $mime (application/octet-stream)
+ * @param string $encoding (base64)
+ */
+public function embedImage($file, $mime = 'application/octet-stream', $encoding = 'base64') {
+	if (!$this->_mailer->addEmbeddedImage($file, md5($file), basename($file), $encoding, $mime, 'inline')) {
+		throw new Exception('failed to add embedded image '.$file);
+	}
+}
+
+
+/**
+ * Add attachment to mail (base64 encoding).
+ * 
+ * @param string $file 
+ * @param string $mime (application/octet-stream)
+ */
+public function attach($file, $mime = 'application/octet-stream') {
+	if (!$this->_mailer->AddAttachment($file, basename($file), 'base64', $mime)) {
+		throw new Exception('failed to add attachment '.$file);
+	}
+}
+
+
+/**
+ * Add Custom Header (key:value).
+ *
+ * @param string $key 
+ * @param string $value 
+ */
+public function setHeader($key, $value) {
+  $this->_mailer->AddCustomHeader($key.':'.$value);
+}
+
+
+/**
+ * Send mail via SMTP. Convert string to [ 'host' => parameter ]. SMTP Parameter are:
+ * 
+ * host= required
+ * port= 25 (optional) 
+ * secure= '' (=default), ssl, tls
+ * auto_tls= false (always enable tls)
+ * auth= CRAM-MD5, PLAIN, LOGIN, XOAUTH2 (optional)
+ * user= (optional)
+ * pass= (optional)
+ * persist= false (optional) 
+ * hostname=
+ *
+ * @param array|string smtp (convert string to [ 'host' => smtp ])
+ */
+public function useSMTP($smtp) {
+	require_once(dirname(__DIR__).'/other/PHPMailer/SMTP.php');
+
+	if (is_string($smtp) && !empty($smtp)) {
+		$smtp = [ 'host' => $smtp ];
+	}
+
+  if (count($smtp) == 0 || empty($smtp['host'])) {
+    return;
+  }
+
+	$this->_mailer->isSMTP();
+  $this->_mailer->Host = $smtp['host'];
+
+  if (isset($smtp['hostname'])) {
+    $this->_mailer->Hostname = $smtp['hostname'];
+  }
+
+	if (isset($smtp['secure']) && in_array($smtp['secure'], [ '', 'ssl', 'tls' ])) {
+		$this->_mailer->SMTPSecure = $smtp['secure'];
+	}
+
+	if (isset($smtp['auto_tls'])) {
+		$this->_mailer->SMTPAutoTLS = $smtp['auto_tls'];
+	}
+
+	if (isset($smtp['persist'])) {
+	  $this->_mailer->SMTPKeepAlive = $smtp['persist'];
+	}
+
+	if (!empty($smpt['port'])) {
+		$this->_mailer->Port = $smtp['port'];
+	}
+
+  if (!empty($smtp['user']) && isset($smtp['pass'])) {
+    $this->_mailer->SMTPAuth = true;
+    $this->_mailer->Username = $smtp['user'];
+    $this->_mailer->Password = $smtp['pass'];
+
+		if (!empty($smtp['auth'])) {
+			$this->_mailer->AuthType = $smtp['auth'];
+		}
+  }
+  else {
+    $this->_mailer->SMTPAuth = false;
+  }
 }
 
 
@@ -150,6 +325,30 @@ public function setBcc($email, $name = '') {
  */
 public function setReplyTo($email, $name = '') {
 	$this->_add_address('ReplyTo', $email, $name);
+}
+
+
+/**
+ * Set Subject.
+ * 
+ * @param string $txt 
+ */
+public function setSubject($txt) {
+	$this->_mailer->Subject = $txt;
+}
+
+
+/**
+ * Set Text Body if $txt is not empty.
+ *
+ * @param string $txt  
+ */
+public function setTxtBody($txt) {
+  if (!empty($txt)) {
+    $this->_mailer->IsHTML(false);
+    $this->_mailer->Body = $txt;
+    $this->_conf['body_type'] = 'text';
+  }
 }
 
 
@@ -261,18 +460,12 @@ private function _add_address($typ, $email, $name) {
 //Set the subject line
 $mail->Subject = 'PHPMailer mail() test';
 
-
 //Read an HTML message body from an external file, convert referenced images to embedded,
 //convert HTML into a basic plain-text alternative body
 $mail->msgHTML(file_get_contents('contents.html'), dirname(__FILE__));
 
-
 //Replace the plain text body with one created manually
 $mail->AltBody = 'This is a plain-text message body';
-
-
-//Attach an image file
-$mail->addAttachment('images/phpmailer_mini.png');
 
 */
 
