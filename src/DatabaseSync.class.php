@@ -191,6 +191,18 @@ private function syncForeignKeyReferences($table, $id_col, $id) {
 
 	foreach ($references as $r_table => $r_cols) {
 		if (count($r_cols) == 1) {
+			$all_references = $this->local_db->getReferences($r_table, '*');
+
+			if (count($all_references) == 2) {
+				// select distinct tour(=curr_table.col) AS value from pano_tour_conf_hist where uid=13(=pano_login.id);
+				// foreach result: syncEntries(in_table.col, value)
+				continue;
+			}
+			else if (count($all_references) > 2) {
+				print "ToDo: ...\n";
+				continue;				
+			}
+
 			$r = [ '_table' => $r_table, '_id_col' => $r_cols[0], 'id' => $id ];
 			$dbres = $this->remote_db->select($this->remote_db->getQuery('select_remote', $r));
 			foreach ($dbres as $row) {
@@ -198,7 +210,7 @@ private function syncForeignKeyReferences($table, $id_col, $id) {
 			}
 		}
 		else {
-			print "ToDo: $r_table has ".join(', ', $r_cols)."\n";
+			print "SKIP 2 - $r_table has ".join(', ', $r_cols)."\n";
 		}
 	}
 }
