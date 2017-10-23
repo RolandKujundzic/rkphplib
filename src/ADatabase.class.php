@@ -1195,7 +1195,8 @@ abstract public function getTableDesc($table);
 
 /**
  * Return table (table, colum) with foreign key references to $table.$column.
- * Result is { table1: [ col1, ... ], ... }.
+ * Result is { table1: [ col1, ... ], ... }. If column = '*' return
+ * { table.col: ftable.fcol, ... }.
  *
  * @param string $table
  * @param string $column
