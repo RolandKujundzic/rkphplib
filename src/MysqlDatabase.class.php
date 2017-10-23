@@ -790,22 +790,30 @@ public function getReferences($table, $column = 'id') {
 	}
 
   $dsn = self::splitDSN($this->_dsn);
-	$db_name = $dsn['name'];
+	$db_name = self::escape($dsn['name']);
 
-	$query = "SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE ".
-		"WHERE REFERENCED_TABLE_NAME='".self::escape_name($table)."' AND REFERENCED_COLUMN_NAME='".
-		self::escape($column)."' AND TABLE_SCHEMA='$db_name' AND CONSTRAINT_SCHEMA='$db_name' ".
-		"AND REFERENCED_TABLE_SCHEMA='$db_name'";
+	if ($column == '*') {
+		$query = "SELECT CONCAT(TABLE_NAME, '.', COLUMN_NAME) AS tname, CONCAT(REFERENCED_TABLE_NAME, '.', REFERENCED_COLUMN_NAME) AS cname ".
+			"FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA='$db_name' ".
+			"AND CONSTRAINT_SCHEMA='$db_name' AND REFERENCED_TABLE_SCHEMA='$db_name' AND TABLE_NAME='".self::escape($table)."' ".
+			"ORDER BY TABLE_NAME;"; 
+	}
+	else {
+		$query = "SELECT TABLE_NAME AS tname, COLUMN_NAME AS cname FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE ".
+			"WHERE REFERENCED_TABLE_NAME='".self::escape($table)."' AND REFERENCED_COLUMN_NAME='".
+			self::escape($column)."' AND TABLE_SCHEMA='$db_name' AND CONSTRAINT_SCHEMA='$db_name' ".
+			"AND REFERENCED_TABLE_SCHEMA='$db_name'";
+	}
 
 	$dbres = $this->select($query);
 	$res = [];
 
 	foreach ($dbres as $row) {
-		$r_table = $row['TABLE_NAME'];
-		$r_col = $row['COLUMN_NAME'];
+		$r_table = $row['tname'];
+		$r_col = $row['cname'];
 
     if (!isset($res[$r_table])) {
-      $res[$r_table] = [ $r_col ];
+      $res[$r_table] = ($column == '*') ? $r_col : [ $r_col ];
     }
     else {
       array_push($res[$r_table], $r_col);
