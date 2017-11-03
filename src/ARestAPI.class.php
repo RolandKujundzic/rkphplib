@@ -165,24 +165,62 @@ END;
 
 
 /**
- * Parse Content-Type header and set request.content-type and request.input-type.
+ * Print CORS (allow-all) header.
+ * 
+ * Access-Control-Allow-Origin: *
+ * Access-Control-Allow-Headers: *
+ * Access-Control-Allow-Methods: GET,POST,PUT,DELETE (if parameter $methods is empty/not-used)
+ * Access-Control-Max-Age: 600
  *
- * request.input-type: data, xml, json, urlencoded
- * request.content-type: application/xml|json|octet-stream|x-www-form-urlencoded, image|text|video|audio/*
+ * @param string $methods
+ */
+public static function CorsAllowAll($methods = 'GET,POST,PUT,DELETE') {
+	header('Access-Control-Allow-Origin: *');
+	header('Access-Control-Allow-Headers: *');
+	header('Access-Control-Allow-Methods: '.$methods);
+	header('Access-Control-Max-Age: 600');  // max. 60 * 10 sec = 10 min cachable
+}
+
+
+/**
+ * Parse Content-Type header and set request.content-type and request.input-type.
+ * Set list(request.input-type, request.content-type) = getInputType()
  *
  * @throws
+ * @see getInputType
  */
 private function parseContentType() {
+	list ($this->request['input-type'], $this->request['content-type']) = self::getInputType();
 
-	if (empty($_SERVER['CONTENT_TYPE']) && empty($_SERVER['HTTP_CONTENT_LENGTH'])) {
-		$this->request['content-type'] = '';
-		$this->request['input-type'] = '';
+	if (is_null($this->request['content-type'])) {
+		throw new RestServerException('empty content-type', self::ERR_INVALID_INPUT, 400);
 	}
 
-	$type = empty($_SERVER['CONTENT_TYPE']) ? 'application/json' : strtolower($_SERVER['CONTENT_TYPE']);
-	$input = '';
+	if (is_null($this->request['input-type'])) {
+		throw new RestServerException('unknown content-type', self::ERR_INVALID_INPUT, 400, "type=$type");
+	}
+}
 
-	// mb_strpos is necessary because "Content-type: application/xml; UTF-8" is valid header
+
+/**
+ * Parse Content-Type header and return pair [ input, mime_type ]. 
+ * If content-type header is empty return [ null, null ] or [ null, content-type ] if unknown.
+ * If content-type and content-length header is empty return [ '', '' ].
+ *
+ * input: null, '', data, xml, json, urlencoded or multipart
+ * mime_type: null, '', application/xml|json|octet-stream|x-www-form-urlencoded, [image|text|video|audio/]*
+ *
+ * @return array [ input, mime_type ] 
+ */
+public static function getInputType() {
+
+	if (empty($_SERVER['CONTENT_TYPE'])) {
+		return empty($_SERVER['HTTP_CONTENT_LENGTH']) ? [ null, null ] : [ '', '' ];
+	}
+
+	$type = mb_strtolower($_SERVER['CONTENT_TYPE']);
+	$input = null;
+
 	if (mb_strpos($type, 'image/') !== false) {
 		$type = 'image/*';
 		$input = 'data';
@@ -219,12 +257,8 @@ private function parseContentType() {
 		$type = 'multipart/form-data';
 		$input = 'multipart';
 	}
-	else {
-		throw new RestServerException('unknown content-type', self::ERR_INVALID_INPUT, 400, "type=$type");
-	}
 
-	$this->request['content-type'] = $type;
-	$this->request['input-type'] = $input;
+	return [ $input, $type ];
 }
 
 	
