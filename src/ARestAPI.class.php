@@ -183,7 +183,7 @@ public static function CorsAllowAll($methods = 'GET,POST,PUT,DELETE') {
 
 
 /**
- * Parse Content-Type header and set request[input-type] and request[content-type].
+ * Parse Content-Type header and set request[input-type], request[method] and request[content-type].
  *
  * input: data, xml, json, urlencoded or multipart
  * mime_type: application/xml|json|octet-stream|x-www-form-urlencoded, [image|text|video|audio/]*
@@ -191,10 +191,26 @@ public static function CorsAllowAll($methods = 'GET,POST,PUT,DELETE') {
  * @throws if content-type header is empty or unknown
  * @param array-reference &$request
  */
-public static function parseContentType(&$request) {
+public static function parseHeader(&$request) {
+	$method = empty($_SERVER['REQUEST_METHOD']) ? 'get' : $_SERVER['REQUEST_METHOD'];
+
+	if (!empty($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
+		$method = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
+	}
+	else if (!empty($_SERVER['HTTP_X_HTTP_METHOD'])) {
+		$method = $_SERVER['HTTP_X_HTTP_METHOD'];
+	}
+
+	if (empty($method)) {
+		throw new RestServerException('empty method', self::ERR_INVALID_INPUT, 400);
+	}
+
+	$request['method'] = strtolower($method);
 
 	if (empty($_SERVER['CONTENT_TYPE'])) {
-		throw new RestServerException('empty content-type', self::ERR_INVALID_INPUT, 400);
+		$request['content-type'] = '';
+		$request['input-type'] = '';
+		return;
 	}
 
 	$type = mb_strtolower($_SERVER['CONTENT_TYPE']);
@@ -307,6 +323,7 @@ public function exceptionHandler($e) {
  * - xml_root: XML Root node of api result (default = '<api></api>')
  * - allow_auth = [ header, request, basic_auth, oauth2 ]
  * - log_dir = '' (if set save requests to this directory) 
+ * - base64_dir = '' (if set decode and save values with "data:image/([a-z0-9+]);base64,..." prefix)
  * - auth_query = optional, e.g. SELECT id, token, config FROM api_user WHERE token='{:=token}' AND valid > NOW() AND status=1
  * - internal_error = false
  *
@@ -412,7 +429,7 @@ public static function parse(&$request) {
 
 	if (($input = file_get_contents('php://input'))) {
 		if (empty($request['input-type'])) {
-			throw new RestServerException('input-type missing call parseContentType first', self::ERR_NOT_IMPLEMENTED, 501);
+			throw new RestServerException('input-type missing call parseHeader first', self::ERR_NOT_IMPLEMENTED, 501);
 		}
 
 		if ($request['input-type'] == 'data') {
@@ -622,27 +639,13 @@ protected function logRequest($stage) {
  * @throws if invalid
  */
 private function checkMethodContent() {
-	$method = empty($_SERVER['REQUEST_METHOD']) ? 'get' : $_SERVER['REQUEST_METHOD'];
 
-	if (!empty($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
-		$method = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
-	}
-	else if (!empty($_SERVER['HTTP_X_HTTP_METHOD'])) {
-		$method = $_SERVER['HTTP_X_HTTP_METHOD'];
-	}
-
-	if (empty($method)) {
-		throw new RestServerException('empty method', self::ERR_INVALID_INPUT, 400);
-	}
-
-	$this->request['method'] = strtolower($method);
+	self::parseHeader($this->request); 
 
 	if (!in_array($this->request['method'], $this->options['allow_method'])) {
 		throw new RestServerException('invalid method', self::ERR_INVALID_INPUT, 400, 'method='.$this->request['method'].
 			' allowed='.join(', ', $this->options['allow_method']));
 	}
-
-	self::parseContentType($this->request); 
 
 	if (!empty($this->request['content-type']) && !in_array($this->request['content-type'], $this->options['accept'])) {
 		throw new RestServerException('invalid content-type', self::ERR_INVALID_INPUT, 400, 
@@ -659,6 +662,11 @@ public function readInput() {
 	$this->checkMethodContent();
 	$this->checkApiToken(); 
 	self::parse($this->result);
+
+	if (!empty($this->options['base64_dir'])) {
+		self::saveBase64($this->request['map'], $this->options['base64_dir']);
+	}
+
 	$this->route();
 
 	if (empty($this->request['token']) && !empty($this->request['map']['api_token'])) {
@@ -667,6 +675,24 @@ public function readInput() {
 	}
 
 	$this->logRequest('in');
+}
+
+
+/**
+ * Decode and save base64 data. Change value into file path.
+ *
+ * @param array $map
+ * @param string $save_dir
+ */
+public static function saveBase64(&$map, $save_dir) {
+	foreach ($map as $key => $value) {
+  	if (strlen($value) > 21 && preg_match('/^data\:image\/([a-z0-9])+;base64,/', $value, $match)) {
+			$suffix = ($match[1] == 'jpeg') ? '.jpg' : '.'.$match[1];
+			$skip = strlen($match[1]) + 19;
+			File::save($save_dir.'/'.$key.$suffix, base64_decode(substr($value, $skip)));
+			$map[$key] = $save_dir.'/'.$key.$suffix;
+		}
+  }
 }
 
 
