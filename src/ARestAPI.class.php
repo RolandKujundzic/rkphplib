@@ -183,39 +183,18 @@ public static function CorsAllowAll($methods = 'GET,POST,PUT,DELETE') {
 
 
 /**
- * Parse Content-Type header and set request.content-type and request.input-type.
- * Set list(request.input-type, request.content-type) = getInputType()
+ * Parse Content-Type header and set request[input-type] and request[content-type].
  *
- * @throws
- * @see getInputType
+ * input: data, xml, json, urlencoded or multipart
+ * mime_type: application/xml|json|octet-stream|x-www-form-urlencoded, [image|text|video|audio/]*
+ *
+ * @throws if content-type header is empty or unknown
+ * @param array-reference &$request
  */
-private function parseContentType() {
-	list ($this->request['input-type'], $this->request['content-type']) = self::getInputType();
-
-	if (is_null($this->request['content-type'])) {
-		throw new RestServerException('empty content-type', self::ERR_INVALID_INPUT, 400);
-	}
-
-	if (is_null($this->request['input-type'])) {
-		throw new RestServerException('unknown content-type', self::ERR_INVALID_INPUT, 400, "type=$type");
-	}
-}
-
-
-/**
- * Parse Content-Type header and return pair [ input, mime_type ]. 
- * If content-type header is empty return [ null, null ] or [ null, content-type ] if unknown.
- * If content-type and content-length header is empty return [ '', '' ].
- *
- * input: null, '', data, xml, json, urlencoded or multipart
- * mime_type: null, '', application/xml|json|octet-stream|x-www-form-urlencoded, [image|text|video|audio/]*
- *
- * @return array [ input, mime_type ] 
- */
-public static function getInputType() {
+public static function parseContentType(&$request) {
 
 	if (empty($_SERVER['CONTENT_TYPE'])) {
-		return empty($_SERVER['HTTP_CONTENT_LENGTH']) ? [ null, null ] : [ '', '' ];
+		throw new RestServerException('empty content-type', self::ERR_INVALID_INPUT, 400);
 	}
 
 	$type = mb_strtolower($_SERVER['CONTENT_TYPE']);
@@ -257,11 +236,15 @@ public static function getInputType() {
 		$type = 'multipart/form-data';
 		$input = 'multipart';
 	}
+	else {
+		throw new RestServerException('unknown content-type', self::ERR_INVALID_INPUT, 400, "type=$type");
+	}
 
-	return [ $input, $type ];
+	$request['content-type'] = $type;
+	$request['input-type'] = $input;
 }
 
-	
+
 /**
  * Catch all php errors. Activated in constructor:
  *
@@ -416,62 +399,68 @@ private function checkApiToken() {
  *
  * ip, data, map, content-type and input-type
  *
- * @throws
+ * @throws if request['input-type'] or request['content-type'] is empty.
+ * @param array-reference &$request
  */
-public function parse() {
+public static function parse(&$request) {
 
-	$this->request['timestamp'] = date('Y-m-d H:i:s').':'.substr(microtime(), 2, 3);
-	$this->request['port'] = empty($_SERVER['REMOTE_PORT']) ? '' : $_SERVER['REMOTE_PORT'];
-	$this->request['ip'] = empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR'];
-	$this->request['data'] = null;
-	$this->request['map'] = [];
+	$request['timestamp'] = date('Y-m-d H:i:s').':'.substr(microtime(), 2, 3);
+	$request['port'] = empty($_SERVER['REMOTE_PORT']) ? '' : $_SERVER['REMOTE_PORT'];
+	$request['ip'] = empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR'];
+	$request['data'] = null;
+	$request['map'] = [];
 
 	if (($input = file_get_contents('php://input'))) {
-		if ($this->request['input-type'] == 'data') {
-			$this->request['data'] = $input;
+		if (empty($request['input-type'])) {
+			throw new RestServerException('input-type missing call parseContentType first', self::ERR_NOT_IMPLEMENTED, 501);
 		}
-		else if ($this->request['input-type'] == 'xml') {
-			$this->request['map'] = XML::toMap($input);
+
+		if ($request['input-type'] == 'data') {
+			$request['data'] = $input;
 		}
-		else if ($this->request['input-type'] == 'json') {
-			$this->request['map'] = JSON::decode($input);
+		else if ($request['input-type'] == 'xml') {
+			$request['map'] = XML::toMap($input);
 		}
-		else if ($this->request['input-type'] == 'urlencoded') {
-			mb_parse_str($input, $this->request['map']);
+		else if ($request['input-type'] == 'json') {
+			$request['map'] = JSON::decode($input);
 		}
-		else if ($this->request['input-type'] == 'multipart') {
+		else if ($request['input-type'] == 'urlencoded') {
+			mb_parse_str($input, $request['map']);
+		}
+		else if ($request['input-type'] == 'multipart') {
 			throw new RestServerException('ToDo: parse multipart/form-data input', self::ERR_NOT_IMPLEMENTED, 501);
 		}
 		else {
-			throw new RestServerException('unknown input type', self::ERR_NOT_IMPLEMENTED, 501, "content=".$this->request['content-type']." input=".$this->request['input-type']);
+			throw new RestServerException('unknown input type', self::ERR_NOT_IMPLEMENTED, 501, 
+				"content=".$request['content-type']." input=".$request['input-type']);
 		}
 	}
 
-	if ($this->request['content-type'] == 'multipart/form-data' && count($_FILES) > 0) {
-		$this->request['map'] = array_merge($_POST, $_FILES);
+	if ($request['content-type'] == 'multipart/form-data' && count($_FILES) > 0) {
+		$request['map'] = array_merge($_POST, $_FILES);
 	}
-	else if ($this->request['content-type'] == 'application/x-www-form-urlencoded') {
-		if ($this->request['method'] == 'get') {
-			$this->request['map'] = array_merge($this->request['map'], $_GET);
+	else if ($request['content-type'] == 'application/x-www-form-urlencoded') {
+		if ($request['method'] == 'get') {
+			$request['map'] = array_merge($GET);
 		}
 		else {
-			$this->request['map'] = array_merge($this->request['map'], $_POST);
+			$request['map'] = array_merge($request['map'], $_POST);
 
 			if (count($_GET) > 0) {
 				// always use query parameter - but prefer map parameter
-				$this->request['map'] = array_merge($_GET, $this->request['map']);
+				$request['map'] = array_merge($_GET, $request['map']);
 			}
 		}
 	}
 	else {
 		if (count($_GET) > 0) {
 			// always use query parameter - but prefer map parameter
-			$this->request['map'] = array_merge($_GET, $this->request['map']);
+			$request['map'] = array_merge($_GET, $request['map']);
 		}
 
-		if ($this->request['method'] != 'get' && count($_POST) > 0) {
+		if ($request['method'] != 'get' && count($_POST) > 0) {
 			// always use post data unless method is GET - but prefer map parameter
-			$this->request['map'] = array_merge($_POST, $this->request['map']);
+			$request['map'] = array_merge($_POST, $request['map']);
 		}
 	}
 }
@@ -653,7 +642,7 @@ private function checkMethodContent() {
 			' allowed='.join(', ', $this->options['allow_method']));
 	}
 
-	$this->parseContentType(); 
+	self::parseContentType($this->request); 
 
 	if (!empty($this->request['content-type']) && !in_array($this->request['content-type'], $this->options['accept'])) {
 		throw new RestServerException('invalid content-type', self::ERR_INVALID_INPUT, 400, 
@@ -669,7 +658,7 @@ private function checkMethodContent() {
 public function readInput() {
 	$this->checkMethodContent();
 	$this->checkApiToken(); 
-	$this->parse();
+	self::parse($this->result);
 	$this->route();
 
 	if (empty($this->request['token']) && !empty($this->request['map']['api_token'])) {
@@ -694,7 +683,7 @@ abstract protected function setConfig();
  * request = [ 'method' => 'get', 'path' => 'user/3832', 'api_call' => 'getUser', api_call_parameter => [ 3832 ] ]
  * call this.getUser(3832)  (up to three parameter otherwise use array as first parameter)
  * 
- * Call $this->parse() and $this->route().
+ * Call self::parse() and $this->route().
  *
  * @throws 
  */
