@@ -74,6 +74,86 @@ public function __construct($config = 0) {
 
 
 /**
+ * Return this.vmap[$name]. If $name is "a.b.c" return this.vmap[a][b][c].
+ * If variable does not exist return ''. If variable ends with ! throw 
+ * exception if it does not exist.
+ *
+ * @throws
+ * @param string
+ * @return any
+ */
+public function getVar($name) {
+	$required = false;
+
+	if (substr($name, -1) == '!') {
+		$required = true;
+		$name = substr($name, 0, -1);
+	}
+
+	if (empty($name)) {
+		throw new Exception('empty vmap name');
+	}
+
+	$path = explode('.', $name);
+	$map = $this->vmap;
+	$done = [];
+
+	while (count($path) > 0) {
+		$key = array_shift($path);
+		array_push($done, $key);
+
+		if (array_key_exists($key, $map)) {
+			if (count($path) == 0) {
+				return $map[$key];
+			}
+			else {
+				$map = $map[$key];
+			}
+		}
+		else {
+			if (!$required) {
+				return '';
+			}
+			
+			throw new Exception('missing vmap.'.join('.', $done)." (vmap.$name)");
+		}
+	}
+}
+
+
+/**
+ * Set this.vmap[$name] = $value. If $name is "a.b.c" set this.vmap[a][b][c] = $value.
+ *
+ * @param string
+ * @param any
+ */
+public function setVar($name, $value) {
+
+	if (empty($name)) {
+		throw new Exception('empty vmap name');
+	}
+
+	$path = explode('.', $name);
+	$map =& $this->vmap;
+
+	while (count($path) > 0) {
+		$key = array_shift($path);
+
+		if (count($path) == 0) {
+			$map[$key] = $value;
+		}
+		else {
+			if (!isset($map[$key]) || !is_array($map[$key])) {
+				$map[$key] = [ ];
+			}
+
+			$map =& $map[$key];
+		}
+	}
+}
+
+
+/**
  * Return callstack.
  * 
  * @return vector<string>
