@@ -34,6 +34,7 @@ public function getPlugins($tok) {
 	$this->tok = $tok;
 
   $plugin = [];
+  $plugin['loop:var'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
   $plugin['loop:list'] = TokPlugin::PARAM_LIST;
   $plugin['loop:hash'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
   $plugin['loop:show'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
@@ -42,6 +43,28 @@ public function getPlugins($tok) {
   $plugin['loop'] = 0; // no callback for base plugin
 
   return $plugin;
+}
+
+
+/**
+ * Set loop to Tokenizer.vmap[$name]. Example:
+ *
+ * PHP: tok->vmap[test] = [ ... ]; tok->vmap['a']['b']['c'] = $x;
+ * TEMPLATE: {loop:var}test!{:loop} {loop:var}a.b.c{:loop}
+ *
+ * Use suffix semicolon to abort if variable was not found.
+ *
+ * @param string $name
+ * @return ''
+ */
+public function tok_loop_var($name) {
+	$res = $this->tok->getVar($name);
+
+	if (!is_array($res)) {
+		$res = [];
+	}
+
+	$this->loop = $res;
 }
 
 
@@ -138,25 +161,52 @@ public function tok_loop_join($p) {
  */
 public function tok_loop_show($txt) {
 	$tag_loop = $this->tok->getTag('loop');
+	$tag_loop_n = $this->tok->getTag('loop_n');
 	$tag_loop_pos = $this->tok->getTag('loop_pos');
 	$tag_loop_key = $this->tok->getTag('loop_key');
 	$tag_loop_value = $this->tok->getTag('loop_value');
-	$res = '';
+	$out = [];
 	$n = 0;
 
 	foreach ($this->loop as $key => $value) {
+		$tpl = trim($txt);
+
 		if ($key === $n) {
-			$res .= str_replace($tag_loop, $value, $txt);
+			if (is_array($value)) {
+				$k = 0;
+
+				foreach ($value as $subkey => $subvalue) {
+					if ($subkey === $k) {
+						$tag = $this->tok->getTag('c'.($k+1));
+					}
+					else {
+						$tag = $this->tok->getTag($subkey);
+					}
+
+					if (mb_strpos($tpl, $tag) !== false) {
+						if (is_array($subvalue)) {
+						}
+						else {
+							$tpl = str_replace($tag, $subvalue, $tpl);
+						}
+					}
+
+					$k++;
+				}
+			}
+			else {
+				$tpl = str_replace($tag_loop, $value, $tpl);
+			}
 		}
 		else {
-			$res .= str_replace([ $tag_loop_key, $tag_loop_value ], [ $key, $value ], $txt); 
+			$tpl = str_replace([ $tag_loop_key, $tag_loop_value ], [ $key, $value ], $tpl);
 		}
 
-		$res = str_replace($tag_loop_pos, $n + 1, $res);
+		array_push($out, str_replace([ $tag_loop_n, $tag_loop_pos ], [ $n, $n + 1 ], $tpl));
 		$n++;
 	}
 
-	return $res;
+	return join("\n", $out);
 }
 
 
