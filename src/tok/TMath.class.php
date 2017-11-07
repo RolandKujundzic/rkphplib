@@ -44,13 +44,23 @@ public function tok_nf($param, $arg) {
  * thousands and [,] as decimal separator. Example:
  * 
  * {number_format:2}2832.8134{:number_format} = 2.832,81
+ * {number_format:2}17,329g{:number_format} = 17,33 g
  *
  * @param int $param
  * @param float $arg
  * @return string
  */
 public function tok_number_format($param, $arg) {
-	$fval = floatval($arg);	
+	$suffix = '';
+
+	if (preg_match('/^([\-\+0-9,\.]+)(.*)$/', trim($arg), $match) && strlen($match[2]) > 0) {
+		$fval = floatval($match[1]);
+		$suffix = ' '.trim($match[2]);
+	}
+	else {
+		$fval = floatval($arg);	
+	}
+
 	$res = '';
 
 	if (strlen($param) == 0) {
@@ -72,7 +82,7 @@ public function tok_number_format($param, $arg) {
 		$res = number_format($fval, intval($param), ',', '.');
 	}
 
-	return $res;
+	return $res.$suffix;
 }
 
 
