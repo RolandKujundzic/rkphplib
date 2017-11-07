@@ -5,6 +5,10 @@ namespace rkphplib;
 require_once(dirname(__DIR__).'/other/PHPMailer/Exception.php');
 require_once(dirname(__DIR__).'/other/PHPMailer/PHPMailer.php');
 
+require_once(__DIR__.'/lib/resolvPath.php');
+
+require_once(__DIR__.'/Dir.class.php');
+
 use PHPMailer\PHPMailer\PHPMailer;
 
 
@@ -28,7 +32,7 @@ public static $smtp = null;
 private $_mailer = null;
 
 /** @var array $typ_email count doubles */
-private $typ_email = [ 'recipient' => '' ];
+private $typ_email = [ 'recipient' => [] ];
 
 
 
@@ -214,6 +218,10 @@ public function useSMTP($smtp) {
 	if (isset($smtp['auto_tls'])) {
 		$this->_mailer->SMTPAutoTLS = $smtp['auto_tls'];
 	}
+	else {
+		// assume we have a mailer with non valid tls certificate
+		$this->_mailer->SMTPAutoTLS = false;
+	}
 
 	if (isset($smtp['persist'])) {
 	  $this->_mailer->SMTPKeepAlive = $smtp['persist'];
@@ -273,7 +281,7 @@ public function setFrom($email, $name = '', $sender = '') {
 public function setTo($email, $name = '') {
 
   if (!empty(self::$always_to)) {
-		self::isValidEmail($always_to, true);
+		self::isValidEmail(self::$always_to, true);
     $email = self::$always_to;
   }
 
@@ -347,7 +355,22 @@ public function setTxtBody($txt) {
   if (!empty($txt)) {
     $this->_mailer->IsHTML(false);
     $this->_mailer->Body = $txt;
-    $this->_conf['body_type'] = 'text';
+  }
+}
+
+
+/**
+ * Set HTML Mail Body (if $html is not empty). 
+ * Relative image URLs and backgrounds will be converted into inline images.
+ * If basedir is set path for images will be relative to basedir. 
+ * Alt Text Body is automatically created. 
+ * 
+ * @param string $html 
+ * @param string $basedir 
+ */
+public function setHtmlBody($html, $basedir = '') {
+  if (!empty($html)) {
+    $this->_mailer->MsgHTML($html, $basedir);
   }
 }
 
@@ -406,6 +429,10 @@ private function _add_address($typ, $email, $name) {
 		throw new Exception("Empty email", "name=[$name] typ=[$typ]");
   }
 
+	if (!isset($this->typ_email[$typ])) {
+		$this->typ_email[$typ] = [];
+	}
+
 	foreach ($email_name_list as $ex => $nx) {
 		list ($email, $name) = $this->_email_name($ex, $nx);
 
@@ -446,27 +473,62 @@ private function _add_address($typ, $email, $name) {
 			throw new Exception("invalid email [$email]", "typ=[$typ] name=[$name]");
 		}
 
-		if (!isset($this->typ_email[$typ])) {
-			$this->typ_email[$typ] = [];
-		}
-
 		array_push($this->typ_email[$typ], $lc_email);
 	}
 }
 
 
-/*
+/**
+ * Save mail in dir.
+ * 
+ * @param string $dir 
+ */
+private function saveMail($dir) {
+	Dir::create($dir, 0, true);
+	throw new Exception('ToDo ...');
+}
 
-//Set the subject line
-$mail->Subject = 'PHPMailer mail() test';
 
-//Read an HTML message body from an external file, convert referenced images to embedded,
-//convert HTML into a basic plain-text alternative body
-$mail->msgHTML(file_get_contents('contents.html'), dirname(__FILE__));
+/**
+ * Send mail. Options: 
+ *
+ * - send: true
+ * - save: false
+ * - save_dir: data/mail/$date(Ym)/$date(dH)/$map(id)
+ *
+ * @throws
+ * @param string options 
+ */
+public function send($options = []) {
 
-//Replace the plain text body with one created manually
-$mail->AltBody = 'This is a plain-text message body';
+	if (!isset($this->typ_email['to']) || count($this->typ_email['to']) == 0) {
+		throw new Exception('call setTo() first');
+	}
 
-*/
+	if (!is_null(self::$smtp)) {
+		$this->useSMTP(self::$smtp);
+	}
+
+	$default = [ 'send' => true, 'save' => false, 'save_dir' => 'data/mail/$date(Ym)/$date(dH)/$map(id)' ];
+	$options = array_merge($default, $options);
+
+	if (!$this->_mailer->preSend()) {
+		throw new Exception('Mailer preSend failed');
+	}
+
+	if ($options['save']) {
+		$options['save_dir'] = \rkphplib\lib\resolvPath($options['save_dir'], [ 'id' => $this->_mailer->getLastMessageId() ]);
+		$this->saveMail($options['save_dir']);
+	}
+
+	if (!$options['send']) {
+		return;
+	}
+
+	if (!$this->_mailer->postSend()) {
+		throw new Exception('Mailer postSend failed');
+	}
+}
+
 
 }
