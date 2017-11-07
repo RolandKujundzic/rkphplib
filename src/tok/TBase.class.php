@@ -93,9 +93,32 @@ public function getPlugins($tok) {
 	$plugin['toupper'] = TokPlugin::NO_PARAM;
 	$plugin['tolower'] = TokPlugin::NO_PARAM;
 	$plugin['join'] = TokPlugin::KV_BODY;
+	$plugin['var'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['esc'] = 0;
 
 	return $plugin;
+}
+
+
+/**
+ * Retrieve (or set) Tokenizer.vmap value. Examples:
+ *
+ * - set a=17: {var:=a}17{:var}
+ * - get optional a: {var:a}
+ * - get required a: {var:a!} (abort if not found)
+ * - set multi-map: {var:=person.age}42{:var}
+ * - get multi-map: {var:person.age}
+ *
+ * @param string $name
+ * @param string $value
+ */
+public function tok_var($name, $value) {
+	if (substr($name, 0, 1) == '=') {
+		$this->_tok->setVar($name, $value);
+	}
+	else {
+		return (string) $this->_tok->getVar($name);
+	}
 }
 
 
