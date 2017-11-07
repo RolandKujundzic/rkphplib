@@ -538,7 +538,8 @@ public static function chmod($file, $mode = 0) {
 
 
 /**
- * Save $data to $file. 
+ * Save $data to $file. If FILE_SAVE_RW=true is defined,
+ * apply chmod($file, self::$DEFAULT_MODE).
  *
  * @throws
  * @param string $file
@@ -562,6 +563,10 @@ public static function save($file, $data, $flag = 0) {
 	if (($bytes = file_put_contents($file, $data, $flag)) === false) {
 		throw new Exception('failed to save data to file', $file);
 	}
+
+	if (defined('FILE_SAVE_RW') && FILE_SAVE_RW) {
+  	FSEntry::chmod($file, self::$DEFAULT_MODE);
+  }
 }
 
 
