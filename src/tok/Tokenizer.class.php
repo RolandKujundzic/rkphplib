@@ -31,9 +31,6 @@ public $rx = [ "/\{([a-zA-Z0-9_]*\:.*?)\}/s", '{', ':', '}', '&#123;', '&#58;', 
 /** @var string $file Token data from $file - defined if load($file) was used */
 public $file = '';
 
-/** @var map $vmap plugin variable interchange */
-public $vmap = [];
-
 
 /** @const TOK_IGNORE remove unkown plugin */
 const TOK_IGNORE = 2;
@@ -44,6 +41,9 @@ const TOK_KEEP = 4;
 /** @const TOK_DEBUG debug unknown plugin */
 const TOK_DEBUG = 8;
 
+
+/** @var map $vmap plugin variable interchange */
+private $vmap = [];
 
 /** @var map<string:map<object:int>> $_plugin */
 private $_plugin = [];
