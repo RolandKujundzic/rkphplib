@@ -158,9 +158,17 @@ public function embedImage($file, $mime = 'application/octet-stream', $encoding 
  * Add attachment to mail (base64 encoding).
  * 
  * @param string $file 
- * @param string $mime (application/octet-stream)
+ * @param string $mime (default = application/octet-stream, empty = auto_detect)
  */
 public function attach($file, $mime = 'application/octet-stream') {
+	if (empty($mime)) {
+		$mime = File::mime($file);
+	}
+
+	if (empty($mime)) {
+		$mime = 'application/octet-stream';
+	}
+
 	if (!$this->_mailer->AddAttachment($file, basename($file), 'base64', $mime)) {
 		throw new Exception('failed to add attachment '.$file);
 	}
