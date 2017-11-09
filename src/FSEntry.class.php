@@ -5,8 +5,13 @@ namespace rkphplib;
 require_once(__DIR__.'/Exception.class.php');
 
 
+if (umask() > 0) {
+	umask(0);
+}
+
+
 /**
- * Filesystem operations for files and directories.
+ * Filesystem operations for files and directories. Set umask to 0.
  *
  * All methods are static.
  *
