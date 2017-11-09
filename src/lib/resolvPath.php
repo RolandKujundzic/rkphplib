@@ -17,6 +17,8 @@ use rkphplib\Exception;
  *  - $map(n,m,k) = map[n][m][k]
  *  - $date(dH) = date('dH')
  *
+ * Append _SCRIPT to map = basename($_SERVER['PHP_SELF'], '.php').
+ *
  * @throws
  * @param string $path
  * @param array $map
@@ -24,7 +26,11 @@ use rkphplib\Exception;
  */
 function resolvPath($path, $map) {
 
-	while (preg_match('/\$([0-9A-Za-z_]+)\(([0-9A-Za-z,]*)\)/', $path, $match)) {
+	if (!isset($map['_SCRIPT']) && !empty($_SERVER['PHP_SELF'])) {
+		$map['_SCRIPT'] = basename($_SERVER['PHP_SELF'], '.php');
+	}
+
+	while (preg_match('/\$([0-9A-Za-z_]+)\(([0-9A-Za-z_,]*)\)/', $path, $match)) {
 		$tag = '$'.$match[1].'('.$match[2].')';
 
 		if ($match[1] == 'date') {
