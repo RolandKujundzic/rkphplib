@@ -885,9 +885,9 @@ public static function mime($file, $use_only_suffix = false) {
 		if (!empty($pi['extension'])) {
 			$s = $pi['extension'];
 
-			$suffix2mime = [ 'png' => 'image/png', 'jpg' => 'image/jpeg', 'gif' => 'image/gif', 'tif' => 'image/tiff', 
-				'psd' => 'image/x-photoshop', 'txt' => 'text/plain', 'xml' => 'application/xml', 
-				'xsd' => 'application/xml' ];
+			$suffix2mime = [ 'png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'gif' => 'image/gif', 
+				'tif' => 'image/tiff', 'tiff' => 'image/tiff', 'psd' => 'image/x-photoshop', 'txt' => 'text/plain', 
+				'csv' => 'text/csv', 'xml' => 'application/xml', 'xsd' => 'application/xml' ];
 
 			if (isset($suffix2mime[$s])) {
 				$res = $suffix2mime[$s];
