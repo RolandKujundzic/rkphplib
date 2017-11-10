@@ -16,68 +16,6 @@ class JSON {
 
 
 /**
- * Convert all strings within $data to latin1.
- *
- * If string are latin1 already no change should occur.
- *
- * @param mixed &$data
- */
-public static function latin1(&$data) {
-
-	if (is_string($data)) {
-		if (mb_detect_encoding($data, 'UTF-8', true)) {
-			$data = utf8_decode($data);
-		}
-	}
-	else if (is_array($data)) {
-		foreach ($data as &$value) {
-			self::latin1($value);
-		}
-
-		unset($value);
-	}
-	else if (is_object($data)) {
-		$vars = array_keys(get_object_vars($data));
-
-		foreach ($vars as $var) {
-			self::latin1($data->$var);
-		}
-	}
-}
-
-
-/**
- * Convert all strings within $data to utf8.
- *
- * If strings are utf8 Umlaute (öäüß ÖÄÜ) will be broken.
- *
- * @param mixed &$data
- */
-public static function utf8(&$data) {
-
-	if (is_string($data)) {
-		if (mb_detect_encoding($data, 'ISO-8859-1', true)) {
-			$data = utf8_encode($data);
-		}
-	}
-	else if (is_array($data)) {
-		foreach ($data as &$value) {
-			self::utf8($value);
-		}
-
-		unset($value);
-	}
-	else if (is_object($data)) {
-		$vars = array_keys(get_object_vars($data));
-
-		foreach ($vars as $var) {
-			self::utf8($data->$var);
-		}
-	}
-}
-
-
-/**
  * Return last error message for encode/decode.
  *
  * @param int $err_no
@@ -156,6 +94,33 @@ public static function decode($txt, $assoc = true) {
  */
 public static function pretty_print($json) {
     return json_encode(json_decode($json), 320|JSON_PRETTY_PRINT);
+}
+
+
+/**
+ * Print JSON object and exit. Use for ajax script output.
+ * If code >= 400 and $o is string or Exception return { error_message: "..." }.
+ *
+ * @param Object $o
+ * @param int $code
+ */
+public static function output($o, $code = 200) {
+	
+	if ($code >= 400) {
+		if ($o instanceof \Exception) {
+			$o = [ 'error_message' => $o->getMessage(), 'error_code' => $o->getCode() ];
+		}
+		else if (is_string($o)) {
+			$o = [ 'error_message' => $o ];
+		}
+	}
+
+	http_response_code($code);
+	header('Content-Type: application/json');
+	$output = JSON::encode($o);
+	header('Content-Length: '.mb_strlen($output));
+	print $output;
+	exit(0);
 }
 
 
