@@ -803,12 +803,19 @@ public static function serialize($file, $data) {
 
 /**
  * Return unserialized file content.
- * 
+ *
+ * @throws 
  * @param string $file
  * @return string 
  */
 public static function unserialize($file) {
-	return unserialize(File::load($file));
+	$res = unserialize(File::load($file));
+
+	if ($res === false && File::size($file) > 100) {
+		throw new Exception('error unserialize file '.$file);
+	}
+
+	return $res;
 }
 
 
