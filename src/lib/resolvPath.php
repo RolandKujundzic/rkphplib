@@ -10,24 +10,31 @@ use rkphplib\Exception;
 /**
  * Replace function calls in string. Example:
  *
- * resolvPath("data/log/ajax/$date(Ym)/$date(dH)/$map(rechnung,email)_$date(is)") 
- *  == "data/log/ajax/201711/0316/roland@kujundzic.de_2917"
+ * resolvPath("data/ajax/$map(_SCRIPT)/$date(Ym)/$date(dH)/$map(_FILE)") 
+ *  == "data/ajax/SCRIPT_NAME/201711/0316/UNIQUE_HEX"
  * 
  * Allow: 
  *  - $map(n,m,k) = map[n][m][k]
  *  - $date(dH) = date('dH')
  *
- * Append _SCRIPT to map = basename($_SERVER['PHP_SELF'], '.php').
+ * Append _SCRIPT and _FILE to map (if not set):
+ * $map(_SCRIPT) = basename($_SERVER['PHP_SELF'], '.php').
+ * $map(_FILE) = date('is').sprintf("%08x", abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME_FLOAT']))); 
  *
  * @throws
  * @param string $path
  * @param array $map
  * @return string
  */
-function resolvPath($path, $map) {
+function resolvPath($path, $map = []) {
 
-	if (!isset($map['_SCRIPT']) && !empty($_SERVER['PHP_SELF'])) {
+	if (!isset($map['_SCRIPT'])) {
 		$map['_SCRIPT'] = basename($_SERVER['PHP_SELF'], '.php');
+	}
+
+	if (!isset($map['_FILE'])) {
+		$remote_addr = empty($_SERVER['REMOTE_ADDR']) ? uniqid() : $_SERVER['REMOTE_ADDR'];
+		$map['_FILE'] = date('is').sprintf("%08x", abs(crc32($remote_addr.$_SERVER['REQUEST_TIME_FLOAT'])));
 	}
 
 	while (preg_match('/\$([0-9A-Za-z_]+)\(([0-9A-Za-z_,]*)\)/', $path, $match)) {
