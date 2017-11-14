@@ -323,6 +323,7 @@ public function exceptionHandler($e) {
  * - xml_root: XML Root node of api result (default = '<api></api>')
  * - allow_auth = [ header, request, basic_auth, oauth2 ]
  * - log_dir = '' (if set save requests to this directory) 
+ * - base64_scan = bool (if set use base64_dir = log_dir)
  * - base64_dir = '' (if set decode and save values with "data:image/([a-z0-9+]);base64,..." prefix)
  * - auth_query = optional, e.g. SELECT id, token, config FROM api_user WHERE token='{:=token}' AND valid > NOW() AND status=1
  * - internal_error = false
@@ -662,6 +663,10 @@ public function readInput() {
 	$this->checkMethodContent();
 	$this->checkApiToken(); 
 	self::parse($this->result);
+
+	if (!empty($this->options['base64_scan']) && empty($this->options['log_dir'])) {
+		$this->options['base64_dir'] = $this->options['log_dir'];
+	}
 
 	if (!empty($this->options['base64_dir'])) {
 		self::saveBase64($this->request['map'], $this->options['base64_dir']);
