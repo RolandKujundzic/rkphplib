@@ -690,8 +690,10 @@ public function readInput() {
  * @param string $save_dir
  */
 public static function saveBase64(&$map, $save_dir) {
+	Dir::create($save_dir, 0, true);
+
 	foreach ($map as $key => $value) {
-  	if (strlen($value) > 21 && preg_match('/^data\:image\/([a-z0-9])+;base64,/', $value, $match)) {
+  	if (is_string($value) && strlen($value) > 21 && preg_match('/^data\:image\/([a-z0-9]+);base64,/', $value, $match)) {
 			$suffix = ($match[1] == 'jpeg') ? '.jpg' : '.'.$match[1];
 			$skip = strlen($match[1]) + 19;
 			File::save($save_dir.'/'.$key.$suffix, base64_decode(substr($value, $skip)));
