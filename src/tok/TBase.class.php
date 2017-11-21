@@ -85,6 +85,7 @@ public function getPlugins($tok) {
 	$plugin['decode'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['get'] = 0;
 	$plugin['include'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
+	$plugin['include_if'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['ignore'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['if'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['keep'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
@@ -225,6 +226,39 @@ public function tok_include($param, $file) {
 		}
 
 		throw new Exception('include file missing', $file);
+	}
+
+	return File::load($file);
+}
+
+
+/**
+ * Include file. Tokenize output.
+ *
+ * @tok {include_if:}|#|a.html{:include_if} = return tokenized content of a.html (throw error if file does not exist)
+ * @tok {include_if:}1|#|a.html{:include_if} = return empty string
+ * @tok {include_if:b}a|#|a.html|#|b.html{:include_if} = return tokenized content of b.html
+ * @tok {include_if:a}a|#|a.html{:include_if} = return tokenized content of a.html 
+ * 
+ * @throws if file does not exists 
+ * @param array $param
+ * @param array $a
+ * @return string
+ */
+public function tok_include_if($param, $a) {
+
+	if (count($a) < 2) {
+		throw new Exception('invalid include_if:'.$param, print_r($a, true));
+	}
+
+	if (count($a) == 2) {
+		$a[2] = '';
+	}
+
+	$file = ($param != $a[0]) ? $a[1] : $a[2];
+	
+	if (empty($file)) {
+		return '';
 	}
 
 	return File::load($file);

@@ -166,7 +166,7 @@ public function tok_menu_add($level, $node) {
 
 	if (!empty($node['if_table'])) {
 		require_once(__DIR__.'/../Database.class.php');
-		$db = Database::getInstance();
+		$db = \rkphplib\Database::getInstance();
 		$table_list = \rkphplib\lib\split_str(',', $node['if_table']);
 		foreach ($table_list as $table) {
 			if (!$db->hasTable($table)) {

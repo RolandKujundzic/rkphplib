@@ -25,7 +25,8 @@ class Session extends ASession {
 /**
  * Initialize session. Parameter: name, scope(=docroot), ttl(=172800), inactive(=7200), redirect_[forbidden|login](='').
  * If required session parameter does not exist redirect to redirect_login or throw exception.
- * 
+ *
+ * @see ASession::setConf 
  * @param map $conf
  */
 public function init($conf) {

@@ -8,6 +8,11 @@ require_once(__DIR__.'/../Database.class.php');
 require_once(__DIR__.'/../Session.class.php');
 
 use \rkphplib\Exception;
+use \rkphplib\Database;
+use \rkphplib\ADatabase;
+use \rkphplib\Session;
+
+
 
 if (!defined('SETTINGS_LANGUAGE')) {
   /** @define string SETTINGS_LANGUAGE = 'de' */
@@ -96,8 +101,8 @@ public function createTable($table = 'language', $language_list = [ 'de', 'en' ]
 	$tconf = [];
 	$tconf['@table'] = $table;
 	$tconf['@timestamp'] = 2;
-	$tconf['id'] = 'varchar:35::3';
-	$tconf['dir'] = 'varchar:255::8';
+	$tconf['id'] = 'varbinary:35::3';
+	$tconf['dir'] = 'varbinary:255::8';
 	$tconf['txt'] = 'text:::1';
 
 	foreach ($language_list as $lang) {
@@ -201,7 +206,7 @@ public function getTxtId($param, $txt) {
 			$id = mb_substr($txt_id, 1);
 		}
 		else if (!empty($txt_id)) {
-			$id = $txt_id;
+			$id = md5($txt_id);
 		}
 		else {
 			throw new Exception('empty txt id');

@@ -19,6 +19,17 @@ protected $conf = [];
 
 
 /**
+ * Set default configuration. 
+ *
+ * @sess init()
+ * @param array $options
+ */
+public function __construct($options = []) {
+	$this->conf = $options;
+}
+
+
+/**
  * Return javascript code (window.setInterval(...), JQuery required).
  * Implement function php_session_refresh(data) { ... } (data = OK or EXPIRED)
  * and set $on_success = 'php_session_refresh' if you want to track refresh success.
@@ -112,10 +123,10 @@ public function getConf($key) {
  *  inactive: seconds of inactivity. Session expires after lchange + inactive. Range [1-21600] (default = 7200 = 2 h)
  *	ttl: time to live in seconds. Session expires after start + ttl. Range [1, 345600] (default = 172800 = 48 h)
  *  unlimited: optional - if set use inactive=21600 and ttl=345600
- *  allow_dir: login
+ *  allow_dir: [] (list of allowed directories)
  *  redirect_login: 
  *  redirect_forbidden:
- *  required: id, type (if one required session parameter is empty redirect to login page)
+ *  required: [] (list of session parameter - if one is empty redirect to login page)
  * 
  *  Check inactive and ttl with hasExpired().
  *
@@ -125,10 +136,15 @@ public function getConf($key) {
 protected function setConf($conf) {
 
 	$default = [ 'name' => '', 'table' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => 0, 
-		'redirect_login' => '',  'redirect_forbidden' => '', 'required' => [ 'id', 'type' ], 'allow_dir' => [ 'login' ] ];
+		'redirect_login' => '',  'redirect_forbidden' => '', 'required' => [ ], 'allow_dir' => [ ] ];
 
 	foreach ($default as $key => $value) {
-		$this->conf[$key] = isset($conf[$key]) ? $conf[$key] : $value;
+		if (isset($conf[$key])) {
+			$this->conf[$key] = $conf[$key];
+		}
+		else if (!isset($this->conf[$key])) {
+			$this->conf[$key] = $value;
+		}
 	}
 
 	if (empty($this->conf['name'])) {

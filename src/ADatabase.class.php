@@ -1002,11 +1002,12 @@ public static function createTableQuery($conf) {
 
 
 /**
- * Create table (drop if exists).
+ * Return true if table was created. Create only if table does not exists or drop_existing = true.
  *
  * @see createTableQuery
  * @param array[string]string $conf
  * @param bool $drop_existing
+ * @return bool
  */
 public function createTable($conf, $drop_existing = false) {
 
@@ -1022,12 +1023,13 @@ public function createTable($conf, $drop_existing = false) {
 		}
 		else {
 			// ToDo: throw exception if $conf has changed
-			return;
+			return false;
 		}
 	}
 
 	$query = self::createTableQuery($conf);
 	$this->execute($query);
+	return true;
 }
 
 

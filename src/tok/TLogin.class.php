@@ -7,6 +7,10 @@ require_once(__DIR__.'/../Database.class.php');
 require_once(__DIR__.'/../Session.class.php');
 
 use \rkphplib\Exception;
+use \rkphplib\Session;
+use \rkphplib\ADatabase;
+use \rkphplib\Database;
+
 
 
 /**
@@ -17,10 +21,13 @@ use \rkphplib\Exception;
  */
 class TLogin implements TokPlugin {
 
-/* @var Session $sess */
+/** @var Tokenizer $tok */
+var $tok = null;
+
+/** @var Session $sess */
 var $sess = null;
 
-/* @var ADatabase $db */
+/** @var ADatabase $db */
 var $db = null;
 
 
@@ -34,11 +41,29 @@ var $db = null;
  * @return map<string:int>
  */
 public function getPlugins($tok) {
+	$this->tok = $tok;
+
   $plugin = [];
   $plugin['login'] = TokPlugin::NO_BODY;
   $plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
   $plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
+  $plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
+
   return $plugin;
+}
+
+
+/**
+ * Logout. Example:
+ *
+ * {login_clear:}
+ *
+ */
+public function tok_login_clear() {
+	if ($this->sess) {
+		$this->sess->destroy();
+		$this->sess = null;
+	}
 }
 
 
@@ -53,8 +78,20 @@ public function getPlugins($tok) {
  * @return string javascript-login-refresh
  */
 public function tok_login_check($p) {
-	$this->sess = new Session();
+
+	$this->sess = new Session([ 'required' => [ 'id', 'type' ], 'allow' => [ 'login' ] ]);
 	$this->sess->init($p);
+
+	$table = ADatabase::escape($p['table']);
+
+  $query_map = [
+    'select_login' => "SELECT *, PASSWORD({:=password}) AS password_input FROM $table WHERE login={:=login}",
+    'insert' => "INSERT INTO $table (login, password, type, person) VALUES ".
+			"({:=login}, PASSWORD({:=password}), {:=type}, {:=person})"
+  ];
+	
+	$this->db = Database::getInstance(SETTINGS_DSN, $query_map);
+
 	return "<script>\n".$this->sess->getJSRefresh('login/ajax/refresh.php', '', 10)."\n</script>";
 }
 
@@ -64,15 +101,37 @@ public function tok_login_check($p) {
  *
  * {login_auth:}login={get:login}|#|password={get:password}{:login_auth}
  *
+ * If login is invalid set {var:login_error} = error.
+ * If password is invalid set {var:password_error} = error. 
+ *
  * @param map $p
  */
 public function tok_login_auth($p) {
-	$do_auth = !empty($p['login']) && !empty($p['password']);
 
-	if (!$do_auth) {
-		$this->db = Database::getInstance(SETTINGS_DSN);
+	if (empty($p['login'])) {
 		$this->createTable($this->sess->getConf('table'));
+		return;
 	}
+
+	$dbres = $this->db->select($this->db->getQuery('select_login', $p));
+	if (count($dbres) == 0) {
+		$this->tok->setVar('login_error', 'error');
+		return;
+	}
+
+	if (empty($p['password'])) {
+		return;
+	}
+
+ 	if (count($dbres) != 1 || empty($dbres[0]['password']) || $dbres[0]['password'] != $dbres[0]['password_input']) {
+		$this->tok->setVar('password_error', 'error');
+		return;
+	}
+
+	// login + password ok ... update login session
+	unset($dbres[0]['password_input']);
+	unset($dbres[0]['password']);
+	$this->sess->setHash($dbres[0]);
 }
 
 
@@ -85,7 +144,10 @@ public function tok_login_auth($p) {
 public function tok_login($key) {
 	$res = '';
 
-	if (!empty($key)) {
+	if (is_null($this->sess)) {
+		// do nothing ...
+	}
+	else if (!empty($key)) {
 		$res = $this->sess->get($key);
 	}
 	else if ($this->sess->has('id')) {
@@ -97,7 +159,7 @@ public function tok_login($key) {
 
 
 /**
- * Create login table.
+ * Create login table. Create admin user admin|admin (id=1).
  * 
  * @param string $table
  */
@@ -106,11 +168,15 @@ public function createTable($table) {
 	$tconf['@table'] = $table;
 	$tconf['@id'] = 1;
 	$tconf['@timestamp'] = 3;
-	$tconf['login'] = 'varchar:50::1';
-	$tconf['password'] = 'varchar:50::';
-	$tconf['type'] = 'varchar:30:admin:9';
+	$tconf['login'] = 'varbinary:50::5';
+	$tconf['password'] = 'varbinary:50::';
+	$tconf['type'] = 'varbinary:30:admin:9';
+	$tconf['person'] = 'varchar:120::1';
 
-	$this->db->createTable($tconf);
+	if ($this->db->createTable($tconf)) {
+		$this->db->execute($this->db->getQuery('insert',
+			[ 'login' => 'admin', 'password' => 'admin', 'type' => 'admin', 'person' => 'Administrator' ]));
+	}
 }
 
 
