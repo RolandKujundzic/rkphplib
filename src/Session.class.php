@@ -74,16 +74,22 @@ public function init($conf) {
 
 	if (!session_id()) {
 		session_start();
+		\rkphplib\lib\log_debug('Session::init> start session');
 	}
-
+	
 	$skey = $this->getSessionKey();
 	$skey_meta =$this->getSessionKey(true); 
 
+	\rkphplib\lib\log_debug('Session::init> session_id='.session_id()." in ".ini_get('session.save_path').
+		" - skey=$skey skey_meta=$skey_meta");
+
 	if (!isset($_SESSION[$skey]) || !is_array($_SESSION[$skey])) {
+		\rkphplib\lib\log_debug('Session::init> create skey map');
     $_SESSION[$skey] = [];
   }
 
 	if (!isset($_SESSION[$skey_meta]) || !is_array($_SESSION[$skey_meta])) {
+		\rkphplib\lib\log_debug('Session::init> create skey_meta map');
     $_SESSION[$skey_meta] = [];
   }
 
@@ -91,6 +97,7 @@ public function init($conf) {
 
 	if (!empty($_REQUEST[SETTINGS_REQ_DIR])) {
 		$dir = $_REQUEST[SETTINGS_REQ_DIR];
+		\rkphplib\lib\log_debug('Session::init> check if '.$dir.' is in allowed: '.print_r($this->conf['allow_dir'], true));
 
 		foreach ($this->conf['allow_dir'] as $allow_dir) {
 			if (!empty($allow_dir) && mb_strpos($dir, $allow_dir) === 0) {
@@ -101,18 +108,21 @@ public function init($conf) {
 	}
 
 	if (!$this->validScope()) {
+		\rkphplib\lib\log_debug('Session::init> invalid scope - redirectForbidden');
 		$this->redirectForbidden();
 	}
 
 	if (count($this->conf['required']) > 0) {
 		foreach ($this->conf['required'] as $name) {
     	if (empty($_SESSION[$skey][$name])) {
+				\rkphplib\lib\log_debug('Session::init> required parameter '.$skey.'.'.$name.' empty - redirectLogin');
 				$this->redirectLogin('no_login');
 			}
 		}
 	}
 
 	if (($expired = $this->hasExpired())) {
+		\rkphplib\lib\log_debug('Session::init> exipred - redirectLogin');
 		$this->redirectLogin('expired', [ 'expired' => $expired ]);
 	}
 }
