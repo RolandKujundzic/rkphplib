@@ -31,7 +31,7 @@ public static function readPHPSessionFile($file) {
 	require_once(__DIR__.'/File.class.php');
 
 	if (ini_get('session.serialize_handler') != 'php') {
-		throws new Exception('set session.serialize_handler = php');
+		throw new Exception('set session.serialize_handler = php');
 	}
 
 	$res = [];
