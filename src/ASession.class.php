@@ -76,6 +76,7 @@ END;
 public function initMeta() {
 
 	if (!empty($this->conf['init_meta'])) {
+		\rkphplib\lib\log_debug('ASession::initMeta> use existing'); 
 		return;
 	}
 
