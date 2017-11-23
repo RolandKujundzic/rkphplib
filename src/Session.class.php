@@ -23,6 +23,40 @@ class Session extends ASession {
 
 
 /**
+ * Return session file. 
+ *
+ * @throws if ini_get("session.serialize_handler") != 'php'
+ */
+public static function readPHPSessionFile($file) {
+	require_once(__DIR__.'/File.class.php');
+
+	if (ini_get('session.serialize_handler') != 'php') {
+		throws new Exception('set session.serialize_handler = php');
+	}
+
+	$res = [];
+	$offset = 0;
+	$session_data = File::load($file);
+
+	while ($offset < strlen($session_data)) {
+		if (!strstr(substr($session_data, $offset), "|")) {
+			throw new Exception("invalid data, remaining: " . substr($session_data, $offset));
+		}
+
+		$pos = strpos($session_data, "|", $offset);
+		$num = $pos - $offset;
+		$varname = substr($session_data, $offset, $num);
+		$offset += $num + 1;
+		$data = unserialize(substr($session_data, $offset));
+		$res[$varname] = $data;
+		$offset += strlen(serialize($data));
+	}
+
+	return $res;
+}
+
+
+/**
  * Initialize session. Parameter: name, scope(=docroot), ttl(=172800), inactive(=7200), redirect_[forbidden|login](='').
  * If required session parameter does not exist redirect to redirect_login or throw exception.
  *
