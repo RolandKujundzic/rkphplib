@@ -9,6 +9,7 @@ require_once(__DIR__.'/../lib/split_str.php');
 use \rkphplib\Exception;
 
 
+
 /**
  * Tokenizer base Menu plugin.
  *
@@ -49,6 +50,7 @@ public function getPlugins($tok) {
 	$plugin['menu'] = TokPlugin::NO_PARAM;
 	$plugin['menu:add'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['menu:conf'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['menu:privileges'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 
 	return $plugin;
 }
@@ -84,6 +86,16 @@ public function tok_menu_conf($name, $value) {
 
 
 /**
+ * Set privilege map.
+ *
+ * @param array $map (privilege=2^N)
+ */
+public function tok_menu_privileges($map) {
+	$this->conf['privileges'] = $map;
+}
+
+
+/**
  * Implement menu output.
  *
  * @param string $tpl
@@ -105,7 +117,7 @@ abstract public function tok_menu($tpl);
  * - label:
  * - if: ignore if empty
  * - if_table: table1, table2, ... (ignore if one table is missing)
- * - if_priv: shop | admin (one privilege is enough) or shop, admin, ... (all privileges necessary)
+ * - if_priv: name (see {menu:privileges}name=2^N|#|...{:menu})
  * - dir: e.g. apps/shop/config
  * - level (= param)
  * - type (l|b, autoset)
@@ -124,6 +136,8 @@ public function tok_menu_add($level, $node) {
 		throw new Exception('invalid level', print_r($node, true));
 	}
 
+	\rkphplib\lib\log_debug("AMenu.tok_menu_add> level=$level node: ".print_r($node, true));
+
 	if ($this->ignore_level > 0 && $level > $this->ignore_level) {
 		// do not append descendant node
 		return;
@@ -135,6 +149,8 @@ public function tok_menu_add($level, $node) {
 	$prev = ($nc > 0) ? $this->node[$nc - 1] : null;
 	$node['id'] = $nc + 1;
 	$node['parent'] = 0;
+
+	\rkphplib\lib\log_debug("AMenu.tok_menu_add> nc=$nc id=".($nc + 1)." parent=0 prev: ".print_r($prev, true));
 
 	if ($prev) {
 		if ($level === $prev['level'] + 1) {
@@ -161,6 +177,7 @@ public function tok_menu_add($level, $node) {
 
 	if (isset($node['if']) && empty($node['if'])) {
 		$this->ignore_level = $level + 1;
+		\rkphplib\lib\log_debug("AMenu.tok_menu_add> if = false");
 		return;
 	}
 
@@ -171,13 +188,30 @@ public function tok_menu_add($level, $node) {
 		foreach ($table_list as $table) {
 			if (!$db->hasTable($table)) {
 				$this->ignore_level = $level + 1;
+				\rkphplib\lib\log_debug("AMenu.tok_menu_add> if_table = false - missing $table");
 				return;
 			}
 		}
 	}
 
 	if (!empty($node['if_priv'])) {
-		throw new Exception('ToDo: if_priv');
+		if (!isset()) {
+			throw new Exception('call [menu:privileges]@me=[login:priv]|#|something=2^N|#|...[:menu]');
+		}
+
+		$privileges = \rkphplib\lib\split_str(',', $node['if_priv']);
+		$mypriv = intval($this->conf['privileges']['@me']);
+
+		foreach ($privileges as $name) {
+			if (!isset($this->conf['privileges'][$name])) {
+				return;
+			}
+
+			$priv = intval($this->conf['privileges'][$name]);
+			if (($priv & $mypriv) != $priv) {
+				return;
+			}
+		}
 	}
 
 	$node['level'] = $level;
@@ -199,6 +233,7 @@ public function tok_menu_add($level, $node) {
 	}
 
 	array_push($this->node, $node);
+	\rkphplib\lib\log_debug("AMenu.tok_menu_add> node: ".print_r($this->node, true)."\npath: ".print_r($this->path, true));
 }
 
 
