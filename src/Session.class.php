@@ -3,6 +3,7 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/ASession.class.php');
+require_once(__DIR__.'/Dir.class.php');
 
 
 if (!defined('SETTINGS_REQ_DIR')) {
@@ -10,6 +11,8 @@ if (!defined('SETTINGS_REQ_DIR')) {
 	define('SETTINGS_REQ_DIR', 'dir');
 }
 
+
+use \rkphplib\Dir;
 
 
 /**
@@ -59,8 +62,10 @@ public static function readPHPSessionFile($file) {
 /**
  * Initialize session. Parameter: name, scope(=docroot), ttl(=172800), inactive(=7200), redirect_[forbidden|login](='').
  * If required session parameter does not exist redirect to redirect_login or throw exception.
- *
+ * New parameter "save_path" (overwrite with define('SESSION_SAVE_PATH', '...')).
+ * 
  * @see ASession::setConf 
+ * @throws
  * @param map $conf
  */
 public function init($conf) {
@@ -70,6 +75,16 @@ public function init($conf) {
 	if ($sess_ttl > 0 && $sess_ttl < $this->conf['inactive']) {
 		// avoid session garbage collection during session lifetime 
 		ini_set('session.gc_maxlifetime', $this->conf['inactive']);
+	}
+
+	if (defined('SESSION_SAVE_PATH')) {
+		$this->conf['save_path'] = SESSION_SAVE_PATH;
+	}
+
+	$save_path = ini_get('session.save_path');
+	if (!empty($this->conf['save_path']) && $save_path != $this->conf['save_path']) {
+		Dir::exists($this->conf['save_path'], true);
+		ini_set('session.save_path', $this->conf['save_path']);
 	}
 
 	if (!session_id()) {
