@@ -242,8 +242,8 @@ public function tok_include($param, $file) {
  * 
  * @throws if file does not exists 
  * @param array $param
- * @param array $a
- * @return string
+ * @param array $a a[0]=condition, a[1]=true path, a[2]=false path
+ * @return string return true_path_content|false_path_content|''
  */
 public function tok_include_if($param, $a) {
 
@@ -255,7 +255,7 @@ public function tok_include_if($param, $a) {
 		$a[2] = '';
 	}
 
-	$file = ($param != $a[0]) ? $a[1] : $a[2];
+	$file = ($param == $a[0]) ? $a[1] : $a[2];
 	
 	if (empty($file)) {
 		return '';
