@@ -259,6 +259,8 @@ public function redirectForbidden() {
  * @param map $p = []
  */
 public function redirectLogin($reason, $p = []) {
+	\rkphplib\lib\log_debug('ASession::redirectLogin> reason='.$reason.' - conf: '.
+		print_r($this->conf, true)."\np: ".print_r($p, true));
 	$this->destroy();
 
 	if (!empty($this->conf['redirect_login'])) {
