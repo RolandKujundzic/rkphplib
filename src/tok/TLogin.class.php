@@ -79,7 +79,7 @@ public function tok_login_clear() {
  */
 public function tok_login_check($p) {
 
-	$this->sess = new Session([ 'required' => [ 'id', 'type' ], 'allow' => [ 'login' ] ]);
+	$this->sess = new Session([ 'required' => [ 'id', 'type' ], 'allow_dir' => [ 'login' ] ]);
 	$this->sess->init($p);
 
 	$table = ADatabase::escape($p['table']);
