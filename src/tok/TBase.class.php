@@ -63,7 +63,25 @@ public function __construct() {
  * - tf: PARAM_LIST
  * - t, true: REQUIRE_BODY, TEXT, REDO
  * - f, false: REQUIRE_BODY, TEXT, REDO, NO_PARAM
- * - find: 
+ * - find: TEXT, REDO
+ * - plugin: NO_PARAM, REQUIRE_BODY, CSLIST_BODY
+ * - escape: REQUIRE_PARAM
+ * - unescape: REQUIRE_PARAM
+ * - encode: REQUIRE_PARAM
+ * - decode: REQUIRE_PARAM
+ * - get: 0
+ * - include: REDO, REQUIRE_BODY
+ * - include_if: REDO, REQUIRE_BODY, KV_BODY
+ * - ignore: NO_PARAM, TEXT, REQUIRE_BODY
+ * - if: REQUIRE_BODY, LIST_BODY
+ * - keep: TEXT, REUIRE_BODY
+ * - load: TEXT, REQUIRE_BODY
+ * - link: PARAM_CSLIST, KV_BODY
+ * - toupper: NO_PARAM
+ * - tolower: NO_PARAM
+ * - join: KV_BODY
+ * - var: REQUIRE_PARAM
+ * - esc: 0
  *
  * @param Tokenizer $tok
  * @return map<string:int>
@@ -86,7 +104,7 @@ public function getPlugins($tok) {
 	$plugin['get'] = 0;
 	$plugin['include'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
 	$plugin['include_if'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
-	$plugin['ignore'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
+	$plugin['ignore'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['if'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['keep'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['load'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
@@ -181,7 +199,7 @@ public function tok_toupper($txt) {
 
 
 /**
- * Return empty string.
+ * Don't parse body, return empty string.
  *
  * @tok {ignore:}abc{:ignore} = [] 
  * 
