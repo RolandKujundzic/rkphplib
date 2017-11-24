@@ -86,8 +86,8 @@ public function tok_login_check($p) {
 
   $query_map = [
     'select_login' => "SELECT *, PASSWORD({:=password}) AS password_input FROM $table WHERE login={:=login}",
-    'insert' => "INSERT INTO $table (login, password, type, person) VALUES ".
-			"({:=login}, PASSWORD({:=password}), {:=type}, {:=person})"
+    'insert' => "INSERT INTO $table (login, password, type, person, language, priv) VALUES ".
+			"({:=login}, PASSWORD({:=password}), {:=type}, {:=person}, {:=language}, {:=priv})"
   ];
 	
 	$this->db = Database::getInstance(SETTINGS_DSN, $query_map);
@@ -171,11 +171,14 @@ public function createTable($table) {
 	$tconf['login'] = 'varbinary:50::5';
 	$tconf['password'] = 'varbinary:50::';
 	$tconf['type'] = 'varbinary:30:admin:9';
+	$tconf['language'] = 'char:2:de:1';
+	$tconf['priv'] = 'int:::1';
 	$tconf['person'] = 'varchar:120::1';
 
 	if ($this->db->createTable($tconf)) {
 		$this->db->execute($this->db->getQuery('insert',
-			[ 'login' => 'admin', 'password' => 'admin', 'type' => 'admin', 'person' => 'Administrator' ]));
+			[ 'login' => 'admin', 'password' => 'admin', 'type' => 'admin', 
+				'person' => 'Administrator', 'language' => 'de', 'priv' => 3 ]));
 	}
 }
 
