@@ -54,29 +54,30 @@ public function tok_menu($tpl) {
 		$this->conf['menu'] = $tpl;
 	}
 
-	$html = [ null ];
+	$html = [ ];
 
 	for ($i = 0; $i < count($this->node); $i++) {
-		$level = $this->node[$i]['level'];
-		$parent = $this->node[$i]['parent'];
+		$node = $this->node[$i];
+		$level = $node['level'];
 
 		if (!isset($html[$level])) {
 			$html[$level] = [];
 		}
 
-		if ($level == 1 || in_array($parent, $this->path)) {
-			array_push($html[$level], $this->node_html($i));
-		}
+		array_push($html[$level], $this->node_html($i));
 	}
 
-	for ($i = 1; $i < count($html); $i++) {
+	$res = $this->conf['menu'];
+
+	for ($i = 1; $i <= count($html); $i++) {
 		$lname = 'level_'.$i;
-		$html[$i] = $this->conf[$lname.'_header'].join($this->conf[$lname.'_delimiter'], $html[$i]).$this->conf[$lname.'_footer'];
+		$out = $this->conf[$lname.'_header'].join($this->conf[$lname.'_delimiter'], $html[$i]).
+			$this->conf[$lname.'_footer'];
+		\rkphplib\lib\log_debug("TMenu.tok_menu> $lname:\n$out");
+		$res = $this->tok->replaceTags($res, [ $lname => $out ]);
 	}
 
-	// \rkphplib\lib\log_debug(print_r($html, true));
-
-	return '';
+	return $res;
 }
 
 
