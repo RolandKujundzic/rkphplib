@@ -57,6 +57,19 @@ public function getPlugins($tok) {
 
 
 /**
+ * Set user privileges. Privilege is name = 2^N.
+ *
+ * @tok {menu:privileges}@me={login:priv}|#|super=1|#|site=2{:menu}
+ *
+ * @param map $map
+ */
+public function tok_menu_privileges($map) {
+	\rkphplib\lib\log_debug('AMenu.tok_privileges> set conf.privileges: '.print_r($map, true));
+	$this->conf['privileges'] = $map;
+}
+
+
+/**
  * Set menu configuration. Example (see subclass constructor for default configuration):
  * 
  * @throws
@@ -86,16 +99,6 @@ public function tok_menu_conf($name, $value) {
 
 
 /**
- * Set privilege map.
- *
- * @param array $map (privilege=2^N)
- */
-public function tok_menu_privileges($map) {
-	$this->conf['privileges'] = $map;
-}
-
-
-/**
  * Implement menu output.
  *
  * @param string $tpl
@@ -107,9 +110,11 @@ abstract public function tok_menu($tpl);
 /**
  * Add menu node. Call in correct order. Example:
  *
+ * {menu:privilege}@me={login:priv}|#|super=1|#|other=2^N|#|...{:menu}
+ *
  * {menu:add:1}label=Main|#|dir=/|#|if={:menu} -> ignore empty if, use dir=/ for active root
  * {menu:add:2}label=Sub 1|#|if_table=shop_customer, shop_item{:menu} -> ignore if table does not exist
- * {menu:add:}level=2|#|lable=sub 2|#|if_priv={:menu} -> ignore if privilege does not exist it current TLogin
+ * {menu:add:}level=2|#|lable=sub 2|#|if_priv=super,other{:menu} -> active if user has super and other priv
  * {menu:add:1}label=Main 2|#|dir=main2{:menu} -> active if dir=main2|main2/*
  * 
  * Parameter: 
@@ -195,8 +200,8 @@ public function tok_menu_add($level, $node) {
 	}
 
 	if (!empty($node['if_priv'])) {
-		if (!isset()) {
-			throw new Exception('call [menu:privileges]@me=[login:priv]|#|something=2^N|#|...[:menu]');
+		if (!isset($this->conf['privileges']) || !isset($this->conf['privileges']['@me'])) {
+			throw new Exception('missing @me privilege - call [menu:privileges]@me=[login:priv]|#|...[:menu]');
 		}
 
 		$privileges = \rkphplib\lib\split_str(',', $node['if_priv']);
@@ -204,11 +209,12 @@ public function tok_menu_add($level, $node) {
 
 		foreach ($privileges as $name) {
 			if (!isset($this->conf['privileges'][$name])) {
-				return;
+				throw new Exception('missing '.$name.' privilege - call [menu:privileges]'.$name.'=2^N|#|...[:menu]');
 			}
 
 			$priv = intval($this->conf['privileges'][$name]);
 			if (($priv & $mypriv) != $priv) {
+				\rkphplib\lib\log_debug("AMenu.tok_menu_add> no $name privilege: $priv & $mypriv != $priv");
 				return;
 			}
 		}
