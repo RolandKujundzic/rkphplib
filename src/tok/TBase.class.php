@@ -325,6 +325,23 @@ public function tok_load($param, $file) {
 public function tok_link($name_list, $p) {
 	$res = 'index.php?'.SETTINGS_REQ_CRYPT.'=';
 
+	if (empty(SETTINGS_REQ_CRYPT)) {
+		$dir = '';
+
+		if (isset($p[SETTINGS_REQ_DIR])) {
+			$dir = $p[SETTINGS_REQ_DIR];
+		}
+		else if (isset($p['@'])) {
+			$dir = $p['@'];
+		}
+		else if (!empty($_REQUEST[SETTINGS_REQ_CRYPT])) {
+			$dir = $_REQUEST[SETTINGS_REQ_CRYPT];
+		}
+
+		$res = 'index.php?'.SETTINGS_REQ_DIR.'='.$dir;
+		return $res;
+	}
+
 	if (isset($p['_'])) {
 		$res  = empty($p['_']) ? '?' : $p['_'].'?'.SETTINGS_REQ_CRYPT.'=';
 		unset($p['_']);
