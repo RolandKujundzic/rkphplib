@@ -90,6 +90,10 @@ private function node_html($pos) {
 	$node = $this->node[$pos];
 	$lname = 'level_'.$node['level'];
 
+	if (!empty($node['label'])) {
+		$node['label_length'] = mb_strlen($node['label']);
+	}
+
 	$hi_name = empty($this->conf[$lname.'_hi']) ? $lname : $lname.'_hi';
 	$tpl = isset($this->path[$pos]) ? $this->conf[$hi_name] : $this->conf[$lname];
 	$tpl = $this->tok->replaceTags($tpl, $node);
