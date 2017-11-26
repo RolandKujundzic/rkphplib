@@ -47,9 +47,9 @@ public function getPlugins($tok) {
 	$this->tok = $tok;
 
 	$plugin = [];
-	$plugin['menu'] = TokPlugin::NO_PARAM;
+	$plugin['menu'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['menu:add'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
-	$plugin['menu:conf'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['menu:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::TEXT;
 	$plugin['menu:privileges'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 
 	return $plugin;
