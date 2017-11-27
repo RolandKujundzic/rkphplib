@@ -225,7 +225,7 @@ public function exec($data = null) {
 	}
 
 	$header = $this->opt['header'];
-	$options = [ 'FOLLOWLOCATION' => true, 'SSL_VERIFYPEER' => false, 
+	$options = [ 'FOLLOWLOCATION' => true, 'SSL_VERIFYPEER' => false, 'TIMEOUT' => 30, 
 		'SSL_VERIFYHOST' => false, 'RETURNTRANSFER' => true, 'BINARYTRANSFER' => true ];
 
 	if (!empty($this->opt['token'])) {
