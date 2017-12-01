@@ -34,7 +34,6 @@ private $db = null;
 public function getPlugins($tok) {
 
 	$plugin = [];
-  $plugin['esc'] = TokPlugin::TEXT;
   $plugin['sql_dsn'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::NO_PARAM;
   $plugin['sql_name'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::NO_PARAM;
   $plugin['sql_query'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::NO_PARAM;
@@ -84,42 +83,6 @@ public function tok_sql_dsn($dsn) {
  */
 public function tok_sql_name($name) {
 	return ADatabase::escape_name(trim($name));
-}
-
-
-/**
- * SQL Escape $arg or _REQUEST[$param].
- *
- * @tok {esc:} ab'c {:esc} -> ' ab''c '
- * @tok {esc:t} 'a"' {:esc} -> ' ''a"'' '
- * @tok {esc:a} AND _REQUEST[a] = " x " -> ' x '
- * @tok {esc:t} AND _REQUEST[t] = " x " -> 'x'
- * @tok {esc:}null{:esc} -> NULL
- * @tok {esc:}NULL{:esc} -> NULL
- * @param string $param
- * @param string $arg
- * @return string 
- */
-public function tok_esc($param, $arg) {
-
-	if (!empty($param) && (isset($_REQUEST[$param]) || array_key_exists($param, $_REQUEST))) {
-		$arg = $_REQUEST[$param];
-	}
-
-	if ($param === 't') {
-		$arg = trim($arg);
-	}
-
-	$res = '';
-
-	if (is_null($arg) || $arg === 'null' || $arg === 'NULL') {
-		$res = 'NULL';
-	}
-	else {
-		$res = "'".$this->db->esc($arg)."'";
-	}
-
-	return $res;
 }
 
 
