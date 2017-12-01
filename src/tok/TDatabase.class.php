@@ -59,57 +59,5 @@ public function __construct($dsn = '') {
 }
 
 
-/**
- * Set database connection string.
- *
- * @tok {sql_name:}a b{:sql_name} -> `a b`
- * @see \rkphplib\ADatabase::setDSN()
- * @param string $arg
- * @return empty string
- */
-public function tok_sql_dsn($dsn) {
-	$this->db = Database::getInstance($dsn);
-	return '';
-}
-
-
-/**
- * SQL Escape trim($name).
- *
- * @tok {sql_name:}a b{:sql_name} -> `a b`
- * @see \rkphplib\ADatabase::escape_name
- * @param string $name
- * @return string
- */
-public function tok_sql_name($name) {
-	return ADatabase::escape_name(trim($name));
-}
-
-
-/**
- * Execute sql query.
- *
- * @param string $param
- * @param string $arg
- * @return empty string
- */
-public function sql_query($param, $arg) {
-	throw new Exception('ToDo');
-	return '';
-}
-
-
-/**
- * Return column value of last sql query.
- *
- * @param string $param
- * @param string $arg
- * @return string
- */
-public function sql_col($param, $arg) {
-	throw new Exception('ToDo');
-}
-
-
 }
 

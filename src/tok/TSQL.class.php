@@ -119,6 +119,18 @@ public function tok_sql_query($qkey, $query) {
 
 
 /**
+ * Return colum value of last {sql_query:}.
+ * 
+ * @throws
+ * @param string $name
+ * @return string
+ */
+public function tok_sql_col($name) {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
  * Escape null value. Example:
  *
  * @tok {null:}abc{:null} = 'abc'
