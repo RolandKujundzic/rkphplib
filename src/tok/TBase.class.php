@@ -584,17 +584,43 @@ public function tok_if($param, $p) {
 
 
 /**
- * Return escaped argument ('$arg'). If argument is empty use trim($_REQUEST[param]).
+ * Return sql escaped argument ('$arg'). If argument is empty use trim($_REQUEST[param]).
+ * Trim argument if param = t and _REQUEST[t] is not set.
+ * Null argument if empty and param = null and _REQUEST[null] is not set.
+ *
+ * @tok {esc:} ab'c {:esc} -> [ ab''c ]
+ * @tok {esc:t} 'a"' {:esc} -> [''a"'']
+ * @tok {esc:a} AND _REQUEST[a] = " x " -> ' x '
+ * @tok {esc:t} AND _REQUEST[t] = " x " -> 'x'
+ * @tok {esc:}null{:esc} -> NULL
+ * @tok {esc:}NULL{:esc} -> NULL
+ * @tok {esc:null}{:esc} -> NULL
  *  
  * @param string $param
  * @param string $arg
- * @return string
+ * @return string|null
  */
 public function tok_esc($param, $arg) {
-	require_once(PATH_RKPHPLIB.'ADatabase.class.php');
 
-	$arg = (empty($param) || !isset($_REQUEST[$param])) ? $arg : trim($_REQUEST[$param]);
-	return "'".\rkphplib\ADatabase::escape($arg)."'";
+	if (!empty($param) && isset($_REQUEST[$param])) {
+		$arg = trim($_REQUEST[$param]);
+	}
+	else if ($param == 't') {
+		$arg = trim($arg);
+	}
+	else if ($param == 'null' && trim($arg) == '') {
+		$arg = null;
+	}
+
+	if (is_null($arg) || $arg === 'null' || $arg === 'NULL') {
+		$res = 'NULL';
+	}
+	else {
+		require_once(PATH_RKPHPLIB.'ADatabase.class.php');
+		$res = "'".\rkphplib\ADatabase::escape($arg)."'";
+	}
+
+	return $res;
 }
 
 
