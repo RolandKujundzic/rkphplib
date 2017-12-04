@@ -9,6 +9,7 @@ require_once(__DIR__.'/../lib/conf2kv.php');
 use \rkphplib\Database;
 
 
+
 /**
  * Execute SQL queries.
  *
@@ -35,18 +36,19 @@ protected $db = null;
  * @return map<string:int>
  */
 public function getPlugins($tok) {
-  $this->tok = $tok;
+	$this->tok = $tok;
 
-  $plugin = [];
-  $plugin['sql:query'] = 0;
+	$plugin = [];
+	$plugin['sql:query'] = 0;
 	$plugin['sql:dsn'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY; 
 	$plugin['sql:name'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['sql:qkey'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY;
-  $plugin['sql:col'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+	$plugin['sql:col'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+	$plugin['sql:in'] = TokPlugin::CSLIST_BODY;
 	$plugin['sql'] = 0;
 	$plugin['null'] = TokPlugin::NO_PARAM;
 
-  return $plugin;
+	return $plugin;
 }
 
 
@@ -57,6 +59,32 @@ public function __construct() {
 	if (defined('SETTINGS_DSN')) {
 		$this->db = Database::getInstance();
 	}
+}
+
+
+/**
+ * Convert list into escaped sql list.
+ *
+ * @tok {sql:in:age}18,19,20{:sql} -> age IN ('18', '19', '20')
+ * @tok {sql:in}admin, user{:sql} -> ('admin', 'user')
+ * 
+ * @param string $param
+ * @param array $list
+ */
+public function tok_sql_in($param, $list) {
+	$in = [];
+
+	for ($i = 0; i < count($list); $i++) {
+		array_push($in, $this->db->esc($list[$i]));
+	}
+
+	$res = "('".join("', '", $in)."')";
+
+	if ($param) {
+		$res = $this->db->esc_name($param).' IN '.$res;
+	}
+
+	return $res;
 }
 
 
