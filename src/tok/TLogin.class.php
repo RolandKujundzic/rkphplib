@@ -2,9 +2,12 @@
 
 namespace rkphplib\tok;
 
+$parent_dir = dirname(__DIR__);
+
 require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/../Database.class.php');
-require_once(__DIR__.'/../Session.class.php');
+require_once($parent_dir.'/Database.class.php');
+require_once($parent_dir.'/Session.class.php');
+require_once($parent_dir.'/lib/kv2conf.php');
 
 use \rkphplib\Exception;
 use \rkphplib\Session;
@@ -47,6 +50,7 @@ public function getPlugins($tok) {
   $plugin['login'] = TokPlugin::NO_BODY;
   $plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
   $plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
+  $plugin['login_update'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
   $plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 
   return $plugin;
@@ -97,13 +101,59 @@ public function tok_login_check($p) {
 
 
 /**
- * Compare login with database. Example:
+ * Update login table and session. Use $_REQUEST[key] (key = session key).
+ * Overwrite $_REQUEST session map with values from $p.
  *
- * {login_auth:}login={get:login}|#|password={get:password}{:login_auth}
+ * @tok {login_update:} -> Use $_REQUEST[key] (key = session key)
+ * @tok {login_update:}if=|#|name=Mr. T{:login_update} -> do nothing because if is empty
+ * @tok {login_update:}type=admin|#|...{:login_update} -> throw exception if previous type != 'admin'
+ *
+ * @throws
+ * @param map $p
+ * @return ''
+ */
+public function tok_login_update($p) {
+	$table = $this->sess->getConf('table');
+	$sess = $this->sess->getHash();
+	$kv = [];
+
+	if (isset($p['if']) && empty($p['if'])) {
+		return '';
+	}
+
+	if (isset($p['type']) && isset($sess['type']) && $p['type'] != $sess['type']) {
+		throw new Exception('[login_update:]type='.$p['type'].' != '.$sess['type'].' - session change is forbidden');
+	}
+
+	foreach ($sess as $key => $value) {
+		$kv[$key] = isset($_REQUEST[$key]) ? $_REQUEST[$key] : $value;
+	}
+
+	foreach ($p as $key => $value) {
+		$kv[$key] = $value;
+	}
+
+	$query = $this->db->buildQuery($table, 'update', $kv);	
+	\rkphplib\lib\log_debug("tok_login_update> update $table: $query");
+	$this->db->execute($query);
+	\rkphplib\lib\log_debug("tok_login_update> new session: ".print_r($kv, true));
+	$this->sess->setHash($kv);
+
+	return '';
+}
+
+
+/**
+ * Compare login with database. If successfull load all columns 
+ * from select_login result (except password) into session. Example:
+ *
+ * @tok {login_auth:}login={get:login}|#|password={get:password}{:login_auth}
  *
  * If login is invalid set {var:login_error} = error.
  * If password is invalid set {var:password_error} = error. 
  *
+ * @tok <pre>{login:*}</pre> = id=...|#|login=...|#|type=...|#|priv=...|#|language=...
+ * 
  * @param map $p
  */
 public function tok_login_auth($p) {
@@ -138,6 +188,12 @@ public function tok_login_auth($p) {
 /**
  * Return login key value. If key is empty return yes if login[id] is set.
  *
+ * @tok {login:} -> yes (if logged in)
+ * @tok {login:*} -> key=value|#|... (show all key value pairs)
+ * @tok {login:@*} -> key=value|#|... (show all meta data)
+ * @tok {login:@since} -> date('d.m.Y H:i:s', @start)
+ * @tok {login:@lchange} -> date('d.m.Y H:i:s', @last)
+ * 
  * @param string $key
  * @return string
  */
@@ -146,6 +202,24 @@ public function tok_login($key) {
 
 	if (is_null($this->sess)) {
 		// do nothing ...
+	}
+	else if ($key == '*') {
+		$res = \rkphplib\lib\kv2conf($this->sess->getHash());
+	}
+	else if (substr($key, 0, 1) == '@') {
+		$mkey = substr($key, 1);
+		if ($mkey == '*') {
+			$res = \rkphplib\lib\kv2conf($this->sess->getMetaHash());
+		}
+		else if ($mkey == 'since') {
+			$res = date('d.m.Y H:i:s', $this->sess->getMeta('start'));
+		}
+		else if ($mkey == 'lchange') {
+			$res = date('d.m.Y H:i:s', $this->sess->getMeta('last'));
+		}
+		else {
+			$res = $this->sess->getMeta($mkey);
+		}
 	}
 	else if (!empty($key)) {
 		$res = $this->sess->get($key);
