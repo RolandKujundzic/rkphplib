@@ -94,7 +94,6 @@ public static function run($key, $value, $check) {
 	}
 
 	\rkphplib\lib\log_debug("key=[$key] value=[$value] check=[".join(':', $check)."] method=[$method] res=[$res]");
-
 	return $res;
 }
 
