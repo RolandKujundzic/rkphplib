@@ -37,7 +37,7 @@ use \rkphplib\ValueCheck;
  *
  * {false:}
  * <form>
- * {fv:in:login}type=input|#|label=Login{:fv} 
+ * {fv:in:login}type=text|#|label=Login{:fv} 
  *  = Login: <input type="text" name="login" value="{get:login}" class="{fv:error:login}"> {fv:error_message:login}
  * {fv:in:password}type=password|#|label=Password{:fv} 
  *  = Password: <input type="password" name="password" value="{get:password}" class="{fv:error:password}"> {fv:error_message:password}
@@ -211,7 +211,7 @@ public function tok_fv_check() {
 					$error[$path[1]] = [];
 				}
 
-				array_push($error[$path[1]], $this->getErrorMessage($path[1], $req_value, $key_value));
+				array_push($error[$path[1]], $this->getErrorMessage($path));
 			}
 		}
 	}
@@ -221,15 +221,18 @@ public function tok_fv_check() {
 
 
 /**
- * Return error message.
+ * Return error message (error.path[1..2]). Example:
  *
- * @param string $key
- * @param string $value
- * @param string $check
+ * check.login.1= isUnique:{login:@table}:...|#|
+ * error.login.1= {txt:}already taken{:txt}|#|
+ *
+ * @param array $path
+ * @return string
  */
-protected function getErrorMessage($key, $value, $check) {
-	\rkphplib\lib\log_error("getErrorMessage> key=$key value=$value check=$check - invalid");
-	return 'invalid';
+protected function getErrorMessage($path) {
+	$ignore = array_shift($path);
+	$key = 'error.'.join('.', $path);
+	return empty($this->conf['current'][$key]) ? 'invalid' : $this->conf['current'][$key];
 }
 
 
@@ -288,8 +291,8 @@ public function tok_fv_in($name, $p) {
 
 
 /**
- * Return html input. Use template.input for type=input|password|radio|checkbox.
- * Use template.textarea, template.select for type=textarea|select.
+ * Return html input. Use template.input for type=[text|password|radio|checkbox|hidden|image|email|...].
+ * Use template.textarea, template.select for type=[textarea|select].
  * Attribute keys: size, maxlength, placeholder, type, class, style, pattern, 
  * rows and cols (add value="{:=value}" if undefined).
  * Boolean attributes: readonly, multiple and disabled (e.g. readonly=1).
@@ -320,14 +323,14 @@ protected function getInput($name, $p) {
 		$input = $conf['template.input'];
 	}
 
-	$delimiter = [ 'style' => ';', 'class' => ' ' ];
 	$attributes = [ 'size', 'maxlength', 'placeholder', 'type', 'class', 'style', 'pattern', 'rows', 'cols' ];
 	$tags = '';
 
 	foreach ($attributes as $key) {
 		if (isset($p[$key])) {
 			$tags .= mb_strpos($input, $key.'="') ? '' : ' '.$key.'="{:='.$key.'}"';
-			$ri[$key] = empty($ri[$key]) ? $p[$key] : $ri[$key].$delimiter[$key].$p[$key];
+			$delimiter = ($key == 'style') ? ';' : ' ';
+			$ri[$key] = empty($ri[$key]) ? $p[$key] : $ri[$key].$delimiter.$p[$key];
 		}
 	}
 
@@ -340,10 +343,12 @@ protected function getInput($name, $p) {
 	}
 
 	// selected, checked ???
+	\rkphplib\lib\log_debug("getInput> $tags - $input");
 
 	$input = str_replace('$tags', $tags, $input);
 	$input = $this->tok->replaceTags($input, $ri);
 
+	\rkphplib\lib\log_debug("getInput($name, ".print_r($p, true).") = $input");
 	return $input;
 }
 
