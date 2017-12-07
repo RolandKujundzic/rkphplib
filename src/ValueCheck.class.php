@@ -47,7 +47,7 @@ public static function run($key, $value, $check) {
 
 	if (($start = mb_strpos($key, '.')) > 0) {
 		// e.g. email.1, email.2 
-		$key = mb_substr(0, $key);
+		$key = mb_substr(0, $start);
 	}
 
 	if (is_callable($value)) {
@@ -130,6 +130,30 @@ public static function getMatch($name) {
 		'PLZ' => '/^[0-9]{5}$/');
 
   return isset($rx[$name]) ? $rx[$name] : '';
+}
+
+
+/**
+ * Execute database query to check if value is unique. Example: 
+ *
+ * self::run(login, 'Joe', '{login:@table}:login:{get:login}:id:{login:id}')
+ *
+ * @param string $value
+ * @array $p
+ */
+public static function isUnique($value, $p) {
+	require_once(__DIR__.'/Database.class.php');
+
+	$table = \rkphplib\ADatabase::escape_name($p[0]);
+	$id_col = \rkphplib\ADatabase::escape_name($p[3]);
+	$u_col = \rkphplib\ADatabase::escape_name($p[1]);
+
+	$query = "SELECT count(*) AS anz FROM $table WHERE $id_col!={:=id_val} AND $u_col={:=u_val}";
+
+	$db = \rkphplib\Database::getInstance('', [ 'select_unique' => $query ]);
+	$query = $db->getQuery('select_unique', [ 'id_val' => $p[4], 'u_val' => $p[2] ]);
+	$dbres = $db->select($query);
+	return intval($dbres[0]['anz']) == 0;
 }
 
 
