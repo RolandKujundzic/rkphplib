@@ -73,7 +73,7 @@ public function tok_menu($tpl) {
 		$lname = 'level_'.$i;
 		$out = $this->conf[$lname.'_header'].join($this->conf[$lname.'_delimiter'], $html[$i]).
 			$this->conf[$lname.'_footer'];
-		\rkphplib\lib\log_debug("TMenu.tok_menu> $lname:\n$out");
+		// \rkphplib\lib\log_debug("TMenu.tok_menu> $lname:\n$out");
 		$res = $this->tok->replaceTags($res, [ $lname => $out ]);
 	}
 
