@@ -42,7 +42,7 @@ public function getPlugins($tok) {
 
 	$plugin = [];
 	$plugin['output:set']  = TokPlugin::REQUIRE_PARAM;
-	$plugin['output.get']  = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+	$plugin['output:get']  = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['output:conf'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['output:init'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['output:loop']   = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
