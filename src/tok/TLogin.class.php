@@ -191,6 +191,7 @@ public function tok_login_auth($p) {
  * @tok {login:} -> yes (if logged in)
  * @tok {login:*} -> key=value|#|... (show all key value pairs)
  * @tok {login:@*} -> key=value|#|... (show all meta data)
+ * @tok {login:@[name|table]} -> show configuration value
  * @tok {login:@since} -> date('d.m.Y H:i:s', @start)
  * @tok {login:@lchange} -> date('d.m.Y H:i:s', @last)
  * 
@@ -217,8 +218,11 @@ public function tok_login($key) {
 		else if ($mkey == 'lchange') {
 			$res = date('d.m.Y H:i:s', $this->sess->getMeta('last'));
 		}
-		else {
+		else if ($this->sess->hasMeta($mkey)) {
 			$res = $this->sess->getMeta($mkey);
+		}
+		else {
+			$res = $this->sess->getConf($mkey);
 		}
 	}
 	else if (!empty($key)) {
