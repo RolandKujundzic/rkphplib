@@ -64,7 +64,7 @@ public function getPlugins($tok) {
  * @param map $map
  */
 public function tok_menu_privileges($map) {
-	\rkphplib\lib\log_debug('AMenu.tok_privileges> set conf.privileges: '.print_r($map, true));
+	// \rkphplib\lib\log_debug('AMenu.tok_privileges> set conf.privileges: '.print_r($map, true));
 	$this->conf['privileges'] = $map;
 }
 
@@ -141,7 +141,7 @@ public function tok_menu_add($level, $node) {
 		throw new Exception('invalid level', print_r($node, true));
 	}
 
-	\rkphplib\lib\log_debug("AMenu.tok_menu_add> level=$level node: ".print_r($node, true));
+	// \rkphplib\lib\log_debug("AMenu.tok_menu_add> level=$level node: ".print_r($node, true));
 
 	if ($this->ignore_level > 0 && $level > $this->ignore_level) {
 		// do not append descendant node
@@ -155,7 +155,7 @@ public function tok_menu_add($level, $node) {
 	$node['id'] = $nc + 1;
 	$node['parent'] = 0;
 
-	\rkphplib\lib\log_debug("AMenu.tok_menu_add> nc=$nc id=".($nc + 1)." parent=0 prev: ".print_r($prev, true));
+	// \rkphplib\lib\log_debug("AMenu.tok_menu_add> nc=$nc id=".($nc + 1)." parent=0 prev: ".print_r($prev, true));
 
 	if ($prev) {
 		if ($level === $prev['level'] + 1) {
@@ -182,7 +182,7 @@ public function tok_menu_add($level, $node) {
 
 	if (isset($node['if']) && empty($node['if'])) {
 		$this->ignore_level = $level + 1;
-		\rkphplib\lib\log_debug("AMenu.tok_menu_add> if = false");
+		// \rkphplib\lib\log_debug("AMenu.tok_menu_add> if = false");
 		return;
 	}
 
@@ -193,7 +193,7 @@ public function tok_menu_add($level, $node) {
 		foreach ($table_list as $table) {
 			if (!$db->hasTable($table)) {
 				$this->ignore_level = $level + 1;
-				\rkphplib\lib\log_debug("AMenu.tok_menu_add> if_table = false - missing $table");
+				// \rkphplib\lib\log_debug("AMenu.tok_menu_add> if_table = false - missing $table");
 				return;
 			}
 		}
@@ -214,7 +214,7 @@ public function tok_menu_add($level, $node) {
 
 			$priv = intval($this->conf['privileges'][$name]);
 			if (($priv & $mypriv) != $priv) {
-				\rkphplib\lib\log_debug("AMenu.tok_menu_add> no $name privilege: $priv & $mypriv != $priv");
+				// \rkphplib\lib\log_debug("AMenu.tok_menu_add> no $name privilege: $priv & $mypriv != $priv");
 				return;
 			}
 		}
@@ -239,7 +239,7 @@ public function tok_menu_add($level, $node) {
 	}
 
 	array_push($this->node, $node);
-	\rkphplib\lib\log_debug("AMenu.tok_menu_add> node: ".print_r($this->node, true)."\npath: ".print_r($this->path, true));
+	// \rkphplib\lib\log_debug("AMenu.tok_menu_add> node: ".print_r($this->node, true)."\npath: ".print_r($this->path, true));
 }
 
 
