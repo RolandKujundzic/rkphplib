@@ -255,7 +255,8 @@ public function setHash($p) {
 
 
 /**
- * Get session value.
+ * Get session value. Use suffix '?' on key to 
+ * prevent exception if key is not found.
  * 
  * @throws if key is not set and required
  * @param string $key
@@ -265,10 +266,20 @@ public function get($key, $required = true) {
 	$skey = $this->sessKey();
 	$res = null;
 
+	if (mb_substr($key, -1) == '?') {
+		$key = mb_substr($key, 0, -1);
+		$required = false;
+	}
+
 	if (array_key_exists($key, $_SESSION[$skey])) {
 		$res = $_SESSION[$skey][$key];
 	}
 	else if ($required) {
+		if (count($_SESSION[$skey]) == 0) {
+			// no session data - force logout ...
+			\rkphplib\lib\redirect($this->conf['redirect_logout'].'&error=empty_session');
+		}
+
 		throw new Exception('no such session key', "skey=$skey key=$key");
 	}
 
