@@ -91,7 +91,7 @@ public function tok_menu_conf($name, $value) {
 	}
 
 	if  (!isset($this->conf[$name])) {
-		throw new Exception('invalid configuration key', $name);
+		throw new Exception('[menu:conf] invalid configuration key "'.$name.'"');
 	}
 
 	$this->conf[$name] = $value;
