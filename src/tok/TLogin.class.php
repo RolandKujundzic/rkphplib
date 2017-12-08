@@ -33,6 +33,9 @@ var $sess = null;
 /** @var ADatabase $db */
 var $db = null;
 
+/** @var array $account */
+var $account = [];
+
 
 
 /**
@@ -46,14 +49,15 @@ var $db = null;
 public function getPlugins($tok) {
 	$this->tok = $tok;
 
-  $plugin = [];
-  $plugin['login'] = TokPlugin::NO_BODY;
-  $plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
-  $plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
-  $plugin['login_update'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
-  $plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
+	$plugin = [];
+	$plugin['login'] = TokPlugin::NO_BODY;
+	$plugin['login_account'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
+	$plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
+	$plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
+	$plugin['login_update'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
+	$plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 
-  return $plugin;
+	return $plugin;
 }
 
 
@@ -62,12 +66,35 @@ public function getPlugins($tok) {
  *
  * {login_clear:}
  *
+ * @return ''
  */
 public function tok_login_clear() {
 	if ($this->sess) {
 		$this->sess->destroy();
 		$this->sess = null;
 	}
+
+	return '';
+}
+
+
+/**
+ * Add account. Required id, login, password and type.
+ *
+ * @throws
+ * @param array $p
+ * @return ''
+ */
+public function tok_login_account($p) {
+	$required = [ 'id', 'type', 'login', 'password' ];
+	foreach ($required as $key) {
+		if (!isset($p[$key])) {
+			throw new Exception('[login_account:] missing parameter '.$key);
+		}
+	}
+
+	array_push($this->account, $p);
+	return '';
 }
 
 
@@ -82,19 +109,20 @@ public function tok_login_clear() {
  * @return string javascript-login-refresh
  */
 public function tok_login_check($p) {
-
 	$this->sess = new Session([ 'required' => [ 'id', 'type' ], 'allow_dir' => [ 'login' ] ]);
 	$this->sess->init($p);
 
-	$table = ADatabase::escape($p['table']);
+	if (!empty($p['table'])) {
+		$table = ADatabase::escape($p['table']);
 
-  $query_map = [
-    'select_login' => "SELECT *, PASSWORD({:=password}) AS password_input FROM $table WHERE login={:=login}",
-    'insert' => "INSERT INTO $table (login, password, type, person, language, priv) VALUES ".
-			"({:=login}, PASSWORD({:=password}), {:=type}, {:=person}, {:=language}, {:=priv})"
-  ];
-	
-	$this->db = Database::getInstance(SETTINGS_DSN, $query_map);
+		$query_map = [
+			'select_login' => "SELECT *, PASSWORD({:=password}) AS password_input FROM $table WHERE login={:=login}",
+			'insert' => "INSERT INTO $table (login, password, type, person, language, priv) VALUES ".
+				"({:=login}, PASSWORD({:=password}), {:=type}, {:=person}, {:=language}, {:=priv})"
+			];
+
+		$this->db = Database::getInstance(SETTINGS_DSN, $query_map);
+	}
 
 	return "<script>\n".$this->sess->getJSRefresh('login/ajax/refresh.php', '', 10)."\n</script>";
 }
@@ -133,9 +161,12 @@ public function tok_login_update($p) {
 		$kv[$key] = $value;
 	}
 
-	$query = $this->db->buildQuery($table, 'update', $kv);	
-	\rkphplib\lib\log_debug("tok_login_update> update $table: $query");
-	$this->db->execute($query);
+	if (!is_null($this->db)) {
+		$query = $this->db->buildQuery($table, 'update', $kv);	
+		\rkphplib\lib\log_debug("tok_login_update> update $table: $query");
+		$this->db->execute($query);
+	}
+
 	\rkphplib\lib\log_debug("tok_login_update> new session: ".print_r($kv, true));
 	$this->sess->setHash($kv);
 
@@ -159,18 +190,67 @@ public function tok_login_update($p) {
 public function tok_login_auth($p) {
 
 	if (empty($p['login'])) {
-		$this->createTable($this->sess->getConf('table'));
-		return;
-	}
+		if (!is_null($this->db)) {
+			$this->createTable($this->sess->getConf('table'));
+		}
 
-	$dbres = $this->db->select($this->db->getQuery('select_login', $p));
-	if (count($dbres) == 0) {
-		$this->tok->setVar('login_error', 'error');
 		return;
 	}
 
 	if (empty($p['password'])) {
 		return;
+	}
+
+	if (!is_null($this->db)) {
+		$user = $this->selectFromDatabase($p);
+	}
+	else {
+		$user = $this->selectFromAccount($p);
+	}
+
+	if (is_null($user)) {
+		return;
+	}
+
+	$this->sess->setHash($user);
+}
+
+
+/**
+ * Select user from account. Parameter: login, password.
+ *
+ * @param array $p
+ * @return array|null
+ */
+private function selectFromAccount($p) {
+	$found = false;
+
+	if (count($this->account) == 0) {
+		lib_abort("no account defined - use [login_account:]...");
+	}
+
+	for  ($i = 0; $found === false && $i < count($this->account); $i++) {
+		if ($this->account[$i]['login'] == $p['login'] && $this->account[$i]['password'] == $p['password']) {
+			$found = $i;
+		}
+	}
+
+	return ($found !== false) ? $this->account[$found] : null;
+}
+
+
+/**
+ * Select user from database. Parameter: login, password.
+ *
+ * @param array $p
+ * @return array|null
+ */
+private function selectFromDatabase($p) {
+
+	$dbres = $this->db->select($this->db->getQuery('select_login', $p));
+	if (count($dbres) == 0) {
+		$this->tok->setVar('login_error', 'error');
+		return null;
 	}
 
  	if (count($dbres) != 1 || empty($dbres[0]['password']) || $dbres[0]['password'] != $dbres[0]['password_input']) {
@@ -181,7 +261,8 @@ public function tok_login_auth($p) {
 	// login + password ok ... update login session
 	unset($dbres[0]['password_input']);
 	unset($dbres[0]['password']);
-	$this->sess->setHash($dbres[0]);
+
+	return $dbres[0];
 }
 
 
@@ -194,7 +275,8 @@ public function tok_login_auth($p) {
  * @tok {login:@[name|table]} -> show configuration value
  * @tok {login:@since} -> date('d.m.Y H:i:s', @start)
  * @tok {login:@lchange} -> date('d.m.Y H:i:s', @last)
- * 
+ *
+ * @throws if key does not exist (append ? to key to prevent)
  * @param string $key
  * @return string
  */
@@ -231,14 +313,14 @@ public function tok_login($key) {
 	else if ($this->sess->has('id')) {
 		$res = 'yes';
 	}
-	
+
 	return $res;
 }
 
 
 /**
  * Create login table. Create admin user admin|admin (id=1).
- * 
+ *
  * @param string $table
  */
 public function createTable($table) {
@@ -253,9 +335,9 @@ public function createTable($table) {
 	$tconf['priv'] = 'int:::1';
 	$tconf['person'] = 'varchar:120::1';
 
-	if ($this->db->createTable($tconf)) {
+	if (!is_null($this->db) && $this->db->createTable($tconf)) {
 		$this->db->execute($this->db->getQuery('insert',
-			[ 'login' => 'admin', 'password' => 'admin', 'type' => 'admin', 
+			[ 'login' => 'admin', 'password' => 'admin', 'type' => 'admin',
 				'person' => 'Administrator', 'language' => 'de', 'priv' => 3 ]));
 	}
 }
