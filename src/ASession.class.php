@@ -126,6 +126,7 @@ public function getConf($key) {
  *  unlimited: optional - if set use inactive=21600 and ttl=345600
  *  allow_dir: [ 'login' ] (list of allowed directories)
  *  redirect_login: index.php?dir=login
+ *  redirect_logout: index.php?dir=login/exit (default: redirect_login.'/exit')
  *  redirect_forbidden: index.php?dir=login/access_denied
  *  required: [] (list of session parameter - if one is empty redirect to login page)
  * 
@@ -135,9 +136,11 @@ public function getConf($key) {
  * @param map $conf
  */
 protected function setConf($conf) {
+	\rkphplib\lib\log_debug('setConf> enter - conf: '.print_r($conf, true));
 
 	$default = [ 'name' => '', 'table' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => 0, 
-		'redirect_login' => 'index.php?dir=login',  'redirect_forbidden' => 'index.php?dir=login/access_denied', 
+		'redirect_login' => 'index.php?dir=login',  'redirect_logout' => 'index.php?dir=login/exit',
+		'redirect_forbidden' => 'index.php?dir=login/access_denied', 
 		'required' => [ ], 'allow_dir' => [ 'login' ] ];
 
 	foreach ($default as $key => $value) {
@@ -182,6 +185,19 @@ protected function setConf($conf) {
 			}
 		}
 	}
+
+	$required_redirect = [ 'login', 'logout' ];
+	foreach ($required_redirect as $key) {
+		if (empty($this->conf['redirect_'.$key])) {
+			throw new Exception('session definition is missing redirect_'.$key);
+		}
+
+		if (preg_match('/dir=(.+)$/', $this->conf['redirect_'.$key], $match) && !Dir::exists($match[1])) {
+			throw new Exception('no such directory '.$match[1]);
+		}
+	}
+
+	\rkphplib\lib\log_debug('setConf> exit - this.conf: '.print_r($this->conf, true));
 }
 
 
