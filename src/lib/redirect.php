@@ -18,7 +18,7 @@ function redirect($url, $p = []) {
 	$md5 = md5($url);
 	if (!empty($_REQUEST['_ld']) && $_REQUEST['_ld'] === $md5) {
 		throw new Exception('redirect loop', $url);
-  }
+	}
 
 	// append parameter _ld for loop detection
 	$url .= mb_strpos($url, '?') ? '&_ld='.$md5 : '?_ld='.$md5;
@@ -28,9 +28,9 @@ function redirect($url, $p = []) {
 		$url .= '&'.$key.'='.rawurlencode($value);
 	}
 
-  // header('P3P: CP="CAO PSA OUR"'); // IE will not accept Frameset SESSIONS without this header 
+	// header('P3P: CP="CAO PSA OUR"'); // IE will not accept Frameset SESSIONS without this header 
 	session_write_close(); // avoid redirect delay 
-  header('Location: '.$url);
-  exit();
+	header('Location: '.$url);
+	exit();
 }
 
