@@ -326,6 +326,17 @@ public function tok_load($param, $file) {
 public function tok_link($name_list, $p) {
 	$res = 'index.php?'.SETTINGS_REQ_CRYPT.'=';
 
+	foreach ($name_list as $name) {
+		if ($name == '@') {
+			$name = SETTINGS_REQ_DIR;
+			$res = '?';
+		}
+
+		if (isset($_REQUEST[$name]) && !isset($p[$name])) {
+			$p[$name] = $_REQUEST[$name];
+		}
+	}
+
 	if (empty(SETTINGS_REQ_CRYPT)) {
 		$dir = '';
 
@@ -340,6 +351,13 @@ public function tok_link($name_list, $p) {
 		}
 
 		$res = 'index.php?'.SETTINGS_REQ_DIR.'='.$dir;
+
+		foreach ($p as $key => $value) {
+			if (!in_array($key, [ '@', '_' ])) { 
+				$res .= '&'.$key.'='.rawurlencode($value);
+			}
+		}
+
 		return $res;
 	}
 
@@ -351,17 +369,6 @@ public function tok_link($name_list, $p) {
 		$p[SETTINGS_REQ_DIR] = $p['@'];
 		$res = '?';
 		unset($p['@']);
-	}
-
-	foreach ($name_list as $name) {
-		if ($name == '@') {
-			$name = SETTINGS_REQ_DIR;
-			$res = '?';
-		}
-
-		if (isset($_REQUEST[$name]) && !isset($p[$name])) {
-			$p[$name] = $_REQUEST[$name];
-		}
 	}
 
 	return $res.self::encodeHash($p);
