@@ -8,6 +8,7 @@ require_once(__DIR__.'/TokPlugin.iface.php');
 require_once($parent_dir.'/Database.class.php');
 require_once($parent_dir.'/Session.class.php');
 require_once($parent_dir.'/lib/kv2conf.php');
+require_once($parent_dir.'/lib/redirect.php');
 
 use \rkphplib\Exception;
 use \rkphplib\Session;
@@ -178,16 +179,23 @@ public function tok_login_update($p) {
  * Compare login with database. If successfull load all columns 
  * from select_login result (except password) into session. Example:
  *
- * @tok {login_auth:}login={get:login}|#|password={get:password}{:login_auth}
+ * @tok {login_auth:}login={get:login}|#|password={get:password}|#|redirect=...{:login_auth}
  *
  * If login is invalid set {var:login_error} = error.
- * If password is invalid set {var:password_error} = error. 
+ * If password is invalid set {var:password_error} = error.
+ * If redirect is set - redirect after successfull login or if still logged in. 
  *
  * @tok <pre>{login:*}</pre> = id=...|#|login=...|#|type=...|#|priv=...|#|language=...
  * 
  * @param map $p
  */
 public function tok_login_auth($p) {
+
+	if ($this->sess->has('id')) {
+		if (!empty($p['redirect'])) {
+			\rkphplib\lib\redirect($p['redirect']);
+		}
+	}
 
 	if (empty($p['login'])) {
 		if (!is_null($this->db)) {
@@ -213,6 +221,10 @@ public function tok_login_auth($p) {
 	}
 
 	$this->sess->setHash($user);
+
+	if (!empty($p['redirect'])) {
+		\rkphplib\lib\redirect($p['redirect']);	
+	}
 }
 
 
