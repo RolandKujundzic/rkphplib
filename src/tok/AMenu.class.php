@@ -71,7 +71,10 @@ public function tok_menu_privileges($map) {
 
 /**
  * Set menu configuration. Example (see subclass constructor for default configuration):
- * 
+ *
+ * @tok {menu:conf:custom}CUSTOM{:menu}
+ * @tok {menu:add:1}_tpl=custom|#|...{:menu}
+ *  
  * @throws
  * @param string $name (required)
  * @param string $value
@@ -88,10 +91,6 @@ public function tok_menu_conf($name, $value) {
 			$this->conf[$ln] = '';
 			$this->conf[$ln.'_hi'] = '';
   	}
-	}
-
-	if  (!isset($this->conf[$name])) {
-		throw new Exception('[menu:conf] invalid configuration key "'.$name.'"');
 	}
 
 	$this->conf[$name] = $value;
