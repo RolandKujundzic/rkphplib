@@ -44,6 +44,8 @@ public function getPlugins($tok) {
 	$plugin['sql:name'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['sql:qkey'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['sql:col'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+	$plugin['sql:getId'] = TokPlugin::NO_PARAM;
+	$plugin['sql:nextId'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['sql:in'] = TokPlugin::CSLIST_BODY;
 	$plugin['sql'] = 0;
 	$plugin['null'] = TokPlugin::NO_PARAM;
@@ -59,6 +61,38 @@ public function __construct() {
 	if (defined('SETTINGS_DSN')) {
 		$this->db = Database::getInstance();
 	}
+}
+
+
+/**
+ * Return next unique id. 
+ *
+ * @tok {sql:nextId:$table}
+ *
+ * @see ADatabase.nextId($table)
+ * @param string $table
+ * @return int
+ */
+public function tok_sql_nextId($table) {
+	return $this->db->nextId($table);
+}
+
+
+/**
+ * Return last auto_increment id.
+ * 
+ * @tok {sql:getId}[$query]{:sql}
+ *
+ * @see ADatabase.getInsertId()
+ * @param string $query (optional)
+ * @return int
+ */
+public function tok_sql_getId($query) {
+	if (!empty($query)) {
+		$this->db->execute($query, true);
+	}
+
+	return $this->db->getInsertId();
 }
 
 
@@ -139,7 +173,7 @@ public function tok_sql_query($qkey, $query) {
 	}
 
 	$query_prefix = strtolower(substr(trim($query), 0, 20));
-	$use_result = (strpos($query_prefix, 'select ') === 0);
+	$use_result = (strpos($query_prefix, 'select ') === 0) || (strpos($query_prefix, 'show ') === 0);
 
 	$this->db->execute($query, $use_result);
 	return '';
