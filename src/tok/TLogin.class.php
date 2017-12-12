@@ -229,10 +229,29 @@ private function selectFromAccount($p) {
 		lib_abort("no account defined - use [login_account:]...");
 	}
 
+	$login_ok = false;
+	$password_ok = false;
+
 	for  ($i = 0; $found === false && $i < count($this->account); $i++) {
 		if ($this->account[$i]['login'] == $p['login'] && $this->account[$i]['password'] == $p['password']) {
 			$found = $i;
+			$login_ok = true;
+			$password_ok = false;
 		}
+		else if (!$login_ok && $this->account[$i]['login'] == $p['login']) {
+			$login_ok = true;
+		}
+		else if (!$password_ok && $this->account[$i]['password'] == $p['password']) {
+			$password_ok = true;
+		}
+	}
+
+	if (!$login_ok) {
+		$this->tok->setVar('login_error', 'error');
+	}
+
+	if (!$password_ok) {
+		$this->tok->setVar('password_error', 'error');
 	}
 
 	return ($found !== false) ? $this->account[$found] : null;
