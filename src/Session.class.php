@@ -158,7 +158,7 @@ private function sessKey($meta = false, $key = '') {
 	}
 
 	if (!empty($key) && !array_key_exists($key, $_SESSION[$skey])) {
-		throw new Exception('no such session key', "skey=$skey key=$key");
+		throw new Exception('no such session key: '.$key, "skey=$skey");
 	}
 
 	return $skey;
@@ -280,7 +280,7 @@ public function get($key, $required = true) {
 			\rkphplib\lib\redirect($this->conf['redirect_logout'].'&error=empty_session');
 		}
 
-		throw new Exception('no such session key', "skey=$skey key=$key");
+		throw new Exception('no such session key: '.$key, "skey=$skey");
 	}
 
 	return $res;
