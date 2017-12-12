@@ -94,10 +94,23 @@ private function node_html($pos) {
 		$node['label_length'] = mb_strlen($node['label']);
 	}
 
-	$hi_name = empty($this->conf[$lname.'_hi']) ? $lname : $lname.'_hi';
-	$tpl = isset($this->path[$pos]) ? $this->conf[$hi_name] : $this->conf[$lname];
+	if (empty($node['link'])) {
+		if (!empty($node['dir'])) {
+			$node['link'] = '{link:}@='.$node['dir'].'{:link}';
+		}
+	}
+
+	if (!empty($node['_tpl'])) {
+		$tpl = $this->conf[$node['_tpl']];
+	}
+	else {
+		$hi_name = empty($this->conf[$lname.'_hi']) ? $lname : $lname.'_hi';
+		$tpl = isset($this->path[$pos]) ? $this->conf[$hi_name] : $this->conf[$lname];
+	}
+
 	$tpl = $this->tok->replaceTags($tpl, $node);
 
+	error_log("tpl: [$tpl] node: ".print_r($node, true)."\n", 3, "/tmp/rk.log");
 	return $tpl;
 }
 
