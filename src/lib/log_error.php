@@ -36,7 +36,7 @@ function log_error($msg) {
 	}
 
 	list($msec, $ts) = explode(" ", microtime());
-	$log = '['.date('YdmHis', $ts).'.'.(1000 * round((float)$msec, 3));
+	$log = '['.date('YmdHis', $ts).'.'.(1000 * round((float)$msec, 3));
 
 	if (!empty($_SERVER['REMOTE_ADDR'])) { 
 		$log .= $_SERVER['REMOTE_ADDR'];

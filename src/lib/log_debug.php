@@ -38,7 +38,7 @@ function log_debug($msg, $prepend_info = false) {
 
 	if ($prepend_info) {
 		list($msec, $ts) = explode(" ", microtime());
-		$log = '['.date('YdmHis', $ts).'.'.(1000 * round((float)$msec, 3));
+		$log = '['.date('YmdHis', $ts).'.'.(1000 * round((float)$msec, 3));
 
 		if (!empty($_SERVER['REMOTE_ADDR'])) { 
 			$log .= '@'.$_SERVER['REMOTE_ADDR'];
