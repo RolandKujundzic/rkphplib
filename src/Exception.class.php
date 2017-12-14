@@ -75,7 +75,8 @@ public static function logCall($class, $method, $parameter = []) {
 		}
 	}
 
-	File::save(SETTINGS_LOG_EXCEPTION."/$class.$method.".$data['time'].'.json', JSON::encode($data));
+	$class_name = str_replace('\\', ':', $class);
+	File::save(SETTINGS_LOG_EXCEPTION."/$class_name.$method.".$data['time'].'.json', JSON::encode($data));
 }
 
 
