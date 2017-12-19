@@ -29,12 +29,12 @@ namespace rkphplib\lib;
 mb_internal_encoding('UTF-8');
 
 if (!defined('SETTINGS_TIMEZONE')) {
-  /** @define string SETTINGS_TIMEZONE = Auto-Detect */
-  date_default_timezone_set(@date_default_timezone_get());
-  define('SETTINGS_TIMEZONE', date_default_timezone_get());
+	/** @define string SETTINGS_TIMEZONE = Auto-Detect */
+	date_default_timezone_set(@date_default_timezone_get());
+	define('SETTINGS_TIMEZONE', date_default_timezone_get());
 }
 else {
-  date_default_timezone_set(SETTINGS_TIMEZONE);
+	date_default_timezone_set(SETTINGS_TIMEZONE);
 }
 
 if (!defined('SETTINGS_LANGUAGE')) {
@@ -58,16 +58,16 @@ function exception_handler($e) {
 	if (php_sapi_name() !== 'cli') {
 		$ts = date('d.m.Y H:i:s');
 		error_log("$ts $msg\n$internal\n\n$trace\n\n", 3, '/tmp/php.fatal');
-	  die("<h3 style='color:red'>$msg</h3>");
+		die("<h3 style='color:red'>$msg</h3>");
 	}
-  else if (php_sapi_name() === 'cli' && property_exists($e, 'internal_message') && substr($e->internal_message, 0, 1) === '@') {
-    if ($e->internal_message == '@ABORT') {
-      print "\nABORT: ".$e->getMessage()."\n\n"; exit(1);
-    }
-    else if ($e->internal_message == '@SYNTAX') {
-      print "\nSYNTAX: ".$e->getMessage()."\n\n"; exit(1);
-    }
-  }
+	else if (php_sapi_name() === 'cli' && property_exists($e, 'internal_message') && substr($e->internal_message, 0, 1) === '@') {
+		if ($e->internal_message == '@ABORT') {
+			print "\nABORT: ".$e->getMessage()."\n\n"; exit(1);
+		}
+		else if ($e->internal_message == '@SYNTAX') {
+			print "\nSYNTAX: ".$e->getMessage()."\n\n"; exit(1);
+		}
+	}
 
 	die("$msg\n$internal\n\n$trace\n\n");
 }
