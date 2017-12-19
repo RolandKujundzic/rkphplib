@@ -36,5 +36,17 @@ public static function removeHtmlAttributes($html) {
 }
 
 
+/**
+ * Remove all tags from $html. If allow = '<p><a>' then <p> and <a> tags are kept.
+ *
+ * @param string $html
+ * @param string $allow = ''
+ * @return string
+ */
+public static function removeHtmlTags($html, $allow = '') {
+	return strip_tags($html);
+}
+
+
 }
 
