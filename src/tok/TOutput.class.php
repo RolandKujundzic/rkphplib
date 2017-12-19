@@ -626,6 +626,7 @@ protected function selectData() {
 	$db->execute($db->getQuery('output', $_REQUEST), true);
 
 	$this->env['total'] = $db->getRowNumber();
+	// \rkphplib\lib\log_debug("TOutput::selectData> found ".$this->env['total'].' entries');
 	$this->table = [];
 
 	if ($this->env['start'] >= $this->env['total']) {
@@ -638,12 +639,14 @@ protected function selectData() {
 	$db->setFirstRow($this->env['start']);
 	$n = ($this->env['pagebreak'] > 0) ? 0 : -100000;
 
+	// \rkphplib\lib\log_debug("TOutput::selectData> show max. $n rows");
 	while (($row = $db->getNextRow()) && $n < $this->env['pagebreak']) {
 		array_push($this->table, $row);
 		$n++;
 	}
 
 	$db->freeResult();
+	// \rkphplib\lib\log_debug('TOutput::selectData> show '.count($this->table).' rows');
 }
 
 
