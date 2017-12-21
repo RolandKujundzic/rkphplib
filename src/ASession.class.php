@@ -186,17 +186,6 @@ protected function setConf($conf) {
 		}
 	}
 
-	$required_redirect = [ 'login', 'logout' ];
-	foreach ($required_redirect as $key) {
-		if (empty($this->conf['redirect_'.$key])) {
-			throw new Exception('session definition is missing redirect_'.$key);
-		}
-
-		if (preg_match('/dir=(.+)$/', $this->conf['redirect_'.$key], $match) && !Dir::exists($match[1])) {
-			throw new Exception('no such directory '.$match[1]);
-		}
-	}
-
 	\rkphplib\lib\log_debug('setConf> exit - this.conf: '.print_r($this->conf, true));
 }
 
