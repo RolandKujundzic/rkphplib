@@ -18,7 +18,7 @@ use \rkphplib\ValueCheck;
  * {fv:conf:NAME}
  * template.output= {:=label}: {:=input} {fv:error_message}|#|
  * template.header|footer= ...|#|
- * template.input= <input type="text" name="{:=name}" value="{:=value}" class="{fv:error:$name}"> {fv:error_message:$name}
+ * template.input= <input type="text" name="{:=name}" value="{:=value}" class="{:=class}"> {fv:error_message:$name}
  * {:fv}
  *
  * {fv:init:[add]}
@@ -38,9 +38,9 @@ use \rkphplib\ValueCheck;
  * {false:}
  * <form>
  * {fv:in:login}type=text|#|label=Login{:fv} 
- *  = Login: <input type="text" name="login" value="{get:login}" class="{fv:error:login}"> {fv:error_message:login}
+ *  = Login: <input type="text" name="login" value="{get:login}" class="{:=class}"> {fv:error_message:login}
  * {fv:in:password}type=password|#|label=Password{:fv} 
- *  = Password: <input type="password" name="password" value="{get:password}" class="{fv:error:password}"> {fv:error_message:password}
+ *  = Password: <input type="password" name="password" value="{get:password}" class="{:=class}"> {fv:error_message:password}
  * </form>
  * {:false}
  *
@@ -76,7 +76,7 @@ public function getPlugins($tok) {
 	$plugin['fv:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['fv:check'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY; 
 	$plugin['fv:in'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
-	$plugin['fv:error'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+	$plugin['fv:error'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:error_message'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:set_error_message'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY;
 
@@ -92,9 +92,12 @@ public function __construct() {
 		'template.header' => '',
 		'template.output' => '{:=label}{:=input}{:=error_message}',
 		'template.footer' => '',
-		'template.input'    => '<input type="{:=type}" name="{:=name}" value="{:=value}"$tags>',
+		'template.input'    => '<input type="{:=type}" name="{:=name}" value="{:=value}" class="{:=class}" $tags>',
 		'template.textarea' => '<textarea name="{:=name}"$tags>{:=value}</textarea>',
 		'template.select'   => '<select name="{:=name}"$tags>{:=options}</select>',
+		'template.error' 		=> 'error',
+		'template.error_message' 			 => '{:=error}',
+		'template.error_message_multi' => '<i>{:=name}</i>: <tt>{:=error}</tt><br>',
 		'submit' => 'form_action'
 		];
 }
@@ -237,24 +240,56 @@ protected function getErrorMessage($path) {
 
 
 /**
- * Return error.
+ * Return "error" (= template.error or $tpl if set) if $name check failed.
  *
  * @throws
+ * @param string $name
+ * @param string $tpl (optional)
  * @return string (error|)
  */
-public function tok_fv_error($name) {
-	throw new Exception('ToDo ...');
+public function tok_fv_error($name, $tpl) {
+	if (!isset($this->error[$name])) {
+		return '';
+	}
+
+	return empty($tpl) ? $this->conf['template.error'] : $tpl;
 }
 
 
 /**
  * Return error message. Replace {:=name} and {:=error} in template.error_message (overwrite with $tpl).
+ * Use name=* to return all error messages concatenated (if $tpl has no {:=name} tag use template.error_message_multi).
  *
  * @throws
  * @return string 
  */
 public function tok_fv_error_message($name, $tpl = '') {
-	throw new Exception('ToDo ...');
+	if (empty($tpl)) {
+		$tpl = $this->conf['template.error_message'];
+	}
+
+	if ($name == '*') {
+		$res = '';
+
+		if (!mb_strpos($tpl, '{:=name}')) {
+			$tpl = $this->conf['template.error_message_multi']; 
+		}
+
+		foreach ($this->error as $key => $value) {
+			$res .= $this->tok_fv_error_message($key, $tpl);
+		}
+
+		return $res;
+	}
+
+	if (!isset($this->error[$name])) {
+		return '';
+	}
+
+	$r['name'] = $name;
+	$r['error'] = $this->error[$name];
+
+	$res = $this->tok->replaceTags($tpl, $r);
 }
 
 
@@ -283,6 +318,7 @@ public function tok_fv_in($name, $p) {
 	$r['label'] = empty($p['label']) ? '' : $p['label'];
 	$r['input'] = $this->getInput($name, $p);
 	$r['error_message'] = isset($this->error[$name]) ? join('|', $this->error[$name]) : '';
+	$r['error'] = isset($this->error[$name]) ? 'error' : '';
 
 	$res = $this->tok->replaceTags($res, $r);
 
@@ -313,7 +349,7 @@ protected function getInput($name, $p) {
 	}
 
 	if (isset($this->error[$name])) {
-		$ri['class'] = 'error';
+		$ri['class'] = empty($ri['class']) ? 'error' : $ri['class'].' error';
 	}
 
 	if (!empty($conf['template.'.$p['type']])) {
@@ -323,20 +359,18 @@ protected function getInput($name, $p) {
 		$input = $conf['template.input'];
 	}
 
-	$attributes = [ 'size', 'maxlength', 'placeholder', 'type', 'class', 'style', 'pattern', 'rows', 'cols' ];
 	$tags = '';
 
+	$attributes = [ 'size', 'maxlength', 'placeholder', 'type', 'pattern', 'rows', 'cols', 'style', 'class' ];
 	foreach ($attributes as $key) {
-		if (isset($p[$key])) {
-			$tags .= mb_strpos($input, $key.'="') ? '' : ' '.$key.'="{:='.$key.'}"';
-			$delimiter = ($key == 'style') ? ';' : ' ';
-			$ri[$key] = empty($ri[$key]) ? $p[$key] : $ri[$key].$delimiter.$p[$key];
+		if (isset($p[$key]) && !mb_strpos($input, '{:='.$key.'}')) {
+			$tags .= $key.'="{:='.$key.'}"';
 		}
 	}
 
 	$boolean_attributes = [ 'readonly', 'multiple', 'disabled' ];
 	foreach ($boolean_attributes as $key) {
-		if (!empty($p[$key])) {
+		if (!empty($p[$key]) && !mb_strpos($input, '{:='.$key.'}')) {
 			$tags .= ' {:='.$key.'}';
 			$ri[$key] = $key;
 		}
