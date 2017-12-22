@@ -93,7 +93,7 @@ public static function run($key, $value, $check) {
 		$res = self::$method($value);
 	}
 
-	\rkphplib\lib\log_debug("key=[$key] value=[$value] check=[".join(':', $check)."] method=[$method] res=[$res]");
+	// \rkphplib\lib\log_debug("key=[$key] value=[$value] check=[".join(':', $check)."] method=[$method] res=[$res]");
 	return $res;
 }
 
