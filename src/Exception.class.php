@@ -73,7 +73,8 @@ private static function logTrace($stack) {
 		}
 	}
 
-	$save_as = md5($last['file'].':'.$last['line']).'.'.$last['TIME'];
+	$save_as  = (!empty($last['file']) && !empty($last['line'])) ? md5($last['file'].':'.$last['line']) : md5($last['TIME']);
+	$save_as .= '.'.$last['TIME'];
 	File::save(SETTINGS_LOG_EXCEPTION.'/'.$save_as.'.last.json', JSON::encode($last));
 	File::save(SETTINGS_LOG_EXCEPTION.'/'.$save_as.'.stack.json', JSON::encode($stack));
 }
