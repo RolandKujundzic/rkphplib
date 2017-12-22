@@ -76,7 +76,7 @@ END;
 public function initMeta() {
 
 	if (!empty($this->conf['init_meta'])) {
-		\rkphplib\lib\log_debug('ASession::initMeta> use existing'); 
+		// \rkphplib\lib\log_debug('ASession::initMeta> use existing'); 
 		return;
 	}
 
@@ -124,11 +124,11 @@ public function getConf($key) {
  *  inactive: seconds of inactivity. Session expires after lchange + inactive. Range [1-21600] (default = 7200 = 2 h)
  *	ttl: time to live in seconds. Session expires after start + ttl. Range [1, 345600] (default = 172800 = 48 h)
  *  unlimited: optional - if set use inactive=21600 and ttl=345600
- *  allow_dir: [ 'login' ] (list of allowed directories)
+ *  allow_dir: 'login' (list of allowed directories)
  *  redirect_login: index.php?dir=login
  *  redirect_logout: index.php?dir=login/exit (default: redirect_login.'/exit')
  *  redirect_forbidden: index.php?dir=login/access_denied
- *  required: [] (list of session parameter - if one is empty redirect to login page)
+ *  required: '' (list of session parameter - if one is empty redirect to login page)
  * 
  *  Check inactive and ttl with hasExpired().
  *
@@ -136,12 +136,12 @@ public function getConf($key) {
  * @param map $conf
  */
 protected function setConf($conf) {
-	\rkphplib\lib\log_debug('setConf> enter - conf: '.print_r($conf, true));
+	// \rkphplib\lib\log_debug('setConf> enter - conf: '.print_r($conf, true));
 
 	$default = [ 'name' => '', 'table' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => 0, 
 		'redirect_login' => 'index.php?dir=login',  'redirect_logout' => 'index.php?dir=login/exit',
 		'redirect_forbidden' => 'index.php?dir=login/access_denied', 
-		'required' => [ ], 'allow_dir' => [ 'login' ] ];
+		'required' => '', 'allow_dir' => 'login' ];
 
 	foreach ($default as $key => $value) {
 		if (isset($conf[$key])) {
@@ -186,7 +186,7 @@ protected function setConf($conf) {
 		}
 	}
 
-	\rkphplib\lib\log_debug('setConf> exit - this.conf: '.print_r($this->conf, true));
+	// \rkphplib\lib\log_debug('setConf> exit - this.conf: '.print_r($this->conf, true));
 }
 
 
@@ -265,8 +265,7 @@ public function redirectForbidden() {
  * @param map $p = []
  */
 public function redirectLogin($reason, $p = []) {
-	\rkphplib\lib\log_debug('ASession::redirectLogin> reason='.$reason.' - conf: '.
-		print_r($this->conf, true)."\np: ".print_r($p, true));
+	// \rkphplib\lib\log_debug('ASession::redirectLogin> reason='.$reason.' - conf: '.print_r($this->conf, true)."\np: ".print_r($p, true));
 	$this->destroy();
 
 	if (!empty($this->conf['redirect_login'])) {
@@ -285,7 +284,6 @@ public function redirectLogin($reason, $p = []) {
  * @return string ttl|inactive|empty = session is valid
  */
 public function hasExpired() {
-
 	$now = time();
 	$expire_reason = '';
 
