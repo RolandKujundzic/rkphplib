@@ -164,11 +164,11 @@ public function tok_login_update($p) {
 
 	if (!is_null($this->db)) {
 		$query = $this->db->buildQuery($table, 'update', $kv);	
-		\rkphplib\lib\log_debug("tok_login_update> update $table: $query");
+		// \rkphplib\lib\log_debug("tok_login_update> update $table: $query");
 		$this->db->execute($query);
 	}
 
-	\rkphplib\lib\log_debug("tok_login_update> new session: ".print_r($kv, true));
+	// \rkphplib\lib\log_debug("tok_login_update> new session: ".print_r($kv, true));
 	$this->sess->setHash($kv);
 
 	return '';
