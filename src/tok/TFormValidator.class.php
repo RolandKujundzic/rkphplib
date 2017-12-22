@@ -377,12 +377,12 @@ protected function getInput($name, $p) {
 	}
 
 	// selected, checked ???
-	\rkphplib\lib\log_debug("getInput> $tags - $input");
+	// \rkphplib\lib\log_debug("getInput> $tags - $input");
 
 	$input = str_replace('$tags', $tags, $input);
 	$input = $this->tok->replaceTags($input, $ri);
 
-	\rkphplib\lib\log_debug("getInput($name, ".print_r($p, true).") = $input");
+	// \rkphplib\lib\log_debug("getInput($name, ".print_r($p, true).") = $input");
 	return $input;
 }
 
