@@ -14,6 +14,8 @@ use rkphplib\Exception;
  * @param map<string:string> $p (extra parameter, default = [])
  */
 function redirect($url, $p = []) {
+	// \rkphplib\lib\log_debug('enter redirect: url='.$url.' _ld?'.!empty($_REQUEST['_ld']));
+	
 	// avoid [index.php?dir=xxx] redirect loop
 	$md5 = md5($url);
 	if (!empty($_REQUEST['_ld']) && $_REQUEST['_ld'] === $md5) {
