@@ -167,6 +167,7 @@ public function tok_language_init($p) {
 	$this->initSession($p['use'], $p['table']);
 	$this->conf = $p;
 
+	// \rkphplib\lib\log_debug("TLanguage->tok_language_init> conf=".print_r($p, true));
 	return '';
 }
 
@@ -237,6 +238,7 @@ public function getTxtId($param, $txt) {
  * @return string
  */
 public function tok_txt($param, $txt) {
+	// \rkphplib\lib\log_debug("TLanguage->tok_txt> param=$param txt=$txt is_null(this->db)=".is_null($this->db));
 
 	$id = $this->getTxtId($param, $txt);
 
