@@ -20,6 +20,9 @@ class TSQL implements TokPlugin {
 /** @var ADatabase $db */
 protected $db = null;
 
+/** @var map first_row = null */
+protected $first_row = null;
+
 
 
 /**
@@ -43,6 +46,7 @@ public function getPlugins($tok) {
 	$plugin['sql:dsn'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY; 
 	$plugin['sql:name'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['sql:qkey'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['sql:json'] = TokPlugin::REQUIRE_BODY;
 	$plugin['sql:col'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['sql:getId'] = TokPlugin::NO_PARAM;
 	$plugin['sql:nextId'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
@@ -175,6 +179,10 @@ public function tok_sql_query($qkey, $query) {
 	$query_prefix = strtolower(substr(trim($query), 0, 20));
 	$use_result = (strpos($query_prefix, 'select ') === 0) || (strpos($query_prefix, 'show ') === 0);
 
+	if ($use_result) {
+		$this->first_row = null;
+	}
+
 	$this->db->execute($query, $use_result);
 	return '';
 }
@@ -188,7 +196,38 @@ public function tok_sql_query($qkey, $query) {
  * @return string
  */
 public function tok_sql_col($name) {
-	throw new Exception('ToDo ...');
+	if (is_null($this->first_row)) {
+		$this->first_row = $this->db->getNextRow();
+
+		if (is_null($this->first_row)) {
+			$this->first_row = [];
+		}
+	}
+
+	return (isset($this->first_row[$name]) || array_key_exists($name, $this->first_row)) ? $this->first_row[$name] : '';
+}
+
+
+/**
+ * Return query result as json. Use mode = hash (key AS name, value AS value) to result hash.
+ * Otherwise return table.
+ * 
+ * @throws
+ * @param string $mode 
+ * @param string $query
+ * @return table|hash
+ */
+public function tok_sql_json($mode, $query) {
+	require_once(__DIR__.'/../JSON.class.php');
+
+	if ($mode == 'hash') {
+		$dbres = $this->db->selectHash($query);
+	}
+	else {
+		$dbres = $this->db->select($query);
+	}
+
+	return \rkphplib\JSON::encode($dbres);
 }
 
 
