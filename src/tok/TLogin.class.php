@@ -103,6 +103,7 @@ public function tok_login_account($p) {
  * Initialize/Check login session. Example:
  * 
  * {login_check:}redirect_login=...{:} -> check login authentication - if not found or expired redirect to redirect_login
+ * {login_check:}refresh=login/ajax/refresh.php|#|...{:}
  *
  * @see Session::init
  * @param string $param [|init]
@@ -125,7 +126,7 @@ public function tok_login_check($p) {
 		$this->db = Database::getInstance(SETTINGS_DSN, $query_map);
 	}
 
-	return "<script>\n".$this->sess->getJSRefresh('login/ajax/refresh.php', '', 10)."\n</script>";
+	return empty($p['refresh']) ? '' : "<script>\n".$this->sess->getJSRefresh($p['refresh'], '', 10)."\n</script>";
 }
 
 
