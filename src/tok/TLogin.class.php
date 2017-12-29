@@ -55,7 +55,7 @@ public function getPlugins($tok) {
 	$plugin['login_account'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
-	$plugin['login_update'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
+	$plugin['login_update'] = TokPlugin::KV_BODY;
 	$plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 
 	return $plugin;
@@ -135,14 +135,16 @@ public function tok_login_check($p) {
  * Overwrite $_REQUEST session map with values from $p.
  *
  * @tok {login_update:} -> Use $_REQUEST[key] (key = session key)
+ * @tok {login_update:reload}password=PASSWORD({esc:password}){:login_update} -> update password
  * @tok {login_update:}if=|#|name=Mr. T{:login_update} -> do nothing because if is empty
  * @tok {login_update:}type=admin|#|...{:login_update} -> throw exception if previous type != 'admin'
  *
  * @throws
+ * @param string $do
  * @param map $p
  * @return ''
  */
-public function tok_login_update($p) {
+public function tok_login_update($do, $p) {
 	$table = $this->sess->getConf('table');
 	$sess = $this->sess->getHash();
 	$kv = [];
@@ -163,10 +165,29 @@ public function tok_login_update($p) {
 		$kv[$key] = $value;
 	}
 
+	if (empty($kv['@where'])) {
+		$id = empty($p['id']) ? '' : $p['id'];
+		if (!$id) {
+			$id = empty($sess['id']) ? '' : $sess['id'];
+		}
+
+		if ($id && is_numeric($id)) {
+			$kv['@where'] = "WHERE id='".intval($id)."'";
+		}
+	}
+
+	if (empty($kv['@where'])) {
+		throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
+	}
+
 	if (!is_null($this->db)) {
 		$query = $this->db->buildQuery($table, 'update', $kv);	
 		// \rkphplib\lib\log_debug("tok_login_update> update $table: $query");
 		$this->db->execute($query);
+	}
+
+	if ($do == 'reload') {
+		$this->sess->setHash($this->db->selectOne("SELECT * FROM $table ".$kv['@where']));
 	}
 
 	// \rkphplib\lib\log_debug("tok_login_update> new session: ".print_r($kv, true));
