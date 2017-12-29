@@ -61,6 +61,9 @@ const LIST_BODY = 8192;
 /** @const XML_BODY body is xml */
 const XML_BODY = 16384;
 
+/** @const POSTPROCESS postprocess finished output */
+const POSTPROCESS = 32768;
+
 
 
 /**
