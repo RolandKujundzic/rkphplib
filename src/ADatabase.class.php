@@ -1476,16 +1476,21 @@ public function buildQuery($table, $type, $kv = []) {
 	foreach ($p as $col => $cinfo) {
 		array_push($key_list, self::escape_name($col));
 
-		if (is_null($kv[$col]) || (!empty($kv[$col]) && $kv[$col] === 'NULL')) {
+		if (array_key_exists($col, $kv) && (is_null($kv[$col]) || (!empty($kv[$col]) && $kv[$col] === 'NULL'))) {
 			$val = 'NULL';
 		}
 		else if (isset($kv[$col])) {
-			$val = "'".self::escape($kv[$col])."'";
+			if (preg_match('/^[a-zA-Z0-9_]+\(\'.+?\'\)$/', $kv[$col])) {
+				$val = $kv[$col];
+			}
+			else {
+				$val = "'".self::escape($kv[$col])."'";
+			}
 		}
-		else if ($p['is_null'] || is_null($p['default']) || $p['default'] === 'NULL') {
+		else if ((isset($p['is_null']) && $p['is_null']) || (isset($p['default']) && (is_null($p['default']) || $p['default'] === 'NULL'))) {
 			$val = 'NULL';
 		}
-		else if ($p['default'] !== '') {
+		else if (!empty($p['default'])) {
 			$val = "'".self::escape($p['default'])."'";
 		}
 
