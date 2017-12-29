@@ -60,6 +60,9 @@ private $_callstack = [];
 /** @var int $_config constructor config flag */
 private $_config = 0;
 
+/** @var array $_postprocess */
+private $_postprocess = [];
+
 
 
 /**
@@ -361,6 +364,12 @@ public function setPlugin($name, $obj) {
  */
 public function toString() {
 	$out = $this->_join_tok(0, count($this->_tok));
+
+	for ($i = 0; $i < count($this->_postprocess); $i++) {
+		$px = $this->_postprocess[$i];
+		$out = call_user_func($px[0], $px[1], $px[2], $out);
+  }
+
 	return $out;
 }
 
@@ -689,6 +698,11 @@ private function _call_plugin($name, $param, $arg = null) {
 
 	if ($this->_plugin[$name][1] & TokPlugin::TOKCALL) {
 		return call_user_func(array($this->_plugin[$name][0], 'tokCall'), $name, $param, $arg);
+	}
+
+	if ($this->_plugin[$name][1] & TokPlugin::POSTPROCESS) {
+		array_push($this->_postprocess, [ array($this->_plugin[$name][0], 'tok_'.$name), $param, $arg ]);
+		return '';
 	}
 
 	$func = 'tok_'.$name;
