@@ -51,6 +51,7 @@ public function getPlugins($tok) {
 	$plugin['sql:getId'] = TokPlugin::NO_PARAM;
 	$plugin['sql:nextId'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['sql:in'] = TokPlugin::CSLIST_BODY;
+	$plugin['sql:password'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['sql'] = 0;
 	$plugin['null'] = TokPlugin::NO_PARAM;
 
@@ -79,6 +80,19 @@ public function __construct() {
  */
 public function tok_sql_nextId($table) {
 	return $this->db->nextId($table);
+}
+
+
+/**
+ * Return result of mysql query "SELECT PASSWORD('$password')".
+ *
+ * @tok {sql:password}secret{:sql} = PASSWORD('secret') = *0B32... 
+ *
+ * @param string $password
+ * @return string
+ */
+public function tok_sql_password($password) {
+	return '*'.strtoupper(sha1(sha1($password, true)));
 }
 
 
