@@ -95,9 +95,10 @@ public function __construct() {
 		'template.input'    => '<input type="{:=type}" name="{:=name}" value="{:=value}" class="{:=class}" $tags>',
 		'template.textarea' => '<textarea name="{:=name}"$tags>{:=value}</textarea>',
 		'template.select'   => '<select name="{:=name}"$tags>{:=options}</select>',
+		'template.error_message' 			  => '{:=error}',
+		'template.error_message_concat' => ', ',
+		'template.error_message_multi'  => '<i>{:=name}</i>: <tt>{:=error}</tt><br>',
 		'template.error' 		=> 'error',
-		'template.error_message' 			 => '{:=error}',
-		'template.error_message_multi' => '<i>{:=name}</i>: <tt>{:=error}</tt><br>',
 		'submit' => 'form_action'
 		];
 }
@@ -191,16 +192,14 @@ public function tok_fv_check() {
 		return '';
 	}
 
-	$error = [];
-
 	$required = \rkphplib\lib\split_str(',', $this->conf['current']['required']);
 	foreach ($required as $key) {
 		if (!isset($_REQUEST[$key]) || mb_strlen($_REQUEST[$key]) == 0) {
-			if (!isset($error[$key])) {
-				$error[$key] = [];
+			if (!isset($this->error[$key])) {
+				$this->error[$key] = [];
 			}
 
-			array_push($error[$key], 'required');
+			array_push($this->error[$key], 'required');
 		}
 	}
 
@@ -209,17 +208,18 @@ public function tok_fv_check() {
 
 		if ($path[0] == 'check') {
 			$req_value = isset($_REQUEST[$path[1]]) ? $_REQUEST[$path[1]] : '';
-			if (ValueCheck::run($path[1], $req_value, $key_value)) {
-				if (!isset($error[$path[1]])) {
-					$error[$path[1]] = [];
+			if (!ValueCheck::run($path[1], $req_value, $key_value)) {
+				if (!isset($this->error[$path[1]])) {
+					$this->error[$path[1]] = [];
 				}
 
-				array_push($error[$path[1]], $this->getErrorMessage($path));
+				array_push($this->error[$path[1]], $this->getErrorMessage($path));
+				// \rkphplib\lib\log_debug("TFormValidator->tok_fv_check> path=$key path.1=".$path[1]." error: ".print_r($this->error[$path[1]], true));
 			}
 		}
 	}
 
-	return (count($error) == 0) ? 'yes' : 'error';
+	return (count($this->error) == 0) ? 'yes' : 'error';
 }
 
 
@@ -257,22 +257,20 @@ public function tok_fv_error($name, $tpl) {
 
 
 /**
- * Return error message. Replace {:=name} and {:=error} in template.error_message (overwrite with $tpl).
- * Use name=* to return all error messages concatenated (if $tpl has no {:=name} tag use template.error_message_multi).
+ * Return error message. Replace {:=name} and {:=error} in template.error_message[_multi] (overwrite with $tpl). If there are
+ * multiple errors concatenate template.error_message with template.error_message_concat.
+ *
+ * Use name=* to return all error messages (concatenate template.error_message_multi).
  *
  * @throws
  * @return string 
  */
 public function tok_fv_error_message($name, $tpl = '') {
-	if (empty($tpl)) {
-		$tpl = $this->conf['template.error_message'];
-	}
+	$res = '';
 
 	if ($name == '*') {
-		$res = '';
-
-		if (!mb_strpos($tpl, '{:=name}')) {
-			$tpl = $this->conf['template.error_message_multi']; 
+		if (empty($tpl)) {
+			$tpl = $this->conf['template.error_message_multi'];
 		}
 
 		foreach ($this->error as $key => $value) {
@@ -282,12 +280,16 @@ public function tok_fv_error_message($name, $tpl = '') {
 		return $res;
 	}
 
+	if (empty($tpl)) {
+		$tpl = $this->conf['template.error_message'];
+	}
+
 	if (!isset($this->error[$name])) {
-		return '';
+		return $res;
 	}
 
 	$r['name'] = $name;
-	$r['error'] = $this->error[$name];
+	$r['error'] = join($this->conf['template.error_message_concat'], $this->error[$name]);
 
 	$res = $this->tok->replaceTags($tpl, $r);
 }
@@ -321,7 +323,7 @@ public function tok_fv_in($name, $p) {
 	$r['error'] = isset($this->error[$name]) ? 'error' : '';
 
 	$res = $this->tok->replaceTags($res, $r);
-
+	// \rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
 	return $res;
 }
 
