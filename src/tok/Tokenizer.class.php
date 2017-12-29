@@ -947,5 +947,23 @@ public function getTag($name) {
 }
 
 
-}
+/** AUTO CREATED BY bin/plugin_map */
+private function getPluginMap() {
+	static $map = [
+		'TLanguage' => [ 'language:init', 'language:get', 'language', 'txt', 'ptxt' ],
+		'THtml' => [ 'html:inner', 'html:tidy', 'html:xml', 'html:uglify', 'html' ],
+		'TMenu' => [ 'menu', 'menu:add', 'menu:conf', 'menu:privileges' ],
+		'TPicture' => [ 'picture:init', 'picture:src', 'picture' ],
+		'TFormValidator' => [ 'fv', 'fv:init', 'fv:conf', 'fv:check', 'fv:in', 'fv:error', 'fv:error_message', 'fv:set_error_message' ],
+		'TTwig' => [ 'autoescape', 'block', 'do', 'embed', 'extends', 'filter', 'flush', 'for', 'from', 'if', 'import', 'include', 'macro', 'sandbox', 'set', 'spaceless', 'use', 'verbatim', 'v' ],
+		'TSQL' => [ 'sql:query', 'sql:dsn', 'sql:name', 'sql:qkey', 'sql:json', 'sql:col', 'sql:getId', 'sql:nextId', 'sql:in', 'sql:password', 'sql', 'null' ],
+		'TMath' => [ 'nf', 'number_format' ],
+		'TLogin' => [ 'login', 'login_account', 'login_check', 'login_auth', 'login_update', 'login_clear' ],
+		'TBase' => [ 'tf', 't', 'true', 'f', 'false', 'find', 'plugin', 'escape', 'unescape', 'encode', 'decode', 'get', 'include', 'include_if', 'ignore', 'if', 'keep', 'load', 'link', 'toupper', 'tolower', 'join', 'set_default', 'var', 'esc' ],
+		'TOutput' => [ 'output:set', 'output:get', 'output:conf', 'output:init', 'output:loop', 'output:header', 'output:footer', 'output:empty', 'output' ],
+		'TLoop' => [ 'loop:var', 'loop:list', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
+		'TDate' => [ 'date' ]
+	];
 
+	return $map;
+}
