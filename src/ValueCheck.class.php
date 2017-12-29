@@ -24,6 +24,7 @@ class ValueCheck {
  * @return bool
  */
 public static function run($key, $value, $check) {
+	// \rkphplib\lib\log_debug("ValueCheck::run> key=$key value=$value check=$check");
 	$condition = '';
 
 	if (($start = mb_strpos($key, '[')) > 0 && ($end = mb_strrpos($key, ']')) > $start + 1) {
@@ -40,6 +41,7 @@ public static function run($key, $value, $check) {
 				return self::run($key, $value, $check);
 			}
 			else {
+				// \rkphplib\lib\log_debug("ValueCheck::run> return true");
 				return true;
 			}
 		}
@@ -55,6 +57,7 @@ public static function run($key, $value, $check) {
 	}
 
 	if (strlen($value) == 0) {
+		// \rkphplib\lib\log_debug("ValueCheck::run> empty value - return true");
 		return true;
 	}
 
@@ -93,7 +96,7 @@ public static function run($key, $value, $check) {
 		$res = self::$method($value);
 	}
 
-	// \rkphplib\lib\log_debug("key=[$key] value=[$value] check=[".join(':', $check)."] method=[$method] res=[$res]");
+	// \rkphplib\lib\log_debug("ValueCheck::run> check=[".join(':', $check)."] method=[$method] res=[$res]");
 	return $res;
 }
 
