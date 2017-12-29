@@ -367,7 +367,19 @@ public function toString() {
 
 	for ($i = 0; $i < count($this->_postprocess); $i++) {
 		$px = $this->_postprocess[$i];
-		$out = call_user_func($px[0], $px[1], $px[2], $out);
+
+		if (($px[3] & TokPlugin::REQUIRE_PARAM) && ($px[3] & TokPlugin::REQUIRE_BODY)) {
+			$out = call_user_func($px[0], $px[1], $px[2], $out);
+		}
+		else if (($px[3] & TokPlugin::REQUIRE_PARAM) && ($px[3] & TokPlugin::NO_BODY)) {
+			$out = call_user_func($px[0], $px[1], $out);
+		}
+		else if (($px[3] & TokPlugin::NO_PARAM) && ($px[3] & TokPlugin::REQUIRE_BODY)) {
+			$out = call_user_func($px[0], $px[2], $out);
+		}
+		else if (($px[3] & TokPlugin::NO_PARAM) && ($px[3] & TokPlugin::NO_BODY)) {
+			$out = call_user_func($px[0], $out);
+		}
   }
 
 	return $out;
@@ -701,7 +713,8 @@ private function _call_plugin($name, $param, $arg = null) {
 	}
 
 	if ($this->_plugin[$name][1] & TokPlugin::POSTPROCESS) {
-		array_push($this->_postprocess, [ array($this->_plugin[$name][0], 'tok_'.$name), $param, $arg ]);
+		array_push($this->_postprocess, [ array($this->_plugin[$name][0], 'tok_'.str_replace(':', '_', $name)), 
+			$param, $arg, $this->_plugin[$name][1] ]);
 		return '';
 	}
 
