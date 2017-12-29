@@ -459,6 +459,10 @@ private function _join_tok_plugin(&$i) {
 	$check_np = 0;
 	$tp = 0;
 
+	if (!isset($this->_plugin[$name])) {
+		$this->tryPluginMap($name);
+	}
+
 	if (isset($this->_plugin[$name])) {
 		$tp = $this->_plugin[$name][1];
 
@@ -948,7 +952,7 @@ public function getTag($name) {
 
 
 /** AUTO CREATED BY bin/plugin_map */
-private function getPluginMap() {
+private function tryPluginMap($name) {
 	static $map = [
 		'TLanguage' => [ 'language:init', 'language:get', 'language', 'txt', 'ptxt' ],
 		'THtml' => [ 'html:inner', 'html:tidy', 'html:xml', 'html:uglify', 'html' ],
@@ -965,5 +969,15 @@ private function getPluginMap() {
 		'TDate' => [ 'date' ]
 	];
 
-	return $map;
+	foreach ($map as $cname => $list) {
+		if (in_array($name, $list)) {
+			require_once(__DIR__.'/'.$cname.'.class.php');
+			$cname = '\\rkphplib\\tok\\'.$cname;
+			$obj = new $cname();
+			$this->register($obj);
+			return;
+		}
+	}
+}
+
 }
