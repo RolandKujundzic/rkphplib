@@ -24,9 +24,6 @@ protected $conf = [];
 /** @var vector<map> $node */
 protected $node = [];
 
-/** @var vector<int> $path */
-protected $path = [];
-
 /** @var Tokenizer $tok */
 protected $tok = null;
 
@@ -141,9 +138,8 @@ public function tok_menu_add($level, $node) {
 	}
 
 	// \rkphplib\lib\log_debug("AMenu.tok_menu_add> level=$level node: ".print_r($node, true));
-
 	if ($this->ignore_level > 0 && $level > $this->ignore_level) {
-		// do not append descendant node
+		// \rkphplib\lib\log_debug("AMenu.tok_menu_add> level=$level > ".$this->ignore_level."=ignore_level - do not append");
 		return;
 	}
 
@@ -155,7 +151,6 @@ public function tok_menu_add($level, $node) {
 	$node['parent'] = 0;
 
 	// \rkphplib\lib\log_debug("AMenu.tok_menu_add> nc=$nc id=".($nc + 1)." parent=0 prev: ".print_r($prev, true));
-
 	if ($prev) {
 		if ($level === $prev['level'] + 1) {
 			$node['parent'] = $prev['id'];
@@ -185,60 +180,111 @@ public function tok_menu_add($level, $node) {
 		return;
 	}
 
-	if (!empty($node['if_table'])) {
-		require_once(__DIR__.'/../Database.class.php');
-		$db = \rkphplib\Database::getInstance();
-		$table_list = \rkphplib\lib\split_str(',', $node['if_table']);
-		foreach ($table_list as $table) {
-			if (!$db->hasTable($table)) {
-				$this->ignore_level = $level + 1;
-				// \rkphplib\lib\log_debug("AMenu.tok_menu_add> if_table = false - missing $table");
-				return;
-			}
-		}
+	if (!empty($node['if_table']) && !$this->hasTables($node['if_table'])) {
+		$this->ignore_level = $level + 1;
+		return;
 	}
 
-	if (!empty($node['if_priv'])) {
-		if (!isset($this->conf['privileges']) || !isset($this->conf['privileges']['@me'])) {
-			throw new Exception('missing @me privilege - call [menu:privileges]@me=[login:priv]|#|...[:menu]');
-		}
-
-		$privileges = \rkphplib\lib\split_str(',', $node['if_priv']);
-		$mypriv = intval($this->conf['privileges']['@me']);
-
-		foreach ($privileges as $name) {
-			if (!isset($this->conf['privileges'][$name])) {
-				throw new Exception('missing '.$name.' privilege - call [menu:privileges]'.$name.'=2^N|#|...[:menu]');
-			}
-
-			$priv = intval($this->conf['privileges'][$name]);
-			if (($priv & $mypriv) != $priv) {
-				// \rkphplib\lib\log_debug("AMenu.tok_menu_add> no $name privilege: $priv & $mypriv != $priv");
-				return;
-			}
-		}
+	if (!empty($node['if_priv']) && !$this->checkPrivileges($node['if_priv'])) {
+		$this->ignore_level = $level + 1;
+		return;
 	}
-
+		
 	$node['level'] = $level;
 	$node['type'] = 'l';	// set to leaf first
 
-	if (!empty($node['dir'])) {
-		if (mb_substr($node['dir'], -1) === '/') {
-			$node['dir'] = mb_substr($node['dir'], 0, -1);
-
-			if (empty($node['dir'])) {
-				array_push($this->path, $nc);
-			}
-		}
-
-		$dir = empty($_REQUEST[SETTINGS_REQ_DIR]) ? '' : $_REQUEST[SETTINGS_REQ_DIR];
-		if (!empty($dir) && ($node['dir'] === $dir || mb_strpos($dir, $node['dir'].'/') === 0)) {
-			array_push($this->path, $nc);
-		}
+	if (!empty($node['dir']) && mb_substr($node['dir'], -1) === '/') {
+		$node['dir'] = mb_substr($node['dir'], 0, -1);
 	}
 
 	array_push($this->node, $node);
-	// \rkphplib\lib\log_debug("AMenu.tok_menu_add> node: ".print_r($this->node, true)."\npath: ".print_r($this->path, true));
+}
+
+
+/**
+ * Add hi=1 to this.node if on $_REQUEST[SETTINGS_REQ_DIR] path.
+ * Add curr=1 to this.node if node is end of current path.
+ */
+public function addNodeHi() {
+	$dir = empty($_REQUEST[SETTINGS_REQ_DIR]) ? '' : $_REQUEST[SETTINGS_REQ_DIR];
+	$path = explode('/', $dir);
+	$curr_path = '';
+
+	for ($i = 0; $i < count($path); $i++) {	
+		$curr_path .= ($i > 0) ? '/'.$path[$i] : $path[$i];
+		$found = false;
+
+		for ($j = 0; !$found && $j < count($this->node); $j++) {
+			$node = $this->node[$j];
+
+			if (!isset($node['dir'])) {
+				continue;
+			}
+
+			if ($node['dir'] == $curr_path) {
+				// \rkphplib\lib\log_debug("AMenu.addNodeHi> ($i, $j): curr_path=$curr_path node.dir=".$node['dir']);
+				$this->node[$j]['hi'] = 1;
+				$found = true;
+
+				if ($curr_path == $dir) {
+					$this->node[$j]['curr'] = 1;
+				}
+			}
+		}
+	}
+}
+
+
+/**
+ * Return true if table exists.
+ *
+ * @param string $tables
+ * @return boolean
+ */
+private function hasTables($tables) {
+	require_once(__DIR__.'/../Database.class.php');
+	$db = \rkphplib\Database::getInstance();
+
+	$table_list = \rkphplib\lib\split_str(',', $tables);
+	foreach ($table_list as $table) {
+		if (!$db->hasTable($table)) {
+			// \rkphplib\lib\log_debug("AMenu.hsaTables> if_table = false - missing $table");
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
+/**
+ * Return false if privileges do not exist.
+ *
+ * @param string $require_priv list of int
+ * @return boolean
+ */
+private function checkPrivileges($require_priv) {
+
+	if (!isset($this->conf['privileges']) || !isset($this->conf['privileges']['@me'])) {
+		throw new Exception('missing @me privilege - call [menu:privileges]@me=[login:priv]|#|...[:menu]');
+	}
+
+	$privileges = \rkphplib\lib\split_str(',', $require_priv);
+	$mypriv = intval($this->conf['privileges']['@me']);
+
+	foreach ($privileges as $name) {
+		if (!isset($this->conf['privileges'][$name])) {
+			throw new Exception('missing '.$name.' privilege - call [menu:privileges]'.$name.'=2^N|#|...[:menu]');
+		}
+
+		$priv = intval($this->conf['privileges'][$name]);
+		if (($priv & $mypriv) != $priv) {
+			// \rkphplib\lib\log_debug("AMenu.checkPrivileges> no $name privilege: $priv & $mypriv != $priv");
+			return false;
+		}
+	}
+
+	return true;
 }
 
 

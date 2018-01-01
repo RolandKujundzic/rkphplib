@@ -50,22 +50,14 @@ public function __construct() {
  */
 public function tok_menu($tpl) {
 
+	$this->addNodeHi();
+
 	if (!empty($tpl)) {
 		$this->conf['menu'] = $tpl;
 	}
 
 	$html = [ ];
-
-	for ($i = 0; $i < count($this->node); $i++) {
-		$node = $this->node[$i];
-		$level = $node['level'];
-
-		if (!isset($html[$level])) {
-			$html[$level] = [];
-		}
-
-		array_push($html[$level], $this->node_html($i));
-	}
+	$this->level_n(0, $html);
 
 	$res = $this->conf['menu'];
 
@@ -77,7 +69,39 @@ public function tok_menu($tpl) {
 		$res = $this->tok->replaceTags($res, [ $lname => $out ]);
 	}
 
+	// remove next level include
+	$res = $this->tok->replaceTags($res, [ 'level_'.$i => '' ]);
+
 	return $res;
+}
+
+
+/**
+ * Compute level html.
+ *
+ * @param int $start 0 ... count(this.node) - 1
+ * @param vector-reference &$html
+ */
+private function level_n($start, &$html) {
+	$level = $this->node[$start]['level'];
+	$parent = $this->node[$start]['parent'];
+
+	if (!isset($html[$level])) {
+		$html[$level] = [];
+	}
+
+	for ($i = $start; $i < count($this->node); $i++) {
+		$node = $this->node[$i];
+
+		if ($node['level'] == $level && $node['parent'] == $parent) {
+			array_push($html[$level], $this->node_html($i));
+			if ($node['type'] == 'b' && !empty($node['hi'])) {
+				$this->level_n($i + 1, $html);
+			}
+		}
+	}
+
+	return;
 }
 
 
@@ -104,13 +128,23 @@ private function node_html($pos) {
 		$tpl = $this->conf[$node['_tpl']];
 	}
 	else {
-		$hi_name = empty($this->conf[$lname.'_hi']) ? $lname : $lname.'_hi';
-		$tpl = isset($this->path[$pos]) ? $this->conf[$hi_name] : $this->conf[$lname];
+		$tpl = (!empty($this->conf[$lname.'_hi']) && !empty($node['hi'])) ? $this->conf[$lname.'_hi'] : 
+			((!empty($this->conf['level_curr']) && !empty($node['curr'])) ? 
+				$this->conf['level_curr'] : $this->conf[$lname]);
+
+		if (empty($node['hi'])) {
+			// remove next level include
+			$include_tag = 'level_'.($node['level'] + 1);
+			$tpl = $this->tok->replaceTags($tpl, [ $include_tag => '' ]);
+		}
+		else if (!empty($this->conf['level_curr'])) {
+			$include_tag = $this->tok->getTag('level_'.($node['level'] + 1));
+			$tpl = $this->tok->replaceTags($tpl, [ 'level_next' => $include_tag ]);
+		}
 	}
 
 	$tpl = $this->tok->replaceTags($tpl, $node);
-
-	error_log("tpl: [$tpl] node: ".print_r($node, true)."\n", 3, "/tmp/rk.log");
+	// \rkphplib\lib\log_debug("TMenu.node_html> pos=$pos tpl=[$tpl] node: ".print_r($node, true));
 	return $tpl;
 }
 
