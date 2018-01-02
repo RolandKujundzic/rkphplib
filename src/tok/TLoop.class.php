@@ -122,7 +122,7 @@ public function tok_loop_join($p) {
 	}
 
 	if (empty($tpl)) {
-		$tpl = '{:=loop}';
+		$tpl = $this->tok->getTag('loop');
 	}
 
 	$tag_loop = $this->tok->getTag('loop');
