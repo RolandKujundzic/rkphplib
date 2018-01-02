@@ -137,9 +137,11 @@ public function tok_menu_add($level, $node) {
 		throw new Exception('invalid level', print_r($node, true));
 	}
 
-	// \rkphplib\lib\log_debug("AMenu.tok_menu_add> level=$level node: ".print_r($node, true));
-	if ($this->ignore_level > 0 && $level > $this->ignore_level) {
-		// \rkphplib\lib\log_debug("AMenu.tok_menu_add> level=$level > ".$this->ignore_level."=ignore_level - do not append");
+	$label = isset($node['label']) ? $node['label'] : (isset($node['dir']) ? $node['dir'] : $level); 
+
+	// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> level=$level ignore_level=".$this->ignore_level);
+	if ($this->ignore_level > 0 && $level >= $this->ignore_level) {
+		// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> level=$level > ignore_level=".$this->ignore_level.' - return');
 		return;
 	}
 
