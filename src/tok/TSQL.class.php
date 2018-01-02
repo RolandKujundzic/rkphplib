@@ -5,6 +5,7 @@ namespace rkphplib\tok;
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/../Database.class.php');
 require_once(__DIR__.'/../lib/conf2kv.php');
+require_once(__DIR__.'/../lib/split_str.php');
 
 use \rkphplib\Database;
 
@@ -231,7 +232,8 @@ public function tok_sql_col($name) {
 /**
  * Return query result as json. Use mode = hash (key AS name, value AS value) for hash result.
  * Use spreadsheet for table in spreadsheet (vector<vector>) format.
- * Use spreadsheet_js for "var spreadsheet_rows = [ [ ... ] ... ]; var spreadsheet_cols = [ '...', ... ];".
+ * Use spreadsheet_js for "var spreadsheet_rows = [ [ ... ] ... ]; var spreadsheet_cols = [ '...', ... ];",
+ * configure via {var:=#sql:json:spreadsheet_js}...{:var} (@see spreadSheetJS).
  * Otherwise return table (vector<map>).
  * 
  * @throws
@@ -259,8 +261,7 @@ public function tok_sql_json($mode, $query) {
 		}
 
 		if ($mode == 'spreadsheet_js') {
-			return 'var spreadsheet_cols = '.\rkphplib\JSON::encode(array_shift($dbres)).";\n".
-				'var spreadsheet_rows = '.\rkphplib\JSON::encode($dbres).";\n";
+			return $this->spreadSheetJS($dbres);
 		}
 	}
 	else if (empty($mode) || $mode == 'table') {
@@ -268,6 +269,72 @@ public function tok_sql_json($mode, $query) {
 	}
 
 	return \rkphplib\JSON::encode($dbres);
+}
+
+
+/**
+ * Return spreadsheet data. Example:
+ *
+ * @tok {var:=#sql:json:spreadsheet_js}readonly= id,...|#|pagebreak=100|#|required=name,...|#|column_type=id:numeric,...|#|check.id=...{:var}
+ * @tok {sql:json:spreadsheet_js}SELECT * FROM ... {:sql}
+ *
+ * var spreadsheet_cols = [ 'id', 'lchange', ... ];
+ * var spreadsheet_col_info = [ { type: 'numeric', readOnly: true }, { type: 'date' }, ... ];
+ * var spreadsheet_rows = [ [ 1, '2017-02-18 14:32:00' ], ... ];
+ *
+ * var xls = new Handsontable(container, {
+ *   data: spreadsheet_rows,
+ *   colHeaders: spreadsheet_cols,
+ *   columns: spreadsheet_col_info,
+ *   rowHeaders: false,
+ *   ... });
+ *
+ * @param table
+ * @return string
+ */
+private function spreadSheetJS($table) {
+
+	$config = $this->tok->getVar('sql:json:spreadsheet_js');
+	if (!is_array($config)) {
+		$config = [];
+	}
+	else {
+		if (isset($config['readonly'])) {
+			$config['readonly'] = \rkphplib\lib\split_str(',', $config['readonly']);
+		}
+
+		if (isset($config['column_type'])) {
+			$config['column_type'] = \rkphplib\lib\conf2kv($config['column_type'], ':', ',');
+		}
+
+		if (isset($config['required'])) {
+			$config['required'] = \rkphplib\lib\split_str(',', $config['required']);
+		}
+	}
+
+	$columns = array_shift($table);
+	$col_info = [];
+
+	for ($i = 0; $i < count($columns); $i++) {
+		$cname = $columns[$i];
+		$col = [ ];
+
+		if (isset($config['readonly']) && in_array($cname, $config['readonly'])) {
+			$col['readOnly'] = true;
+		}
+
+		if (isset($config['column_type']) && isset($config['column_type'][$cname])) {
+			$col['type'] = $config['column_type'][$cname];
+		}
+
+		array_push($col_info, $col);
+	}
+
+	$res  = 'var spreadsheet_cols = '.\rkphplib\JSON::encode($columns).";\n"; 	
+	$res .= 'var spreadsheet_col_info = '.\rkphplib\JSON::encode($col_info).";\n";
+	$res .= 'var spreadsheet_rows = '.\rkphplib\JSON::encode($table).";\n";
+
+	return $res;
 }
 
 
