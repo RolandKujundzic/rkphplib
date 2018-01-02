@@ -51,7 +51,6 @@ private $tok = null;
  * @return map <string:int>
  */
 public function getPlugins($tok) {
-
 	$this->tok = $tok;
 
 	$plugin = [
@@ -306,7 +305,7 @@ public function untranslated($action, $param, $arg) {
 		return $tok->getPluginTxt($action.$tok->rx[2].$param, $arg);
 	}
 	else {
-		return str_replace('{:=txt}', $arg, $this->conf['untranslated']);
+		return str_replace($this->tok->getTag('txt'), $arg, $this->conf['untranslated']);
 	}
 }
 
