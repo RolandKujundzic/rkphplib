@@ -27,10 +27,10 @@ class TMenu extends AMenu implements TokPlugin {
  *
  */
 public function __construct() {
-	$this->conf['menu'] = $this->tok->getTag('level_1');
+	$this->conf['menu'] = TAG_PREFIX.'level_1'.TAG_SUFFIX;
 
-	$t_label = $this->tok->getTag('label');
-	$t_link = $this->tok->getTag('link');
+	$t_label = TAG_PREFIX.'label'.TAG_SUFFIX;
+	$t_link = TAG_PREFIX.'link'.TAG_SUFFIX;
 
 	for ($i = 0; $i < 7; $i++) {
 		$ln = 'level_'.($i + 1);
@@ -39,7 +39,7 @@ public function __construct() {
 		$this->conf[$ln.'_footer'] = $tab.'</ul>';
 		$this->conf[$ln.'_delimiter'] = "\n";
 		$this->conf[$ln] = $tab."\t".'<li><a href="'.$t_link.'" class="menu_'.$ln.'">'.$t_label.'</a></li>';
-		$t_next_level = $this->tok->getTag('level_'.($i + 2));
+		$t_next_level = TAG_PREFIX.('level_'.($i + 2)).TAG_SUFFIX;
 		$this->conf[$ln.'_hi'] = $tab."\t".'<li><a href="'.$t_link.'" class="menu_'.$ln.'_hi">'.$t_label.'</a>'."\n$t_next_level\n</li>";
 	}
 }
