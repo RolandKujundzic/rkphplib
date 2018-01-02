@@ -27,7 +27,10 @@ class TMenu extends AMenu implements TokPlugin {
  *
  */
 public function __construct() {
-	$this->conf['menu'] = '{:=level_1}';
+	$this->conf['menu'] = $this->tok->getTag('level_1');
+
+	$t_label = $this->tok->getTag('label');
+	$t_link = $this->tok->getTag('link');
 
 	for ($i = 0; $i < 7; $i++) {
 		$ln = 'level_'.($i + 1);
@@ -35,8 +38,9 @@ public function __construct() {
 		$this->conf[$ln.'_header'] = $tab.'<ul>';
 		$this->conf[$ln.'_footer'] = $tab.'</ul>';
 		$this->conf[$ln.'_delimiter'] = "\n";
-		$this->conf[$ln] = $tab."\t".'<li><a href="{:=link}" class="menu_'.$ln.'">{:=label}</a></li>';
-		$this->conf[$ln.'_hi'] = $tab."\t".'<li><a href="{:=link}" class="menu_'.$ln.'_hi">{:=label}</a>'."\n{:=level_".($i + 2)."}\n</li>";
+		$this->conf[$ln] = $tab."\t".'<li><a href="'.$t_link.'" class="menu_'.$ln.'">'.$t_label.'</a></li>';
+		$t_next_level = $this->tok->getTag('level_'.($i + 2));
+		$this->conf[$ln.'_hi'] = $tab."\t".'<li><a href="'.$t_link.'" class="menu_'.$ln.'_hi">'.$t_label.'</a>'."\n$t_next_level\n</li>";
 	}
 }
 
