@@ -431,26 +431,26 @@ public static function decodeHash($data, $export_into_req = false) {
  * will be execute before condition comparision - use {tf:} and {true|false:} to
  * avoid this.
  * 
- * {if:|eq|ne|in|in_set|le|lt|ge|gt|and|or|cmp|cmp:or}condition(s)|#|true|#|false{:if}
+ * @tok {if:|eq|ne|in|in_set|le|lt|ge|gt|and|or|cmp|cmp:or}condition(s)|#|true|#|false{:if}
  *
- * {if:}abc|#|true|#|false{:if} = true
- * {if:}|#|true|#|false{:if} = false
- * {if:eq:abc}abc|#|true{:if} = true
- * {if:eq:abc}|#|true{:if} = ""
- * {if:ne:abc}abc|#|true|#|false{:if} = false
- * {if:ne:abc}|#|true{:if} = true
- * {if:in:2,5}3|#|true|#|false{:if} = false 
- * {if:in:2,5}2|#|true|#|false{:if} = true
- * {if:in_set:3}2,5|#|true|#|false{:if} = false
- * {if:in_set:5}2,5|#|true|#|false{:if} = true 
- * {if:le}2|#|3|#|true|#|false{:if} = true - same as {if:le:2}3|#|true|#|false{:if}
- * {if:lt:3}2|#|true|#|false{:if} = false - same as {if:lt}3|#|2|#|true|#|false{:if}
- * {if:ge}2|#|3|#|true|#|false{:if} = false - same as {if:ge:2}3|#|true|#|false{:if}
- * {if:gt:3}2|#|true|#|false{:if} = true - same as {if:gt}3|#|2|#|true|#|false{:if}
- * {if:and:2}1|#|1|#|true|#|false{:if} = true
- * {if:or:3}0|#|0|#|1|#|true|#|false{:if} = true
- * {if:cmp}a|#|a|#|b|#|c|#|true|#|false{:if} = false - same as {if:cmp:and}...
- * {if:cmp:or}a|#|a|#|b|#|c|#|true|#|false{:if} = true
+ * @tok {if:}abc|#|true|#|false{:if} = true
+ * @tok {if:}|#|true|#|false{:if} = false
+ * @tok {if:eq:abc}abc|#|true{:if} = true
+ * @tok {if:eq:abc}|#|true{:if} = ""
+ * @tok {if:ne:abc}abc|#|true|#|false{:if} = false
+ * @tok {if:ne:abc}|#|true{:if} = true
+ * @tok {if:in:2,5}3|#|true|#|false{:if} = false 
+ * @tok {if:in:2,5}2|#|true|#|false{:if} = true
+ * @tok {if:in_set:3}2,5|#|true|#|false{:if} = false
+ * @tok {if:in_set:5}2,5|#|true|#|false{:if} = true 
+ * @tok {if:le}2|#|3|#|true|#|false{:if} = true - same as {if:le:2}3|#|true|#|false{:if}
+ * @tok {if:lt:3}2|#|true|#|false{:if} = false - same as {if:lt}3|#|2|#|true|#|false{:if}
+ * @tok {if:ge}2|#|3|#|true|#|false{:if} = false - same as {if:ge:2}3|#|true|#|false{:if}
+ * @tok {if:gt:3}2|#|true|#|false{:if} = true - same as {if:gt}3|#|2|#|true|#|false{:if}
+ * @tok {if:and:2}1|#|1|#|true|#|false{:if} = true
+ * @tok {if:or:3}0|#|0|#|1|#|true|#|false{:if} = true
+ * @tok {if:cmp}a|#|a|#|b|#|c|#|true|#|false{:if} = false - same as {if:cmp:and}...
+ * @tok {if:cmp:or}a|#|a|#|b|#|c|#|true|#|false{:if} = true
  *
  * @throws 
  * @param string $param
@@ -981,7 +981,7 @@ public static function findPath($file, $dir = '.') {
  * @test:t8 p.length == 2 and p[0] == in: set is split(',', p[1]) true if p[0] in set
  * @test:t9 p.length == 2 and p[0] == in_set: set is split(',', p[0]) true if p[1] in set
  * @test:t10 p.length >= 2 and p[0] == or: true if one entry in p[1...n] is not empty
- * @test:t11 p.legnth >= 2 and p[0] == and: true if every entry in p[1...n] is not empty
+ * @test:t11 p.length >= 2 and p[0] == and: true if every entry in p[1...n] is not empty
  * @test:t12 p.length >= 3 and p[0] == cmp_or: true if one p[i] == p[i+1] (i+=2)
  * @test:t13 p.length >= 3 and p[0] == cmp_and: true if every p[i] == p[i+1] (i+=2)
  * - p.length == 2 and p[0] == prev[:n]: modify result of previous evaluation
@@ -1008,16 +1008,16 @@ public function tok_tf($p, $arg) {
 			$tf = empty($ta) ? false : $ta;
 		}
 		else if ($p[0] === 'set') {
-			$tf = \rkphplib\lib\split_str('|#|', $arg);
+			$tf = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
 		}
 		else if (!empty($p[0])) {
 			if (in_array($p[0], [ 'cmp', 'set', 'in_arr', 'in', 'in_set', 'and', 'or', 'cmp_and', 'cmp_or' ])) {
 				$do = $p[0];
-				$ap = \rkphplib\lib\split_str('|#|', $arg);
+				$ap = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
 			}
 			else if (in_array($p[0], [ 'eq', 'ne', 'lt', 'gt', 'le', 'ge' ])) {
 				$do = $p[0];
-				$tmp = \rkphplib\lib\split_str('|#|', $arg);
+				$tmp = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
 				$ap = [];
 
 				foreach ($tmp as $value) {
@@ -1036,7 +1036,7 @@ public function tok_tf($p, $arg) {
 	else if (count($p) > 1) {
 		$do = array_shift($p);
 		// even if arg is empty we need [] as ap - e.g. {tf:cmp:}{:tf} = true
-		$ap = array_merge($p, \rkphplib\lib\split_str('|#|', $arg));
+		$ap = array_merge($p, \rkphplib\lib\split_str(HASH_DELIMITER, $arg));
 	}
 
 	if (empty($do)) {
