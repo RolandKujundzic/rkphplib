@@ -941,13 +941,22 @@ public function replaceTags($tpl, $replace, $prefix = '') {
 
 
 /**
- * Return {:=$name}.
+ * Return {:=$name}. Use $name = 'TAG:PREFIX' for "{:=" and $name = 'TAG:SUFFIX' for "}".
  *
  * @param string $name
  * @return string
  */
 public function getTag($name) {
-	return $this->rx[1].$this->rx[2].'='.$name.$this->rx[3];
+	$res = $this->rx[1].$this->rx[2].'='.$name.$this->rx[3];
+
+	if ($name == 'TAG:PREFIX') {
+		$res = $this->rx[1].$this->rx[2].'=';
+	}
+	else if ($name == 'TAG:SUFFIX') {
+		$res = $this->rx[3];
+	}
+
+	return $res;
 }
 
 
