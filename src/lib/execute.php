@@ -27,7 +27,7 @@ function execute($cmd, $parameter = null, $abort = true) {
 
 	if (is_array($parameter)) {
 		foreach ($parameter as $key => $value) {
-			$cmd = str_replace('{:='.$key.'}', escapeshellarg($value), $cmd);
+			$cmd = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, escapeshellarg($value), $cmd);
 		}
 	}
 
