@@ -325,12 +325,12 @@ public function setQuery($qkey, $query, $info = []) {
 		$this->setQueryInfo($qkey, $info);
 	}
 
-	if (mb_strpos($query, '{:=') === false) {
+	if (mb_strpos($query, TAG_PREFIX) === false) {
 		$this->_query[$qkey] = [ '@query' => $query ];
 		return;
 	}
 
-	$tok = preg_split("/('?\{:=[a-zA-Z0-9_\^]+\}'?)/s", $query, -1, PREG_SPLIT_DELIM_CAPTURE);
+	$tok = preg_split("/('?\\".TAG_PREFIX."[a-zA-Z0-9_\^]+\\".TAG_SUFFIX."'?)/s", $query, -1, PREG_SPLIT_DELIM_CAPTURE);
 	// value is: bind, escape, escape2, escape_name, keep
 	$map = array('bind' => array());
 
@@ -422,13 +422,13 @@ public function getQuery($qkey, $replace = null) {
 				$value = "'".$this->esc($value)."'";
 			}
 
-			$query = str_replace("{:=$key}", $value, $query);
+			$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, $value, $query);
 		}
 		else if ($do === 'escape_name') {
-			$query = str_replace('{:=^'.$key.'}', self::escape_name($replace[$key]), $query);
+			$query = str_replace(TAG_PREFIX.'^'.$key.TAG_SUFFIX, self::escape_name($replace[$key]), $query);
 		}
 		else if ($do === 'keep') {
-			$query = str_replace('{:='.$key.'}', $replace[$key], $query);
+			$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, $replace[$key], $query);
 		}
 		else {
 			throw new Exception("Unknown replace action", "do=$do query=$query");
@@ -564,7 +564,7 @@ public function setQueryHash($conf_hash, $require_keys = '') {
 
 	foreach ($qlist as $qkey => $query) {
 		foreach ($replace as $rkey => $rval) {
-			$qlist[$key] = str_replace('{:=@'.$rkey.'}', $rval, $query);
+			$qlist[$key] = str_replace(TAG_PREFIX.'@'.$rkey.TAG_SUFFIX, $rval, $query);
 		}
 	}
 
