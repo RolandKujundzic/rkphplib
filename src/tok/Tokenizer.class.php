@@ -127,10 +127,12 @@ public function getVar($name) {
 /**
  * Set this.vmap[$name] = $value. If $name is "a.b.c" set this.vmap[a][b][c] = $value.
  *
+ * @throws
  * @param string
  * @param any
+ * @param boolean must_not_exist (=false)
  */
-public function setVar($name, $value) {
+public function setVar($name, $value, $must_not_exists = false) {
 
 	if (empty($name)) {
 		throw new Exception('empty vmap name');
@@ -143,6 +145,10 @@ public function setVar($name, $value) {
 		$key = array_shift($path);
 
 		if (count($path) == 0) {
+			if (isset($map[$key]) && $must_not_exists) {
+				throw new Exception('setVar('.$name.') ({var:='.$name.'}) already exists', $value);
+			}
+
 			$map[$key] = $value;
 		}
 		else {
