@@ -88,15 +88,15 @@ public function getPlugins($tok) {
  * Set default configuration.
  */
 public function __construct() {
-	$label = $this->tok->getTag('label');
-	$input = $this->tok->getTag('input');
-	$error = $this->tok->getTag('error');
-	$error_message = $this->tok->getTag('error_message');
-	$type = $this->tok->getTag('type');
-	$name = $this->tok->getTag('name');
-	$value = $this->tok->getTag('value');
-	$class = $this->tok->getTag('class');
-	$options = $this->tok->getTag('options');
+	$label = TAG_PREFIX.'label'.TAG_SUFFIX;
+	$input = TAG_PREFIX.'input'.TAG_SUFFIX;
+	$error = TAG_PREFIX.'error'.TAG_SUFFIX;
+	$error_message = TAG_PREFIX.'error_message'.TAG_SUFFIX;
+	$type = TAG_PREFIX.'type'.TAG_SUFFIX;
+	$name = TAG_PREFIX.'name'.TAG_SUFFIX;
+	$value = TAG_PREFIX.'value'.TAG_SUFFIX;
+	$class = TAG_PREFIX.'class'.TAG_SUFFIX;
+	$options = TAG_PREFIX.'options'.TAG_SUFFIX;
 
 	$this->conf['default'] = [
 		'template.header' => '',
