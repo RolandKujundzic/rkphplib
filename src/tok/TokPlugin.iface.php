@@ -8,6 +8,11 @@ if (!defined('SETTINGS_REQ_DIR')) {
 	define('SETTINGS_REQ_DIR', 'dir');
 }
 
+if (!defined('HASH_DELIMITER')) {
+	/** @const HASH_DELIMITER = '|#|' if undefined */
+	define('HASH_DELIMITER', '|#|');
+}
+
 
 
 /**
