@@ -48,11 +48,11 @@ FOREIGN KEY (pid) REFERENCES {$table}(id) ON DELETE CASCADE ON UPDATE CASCADE
 END;
 	$db->setQuery('create', $query);
 
-	$db->setQuery('insert', "INSERT INTO $table (pid, name) VALUES ('{:=pid}', '{:=name}')");
+	$db->setQuery('insert', "INSERT INTO $table (pid, name) VALUES ({:=pid}, {:=name})");
 
-	$db->setQuery('select_name_pid', "SELECT * FROM $table WHERE name='{:=name}' AND pid='{:=pid}'");
+	$db->setQuery('select_name_pid', "SELECT * FROM $table WHERE name={:=name} AND pid={:=pid}");
 
-	$db->setQuery('select_id', "SELECT * FROM $table WHERE id='{:=id}'");
+	$db->setQuery('select_id', "SELECT * FROM $table WHERE id={:=id}");
 }
 
 
