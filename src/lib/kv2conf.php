@@ -6,6 +6,11 @@ require_once(dirname(__DIR__).'/Exception.class.php');
 
 use rkphplib\Exception;
 
+if (!defined('HASH_DELIMITER')) {
+	/** @const HASH_DELIMITER = '|#|' if undefined */
+	define('HASH_DELIMITER', '|#|');
+}
+
 
 /**
  * Convert map to string. 
@@ -21,7 +26,7 @@ use rkphplib\Exception;
  * @param int $level (recursive call level - default = 1) 
  * @return string
  */
-function kv2conf($kv, $d1 = '=', $d2 = '|#|', $ikv = false, $level = 1) {
+function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1) {
 
 	$conf = $ikv ? '@@1="",","'.$d2."\n".'@@2="'.$d1.'","'.$d2.'"'.$d2."\n" : '';
 	
