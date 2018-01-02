@@ -88,16 +88,26 @@ public function getPlugins($tok) {
  * Set default configuration.
  */
 public function __construct() {
+	$label = $this->tok->getTag('label');
+	$input = $this->tok->getTag('input');
+	$error = $this->tok->getTag('error');
+	$error_message = $this->tok->getTag('error_message');
+	$type = $this->tok->getTag('type');
+	$name = $this->tok->getTag('name');
+	$value = $this->tok->getTag('value');
+	$class = $this->tok->getTag('class');
+	$options = $this->tok->getTag('options');
+
 	$this->conf['default'] = [
 		'template.header' => '',
-		'template.output' => '{:=label}{:=input}{:=error_message}',
+		'template.output' => "$label$input$error_message",
 		'template.footer' => '',
-		'template.input'    => '<input type="{:=type}" name="{:=name}" value="{:=value}" class="{:=class}" $tags>',
-		'template.textarea' => '<textarea name="{:=name}"$tags>{:=value}</textarea>',
-		'template.select'   => '<select name="{:=name}"$tags>{:=options}</select>',
-		'template.error_message' 			  => '{:=error}',
+		'template.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" $tags>',
+		'template.textarea' => '<textarea name="'.$name.'"$tags>'.$value.'</textarea>',
+		'template.select'   => '<select name="'.$name.'"$tags>'.$options.'</select>',
+		'template.error_message' 			  => $error,
 		'template.error_message_concat' => ', ',
-		'template.error_message_multi'  => '<i>{:=name}</i>: <tt>{:=error}</tt><br>',
+		'template.error_message_multi'  => "<i>$name</i>: <tt>$error</tt><br>",
 		'template.error' 		=> 'error',
 		'submit' => 'form_action'
 		];
@@ -365,15 +375,15 @@ protected function getInput($name, $p) {
 
 	$attributes = [ 'size', 'maxlength', 'placeholder', 'type', 'pattern', 'rows', 'cols', 'style', 'class' ];
 	foreach ($attributes as $key) {
-		if (isset($p[$key]) && !mb_strpos($input, '{:='.$key.'}')) {
-			$tags .= $key.'="{:='.$key.'}"';
+		if (isset($p[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
+			$tags .= $key.'="'.$this->tok->getTag($key).'"';
 		}
 	}
 
 	$boolean_attributes = [ 'readonly', 'multiple', 'disabled' ];
 	foreach ($boolean_attributes as $key) {
-		if (!empty($p[$key]) && !mb_strpos($input, '{:='.$key.'}')) {
-			$tags .= ' {:='.$key.'}';
+		if (!empty($p[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
+			$tags .= ' '.$this->tok->getTag($key);
 			$ri[$key] = $key;
 		}
 	}
