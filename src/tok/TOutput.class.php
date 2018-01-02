@@ -288,6 +288,9 @@ public function tok_output_loop($tpl) {
 public function tok_output_conf($p) {
 
 	if (count($this->conf) == 0 || !empty($p['reset'])) {
+		$tag_min = $this->tok->getTag('min');
+		$tag_max = $this->tok->getTag('max');
+
 		$this->conf = [
 			'reset' => 1,
 			'req.last' => 'last',
@@ -301,7 +304,7 @@ public function tok_output_conf($p) {
 			'table.type' => '',			
 			'table.data' => '',
 			'table.url' => '',
-			'scroll.link' => '<a href="index.php?{:=keep}">{:=link}</a>',
+			'scroll.link' => '<a href="index.php?'.$this->tok->getTag('keep').'">'.$this->tok->getTag('link').'</a>',
 			'scroll.first' => '<img src="img/scroll/first.gif" border="0">',
 			'scroll.prev' => '<img src="img/scroll/prev.gif" border="0">',
 			'scroll.next' => '<img src="img/scroll/next.gif" border="0">',
@@ -310,8 +313,8 @@ public function tok_output_conf($p) {
 			'scroll.no_prev' => '<img src="img/scroll/no_prev.gif" border="0">',
 			'scroll.no_next' => '<img src="img/scroll/no_next.gif" border="0">',
 			'scroll.no_last' => '<img src="img/scroll/no_last.gif" border="0">',
-			'scroll.jump' => '{:=min} - {:=max}',
-			'scroll.jump_active' => '<b>{:=min} - {:=max}</b>',
+			'scroll.jump' => $tag_min.' - '.$tag_max,
+			'scroll.jump_active' => '<b>'.$tag_min.' - '.$tag_max.'</b>',
 			'scroll.jump_delimiter' => '&nbsp;|&nbsp;',
 			'scroll.jump_num' => '4'
 		];
