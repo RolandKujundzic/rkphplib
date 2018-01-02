@@ -6,6 +6,7 @@ require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/../Exception.class.php');
 require_once(__DIR__.'/../lib/split_str.php');
 require_once(__DIR__.'/../File.class.php');
+require_once(__DIR__.'/../lib/conf2kv.php');
 
 use \rkphplib\Exception;
 use \rkphplib\File;
@@ -123,18 +124,28 @@ public function getPlugins($tok) {
 /**
  * Retrieve (or set) Tokenizer.vmap value. Examples:
  *
- * - set a=17: {var:=a}17{:var}
- * - get optional a: {var:a}
- * - get required a: {var:a!} (abort if not found)
- * - set multi-map: {var:=person.age}42{:var}
- * - get multi-map: {var:person.age}
+ * @tok set a=17: {var:=a}17{:var}
+ * @tok set hash: {var:=#b}x=5|#|y=12|#|...{:var}
+ * @tok get optional a: {var:a}
+ * @tok get required a: {var:a!} (abort if not found)
+ * @tok set multi-map: {var:=person.age}42{:var}
+ * @tok get multi-map: {var:person.age}
  *
+ * @throws
  * @param string $name
  * @param string $value
  */
 public function tok_var($name, $value) {
 	if (substr($name, 0, 1) == '=') {
-		$this->_tok->setVar($name, $value);
+		$name = substr($name, 1);
+
+		if (substr($name, 0, 1) == '#') {
+			$name = substr($name, 1);
+			$this->_tok->setVar($name, \rkphplib\lib\conf2kv($value), true);
+		}
+		else {
+			$this->_tok->setVar($name, $value);
+		}
 	}
 	else {
 		return (string) $this->_tok->getVar($name);
