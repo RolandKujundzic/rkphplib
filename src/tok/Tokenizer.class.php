@@ -764,7 +764,7 @@ private function _call_plugin($name, $param, $arg = null) {
 	}
 	else if (($pconf & TokPlugin::CSLIST_BODY) || ($pconf & TokPlugin::LIST_BODY)) {
 		require_once($src_dir.'/lib/split_str.php');
-		$delim = ($pconf & TokPlugin::CSLIST_BODY) ? ',' : '|#|';
+		$delim = ($pconf & TokPlugin::CSLIST_BODY) ? ',' : HASH_DELIMITER;
 		$arg = \rkphplib\lib\split_str($delim, $arg);
 	}
 	else if ($pconf & TokPlugin::XML_BODY) {
