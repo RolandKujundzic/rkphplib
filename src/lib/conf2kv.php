@@ -4,6 +4,12 @@ namespace rkphplib\lib;
 
 require_once(__DIR__.'/csv_explode.php');
 
+if (!defined('HASH_DELIMITER')) {
+  /** @const HASH_DELIMITER = '|#|' if undefined */
+  define('HASH_DELIMITER', '|#|');
+}
+
+
 
 /**
  * Split text into key value hash. 
@@ -25,7 +31,7 @@ require_once(__DIR__.'/csv_explode.php');
  * @param map ikv (config hash - default [ ])
  * @return string|array|hash
  */
-function conf2kv($text, $d1 = '=', $d2 = '|#|', $ikv = array()) {
+function conf2kv($text, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = array()) {
 	$ld1 = mb_strlen($d1);
 
 	if (empty($text)) {
