@@ -21,8 +21,12 @@ use \rkphplib\Dir;
  */
 class TPicture implements TokPlugin {
 
+/** @var Tokenizer $tok */
+protected $tok = null;
+
 /** @var array[string]string $conf */
 protected $conf = [];
+
 
 
 /**
@@ -34,6 +38,8 @@ protected $conf = [];
  * @return map<string:int>
  */
 public function getPlugins($tok) {
+	$this->tok = $tok;
+
   $plugin = [];
   $plugin['picture:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['picture:src'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY; 
@@ -62,7 +68,8 @@ public function tok_picture_init($p) {
 	if (count($this->conf) == 0 || !empty($this->conf['reset'])) {
 	  $default['picture_dir'] = 'data/picture/upload';
   	$default['preview_dir'] = 'data/picture/preview';
- 		$default['convert.resize'] = 'convert -colorspace sRGB -geometry {:=resize} {:=source} {:=target}';
+ 		$default['convert.resize'] = 'convert -colorspace sRGB -geometry '.
+			$this->tok->getTag('resize').' '.$this->tok->getTag('source').' '.$this->tok->getTag('target');
 	  $default['default'] = 'default.jpg';
 		$default['ignore_missing'] = 1;
 		$default['module'] = 'convert';
