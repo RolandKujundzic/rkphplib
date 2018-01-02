@@ -275,7 +275,12 @@ public function tok_sql_json($mode, $query) {
 /**
  * Return spreadsheet data. Example:
  *
- * @tok {var:=#sql:json:spreadsheet_js}readonly= id,...|#|pagebreak=100|#|required=name,...|#|column_type=id:numeric,...|#|check.id=...{:var}
+ * @tok {var:=#sql:json:spreadsheet_js}
+ *				readonly= id,...|#|
+ * 				pagebreak=100|#|
+ * 				required=name,...|#|
+ *				columns= NAME:TYPE:ALIAS, id:numeric:ID,...|#|
+ *				check.id=...{:var}
  * @tok {sql:json:spreadsheet_js}SELECT * FROM ... {:sql}
  *
  * var spreadsheet_cols = [ 'id', 'lchange', ... ];
@@ -296,15 +301,15 @@ private function spreadSheetJS($table) {
 
 	$config = $this->tok->getVar('sql:json:spreadsheet_js');
 	if (!is_array($config)) {
-		$config = [];
+		$config = $this->createSpreadSheetConf();
 	}
 	else {
 		if (isset($config['readonly'])) {
 			$config['readonly'] = \rkphplib\lib\split_str(',', $config['readonly']);
 		}
 
-		if (isset($config['column_type'])) {
-			$config['column_type'] = \rkphplib\lib\conf2kv($config['column_type'], ':', ',');
+		if (isset($config['columns'])) {
+			$config['columns'] = \rkphplib\lib\split_str(',', $config['columns']);
 		}
 
 		if (isset($config['required'])) {
@@ -312,25 +317,26 @@ private function spreadSheetJS($table) {
 		}
 	}
 
-	$columns = array_shift($table);
+	$col_names = array_shift($table);
+	$col_label = [];
 	$col_info = [];
 
-	for ($i = 0; $i < count($columns); $i++) {
-		$cname = $columns[$i];
-		$col = [ ];
+	for ($i = 0; $i < count($config['columns']); $i++) {
+		list ($cname, $type, $alias) = explode(':', $config['columns'][$i]);
+		$col = [ 'col' => $cname, 'type' => $type ];
 
 		if (isset($config['readonly']) && in_array($cname, $config['readonly'])) {
 			$col['readOnly'] = true;
 		}
-
-		if (isset($config['column_type']) && isset($config['column_type'][$cname])) {
-			$col['type'] = $config['column_type'][$cname];
+		else if (isset($config['required']) && in_array($cname, $config['required'])) {
+			$col['required'] = true;
 		}
 
+		array_push($col_label, $alias);
 		array_push($col_info, $col);
 	}
 
-	$res  = 'var spreadsheet_cols = '.\rkphplib\JSON::encode($columns).";\n"; 	
+	$res  = 'var spreadsheet_col_label = '.\rkphplib\JSON::encode($col_label).";\n"; 	
 	$res .= 'var spreadsheet_col_info = '.\rkphplib\JSON::encode($col_info).";\n";
 	$res .= 'var spreadsheet_rows = '.\rkphplib\JSON::encode($table).";\n";
 
