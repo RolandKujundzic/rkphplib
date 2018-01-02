@@ -2,6 +2,19 @@
 
 namespace rkphplib;
 
+
+if (!defined('TAG_PREFIX')) {
+  /** @define string TAG_PREFIX = '{:=' */
+  define('TAG_PREFIX', '{:=');
+}
+
+if (!defined('TAG_SUFFIX')) {
+  /** @define string TAG_SUFFIX = '}' */
+  define('TAG_SUFFIX', '}');
+}
+
+
+
 /**
  * Custom exception with two parameter constructor. Log debug_backtrace if save path
  * SETTINGS_LOG_EXCEPTION is set. If directory data/log/exception exist and 
