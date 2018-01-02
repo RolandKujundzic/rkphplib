@@ -152,7 +152,7 @@ public function tok_menu_add($level, $node) {
 	$node['id'] = $nc + 1;
 	$node['parent'] = 0;
 
-	// \rkphplib\lib\log_debug("AMenu.tok_menu_add> nc=$nc id=".($nc + 1)." parent=0 prev: ".print_r($prev, true));
+	// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> nc=$nc id=".($nc + 1)." parent=0 prev=node.".($nc - 1));
 	if ($prev) {
 		if ($level === $prev['level'] + 1) {
 			$node['parent'] = $prev['id'];
@@ -164,7 +164,7 @@ public function tok_menu_add($level, $node) {
 		else if ($level > $prev['level'] + 1) {
 			throw new Exception('invalid level', print_r($node, true));
 		}
-		else if ($level > 1) {
+		else if ($level > 0) {
 			// level < $prev['level']
 			for ($i = $nc - 1; $node['parent'] === 0 && $i >= 0; $i--) {
 				$predecessor = $this->node[$i];
@@ -178,12 +178,13 @@ public function tok_menu_add($level, $node) {
 
 	if (isset($node['if']) && empty($node['if'])) {
 		$this->ignore_level = $level + 1;
-		// \rkphplib\lib\log_debug("AMenu.tok_menu_add> if = false");
+		// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> return - if = false");
 		return;
 	}
 
 	if (!empty($node['if_table']) && !$this->hasTables($node['if_table'])) {
 		$this->ignore_level = $level + 1;
+		// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> return - no such table ".$node['if_table']);
 		return;
 	}
 
@@ -199,6 +200,7 @@ public function tok_menu_add($level, $node) {
 		$node['dir'] = mb_substr($node['dir'], 0, -1);
 	}
 
+	// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> add node: ".print_r($node, true));
 	array_push($this->node, $node);
 }
 
