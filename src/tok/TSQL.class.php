@@ -28,7 +28,8 @@ protected $first_row = null;
 /**
  * Register output plugins. Examples:
  *
- * @tok {sql:query}SELECT * FROM test WHERE name LIKE '{:=name}%' OR id={:=name}{:sql}
+ * @tok {sql:query}SELECT * FROM test WHERE name LIKE '{:=name}%' OR id={esc:name}{:sql}
+ * @tok {sql:query}UPDATE test SET name={:=name} WHERE id={:=id}{:sql}
  *
  * @tok {sql:qkey:test}SELECT * FROM test WHERE name LIKE '{:=name}%' OR id={:=name}{:sql}
  * @tok {sql:query:test}name=something{:sql}
@@ -185,6 +186,11 @@ public function tok_sql_qkey($qkey, $query) {
  */
 public function tok_sql_query($qkey, $query) {
 
+	if (empty($qkey) && mb_strpos($query, $this->tok->getTag('TAG:PREFIX')) !== false) {
+		$this->db->setQuery('current_query', $query);
+		$query = $this->db->getQuery('current_query', $_REQUEST);
+	}
+
 	if (!empty($qkey)) {
 		$replace = \rkphplib\lib\conf2kv($query);
 		$query = $this->db->getQuery($qkey, $replace);
@@ -223,11 +229,13 @@ public function tok_sql_col($name) {
 
 
 /**
- * Return query result as json. Use mode = hash (key AS name, value AS value) to result hash.
- * Otherwise return table.
+ * Return query result as json. Use mode = hash (key AS name, value AS value) for hash result.
+ * Use spreadsheet for table in spreadsheet (vector<vector>) format.
+ * Use spreadsheet_js for "var spreadsheet_rows = [ [ ... ] ... ]; var spreadsheet_cols = [ '...', ... ];".
+ * Otherwise return table (vector<map>).
  * 
  * @throws
- * @param string $mode 
+ * @param string $mode table=''|hash|spreadsheet_js
  * @param string $query
  * @return table|hash
  */
@@ -237,7 +245,25 @@ public function tok_sql_json($mode, $query) {
 	if ($mode == 'hash') {
 		$dbres = $this->db->selectHash($query);
 	}
-	else {
+	else if ($mode = 'spreadsheet' || $mode = 'spreadsheet_js') {
+		$table = $this->db->select($query);
+		$dbres = [];
+
+		if (count($table) > 0) {
+			$cols = array_keys($table[0]);
+			array_push($dbres, $cols);
+		}
+
+		for ($i = 0; $i < count($table); $i++) {
+			array_push($dbres, array_values($table[$i])); 
+		}
+
+		if ($mode == 'spreadsheet_js') {
+			return 'var spreadsheet_cols = '.\rkphplib\JSON::encode(array_shift($dbres)).";\n".
+				'var spreadsheet_rows = '.\rkphplib\JSON::encode($dbres).";\n";
+		}
+	}
+	else if (empty($mode) || $mode == 'table') {
 		$dbres = $this->db->select($query);
 	}
 
