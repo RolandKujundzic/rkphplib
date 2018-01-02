@@ -2,6 +2,11 @@
 
 namespace rkphplib\lib;
 
+require_once(dirname(__DIR__).'/Exception.class.php');
+
+use rkphplib\Exception;
+
+
 
 /**
  * Replace {:=key} in $text with $map.key value.
@@ -15,10 +20,10 @@ namespace rkphplib\lib;
  * @param array $conf (default = [ '{:=', '}', '' ])
  * @return string
  */
-function replace_tags($text, $map, $conf = array('{:=', '}', '')) {
+function replace_tags($text, $map, $conf = array(TAG_PREFIX, TAG_SUFFIX, '')) {
 
 	if (is_string($conf)) {
-		$conf = [ '{:=', '}', $conf ];
+		$conf = [ TAG_PREFIX, TAG_SUFFIX, $conf ];
 	}
 
 	foreach ($map as $key => $value) {
