@@ -279,12 +279,12 @@ public function tok_sql_json($mode, $query) {
  *				readonly= id,...|#|
  * 				pagebreak=100|#|
  * 				required=name,...|#|
- *				columns= NAME:TYPE:ALIAS, id:numeric:ID,...|#|
+ *				columns= NAME[:ALIAS], id:ID, age, ...|#|
  *				check.id=...{:var}
- * @tok {sql:json:spreadsheet_js}SELECT * FROM ... {:sql}
+ * @tok {sql:json:spreadsheet_js}SELECT id, age, ... FROM ... {:sql}
  *
  * var spreadsheet_cols = [ 'id', 'lchange', ... ];
- * var spreadsheet_col_info = [ { type: 'numeric', readOnly: true }, { type: 'date' }, ... ];
+ * var spreadsheet_col_info = [ { type: 'text', readOnly: true }, { type: 'text' }, ... ];
  * var spreadsheet_rows = [ [ 1, '2017-02-18 14:32:00' ], ... ];
  *
  * var xls = new Handsontable(container, {
@@ -322,8 +322,11 @@ private function spreadSheetJS($table) {
 	$col_info = [];
 
 	for ($i = 0; $i < count($config['columns']); $i++) {
-		list ($cname, $type, $alias) = explode(':', $config['columns'][$i]);
-		$col = [ 'col' => $cname, 'type' => $type ];
+		$tmp = explode(':', $config['columns'][$i]);
+
+		$cname = $tmp[0];
+		$alias = empty($tmp[1]) ? $cname : $tmp[1];
+		$col = [ 'col' => $cname, 'type' => 'text' ];
 
 		if (isset($config['readonly']) && in_array($cname, $config['readonly'])) {
 			$col['readOnly'] = true;
