@@ -42,7 +42,6 @@ public function getPlugins($tok) {
 public static function tok_eval_logic($expr) {
 
 	$expr = preg_replace("/[\r\n\t ]+/", '', $expr);
-	$expr = str_replace(',', '.', $expr);
 	$expr_check = strtr($expr, 'tf01)(x&|!', '          ');
 	$res = '';
 
