@@ -71,9 +71,13 @@ public function register($handler, $cname) {
 public function createMap() {
 	$tokenizer = mb_substr(trim(File::load('src/tok/Tokenizer.class.php')), 0, -1);
 
-	if (($pos = mb_strpos($tokenizer, '/** AUTO CREATED BY bin/plugin_map')) > 0) {
-		$tokenizer = mb_substr($tokenizer, 0, $pos);
+	if (($pos = mb_strpos($tokenizer, '/** AUTO CREATED BY bin/plugin_map')) < 1) {
+		throw new Exception('append point not found');
 	}
+
+	$tokenizer = mb_substr($tokenizer, 0, $pos);
+
+	ksort($this->_plugin);
 
 	$code = "/** AUTO CREATED BY bin/plugin_map */\n".'private function tryPluginMap($name) {'."\n\t".
 		'static $map = ['."\n\t\t";
