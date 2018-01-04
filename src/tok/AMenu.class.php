@@ -5,6 +5,7 @@ namespace rkphplib\tok;
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/../Exception.class.php');
 require_once(__DIR__.'/../lib/split_str.php');
+require_once(__DIR__.'/../lib/replace_str.php');
 
 use \rkphplib\Exception;
 
@@ -268,27 +269,43 @@ private function hasTables($tables) {
  * @return boolean
  */
 private function checkPrivileges($require_priv) {
+	$priv_expr = $require_priv;
 
 	if (!isset($this->conf['privileges']) || !isset($this->conf['privileges']['@me'])) {
 		throw new Exception('missing @me privilege - call [menu:privileges]@me=[login:priv]|#|...[:menu]');
 	}
 
-	$privileges = \rkphplib\lib\split_str(',', $require_priv);
 	$mypriv = intval($this->conf['privileges']['@me']);
 
-	foreach ($privileges as $name) {
-		if (!isset($this->conf['privileges'][$name])) {
-			throw new Exception('missing '.$name.' privilege - call [menu:privileges]'.$name.'=2^N|#|...[:menu]');
+	// replace privileges with 1|0 in require_priv
+	foreach ($this->conf['privileges'] as $pname => $pval) {
+		if (mb_strpos($require_priv, $pname) === false) {
+			continue;
 		}
 
-		$priv = intval($this->conf['privileges'][$name]);
-		if (($priv & $mypriv) != $priv) {
-			// \rkphplib\lib\log_debug("AMenu.checkPrivileges> no $name privilege: $priv & $mypriv != $priv");
-			return false;
-		}
+		$priv = intval($pval);
+		$priv = ($priv & $mypriv) ? 1 : 0;
+		$priv_expr = trim(\rkphplib\lib\replace_str($pname, $priv, $priv_expr));
+		// \rkphplib\lib\log_debug("AMenu.checkPrivileges> priv_expr=[$priv_expr] pname=[$pname] pval=[$pval] priv=[$priv]");
 	}
 
-	return true;
+	if ($require_priv == '1') {
+		$res = true;
+	}
+	else if ($require_priv == '0') {
+		$res = false;
+	}
+	else {
+	  $rp_check = trim(strtr($priv_expr, 'tf01)(x&|!', '          '));
+  	if ($rp_check != '') {
+			throw new Exception('invalid privilege ['.$rp_check.']', "priv_expr=[$priv_expr] require_priv=[$require_priv]");
+		}
+
+		$res = eval('return '.$priv_expr.';');
+	}
+
+	// \rkphplib\lib\log_debug("AMenu.checkPrivileges> res=[$res] require_priv=[$require_priv] return eval('$require_priv')");
+	return $res;
 }
 
 
