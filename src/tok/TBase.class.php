@@ -7,6 +7,7 @@ require_once(__DIR__.'/../Exception.class.php');
 require_once(__DIR__.'/../lib/split_str.php');
 require_once(__DIR__.'/../File.class.php');
 require_once(__DIR__.'/../lib/conf2kv.php');
+require_once(__DIR__.'/../lib/redirect.php');
 
 use \rkphplib\Exception;
 use \rkphplib\File;
@@ -115,6 +116,7 @@ public function getPlugins($tok) {
 	$plugin['tolower'] = TokPlugin::NO_PARAM;
 	$plugin['join'] = TokPlugin::KV_BODY;
 	$plugin['set_default'] =  TokPlugin::REQUIRE_PARAM;
+	$plugin['redirect'] =  TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['var'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['esc'] = 0;
 
@@ -151,6 +153,30 @@ public function tok_var($name, $value) {
 	else {
 		return (string) $this->_tok->getVar($name);
 	}
+}
+
+
+/**
+ * Redirect to $url. Use ERROR_[401|404] for error status.
+ * Do nothing if $url is empty.
+ *
+ * @exit
+ * @param string $url
+ */
+public function tok_redirect($url) {
+	if ($url == 'ERROR_404') {
+		header("HTTP/1.0 404 Not Found");
+		header("Status: 404 Not Found");
+		exit("<h1>404 Not Found</h1>\nThe page that you have requested could not be found.");
+  }
+	else if ($url == 'ERROR_401') {
+		header("HTTP/1.0 404 Unauthorized");
+		header("Status: 404 Unauthorized");
+		exit("<h1>401 Unauthorized</h1>\nThe page that you have requested can not accessed.");
+  }
+	else if ($url) {
+		\rkphplib\lib\redirect($url);
+  }
 }
 
 
