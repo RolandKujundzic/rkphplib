@@ -116,7 +116,7 @@ public function getPlugins($tok) {
 	$plugin['tolower'] = TokPlugin::NO_PARAM;
 	$plugin['join'] = TokPlugin::KV_BODY;
 	$plugin['set_default'] =  TokPlugin::REQUIRE_PARAM;
-	$plugin['redirect'] =  TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['redirect'] =  TokPlugin::NO_PARAM;
 	$plugin['var'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['esc'] = 0;
 
