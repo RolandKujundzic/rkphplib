@@ -18,7 +18,10 @@ use \rkphplib\Database;
 
 
 /**
- * Tokenizer Login/Session plugin.
+ * Tokenizer Login/Session plugin. Examples:
+ *
+ * {login_check:}table=xyz|#|required={:login_check} - optional login
+ * {login_check:}table=xyz|#|required=id,type|#|allow_dir=login{:login_check} - mandatory login
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
