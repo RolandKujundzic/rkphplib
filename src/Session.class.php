@@ -112,12 +112,6 @@ public function init($conf) {
 	if (!empty($_REQUEST[SETTINGS_REQ_DIR])) {
 		$dir = $_REQUEST[SETTINGS_REQ_DIR];
 		// \rkphplib\lib\log_debug('Session::init> check if '.$dir.' is in allowed: '.print_r($this->conf['allow_dir'], true));
-
-		if ($this->conf['allow_dir'][0] == '*') {
-			// all directories allowed
-			return;
-		}
-
 		foreach ($this->conf['allow_dir'] as $allow_dir) {
 			if (!empty($allow_dir) && mb_strpos($dir, $allow_dir) === 0) {
 				// we are in login-free directory - return without checks
