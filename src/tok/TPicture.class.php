@@ -6,6 +6,7 @@ require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/../Dir.class.php');
 require_once(__DIR__.'/../File.class.php');
 require_once(__DIR__.'/../lib/execute.php');
+require_once(__DIR__.'/../lib/split_str.php');
 
 use \rkphplib\Exception;
 use \rkphplib\FSEntry;
@@ -65,7 +66,11 @@ public function getPlugins($tok) {
  */
 public function tok_picture_init($p) {
 
-	if (count($this->conf) == 0 || !empty($this->conf['reset'])) {
+	if (!isset($p['reset'])) {
+		$p['reset'] = 1;
+	}
+
+	if (count($this->conf) == 0 || !empty($p['reset'])) {
 	  $default['picture_dir'] = 'data/picture/upload';
   	$default['preview_dir'] = 'data/picture/preview';
  		$default['convert.resize'] = 'convert -colorspace sRGB -geometry '.
@@ -82,12 +87,6 @@ public function tok_picture_init($p) {
 
 	foreach ($p as $key => $value) {
 		$this->conf[$key] = $value;
-	}
-}
-
-private function log($msg) {
-	if (!empty($_REQUEST['debug'])) {
-		print "<pre>log: $msg</pre>";
 	}
 }
 
@@ -109,6 +108,8 @@ private function log($msg) {
  * @return string|empty
  */
 public function tok_picture_src($p) {
+	$this->conf['source'] = '';
+	$this->conf['target'] = '';
 
 	$conf = $this->conf;
 
@@ -122,15 +123,18 @@ public function tok_picture_src($p) {
 		return '';
 	}
 
-	if (empty($this->conf['target']) && !empty($this->conf['picture_dir'])) {
-		$this->conf['target'] = str_replace($this->conf['picture_dir'], $this->conf['preview_dir'], $this->conf['source']);
-	}
-
 	if (!empty($this->conf['resize'])) {
+		if (empty($this->conf['target']) && !empty($this->conf['picture_dir'])) {
+			$this->conf['target'] = str_replace($this->conf['picture_dir'], $this->conf['preview_dir'], $this->conf['source']);
+		}
+
 		$this->resize();
 	}
+	else {
+		$this->conf['target'] = $this->conf['source'];
+	}
 
-	$img =  $this->conf['target'];
+	$img = $this->conf['target'];
 
 	if (!empty($this->conf['abs_path']) && !empty($this->conf['rel_path'])) {
 		$img = str_replace($this->conf['abs_path'], $this->conf['rel_path'], $img);
@@ -145,16 +149,20 @@ public function tok_picture_src($p) {
  *
  */
 private function computeImgSource() {
-	if (!empty($this->conf['source'])) {
-		// do nothing ...
-		return;
-	}
 
-	if (!empty($this->conf['name'])) {
+	if (!empty($this->conf['names'])) {
+		$list = \rkphplib\lib\split_str(',', $this->conf['names']);
+		$this->conf['source'] = $this->conf['picture_dir'].'/'.$list[0];
+	}
+	else if (!empty($this->conf['name'])) {
 		$this->conf['source'] = $this->conf['picture_dir'].'/'.$this->conf['name'];
 	}
 
-	$this->log(print_r($this->conf, true));
+	if (empty($this->conf['source']) && !empty($this->conf['examples'])) {
+		$list = \rkphplib\lib\split_str(',', $this->conf['examples']);
+		$n = rand(0, count($list) - 1);
+		$this->conf['source'] = $this->conf['picture_dir'].'/'.$list[$n];
+	}
 
 	if (empty($this->conf['source']) || !File::exists($this->conf['source'])) {
 		$default = (basename($this->conf['default']) == $this->conf['default']) ?
