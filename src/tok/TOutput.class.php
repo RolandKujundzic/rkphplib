@@ -361,6 +361,11 @@ public function tok_output_conf($p) {
  * @param array[string]string $p
  */
 public function tok_output_init($p) {
+
+	if (!isset($p['reset'])) {
+		$p['reset'] = 1;
+	}
+
 	$this->tok_output_conf($p);
 
 	$this->computePagebreak();
