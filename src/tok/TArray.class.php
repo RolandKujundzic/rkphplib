@@ -36,9 +36,9 @@ public function getPlugins($tok) {
 	$plugin['array'] = 0;
   $plugin['array:set'] = TokPlugin::REQUIRE_PARAM;
   $plugin['array:get'] = TokPlugin::REQUIRE_PARAM;
-  $plugin['array:shift'] = TokPlugin::NO_PARAM & TokPlugin::NO_BODY;
+  $plugin['array:shift'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
   $plugin['array:unshift'] = TokPlugin::NO_PARAM;
-  $plugin['array:pop'] = TokPlugin::NO_PARAM & TokPlugin::NO_BODY;
+  $plugin['array:pop'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
   $plugin['array:push'] = TokPlugin::NO_PARAM;
 	$plugin['array:join'] = TokPlugin::NO_PARAM;
 	$plugin['array:length'] = TokPlugin::NO_PARAM;
