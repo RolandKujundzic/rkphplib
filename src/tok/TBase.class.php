@@ -107,6 +107,7 @@ public function getPlugins($tok) {
 	$plugin['include_if'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['ignore'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['if'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
+	$plugin['switch'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['keep'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['load'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['link'] = TokPlugin::PARAM_CSLIST | TokPlugin::KV_BODY;
@@ -433,6 +434,38 @@ public static function decodeHash($data, $export_into_req = false) {
 	}
 
 	// \rkphplib\lib\log_debug("decodeHash: ".print_r($res, true));
+	return $res;
+}
+
+
+/**
+ * Return result of switch plugin. Example:
+ * 
+ * @tok {switch:a,b,c}value|#|if_eq_a|#|if_eq_b|#|if_eq_c|#|else{:switch}
+ *
+ * @throws 
+ * @param vector $set
+ * @param vector $p
+ * @return string
+ */
+public function tok_switch($set, $p) {
+	$csa = count($set);
+	$cp = count($p);
+
+	if ($cp <= $csa || $cp > $csa + 2) {
+		throw new Exception('invalid plugin [switch:]', 'set: '.join('|', $set).' p: '.join('|', $p));
+  }
+
+	$res = ($cp == $csa + 2) ? $p[$cp - 1] : '';
+	$done = false;
+
+	for ($i = 0; !$done && $i < $csa; $i++) {
+		if ($p[0] == $set[$i]) {
+			$res = $p[$i + 1];
+			$done = true;
+		}
+	}
+
 	return $res;
 }
 
