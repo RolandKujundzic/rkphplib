@@ -969,7 +969,8 @@ public function getTag($name) {
 /** AUTO CREATED BY bin/plugin_map */
 private function tryPluginMap($name) {
 	static $map = [
-		'TBase' => [ 'tf', 't', 'true', 'f', 'false', 'find', 'plugin', 'escape', 'unescape', 'encode', 'decode', 'get', 'include', 'include_if', 'ignore', 'if', 'keep', 'load', 'link', 'toupper', 'tolower', 'join', 'set_default', 'var', 'esc' ],
+		'TArray' => [ 'array', 'array:set', 'array:get', 'array:shift', 'array:unshift', 'array:pop', 'array:push', 'array:join', 'array:length' ],
+		'TBase' => [ 'tf', 't', 'true', 'f', 'false', 'find', 'plugin', 'escape', 'unescape', 'encode', 'decode', 'get', 'include', 'include_if', 'ignore', 'if', 'switch', 'keep', 'load', 'link', 'toupper', 'tolower', 'join', 'set_default', 'redirect', 'var', 'esc' ],
 		'TDate' => [ 'date' ],
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval' ],
 		'TFormValidator' => [ 'fv', 'fv:init', 'fv:conf', 'fv:check', 'fv:in', 'fv:error', 'fv:error_message', 'fv:set_error_message' ],
