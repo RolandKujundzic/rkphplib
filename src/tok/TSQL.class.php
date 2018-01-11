@@ -109,7 +109,7 @@ public function tok_sql_password($password) {
  */
 public function tok_sql_getId($query) {
 	if (!empty($query)) {
-		$this->db->execute($query, true);
+		$this->db->execute($query);
 	}
 
 	return $this->db->getInsertId();
