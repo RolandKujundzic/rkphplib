@@ -433,6 +433,7 @@ private function computeEnv() {
 	}
 
 	$start = $this->env['start'];
+	$this->env['rownum'] = $this->env['end'] - $this->env['start'];
 
 	if (empty($this->conf['table.columns']) || $this->conf['table.columns'] == 'array_keys') {
 		$this->env['tags'] = isset($this->table[0]) ? array_keys($this->table[0]) : array_keys($this->table[$start]);
