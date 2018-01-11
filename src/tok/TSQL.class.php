@@ -247,7 +247,7 @@ public function tok_sql_json($mode, $query) {
 	if ($mode == 'hash') {
 		$dbres = $this->db->selectHash($query);
 	}
-	else if ($mode = 'spreadsheet' || $mode = 'spreadsheet_js') {
+	else if ($mode == 'spreadsheet' || $mode == 'spreadsheet_js') {
 		$table = $this->db->select($query);
 		$dbres = [];
 
