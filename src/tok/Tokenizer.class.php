@@ -739,17 +739,17 @@ private function _call_plugin($name, $param, $arg = null) {
 	}
 
 	if (($pconf & TokPlugin::REQUIRE_PARAM) && $plen == 0) {
-		throw new Exception('plugin parameter missing', "plugin=$name");
+		throw new Exception('plugin parameter missing', "plugin=$name pconf=[$pconf]");
 	}
 	else if (($pconf & TokPlugin::NO_PARAM) && $plen > 0) {
-		throw new Exception('invalid plugin parameter', "plugin=$name param=$param");
+		throw new Exception('invalid plugin parameter', "plugin=$name pconf=[$pconf] param=$param");
 	}
 
 	if (($pconf & TokPlugin::REQUIRE_BODY) && $alen == 0) {
-		throw new Exception('plugin body missing', "plugin=$name param=[$param] arg=[$arg]\n".$this->dump());
+		throw new Exception('plugin body missing', "plugin=$name pconf=[$pconf] param=[$param] arg=[$arg]\n".$this->dump());
 	}
 	else if (($pconf & TokPlugin::NO_BODY) && $alen > 0) {
-		throw new Exception('invalid plugin body', "plugin=$name arg=$arg");
+		throw new Exception('invalid plugin body', "plugin=$name pconf=[$pconf] arg=[$arg]");
 	}
 
 	$src_dir = dirname(__DIR__);
