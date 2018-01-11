@@ -69,6 +69,7 @@ public function tok_output_set($name, $value) {
 	}
 
 	$this->conf[$name] = $value;
+	\rkphplib\lib\log_debug("TOutput::set> [$name]=[$value] conf: ".print_r($this->conf, true));
 	return '';
 }
 
@@ -123,7 +124,8 @@ public function tok_output_empty($tpl) {
 private function isEmpty() {
 
 	if (is_null($this->table)) {
-		$this->tok_output_init([]);
+		$p = (count($this->conf) > 0) ? [ 'reset' => 0 ] : [];
+		$this->tok_output_init($p);
 	}
 
 	return $this->env['total'] == 0;
