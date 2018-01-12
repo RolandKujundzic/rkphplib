@@ -83,6 +83,9 @@ public function tok_output_set($name, $value) {
  */
 public function tok_output_get($name) {
 
+	// run init and compute stuff if necessary ...
+	$this->isEmpty();
+
 	if (mb_substr($name, 0, 5) == 'conf.') {
 		$name = mb_substr($name, 5);
 
@@ -94,7 +97,7 @@ public function tok_output_get($name) {
 	}
 	
 	if (!isset($this->env[$name])) {
-		throw new Exception('No such env key', $name);
+		throw new Exception('No such env key '.$name, print_r($this->env, true));
 	}
 
 	return $this->env[$name];
@@ -180,7 +183,6 @@ public function tok_output_footer($tpl) {
 		$tpl = $this->tok->replaceTags($tpl, $this->env['scroll'], 'scroll.');
 	}
 
-	error_log($tpl."\n", 3, '/tmp/php.fatal');
 	return $tpl;
 }
 
@@ -407,6 +409,7 @@ private function computeEnv() {
 
 	if (count($this->table) == 0) {
 		// no output ...
+		$this->env['rownum'] = 0;
 		$this->env['page_num'] = 0;
 		$this->env['visible'] = 0;
 		$this->env['start'] = 0;
@@ -433,7 +436,7 @@ private function computeEnv() {
 	}
 
 	$start = $this->env['start'];
-	$this->env['rownum'] = $this->env['end'] - $this->env['start'];
+	$this->env['rownum'] = $this->env['end'] - $this->env['start'] + 1;
 
 	if (empty($this->conf['table.columns']) || $this->conf['table.columns'] == 'array_keys') {
 		$this->env['tags'] = isset($this->table[0]) ? array_keys($this->table[0]) : array_keys($this->table[$start]);
