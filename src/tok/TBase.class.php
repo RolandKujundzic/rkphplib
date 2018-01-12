@@ -115,7 +115,7 @@ public function getPlugins($tok) {
 	$plugin['toupper'] = TokPlugin::NO_PARAM;
 	$plugin['tolower'] = TokPlugin::NO_PARAM;
 	$plugin['join'] = TokPlugin::KV_BODY;
-	$plugin['set_default'] =  TokPlugin::REQUIRE_PARAM;
+	$plugin['set_default'] =  0;
 	$plugin['redirect'] =  TokPlugin::NO_PARAM;
 	$plugin['var'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['esc'] = 0;
@@ -705,6 +705,9 @@ public function tok_esc($param, $arg) {
 /**
  * Set _REQUEST[$name] = $value if unset.
  *
+ * @tok {set_default:key}value{:set_default}
+ * @tok {set_default:}key=value|#|...{:set_default}
+ *
  * @param string $name
  * @param string $value
  * @return ''
@@ -712,14 +715,18 @@ public function tok_esc($param, $arg) {
 public function tok_set_default($name, $value) {
 
   if (empty($name)) {
-		throw new Exception('[set_default:name]...[:set_default] - name is empty');
+		$kv = \rkphplib\lib\conf2kv($value);
+		foreach ($kv as $key => $value) {
+			if (!isset($_REQUEST[$key])) {
+				$_REQUEST[$key] = $value;
+			}
+		}
+	}
+	else if (!isset($_REQUEST[$name])) {
+		$_REQUEST[$name] = $value;
 	}
 
-	if (isset($_REQUEST[$name])) {
-		return '';
-	}
-
-	$_REQUEST[$name] = $value;
+	return '';
 }
 
 
