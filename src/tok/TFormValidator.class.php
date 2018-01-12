@@ -78,7 +78,7 @@ public function getPlugins($tok) {
 	$plugin['fv:init'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY; 
 	$plugin['fv:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['fv:check'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY; 
-	$plugin['fv:in'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['fv:in'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
 	$plugin['fv:hidden'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 	$plugin['fv:error'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:error_message'] = TokPlugin::REQUIRE_PARAM;
@@ -145,9 +145,10 @@ public function tok_fv_set_error_message($name, $msg) {
  */
 public function tok_fv_hidden() {
 	$res = '';
+	$conf = $this->conf['current'];
 
-	if (!empty($this->conf['hidden_keep'])) {
-		$list = \rkphplib\lib\split_str($this->conf['hidden_keep']);
+	if (!empty($conf['hidden_keep'])) {
+		$list = \rkphplib\lib\split_str(',', $conf['hidden_keep']);
 		foreach ($list as $key) {
 			if (isset($_REQUEST[$key])) {
 				$res .= '<input type="hidden" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($_REQUEST[$key]).'">'."\n";
@@ -155,7 +156,7 @@ public function tok_fv_hidden() {
 		}
 	}
 
-	foreach ($this->conf as $key => $value) {
+	foreach ($conf as $key => $value) {
 		if (mb_substr($key, 0, 7) == 'hidden.') {
 			$key = mb_substr($key, 7);
 			$res .= '<input type="hidden" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($value).'">'."\n";
@@ -309,10 +310,11 @@ public function tok_fv_error($name, $tpl) {
  */
 public function tok_fv_error_message($name, $tpl = '') {
 	$res = '';
+	$conf = $this->conf['current'];
 
 	if ($name == '*') {
 		if (empty($tpl)) {
-			$tpl = $this->conf['template.error_message_multi'];
+			$tpl = $conf['template.error_message_multi'];
 		}
 
 		foreach ($this->error as $key => $value) {
@@ -323,7 +325,7 @@ public function tok_fv_error_message($name, $tpl = '') {
 	}
 
 	if (empty($tpl)) {
-		$tpl = $this->conf['template.error_message'];
+		$tpl = $conf['template.error_message'];
 	}
 
 	if (!isset($this->error[$name])) {
@@ -331,14 +333,14 @@ public function tok_fv_error_message($name, $tpl = '') {
 	}
 
 	$r['name'] = $name;
-	$r['error'] = join($this->conf['template.error_message_concat'], $this->error[$name]);
+	$r['error'] = join($conf['template.error_message_concat'], $this->error[$name]);
 
 	$res = $this->tok->replaceTags($tpl, $r);
 }
 
 
 /**
- * Show input for $name.
+ * Show input for $name. If $p is empty use conf.[in.name].
  *
  * @throws
  * @param string $name
@@ -359,13 +361,44 @@ public function tok_fv_in($name, $p) {
 		$res .= $conf['template.footer'];
 	}
 
-	$r['label'] = empty($p['label']) ? '' : $p['label'];
-	$r['input'] = $this->getInput($name, $p);
+	$r = [];
+
+	if (!empty($conf['in.'.$name])) {
+		$r = $this->getInputHtml($name, \rkphplib\lib\split_str(',', $conf['in.'.$name]));
+	}
+	else {
+		$r['label'] = empty($p['label']) ? '' : $p['label'];
+		$r['input'] = $this->getInput($name, $p);
+	}
+
 	$r['error_message'] = isset($this->error[$name]) ? join('|', $this->error[$name]) : '';
 	$r['error'] = isset($this->error[$name]) ? 'error' : '';
 
 	$res = $this->tok->replaceTags($res, $r);
 	// \rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
+	return $res;
+}
+
+
+/**
+ * Return html input. Examples:
+ *
+ * checkbox,
+ * radio,
+ * area,
+ * text,
+ * pass,
+ * file,
+ * select,
+ * fselect,
+ * set,
+ * multi_select,
+ *
+ * @param string $name
+ * @param vector $p 
+ */
+protected function getInputHtml($name, $p) {
+	$res = [ 'input' => 'ToDo' ];
 	return $res;
 }
 
