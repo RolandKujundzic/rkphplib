@@ -6,6 +6,7 @@ $parent_dir = dirname(__DIR__);
 
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once($parent_dir.'/ValueCheck.class.php');
+require_once($parent_dir.'/lib/htmlescape.php');
 require_once($parent_dir.'/lib/split_str.php');
 
 use \rkphplib\Exception;
@@ -23,6 +24,8 @@ use \rkphplib\ValueCheck;
  *
  * {fv:init:[add]}
  * use= NAME|#| (default: use=default)
+ * hidden_keep= dir, ...|#|
+ * hidden.id= 5|#|
  * required= login, password|#|
  * check.login= minLength:2|#|
  * {sql_select:}SELECT count(*) AS num FROM {esc_name:}{login:@table}{:esc_name}
@@ -61,7 +64,7 @@ protected $error = [];
  * Register plugins. 
  *
  * @tok {fv:init:[|add]}required=...|#|...{:fv}
- * @tok {fv:input|password|select|text:name}label=...|#|...{:fv}
+ * @tok {fv:in:name}label=...|#|...{:fv}
  * @tok {fv:check}
  *
  * @param Tokenizer $tok
@@ -76,6 +79,7 @@ public function getPlugins($tok) {
 	$plugin['fv:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['fv:check'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY; 
 	$plugin['fv:in'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['fv:hidden'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 	$plugin['fv:error'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:error_message'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:set_error_message'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY;
@@ -131,6 +135,34 @@ public function tok_fv_set_error_message($name, $msg) {
 	}
 
 	array_push($this->error[$name], $msg);
+}
+
+
+/**
+ * Return hidden input for conf.keep_hidden and conf.hidden.key.
+ *
+ * @return string
+ */
+public function tok_fv_hidden() {
+	$res = '';
+
+	if (!empty($this->conf['hidden_keep'])) {
+		$list = \rkphplib\lib\split_str($this->conf['hidden_keep']);
+		foreach ($list as $key) {
+			if (isset($_REQUEST[$key])) {
+				$res .= '<input type="hidden" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($_REQUEST[$key]).'">'."\n";
+			}
+		}
+	}
+
+	foreach ($this->conf as $key => $value) {
+		if (mb_substr($key, 0, 7) == 'hidden.') {
+			$key = mb_substr($key, 7);
+			$res .= '<input type="hidden" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($value).'">'."\n";
+		}
+	}
+
+	return $res;
 }
 
 
@@ -390,6 +422,10 @@ protected function getInput($name, $p) {
 
 	// selected, checked ???
 	// \rkphplib\lib\log_debug("getInput> $tags - $input");
+
+	foreach ($ri as $key => $value) {
+		$ri[$key] = \rkphplib\lib\htmlescape($value);
+	}
 
 	$input = str_replace('$tags', $tags, $input);
 	$input = $this->tok->replaceTags($input, $ri);
