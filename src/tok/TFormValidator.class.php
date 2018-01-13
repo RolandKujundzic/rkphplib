@@ -107,8 +107,8 @@ public function __construct() {
 		'template.output' => "$label$input$error_message",
 		'template.footer' => '',
 		'template.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" $tags>',
-		'template.textarea' => '<textarea name="'.$name.'"$tags>'.$value.'</textarea>',
-		'template.select'   => '<select name="'.$name.'"$tags>'.$options.'</select>',
+		'template.textarea' => '<textarea name="'.$name.'" class="'.$class.'" $tags>'.$value.'</textarea>',
+		'template.select'   => '<select name="'.$name.'" class="'.$class.'" $tags>'.$options.'</select>',
 		'template.error_message' 			  => $error,
 		'template.error_message_concat' => ', ',
 		'template.error_message_multi'  => "<i>$name</i>: <tt>$error</tt><br>",
@@ -364,12 +364,11 @@ public function tok_fv_in($name, $p) {
 	$r = [];
 
 	if (!empty($conf['in.'.$name])) {
-		$r = $this->getInputHtml($name, \rkphplib\lib\split_str(',', $conf['in.'.$name]));
+		$p = array_merge($this->getInputMap($name, \rkphplib\lib\split_str(',', $conf['in.'.$name])), $p);
 	}
-	else {
-		$r['label'] = empty($p['label']) ? '' : $p['label'];
-		$r['input'] = $this->getInput($name, $p);
-	}
+
+	$r['label'] = empty($p['label']) ? '' : $p['label'];
+	$r['input'] = $this->getInput($name, $p);
 
 	$r['error_message'] = isset($this->error[$name]) ? join('|', $this->error[$name]) : '';
 	$r['error'] = isset($this->error[$name]) ? 'error' : '';
@@ -381,12 +380,12 @@ public function tok_fv_in($name, $p) {
 
 
 /**
- * Return html input. Examples:
+ * Return input map. Examples:
  *
  * checkbox,
  * radio,
- * area,
- * text,
+ * area,ROWS,COLS,WRAP
+ * text,SIZE|WIDTHcc,MAXLENGTH
  * pass,
  * file,
  * select,
@@ -396,10 +395,39 @@ public function tok_fv_in($name, $p) {
  *
  * @param string $name
  * @param vector $p 
+ * @return map
  */
-protected function getInputHtml($name, $p) {
-	$res = [ 'input' => 'ToDo' ];
-	return $res;
+protected function getInputMap($name, $p) {
+	$type = array_shift($p);
+	$r = [];
+
+	if ($type == 'text') {
+		if (mb_substr($p[0], -2) == 'ch') {
+			$r['width'] = $p[0];
+		}
+		else {
+			$r['size'] = $p[0];
+		}
+
+		$r['type'] = 'text';
+		$r['maxwidth'] = $p[1];
+	}
+	else if ($type == 'area') {
+		$r['rows'] = $p[0];
+		$r['cols'] = $p[1];
+		$r['wrap'] = $p[2];
+
+		if (!in_array($r['wrap'], [ 'soft', 'hard' ])) {
+			throw new Exception('invalid wrap=['.$p[2].'] use soft|hard');
+		}
+
+		$r['type'] = 'textarea';
+	}
+	else {
+		throw new Exception('ToDo: name='.$name.' p: '.join('|', $p));
+	}
+
+	return $r;
 }
 
 
@@ -423,6 +451,10 @@ protected function getInput($name, $p) {
 
 	if (!empty($p['width'])) {
 		$ri['style'] = 'width: '.$p['width'];
+	}
+
+	if (!isset($ri['class'])) {
+		$ri['class'] = '';
 	}
 
 	if (isset($this->error[$name])) {
