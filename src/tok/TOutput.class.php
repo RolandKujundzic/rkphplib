@@ -29,6 +29,9 @@ protected $conf = [];
 /** @var Tokenizer $tok */
 protected $tok = null;
 
+/** @var map $set_search = [] */
+protected $set_search = [];
+
 
 
 /**
@@ -286,7 +289,9 @@ public function tok_output_loop($tpl) {
  * Use if you need more configuration blocks beside {output:init}. Parameter are
  * the same as in tok_output_init. Fill this.conf with default value if 
  * this.conf == [] or $p['reset'] = 1. Overwrite with values from $p. 
- * 
+ *
+ * Enable sql sort with conf.sort= id, name, ... and place _SORT in query.
+ *
  * @param array[string]string $p
  */
 public function tok_output_conf($p) {
@@ -296,6 +301,8 @@ public function tok_output_conf($p) {
 		$tag_max = $this->tok->getTag('max');
 
 		$this->conf = [
+			'search' => '',
+			'sort' => '',
 			'reset' => 1,
 			'req.last' => 'last',
 			'keep' => SETTINGS_REQ_DIR,
@@ -334,6 +341,8 @@ public function tok_output_conf($p) {
  * Initialize and retrieve data. Default parameter values are:
  *
  *  reset= 1
+ *  search = 
+ *  sort = 
  *  req.last= last
  *  keep= SETTINGS_REQ_DIR (comma separated list)
  *  pagebreak= 0
@@ -341,7 +350,7 @@ public function tok_output_conf($p) {
  *  rowbreak= 0
  *  rowbreak_html= </tr><tr>
  *  rowbreak_fill= <td></td>
- *  query= (use Database if set)
+ *  query= use Database if set - use _[WHERE|AND]_SEARCH and _SORT if conf.search|sort is set
  *  query.dsn= (use SETTINGS_DSN if empty)
  *  table.type= (use: "split, |&|, |@|", "split, |&|, |@|, =", csv, unserialize or json)
  *  table.columns= array_keys (or: col_1n / first_list / tag1, ... )
@@ -627,6 +636,153 @@ protected function getValue($name) {
 
 
 /**
+ * Return sql search expression. Define search via conf.search= COLUMN:METHOD, .... 
+ * Search methods: =|EQ, %$%|LIKE, %$|LLIKE, $%|RLIKE, [a,b], [] (with value = a,b), 
+ * ]], [[, ][, ?|OPTION, <|LT, >|GT, <=|LE, >=|GE. Place _[WHERE¦AND]_SEARCH in query.
+ *
+ * @example conf.search= id:=, age:EQ, firstname:LIKE, lastname:%$%, ...
+ *
+ * @throws
+ * @return array [ _WHERE_SEARCH, _AND_SEARCH ]
+ */ 
+protected function getSqlSearch() {
+	$where = [];
+
+	$cols = \rkphplib\lib\split_str(',', $this->conf['search']);
+	foreach ($cols as $col_method) {
+		list ($col, $method) = explode(':', $col_method, 2);
+
+		if (isset($_REQUEST['s_'.$col])) {
+			array_push($where, [ $col, $_REQUEST['s_'.$col], $method ]);
+		}
+	}
+
+	$compare = [ 'EQ' => '=', 'LT' => '<', 'GT' => '>', 'LE' => '<=', 'GE' => '>=' ];
+	$like = [ 'LIKE' => '%$%', 'LLIKE' => '$%', 'RLIKE' => '%$' ];
+	$select_search = [];
+	$this->set_search = [];
+	$expr = [];
+
+	for ($i = 0; $i < count($where); $i++) {
+		list ($col, $value, $method) = $where[$i];
+
+		foreach ($compare as $cx => $op) {
+			if ($cx == $method || $op == $method) {
+				array_push($expr, $col.' '.$op." '".preg_replace('/[^0-9\-\+\.]/', '', $value)."'");
+				continue;
+			}
+		}
+
+		foreach ($like as $cx => $op) {
+			if ($cx == $method || $op == $method) {
+				$value = ADatabase::escape(str_replace('$', $value, $op));
+				array_push($expr, $col." LIKE '$value'");
+				continue;
+			}
+		}
+
+		if (preg_match('/^([\[\]]{1})([0-9\-\.\?])*\,?([0-9\-\.\?])*([\[\]]{1})$/', $method, $match)) {
+			if (count($match) != 3 && count($match) != 5) {
+				throw new Exception("invalid range $method - match: ".join('|', $match));
+			}
+
+			if (count($match) == 3) {
+				$op1 = $match[1];
+				$op2 = $match[2];
+				array_push($select_search, "min($col) AS s_".$col."_min");
+				array_push($select_search, "max($col) AS s_".$col."_max");
+			}
+			else if (count($match) == 5) {
+				$op1 = $match[1];
+				$a = $match[2];
+				$b = $match[3];
+				$op2 = $match[4];
+				$this->set_search['s_'.$col.'_min'] = $a;
+				$this->set_search['s_'.$col.'_max'] = $b;
+			}
+
+			array_push($expr, $this->getRangeExpression($col, $value, $method));
+			continue;
+		}
+
+		if ($method == 'OPTION' || $method == '?') {
+			array_push($expr, $col." = '".ADatabase::escape($value)."'");
+			array_push($select_search, "GROUP_CONCAT($col) AS s_".$col."_options");
+			continue;
+		}
+
+		throw new Exception("search method [$method] not found ($col=$value)");
+	}
+
+	if (count($expr) == 0) {
+		return [ '', '' ];
+	}
+
+	if (count($select_search) > 0) {
+		$this->set_search = array_merge($this->selectSearch($select_search), $this->set_search);
+	}
+
+	$sql_and = join(' AND ', $expr);
+
+	return [ ' WHERE '.$sql_and, ' AND '.$sql_and ];
+}
+
+
+/**
+ * Return range limits and options for search evaluation. 
+ *
+ * @param string $cols 
+ * @return map
+ */
+private function selectSearch($cols) {
+	print "ToDo: selectSearch()<br>";
+}
+
+
+/**
+ * Return range expression. Example:
+ * 
+ * age, "18,24", [] = (18 <= age AND age <= 24)
+ *
+ * @throws
+ * @return string
+ */
+private function getRangeExpression($col, $value, $range) {
+	if (mb_strpos($value, ',') === false) {
+		throw Exception('invalid range value '.$col.'=['.$value.'] use a,b');
+	}
+
+	list ($a, $b) = explode(',', preg_replace('/[^0-9\-\+\.]/', '', $value), 2);
+
+	if (mb_strlen($a) == 0) {
+		throw Exception("invalid number a=[$a] in a,b");
+	}
+
+	if (mb_strlen($b) == 0) {
+		throw Exception("invalid number b=[$b] in a,b");
+	}
+
+	$bracket_op = [ '[' => '<=', ']' => '>=' ];
+	$bracket_1 = mb_substr($range, 0, 1);
+	$bracket_2 = mb_substr($range, -1);
+	$op1 = $bracket_op[$bracket_1];
+	$op2 = $bracket_op[$bracket_2];
+
+	$expr = "('$a' $op1 $col AND '$b' $op2 $col)";
+	return $expr;
+}
+
+
+/**
+ * Return sql sort expression.
+ *
+ * @return string
+ */
+protected function getSqlSort() {
+}
+
+
+/**
  * Load data with select query. Extract only data we are displaying.
  *
  */
@@ -635,7 +791,17 @@ protected function selectData() {
 
 	$dsn = empty($this->conf['query.dsn']) ? '' : $this->conf['query.dsn'];
 
-	$db = \rkphplib\Database::getInstance($dsn, [ 'output' => $this->conf['query'] ]);
+	$query = $this->conf['query'];
+
+	if (!empty($this->conf['search'])) {
+		$query = str_replace([ '_WHERE_SEARCH', '_AND_SEARCH' ], $this->getSqlSearch(), $query);
+	}
+
+	if (!empty($this->conf['sort'])) {
+		$query = str_replace('_SORT', $this->getSqlSort(), $query);
+	}
+
+	$db = \rkphplib\Database::getInstance($dsn, [ 'output' => $query ]);
 	// \rkphplib\lib\log_debug("TOutput::selectData> ".$db->getQuery('output', $_REQUEST));
 	$db->execute($db->getQuery('output', $_REQUEST), true);
 
