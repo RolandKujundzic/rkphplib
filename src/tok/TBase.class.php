@@ -2,15 +2,17 @@
 
 namespace rkphplib\tok;
 
+$parent_dir = dirname(__DIR__);
 require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/../Exception.class.php');
-require_once(__DIR__.'/../lib/split_str.php');
-require_once(__DIR__.'/../File.class.php');
-require_once(__DIR__.'/../lib/conf2kv.php');
-require_once(__DIR__.'/../lib/redirect.php');
+require_once($parent_dir.'/Exception.class.php');
+require_once($parent_dir.'/File.class.php');
+require_once($parent_dir.'/lib/split_str.php');
+require_once($parent_dir.'/lib/conf2kv.php');
+require_once($parent_dir.'/lib/redirect.php');
 
 use \rkphplib\Exception;
 use \rkphplib\File;
+
 
 
 if (!defined('SETTINGS_REQ_CRYPT')) {
@@ -79,6 +81,7 @@ public function __construct() {
  * - keep: TEXT, REUIRE_BODY
  * - load: TEXT, REQUIRE_BODY
  * - link: PARAM_CSLIST, KV_BODY
+ * - redo: NO_PARAM, REDO 
  * - toupper: NO_PARAM
  * - tolower: NO_PARAM
  * - join: KV_BODY
@@ -112,6 +115,7 @@ public function getPlugins($tok) {
 	$plugin['keep'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['load'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['link'] = TokPlugin::PARAM_CSLIST | TokPlugin::KV_BODY;
+	$plugin['redo'] = TokPlugin::NO_PARAM | TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
 	$plugin['toupper'] = TokPlugin::NO_PARAM;
 	$plugin['tolower'] = TokPlugin::NO_PARAM;
 	$plugin['join'] = TokPlugin::KV_BODY;
@@ -259,6 +263,19 @@ public function tok_ignore($txt) {
  * @return string
  */
 public function tok_keep($txt) {
+	return $txt;
+}
+
+
+/**
+ * Re-parse text.
+ *
+ * @tok {redo:}{dirname:}a/b{:dirname}{:redo} = a
+ * 
+ * @param string $txt
+ * @return string
+ */
+public function tok_redo($txt) {
 	return $txt;
 }
 
