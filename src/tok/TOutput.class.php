@@ -2,12 +2,21 @@
 
 namespace rkphplib\tok;
 
+$parent_dir = dirname(__DIR__);
 require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/../Exception.class.php');
-require_once(__DIR__.'/../lib/split_str.php');
-require_once(__DIR__.'/../lib/is_map.php');
+require_once($parent_dir.'/Exception.class.php');
+require_once($parent_dir.'/Database.class.php');
+require_once($parent_dir.'/File.class.php');
+require_once($parent_dir.'/lib/htmlescape.php');
+require_once($parent_dir.'/lib/split_str.php');
+require_once($parent_dir.'/lib/conf2kv.php');
+require_once($parent_dir.'/lib/is_map.php');
 
 use \rkphplib\Exception;
+use \rkphplib\ADatabase;
+use \rkphplib\Database;
+use \rkphplib\File;
+
 
 
 /**
@@ -35,7 +44,7 @@ protected $set_search = [];
 
 
 /**
- * Register output plugin {output:conf|init|loop}.
+ * Register output plugin {output:set|get|conf|init|loop|header|footer|empty} and {sort:}.
  *
  * @param Tokenizer $tok
  * @return map<string:int>
@@ -53,8 +62,108 @@ public function getPlugins($tok) {
 	$plugin['output:footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
 	$plugin['output:empty'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['output'] = 0; // no callback for base plugin
+	$plugin['sort'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+	$plugin['search'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 
 	return $plugin;
+}
+
+
+/**
+ * Return search input. Always call searchOutput() (auto-appended after output:init). Examples:
+ * 
+ * @tok {search:status}options= 1={txt:}active{:txt},99={txt:}deleted{:txt},100={txt:}inactive{:txt}{:search} =
+ *   <select name="s_status" onchange="searchOutput(this)"><option value="">...</option><option value="1">{txt:}active{:txt}</option>...</select>
+ *
+ * @tok {search:name}width=5{:search} =
+ *   <input type="text" name="s_name" value="{get:s_name}" style="width:$WIDTHch" onkeypress="searchOutput(this)">
+ *
+ * @param string $col
+ * @param map $p
+ * @return string
+ */
+public function tok_search($col, $p) {
+	$res = '';
+
+	if (empty($p['type'])) {
+		if (!empty($p['options'])) {
+			$p['type'] = 'select';
+		}
+		else {
+			$p['type'] = 'text';
+		}
+	}
+
+	if ($p['type'] == 'select') {
+		$res = '<select name="s_'.$col.'" onchange="searchOutput(this)">';
+		$options = \rkphplib\lib\conf2kv($p['options'], '=', ',');
+
+		if (isset($options['@_1'])) {
+			$options[''] = $options['@_1'];
+			unset($options['@_1']);
+		}
+
+		if ($options == 'auto') {
+			print "<pre>$col = select:auto</pre>";
+		}
+		else {
+			foreach ($options as $value => $label) {
+				$res .= '<option value="'.\rkphplib\lib\htmlescape($value).'">'.\rkphplib\lib\htmlescape($label)."</option>\n";
+			}
+		}
+
+		$res .= '</select>';
+	}
+	else if ($p['type'] == 'text') {
+		$value = isset($_REQUEST['s_'.$col]) ? \rkphplib\lib\htmlescape($_REQUEST['s_'.$col]) : '';
+		$res = '<input type="text" name="s_'.$col.'" value="'.$value.'" placeholder="'.$this->getSearchPlaceholder($col).'" onkeypress="searchOutput(this)"';
+
+		if (!empty($p['width'])) {
+			$res .= 'style="width:'.intval($p['width']).'ch"';
+		}
+
+		$res .= '/>'; 
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return placeholder information for column search.
+ * 
+ * @param string $col
+ * @return string
+ */
+private function getSearchPlaceholder($col) {
+	return 'ToDo';
+}
+
+
+/**
+ * Return sort icon (conf.sort.desc|asc|no). Sort by conf.sort = [a(scending)|d(escending)]COLNAME
+ * or _REQUEST[conf.req.sort].
+ *
+ * @throws
+ * @param string $col
+ * @return string
+ */
+public function tok_sort($col) {
+  $sort = empty($_REQUEST[$this->conf['req.sort']]) ? $this->conf['sort'] : $_REQUEST[$this->conf['req.sort']];
+	$res = $this->conf['sort.no'];
+ 
+	if (empty($this->conf['sort'])) {
+		throw new Exception('missing [output:init]sort=...');
+	}
+
+	if ($sort == 'd'.$col) {
+		$res = $this->conf['sort.desc'];
+  }
+	else if ($sort == 'a'.$col) {
+		$res = $this->conf['sort.asc'];
+  }
+
+	return str_replace('$keep', $this->conf['keep'], $res);
 }
 
 
@@ -303,14 +412,19 @@ public function tok_output_conf($p) {
 		$this->conf = [
 			'search' => '',
 			'sort' => '',
+			'sort.desc' => '<a href="{link:$keep}"><img src="img/sort/desc.gif" border="0" alt=""></a>',
+      'sort.asc' => '<a href="{link:$keep}"><img src="img/sort/asc.gif" border="0" alt=""></a>',
+      'sort.no' => '<a href="{link:$keep}"><img src="img/sort/no.gif" border="0" alt=""></a>',
 			'reset' => 1,
 			'req.last' => 'last',
-			'keep' => SETTINGS_REQ_DIR,
+			'req.sort' => 'sort',
+			'keep' => SETTINGS_REQ_DIR.',sort,last',
 			'pagebreak' => 0,
 			'pagebreak_fill' => 1,
 			'rowbreak' => 0,
 			'rowbreak_html' => '</tr><tr>',
 			'rowbreak_fill' => '<td></td>',
+			'query.dsn' => '',
 			'table.columns' => 'array_keys',
 			'table.type' => '',			
 			'table.data' => '',
@@ -342,9 +456,13 @@ public function tok_output_conf($p) {
  *
  *  reset= 1
  *  search = 
- *  sort = 
+ *  sort =
+ *  sort.desc = <a href="{link:$keep}"><img src="img/sort/desc.gif" border="0" alt=""></a>
+ *  sort.asc = <a href="{link:$keep}"><img src="img/sort/asc.gif" border="0" alt=""></a>
+ *  sort.no = <a href="{link:$keep}"><img src="img/sort/no.gif" border="0" alt=""></a>
+ *  req.sort= sort
  *  req.last= last
- *  keep= SETTINGS_REQ_DIR (comma separated list)
+ *  keep= SETTINGS_REQ_DIR, $req.sort, $req.last (comma separated list)
  *  pagebreak= 0
  *  pagebreak_fill= 1
  *  rowbreak= 0
@@ -352,6 +470,7 @@ public function tok_output_conf($p) {
  *  rowbreak_fill= <td></td>
  *  query= use Database if set - use _[WHERE|AND]_SEARCH and _SORT if conf.search|sort is set
  *  query.dsn= (use SETTINGS_DSN if empty)
+ *  query.table= (sql table name)
  *  table.type= (use: "split, |&|, |@|", "split, |&|, |@|, =", csv, unserialize or json)
  *  table.columns= array_keys (or: col_1n / first_list / tag1, ... )
  *  table.url= (e.g. path/to/file = file://path/to/file or http[s]://...) 
@@ -372,6 +491,7 @@ public function tok_output_conf($p) {
  *
  * @see File::loadTable for table.type 
  * @param array[string]string $p
+ * @return if search=yes
  */
 public function tok_output_init($p) {
 
@@ -395,6 +515,56 @@ public function tok_output_init($p) {
 	if ($this->env['pagebreak'] > 0) {
 		$this->computeScroll();
 	}
+
+	return $this->getJavascript();
+}
+
+
+/**
+ * Return javascript for search and edit.
+ *
+ * @param string
+ */
+protected function getJavascript() {
+	
+	if (empty($this->conf['search']) && empty($this->conf['edit'])) {
+		return '';
+	}
+
+	$res = '<script type="text/javascript">';
+
+$search_js = <<<END
+var search_output_timeout = null;
+
+//-----------------------------------------------------------------------------
+function searchOutput(el) {
+  var value = el.value;
+
+  if (search_output_timeout) {
+    clearTimeout(search_output_timeout);
+    search_output_timeout = null;
+  }
+  
+  search_output_timeout = setTimeout(function() { 
+    el.form.submit();
+    }, 1200);
+  }
+}
+END;
+
+$edit_js = <<<END
+// ToDo ...
+END;
+
+	if (!empty($this->conf['search'])) {
+		$res .= $search_js;
+	}
+
+	if (!empty($this->conf['edit'])) {
+		$res .= $edit_js;
+	}
+
+	return $res."</script>";
 }
 
 
@@ -646,72 +816,77 @@ protected function getValue($name) {
  * @return array [ _WHERE_SEARCH, _AND_SEARCH ]
  */ 
 protected function getSqlSearch() {
-	$where = [];
-
-	$cols = \rkphplib\lib\split_str(',', $this->conf['search']);
-	foreach ($cols as $col_method) {
-		list ($col, $method) = explode(':', $col_method, 2);
-
-		if (isset($_REQUEST['s_'.$col])) {
-			array_push($where, [ $col, $_REQUEST['s_'.$col], $method ]);
-		}
-	}
-
 	$compare = [ 'EQ' => '=', 'LT' => '<', 'GT' => '>', 'LE' => '<=', 'GE' => '>=' ];
 	$like = [ 'LIKE' => '%$%', 'LLIKE' => '$%', 'RLIKE' => '%$' ];
-	$select_search = [];
+
 	$this->set_search = [];
+	$select_search = [];
 	$expr = [];
 
-	for ($i = 0; $i < count($where); $i++) {
-		list ($col, $value, $method) = $where[$i];
+	$search_cols = \rkphplib\lib\split_str(',', $this->conf['search']);
+
+	foreach ($search_cols as $col_method) {
+		list ($col, $method) = explode(':', $col_method, 2);
+		$value = isset($_REQUEST['s_'.$col]) ? $_REQUEST['s_'.$col] : '';
+		$found = false;
 
 		foreach ($compare as $cx => $op) {
 			if ($cx == $method || $op == $method) {
-				array_push($expr, $col.' '.$op." '".preg_replace('/[^0-9\-\+\.]/', '', $value)."'");
-				continue;
+				if ($value) {
+					array_push($expr, $col.' '.$op." '".preg_replace('/[^0-9\-\+\.]/', '', $value)."'");
+				}
+
+				$found = true;
 			}
 		}
 
-		foreach ($like as $cx => $op) {
-			if ($cx == $method || $op == $method) {
-				$value = ADatabase::escape(str_replace('$', $value, $op));
-				array_push($expr, $col." LIKE '$value'");
-				continue;
+		if (!$found) {
+			foreach ($like as $cx => $op) {
+				if ($cx == $method || $op == $method) {
+					if ($value) {
+						$value = ADatabase::escape(str_replace('$', $value, $op));
+						array_push($expr, $col." LIKE '$value'");
+					}
+
+					$found = true;
+				}
 			}
 		}
 
-		if (preg_match('/^([\[\]]{1})([0-9\-\.\?])*\,?([0-9\-\.\?])*([\[\]]{1})$/', $method, $match)) {
-			if (count($match) != 3 && count($match) != 5) {
-				throw new Exception("invalid range $method - match: ".join('|', $match));
-			}
-
+		if ($found) {
+			// do nothing ...
+		}
+		else if (preg_match('/^([\[\]]{1})([0-9\-\.\?])*\,?([0-9\-\.\?])*([\[\]]{1})$/', $method, $match)) {
 			if (count($match) == 3) {
 				$op1 = $match[1];
 				$op2 = $match[2];
-				array_push($select_search, "min($col) AS s_".$col."_min");
-				array_push($select_search, "max($col) AS s_".$col."_max");
+				array_push($select_search, "MIN($col) AS s_".$col."_min");
+				array_push($select_search, "MAX($col) AS s_".$col."_max");
 			}
 			else if (count($match) == 5) {
 				$op1 = $match[1];
-				$a = $match[2];
-				$b = $match[3];
 				$op2 = $match[4];
-				$this->set_search['s_'.$col.'_min'] = $a;
-				$this->set_search['s_'.$col.'_max'] = $b;
+				$this->set_search['s_'.$col.'_min'] = $match[2];
+				$this->set_search['s_'.$col.'_max'] = $match[3];
+			}
+			else {
+				throw new Exception("invalid range $method - match: ".join('|', $match));
 			}
 
-			array_push($expr, $this->getRangeExpression($col, $value, $method));
-			continue;
+			if ($value) {
+				array_push($expr, $this->getRangeExpression($col, $value, $method));
+			}
 		}
+		else if ($method == 'OPTION' || $method == '?') {
+			if ($value) {
+				array_push($expr, $col." = '".ADatabase::escape($value)."'");
+			}
 
-		if ($method == 'OPTION' || $method == '?') {
-			array_push($expr, $col." = '".ADatabase::escape($value)."'");
-			array_push($select_search, "GROUP_CONCAT($col) AS s_".$col."_options");
-			continue;
+			array_push($select_search, "GROUP_CONCAT(DISTINCT($col)) AS s_".$col."_options");
 		}
-
-		throw new Exception("search method [$method] not found ($col=$value)");
+		else {
+			throw new Exception("search method [$method] not found ($col=$value)");
+		}
 	}
 
 	if (count($expr) == 0) {
@@ -719,6 +894,7 @@ protected function getSqlSearch() {
 	}
 
 	if (count($select_search) > 0) {
+print "<pre>selectSearch: ".join(', ', $select_search)."</pre>";
 		$this->set_search = array_merge($this->selectSearch($select_search), $this->set_search);
 	}
 
@@ -731,11 +907,22 @@ protected function getSqlSearch() {
 /**
  * Return range limits and options for search evaluation. 
  *
- * @param string $cols 
+ * @throws
+ * @param vector $cols 
  * @return map
  */
 private function selectSearch($cols) {
-	print "ToDo: selectSearch()<br>";
+	if (empty($this->conf['query.table'])) {
+		throw new Exception('missing [output:]query.table=...');
+	}
+
+	$query = "SELECT ".join(', ', $cols)." FROM ".ADatabase::escape_name($this->conf['query.table']);
+	print "selectSearch: $query<br>";
+	$db = Database::getInstance($this->conf['query.dsn'], [ 'search_info' => $query ]);
+	// \rkphplib\lib\log_debug("TOutput::selectSearch> ".$db->getQuery('search_info'));
+	$dbres = $db->selectOne($db->getQuery('search_info'));
+
+	return $dbres;
 }
 
 
@@ -774,11 +961,34 @@ private function getRangeExpression($col, $value, $range) {
 
 
 /**
- * Return sql sort expression.
+ * Return "ORDER BY ...". Use conf.sort or _REQUEST[conf.req.sort] = sort.
+ * Sort value is [a|d]colname.
  *
- * @return string
+ * @throws
+ * @return string ''|ORDER BY ...
  */
 protected function getSqlSort() {
+  $sort = empty($_REQUEST[$this->conf['req.sort']]) ? $this->conf['sort'] : $_REQUEST[$this->conf['req.sort']];
+
+	if (empty($sort)) {
+		return '';
+	}
+
+	$direction = mb_substr($sort, 0, 1);
+	$column = ADatabase::escape_name(mb_substr($sort, 1));
+	$res = 'ORDER BY '.$column;
+		
+	if ($direction == 'a') {
+		// ASC = ASCENDING = DEFAULT
+	}
+	else if ($direction == 'd') {
+		$res .= ' DESC';
+	}
+	else {
+		throw new Exception("invalid sort value [$sort]");
+	}
+
+	return $res;
 }
 
 
@@ -787,10 +997,6 @@ protected function getSqlSort() {
  *
  */
 protected function selectData() {
-	require_once(__DIR__.'/../Database.class.php');
-
-	$dsn = empty($this->conf['query.dsn']) ? '' : $this->conf['query.dsn'];
-
 	$query = $this->conf['query'];
 
 	if (!empty($this->conf['search'])) {
@@ -801,7 +1007,8 @@ protected function selectData() {
 		$query = str_replace('_SORT', $this->getSqlSort(), $query);
 	}
 
-	$db = \rkphplib\Database::getInstance($dsn, [ 'output' => $query ]);
+	$this->conf['query'] = $query;
+	$db = Database::getInstance($this->conf['query.dsn'], [ 'output' => $this->conf['query'] ]);
 	// \rkphplib\lib\log_debug("TOutput::selectData> ".$db->getQuery('output', $_REQUEST));
 	$db->execute($db->getQuery('output', $_REQUEST), true);
 
@@ -854,8 +1061,7 @@ protected function fillTable() {
 	$table_type = \rkphplib\lib\split_str(',', $this->conf['table.type']);
 	$uri = array_shift($table_type).':'.$uri;
 
-	require_once(__DIR__.'/../File.class.php');
-	$this->table = \rkphplib\File::loadTable($uri, $table_type);
+	$this->table = File::loadTable($uri, $table_type);
 
 	$this->env['total'] = count($this->table);
 }
