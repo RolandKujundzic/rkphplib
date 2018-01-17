@@ -94,6 +94,8 @@ public function tok_search($col, $p) {
 		}
 	}
 
+	$value = isset($_REQUEST['s_'.$col]) ? \rkphplib\lib\htmlescape($_REQUEST['s_'.$col]) : '';
+
 	if ($p['type'] == 'select') {
 		$res = '<select name="s_'.$col.'" onchange="searchOutput(this)">';
 		$options = \rkphplib\lib\conf2kv($p['options'], '=', ',');
@@ -104,7 +106,14 @@ public function tok_search($col, $p) {
 		}
 
 		if ($options == 'auto') {
-			print "<pre>$col = select:auto</pre>";
+			if (isset($this->set_search['s_'.$col.'_options'])) {
+				$options = \rkphplib\lib\split_str(',', $this->set_search['s_'.$col.'_options']);
+				foreach ($options as $opt_value) {
+					$opt_value = \rkphplib\lib\htmlescape($opt_value);
+					$label = $opt_value ? '{txt:}'.$opt_value.'{:txt}' : '{txt:any}{:txt}';
+					$res .= '<option value="'.$opt_value.'">'.$label."</option>\n";
+				}
+			}
 		}
 		else {
 			foreach ($options as $value => $label) {
@@ -112,10 +121,16 @@ public function tok_search($col, $p) {
 			}
 		}
 
+		if ($value) {
+			$res = str_replace('<option value="'.$value.'">', '<option value="'.$value.'" selected>', $res);
+		}
+		else {
+			$res = str_replace('<option value="">', '<option value="" selected>', $res);
+		}
+
 		$res .= '</select>';
 	}
 	else if ($p['type'] == 'text') {
-		$value = isset($_REQUEST['s_'.$col]) ? \rkphplib\lib\htmlescape($_REQUEST['s_'.$col]) : '';
 		$res = '<input type="text" name="s_'.$col.'" value="'.$value.'" placeholder="'.$this->getSearchPlaceholder($col).'" onkeypress="searchOutput(this)"';
 
 		if (!empty($p['width'])) {
@@ -136,7 +151,19 @@ public function tok_search($col, $p) {
  * @return string
  */
 private function getSearchPlaceholder($col) {
-	return 'ToDo';
+	$res = '';
+
+	if (isset($this->set_search['s_'.$col.'_min']) && isset($this->set_search['s_'.$col.'_max'])) {
+		$res = $this->set_search['s_'.$col.'_min'].','.$this->set_search['s_'.$col.'_max'];
+	}
+	else if (isset($this->set_search['s_'.$col.'_min'])) {
+		$res = $this->set_search['s_'.$col.'_min'].',';
+	}
+	else if (isset($this->set_search['s_'.$col.'_max'])) {
+		$res = ','.$this->set_search['s_'.$col.'_max'];
+	}
+
+	return $res;
 }
 
 
@@ -304,7 +331,12 @@ public function tok_output_footer($tpl) {
  * Default tags are array_keys(row[0]) ({:=0} ... {:=n} if vector or {:=key} if map).
  * If conf.table.columns=col_1n use {:=col_1} ... {:=col_n} as tags. If col.table.columns=first_list
  * use values from row[0] as tags. Otherwise assume conf.table.columns is a comma separted list
- * of tag names.
+ * of tag names. Special tags: 
+ * 
+ * @tag {:=_rowpos} - 0, 1, 2, ...
+ * @tag {:=_rownum} - 1, 2, 3, ...
+ * @tag {:=_image1}, {:=_image_num}, {:=_image_preview_js} and {:=_image_preview}
+ *   if conf.images= colname is set and value (image1, ...) is not empty
  *
  * @throws
  * @param string $arg
@@ -328,9 +360,9 @@ public function tok_output_loop($tpl) {
 	for ($i = $start; $i <= $end; $i++) {
 		$row = $this->table[$i];
 
-		$replace = [];
-		$replace['rowpos'] = $this->env['last'] + $i;
-		$replace['rownum'] = $this->env['last'] + $i + 1;
+		$replace = $this->getImageTags($row);
+		$replace['_rowpos'] = $this->env['last'] + $i;
+		$replace['_rownum'] = $this->env['last'] + $i + 1;
 
 		if (!$this->env['is_map']) {
 			$j = 0;
@@ -395,6 +427,35 @@ public function tok_output_loop($tpl) {
 
 
 /**
+ * If conf.images is empty or $row[conf.images] is empty return empty map.
+ * Otherwise split image list (image1, ...) and set map keys _image1, 
+ * _image_num, _image_preview_js and _image_preview.
+ *
+ * @param map $row
+ * @return map
+ */
+protected function getImageTags($row) {
+	if (empty($this->conf['images']) || empty($row[$this->conf['images']])) {
+		return [];
+	}
+
+	$images = \rkphplib\lib\split_str(',', $row[$this->conf['images']]);
+	$id = $row['id'];
+
+	$img_dir = empty($row['_image_dir']) ? '' : $row['_image_dir'].'/';
+
+	$res = [];
+	$res['_image1'] = $img_dir.$images[0];
+	$res['_image_num'] = count($images);
+	$res['_image_preview'] = '<div style="position:relative"><div class="preview_img" id="preview_img_'.$id.'"></div></div>';
+	$res['_image_preview_js'] = ' onmouseout="hideOLIP('."'$id'".')" onmouseover="showOLIP('."'$id'".', '."'".
+		$img_dir.$images[0]."'".')" ';
+	
+	return $res;
+}
+
+
+/**
  * Use if you need more configuration blocks beside {output:init}. Parameter are
  * the same as in tok_output_init. Fill this.conf with default value if 
  * this.conf == [] or $p['reset'] = 1. Overwrite with values from $p. 
@@ -419,6 +480,7 @@ public function tok_output_conf($p) {
 			'req.last' => 'last',
 			'req.sort' => 'sort',
 			'keep' => SETTINGS_REQ_DIR.',sort,last',
+			'images' => '',
 			'pagebreak' => 0,
 			'pagebreak_fill' => 1,
 			'rowbreak' => 0,
@@ -463,6 +525,7 @@ public function tok_output_conf($p) {
  *  req.sort= sort
  *  req.last= last
  *  keep= SETTINGS_REQ_DIR, $req.sort, $req.last (comma separated list)
+ *  images= (use {:=_image_num}, {:=_image1}, {:=_image_preview})  
  *  pagebreak= 0
  *  pagebreak_fill= 1
  *  rowbreak= 0
@@ -491,7 +554,7 @@ public function tok_output_conf($p) {
  *
  * @see File::loadTable for table.type 
  * @param array[string]string $p
- * @return if search=yes
+ * @return if search=yes or conf.images
  */
 public function tok_output_init($p) {
 
@@ -527,7 +590,7 @@ public function tok_output_init($p) {
  */
 protected function getJavascript() {
 	
-	if (empty($this->conf['search']) && empty($this->conf['edit'])) {
+	if (empty($this->conf['search']) && empty($this->conf['edit']) && empty($this->conf['images'])) {
 		return '';
 	}
 
@@ -556,6 +619,34 @@ $edit_js = <<<END
 // ToDo ...
 END;
 
+$images_js = <<<END
+//-----------------------------------------------------------------------------
+function showOLIP(id, picture) {
+	var preview_div = document.getElementById('preview_img_' + id);
+
+  if (!preview_div) {
+    return;
+  }
+  
+  if (!document.getElementById('img_' + id) && picture.length > 4) {
+    var preview_img = document.createElement('img');
+    preview_img.setAttribute('src', picture);
+    preview_img.setAttribute('id', 'img_' + id);
+    document.getElementById('preview_img_' + id).appendChild(preview_img);
+  }
+
+  preview_div.style.visibility = 'visible';   
+}
+
+//-----------------------------------------------------------------------------
+function hideOLIP(id) {
+  var preview_div = document.getElementById('preview_img_' + id);
+  if (preview_div) {
+    preview_div.style.visibility = 'hidden';    
+  }
+}
+END;
+
 	if (!empty($this->conf['search'])) {
 		$res .= $search_js;
 	}
@@ -564,7 +655,32 @@ END;
 		$res .= $edit_js;
 	}
 
-	return $res."</script>";
+	if (!empty($this->conf['images'])) {
+		$res .= $images_js;
+	}
+
+	$res .= "</script>";
+
+	if (!empty($this->conf['images'])) {
+		$res .= <<<END
+<style type="text/css">
+div.preview_img {
+  position:absolute;
+  visibility:hidden;
+  z-index:1;
+  top: 4px;
+  left:24px;
+  width: 150px;
+  height: 200px;
+  text-align:center;
+  background: #fff;
+  border: 2px solid #cacaca;
+}
+</style>
+END;
+	}
+
+	return $res;
 }
 
 
@@ -857,20 +973,21 @@ protected function getSqlSearch() {
 			// do nothing ...
 		}
 		else if (preg_match('/^([\[\]]{1})([0-9\-\.\?])*\,?([0-9\-\.\?])*([\[\]]{1})$/', $method, $match)) {
-			if (count($match) == 3) {
-				$op1 = $match[1];
-				$op2 = $match[2];
-				array_push($select_search, "MIN($col) AS s_".$col."_min");
-				array_push($select_search, "MAX($col) AS s_".$col."_max");
-			}
-			else if (count($match) == 5) {
-				$op1 = $match[1];
-				$op2 = $match[4];
+			$op1 = $match[1];
+			$op2 = $match[4];
+
+			if ($match[2]) {
 				$this->set_search['s_'.$col.'_min'] = $match[2];
+			}
+			else {
+				array_push($select_search, "MIN($col) AS s_".$col."_min");
+			}
+
+			if ($match[3]) {
 				$this->set_search['s_'.$col.'_max'] = $match[3];
 			}
 			else {
-				throw new Exception("invalid range $method - match: ".join('|', $match));
+				array_push($select_search, "MAX($col) AS s_".$col."_max");
 			}
 
 			if ($value) {
@@ -894,7 +1011,6 @@ protected function getSqlSearch() {
 	}
 
 	if (count($select_search) > 0) {
-print "<pre>selectSearch: ".join(', ', $select_search)."</pre>";
 		$this->set_search = array_merge($this->selectSearch($select_search), $this->set_search);
 	}
 
@@ -917,12 +1033,9 @@ private function selectSearch($cols) {
 	}
 
 	$query = "SELECT ".join(', ', $cols)." FROM ".ADatabase::escape_name($this->conf['query.table']);
-	print "selectSearch: $query<br>";
 	$db = Database::getInstance($this->conf['query.dsn'], [ 'search_info' => $query ]);
 	// \rkphplib\lib\log_debug("TOutput::selectSearch> ".$db->getQuery('search_info'));
-	$dbres = $db->selectOne($db->getQuery('search_info'));
-
-	return $dbres;
+	return $db->selectOne($db->getQuery('search_info'));
 }
 
 
