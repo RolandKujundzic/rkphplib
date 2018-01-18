@@ -6,9 +6,10 @@ $parent_dir = dirname(__DIR__);
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once($parent_dir.'/Exception.class.php');
 require_once($parent_dir.'/File.class.php');
+require_once($parent_dir.'/lib/htmlescape.php');
 require_once($parent_dir.'/lib/split_str.php');
-require_once($parent_dir.'/lib/conf2kv.php');
 require_once($parent_dir.'/lib/redirect.php');
+require_once($parent_dir.'/lib/conf2kv.php');
 
 use \rkphplib\Exception;
 use \rkphplib\File;
@@ -86,6 +87,7 @@ public function __construct() {
  * - tolower: NO_PARAM
  * - join: KV_BODY
  * - var: REQUIRE_PARAM
+ * - view: REQUIRE_PARAM, KV_BODY, REDO
  * - esc: 0
  *
  * @param Tokenizer $tok
@@ -109,6 +111,7 @@ public function getPlugins($tok) {
 	$plugin['get'] = 0;
 	$plugin['include'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
 	$plugin['include_if'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['view'] = TokPlugin::REDO | TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
 	$plugin['ignore'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['if'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['switch'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
@@ -277,6 +280,29 @@ public function tok_keep($txt) {
  */
 public function tok_redo($txt) {
 	return $txt;
+}
+
+
+/**
+ * Include view file.
+ *
+ * @tok {view:overview}name=Overview{:view} = 
+ *   <div id="overview" class="view" data-name="Overview">{include:}{get:dir}/overview.inc.html</div>
+ * 
+ * @throws if file {get:dir}/$name.inc.html does not exists
+ * @param string $name
+ * @param map $p
+ * @return string
+ */
+public function tok_view($name, $p) {
+	$file = self::getReqDir(true).'/'.$name.'.inc.html';
+	$attrib = 'id="'.$name.'" class="view"';
+
+	foreach ($p as $key => $value) {
+		$attrib .= ' data-'.$key.'="'.\rkphplib\lib\htmlescape($value).'"';
+	}
+ 
+	return '<div '.$attrib.'>'.File::load($file).'</div>';
 }
 
 
