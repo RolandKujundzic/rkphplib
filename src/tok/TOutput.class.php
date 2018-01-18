@@ -58,8 +58,8 @@ public function getPlugins($tok) {
 	$plugin['output:conf'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['output:init'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['output:loop']   = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
-	$plugin['output:header'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
-	$plugin['output:footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
+	$plugin['output:header'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
+	$plugin['output:footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
 	$plugin['output:empty'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['output'] = 0; // no callback for base plugin
 	$plugin['sort'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
@@ -320,6 +320,7 @@ public function tok_output_footer($tpl) {
 
 	if (isset($this->env['scroll'])) {
 		$tpl = $this->tok->replaceTags($tpl, $this->env['scroll'], 'scroll.');
+		$tpl = $this->tok->replaceTags($tpl, $this->env);
 	}
 
 	return $tpl;
