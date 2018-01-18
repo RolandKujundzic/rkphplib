@@ -938,8 +938,10 @@ public function unescape($txt, $rx = null) {
  */
 public function replaceTags($tpl, $replace, $prefix = '') {
 	foreach ($replace as $key => $value) {
-		$tag = $this->rx[1].$this->rx[2].'='.$prefix.$key.$this->rx[3];
-		$tpl = str_replace($tag, $value, $tpl);
+		if (!is_array($value)) {
+			$tag = $this->rx[1].$this->rx[2].'='.$prefix.$key.$this->rx[3];
+			$tpl = str_replace($tag, $value, $tpl);
+		}
 	}
 
 	return $tpl;
