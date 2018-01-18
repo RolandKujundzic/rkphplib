@@ -17,6 +17,11 @@ use \rkphplib\DateCalc;
  */
 class TDate implements TokPlugin {
 
+/** @var map $env { format_in:null, format_out: null } */
+private $env = [ 'format_in' => null, 'format_out' => null ];
+
+
+
 /**
  *
  */
@@ -28,7 +33,7 @@ public function getPlugins($tok) {
 
 
 /**
- * Return result of {date:time|microtime}.
+ * Return result of {date:time|microtime}. 
  *
  * @param string $param time|microtime
  * @return string|null
@@ -55,6 +60,7 @@ private function date_param($param) {
  * {date:[format_in,] format_out}now(+/-NNN){:} or {date:[format_in]}XXX|#|format_out{:}
  * {date:}XXX{:} = {date:}XXX|#|de{:date}
  * {date:time}, {date:microtime}
+ * {date:set_format}format_in|#|format_out{:date}
  *
  * @see DateCalc::formatDateStr()
  * @param array $p
@@ -64,6 +70,12 @@ private function date_param($param) {
 public function tok_date($p, $arg) {
 
 	if (count($p) == 1 && !empty($p[0])) {
+		if ($p[0] == 'set_format') {
+			$this->env['format_in'] = $arg[0]; 
+			$this->env['format_out'] = $arg[1];
+			return '';
+		}
+
 		$res = $this->date_param($p[0]);
 
 		if (!is_null($res)) {
@@ -80,6 +92,10 @@ public function tok_date($p, $arg) {
 		$format_out = $p[1];
 	}
 	else if (count($p) == 1) {
+		if (empty($p[0]) && is_string($arg) && !empty($this->env['format_in']) && !empty($this->env['format_out'])) {
+			return DateCalc::formatDateStr($this->env['format_out'], $arg, $this->env['format_in']); 
+		}
+
 		$format_out = $p[0];
 		$xin = $p[0];
 	}
