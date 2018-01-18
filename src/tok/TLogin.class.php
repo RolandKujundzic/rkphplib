@@ -78,7 +78,7 @@ public function tok_login_clear($p) {
 			$r = [];
 			$r['lid'] = $this->sess->get('id');
 			$r['session_md5'] = md5(session_id());
-			$r['_table'] = ADatabase::escape_name($table);
+			$r['_table'] = ADatabase::escape_name($p['log_table']);
  			$this->db->execute($this->db->getQuery('log_logout', $r));
 		}
 
