@@ -59,7 +59,7 @@ public function getPlugins($tok) {
 	$plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_update'] = TokPlugin::KV_BODY;
-	$plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
+	$plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 
 	return $plugin;
 }
@@ -68,12 +68,20 @@ public function getPlugins($tok) {
 /**
  * Logout. Example:
  *
- * {login_clear:}
+ * {login_clear:}log_table=cms_login_history{:login_clear}
  *
  * @return ''
  */
-public function tok_login_clear() {
+public function tok_login_clear($p) {
 	if ($this->sess) {
+		if (!empty($p['log_table'])) {
+			$r = [];
+			$r['lid'] = $this->sess->get('id');
+			$r['session_md5'] = md5(session_id());
+			$r['_table'] = ADatabase::escape_name($table);
+ 			$this->db->execute($this->db->getQuery('log_logout', $r));
+		}
+
 		$this->sess->destroy();
 		$this->sess = null;
 	}
@@ -123,7 +131,10 @@ public function tok_login_check($p) {
 		$query_map = [
 			'select_login' => "SELECT *, PASSWORD({:=password}) AS password_input FROM $table WHERE login={:=login}",
 			'insert' => "INSERT INTO $table (login, password, type, person, language, priv) VALUES ".
-				"({:=login}, PASSWORD({:=password}), {:=type}, {:=person}, {:=language}, {:=priv})"
+				"({:=login}, PASSWORD({:=password}), {:=type}, {:=person}, {:=language}, {:=priv})",
+			'log_login' => "INSERT INTO {:=_table} (lid, session_md5, fingerprint, ip) VALUES ".
+				"({:=lid}, {:=session_md5}, {:=fingerprint}, {:=ip})",
+			'log_logout' => "UPDATE {:=_table} SET logout=NOW() WHERE lid={:=lid} AND session_md5={:=session_md5}"
 			];
 
 		$this->db = Database::getInstance(SETTINGS_DSN, $query_map);
@@ -204,11 +215,12 @@ public function tok_login_update($do, $p) {
  * Compare login with database. If successfull load all columns 
  * from select_login result (except password) into session. Example:
  *
- * @tok {login_auth:}login={get:login}|#|password={get:password}|#|redirect=...{:login_auth}
+ * @tok {login_auth:}login={get:login}|#|password={get:password}|#|redirect=...|#|log_table=...{:login_auth}
  *
  * If login is invalid set {var:login_error} = error.
  * If password is invalid set {var:password_error} = error.
- * If redirect is set - redirect after successfull login or if still logged in. 
+ * If redirect is set - redirect after successfull login or if still logged in.
+ * If log_table is set - insert log entry into log table. 
  *
  * @tok <pre>{login:*}</pre> = id=...|#|login=...|#|type=...|#|priv=...|#|language=...
  * 
@@ -247,9 +259,36 @@ public function tok_login_auth($p) {
 
 	$this->sess->setHash($user);
 
+	if (!empty($p['log_table'])) {
+		$this->logAuthInTable($p['log_table'], $user['id']);
+	}
+
 	if (!empty($p['redirect'])) {
 		\rkphplib\lib\redirect($p['redirect']);	
 	}
+}
+
+
+/**
+ * Log successfull authentication in table.
+ *
+ * @throws
+ * @param string $table
+ * @param string $id
+ */
+private function logAuthInTable($table, $id) {
+	$fingerprint = '';
+
+	foreach (getallheaders() as $key => $value) {
+  	$fingerprint = md5("$fingerprint:$key=$value");
+	}
+
+	$r = [ 'fingerprint' => $fingerprint, 'lid' => $id ];
+	$r['ip'] = empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR'];
+	$r['_table'] = ADatabase::escape_name($table);
+	$r['session_md5'] = md5(session_id()); 
+
+	$this->db->execute($this->db->getQuery('log_login', $r));
 }
 
 
