@@ -18,7 +18,7 @@ use \rkphplib\DateCalc;
 class TDate implements TokPlugin {
 
 /** @var map $env { format_in:null, format_out: null } */
-private $env = [ 'format_in' => null, 'format_out' => null ];
+private $env = [ 'format_in' => null, 'format_out' => null, 'format_cut' => '' ];
 
 
 
@@ -60,7 +60,7 @@ private function date_param($param) {
  * {date:[format_in,] format_out}now(+/-NNN){:} or {date:[format_in]}XXX|#|format_out{:}
  * {date:}XXX{:} = {date:}XXX|#|de{:date}
  * {date:time}, {date:microtime}
- * {date:set_format}format_in|#|format_out{:date}
+ * {date:set_format}format_in|#|format_out[@nosec|@noHmi]{:date}
  *
  * @see DateCalc::formatDateStr()
  * @param array $p
@@ -71,8 +71,16 @@ public function tok_date($p, $arg) {
 
 	if (count($p) == 1 && !empty($p[0])) {
 		if ($p[0] == 'set_format') {
-			$this->env['format_in'] = $arg[0]; 
-			$this->env['format_out'] = $arg[1];
+			$this->env['format_in'] = $arg[0];
+
+			if (in_array(mb_substr($arg[1], -6), [ '@nosec', '@noHmi' ])) {  
+				$this->env['format_out'] = mb_substr($arg[1], 0, -6);
+				$this->env['format_cut'] = mb_substr($arg[1], -3);
+			}
+			else {
+				$this->env['format_out'] = $arg[1];				
+			}
+
 			return '';
 		}
 
@@ -93,7 +101,16 @@ public function tok_date($p, $arg) {
 	}
 	else if (count($p) == 1) {
 		if (empty($p[0]) && is_string($arg) && !empty($this->env['format_in']) && !empty($this->env['format_out'])) {
-			return DateCalc::formatDateStr($this->env['format_out'], $arg, $this->env['format_in']); 
+			$res = DateCalc::formatDateStr($this->env['format_out'], $arg, $this->env['format_in']); 
+
+			if ($this->env['format_cut'] == 'sec') {
+				$res = mb_substr($res, 0, -3);
+			}
+			else if ($this->env['format_cut'] == 'Hmi') {
+				$res = mb_substr($res, 0, -9);
+			}
+
+			return $res;
 		}
 
 		$format_out = $p[0];
