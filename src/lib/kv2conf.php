@@ -39,7 +39,7 @@ function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1)
 		else if (is_bool($value)) {
 			$conf .= intval($value).$d2."\n";
 		}
-		else if (is_string($value)) {
+		else if (is_string($value) || is_null($value)) {
 			if (strpos($value, $d2) !== false || trim($value) != $value) {
 				$value = '"'.$value.'"'; 
 			}
@@ -64,7 +64,7 @@ function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1)
 						$val = intval($val);
 					}
 					else if (!is_numeric($val)) {
-						throw new Exception("invalid array value", "$key: ".print_r($obj, true));
+						throw new Exception("invalid array value", "$key: ".print_r($value, true));
 					}
 
 					array_push($arr, $val);
@@ -74,7 +74,7 @@ function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1)
 			}
 		}
 		else {
-			throw new Exception("invalid value", "$key: ".print_r($obj, true));
+			throw new Exception("invalid value", "$key: ".print_r($value, true));
 		}
 	}
 
