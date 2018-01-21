@@ -52,6 +52,10 @@ public function __construct($options = []) {
 		'dsn' => ''
 		];
 
+	if (!defined('SETTINGS_DSN')) {
+		return;
+	}
+
 	$opt = array_merge($default_options, $options);
   $table = ADatabase::escape($opt['table.conf']);
   $table_login = ADatabase::escape($opt['table.login']);
