@@ -76,20 +76,21 @@ public function __construct($options = []) {
  */
 public function getPlugins($tok) {
   $plugin = [];
-	$plugin['conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::TEXT | TokPlugin::REDO;
+	$plugin['conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REDO;
 	$plugin['conf:id'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['conf:var'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['conf:get'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REDO;
 	$plugin['conf:set'] = TokPlugin::REQUIRE_PARAM | TokPlugin::TEXT;
+	$plugin['conf:set_default'] = TokPlugin::REQUIRE_PARAM | TokPlugin::TEXT;
 	$plugin['conf:append'] = TokPlugin::REQUIRE_PARAM | TokPlugin::TEXT;
   return $plugin;
 }
 
 
 /**
- * Return tokenized configuration value. If configuration value is not in database add it as text (untokenized).
+ * Return tokenized configuration value. If configuration value is not in database add it tokenized.
  * 
- * @tok {conf:email}38.2883{:conf}
+ * @tok {conf:since}{date:now}{:conf} - set since=NOW() if not already set
  *
  * @param string $key
  * @param string $value
@@ -140,6 +141,31 @@ public function tok_conf_set($key, $value) {
 	$this->set($this->lid, $key, $value);
 	return '';
 }
+
+
+/**
+ * Set configuration value if still unset.
+ * 
+ * @tok {conf:set_default:since}{date:now}{:conf} - set since="{date:now}" if not already set
+ *
+ * @param string $key
+ * @param string $value
+ * @return string
+ */
+public function tok_conf_set_default($key, $value) {
+	$qtype = (intval($this->lid) > 0) ? 'select_user_path' : 'select_system_path';
+	$lid = ($this->lid > 0) ? intval($this->lid) : null;
+
+	$dbres = $this->db->select($this->db->getQuery($qtype, [ 'lid' => $lid, 'path' => $key ]));
+	$current = (count($dbres) == 0) ? null : $dbres[0]['value'];
+
+	if (is_null($current)) {
+		$this->set($lid, $key, $value);
+	}
+
+	return '';
+}
+
 
 
 /**
