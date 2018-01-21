@@ -112,6 +112,7 @@ public function getPlugins($tok) {
 	$plugin['include'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
 	$plugin['include_if'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['view'] = TokPlugin::REDO | TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
+	$plugin['clear'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['ignore'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['if'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['switch'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
@@ -253,6 +254,19 @@ public function tok_toupper($txt) {
  * @return empty-string
  */
 public function tok_ignore($txt) {
+	return '';
+}
+
+
+/**
+ * Return empty text.
+ *
+ * @tok {clear:}{date:now}{:ignore} = return '', execute {date:now} 
+ * 
+ * @param string $txt
+ * @return empty-string
+ */
+public function tok_clear($txt) {
 	return '';
 }
 
