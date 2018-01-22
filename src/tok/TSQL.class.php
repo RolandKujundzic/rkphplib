@@ -54,6 +54,7 @@ public function getPlugins($tok) {
 	$plugin['sql:nextId'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['sql:in'] = TokPlugin::CSLIST_BODY;
 	$plugin['sql:password'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['sql:import'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['sql'] = 0;
 	$plugin['null'] = TokPlugin::NO_PARAM;
 
@@ -68,6 +69,19 @@ public function __construct() {
 	if (defined('SETTINGS_DSN')) {
 		$this->db = Database::getInstance();
 	}
+}
+
+
+/**
+ * Import sql dump.
+ *
+ * @tok {sql:import}base= apps/shop/setup/sql|#|custom= {const:DOCROOT}/setup/sql{:sql}
+ *
+ * @param map $p
+ * @return ''
+ */
+public function tok_sql_import($p) {
+	throw new Exception('ToDo');
 }
 
 
