@@ -109,6 +109,7 @@ public function getPlugins($tok) {
 	$plugin['encode'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['decode'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['get'] = 0;
+	$plugin['const'] = 0;
 	$plugin['include'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
 	$plugin['include_if'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['view'] = TokPlugin::REDO | TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
@@ -784,6 +785,25 @@ public function tok_set_default($name, $value) {
 	}
 
 	return '';
+}
+
+
+/**
+ * Return constant value. Constant name is either param or arg.
+ *
+ * @throws if undefined constant
+ * @param string $param
+ * @param string $arg
+ * @return string
+ */
+public function tok_const($param, $arg) {
+	$name = empty($arg) ? $param : trim($arg);
+
+	if (!defined($name)) {
+		throw new Exception('undefined constant '.$name);
+	}
+
+	return constant($name);
 }
 
 
