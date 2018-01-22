@@ -221,7 +221,7 @@ public function loadDump($file, $with_usr_bin_mysql = false) {
 		\rkphplib\lib\execute("mysql -h ".$dsn['host']." -u '".$dsn['login']."' -p'".$dsn['password']."' '".$dsn['name']."' < '".$file."'");
 	}
 	else {
-		self::loadDump($file);
+		parent::loadDump($file);
 	}
 }
 
