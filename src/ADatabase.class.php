@@ -879,6 +879,9 @@ abstract public function saveDump($file, $opt = null);
  * @param string $file
  */
 public function loadDump($file) {
+
+	throw new Exception("ToDo: still buggy use native version loadDump($file, true)");
+
 	if (!($fh = fopen($file, "rb"))) {
 		throw new Exception('Could not read '.$file);
 	}
