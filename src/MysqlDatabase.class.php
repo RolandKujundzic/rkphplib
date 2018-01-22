@@ -209,12 +209,20 @@ public function saveDump($file, $opt = null) {
 
 
 /**
+ * Allow to load via mysqldump shell command.
  *
+ * @param string $file 
+ * @param bool $with_usr_bin_mysql
  */
-public function loadDump($file) {
-	File::exists($file, true);
-	$dsn = self::splitDSN($this->_dsn);
-	\rkphplib\lib\execute("mysql -h ".$dsn['host']." -u '".$dsn['login']."' -p'".$dsn['password']."' '".$dsn['name']."' < '".$file."'");
+public function loadDump($file, $with_usr_bin_mysql = false) {
+	if ($with_usr_bin_mysql) {
+		File::exists($file, true);
+		$dsn = self::splitDSN($this->_dsn);
+		\rkphplib\lib\execute("mysql -h ".$dsn['host']." -u '".$dsn['login']."' -p'".$dsn['password']."' '".$dsn['name']."' < '".$file."'");
+	}
+	else {
+		self::loadDump($file);
+	}
 }
 
 
