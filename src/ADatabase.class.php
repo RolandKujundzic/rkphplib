@@ -875,9 +875,53 @@ abstract public function saveDump($file, $opt = null);
 /**
  * Import database dump.
  *
+ * @throws
  * @param string $file
  */
-abstract public function loadDump($file);
+public function loadDump($file) {
+	if (!($fh = fopen($file, "rb"))) {
+		throw new Exception('Could not read '.$file);
+	}
+ 
+	$left = '';
+
+	while (!feof($fh)) { 
+		$temp = fread($fh, 1024);  // up to 1 MB buffer  
+		$lines = explode("\n", $temp);
+		$lines[0] = $left.$lines[0];
+		$query = '';
+
+		if (!feof($fh)) {
+			$left = array_pop($lines);
+		} 
+
+		foreach ($lines as $k => $line){
+			$line .= "\n";
+
+			if (substr($line, 0, 2) == '--' || $line == '') {
+				continue;
+			}
+
+			$query .= $line;
+
+			if (substr(trim($line), -1) == ';') { // every query ends with ";"
+				$this->execute($query);
+				$query = '';
+      }
+		}
+
+		// we might have super long insert line: INSERT INTO ... VALUES (...),(...), ... (...);
+		while (!empty($left) && substr($left, 0, 12) == 'INSERT INTO ' && ($start = strpos($left, ' VALUES (')) !== false &&  
+					($end = strpos($left, '),(', $start + 1)) !== false) {
+			$insert = substr($left, 0, $end + 1).';';
+			$left = substr($left, 0, $start + 9).substr($left, $end + 3);
+			$start = 0;
+			$end = 0;
+		}
+	}
+
+	fclose($fh);
+}
 
 
 /**
