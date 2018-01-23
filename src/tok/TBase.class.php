@@ -138,6 +138,7 @@ public function getPlugins($tok) {
  *
  * @tok set a=17: {var:=a}17{:var}
  * @tok set hash: {var:=#b}x=5|#|y=12|#|...{:var}
+ * @tok set vector: {var:+=b}x{:var}, {var:+=b},y{:var} - {var:b} = x,y
  * @tok get optional a: {var:a}
  * @tok get required a: {var:a!} (abort if not found)
  * @tok set multi-map: {var:=person.age}42{:var}
@@ -148,12 +149,16 @@ public function getPlugins($tok) {
  * @param string $value
  */
 public function tok_var($name, $value) {
-	if (substr($name, 0, 1) == '=') {
+	if (substr($name, 0, 2) == '+=') {
+		$name = substr($name, 2);
+		$this->_tok->setVar($name, $value, Tokenizer::VAR_APPEND);
+	}
+	else if (substr($name, 0, 1) == '=') {
 		$name = substr($name, 1);
 
 		if (substr($name, 0, 1) == '#') {
 			$name = substr($name, 1);
-			$this->_tok->setVar($name, \rkphplib\lib\conf2kv($value), true);
+			$this->_tok->setVar($name, \rkphplib\lib\conf2kv($value), Tokenizer::VAR_MUST_NOT_EXIST);
 		}
 		else {
 			$this->_tok->setVar($name, $value);
