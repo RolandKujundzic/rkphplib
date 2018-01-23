@@ -504,4 +504,46 @@ public static function size($path) {
 }
 
 
+/**
+ * Return true all directory entries are readable|writable.
+ *
+ * @param string $path
+ * @param string $action readable|writable
+ * @return int
+ */
+public static function check($path, $action) {
+
+	if ($action != 'readable' && $action != 'writeable') {
+		throw new Exception("invalid action [$action] use check(PATH, readable|writeable)", "path=[$path]");
+	}
+
+	if (!FSEntry::isDir($path, false)) {
+		return false;
+	}
+
+	$check_write = $action == 'writeable';
+	$entries = Dir::entries($path);
+
+	foreach ($entries as $entry) {
+		if (FSEntry::isFile($entry, false)) {
+			if ($check_write && !is_writable($entry)) {
+				return false;
+			}
+		}
+		else if (FSEntry::isDir($entry, false)) {
+			if ($check_write && !is_writable($entry)) {
+				return false;
+			}
+
+			Dir::check($entry, $action);
+		}
+		else {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
 }
