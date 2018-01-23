@@ -57,6 +57,7 @@ public function getPlugins($tok) {
 		'language:init' => TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY, 
 		'language:get' => TokPlugin::NO_PARAM | TokPlugin::NO_BODY,
 		'language' => 0,
+		'txt:js' => TokPlugin::REQUIRE_PARAM,
 		'txt' => 0,
 		'ptxt' => TokPlugin::LIST_BODY
 	];
@@ -214,6 +215,26 @@ public function getTxtId($param, $txt) {
 	}
 
 	return $id;
+}
+
+
+/**
+ * Same as {txt:} but result is ['id': 'translation']. And translation is javascript escaped.
+ * 
+ * @tok {txt:js:alert}Are you Shure?{:txt} -> 'alert': 'Are your Shure?'
+ *
+ * @throws
+ * @see tok_txt
+ * @param string $id
+ * @param string $txt
+ * @return string
+ */
+public function tok_txt_js($id, $txt) {
+	$translation = str_replace("'", "\\'", $this->tok_txt($id, $txt));
+	$lines = preg_split("/\r?\n/", $translation);
+	$translation = "'".join("' + \"\\n\" + '", $lines)."'";
+
+	return "'$id': $translation";
 }
 
 
