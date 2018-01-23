@@ -18,6 +18,7 @@ if (!defined('HASH_DELIMITER')) {
 /**
  * Tokenizer plugin callback interface.
  * 
+ * @author Roland Kujundzic <roland@kujundzic.de>
  */
 interface TokPlugin {
 
