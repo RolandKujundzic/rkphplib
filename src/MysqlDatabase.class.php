@@ -214,14 +214,52 @@ public function saveDump($file, $opt = null) {
  * @param string $file 
  * @param bool $with_usr_bin_mysql
  */
-public function loadDump($file, $with_usr_bin_mysql = false) {
-	if ($with_usr_bin_mysql) {
-		File::exists($file, true);
+public function loadDump($file, $flags = 0) {
+	File::exists($file, true);
+	$table = self::escape_name(File::basename($file, true));
+
+	if ($flags & self::LOAD_DUMP_USE_SHELL) {
 		$dsn = self::splitDSN($this->_dsn);
-		\rkphplib\lib\execute("mysql -h ".$dsn['host']." -u '".$dsn['login']."' -p'".$dsn['password']."' '".$dsn['name']."' < '".$file."'");
+		$handle = popen("mysql -h '".$dsn['host']."' -u '".$dsn['login']."' -p'".$dsn['password']."' '".$dsn['name']."'", 'w');
+		if (!$handle) {
+			throw new Exception('failed to open write pipe to mysql');
+		}
+
+		if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
+			fwrite($handle, "SET FOREIGN_KEY_CHECKS=0;");
+		}
+
+		if ($flags & self::LOAD_DUMP_ADD_DROP_TABLE) {
+			fwrite($handle, "DROP TABLE IF EXISTS $table;");
+		}
+
+		$fh = fopen($file, 'rb');
+		if (!$fh) {
+			throw new Exception('failed to read '.$file);
+		}
+
+		while (!feof($fh)) { 
+    	fwrite($handle, fread($fh, 4096)); 
+		}
+
+		fclose($fh);
+
+		if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
+			fwrite($handle, "SET FOREIGN_KEY_CHECKS=1;");
+		}
+
+		pclose($handle);
 	}
 	else {
-		parent::loadDump($file);
+		if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
+    	$this->db->execute("SET FOREIGN_KEY_CHECKS=0");
+  	}
+
+		parent::loadDump($file, $flags);
+
+		if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
+    	$this->db->execute("SET FOREIGN_KEY_CHECKS=1");
+  	}
 	}
 }
 
