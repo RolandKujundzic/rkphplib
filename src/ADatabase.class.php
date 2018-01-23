@@ -897,17 +897,13 @@ public function loadDump($file, $flags) {
 		throw new Exception('implement loadDump() for LOAD_DUMP_USE_SHELL');
 	}
 
-	throw new Exception("ToDo: still buggy use native version loadDump($file, true)");
+	throw new Exception("ToDo: still buggy use native version loadDump($file, 1)");
 
 	if (!($fh = fopen($file, "rb"))) {
 		throw new Exception('Could not read '.$file);
 	}
 
 	$table = File::basename($file, true);
-
-	if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
-		$this->db->execute("SET FOREIGN_KEY_CHECKS=0");
-	}
 
 	if ($flags & self::LOAD_DUMP_ADD_DROP_TABLE) {
 		$this->db->dropTable($table);
@@ -951,10 +947,6 @@ public function loadDump($file, $flags) {
 	}
 
 	fclose($fh);
-
-	if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
-		$this->db->execute("SET FOREIGN_KEY_CHECKS=1");
-	}
 }
 
 
