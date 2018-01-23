@@ -239,7 +239,7 @@ public function loadDump($file, $flags = 0) {
 		}
 
 		while (!feof($fh)) { 
-    	fwrite($handle, fread($fh, 4096)); 
+			fwrite($handle, fread($fh, 4096)); 
 		}
 
 		fclose($fh);
