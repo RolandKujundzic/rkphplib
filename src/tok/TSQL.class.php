@@ -2,12 +2,17 @@
 
 namespace rkphplib\tok;
 
+$parent_dir = dirname(__DIR__);
 require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/../Database.class.php');
-require_once(__DIR__.'/../lib/conf2kv.php');
-require_once(__DIR__.'/../lib/split_str.php');
+require_once($parent_dir.'/Database.class.php');
+require_once($parent_dir.'/File.class.php');
+require_once($parent_dir.'/Dir.class.php');
+require_once($parent_dir.'/lib/conf2kv.php');
+require_once($parent_dir.'/lib/split_str.php');
 
 use \rkphplib\Database;
+use \rkphplib\File;
+use \rkphplib\Dir;
 
 
 
@@ -73,14 +78,65 @@ public function __construct() {
 
 
 /**
- * Import sql dump.
+ * Import sql dump. 
  *
- * @tok {sql:import}base= apps/shop/setup/sql|#|custom= {const:DOCROOT}/setup/sql{:sql}
+ * @tok {sql:import}directory=apps/shop/setup/sql|#|tables={const:DOCROOT}/setup/sql{:sql}
  *
+ * If table parameter not empty try: directory/table.sql, directory/alter/table.sql, directory/insert/table.sql.
+ * Otherwise import all sql files (directory/[alter/|insert/]*.sql). If directory/tables.txt exists assume
+ * tables= table names in tables.txt.
+ *
+ * @tok {sql:import}dump=path/to/dump.sql|#|drop_table=1|#|ignore_foreign_keys=0{:sql}
+ *
+ * If drop is true add "DROP TABLE IF EXISTS $table; 
+ *
+ * @throws
  * @param map $p
  * @return ''
  */
 public function tok_sql_import($p) {
+	if (empty($p['directory'])) {
+		if (!empty($p['dump'])) {
+			$flags = 0;
+
+			if (!empty($p['drop_table'])) {
+				$flags = $flags | ADatabase::LOAD_DUMP_ADD_DROP_TABLE;
+			}
+
+			if (!empty($p['ignore_foreign_keys'])) {
+				$flags = $flags | ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS;
+			}
+
+			$this->db->loadDump($p['dump'], $flags | ADatabase::LOAD_DUMP_USE_SHELL);
+		}
+
+		return '';
+	}
+
+	if (!empty($p['tables'])) {
+		$files = \rkphplib\lib\split_str(',', $p['tables']);
+	}
+	else if (File::exists($p['directory'].'/tables.txt')) {
+		$files = \rkphplib\lib\split_str("\n", File::load($p['directory'].'/tables.txt'));
+	}
+	else {
+		$files = Dir::scanDir($p['directory'], [ '.sql' ]);
+	}
+
+	foreach ($files as $file) {
+		$base = basename($file);
+		$file = $p['directory'].'/'.$base;
+		$this->db->loadDump($file, ADatabase::LOAD_DUMP_ADD_DROP_TABLE | ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS | ADatabase::LOAD_DUMP_USE_SHELL);
+	
+		if (File::exists($p['directory'].'/alter/'.$base)) {
+			$this->db->loadDump($p['directory'].'/alter/'.$base, ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS |	ADatabase::LOAD_DUMP_USE_SHELL);
+		}
+
+		if (File::exists($p['directory'].'/insert/'.$base)) {
+			$this->db->loadDump($p['directory'].'/insert/'.$base, ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS | ADatabase::LOAD_DUMP_USE_SHELL);
+		}
+	}
+
 	throw new Exception('ToDo');
 }
 
