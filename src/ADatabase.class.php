@@ -15,6 +15,16 @@ require_once(__DIR__.'/lib/is_map.php');
  */
 abstract class ADatabase {
 
+/** @const int LOAD_DUMP_USE_SHELL */
+const LOAD_DUMP_USE_SHELL = 1;
+
+/** @const int LOAD_DUMP_ADD_DROP_TABLE */
+const LOAD_DUMP_ADD_DROP_TABLE = 2;
+
+/** @const int LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS */
+const LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS = 4;
+
+
 /** @const int NOT_NULL = NOT NULL column */
 const NOT_NULL = 1;
 
@@ -873,19 +883,36 @@ abstract public function saveDump($file, $opt = null);
 
 
 /**
- * Import database dump.
+ * Import database dump. Basename $file (without .sql suffix) must be tablename. Flags are 
+ *
+ * self::LOAD_DUMP_USE_SHELL | self::LOAD_DUMP_ADD_DROP_TABLE | self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS
  *
  * @throws
  * @param string $file
+ * @param int $flags
  */
-public function loadDump($file) {
+public function loadDump($file, $flags) {
+
+	if ($flags & self::LOAD_DUMP_USE_SHELL) {
+		throw new Exception('implement loadDump() for LOAD_DUMP_USE_SHELL');
+	}
 
 	throw new Exception("ToDo: still buggy use native version loadDump($file, true)");
 
 	if (!($fh = fopen($file, "rb"))) {
 		throw new Exception('Could not read '.$file);
 	}
- 
+
+	$table = File::basename($file, true);
+
+	if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
+		$this->db->execute("SET FOREIGN_KEY_CHECKS=0");
+	}
+
+	if ($flags & self::LOAD_DUMP_ADD_DROP_TABLE) {
+		$this->db->dropTable($table);
+	}
+
 	$left = '';
 
 	while (!feof($fh)) { 
@@ -924,6 +951,10 @@ public function loadDump($file) {
 	}
 
 	fclose($fh);
+
+	if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
+		$this->db->execute("SET FOREIGN_KEY_CHECKS=1");
+	}
 }
 
 
