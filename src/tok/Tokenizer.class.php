@@ -42,6 +42,13 @@ const TOK_KEEP = 4;
 const TOK_DEBUG = 8;
 
 
+/** @const VAR_MUST_NOT_EXIST throw exception in setVar() if key already exists */
+const VAR_MUST_NOT_EXIST = 1;
+
+/** @const VAR_APPEND append value to vector key in setVar() */
+const VAR_APPEND = 2;
+
+
 /** @var map $vmap plugin variable interchange */
 private $vmap = [];
 
@@ -126,13 +133,14 @@ public function getVar($name) {
 
 /**
  * Set this.vmap[$name] = $value. If $name is "a.b.c" set this.vmap[a][b][c] = $value.
+ * Concatenate with existing value in Append mode.
  *
  * @throws
- * @param string
- * @param any
- * @param boolean must_not_exist (=false)
+ * @param string $name
+ * @param any $value
+ * @param int $flags VAR_MUST_NOT_EXIST | VAR_APPEND (default = 0)
  */
-public function setVar($name, $value, $must_not_exists = false) {
+public function setVar($name, $value, $flags = 0) {
 
 	if (empty($name)) {
 		throw new Exception('empty vmap name');
@@ -145,11 +153,21 @@ public function setVar($name, $value, $must_not_exists = false) {
 		$key = array_shift($path);
 
 		if (count($path) == 0) {
-			if (isset($map[$key]) && $must_not_exists) {
-				throw new Exception('setVar('.$name.') ({var:='.$name.'}) already exists', $value);
+			if (isset($map[$key]) && ($flags & self::VAR_MUST_NOT_EXIST)) {
+				throw new Exception('setVar('.$name.', ...) ({var:='.$name.'}) already exists', $value);
 			}
 
-			$map[$key] = $value;
+			if ($flags & self::VAR_APPEND) {
+				if (!isset($map[$key])) {
+					$map[$key] = $value;
+				}
+				else {
+					$map[$key] .= $value;
+				}
+			}
+			else {
+				$map[$key] = $value;
+			}
 		}
 		else {
 			if (!isset($map[$key]) || !is_array($map[$key])) {
@@ -972,20 +990,21 @@ public function getTag($name) {
 private function tryPluginMap($name) {
 	static $map = [
 		'TArray' => [ 'array', 'array:set', 'array:get', 'array:shift', 'array:unshift', 'array:pop', 'array:push', 'array:join', 'array:length' ],
-		'TBase' => [ 'tf', 't', 'true', 'f', 'false', 'find', 'plugin', 'escape', 'unescape', 'encode', 'decode', 'get', 'include', 'include_if', 'view', 'ignore', 'if', 'switch', 'keep', 'load', 'link', 'redo', 'toupper', 'tolower', 'join', 'set_default', 'redirect', 'var', 'esc' ],
-		'TConf' => [ 'conf', 'conf:id', 'conf:var', 'conf:get', 'conf:set', 'conf:append' ],
+		'TBase' => [ 'tf', 't', 'true', 'f', 'false', 'find', 'plugin', 'escape', 'unescape', 'encode', 'decode', 'get', 'const', 'include', 'include_if', 'view', 'clear', 'ignore', 'if', 'switch', 'keep', 'load', 'link', 'redo', 'toupper', 'tolower', 'join', 'set_default', 'redirect', 'var', 'esc' ],
+		'TConf' => [ 'conf', 'conf:id', 'conf:var', 'conf:get', 'conf:set', 'conf:set_default', 'conf:append' ],
 		'TDate' => [ 'date' ],
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval' ],
+		'TFileSystem' => [ 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'directory', 'file:size', 'file:exists', 'file' ],
 		'TFormValidator' => [ 'fv', 'fv:init', 'fv:conf', 'fv:check', 'fv:in', 'fv:hidden', 'fv:error', 'fv:error_message', 'fv:set_error_message' ],
 		'THtml' => [ 'html:inner', 'html:tidy', 'html:xml', 'html:uglify', 'html' ],
-		'TLanguage' => [ 'language:init', 'language:get', 'language', 'txt', 'ptxt' ],
+		'TLanguage' => [ 'language:init', 'language:get', 'language', 'txt:js', 'txt', 'ptxt' ],
 		'TLogin' => [ 'login', 'login_account', 'login_check', 'login_auth', 'login_update', 'login_clear' ],
 		'TLoop' => [ 'loop:var', 'loop:list', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
 		'TMath' => [ 'nf', 'number_format' ],
 		'TMenu' => [ 'menu', 'menu:add', 'menu:conf', 'menu:privileges' ],
 		'TOutput' => [ 'output:set', 'output:get', 'output:conf', 'output:init', 'output:loop', 'output:header', 'output:footer', 'output:empty', 'output', 'sort', 'search' ],
 		'TPicture' => [ 'picture:init', 'picture:src', 'picture' ],
-		'TSQL' => [ 'sql:query', 'sql:dsn', 'sql:name', 'sql:qkey', 'sql:json', 'sql:col', 'sql:getId', 'sql:nextId', 'sql:in', 'sql:password', 'sql', 'null' ],
+		'TSQL' => [ 'sql:query', 'sql:dsn', 'sql:name', 'sql:qkey', 'sql:json', 'sql:col', 'sql:getId', 'sql:nextId', 'sql:in', 'sql:hasTable', 'sql:password', 'sql:import', 'sql', 'null' ],
 		'TTwig' => [ 'autoescape', 'block', 'do', 'embed', 'extends', 'filter', 'flush', 'for', 'from', 'if', 'import', 'include', 'macro', 'sandbox', 'set', 'spaceless', 'use', 'verbatim', 'v' ]
 	];
 
