@@ -59,6 +59,7 @@ public function getPlugins($tok) {
 	$plugin['sql:getId'] = TokPlugin::NO_PARAM;
 	$plugin['sql:nextId'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['sql:in'] = TokPlugin::CSLIST_BODY;
+	$plugin['sql:hasTable'] = 0;
 	$plugin['sql:password'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['sql:import'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['sql'] = 0;
@@ -79,6 +80,31 @@ public function __construct() {
 
 
 /**
+ * Return 1 if table(s) exist.
+ *
+ * @tok {sql:hasTable:login} = 1 if table login exists (otherwise '')
+ * @tok {sql:hasTable}login,user{:sql} = 1 if table login and user exists
+ *
+ * @param string $param
+ * @param string $arg
+ * @return 1|''
+ */
+public function tok_sql_hasTable($param, $arg) {
+	$list = empty($param) ? $arg : $param;
+	$tables = \rkphplib\lib\split_str(',', $list);
+	$res = true;
+
+	for ($i = 0; $res && $i < count($tables); $i++) {
+		if (!$this->db->hasTable($tables[$i])) {
+			$res = false;
+		}
+	}
+
+	return $res;
+}
+
+
+/**
  * Import sql dump. 
  *
  * @tok {sql:import}directory=apps/shop/setup/sql|#|tables={const:DOCROOT}/setup/sql{:sql}
@@ -91,11 +117,13 @@ public function __construct() {
  *
  * If drop is true add "DROP TABLE IF EXISTS $table; 
  *
+ * @tok_log {v:log.sql_import}
  * @throws
  * @param map $p
  * @return ''
  */
 public function tok_sql_import($p) {
+
 	if (empty($p['directory'])) {
 		if (!empty($p['dump'])) {
 			$flags = 0;
@@ -108,7 +136,9 @@ public function tok_sql_import($p) {
 				$flags = $flags | ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS;
 			}
 
-			$this->db->loadDump($p['dump'], $flags | ADatabase::LOAD_DUMP_USE_SHELL);
+			$flags = $flags | ADatabase::LOAD_DUMP_USE_SHELL;
+			$this->tok->setVar('log.sql_import', 'loadDump('.$p['dump'].", $flags)<br>");
+			$this->db->loadDump($p['dump'], $flags);
 		}
 
 		return '';
@@ -130,15 +160,27 @@ public function tok_sql_import($p) {
 
 	foreach ($files as $file) {
 		$base = basename($file);
+
+		$flags = ADatabase::LOAD_DUMP_ADD_DROP_TABLE | ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS | ADatabase::LOAD_DUMP_USE_SHELL;
+
 		$file = $p['directory'].'/'.$base.'.sql';
-		$this->db->loadDump($file, ADatabase::LOAD_DUMP_ADD_DROP_TABLE | ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS | ADatabase::LOAD_DUMP_USE_SHELL);
-	
-		if (File::exists($p['directory'].'/alter/'.$base.'.sql')) {
-			$this->db->loadDump($p['directory'].'/alter/'.$base.'.sql', ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS |	ADatabase::LOAD_DUMP_USE_SHELL);
+		if (File::exists($file)) {
+			$this->tok->setVar('log.sql_import', "loadDump($file, $flags)<br>");
+			$this->db->loadDump($file, $flags);
 		}
 
-		if (File::exists($p['directory'].'/insert/'.$base.'.sql')) {
-			$this->db->loadDump($p['directory'].'/insert/'.$base.'.sql', ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS | ADatabase::LOAD_DUMP_USE_SHELL);
+		$flags = ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS | ADatabase::LOAD_DUMP_USE_SHELL;
+
+		$file = $p['directory'].'/alter/'.$base.'.sql';	
+		if (File::exists($file)) {
+			$this->tok->setVar('log.sql_import', "loadDump($file, $flags)<br>");
+			$this->db->loadDump($file, $flags);
+		}
+
+		$file = $p['directory'].'/insert/'.$base.'.sql';
+		if (File::exists($file)) {
+			$this->tok->setVar('log.sql_import', "loadDump($file, $flags)<br>");
+			$this->db->loadDump($file, $flags);
 		}
 	}
 
