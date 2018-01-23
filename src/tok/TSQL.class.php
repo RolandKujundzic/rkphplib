@@ -11,6 +11,7 @@ require_once($parent_dir.'/lib/conf2kv.php');
 require_once($parent_dir.'/lib/split_str.php');
 
 use \rkphplib\Database;
+use \rkphplib\ADatabase;
 use \rkphplib\File;
 use \rkphplib\Dir;
 
@@ -113,11 +114,15 @@ public function tok_sql_import($p) {
 		return '';
 	}
 
+	if (!Dir::exists($p['directory'])) {
+		return '';
+	}
+
 	if (!empty($p['tables'])) {
 		$files = \rkphplib\lib\split_str(',', $p['tables']);
 	}
 	else if (File::exists($p['directory'].'/tables.txt')) {
-		$files = \rkphplib\lib\split_str("\n", File::load($p['directory'].'/tables.txt'));
+		$files = \rkphplib\lib\split_str("\n", File::load($p['directory'].'/tables.txt'), true);
 	}
 	else {
 		$files = Dir::scanDir($p['directory'], [ '.sql' ]);
@@ -125,19 +130,19 @@ public function tok_sql_import($p) {
 
 	foreach ($files as $file) {
 		$base = basename($file);
-		$file = $p['directory'].'/'.$base;
+		$file = $p['directory'].'/'.$base.'.sql';
 		$this->db->loadDump($file, ADatabase::LOAD_DUMP_ADD_DROP_TABLE | ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS | ADatabase::LOAD_DUMP_USE_SHELL);
 	
-		if (File::exists($p['directory'].'/alter/'.$base)) {
-			$this->db->loadDump($p['directory'].'/alter/'.$base, ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS |	ADatabase::LOAD_DUMP_USE_SHELL);
+		if (File::exists($p['directory'].'/alter/'.$base.'.sql')) {
+			$this->db->loadDump($p['directory'].'/alter/'.$base.'.sql', ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS |	ADatabase::LOAD_DUMP_USE_SHELL);
 		}
 
-		if (File::exists($p['directory'].'/insert/'.$base)) {
-			$this->db->loadDump($p['directory'].'/insert/'.$base, ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS | ADatabase::LOAD_DUMP_USE_SHELL);
+		if (File::exists($p['directory'].'/insert/'.$base.'.sql')) {
+			$this->db->loadDump($p['directory'].'/insert/'.$base.'.sql', ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS | ADatabase::LOAD_DUMP_USE_SHELL);
 		}
 	}
 
-	throw new Exception('ToDo');
+	return '';
 }
 
 
