@@ -210,7 +210,7 @@ public function getTxtId($param, $txt) {
 			$id = md5($txt_id);
 		}
 		else {
-			throw new Exception('empty txt id');
+			throw new Exception('empty txt id - look for {txt:}without closure');
 		}
 	}
 
