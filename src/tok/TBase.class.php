@@ -1040,6 +1040,7 @@ public function tok_plugin($p) {
  * - _REQUEST[dir] = a/b/c, c/test.html exists: a/b/c/test.html
  * - _REQUEST[dir] = a/b/c, ./test.html exists: test.html
  *
+ * @throws if nothing was found
  * @see self::getReqDir
  * @see self::findPath
  * @param string $file
@@ -1052,7 +1053,14 @@ public function tok_find($file, $file2 = '') {
 		$file = $file2;
 	}
 
-	return self::findPath($file, self::getReqDir(true));
+	$res = self::findPath($file, self::getReqDir(true));
+
+	if (empty($res)) {
+		$plugin = $this->tok->getPluginTxt('find:'.$file);
+		throw new Exception("result of $plugin is empty - create $file in document root");
+	}
+
+	return $res;
 }
 
 
