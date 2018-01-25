@@ -3,6 +3,7 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/ADatabase.class.php');
+require_once(__DIR__.'/PipeExecute.class.php');
 require_once(__DIR__.'/File.class.php');
 require_once(__DIR__.'/lib/execute.php');
 
@@ -230,35 +231,27 @@ public function loadDump($file, $flags = 0) {
 
 	if ($flags & self::LOAD_DUMP_USE_SHELL) {
 		$dsn = self::splitDSN($this->_dsn);
-		$handle = popen("mysql -h '".$dsn['host']."' -u '".$dsn['login']."' -p'".$dsn['password']."' '".$dsn['name']."'", 'w');
-		if (!$handle) {
-			throw new Exception('failed to open write pipe to mysql');
-		}
+		$mysql = new PipeExecute('mysql -h {:=host} -u {:=login} -p{:=password} {:=name}', $dsn);
 
 		if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
-			fwrite($handle, "SET FOREIGN_KEY_CHECKS=0;");
+			$mysql->write("SET FOREIGN_KEY_CHECKS=0;");
 		}
 
 		if ($flags & self::LOAD_DUMP_ADD_DROP_TABLE) {
-			fwrite($handle, "DROP TABLE IF EXISTS $table;");
+			$mysql->write("DROP TABLE IF EXISTS $table;");
 		}
 
-		$fh = fopen($file, 'rb');
-		if (!$fh) {
-			throw new Exception('failed to read '.$file);
-		}
-
-		while (!feof($fh)) { 
-			fwrite($handle, fread($fh, 4096)); 
-		}
-
-		fclose($fh);
+		$mysql->load($file);
 
 		if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
-			fwrite($handle, "SET FOREIGN_KEY_CHECKS=1;");
+			$mysql->write("SET FOREIGN_KEY_CHECKS=1;");
 		}
 
-		pclose($handle);
+		list ($retval, $error, $output) = $mysql->close();
+
+		if ($error || $retval !== 0) {
+			throw new Exception("loadDump($file, $flags) failed: ".$error, "retval=[$retval] output=[$output]");
+		}
 	}
 	else {
 		if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
