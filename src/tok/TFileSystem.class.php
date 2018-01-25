@@ -38,6 +38,7 @@ public function getPlugins($tok) {
   $plugin['directory:is'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['directory'] = 0;
 	$plugin['file:size'] = TokPlugin::REQUIRE_BODY;
+	$plugin['file:copy'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['file:exists'] = TokPlugin::REQUIRE_BODY;
 	$plugin['file'] = 0;
 
@@ -252,6 +253,19 @@ public function tok_directory_create($param, $path) {
 	}
 
 	return '';
+}
+
+
+/**
+ * Copy file from source to target.
+ *
+ * @throws
+ * @tok_log
+ * @param string $source
+ * @param string $target
+ */
+public function tok_file_copy($source, $target) {
+	File::copy($source, $target);
 }
 
 
