@@ -122,6 +122,13 @@ public static function chmod($path, $mode) {
 	$res = false;
 
 	if ($has_priv != decoct($mode)) {
+		if (posix_getuid() != $stat['uid']) {
+			// we can not chmod ...
+			if ("$has_priv" == '0777' || "$has_priv" == '0666') {
+				return true;
+			}
+		}
+
 		$res = true;
 		try {
 			$res = chmod($entry, $mode);
