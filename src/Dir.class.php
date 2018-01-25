@@ -6,11 +6,22 @@ require_once(__DIR__.'/FSEntry.class.php');
 require_once(__DIR__.'/File.class.php');
 
 
+/** @const int DIR_DEFAULT_MODE octal, default directory creation mode, 0777 (uid < 1000) or 0755 */
+if (!defined('DIR_DEFAULT_MODE')) {
+	if (posix_getuid() < 1000) {
+		define('DIR_DEFAULT_MODE', 0777);
+	}
+	else {
+		define('DIR_DEFAULT_MODE', 0755);
+	}
+}
+
+
+
 /**
- * Directory access wrapper.
+ * Directory access wrapper. All methods are static.
+ * Use DIR_DEFAULT_MODE = 0777 if uid < 1000 otherwise use 0755. 
  *
- * All methods are static.
- * 
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @copyright 2016 Roland Kujundzic
  *
@@ -22,9 +33,6 @@ const CREATE_TARGET_PATH = 1;
 
 /** @const int REMOVE_EXISTING */
 const REMOVE_EXISTING = 2;
-
-/** @var int $DEFAULT_MODE octal, default directory creation mode is 0777 */
-public static $DEFAULT_MODE = 0777;
 
 /** @var bool $SKIP_UNREADABLE directory copy behaviour */
 public static $SKIP_UNREADABLE = false;
@@ -143,15 +151,16 @@ public static function remove($path, $must_exist = true) {
  * Use $recursive = true to create parent directories.
  * 
  * @throws
+ * @tok_log log.file_system
  * @param string $path
- * @param int $mode octal, default is self.DEFAULT_MODE
+ * @param int $mode octal, default is DIR_DEFAULT_MODE
  * @param bool $recursive
  * @return bool 
  */
 public static function create($path, $mode = 0, $recursive = false) {
 
 	if (!$mode) {
-		$mode = self::$DEFAULT_MODE;
+		$mode = DIR_DEFAULT_MODE;
 	}
 
 	if ($path == '.' || FSEntry::isDir($path, false)) {
@@ -187,6 +196,9 @@ public static function create($path, $mode = 0, $recursive = false) {
 		}
 
 		throw new Exception("Failed to create directory", $path);
+	}
+	else if (class_exists('\\rkphplib\\tok\\Tokenizer', false)) {
+		\rkphplib\tok\Tokenizer::log([ 'label' => 'create directory', 'message' => $path ], 'log.file_system');
 	}
 
 	return true;
