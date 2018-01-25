@@ -126,7 +126,7 @@ public function getPlugins($tok) {
 	$plugin['join'] = TokPlugin::KV_BODY;
 	$plugin['set_default'] =  0;
 	$plugin['redirect'] =  TokPlugin::NO_PARAM;
-	$plugin['var'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['var'] = 0;
 	$plugin['esc'] = 0;
 
 	return $plugin;
@@ -139,7 +139,7 @@ public function getPlugins($tok) {
  * @tok set a=17: {var:=a}17{:var}
  * @tok set hash: {var:=#b}x=5|#|y=12|#|...{:var}
  * @tok set vector: {var:+=b}x{:var}, {var:+=b},y{:var} - {var:b} = x,y
- * @tok get optional a: {var:a}
+ * @tok get optional a: {var:a} or {var:}a{:var}
  * @tok get required a: {var:a!} (abort if not found)
  * @tok set multi-map: {var:=person.age}42{:var}
  * @tok get multi-map: {var:person.age}
@@ -165,7 +165,17 @@ public function tok_var($name, $value) {
 		}
 	}
 	else {
-		return (string) $this->_tok->getVar($name);
+		if (empty($name)) {
+			if (!empty($value)) {
+				$name = trim($value);
+			}
+			else {
+				throw new Exception("invalid plugin ".$this->_tok->getPluginTxt("loop:", $value));
+			}
+		}
+
+		$res = (string) $this->_tok->getVar($name);
+		return $res;
 	}
 }
 
