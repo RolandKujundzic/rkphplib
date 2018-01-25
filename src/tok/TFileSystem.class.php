@@ -265,7 +265,14 @@ public function tok_directory_create($param, $path) {
  * @return ''
  */
 public function tok_file_copy($p) {
+	if (File::exists($p[1])) {
+		if (File::md5($p[0]) == File::md5($p[1])) {
+			return '';
+		}
+	}
+
 	File::copy($p[0], $p[1]);
+	return '';
 }
 
 
