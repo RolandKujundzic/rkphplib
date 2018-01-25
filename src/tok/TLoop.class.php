@@ -69,7 +69,7 @@ public function tok_loop_var($name) {
 
 
 /**
- * Loop data is list. If delimiter is empty use comma. Example:
+ * Loop data is list. If delimiter is empty use comma. Ignore empty entries. Example:
  * 
  *  {loop:list}a,b,c{:loop}
  *  {loop:list:;}a;b;c{:loop}
@@ -86,7 +86,7 @@ public function tok_loop_list($p, $txt) {
 		$delimiter = $p[0];
 	}
 
-	$this->loop = \rkphplib\lib\split_str($delimiter, $txt);
+	$this->loop = \rkphplib\lib\split_str($delimiter, $txt, true);
 }
 
 
