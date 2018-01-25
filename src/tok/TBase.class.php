@@ -1056,7 +1056,7 @@ public function tok_find($file, $file2 = '') {
 	$res = self::findPath($file, self::getReqDir(true));
 
 	if (empty($res)) {
-		$plugin = $this->tok->getPluginTxt('find:'.$file);
+		$plugin = $this->_tok->getPluginTxt('find:'.$file);
 		throw new Exception("result of $plugin is empty - create $file in document root");
 	}
 
