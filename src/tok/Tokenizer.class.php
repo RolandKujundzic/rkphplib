@@ -142,10 +142,15 @@ public function getVar($name) {
  * Log to self::$site.vmap[$to] in append (<br>\n) mode.
  * Retrieve log via {var:$to}.
  *
+ * @throws
  * @param string|map $message map keys: label, message
- * @param string $to (=system.log)
+ * @param string $to required prefix log.
  */
-public static function log($message, $to = 'system.log') {
+public static function log($message, $to) {
+
+	if (substr($to, 0, 4) != 'log.')
+		throw new Exception("missing log prefix [log.] in [$to]");
+	}
 
 	if (is_array($message)) {
 		$m = '';

@@ -223,7 +223,7 @@ public function loadDump($file, $flags = 0) {
 	}
 
 	if (class_exists('\\rkphplib\\tok\\Tokenizer', false)) {
-		\rkphplib\tok\Tokenizer::log([ 'label' => 'load sql dump', 'message' => $file ], 'sql_import');
+		\rkphplib\tok\Tokenizer::log([ 'label' => 'load sql dump', 'message' => $file ], 'log.sql_import');
 	}
 
 	$table = self::escape_name(File::basename($file, true));
