@@ -2,9 +2,9 @@
 
 namespace rkphplib\tok;
 
-
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/AMenu.class.php');
+
 
 
 /**
@@ -53,6 +53,11 @@ public function __construct() {
  * @return string
  */
 public function tok_menu($tpl) {
+
+	if (count($this->node) == 0) {
+		// empty node tree
+		return '';
+	}
 
 	$this->addNodeHi();
 
