@@ -117,7 +117,7 @@ public function tok_sql_hasTable($param, $arg) {
  *
  * If drop is true add "DROP TABLE IF EXISTS $table; 
  *
- * @tok_log {v:log.sql_import}
+ * @tok_log log.sql_import
  * @throws
  * @param map $p
  * @return ''
@@ -137,7 +137,6 @@ public function tok_sql_import($p) {
 			}
 
 			$flags = $flags | ADatabase::LOAD_DUMP_USE_SHELL;
-			$this->tok->setVar('log.sql_import', 'loadDump('.$p['dump'].", $flags)<br>");
 			$this->db->loadDump($p['dump'], $flags);
 		}
 
@@ -171,7 +170,6 @@ public function tok_sql_import($p) {
 
 		$file = $p['directory'].'/'.$base.'.sql';
 		if (File::exists($file)) {
-			$this->tok->setVar('log.sql_import', "loadDump($file, $flags)<br>");
 			$this->db->loadDump($file, $flags);
 		}
 
@@ -179,13 +177,11 @@ public function tok_sql_import($p) {
 
 		$file = $p['directory'].'/alter/'.$base.'.sql';	
 		if (File::exists($file)) {
-			$this->tok->setVar('log.sql_import', "loadDump($file, $flags)<br>");
 			$this->db->loadDump($file, $flags);
 		}
 
 		$file = $p['directory'].'/insert/'.$base.'.sql';
 		if (File::exists($file)) {
-			$this->tok->setVar('log.sql_import', "loadDump($file, $flags)<br>");
 			$this->db->loadDump($file, $flags);
 		}
 	}
