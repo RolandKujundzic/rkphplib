@@ -1044,7 +1044,7 @@ public static function copy($source, $target, $mode = 0) {
 	}
 
 	if (class_exists('\\rkphplib\\tok\\Tokenizer', false)) {
-		\rkphplib\tok\Tokenizer::log([ 'label' => 'copy file', 'message' => $source.' to '.$target ], 'log.file_system');
+		\rkphplib\tok\Tokenizer::log([ 'label' => 'copy file', 'message' => $source.' '.$target ], 'log.file_system');
 	}
 
 	FSEntry::chmod($target, $mode);
