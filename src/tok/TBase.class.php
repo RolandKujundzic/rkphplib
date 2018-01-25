@@ -118,7 +118,7 @@ public function getPlugins($tok) {
 	$plugin['if'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['switch'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['keep'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
-	$plugin['load'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
+	$plugin['load'] = TokPlugin::REQUIRE_BODY;
 	$plugin['link'] = TokPlugin::PARAM_CSLIST | TokPlugin::KV_BODY;
 	$plugin['redo'] = TokPlugin::NO_PARAM | TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
 	$plugin['toupper'] = TokPlugin::NO_PARAM;
@@ -1040,7 +1040,7 @@ public function tok_plugin($p) {
  * - _REQUEST[dir] = a/b/c, c/test.html exists: a/b/c/test.html
  * - _REQUEST[dir] = a/b/c, ./test.html exists: test.html
  *
- * @throws if nothing was found
+ * @throws if nothing was found (avoid with "?" suffix)
  * @see self::getReqDir
  * @see self::findPath
  * @param string $file
@@ -1052,10 +1052,16 @@ public function tok_find($file, $file2 = '') {
 	if (empty($file) && !empty($file2)) {
 		$file = $file2;
 	}
+	
+	$is_required = true;
+	if (substr($file, -1) == '?') {
+		$file = substr($file, 0, -1);
+		$is_required = false;
+	}
 
 	$res = self::findPath($file, self::getReqDir(true));
 
-	if (empty($res)) {
+	if (empty($res) && $is_required) {
 		$plugin = $this->_tok->getPluginTxt('find:'.$file);
 		throw new Exception("result of $plugin is empty - create $file in document root");
 	}
