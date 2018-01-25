@@ -171,6 +171,10 @@ public static function log($message, $to) {
 		$message = $m;
 	}
 
+	if (defined('DOCROOT')) {
+		$message = str_replace(DOCROOT, '..', $message); 
+	}
+
 	self::$site->setVar($to, $message."<br>\n", self::VAR_APPEND);
 }
 
