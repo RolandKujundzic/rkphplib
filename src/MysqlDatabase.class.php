@@ -210,12 +210,22 @@ public function saveDump($file, $opt = null) {
 
 /**
  * Allow to load via mysqldump shell command.
+ * Do nothing if file is empty.
  *
+ * @tok_log log.sql_import
  * @param string $file 
  * @param bool $with_usr_bin_mysql
  */
 public function loadDump($file, $flags = 0) {
-	File::exists($file, true);
+
+	if (!File::size($file)) {
+		return;
+	}
+
+	if (class_exists('\\rkphplib\\tok\\Tokenizer', false)) {
+		\rkphplib\tok\Tokenizer::log([ 'label' => 'load sql dump', 'message' => $file ], 'sql_import');
+	}
+
 	$table = self::escape_name(File::basename($file, true));
 
 	if ($flags & self::LOAD_DUMP_USE_SHELL) {
