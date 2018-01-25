@@ -110,8 +110,8 @@ public function tok_sql_hasTable($param, $arg) {
  * @tok {sql:import}directory=apps/shop/setup/sql|#|tables={const:DOCROOT}/setup/sql{:sql}
  *
  * If table parameter not empty try: directory/table.sql, directory/alter/table.sql, directory/insert/table.sql.
- * Otherwise import all sql files (directory/[alter/|insert/]*.sql). If directory/tables.txt exists assume
- * tables= table names in tables.txt.
+ * Otherwise import all sql files (directory/[alter/|insert/]*.sql). If cms/[APP|cms=]/setup/sql/tables.txt exists 
+ * assume tables= table names in tables.txt.
  *
  * @tok {sql:import}dump=path/to/dump.sql|#|drop_table=1|#|ignore_foreign_keys=0{:sql}
  *
@@ -148,11 +148,17 @@ public function tok_sql_import($p) {
 		return '';
 	}
 
+	$cms_app = basename(dirname(dirname($p['directory'])));
+	$cms_setup = ($cms_app == 'cms') ? 'setup/sql' : 'apps/'.$cms_app.'/setup/sql';
+
 	if (!empty($p['tables'])) {
 		$files = \rkphplib\lib\split_str(',', $p['tables']);
 	}
 	else if (File::exists($p['directory'].'/tables.txt')) {
 		$files = \rkphplib\lib\split_str("\n", File::load($p['directory'].'/tables.txt'), true);
+	}
+	else if (File::exists($cms_setup.'/tables.txt')) {
+		$files = \rkphplib\lib\split_str("\n", File::load($cms_setup.'/tables.txt'), true);
 	}
 	else {
 		$files = Dir::scanDir($p['directory'], [ '.sql' ]);
