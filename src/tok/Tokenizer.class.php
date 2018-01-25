@@ -148,7 +148,7 @@ public function getVar($name) {
  */
 public static function log($message, $to) {
 
-	if (substr($to, 0, 4) != 'log.')
+	if (substr($to, 0, 4) != 'log.') {
 		throw new Exception("missing log prefix [log.] in [$to]");
 	}
 
