@@ -1040,7 +1040,7 @@ public static function copy($source, $target, $mode = 0) {
 	}
 
 	if (!copy($source, $target)) {
-		throw new Exception("Filecopy failed", "$source -> $target");
+		throw new Exception("Filecopy failed", "$source to $target");
 	}
 
 	if (class_exists('\\rkphplib\\tok\\Tokenizer', false)) {
