@@ -6,10 +6,22 @@ require_once(__DIR__.'/FSEntry.class.php');
 require_once(__DIR__.'/lib/execute.php');
 
 
+/** @const FILE_DEFAULT_MODE = 0666 (UID < 1000) or 0644 (UID >= 1000) */
+if (!defined('FILE_DEFAULT_MODE')) {
+	if (posix_getuid() < 1000) {
+		define('FILE_DEFAULT_MODE', 0666);
+	}
+	else {
+		define('FILE_DEFAULT_MODE', 0644);
+	}
+}
+
+
 /**
  * File access wrapper.
  * 
- * All methods are static.
+ * All methods are static. If uid >= 1000 use FILE_DEFAULT_MODE = 0666 otherwise
+ * use 0644 (unless FILE_DEFAULT_MODE is already set).
  * By default file locking is disabled (enable with self::$USE_FLOCK = true).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
@@ -20,9 +32,6 @@ class File {
 
 /** @var bool $USE_FLOCK don't use file locking by default (BEWARE: locking will not work on NFS) */
 public static $USE_FLOCK = false;
-
-/** @var bool $DEFAULT_MODE default file creation mode */
-public static $DEFAULT_MODE = 0666;
 
 
 
@@ -524,12 +533,12 @@ public static function isChanging($file, $watch = 15) {
  * Change file permissions.
  *
  * @param string $file
- * @param int $mode octal, default = 0 = self::$DEFAULT_MODE
+ * @param int $mode octal, default = 0 = FILE_DEFAULT_MODE
  */
 public static function chmod($file, $mode = 0) {
 
 	if (!$mode) {
-		$mode = self::$DEFAULT_MODE;
+		$mode = FILE_DEFAULT_MODE;
 	}
 
 	FSEntry::isFile($file, true);
@@ -538,10 +547,10 @@ public static function chmod($file, $mode = 0) {
 
 
 /**
- * Save $data to $file. If FILE_SAVE_RW=true is defined,
- * apply chmod($file, self::$DEFAULT_MODE).
+ * Save $data to $file. Apply chmod($file, FILE_DEFAULT_MODE).
  *
  * @throws
+ * @tok_log
  * @param string $file
  * @param string $data
  * @param int $flag (default = 0, FILE_APPEND)
@@ -564,9 +573,11 @@ public static function save($file, $data, $flag = 0) {
 		throw new Exception('failed to save data to file', $file);
 	}
 
-	if (defined('FILE_SAVE_RW') && FILE_SAVE_RW) {
-  	FSEntry::chmod($file, self::$DEFAULT_MODE);
-  }
+	if (class_exists('\\rkphplib\\tok\\Tokenizer', false)) {
+		\rkphplib\tok\Tokenizer::log([ 'label' => 'create file', 'message' => $file ], 'log.file_system');
+	}
+
+	FSEntry::chmod($file, FILE_DEFAULT_MODE);
 }
 
 
@@ -575,13 +586,13 @@ public static function save($file, $data, $flag = 0) {
  *
  * @param string $file
  * @param string $data
- * @param int $mode octal, default = 0 = self::DEFAULT_MODE
+ * @param int $mode octal, default = 0 = FILE_DEFAULT_MODE
  */
 public static function save_rw($file, $data, $mode = 0) {
 	File::save($file, $data);
 
 	if (!$mode) {
-		$mode = self::$DEFAULT_MODE;
+		$mode = FILE_DEFAULT_MODE;
 	}
 
 	FSEntry::chmod($file, $mode);
@@ -1020,16 +1031,20 @@ public static function basename_collect($list, $options = []) {
  * @throws
  * @param string $source
  * @param string $target
- * @param int $mode default = 0 = self::$DEFAULT_MODE
+ * @param int $mode default = 0 = FILE_DEFAULT_MODE
  */
 public static function copy($source, $target, $mode = 0) {
 
 	if (!$mode) {
-		$mode = self::$DEFAULT_MODE;
+		$mode = FILE_DEFAULT_MODE;
 	}
 
 	if (!copy($source, $target)) {
 		throw new Exception("Filecopy failed", "$source -> $target");
+	}
+
+	if (class_exists('\\rkphplib\\tok\\Tokenizer', false)) {
+		\rkphplib\tok\Tokenizer::log([ 'label' => 'copy file', 'message' => $source.' to '.$target ], 'log.file_system');
 	}
 
 	FSEntry::chmod($target, $mode);
@@ -1042,9 +1057,13 @@ public static function copy($source, $target, $mode = 0) {
  * @throws
  * @param string $source
  * @param string $target
- * @param int $mode octal, 0 = self::$DEFAULT_MODE
+ * @param int $mode octal, 0 = FILE_DEFAULT_MODE
  */
-public static function move($source, $target, $mode = 0666) {
+public static function move($source, $target, $mode = 0) {
+
+	if (!$mode) {
+		$mode = FILE_DEFAULT_MODE;
+	}
 
 	$rp_target = realpath($target);
 
