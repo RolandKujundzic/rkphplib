@@ -563,11 +563,11 @@ private function _join_tok_plugin(&$i) {
 					$tp = $this->_plugin[$name][1]; // update plugin flag
 				}
 				else if ($check_np === 1) {
-					throw new Exception('invalid plugin', "no tok_$name() callback method");
+					throw new Exception('invalid plugin '.$this->getPluginTxt("$name:$param"), "no tok_$name() callback method");
 				}
 			}
 			else if ($check_np === 1) {
-				throw new Exception('invalid plugin', "no tok_$name() callback method");
+				throw new Exception('invalid plugin '.$this->getPluginTxt("$name:$param"), "no tok_$name() callback method");
 			}
 		}
 	}
