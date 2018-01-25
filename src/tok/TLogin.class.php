@@ -154,7 +154,7 @@ public function tok_login_check($p) {
  * @tok {login_update:}type=admin|#|...{:login_update} -> throw exception if previous type != 'admin'
  *
  * @throws
- * @param string $do
+ * @param string $do reload
  * @param map $p
  * @return ''
  */
@@ -171,12 +171,26 @@ public function tok_login_update($do, $p) {
 		throw new Exception('[login_update:]type='.$p['type'].' != '.$sess['type'].' - session change is forbidden');
 	}
 
+	$has_change = false;
+
 	foreach ($sess as $key => $value) {
-		$kv[$key] = isset($_REQUEST[$key]) ? $_REQUEST[$key] : $value;
+		if (isset($_REQUEST[$key])) {
+			if ($value != $_REQUEST[$key]) {
+				$has_change = true;
+			}
+
+			$kv[$key] = $_REQUEST[$key];
+		}
+		else {
+			$kv[$key] = $value;
+		}
 	}
 
 	foreach ($p as $key => $value) {
-		$kv[$key] = $value;
+		if ($kv[$key] != $value) {
+			$has_change = true;
+			$kv[$key] = $value;
+		}
 	}
 
 	if (empty($kv['@where'])) {
@@ -194,18 +208,20 @@ public function tok_login_update($do, $p) {
 		throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
 	}
 
-	if (!is_null($this->db)) {
+	if (!is_null($this->db) && $has_change) {
 		$query = $this->db->buildQuery($table, 'update', $kv);	
 		// \rkphplib\lib\log_debug("tok_login_update> update $table: $query");
 		$this->db->execute($query);
 	}
 
-	if ($do == 'reload') {
-		$this->sess->setHash($this->db->selectOne("SELECT * FROM $table ".$kv['@where']));
+	if (!is_null($this->db) && $do == 'reload') {
+		$udata = $this->db->selectOne("SELECT * FROM $table ".$kv['@where']);
+		$this->sess->setHash($udata);
 	}
-
-	// \rkphplib\lib\log_debug("tok_login_update> new session: ".print_r($kv, true));
-	$this->sess->setHash($kv);
+	else {
+		// \rkphplib\lib\log_debug("tok_login_update> new session: ".print_r($kv, true));
+		$this->sess->setHash($kv);
+	}
 
 	return '';
 }
