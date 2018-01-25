@@ -25,6 +25,9 @@ use \rkphplib\File;
  */
 class Tokenizer {
 
+/** @var Tokenizer $site Tokenizer Object for Website (first tokenizer object created) */
+public static $site = null;
+
 /** @var vector $rx Token expression (regular expression for start+end token, prefix, delimiter, suffix, esc-prefix, esc-delimiter, esc-suffix) */
 public $rx = [ "/\{([a-zA-Z0-9_]*\:.*?)\}/s", '{', ':', '}', '&#123;', '&#58;', '&#125;' ];
 
@@ -79,6 +82,10 @@ private $_postprocess = [];
  * @param int $config (0=default, Tokenizer::TOK_[IGNORE|KEEP|DEBUG])
  */
 public function __construct($config = 0) {
+	if (is_null(self::$site)) {
+		self::$site =& $this;
+	}
+
 	$this->_config = $config;
 }
 
@@ -128,6 +135,33 @@ public function getVar($name) {
 			throw new Exception('missing vmap.'.join('.', $done)." (vmap.$name)");
 		}
 	}
+}
+
+
+/**
+ * Log to self::$site.vmap[$to] in append (<br>\n) mode.
+ * Retrieve log via {var:$to}.
+ *
+ * @param string|map $message map keys: label, message
+ * @param string $to (=system.log)
+ */
+public static function log($message, $to = 'system.log') {
+
+	if (is_array($message)) {
+		$m = '';
+
+		if (isset($message['label'])) {
+			$m .= '<span style="opacity: 0.7">'.$message['label'].'</span> ';
+		}
+
+		if (isset($message['message'])) {
+			$m .= $message['message'];
+		}
+
+		$message = $m;
+	}
+
+	self::$site->setVar($to, $message."<br>\n", self::VAR_APPEND);
 }
 
 
