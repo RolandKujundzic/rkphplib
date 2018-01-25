@@ -38,7 +38,7 @@ public function getPlugins($tok) {
   $plugin['directory:is'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['directory'] = 0;
 	$plugin['file:size'] = TokPlugin::REQUIRE_BODY;
-	$plugin['file:copy'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['file:copy'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['file:exists'] = TokPlugin::REQUIRE_BODY;
 	$plugin['file'] = 0;
 
@@ -261,11 +261,11 @@ public function tok_directory_create($param, $path) {
  *
  * @throws
  * @tok_log
- * @param string $source
- * @param string $target
+ * @param vector $p [ $source, $target ]
+ * @return ''
  */
-public function tok_file_copy($source, $target) {
-	File::copy($source, $target);
+public function tok_file_copy($p) {
+	File::copy($p[0], $p[1]);
 }
 
 
