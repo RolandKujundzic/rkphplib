@@ -147,8 +147,11 @@ public function tok_sql_import($p) {
 		return '';
 	}
 
-	$cms_app = basename(dirname(dirname($p['directory'])));
-	$cms_setup = ($cms_app == 'cms') ? 'setup/sql' : 'apps/'.$cms_app.'/setup/sql';
+	$cms_setup = $p['directory'];
+	$cms_app = basename($p['directory']);
+	if (basename(getcwd()) == 'cms') {
+		$cms_setup = ($cms_app == 'cms') ? 'setup/sql' : 'apps/'.$cms_app.'/setup/sql';
+	}
 
 	if (!empty($p['tables'])) {
 		$files = \rkphplib\lib\split_str(',', $p['tables']);
