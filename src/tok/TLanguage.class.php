@@ -259,6 +259,9 @@ public function tok_txt_js($id, $txt) {
  */
 public function tok_txt($param, $txt) {
 	// \rkphplib\lib\log_debug("TLanguage->tok_txt> param=$param txt=$txt is_null(this->db)=".is_null($this->db));
+	if (is_null($txt)) {
+		$txt = '';
+	}
 
 	$id = $this->getTxtId($param, $txt);
 
