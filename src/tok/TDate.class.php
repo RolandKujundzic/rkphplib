@@ -27,7 +27,7 @@ private $env = [ 'format_in' => null, 'format_out' => null, 'format_cut' => '' ]
  */
 public function getPlugins($tok) {
   $plugin = [];
-  $plugin['date'] = TokPlugin::PARAM_CSLIST | TokPlugin::KV_BODY;
+  $plugin['date'] = TokPlugin::PARAM_CSLIST | TokPlugin::LIST_BODY;
   return $plugin;
 }
 
@@ -63,8 +63,8 @@ private function date_param($param) {
  * {date:set_format}format_in|#|format_out[@nosec|@noHmi]{:date}
  *
  * @see DateCalc::formatDateStr()
- * @param array $p
- * @param array $arg
+ * @param vector $p
+ * @param vector $arg
  * @return string
  */
 public function tok_date($p, $arg) {
@@ -100,8 +100,8 @@ public function tok_date($p, $arg) {
 		$format_out = $p[1];
 	}
 	else if (count($p) == 1) {
-		if (empty($p[0]) && is_string($arg) && !empty($this->env['format_in']) && !empty($this->env['format_out'])) {
-			$res = DateCalc::formatDateStr($this->env['format_out'], $arg, $this->env['format_in']); 
+		if (empty($p[0]) && count($arg) == 1 && !empty($this->env['format_in']) && !empty($this->env['format_out'])) {
+			$res = DateCalc::formatDateStr($this->env['format_out'], $arg[0], $this->env['format_in']); 
 
 			if ($this->env['format_cut'] == 'sec') {
 				$res = mb_substr($res, 0, -3);
