@@ -41,10 +41,77 @@ public function getPlugins($tok) {
 	$plugin['file:copy'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['file:exists'] = TokPlugin::REQUIRE_BODY;
 	$plugin['file'] = 0;
+	$plugin['dirname'] = 0;
+	$plugin['basename'] = 0;
 
   return $plugin;
 }
 
+
+/**
+ * Return basename($arg).
+ *
+ * @tok {basename:}a/b/c.gif{:basename} = c.gif
+ * @tok {basename:a/b}a/b/c/d{:basename} = c/d
+ *  
+ * @param string $param
+ * @param string $param
+ * @return string
+ */
+public static function tok_basename($param, $arg) {
+	$res = basename(trim($arg));
+
+	if ($param == 'no_suffix' && ($pos = mb_strrpos($res, '.')) !== false) {
+		$res = mb_substr($res, 0, $pos);
+  }
+  else if (mb_strpos($param, '/') !== false && ($pos = mb_strpos($arg, $param)) !== false) {
+    $res = mb_substr($arg, $pos + mb_strlen($param));
+  }
+
+  return $res;
+}
+
+
+/**
+ * Return dirname(arg). Trim arg. If dirname(path) is empty return ".".
+ *
+ * @tok {dirname:}a/b/c{:dirname} = {dirname:1}a/b/c{:dirname} = a/b
+ * @tok {dirname:2}a/b/c{:dirname} = {dirname:-1}a/b/c{:dirname} = a
+ * @tok {dirname:NAME} (and _REQUEST[NAME]=x/y) = x
+ *
+ * @param int $param
+ * @param string $arg
+ * return string
+ */
+public static function tok_dirname($param, $arg) {
+	$arg = trim($arg);
+	$path = explode('/', $arg);
+	$n = intval($param);
+	$res = '';
+
+	if ($n > 1) {
+		for ($i = 0, $res = $arg; $res && $i < $n && $i < 50; $i++) {
+			$res = dirname($res);
+		}
+	}
+	else if ($n < 0) {
+		for ($i = 1, $res = $path[0], $pos = $n * -1; $i < $pos; $i++) {
+			$res .= '/'.$path[$i];
+		}
+	}
+	else if (!empty($param) && !empty($_REQUEST[$param])) {
+		$res = dirname($_REQUEST[$param]);
+	}
+	else {
+		$res = dirname($arg);
+	}
+
+	if (!strlen($res)) {
+		$res = '.';
+	}
+
+	return $res;
+}
 
 
 /**
