@@ -78,6 +78,8 @@ public function getPlugins($tok) {
  * @tok {search:name}width=5{:search} =
  *   <input type="text" name="s_name" value="{get:s_name}" style="width:$WIDTHch" onkeypress="searchOutput(this)">
  *
+ * @tok {search:name}overlay=1|#|sort=1|#|label=NAME|#| ...{:search} = NAME
+ *
  * @param string $col
  * @param map $p
  * @return string
@@ -110,7 +112,7 @@ public function tok_search($col, $p) {
 				$options = \rkphplib\lib\split_str(',', $this->set_search['s_'.$col.'_options']);
 				foreach ($options as $opt_value) {
 					$opt_value = \rkphplib\lib\htmlescape($opt_value);
-					$label = $opt_value ? '{txt:}'.$opt_value.'{:txt}' : '{txt:any}{:txt}';
+					$label = $opt_value ? $this->tok->getPluginTxt('txt:', $opt_value) : $this->tok->getPluginTxt('txt:any');
 					$res .= '<option value="'.$opt_value.'">'.$label."</option>\n";
 				}
 			}
@@ -138,6 +140,11 @@ public function tok_search($col, $p) {
 		}
 
 		$res .= '/>'; 
+	}
+
+	if (!empty($p['overlay']) && !empty($p['label'])) {
+		// ToDo: return input layer
+		$res = empty($p['sort']) ? $p['label'] : $p['label'].' '.$this->tok->getPluginTxt('sort:'.$col);
 	}
 
 	return $res;
@@ -609,10 +616,7 @@ function searchOutput(el) {
     search_output_timeout = null;
   }
   
-  search_output_timeout = setTimeout(function() { 
-    el.form.submit();
-    }, 1200);
-  }
+  search_output_timeout = setTimeout(function() { el.form.submit(); }, 1200);
 }
 END;
 
@@ -1049,18 +1053,21 @@ private function selectSearch($cols) {
  * @return string
  */
 private function getRangeExpression($col, $value, $range) {
+	$value = preg_replace('/[^0-9\-\+\.\,]/', '', $value);
+
 	if (mb_strpos($value, ',') === false) {
-		throw Exception('invalid range value '.$col.'=['.$value.'] use a,b');
+		// range [value,value] same as =value 
+		return $col."='$value'";
 	}
 
-	list ($a, $b) = explode(',', preg_replace('/[^0-9\-\+\.]/', '', $value), 2);
+	list ($a, $b) = explode(',', $value, 2);
 
 	if (mb_strlen($a) == 0) {
-		throw Exception("invalid number a=[$a] in a,b");
+		throw new Exception("invalid number a=[$a] in a,b");
 	}
 
 	if (mb_strlen($b) == 0) {
-		throw Exception("invalid number b=[$b] in a,b");
+		throw new Exception("invalid number b=[$b] in a,b");
 	}
 
 	$bracket_op = [ '[' => '<=', ']' => '>=' ];
