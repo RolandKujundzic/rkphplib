@@ -337,8 +337,9 @@ public function tok_view($name, $p) {
 
 
 /**
- * Include file. Tokenize output. Use parameter "optional" or "?" if you do not want to abort
- * if file is missing. Parameter "static" indicates include can be done at build time.
+ * Include file. Tokenize output. Use parameter "optional" or append "?" to parameter, 
+ * if you do not want to abort if file is missing. Parameter "static" indicates include 
+ * can be done at build time.
  *
  * @tok {include:static}a.html{:include} = return tokenized content of a.html (throw error if file does not exist)
  * @tok {include:optional}a.html{:include} = do not throw error if file does not exist (short version is "?" instead of optional)
@@ -350,9 +351,17 @@ public function tok_view($name, $p) {
  * @return string
  */
 public function tok_include($param, $file) {
+	
+	if (substr($param, -1) == '?') {
+		$ignore_missing = true;
+		$param = substr($param, 0, -1);
+	}
+	else {
+		$ignore_missing = $param === 'optional';
+	}
 
 	if (!File::exists($file)) {
-		if ($param === 'optional' || $param === '?') {
+		if ($ignore_missing) {
 			return '';
 		}
 
