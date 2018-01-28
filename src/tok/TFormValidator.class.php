@@ -106,6 +106,7 @@ public function __construct() {
 		'template.header' => '',
 		'template.output' => "$label$input$error_message",
 		'template.footer' => '',
+		'template.const'    => $value,
 		'template.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" $tags>',
 		'template.textarea' => '<textarea name="'.$name.'" class="'.$class.'" $tags>'.$value.'</textarea>',
 		'template.select'   => '<select name="'.$name.'" class="'.$class.'" $tags>'.$options.'</select>',
@@ -246,18 +247,19 @@ public function tok_fv_check() {
 		}
 	}
 
-	foreach ($this->conf['current'] as $key => $key_value) {
+	foreach ($this->conf['current'] as $key => $check) {
 		$path = explode('.', $key);
 
 		if ($path[0] == 'check') {
-			$req_value = isset($_REQUEST[$path[1]]) ? $_REQUEST[$path[1]] : '';
-			if (!ValueCheck::run($path[1], $req_value, $key_value)) {
-				if (!isset($this->error[$path[1]])) {
-					$this->error[$path[1]] = [];
+			$name = $path[1];
+			$req_value = isset($_REQUEST[$name]) ? $_REQUEST[$name] : '';
+			if (!ValueCheck::run($name, $req_value, $check)) {
+				if (!isset($this->error[$name])) {
+					$this->error[$name] = [];
 				}
 
-				array_push($this->error[$path[1]], $this->getErrorMessage($path));
-				// \rkphplib\lib\log_debug("TFormValidator->tok_fv_check> path=$key path.1=".$path[1]." error: ".print_r($this->error[$path[1]], true));
+				array_push($this->error[$name], $this->getErrorMessage($path));
+				// \rkphplib\lib\log_debug("TFormValidator->tok_fv_check> path=$key name=$name error: ".print_r($this->error[$name], true));
 			}
 		}
 	}
@@ -459,6 +461,11 @@ protected function getInput($name, $p) {
 
 	if (isset($this->error[$name])) {
 		$ri['class'] = empty($ri['class']) ? 'error' : $ri['class'].' error';
+	}
+
+	if (!isset($p['type'])) {
+		$type = empty($p['type']) ? '' : $p['type'];
+		throw new Exception('invalid form validator type '.$name.'.type=['.$type.'] (use '.join(', ', array_keys($conf['template.*'])).')');
 	}
 
 	if (!empty($conf['template.'.$p['type']])) {
