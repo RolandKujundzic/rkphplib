@@ -5,6 +5,7 @@ namespace rkphplib\tok;
 $parent_dir = dirname(__DIR__);
 
 require_once(__DIR__.'/TokPlugin.iface.php');
+require_once(__DIR__.'/TokHelper.trait.php');
 require_once($parent_dir.'/ValueCheck.class.php');
 require_once($parent_dir.'/lib/htmlescape.php');
 require_once($parent_dir.'/lib/split_str.php');
@@ -51,6 +52,8 @@ use \rkphplib\ValueCheck;
  *
  */
 class TFormValidator implements TokPlugin {
+use TokHelper;
+
 
 /** @var array $conf */
 protected $conf = [ 'default' => [], 'current' => [] ];
@@ -103,18 +106,18 @@ public function __construct() {
 	$options = TAG_PREFIX.'options'.TAG_SUFFIX;
 
 	$this->conf['default'] = [
+		'submit' 					=> 'form_action',
 		'template.header' => '',
 		'template.output' => "$label$input$error_message",
 		'template.footer' => '',
-		'template.const'    => $value,
-		'template.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" $tags>',
-		'template.textarea' => '<textarea name="'.$name.'" class="'.$class.'" $tags>'.$value.'</textarea>',
-		'template.select'   => '<select name="'.$name.'" class="'.$class.'" $tags>'.$options.'</select>',
-		'template.error_message' 			  => $error,
-		'template.error_message_concat' => ', ',
-		'template.error_message_multi'  => "<i>$name</i>: <tt>$error</tt><br>",
-		'template.error' 		=> 'error',
-		'submit' => 'form_action'
+		'template.in.const'    => $value,
+		'template.in.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" $tags>',
+		'template.in.textarea' => '<textarea name="'.$name.'" class="'.$class.'" $tags>'.$value.'</textarea>',
+		'template.in.select'   => '<select name="'.$name.'" class="'.$class.'" $tags>'.$options.'</select>',
+		'template.error.message' 			  => $error,
+		'template.error.message_concat' => ', ',
+		'template.error.message_multi'  => "<i>$name</i>: <tt>$error</tt><br>",
+		'template.error.const' 					=> 'error'
 		];
 }
 
@@ -285,7 +288,7 @@ protected function getErrorMessage($path) {
 
 
 /**
- * Return "error" (= template.error or $tpl if set) if $name check failed.
+ * Return "error" (= template.error.const or $tpl if set) if $name check failed.
  *
  * @throws
  * @param string $name
@@ -297,15 +300,15 @@ public function tok_fv_error($name, $tpl) {
 		return '';
 	}
 
-	return empty($tpl) ? $this->conf['template.error'] : $tpl;
+	return empty($tpl) ? $this->conf['template.error.const'] : $tpl;
 }
 
 
 /**
- * Return error message. Replace {:=name} and {:=error} in template.error_message[_multi] (overwrite with $tpl). If there are
- * multiple errors concatenate template.error_message with template.error_message_concat.
+ * Return error message. Replace {:=name} and {:=error} in template.error.message[_multi] (overwrite with $tpl). If there are
+ * multiple errors concatenate template.error.message with template.error.message_concat.
  *
- * Use name=* to return all error messages (concatenate template.error_message_multi).
+ * Use name=* to return all error messages (concatenate template.error.message_multi).
  *
  * @throws
  * @return string 
@@ -316,7 +319,7 @@ public function tok_fv_error_message($name, $tpl = '') {
 
 	if ($name == '*') {
 		if (empty($tpl)) {
-			$tpl = $conf['template.error_message_multi'];
+			$tpl = $conf['template.error.message_multi'];
 		}
 
 		foreach ($this->error as $key => $value) {
@@ -327,7 +330,7 @@ public function tok_fv_error_message($name, $tpl = '') {
 	}
 
 	if (empty($tpl)) {
-		$tpl = $conf['template.error_message'];
+		$tpl = $conf['template.error.message'];
 	}
 
 	if (!isset($this->error[$name])) {
@@ -335,7 +338,7 @@ public function tok_fv_error_message($name, $tpl = '') {
 	}
 
 	$r['name'] = $name;
-	$r['error'] = join($conf['template.error_message_concat'], $this->error[$name]);
+	$r['error'] = join($conf['template.error.message_concat'], $this->error[$name]);
 
 	$res = $this->tok->replaceTags($tpl, $r);
 }
@@ -465,14 +468,15 @@ protected function getInput($name, $p) {
 
 	if (!isset($p['type'])) {
 		$type = empty($p['type']) ? '' : $p['type'];
-		throw new Exception('invalid form validator type '.$name.'.type=['.$type.'] (use '.join(', ', array_keys($conf['template.*'])).')');
+		$use = join(', ', array_keys($this->getMapKeys('template.in', $conf)));
+		throw new Exception("invalid form validator type (=$type) for $name (use $use)", print_r($p, true));
 	}
 
-	if (!empty($conf['template.'.$p['type']])) {
-		$input = $conf['template.'.$p['type']];
+	if (!empty($conf['template.in.'.$p['type']])) {
+		$input = $conf['template.in.'.$p['type']];
 	}
 	else {
-		$input = $conf['template.input'];
+		$input = $conf['template.in.input'];
 	}
 
 	$tags = '';
