@@ -451,7 +451,11 @@ protected function getInputMap($name, $p) {
 protected function getInput($name, $p) {
 	$ri = $p;
 	$ri['name'] = $name;
-	$ri['value'] = isset($_REQUEST[$name]) ? $_REQUEST[$name] : '';
+
+	if (!isset($ri['value'])) {
+		$ri['value'] = isset($_REQUEST[$name]) ? $_REQUEST[$name] : '';
+	}
+
 	$conf = $this->conf['current'];
 
 	if (!empty($p['width'])) {
@@ -497,7 +501,7 @@ protected function getInput($name, $p) {
 	}
 
 	// selected, checked ???
-	// \rkphplib\lib\log_debug("getInput> $tags - $input");
+	// \rkphplib\lib\log_debug("getInput> tags=[$tags] input=[$input]");
 
 	foreach ($ri as $key => $value) {
 		$ri[$key] = \rkphplib\lib\htmlescape($value);
@@ -506,7 +510,7 @@ protected function getInput($name, $p) {
 	$input = str_replace('$tags', $tags, $input);
 	$input = $this->tok->replaceTags($input, $ri);
 
-	// \rkphplib\lib\log_debug("getInput($name, ".print_r($p, true).") = $input");
+	// \rkphplib\lib\log_debug("getInput($name): ".print_r($ri, true)."\n$input");
 	return $input;
 }
 
