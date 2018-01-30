@@ -1531,6 +1531,7 @@ public static function columnList($cols, $prefix = '') {
 
 /**
  * Return insert|update query string. If type=update key '@where' = 'WHERE ...' is required in $kv.
+ * Use kv[@add_default] add default columns.
  *
  * @param string $table
  * @param string $type insert|update
@@ -1543,8 +1544,10 @@ public function buildQuery($table, $type, $kv = []) {
 	$key_list = [];
 	$val_list = [];
 
+	$add_default = empty($kv['@add_default']) ? false : true;
+
 	foreach ($p as $col => $cinfo) {
-		array_push($key_list, self::escape_name($col));
+		$val = false;
 
 		if (array_key_exists($col, $kv) && (is_null($kv[$col]) || (!empty($kv[$col]) && $kv[$col] === 'NULL'))) {
 			$val = 'NULL';
@@ -1557,14 +1560,20 @@ public function buildQuery($table, $type, $kv = []) {
 				$val = "'".self::escape($kv[$col])."'";
 			}
 		}
-		else if ((isset($p['is_null']) && $p['is_null']) || (isset($p['default']) && (is_null($p['default']) || $p['default'] === 'NULL'))) {
-			$val = 'NULL';
-		}
-		else if (!empty($p['default'])) {
-			$val = "'".self::escape($p['default'])."'";
+		else if ($add_default) {
+			if ((isset($p['is_null']) && $p['is_null']) || 
+					(isset($p['default']) && (is_null($p['default']) || $p['default'] === 'NULL'))) {
+				$val = 'NULL';
+			}
+			else if (!empty($p['default'])) {
+				$val = "'".self::escape($p['default'])."'";
+			}
 		}
 
-		array_push($val_list, $val);
+		if ($val !== false) {
+			array_push($key_list, self::escape_name($col));
+			array_push($val_list, $val);
+		}
 	}
 
 	if ($type === 'insert') {
@@ -1589,6 +1598,7 @@ public function buildQuery($table, $type, $kv = []) {
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
+	// \rkphplib\lib\log_debug("buildQuery($table, $type, ...)> $res");
 	return $res;
 }
 
