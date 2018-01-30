@@ -376,6 +376,16 @@ public function tok_fv_in($name, $p) {
 		$p = array_merge($this->getInputMap($name, \rkphplib\lib\split_str(',', $conf['in.'.$name])), $p);
 	}
 
+	if (!isset($p['value'])) {
+		$p['value'] = isset($_REQUEST[$name]) ? $_REQUEST[$name] : '';
+	}
+
+	if ($p['type'] == 'const') {
+		if (is_null($p['value']) || $p['value'] == 'NULL' || (!empty($p['is_null']) && $p['is_null'] == 'NULL')) {
+			return '';
+		}
+	}
+
 	$r['label'] = empty($p['label']) ? '' : $p['label'];
 	$r['input'] = $this->getInput($name, $p);
 
@@ -449,21 +459,16 @@ protected function getInputMap($name, $p) {
  * Other keys: prefix, suffix.
  *
  * @param string $name
- * @param array $p
+ * @param map $ri
  * @return string
  */
-protected function getInput($name, $p) {
-	$ri = $p;
+protected function getInput($name, $ri) {
 	$ri['name'] = $name;
-
-	if (!isset($ri['value'])) {
-		$ri['value'] = isset($_REQUEST[$name]) ? $_REQUEST[$name] : '';
-	}
 
 	$conf = $this->conf['current'];
 
-	if (!empty($p['width'])) {
-		$ri['style'] = 'width: '.$p['width'];
+	if (!empty($ri['width'])) {
+		$ri['style'] = 'width: '.$ri['width'];
 	}
 
 	if (!isset($ri['class'])) {
@@ -474,14 +479,13 @@ protected function getInput($name, $p) {
 		$ri['class'] = empty($ri['class']) ? 'error' : $ri['class'].' error';
 	}
 
-	if (!isset($p['type'])) {
-		$type = empty($p['type']) ? '' : $p['type'];
+	if (empty($ri['type'])) {
 		$use = join(', ', array_keys($this->getMapKeys('template.in', $conf)));
-		throw new Exception("invalid form validator type (=$type) for $name (use $use)", print_r($p, true));
+		throw new Exception("missing form validator type for $name (use $use)", print_r($ri, true));
 	}
 
-	if (!empty($conf['template.in.'.$p['type']])) {
-		$input = $conf['template.in.'.$p['type']];
+	if (!empty($conf['template.in.'.$ri['type']])) {
+		$input = $conf['template.in.'.$ri['type']];
 	}
 	else {
 		$input = $conf['template.in.input'];
@@ -491,14 +495,14 @@ protected function getInput($name, $p) {
 
 	$attributes = [ 'size', 'maxlength', 'placeholder', 'type', 'pattern', 'rows', 'cols', 'style', 'class' ];
 	foreach ($attributes as $key) {
-		if (isset($p[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
+		if (isset($ri[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
 			$tags .= $key.'="'.$this->tok->getTag($key).'"';
 		}
 	}
 
 	$boolean_attributes = [ 'readonly', 'multiple', 'disabled' ];
 	foreach ($boolean_attributes as $key) {
-		if (!empty($p[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
+		if (!empty($ri[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
 			$tags .= ' '.$this->tok->getTag($key);
 			$ri[$key] = $key;
 		}
@@ -534,7 +538,7 @@ private function setOptions(&$p) {
 	}
 
 	if (empty($p['options'])) {
-		throw new Exception('empty options', print_r($p, true));
+		throw new Exception('empty options in ['.$p['type'].' name='.$p['name'].' ... ]', print_r($p, true));
 	}
 
 	// options are either vector or map ...
@@ -560,15 +564,19 @@ private function setOptions(&$p) {
 		}
 	}
 	else {
+		if (!empty($options['@_1']) && substr($options['@_1'], 0, 1) == '=') {
+			$options[''] = substr($options['@_1'], 1);
+			unset($options['@_1']);
+		}
+
 		foreach ($options as $value => $label) {
-			$selected = ($value == $pl['value']) ? ' selected' : '';
-			$html .= '<option value="'.$value.'"'.$selected.'>'.$lable."</option>\n";
+			$selected = ($value == $p['value']) ? ' selected' : '';
+			$html .= '<option value="'.$value.'"'.$selected.'>'.$label."</option>\n";
 		}
 	}
 
-	$p['options'] = $html;
-
 	\rkphplib\lib\log_debug("setOptions: $html");
+	$p['options'] = $html;
 }
 
 
