@@ -9,6 +9,7 @@ require_once($parent_dir.'/Database.class.php');
 require_once($parent_dir.'/Session.class.php');
 require_once($parent_dir.'/lib/kv2conf.php');
 require_once($parent_dir.'/lib/redirect.php');
+require_once($parent_dir.'/lib/split_str.php');
 
 use \rkphplib\Exception;
 use \rkphplib\Session;
@@ -146,16 +147,17 @@ public function tok_login_check($p) {
 
 /**
  * Update login table and session. Use $_REQUEST[key] (key = session key).
- * Overwrite $_REQUEST session map with values from $p.
+ * Overwrite $_REQUEST session map with values from $p. Export _REQUEST['login_update_cols'].
  *
  * @tok {login_update:} -> Use $_REQUEST[key] (key = session key)
  * @tok {login_update:reload}password=PASSWORD({esc:password}){:login_update} -> update password
  * @tok {login_update:}if=|#|name=Mr. T{:login_update} -> do nothing because if is empty
  * @tok {login_update:}type=admin|#|...{:login_update} -> throw exception if previous type != 'admin'
- *
+ * @tok {login_update:}@allow_cols= login, password, ...|#|{sql:password}|#|@where= WHERE id={esc:id}{:login_update}
+ * 
  * @throws
  * @param string $do reload
- * @param map $p
+ * @param map $p (optional)
  * @return ''
  */
 public function tok_login_update($do, $p) {
@@ -171,26 +173,38 @@ public function tok_login_update($do, $p) {
 		throw new Exception('[login_update:]type='.$p['type'].' != '.$sess['type'].' - session change is forbidden');
 	}
 
-	$has_change = false;
+	$allow_cols = [];
+	if (!empty($p['@allow_cols'])) {
+		$allow_cols = \rkphplib\lib\split_str(',', $p['@allow_cols']);
+		unset($p['@allow_cols']);	
+	}
 
+	// only add (key,value) to kv where value has changed
 	foreach ($sess as $key => $value) {
-		if (isset($_REQUEST[$key])) {
-			if ($value != $_REQUEST[$key]) {
-				$has_change = true;
-			}
-
+		if (isset($_REQUEST[$key]) && $value != $_REQUEST[$key]) {
 			$kv[$key] = $_REQUEST[$key];
-		}
-		else {
-			$kv[$key] = $value;
 		}
 	}
 
 	foreach ($p as $key => $value) {
-		if ($kv[$key] != $value) {
-			$has_change = true;
+		// e.g. !isset(kv['password'])
+		if (!isset($kv[$key]) || $kv[$key] != $value) {
 			$kv[$key] = $value;
 		}
+	}
+
+	if (count($allow_cols) > 0) {
+		$has_cols = array_keys($kv);
+
+		foreach ($has_cols as $col) {
+			if (!in_array($col, $allow_cols)) {
+				throw new Exception('[login_update:] of column '.$col.' is forbidden (see @cols)');
+			}
+		}
+	}
+
+	if (isset($kv['password']) && empty($kv['password'])) {
+		unset($kv['password']);
 	}
 
 	if (empty($kv['@where'])) {
@@ -208,19 +222,19 @@ public function tok_login_update($do, $p) {
 		throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
 	}
 
-	if (!is_null($this->db) && $has_change) {
+	if (!is_null($this->db) && count($kv) > 1) {
 		$query = $this->db->buildQuery($table, 'update', $kv);	
-		// \rkphplib\lib\log_debug("tok_login_update> update $table: $query");
+		\rkphplib\lib\log_debug("tok_login_update> update $table: $query");
 		$this->db->execute($query);
 	}
 
 	if (!is_null($this->db) && $do == 'reload') {
-		$udata = $this->db->selectOne("SELECT * FROM $table ".$kv['@where']);
-		$this->sess->setHash($udata);
+		$kv = $this->db->selectOne("SELECT * FROM $table ".$kv['@where']);
 	}
-	else {
-		// \rkphplib\lib\log_debug("tok_login_update> new session: ".print_r($kv, true));
-		$this->sess->setHash($kv);
+
+	if (count($kv) > 1) {
+		\rkphplib\lib\log_debug("tok_login_update> #kv=".(count($kv))." update session: ".print_r($kv, true));
+		$this->sess->setHash($kv, true);
 	}
 
 	return '';
@@ -236,6 +250,7 @@ public function tok_login_update($do, $p) {
  * If login is invalid set {var:login_error} = error.
  * If password is invalid set {var:password_error} = error.
  * If redirect is set - redirect after successfull login or if still logged in.
+ * If user.redirect is set - redirect after successfull login or if still logged in.
  * If log_table is set - insert log entry into log table. 
  *
  * @tok <pre>{login:*}</pre> = id=...|#|login=...|#|type=...|#|priv=...|#|language=...
@@ -279,7 +294,10 @@ public function tok_login_auth($p) {
 		$this->logAuthInTable($p['log_table'], $user['id']);
 	}
 
-	if (!empty($p['redirect'])) {
+	if (!empty($user['redirect'])) {
+		\rkphplib\lib\redirect($user['redirect']);	
+	}
+	else if (!empty($p['redirect'])) {
 		\rkphplib\lib\redirect($p['redirect']);	
 	}
 }
@@ -420,6 +438,9 @@ public function tok_login($key) {
 	}
 	else if (!empty($key)) {
 		$res = $this->sess->get($key);
+		if (is_null($res)) {
+			$res = 'NULL';
+		}
 	}
 	else if ($this->sess->has('id')) {
 		$res = 'yes';
