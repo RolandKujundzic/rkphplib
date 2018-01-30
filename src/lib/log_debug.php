@@ -3,8 +3,8 @@
 namespace rkphplib\lib;
 
 if (!defined('SETTINGS_LOG_DEBUG')) {
-  /** @define string SETTINGS_LOG_DEBUG = '/tmp/php.warn' */
-	define('SETTINGS_LOG_DEBUG', '/tmp/php.warn');
+  /** @define string SETTINGS_LOG_DEBUG = '/tmp/php.log' */
+	define('SETTINGS_LOG_DEBUG', '/tmp/php.log');
 }
 
 if (!defined('SETTINGS_TIMEZONE')) {
