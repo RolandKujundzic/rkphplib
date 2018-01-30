@@ -9,6 +9,8 @@ require_once(__DIR__.'/TokHelper.trait.php');
 require_once($parent_dir.'/ValueCheck.class.php');
 require_once($parent_dir.'/lib/htmlescape.php');
 require_once($parent_dir.'/lib/split_str.php');
+require_once($parent_dir.'/lib/conf2kv.php');
+require_once($parent_dir.'/lib/is_map.php');
 
 use \rkphplib\Exception;
 use \rkphplib\ValueCheck;
@@ -110,6 +112,7 @@ public function __construct() {
 		'template.header' => '',
 		'template.output' => "$label$input$error_message",
 		'template.footer' => '',
+		'option.label_empty'   => '...',
 		'template.in.const'    => $value,
 		'template.in.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" $tags>',
 		'template.in.textarea' => '<textarea name="'.$name.'" class="'.$class.'" $tags>'.$value.'</textarea>',
@@ -190,6 +193,7 @@ public function tok_fv_conf($name, $p) {
  *
  * - use: default (list of names configurations)
  * - submit: form_action
+ * - option.label_empty: ...
  * 
  * @param string $do add|
  * @param array $p
@@ -500,12 +504,14 @@ protected function getInput($name, $p) {
 		}
 	}
 
-	// selected, checked ???
-	// \rkphplib\lib\log_debug("getInput> tags=[$tags] input=[$input]");
-
 	foreach ($ri as $key => $value) {
 		$ri[$key] = \rkphplib\lib\htmlescape($value);
 	}
+
+	$this->setOptions($ri);
+
+	// selected, checked ???
+	\rkphplib\lib\log_debug("getInput> tags=[$tags] input=[$input] ri: ".print_r($ri, true));
 
 	$input = str_replace('$tags', $tags, $input);
 	$input = $this->tok->replaceTags($input, $ri);
@@ -515,5 +521,55 @@ protected function getInput($name, $p) {
 }
 
 
+/**
+ * Change $p['options'] into html options if defined and $p['type'] == [f]select.
+ *
+ * @throws
+ * @param map-reference $p
+ */
+private function setOptions(&$p) {
+
+	if ($p['type'] != 'select' && $p['type'] != 'fselect') {
+		return;
+	}
+
+	if (empty($p['options'])) {
+		throw new Exception('empty options', print_r($p, true));
+	}
+
+	// options are either vector or map ...
+	$options = \rkphplib\lib\conf2kv($p['options'], '=', ',');
+	$html = '';
+
+	if (!\rkphplib\lib\is_map($options)) {
+		foreach ($options as $value) {
+			$selected = ($value == $p['value']) ? ' selected' : '';
+
+			if (strlen($value) == 0) {
+				if ($html) {
+					// ignore empty - except first option
+					continue;
+				}
+				else {
+					$html .= '<option value=""'.$selected.'>'.$this->conf['current']['option.label_empty']."</option>\n";
+				}
+			}
+			else {
+				$html .= '<option value="'.$value.'"'.$selected.'>'.$value."</option>\n";
+			}
+		}
+	}
+	else {
+		foreach ($options as $value => $label) {
+			$selected = ($value == $pl['value']) ? ' selected' : '';
+			$html .= '<option value="'.$value.'"'.$selected.'>'.$lable."</option>\n";
+		}
+	}
+
+	$p['options'] = $html;
+
+	\rkphplib\lib\log_debug("setOptions: $html");
 }
 
+
+}
