@@ -117,7 +117,7 @@ public function getPlugins($tok) {
 	$plugin['ignore'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['if'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['switch'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
-	$plugin['keep'] = TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
+	$plugin['keep'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['load'] = TokPlugin::REQUIRE_BODY;
 	$plugin['link'] = TokPlugin::PARAM_CSLIST | TokPlugin::KV_BODY;
 	$plugin['redo'] = TokPlugin::NO_PARAM | TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
@@ -296,6 +296,7 @@ public function tok_clear($txt) {
  * @return string
  */
 public function tok_keep($txt) {
+	// \rkphplib\lib\log_debug("keep=[$txt]");
 	return $txt;
 }
 
