@@ -1050,7 +1050,7 @@ private function tryPluginMap($name) {
 		'TFormValidator' => [ 'fv', 'fv:init', 'fv:conf', 'fv:check', 'fv:in', 'fv:hidden', 'fv:error', 'fv:error_message', 'fv:set_error_message' ],
 		'THtml' => [ 'html:inner', 'html:tidy', 'html:xml', 'html:uglify', 'html' ],
 		'TLanguage' => [ 'language:init', 'language:get', 'language', 'txt:js', 'txt', 'ptxt' ],
-		'TLogin' => [ 'login', 'login_account', 'login_check', 'login_auth', 'login_update', 'login_clear' ],
+		'TLogin' => [ 'login', 'login:is_null', 'login_account', 'login_check', 'login_auth', 'login_update', 'login_clear' ],
 		'TLoop' => [ 'loop:var', 'loop:list', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
 		'TMath' => [ 'nf', 'number_format' ],
 		'TMenu' => [ 'menu', 'menu:add', 'menu:conf', 'menu:privileges' ],
