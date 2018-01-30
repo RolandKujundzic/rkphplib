@@ -438,9 +438,6 @@ public function tok_login($key) {
 	}
 	else if (!empty($key)) {
 		$res = $this->sess->get($key);
-		if (is_null($res)) {
-			$res = 'NULL';
-		}
 	}
 	else if ($this->sess->has('id')) {
 		$res = 'yes';
