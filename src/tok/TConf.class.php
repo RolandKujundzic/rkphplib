@@ -104,6 +104,7 @@ public function tok_conf($key, $value) {
 	$current = (count($dbres) == 0) ? null : $dbres[0]['value'];
 
 	if (is_null($current)) {
+		// \rkphplib\lib\log_debug("tok_conf: set [$key]=[$value]");
 		$this->set($lid, $key, $value);
 	}
 	else {
