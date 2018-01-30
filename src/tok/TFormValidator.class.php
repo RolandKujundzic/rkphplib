@@ -381,7 +381,7 @@ public function tok_fv_in($name, $p) {
 	}
 
 	if ($p['type'] == 'const') {
-		if (is_null($p['value']) || $p['value'] == 'NULL' || (!empty($p['is_null']) && $p['is_null'] == 'NULL')) {
+		if (is_null($p['value']) || $p['value'] == 'NULL' || !empty($p['is_null'])) {
 			return '';
 		}
 	}
