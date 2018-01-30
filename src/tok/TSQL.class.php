@@ -60,7 +60,7 @@ public function getPlugins($tok) {
 	$plugin['sql:nextId'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['sql:in'] = TokPlugin::CSLIST_BODY;
 	$plugin['sql:hasTable'] = 0;
-	$plugin['sql:password'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['sql:password'] = 0;
 	$plugin['sql:import'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['sql'] = 0;
 	$plugin['null'] = TokPlugin::NO_PARAM;
@@ -210,13 +210,29 @@ public function tok_sql_nextId($table) {
 /**
  * Return result of mysql query "SELECT PASSWORD('$password')".
  *
+ * @tok {sql:password:kv} = '' if _REQUEST[password] empty or [password=PASSWORD(_REQUEST[password])] otherwise
  * @tok {sql:password}secret{:sql} = PASSWORD('secret') = *0B32... 
  *
  * @param string $password
  * @return string
  */
-public function tok_sql_password($password) {
-	return '*'.strtoupper(sha1(sha1($password, true)));
+public function tok_sql_password($param, $password) {
+
+	if ($param == 'kv') {
+		if (!empty($_REQUEST['password'])) {
+			$mysql_pass = '*'.strtoupper(sha1(sha1($_REQUEST['password'], true)));
+			$mysql_pass = empty($_REQUEST['password']) ? '' : 'password='.$mysql_pass;
+		}
+		else {
+			$mysql_pass = '';
+		}
+	}
+	else {
+		$mysql_pass = '*'.strtoupper(sha1(sha1($password, true)));
+	}
+
+	\rkphplib\lib\log_debug("tok_sql_password($param, $password)> $mysql_pass");
+	return $mysql_pass;
 }
 
 
