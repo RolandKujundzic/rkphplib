@@ -15,7 +15,7 @@ if (!defined('HASH_DELIMITER')) {
 /**
  * Convert map to string. 
  *
- * Reverse version of conf2kv(). Use "NULL" for null values.
+ * Reverse version of conf2kv(). Use '' for null values.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @see conf2kv
@@ -40,7 +40,7 @@ function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1)
 			$conf .= intval($value).$d2."\n";
 		}
 		else if (is_null($value)) {
-			$conf .= 'NULL'.$d2."\n";
+			$conf .= ''.$d2."\n";
 		}
 		else if (is_string($value)) {
 			if (strpos($value, $d2) !== false || trim($value) != $value) {
