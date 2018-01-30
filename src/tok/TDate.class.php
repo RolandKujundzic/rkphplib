@@ -101,6 +101,10 @@ public function tok_date($p, $arg) {
 	}
 	else if (count($p) == 1) {
 		if (empty($p[0]) && count($arg) == 1 && !empty($this->env['format_in']) && !empty($this->env['format_out'])) {
+			if (empty($arg[0]) || is_null($arg[0]) || $arg[0] == 'NULL') {
+				return '';
+			}
+
 			$res = DateCalc::formatDateStr($this->env['format_out'], $arg[0], $this->env['format_in']); 
 
 			if ($this->env['format_cut'] == 'sec') {
