@@ -236,19 +236,25 @@ public function set($key, $value) {
 
 
 /**
- * Set session map. Overwrite existing.
+ * Set session map. Overwrite existing unless merge = true.
  *
  * @param map<string:any> $key
+ * @param bool $merge (default = false)
  * @param any $value
  */
-public function setHash($p) {
+public function setHash($p, $merge = false) {
 	$skey = $this->sessKey();
 
 	if (!is_array($p)) {
 		throw new Exception('invalid parameter');
 	}
 
-	$_SESSION[$skey] = $p;
+	if ($merge) {
+		$_SESSION[$skey] = array_merge($_SESSION[$skey], $p);
+	}
+	else {
+		$_SESSION[$skey] = $p;
+	}
 }
 
 
