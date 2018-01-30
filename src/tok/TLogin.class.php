@@ -56,6 +56,7 @@ public function getPlugins($tok) {
 
 	$plugin = [];
 	$plugin['login'] = TokPlugin::NO_BODY;
+	$plugin['login:is_null'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['login_account'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
@@ -396,9 +397,24 @@ private function selectFromDatabase($p) {
 
 
 /**
+ * Return 1 if login key is null.
+ *
+ * @tok {login:is_null:age} -> 1 if is_null(age)
+ *
+ * @throws
+ * @param string $key
+ * @return 1|''
+ */
+public function tok_login_is_null($key) {
+	return is_null($this->sess->get($key)) ? 1 : '';
+}
+
+
+/**
  * Return login key value. If key is empty return yes if login[id] is set.
  *
  * @tok {login:} -> yes (if logged in)
+ * @tok {login:id} -> ID (value of session key id)
  * @tok {login:*} -> key=value|#|... (show all key value pairs)
  * @tok {login:@*} -> key=value|#|... (show all meta data)
  * @tok {login:@[name|table]} -> show configuration value
