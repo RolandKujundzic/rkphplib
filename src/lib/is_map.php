@@ -4,21 +4,36 @@ namespace rkphplib\lib;
 
 /**
  * Return true if $arr is map. Use !is_map to check for vector.
- * Set $true_if_empty if empty array should be true.
+ * Set $true_if_empty if empty array should be true. Flags:
+ *
+ *  - 1 = return true if empty
+ *  - 2 = instead of range 0-1 check ... check if n,n+1, ... n+k (k > 0)
  *
  * @throws
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @param array $arr
- * @param bool $true_if_empty
+ * @param int $flags 1 | 2 
  * @return bool
  */
-function is_map(array $arr, $true_if_empty = false) {
+function is_map(array $arr, $flags = 0) {
   $n = is_array($arr) ? count($arr) : 0;
 
-	if ($n == 0 && $true_if_empty) {
+	if ($n == 0 && ($flags & 1)) {
 		return true;
 	}
 
-  return $n > 0 && array_keys($arr) !== range(0, $n - 1);
+	$arr_keys = array_keys($arr);
+
+	if ($flags & 2) {
+		$min = $arr_keys[0];
+		$max = $arr_keys[$n - 1];
+
+		$res = $n == 1 || $arr_keys !== range($min, $max);
+	}
+	else {
+		$res = $n > 0 && $arr_keys !== range(0, $n - 1);
+	}
+
+  return $res;
 }
 
