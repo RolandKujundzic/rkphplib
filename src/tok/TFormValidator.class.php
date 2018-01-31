@@ -370,10 +370,8 @@ public function tok_fv_in($name, $p) {
 		$res .= $conf['template.footer'];
 	}
 
-	$r = [];
-
 	if (!empty($conf['in.'.$name])) {
-		$p = array_merge($this->getInputMap($name, \rkphplib\lib\split_str(',', $conf['in.'.$name])), $p);
+		$this->parseInName($name, $conf['in.'.$name], $p);
 	}
 
 	if (!isset($p['value'])) {
@@ -386,6 +384,7 @@ public function tok_fv_in($name, $p) {
 		}
 	}
 
+	$r = [];
 	$r['label'] = empty($p['label']) ? '' : $p['label'];
 	$r['input'] = $this->getInput($name, $p);
 
@@ -399,54 +398,106 @@ public function tok_fv_in($name, $p) {
 
 
 /**
- * Return input map. Examples:
+ * Parse value and add to input map p. Examples:
  *
- * checkbox,
- * radio,
- * area,ROWS,COLS,WRAP
- * text,SIZE|WIDTHcc,MAXLENGTH
- * pass,
- * file,
- * select,
- * fselect,
- * set,
- * multi_select,
+ *  - in.name= checkbox,
+ *  - in.name= radio,
+ *  - in.name= area(=textarea),ROWS,COLS,WRAP
+ *  - in.name= text(=input),SIZE|WIDTHcc,MAXLENGTH
+ *  - in.name= pass(=input),
+ *  - in.name= file,
+ *  - in.name= select,
+ *  - in.name= fselect,
+ *  - in.name= set,
+ *  - in.name= multi_select,
  *
  * @param string $name
- * @param vector $p 
+ * @param string $value
+ * @param map-reference &$p 
  * @return map
  */
-protected function getInputMap($name, $p) {
-	$type = array_shift($p);
-	$r = [];
+protected function parseInName($name, $value, &$p) {
 
-	if ($type == 'text') {
-		if (mb_substr($p[0], -2) == 'ch') {
-			$r['width'] = $p[0];
-		}
-		else {
-			$r['size'] = $p[0];
+	$r = \rkphplib\lib\conf2kv($value, '=', ',');
+
+	if (is_string($r)) {
+		$p['type'] = $r;
+		return;
+	}
+
+	if (!empty($r['@_1'])) {
+		$p['type'] = $r['@_1'];
+		unset($r['@_1']);
+	}
+	else if (!empty($r[0])) {
+		$p['type'] = $r[0];
+		unset($r[0]);
+	}
+
+	\rkphplib\lib\log_debug("parseInName($name, $value, ...)> r: ".print_r($r, true));
+	$type = $p['type'];
+
+	if (in_array($type, [ 'text', 'pass', 'input', 'password' ])) {
+		if (!empty($r[1])) {
+			if (mb_substr($r[1], -2) == 'ch') {
+				$p['width'] = $r[1];
+			}
+			else {
+				$p['size'] = $r[1];
+			}
+
+			unset($r[1]);
 		}
 
-		$r['type'] = 'text';
-		$r['maxwidth'] = $p[1];
+		if (!empty($r[2])) {
+			$p['maxwidth'] = $r[2];
+			unset($r[2]);
+		}
+
+		if ($type == 'text') {
+			$p['type'] = 'input';
+		}
+		else if ($type == 'pass') {
+			$p['type'] = 'password';
+		}
 	}
 	else if ($type == 'area') {
-		$r['rows'] = $p[0];
-		$r['cols'] = $p[1];
-		$r['wrap'] = $p[2];
+		if (!empty($r[1]) && !empty($r[2])) {
+			$p['rows'] = $r[1];
+			unset($r[1]);
 
-		if (!in_array($r['wrap'], [ 'soft', 'hard' ])) {
-			throw new Exception('invalid wrap=['.$p[2].'] use soft|hard');
+			$p['cols'] = $r[2];
+			unset($r[2]);
 		}
 
-		$r['type'] = 'textarea';
+		if (!empty($r[3])) {
+			$p['wrap'] = $r[3];
+			unset($r[3]);
+
+			if (!in_array($p['wrap'], [ 'soft', 'hard' ])) {
+				throw new Exception('invalid wrap=['.$p['wrap'].'] use soft|hard');
+			}
+		}
+	}
+	else if ($type == 'select' || $type == 'fselect') {
+		if (!isset($p['value'])) {
+			$p['value'] = isset($_REQUEST[$name]) ? $_REQUEST[$name] : '';
+		}
+
+		$p['options'] = $this->getOptions($r, $p['value']);
+	}
+	else if ($type == 'const') {
+		// ok ...
 	}
 	else {
 		throw new Exception('ToDo: name='.$name.' p: '.join('|', $p));
 	}
 
-	return $r;
+	foreach ($r as $key => $value) {
+		$p[$key] = $value;
+	}
+
+	\rkphplib\lib\log_debug("parseInName($name, $value, ...)> p: ".print_r($p, true));
 }
 
 
@@ -508,13 +559,17 @@ protected function getInput($name, $ri) {
 		}
 	}
 
-	foreach ($ri as $key => $value) {
-		$ri[$key] = \rkphplib\lib\htmlescape($value);
+	if (!empty($ri['options']) && strpos($ri['options'], '</option>') === false) {
+		$tmp = \rkphplib\lib\conf2kv($ri['options'], '=', ',');
+		$ri['options'] = $this->getOptions($tmp, $ri['value']);
 	}
 
-	$this->setOptions($ri);
+	foreach ($ri as $key => $value) {
+		if ($key != 'options') {
+			$ri[$key] = \rkphplib\lib\htmlescape($value);
+		}
+	}
 
-	// selected, checked ???
 	\rkphplib\lib\log_debug("getInput> tags=[$tags] input=[$input] ri: ".print_r($ri, true));
 
 	$input = str_replace('$tags', $tags, $input);
@@ -526,58 +581,60 @@ protected function getInput($name, $ri) {
 
 
 /**
- * Change $p['options'] into html options if defined and $p['type'] == [f]select.
+ * Return html options. Options map p is conf2kv result map (unsed keys).
  *
  * @throws
  * @param map-reference $p
+ * @param string $opt_value
+ * @return string
  */
-private function setOptions(&$p) {
-
-	if ($p['type'] != 'select' && $p['type'] != 'fselect') {
-		return;
-	}
-
-	if (empty($p['options'])) {
-		throw new Exception('empty options in ['.$p['type'].' name='.$p['name'].' ... ]', print_r($p, true));
-	}
-
-	// options are either vector or map ...
-	$options = \rkphplib\lib\conf2kv($p['options'], '=', ',');
+private function getOptions(&$p, $opt_value) {
+	// options are conf2kv result map ...
 	$html = '';
+	$empty_label = null;
 
-	if (!\rkphplib\lib\is_map($options)) {
-		foreach ($options as $value) {
-			$selected = ($value == $p['value']) ? ' selected' : '';
+	if (!empty($p['@_1']) && substr($p['@_1'], 0, 1) == '=') {
+		$empty_label = substr($p['@_1'], 1);
+		unset($p['@_1']);
+	}
 
-			if (strlen($value) == 0) {
-				if ($html) {
-					// ignore empty - except first option
-					continue;
-				}
-				else {
-					$html .= '<option value=""'.$selected.'>'.$this->conf['current']['option.label_empty']."</option>\n";
-				}
-			}
-			else {
+	if (!empty($p['@_2']) && substr($p['@_2'], 0, 1) == '=') {
+		$empty_label = substr($p['@_2'], 1);
+		unset($p['@_2']);
+	}
+
+	if (!is_null($empty_label)) {
+		$selected = ($opt_value == '') ? ' selected' : '';
+		$empty_label = empty($empty_label) ? $this->conf['current']['option.label_empty'] : $empty_label;
+		$html .= '<option value=""'.$selected.'>'.$empty_label."</option>\n";
+	}
+
+	if (!\rkphplib\lib\is_map($p, 2)) {
+		foreach ($p as $key => $value) {
+			if (strlen($value) > 0) {
+				$selected = ($opt_value == $value) ? ' selected' : '';
 				$html .= '<option value="'.$value.'"'.$selected.'>'.$value."</option>\n";
 			}
+
+			unset($p[$key]);
 		}
 	}
 	else {
-		if (!empty($options['@_1']) && substr($options['@_1'], 0, 1) == '=') {
-			$options[''] = substr($options['@_1'], 1);
-			unset($options['@_1']);
-		}
-
-		foreach ($options as $value => $label) {
-			$selected = ($value == $p['value']) ? ' selected' : '';
+		foreach ($p as $value => $label) {
+			$selected = ($opt_value == $value) ? ' selected' : '';
 			$html .= '<option value="'.$value.'"'.$selected.'>'.$label."</option>\n";
+			unset($p[$value]);
 		}
 	}
 
-	\rkphplib\lib\log_debug("setOptions: $html");
-	$p['options'] = $html;
+	if (count($p) > 0) {
+		throw new Exception('leftover keys', "html=[$html] p: ".print_r($p, true));
+	}
+
+	\rkphplib\lib\log_debug("getOptions> $html");
+	return $html;
 }
 
 
 }
+
