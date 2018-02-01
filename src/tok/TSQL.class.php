@@ -100,7 +100,8 @@ public function tok_sql_hasTable($param, $arg) {
 		}
 	}
 
-	return $res;
+	// \rkphplib\lib\log_debug("tok_sql_hasTable> list=[$list] res=[$res]");
+	return $res ? 1 : '';
 }
 
 
@@ -231,7 +232,7 @@ public function tok_sql_password($param, $password) {
 		$mysql_pass = '*'.strtoupper(sha1(sha1($password, true)));
 	}
 
-	\rkphplib\lib\log_debug("tok_sql_password($param, $password)> $mysql_pass");
+	// \rkphplib\lib\log_debug("tok_sql_password($param, $password)> $mysql_pass");
 	return $mysql_pass;
 }
 
