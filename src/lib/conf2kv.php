@@ -40,7 +40,7 @@ function conf2kv($text, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = array()) {
 	}
 
 	$e_d2 = entity($d2);
-	$has_entity = mb_strpos($txt, $e_d2) !== false;
+	$has_entity = mb_strpos($text, $e_d2) !== false;
 
 	if ($ld1 == 0 || mb_strpos($text, $d1) === false) {
 		$res = $text;

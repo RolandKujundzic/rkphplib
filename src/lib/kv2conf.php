@@ -45,7 +45,7 @@ function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1)
 			$conf .= ''.$d2."\n";
 		}
 		else if (is_string($value)) {
-			if (strpos($value, $d2) !== false)
+			if (strpos($value, $d2) !== false) {
 				$value = str_replace($d2, $e_d2, $value);
 			}
 
