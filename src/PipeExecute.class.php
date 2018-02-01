@@ -79,7 +79,7 @@ public function __construct($command, $parameter = []) {
  */
 private function readStream($num) {
 	$res = stream_get_contents($this->pipe[$num]);
-	\rkphplib\lib\log_debug("PipeExecute.readStream> exit - num=[$num] res=[$res]");
+	// \rkphplib\lib\log_debug("PipeExecute.readStream> exit - num=[$num] res=[$res]");
 	return $res;
 }
 
@@ -141,7 +141,7 @@ public function close($abort = false) {
 	}
 
 	$retval = proc_close($this->process);
-	\rkphplib\lib\log_debug("PipeExecute.close> retval=[$retval] output=[$output] error=[$error]");
+	// \rkphplib\lib\log_debug("PipeExecute.close> retval=[$retval] output=[$output] error=[$error]");
 
 	if ($retval === -1) {
 		if ($abort) {
