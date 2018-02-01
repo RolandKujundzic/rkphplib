@@ -1033,16 +1033,20 @@ public function tok_plugin($p) {
 		if (mb_strpos($plugin, ':') === false) {
 			require_once(PATH_RKPHPLIB.'tok/'.$plugin.'.class.php');
 			$obj = '\\rkphplib\\tok\\'.$plugin;
+			\rkphplib\lib\log_debug("tok_plugin> require_once('".PATH_RKPHPLIB.'tok/'.$plugin.".class.php'); new $obj();");
 		}
 		else {
 			list ($path, $obj) = explode(':', $plugin);
 
 			if (basename($path) === $path && defined("PATH_$path")) {
-				require_once(constant("PATH_$path").$obj);
-				$obj = '\\'.strtolower($path).'\\'.$obj;
+				$incl_path = constant("PATH_$path").'tok/'.$obj.'.class.php';
+				require_once($incl_path);
+				$obj = '\\'.strtolower($path).'\\tok\\'.$obj;
+				\rkphplib\lib\log_debug("tok_plugin> require_once('$incl_path'); new $obj();");
 			}
 			else {
 				require_once($path);
+				\rkphplib\lib\log_debug("tok_plugin> require_once('$path');");
 			}
 		}
 
