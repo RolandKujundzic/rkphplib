@@ -56,8 +56,6 @@ public function getPlugins($tok) {
 
 	$plugin = [];
 	$plugin['login'] = TokPlugin::NO_BODY;
-	$plugin['login:is_null'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
-	$plugin['login:getConfPrivileges'] = TokPlugin::NO_PARAM;
 	$plugin['login_account'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
@@ -65,6 +63,17 @@ public function getPlugins($tok) {
 	$plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 
 	return $plugin;
+}
+
+
+/**
+ * Set session key value.
+ *
+ * @param string $key
+ * @param any $value
+ */
+public function set($key, $value) {
+	$this->sess->set($key, $value);
 }
 
 
@@ -157,9 +166,6 @@ public function tok_login_check($p) {
  * @tok {login_update:}type=admin|#|...{:login_update} -> throw exception if previous type != 'admin'
  * @tok {login_update:}@allow_cols= login, password, ...|#|{sql:password}|#|@where= WHERE id={esc:id}{:login_update}
  * 
- * @tok {login_update:conf}apps=,shop,|#|shop=1|#|shop.privileges=super{:login_update}
- * @tok_desc Overwrite login:apps, login:shop, ... no database sync.
- *
  * @throws
  * @param string $do reload
  * @param map $p (optional)
@@ -212,7 +218,7 @@ public function tok_login_update($do, $p) {
 		unset($kv['password']);
 	}
 
-	if ($do != 'conf' && empty($kv['@where'])) {
+	if (empty($kv['@where'])) {
 		$id = empty($p['id']) ? '' : $p['id'];
 		if (!$id) {
 			$id = empty($sess['id']) ? '' : $sess['id'];
@@ -223,11 +229,11 @@ public function tok_login_update($do, $p) {
 		}
 	}
 
-	if ($do != 'conf' && empty($kv['@where'])) {
+	if (empty($kv['@where'])) {
 		throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
 	}
 
-	if ($do != 'conf' && !is_null($this->db) && count($kv) > 1) {
+	if (!is_null($this->db) && count($kv) > 1) {
 		$query = $this->db->buildQuery($table, 'update', $kv);	
 		\rkphplib\lib\log_debug("tok_login_update> update $table: $query");
 		$this->db->execute($query);
@@ -251,7 +257,6 @@ public function tok_login_update($do, $p) {
  * from select_login result (except password) into session. Example:
  *
  * @tok {login_auth:}login={get:login}|#|password={get:password}|#|redirect=...|#|log_table=...{:login_auth}
- * @tok {login_auth:}@@3="=","|:|"|#|login={get:login}|#|password={get:pass}|#|conf=@_3 a=b|:|...{:login_auth}
  * @tok {login_auth:}login={get:login}|#|password={get:pass}|#|conf_query=SELECT 
  *   GROUP_CONCAT(CONCAT('conf.', path, '=', value) SEPARATOR '{escape:arg}|#|{:escape}') AS conf FROM ...{:login_auth}
  *
@@ -297,10 +302,6 @@ public function tok_login_auth($p) {
 	}
 
 	$this->sess->setHash($user);
-
-	if (isset($p['conf']) && is_array($p['conf']) && count($p['conf']) > 0) {
-		$this->tok_login_update('conf', $p['conf']);
-	}
 
 	if (isset($p['conf_query'])) {
 		$this->db->setQuery('__tmp', $p['conf_query']);
@@ -414,32 +415,17 @@ private function selectFromDatabase($p) {
 
 
 /**
- * Return 1 if login key is null.
+ * Return conf path value.
  *
- * @tok {login:is_null:age} -> 1 if is_null(age)
+ * @tok {login:getConf:*.privileges} = cms.super,cms.translation,shop.admin,shop.super,...
+ * @tok {login:getConf:cms.apps} 
  *
  * @throws
- * @param string $key
- * @return 1|''
- */
-public function tok_login_is_null($key) {
-	return is_null($this->sess->get($key)) ? 1 : '';
-}
-
-
-/**
- * Return privilege list (e.g. shop.admin,shop.super) if $check
- * is empty. Otherwise return 1 if privileges match or ''.
- *
- * @tok {login:getConfPrivileges} = shop.admin, shop.super 
- * @tok {login:getConfPrivileges}shop.admin | shop.super | cms.super{:login} = 1 | 1 | 1 = 1
- * @tok {login:getConfPrivileges}shop.admin & shop.translation{:login} = 1 & 0 = 0
- * 
- * @throws
- * @param string $check
+ * @param string $path
+ * @param string $arg
  * @return string
  */
-public function tok_login_getConfPrivileges($check) {
+public function tok_login_getConf($path) {
 	$sess = $this->sess->getHash();
 	$priv = [];
 
@@ -454,25 +440,20 @@ public function tok_login_getConfPrivileges($check) {
 		}
 	}
 
-	if (empty($check)) {
-		return join(',', $priv);
-	}
-
-	foreach ($priv as $value) {
-		$check = str_replace($value, '1', $check);
-	}
-
-	return $check;
+	return join(',', $priv);
 }
 
 
 /**
  * Return login key value. If key is empty return yes if login[id] is set.
- * Forbidden session value keys in {login:key} are "is_null" and "getConfPrivileges".
+ * Forbidden session value keys in {login:key} are "is_null" and "getConf".
  *
  * @tok {login:} -> yes (if logged in)
  * @tok {login:id} -> ID (value of session key id)
  * @tok {login:*} -> key=value|#|... (show all key value pairs)
+ *
+ * @tok {login:?age} -> 1|'' (1: {login:age} == null)
+ *
  * @tok {login:@*} -> key=value|#|... (show all meta data)
  * @tok {login:@[name|table]} -> show configuration value
  * @tok {login:@since} -> date('d.m.Y H:i:s', @start)
@@ -490,6 +471,10 @@ public function tok_login($key) {
 	}
 	else if ($key == '*') {
 		$res = \rkphplib\lib\kv2conf($this->sess->getHash());
+	}
+	else if (substr($key, 0, 1) == '?') {
+		$name = substr($key, 1);
+		$res = is_null($this->sess->get($name)) ? 1 : '';
 	}
 	else if (substr($key, 0, 1) == '@') {
 		$mkey = substr($key, 1);

@@ -119,6 +119,10 @@ public function tok_picture_src($p) {
 		$this->conf[$key] = $value;
 	}
 
+	if (!empty($this->conf['target_dir']) && !empty($this->conf['name']) && !empty($this->conf['use_cache'])) {
+		return $this->conf['target_dir'].'/'.$this->conf['name'];
+	}
+
 	$this->computeImgSource();
 
 	// \rkphplib\lib\log_debug('tok_picture_src> this.conf: '.print_r($this->conf, true));
