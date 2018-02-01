@@ -779,7 +779,7 @@ private function _buildin($action, $name, $param, $arg = null) {
 public function callPlugin($name, $func, $args = []) {
 
 	if (empty($this->_plugin[$name])) {
-		throw new Exception('no such plugin '.$name);
+		throw new Exception('no such plugin '.$name, join('|', array_keys($this->_plugin)));
 	}
 
 	if (!method_exists($this->_plugin[$name][0], $func)) {
