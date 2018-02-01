@@ -291,6 +291,7 @@ private function checkPrivileges($require_priv) {
 	}
 
 	$mypriv = intval($this->conf['privileges']['@me']);
+	// \rkphplib\lib\log_debug("AMenu.checkPrivileges> require_priv=[$require_priv] mypriv=[$mypriv] privileges: ".print_r($this->conf['privileges'], true));
 
 	// replace privileges with 1|0 in require_priv
 	foreach ($this->conf['privileges'] as $pname => $pval) {
