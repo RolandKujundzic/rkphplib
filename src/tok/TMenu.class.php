@@ -5,6 +5,8 @@ namespace rkphplib\tok;
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/AMenu.class.php');
 
+use \rkphplib\Exception;
+
 
 
 /**
@@ -105,6 +107,7 @@ private function level_n($start, &$html) {
 		if ($node['level'] == $level && $node['parent'] == $parent) {
 			array_push($html[$level], $this->node_html($i));
 			if ($node['type'] == 'b' && !empty($node['hi'])) {
+				// \rkphplib\lib\log_debug("level_n> i=$i node.parent=$parent node.level=$level node.type=".$node['type'].' node.hi='.$node['hi']);
 				$this->level_n($i + 1, $html);
 			}
 		}
