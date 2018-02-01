@@ -216,6 +216,12 @@ public function addNodeHi() {
 	$path = explode('/', $dir);
 	$curr_path = '';
 
+	$nc = count($this->node) - 1;
+	if ($this->node[$nc]['type'] == 'b') {
+		// fix last node type
+		$this->node[$nc]['type'] = 'l';
+	}
+
 	for ($i = 0; $i < count($path); $i++) {	
 		$curr_path .= ($i > 0) ? '/'.$path[$i] : $path[$i];
 		$found = false;
