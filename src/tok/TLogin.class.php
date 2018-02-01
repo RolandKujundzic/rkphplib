@@ -156,6 +156,9 @@ public function tok_login_check($p) {
  * @tok {login_update:}type=admin|#|...{:login_update} -> throw exception if previous type != 'admin'
  * @tok {login_update:}@allow_cols= login, password, ...|#|{sql:password}|#|@where= WHERE id={esc:id}{:login_update}
  * 
+ * @tok {login_update:conf}apps=,shop,|#|shop=1|#|shop.privileges=super{:login_update}
+ * @tok_desc Overwrite login:apps, login:shop, ... no database sync.
+ *
  * @throws
  * @param string $do reload
  * @param map $p (optional)
@@ -208,7 +211,7 @@ public function tok_login_update($do, $p) {
 		unset($kv['password']);
 	}
 
-	if (empty($kv['@where'])) {
+	if ($do != 'conf' && empty($kv['@where'])) {
 		$id = empty($p['id']) ? '' : $p['id'];
 		if (!$id) {
 			$id = empty($sess['id']) ? '' : $sess['id'];
@@ -219,11 +222,11 @@ public function tok_login_update($do, $p) {
 		}
 	}
 
-	if (empty($kv['@where'])) {
+	if ($do != 'conf' && empty($kv['@where'])) {
 		throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
 	}
 
-	if (!is_null($this->db) && count($kv) > 1) {
+	if ($do != 'conf' && !is_null($this->db) && count($kv) > 1) {
 		$query = $this->db->buildQuery($table, 'update', $kv);	
 		\rkphplib\lib\log_debug("tok_login_update> update $table: $query");
 		$this->db->execute($query);
@@ -247,6 +250,7 @@ public function tok_login_update($do, $p) {
  * from select_login result (except password) into session. Example:
  *
  * @tok {login_auth:}login={get:login}|#|password={get:password}|#|redirect=...|#|log_table=...{:login_auth}
+ * @tok {login_auth:}@@3="=","|:|"|#|login={get:login}|#|password={get:pass}|#|conf=@_3 a=b|:|...{:login_auth}
  *
  * If login is invalid set {var:login_error} = error.
  * If password is invalid set {var:password_error} = error.
@@ -290,6 +294,10 @@ public function tok_login_auth($p) {
 	}
 
 	$this->sess->setHash($user);
+
+	if (isset($p['conf']) && is_array($p['conf']) && count($p['conf']) > 0) {
+		$this->tok_login_update('conf', $p['conf']);
+	}
 
 	if (!empty($p['log_table'])) {
 		$this->logAuthInTable($p['log_table'], $user['id']);
