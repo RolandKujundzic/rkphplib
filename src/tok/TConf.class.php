@@ -248,7 +248,7 @@ public function set($lid, $name, $value) {
 		$path_pid = join('.', $path);
 
 		$r = [ 'lid' => $lid, 'path' => $path_pid ];
-		$parent = $this->db->selectOne($this->db->getQuery($qtype, [ 'path' => $path_pid ]));
+		$parent = $this->db->selectOne($this->db->getQuery($qtype, $r));
 		$r = [ 'lid' => $lid, 'pid' => $parent['id'], 'path' => $name, 'name' => $path_last, 'value' => $value ];
 	}
 	else {
