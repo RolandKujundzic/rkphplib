@@ -257,8 +257,7 @@ public function tok_login_update($do, $p) {
  * from select_login result (except password) into session. Example:
  *
  * @tok {login_auth:}login={get:login}|#|password={get:password}|#|redirect=...|#|log_table=...{:login_auth}
- * @tok {login_auth:}login={get:login}|#|password={get:pass}|#|conf_query=SELECT 
- *   GROUP_CONCAT(CONCAT('conf.', path, '=', value) SEPARATOR '{escape:arg}|#|{:escape}') AS conf FROM ...{:login_auth}
+ * @tok {login_auth:}login={get:login}|#|password={get:pass}|#|callback=cms,conf2login{:login_auth}
  *
  * If login is invalid set {var:login_error} = error.
  * If password is invalid set {var:password_error} = error.
@@ -303,10 +302,11 @@ public function tok_login_auth($p) {
 
 	$this->sess->setHash($user);
 
-	if (isset($p['conf_query'])) {
-		$this->db->setQuery('__tmp', $p['conf_query']);
-		$dbres = $this->db->selectOne($this->db->getQuery('__tmp', $user));
-		$this->tok_login_update('conf', \rkphplib\lib\conf2kv($dbres['conf']));
+	if (empty($p['conf_query'])) {
+		$tmp = \rkphplib\lib\split_str(',', $p['conf_query']);
+		$plugin = array_shift($tmp);
+		$method = array_shift($tmp);
+		$this->tok->callPlugin($plugin, $method, $tmp);
 	}
 
 	if (!empty($p['log_table'])) {
