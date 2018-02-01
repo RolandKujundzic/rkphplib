@@ -786,8 +786,13 @@ public function callPlugin($name, $func, $args = []) {
 		throw new Exception("no such plugin method $name.".$func);
 	}
 
+	\rkphplib\lib\log_debug("Tokenizer.callPlugin($name, $func> args: ".print_r($args, true));
+
 	if (count($args) == 0) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func));
+	}
+	else if (!isset($args[0]) || count($args) > 3) {
+		$res = call_user_func(array($this->_plugin[$name][0], $func), $args);
 	}
 	else if (count($args) == 1) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func), $args[0]);
@@ -797,9 +802,6 @@ public function callPlugin($name, $func, $args = []) {
 	}
 	else if (count($args) == 3) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func), $args[0], $args[1], $args[2]);
-	}
-	else if (count($args) > 3) {
-		$res = call_user_func(array($this->_plugin[$name][0], $func), $args);
 	}
 
 	return $res;
