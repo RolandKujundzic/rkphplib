@@ -1102,6 +1102,7 @@ private function tryPluginMap($name) {
 
 	foreach ($map as $cname => $list) {
 		if (in_array($name, $list)) {
+			\rkphplib\lib\log_debug("tryPluginMap($name)> autoload $cname");
 			require_once(__DIR__.'/'.$cname.'.class.php');
 			$cname = '\\rkphplib\\tok\\'.$cname;
 			$obj = new $cname();
