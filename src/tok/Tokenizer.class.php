@@ -767,6 +767,46 @@ private function _buildin($action, $name, $param, $arg = null) {
 
 
 /**
+ * Return result of plugin $name function $func.
+ * If number of args < 4 call $name.$func($args[0], $args[1], $args[2]) otherwise
+ * call $name.$func($args). 
+ *
+ * @param string $name
+ * @param string $func
+ * @param vector|map $args
+ * @return any
+ */
+public function callPlugin($name, $func, $args = []) {
+
+	if (empty($this->_plugin[$name])) {
+		throw new Exception('no such plugin '.$name);
+	}
+
+	if (!method_exists($this->_plugin[$name][0], $func)) {
+		throw new Exception("no such plugin method $name.".$func);
+	}
+
+	if (count($args) == 0) {
+		$res = call_user_func(array($this->_plugin[$name][0], $func));
+	}
+	else if (count($args) == 1) {
+		$res = call_user_func(array($this->_plugin[$name][0], $func), $args[0]);
+	}
+	else if (count($args) == 2) {
+		$res = call_user_func(array($this->_plugin[$name][0], $func), $args[0], $args[1]);
+	}
+	else if (count($args) == 3) {
+		$res = call_user_func(array($this->_plugin[$name][0], $func), $args[0], $args[1], $args[2]);
+	}
+	else if (count($args) > 3) {
+		$res = call_user_func(array($this->_plugin[$name][0], $func), $args);
+	}
+
+	return $res;
+}
+
+
+/**
  * Return plugin result = $plugin->tok_NAME($param, $arg).
  * If callback mode is not TokPlugin::TOKCALL preprocess param and arg. Example:
  *
@@ -1053,7 +1093,7 @@ private function tryPluginMap($name) {
 		'TLogin' => [ 'login', 'login:is_null', 'login_account', 'login_check', 'login_auth', 'login_update', 'login_clear' ],
 		'TLoop' => [ 'loop:var', 'loop:list', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
 		'TMath' => [ 'nf', 'number_format' ],
-		'TMenu' => [ 'menu', 'menu:add', 'menu:conf', 'menu:privileges' ],
+		'TMenu' => [ 'menu', 'menu:add', 'menu:conf', 'menu:has_priv', 'menu:privileges' ],
 		'TOutput' => [ 'output:set', 'output:get', 'output:conf', 'output:init', 'output:loop', 'output:header', 'output:footer', 'output:empty', 'output', 'sort', 'search' ],
 		'TPicture' => [ 'picture:init', 'picture:src', 'picture' ],
 		'TSQL' => [ 'sql:query', 'sql:dsn', 'sql:name', 'sql:qkey', 'sql:json', 'sql:col', 'sql:getId', 'sql:nextId', 'sql:in', 'sql:hasTable', 'sql:password', 'sql:import', 'sql', 'null' ],
