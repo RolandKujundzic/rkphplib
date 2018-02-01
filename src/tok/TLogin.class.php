@@ -302,8 +302,8 @@ public function tok_login_auth($p) {
 
 	$this->sess->setHash($user);
 
-	if (empty($p['conf_query'])) {
-		$tmp = \rkphplib\lib\split_str(',', $p['conf_query']);
+	if (!empty($p['callback'])) {
+		$tmp = \rkphplib\lib\split_str(',', $p['callback']);
 		$plugin = array_shift($tmp);
 		$method = array_shift($tmp);
 		$this->tok->callPlugin($plugin, $method, $tmp);
