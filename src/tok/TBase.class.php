@@ -10,6 +10,7 @@ require_once($parent_dir.'/lib/htmlescape.php');
 require_once($parent_dir.'/lib/split_str.php');
 require_once($parent_dir.'/lib/redirect.php');
 require_once($parent_dir.'/lib/conf2kv.php');
+require_once($parent_dir.'/lib/entity.php');
 
 use \rkphplib\Exception;
 use \rkphplib\File;
@@ -893,6 +894,8 @@ public function tok_get($param, $arg) {
  * - html: replace [ '&lt;', '&gt;', '&quot;' ] with [ '<', '>', '"' ]
  *
  * @tok {escape:tok}{x:}{:escape} = &#123;x&#58;&#125; 
+ * @tok {escape:arg}a|#|b{:escape} = &#124;&#35;&#124; (|#| = HASH_DELIMITER)
+ * @tok {escape:entity}|@||#|a|@|b{:escape} = a&#124;&#64;&#124b
  * @tok {escape:js}-_.|~!*'();:@&=+$,/?%#[]{:escape} = -_.%7C~!*'()%3B%3A%40%26%3D%2B%24%2C%2F%3F%25%23%5B%5D
  * @tok {escape:html}<a href="abc">{:escape} = &lt;a href=&quot;abc&quot;&gt;
  *  
@@ -904,8 +907,15 @@ public function tok_get($param, $arg) {
 public function tok_escape($param, $txt) {
 	$res = $txt;
 
-	if ($param == 'tok_html') {
+	if ($param == 'tok') {
 		$res = $this->_tok->escape($txt);
+	}
+	else if ($param == 'entity') {
+		list ($entity, $txt) = explode(HASH_DELIMITER, $txt, 2);
+		$res = str_replace($entity, \rkphplib\lib\entity($entity), $txt);
+	}
+	else if ($param == 'arg') {
+		$res = str_replace(HASH_DELIMITER, \rkphplib\lib\entity(HASH_DELIMITER), $txt);
 	}
 	else if ($param == 'js') {
 		// exclude "!,*,',(,)" to make it same as javascript encodeURIcomponent()
@@ -931,7 +941,9 @@ public function tok_escape($param, $txt) {
  * - js: rawurldecode($txt)
  * - html: replace [ '&lt;', '&gt;', '&quot;' ] with [ '<', '>', '"' ]
  *
- * @tok {unescape:tok}&#123;x&#58;&#125;{:unescape} = {x:} 
+ * @tok {unescape:tok}&#123;x&#58;&#125;{:unescape} = {x:}
+ * @tok {unescape:arg}a&#124;&#35;&#124;b{:unescape} = a|#|b 
+ * @tok {unescape:entity}|@||#|a&#124;&#64;&#124;b{:unescape} = a|@|b
  * @tok {unescape:html}&lt;a href=&quot;abc&quot;&gt;{:unescape} = <a href="abc">
  * @tok {unescape:js}-_.%7C~!*'()%3B%3A%40%26%3D%2B%24%2C%2F%3F%25%23%5B%5D{:unescape} = -_.|~!*'();:@&=+$,/?%#[]
  * 
@@ -943,8 +955,15 @@ public function tok_escape($param, $txt) {
 public function tok_unescape($param, $txt) {
 	$res = '';
 
-	if ($param == 'tok_html') {
+	if ($param == 'tok') {
 		$res = $this->_tok->unescape($txt);
+	}
+	else if ($param == 'arg') {
+    $res = str_replace(\rkphplib\lib\entity(HASH_DELIMITER), HASH_DELIMITER, $txt);
+	}
+	else if ($param == 'entity') {
+		list ($entity, $txt) = explode(HASH_DELIMITER, $txt, 2);
+		$res = str_replace(\rkphplib\lib\entity($entity), $entity, $txt);
 	}
 	else if ($param == 'js') {
 		$res = rawurldecode($txt);
