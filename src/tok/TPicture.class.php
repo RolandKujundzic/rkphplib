@@ -88,6 +88,8 @@ public function tok_picture_init($p) {
 	foreach ($p as $key => $value) {
 		$this->conf[$key] = $value;
 	}
+
+	// \rkphplib\lib\log_debug('tok_picture_init> this.conf: '.print_r($this->conf, true));
 }
 
 
@@ -108,10 +110,10 @@ public function tok_picture_init($p) {
  * @return string|empty
  */
 public function tok_picture_src($p) {
+	$conf = $this->conf;
+
 	$this->conf['source'] = '';
 	$this->conf['target'] = '';
-
-	$conf = $this->conf;
 
 	foreach ($p as $key => $value) {
 		$this->conf[$key] = $value;
@@ -119,6 +121,7 @@ public function tok_picture_src($p) {
 
 	$this->computeImgSource();
 
+	// \rkphplib\lib\log_debug('tok_picture_src> this.conf: '.print_r($this->conf, true));
 	if (empty($this->conf['source'])) {
 		return '';
 	}
@@ -139,7 +142,8 @@ public function tok_picture_src($p) {
 	if (!empty($this->conf['abs_path']) && !empty($this->conf['rel_path'])) {
 		$img = str_replace($this->conf['abs_path'], $this->conf['rel_path'], $img);
 	}
- 
+
+	$this->conf = $conf; 
 	return $img;
 }
     
@@ -185,14 +189,10 @@ private function computeImgSource() {
  * Resize conf.source to conf.target according to conf.resize. 
  *
  * @see http://www.imagemagick.org/script/convert.php
+ * @see http://www.imagemagick.org/script/command-line-processing.php#geometry
  */
 public function resize() {
 	$resize = $this->conf['resize'];
-
-	if (!preg_match('/^([0-9]+)x([0-9]+)[\<\>\!]?$/', $resize)) {
-		throw new Exception('invalid resize '.$resize);
-	}
-
   $resize_dir = str_replace([ '>', '<', '!' ], [ 'g', 'l', 'x' ], $resize);
 
 	if (basename(dirname($this->conf['target'])) != $resize_dir) {
@@ -200,6 +200,7 @@ public function resize() {
 		$this->conf['target'] = $target_dir.'/'.basename($this->conf['target']);
 	}
 
+	// \rkphplib\lib\log_debug('resize> this.conf: '.print_r($this->conf, true));
 	if (File::exists($this->conf['target']) && !empty($this->conf['use_cache'])) {
 		return;
   }
@@ -208,6 +209,7 @@ public function resize() {
 
 	if ($this->conf['module'] == 'convert') {
 		$r = [ 'resize' => $resize, 'source' => $this->conf['source'], 'target' => $this->conf['target'] ];
+		// \rkphplib\lib\log_debug('resize> '.$this->conf['convert.resize'].' r: '.print_r($r, true));
 		\rkphplib\lib\execute($this->conf['convert.resize'], $r); 
 	}
 	else if ($this->conf['module'] == 'gdlib') {
