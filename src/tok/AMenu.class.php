@@ -48,6 +48,7 @@ public function getPlugins($tok) {
 	$plugin['menu'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['menu:add'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['menu:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::TEXT;
+	$plugin['menu:has_priv'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['menu:privileges'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 
 	return $plugin;
@@ -259,6 +260,20 @@ private function hasTables($tables) {
 	}
 
 	return true;
+}
+
+
+/**
+ * Return 1 if privileges are ok (otherwise '').
+ *
+ * @tok {menu:has_priv}shop{:menu} -> 1 (if [shop] privilege)
+ * @tok {menu:has_priv}super & shop{:menu} -> '' (if [shop && !super] privilege)
+ *
+ * @param string $priv
+ * @return 1|''
+ */
+public function tok_has_priv($priv) {
+	return $this->checkPrivileges($priv) ? 1 : '';
 }
 
 
