@@ -3,6 +3,7 @@
 namespace rkphplib\lib;
 
 require_once(__DIR__.'/csv_explode.php');
+require_once(__DIR__.'/entity.php');
 
 if (!defined('HASH_DELIMITER')) {
   /** @const HASH_DELIMITER = '|#|' if undefined */
@@ -22,7 +23,7 @@ if (!defined('HASH_DELIMITER')) {
  * Default values are [@@1="",","] and [@@2=$d1,$d2]. 
  * All keys and values are trimmed. Use Quote character ["] to preserve whitespace and delimiter.
  * Use double quote [""] to escape ["]. If $d1 is empty return array with $d2 as delimiter.
- * If text is empty return empty array.
+ * If text is empty return empty array. Unescape entity($d2).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @param string $text
@@ -38,6 +39,9 @@ function conf2kv($text, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = array()) {
 		return array();
 	}
 
+	$e_d2 = entity($d2);
+	$has_entity = mb_strpos($txt, $e_d2) !== false;
+
 	if ($ld1 == 0 || mb_strpos($text, $d1) === false) {
 		$res = $text;
 
@@ -46,6 +50,12 @@ function conf2kv($text, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = array()) {
 		}
 		else if (mb_substr($res, 0, 1) == '"' && mb_substr($res, -1) == '"'){
 			$res = mb_substr($res, 1, -1);
+		}
+
+		if ($has_entity) {
+			foreach ($res as $key => $value) {
+				$res[$key] = str_replace($e_d2, $d2, $value);
+			}
 		}
 
 		return $res;
@@ -112,6 +122,12 @@ function conf2kv($text, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = array()) {
 
 	if ($n == 2 && count($kv) == 1 && isset($kv['@_1'])) {
 		return $kv['@_1'];
+	}
+
+	if ($has_entity) {
+		foreach ($kv as $key => $value) {
+			$kv[$key] = str_replace($e_d2, $d2, $value);
+		}
 	}
 
 	return $kv;

@@ -3,6 +3,7 @@
 namespace rkphplib\lib;
 
 require_once(dirname(__DIR__).'/Exception.class.php');
+require_once(__DIR__.'/entity.php');
 
 use rkphplib\Exception;
 
@@ -15,7 +16,7 @@ if (!defined('HASH_DELIMITER')) {
 /**
  * Convert map to string. 
  *
- * Reverse version of conf2kv(). Use '' for null values.
+ * Reverse version of conf2kv(). Use '' for null values. Escape entity($d2).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @see conf2kv
@@ -29,6 +30,7 @@ if (!defined('HASH_DELIMITER')) {
 function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1) {
 
 	$conf = $ikv ? '@@1="",","'.$d2."\n".'@@2="'.$d1.'","'.$d2.'"'.$d2."\n" : '';
+	$e_d2 = entity($d2);
 	
 	foreach ($kv as $key => $value) {
 		$conf .= $key.$d1;
@@ -43,7 +45,11 @@ function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1)
 			$conf .= ''.$d2."\n";
 		}
 		else if (is_string($value)) {
-			if (strpos($value, $d2) !== false || trim($value) != $value) {
+			if (strpos($value, $d2) !== false)
+				$value = str_replace($d2, $e_d2, $value);
+			}
+
+			if (trim($value) != $value) {
 				$value = '"'.$value.'"'; 
 			}
 
