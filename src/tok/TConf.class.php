@@ -116,14 +116,19 @@ public function tok_conf($key, $value) {
 
 
 /**
- * Set login id.
+ * Set login id. If id is empty reset to null (= no login).
  *
  * @param string
  * @return ''
  */
 public function tok_conf_id($id) {
 	if (intval($id) < 1) {
-		throw new Exception('invalid id', "id=[$id]");
+		if ($id == '') {
+			$this->lid = null;
+		}
+		else {
+			throw new Exception('invalid id', "id=[$id]");
+		}
 	}
 
 	$this->lid = $id;
