@@ -257,7 +257,7 @@ public function tok_login_update($do, $p) {
  * from select_login result (except password) into session. Example:
  *
  * @tok {login_auth:}login={get:login}|#|password={get:password}|#|redirect=...|#|log_table=...{:login_auth}
- * @tok {login_auth:}login={get:login}|#|password={get:pass}|#|callback=cms,conf2login{:login_auth}
+ * @tok {login_auth:}login={get:login}|#|password={get:pass}|#|callback=cms,tok_conf2login{:login_auth}
  *
  * If login is invalid set {var:login_error} = error.
  * If password is invalid set {var:password_error} = error.
