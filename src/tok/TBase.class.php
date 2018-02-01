@@ -1045,8 +1045,7 @@ public function tok_plugin($p) {
 				// \rkphplib\lib\log_debug("tok_plugin> require_once('$incl_path'); new $obj();");
 			}
 			else {
-				require_once($path);
-				// \rkphplib\lib\log_debug("tok_plugin> require_once('$path');");
+				throw new Exception("invalid path=[$path] or undefined PATH_$path");
 			}
 		}
 
