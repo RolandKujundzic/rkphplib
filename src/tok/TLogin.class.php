@@ -251,6 +251,8 @@ public function tok_login_update($do, $p) {
  *
  * @tok {login_auth:}login={get:login}|#|password={get:password}|#|redirect=...|#|log_table=...{:login_auth}
  * @tok {login_auth:}@@3="=","|:|"|#|login={get:login}|#|password={get:pass}|#|conf=@_3 a=b|:|...{:login_auth}
+ * @tok {login_auth:}login={get:login}|#|password={get:pass}|#|conf_query=SELECT 
+ *   GROUP_CONCAT(CONCAT('conf.', path, '=', value) SEPARATOR '{escape:arg}|#|{:escape}') AS conf FROM ...{:login_auth}
  *
  * If login is invalid set {var:login_error} = error.
  * If password is invalid set {var:password_error} = error.
@@ -297,6 +299,12 @@ public function tok_login_auth($p) {
 
 	if (isset($p['conf']) && is_array($p['conf']) && count($p['conf']) > 0) {
 		$this->tok_login_update('conf', $p['conf']);
+	}
+
+	if (isset($p['conf_query'])) {
+		$this->db->setQuery('__tmp', $p['conf_query']);
+		$dbres = $this->db->selectOne($this->db->getQuery('__tmp', $user));
+		$this->tok_login_update('conf', \rkphplib\lib\conf2kv($dbres['conf']));
 	}
 
 	if (!empty($p['log_table'])) {
