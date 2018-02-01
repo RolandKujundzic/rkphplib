@@ -57,6 +57,7 @@ public function getPlugins($tok) {
 	$plugin = [];
 	$plugin['login'] = TokPlugin::NO_BODY;
 	$plugin['login:is_null'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+	$plugin['login:getConfPrivileges'] = TokPlugin::NO_PARAM;
 	$plugin['login_account'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
@@ -427,7 +428,47 @@ public function tok_login_is_null($key) {
 
 
 /**
+ * Return privilege list (e.g. shop.admin,shop.super) if $check
+ * is empty. Otherwise return 1 if privileges match or ''.
+ *
+ * @tok {login:getConfPrivileges} = shop.admin, shop.super 
+ * @tok {login:getConfPrivileges}shop.admin | shop.super | cms.super{:login} = 1 | 1 | 1 = 1
+ * @tok {login:getConfPrivileges}shop.admin & shop.translation{:login} = 1 & 0 = 0
+ * 
+ * @throws
+ * @param string $check
+ * @return string
+ */
+public function tok_login_getConfPrivileges($check) {
+	$sess = $this->sess->getHash();
+	$priv = [];
+
+	foreach ($sess as $key => $value) {
+		if (substr($key, 0, 5) == 'conf.' && substr($key, -11) == '.privileges') {
+			$app = substr($key, 5, -11);
+			$priv_list = \rkphplib\lib\split_str(',', $value);
+
+			foreach ($priv_list as $entry) {
+				array_push($priv, $app.'.'.$entry);
+			}
+		}
+	}
+
+	if (empty($check)) {
+		return join(',', $priv);
+	}
+
+	foreach ($priv as $value) {
+		$check = str_replace($value, '1', $check);
+	}
+
+	return $check;
+}
+
+
+/**
  * Return login key value. If key is empty return yes if login[id] is set.
+ * Forbidden session value keys in {login:key} are "is_null" and "getConfPrivileges".
  *
  * @tok {login:} -> yes (if logged in)
  * @tok {login:id} -> ID (value of session key id)
