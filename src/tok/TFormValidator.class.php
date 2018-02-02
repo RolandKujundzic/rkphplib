@@ -330,6 +330,7 @@ public function tok_fv_error_message($name, $tpl = '') {
 			$res .= $this->tok_fv_error_message($key, $tpl);
 		}
 
+		// \rkphplib\lib\log_debug("tok_fv_error_message($name, ...)> name=[$name] res=[$res] - error: ".print_r($this->error, true));
 		return $res;
 	}
 
@@ -434,7 +435,7 @@ protected function parseInName($name, $value, &$p) {
 		unset($r[0]);
 	}
 
-	\rkphplib\lib\log_debug("parseInName($name, $value, ...)> r: ".print_r($r, true));
+	// \rkphplib\lib\log_debug("parseInName($name, $value, ...)> r: ".print_r($r, true));
 	$type = $p['type'];
 
 	if (in_array($type, [ 'text', 'pass', 'input', 'password' ])) {
@@ -461,7 +462,7 @@ protected function parseInName($name, $value, &$p) {
 			$p['type'] = 'password';
 		}
 	}
-	else if ($type == 'area') {
+	else if ($type == 'area' || $type == 'textarea') {
 		if (!empty($r[1]) && !empty($r[2])) {
 			$p['rows'] = $r[1];
 			unset($r[1]);
@@ -477,6 +478,10 @@ protected function parseInName($name, $value, &$p) {
 			if (!in_array($p['wrap'], [ 'soft', 'hard' ])) {
 				throw new Exception('invalid wrap=['.$p['wrap'].'] use soft|hard');
 			}
+		}
+
+		if ($type == 'area') {
+			$p['type'] = 'textarea';
 		}
 	}
 	else if ($type == 'select' || $type == 'fselect') {
@@ -497,7 +502,7 @@ protected function parseInName($name, $value, &$p) {
 		$p[$key] = $value;
 	}
 
-	\rkphplib\lib\log_debug("parseInName($name, $value, ...)> p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("parseInName($name, $value, ...)> p: ".print_r($p, true));
 }
 
 
@@ -570,7 +575,7 @@ protected function getInput($name, $ri) {
 		}
 	}
 
-	\rkphplib\lib\log_debug("getInput> tags=[$tags] input=[$input] ri: ".print_r($ri, true));
+	// \rkphplib\lib\log_debug("getInput> tags=[$tags] input=[$input] ri: ".print_r($ri, true));
 
 	$input = str_replace('$tags', $tags, $input);
 	$input = $this->tok->replaceTags($input, $ri);
@@ -631,7 +636,7 @@ private function getOptions(&$p, $opt_value) {
 		throw new Exception('leftover keys', "html=[$html] p: ".print_r($p, true));
 	}
 
-	\rkphplib\lib\log_debug("getOptions> $html");
+	// \rkphplib\lib\log_debug("getOptions> $html");
 	return $html;
 }
 
