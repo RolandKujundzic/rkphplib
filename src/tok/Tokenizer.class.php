@@ -1061,6 +1061,24 @@ public function replaceTags($tpl, $replace, $prefix = '') {
 
 
 /**
+ * Replace all tags with $replace_with. 
+ * 
+ * @param string
+ * @return string
+ */
+public function removeTags($txt, $replace_with = '') {
+	$prefix = $this->rx[1].$this->rx[2].'=';
+	$suffix = $this->rx[3];
+
+  if (mb_strpos($txt, $prefix) !== false) {
+    $txt = preg_replace('/'.preg_quote($prefix).'.+?'.preg_quote($suffix).'/', $replace_with, $txt);
+  }
+
+  return $txt;
+}
+
+
+/**
  * Return {:=$name}. Use $name = 'TAG:PREFIX' for "{:=" and $name = 'TAG:SUFFIX' for "}".
  *
  * @param string $name
