@@ -95,18 +95,11 @@ public function hasPrivileges($require_priv, $dir = '') {
 		$priv_expr = str_replace($this->tok->getTag($pname), '1', $priv_expr);
 	}
 
-	\rkphplib\lib\log_debug("TLogin.hasPrivileges> priv_expr=[$priv_expr] after @privileges");
-	$priv_map = [ 'shop' => 1, 'ToDo' => 2 ];
+	\rkphplib\lib\log_debug("TLogin.hasPrivileges> priv=[$priv] priv_expr=[$priv_expr] after @privileges");
+	$priv_map = [ 'super' => 1, 'ToDo' => 2 ];
 	foreach ($priv_map as $pname => $pval) {
-		$ptag = $this->tok->getTag($pname);
-
-		if (mb_strpos($require_priv, $ptag) === false) {
-			continue;
-		}
-
-		$pval = intval($pval);
 		$pval = ($priv & $pval) ? 1 : 0;
-		$priv_expr = str_replace($ptag, $pval, $priv_expr);
+		$priv_expr = str_replace($this->tok->getTag($pname), $pval, $priv_expr);
   }
 
 	\rkphplib\lib\log_debug("TLogin.hasPrivileges> priv_expr=[$priv_expr] after @priv");
