@@ -55,9 +55,9 @@ public function getPlugins($tok) {
 
 
 /**
- * Set user privileges. Privilege is name = 2^N if @priv is used. Try @privileges first (app.priv,...).
+ * Set 2^N map for login.priv.
  *
- * @tok {menu:privileges}@priv={login:priv}|#|super=1|#|site=2|#|....|#|@privileges={login:getConfPrivileges}{:menu}
+ * @tok {menu:privileges}super=1|#|site=2|#|....{:menu}
  *
  * @param map $map
  */
@@ -295,13 +295,13 @@ private function checkPrivileges($require_priv, $dir = '') {
 		return true;
 	}
 
-	if (!isset($this->conf['privileges']) || !isset($this->conf['privileges']['@priv']) || 
-			!isset($this->conf['privileges']['@privileges'])) {
-		throw new Exception('missing @priv or @privileges - call [menu:privileges]@priv=[login:priv]|#|@privileges=[login:getConfPrivileges]|#|...[:menu]');
+	if (empty($this->conf['privileges'])) {
+		throw new Exception('missing login.priv 2^N map - call [menu:privileges]super=1|#|...[:menu]');
 	}
 
-	$priv = intval($this->conf['privileges']['@priv']); // 2^n | 2^m | ...
-	$privileges = $this->conf['privileges']['@privileges']; // app1.priv1,app1.priv2,app2.priv1,...
+	$priv = intval($this->tok->callPlugin('login', 'tok_login', [ 'priv' ])); // 2^n | 2^m | ...
+	$tmp = \rkphplib\lib\conf2kv($this->tok->callPlugin('login', 'tok_login', [ 'conf.role' ]));
+	$privileges = str_replace('=,', '', join(',', $tmp)); // app1.priv1,app1.priv2,app2.priv1,...
 
 	\rkphplib\lib\log_debug("AMenu.checkPrivileges> require_priv=[$require_priv] dir=[$dir] priv=[$priv] privileges=[$privileges]");
 	$priv_list  = explode(',', $privileges);
