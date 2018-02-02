@@ -864,6 +864,16 @@ private function _call_plugin($name, $param, $arg = null) {
 			"plugin=$name pconf=[$pconf] arg=[$arg]");
 	}
 
+	if ($pconf & TokPlugin::ONE_PARAM) {
+		if ($alen > 0) {
+			$param = $arg;
+		}
+		else if ($plen == 0) {
+			throw new Exception('empty plugin parameter and body in '.$this->getPluginTxt("$name:$param"),
+				"plugin=$name pconf=[$pconf] param=[$param] arg=[$arg]");
+		}
+	}
+
 	$src_dir = dirname(__DIR__);
 
 	if (($pconf & TokPlugin::PARAM_LIST) || ($pconf & TokPlugin::PARAM_CSLIST)) {
@@ -895,7 +905,7 @@ private function _call_plugin($name, $param, $arg = null) {
 	if ($pconf & TokPlugin::NO_PARAM) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func), $arg);
 	}
-	else if ($pconf & TokPlugin::NO_BODY) {
+	else if ($pconf & TokPlugin::NO_BODY || $pconf & TokPlugin::ONE_PARAM) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func), $param);
 	}
 	else {
@@ -1109,11 +1119,12 @@ private function tryPluginMap($name) {
 		'TFileSystem' => [ 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'directory', 'file:size', 'file:copy', 'file:exists', 'file', 'dirname', 'basename' ],
 		'TFormValidator' => [ 'fv', 'fv:init', 'fv:conf', 'fv:check', 'fv:in', 'fv:hidden', 'fv:error', 'fv:error_message', 'fv:set_error_message' ],
 		'THtml' => [ 'html:inner', 'html:tidy', 'html:xml', 'html:uglify', 'html' ],
+		'THttp' => [ 'http:get', 'http' ],
 		'TLanguage' => [ 'language:init', 'language:get', 'language', 'txt:js', 'txt', 'ptxt' ],
-		'TLogin' => [ 'login', 'login:is_null', 'login_account', 'login_check', 'login_auth', 'login_update', 'login_clear' ],
+		'TLogin' => [ 'login', 'login_account', 'login_check', 'login_auth', 'login_update', 'login_clear' ],
 		'TLoop' => [ 'loop:var', 'loop:list', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
 		'TMath' => [ 'nf', 'number_format' ],
-		'TMenu' => [ 'menu', 'menu:add', 'menu:conf', 'menu:has_priv', 'menu:privileges' ],
+		'TMenu' => [ 'menu', 'menu:add', 'menu:conf' ],
 		'TOutput' => [ 'output:set', 'output:get', 'output:conf', 'output:init', 'output:loop', 'output:header', 'output:footer', 'output:empty', 'output', 'sort', 'search' ],
 		'TPicture' => [ 'picture:init', 'picture:src', 'picture' ],
 		'TSQL' => [ 'sql:query', 'sql:dsn', 'sql:name', 'sql:qkey', 'sql:json', 'sql:col', 'sql:getId', 'sql:nextId', 'sql:in', 'sql:hasTable', 'sql:password', 'sql:import', 'sql', 'null' ],
