@@ -786,7 +786,7 @@ public function callPlugin($name, $func, $args = []) {
 		throw new Exception("no such plugin method $name.".$func);
 	}
 
-	\rkphplib\lib\log_debug("Tokenizer.callPlugin($name, $func> args: ".print_r($args, true));
+	// \rkphplib\lib\log_debug("Tokenizer.callPlugin($name, $func> args: ".print_r($args, true));
 
 	if (count($args) == 0) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func));
