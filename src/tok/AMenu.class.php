@@ -47,23 +47,8 @@ public function getPlugins($tok) {
 	$plugin['menu'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['menu:add'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['menu:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::TEXT;
-	$plugin['menu:has_priv'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
-	$plugin['menu:privileges'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 
 	return $plugin;
-}
-
-
-/**
- * Set 2^N map for login.priv.
- *
- * @tok {menu:privileges}super=1|#|site=2|#|....{:menu}
- *
- * @param map $map
- */
-public function tok_menu_privileges($map) {
-	// \rkphplib\lib\log_debug('AMenu.tok_privileges> set conf.privileges: '.print_r($map, true));
-	$this->conf['privileges'] = $map;
 }
 
 
@@ -111,7 +96,7 @@ abstract public function tok_menu($tpl);
  *
  * {menu:add:1}label=Main|#|dir=/|#|if={:menu} -> ignore empty if, use dir=/ for active root
  * {menu:add:2}label=Sub 1|#|if_table=shop_customer, shop_item{:menu} -> ignore if table does not exist
- * {menu:add:}level=2|#|lable=sub 2|#|if_priv=super,other{:menu} -> active if user has super and other priv
+ * {menu:add:}level=2|#|lable=sub 2|#|if_priv={:=super} | {:=shop.super}{:menu} -> active if user has super or shop.super priv
  * {menu:add:1}label=Main 2|#|dir=main2{:menu} -> active if dir=main2|main2/*
  * 
  * Parameter: 
@@ -119,7 +104,7 @@ abstract public function tok_menu($tpl);
  * - label:
  * - if: ignore if empty
  * - if_table: table1, table2, ... (ignore if one table is missing)
- * - if_priv: name (see {menu:privileges}name=2^N|#|...{:menu})
+ * - if_priv: name  (super = 2^0 = 1, ToDo = 2^1 = 2, see cms_conf.role.* for app privileges)
  * - dir: e.g. apps/shop/config
  * - level (= param)
  * - type (l|b, autoset)
@@ -189,7 +174,7 @@ public function tok_menu_add($level, $node) {
 		return;
 	}
 
-	if (isset($node['if_priv']) && !$this->checkPrivileges($node['if_priv'], $node['dir'])) {
+	if (isset($node['if_priv']) && !$this->tok->callPlugin('login', 'hasPrivileges', [ $node['if_priv'], $node['dir'] ])) {
 		$this->ignore_level = $level + 1;
 		return;
 	}
@@ -265,75 +250,6 @@ private function hasTables($tables) {
 	}
 
 	return true;
-}
-
-
-/**
- * Return 1 if privileges are ok (otherwise '').
- *
- * @tok {menu:has_priv}shop{:menu} -> 1 (if [shop] privilege)
- * @tok {menu:has_priv}super & shop{:menu} -> '' (if [shop && !super] privilege)
- *
- * @param string $priv
- * @return 1|''
- */
-public function tok_has_priv($priv) {
-	return $this->checkPrivileges($priv) ? 1 : '';
-}
-
-
-/**
- * Return false if privileges do not exist.
- *
- * @param string $require_priv boolean expression e.g (priv1 | priv2) & !priv3 
- * @param string 
- * @return boolean
- */
-private function checkPrivileges($require_priv, $dir = '') {
-
-	if (strlen(trim($require_priv)) == 0) {
-		return true;
-	}
-
-	if (empty($this->conf['privileges'])) {
-		throw new Exception('missing login.priv 2^N map - call [menu:privileges]super=1|#|...[:menu]');
-	}
-
-	$priv = intval($this->tok->callPlugin('login', 'tok_login', [ 'priv' ])); // 2^n | 2^m | ...
-	$tmp = \rkphplib\lib\conf2kv($this->tok->callPlugin('login', 'tok_login', [ 'conf.role' ]));
-	$privileges = str_replace('=,', '', join(',', $tmp)); // app1.priv1,app1.priv2,app2.priv1,...
-
-	\rkphplib\lib\log_debug("AMenu.checkPrivileges> require_priv=[$require_priv] dir=[$dir] priv=[$priv] privileges=[$privileges]");
-	$priv_list  = explode(',', $privileges);
-	$priv_expr  = ' '.$require_priv.' ';
-
-	foreach ($priv_list as $pname) {
-		$priv_expr = str_replace(" $pname ", ' 1 ', $priv_expr);
-	}
-
-	\rkphplib\lib\log_debug("AMenu.checkPrivileges> priv_expr=[$priv_expr] after @privileges");
-	foreach ($this->conf['privileges'] as $pname => $pval) {
-		if (mb_strpos($require_priv, $pname) === false) {
-			continue;
-		}
-
-		$pval = intval($pval);
-		$pval = ($priv & $pval) ? 1 : 0;
-		$priv_expr = str_replace(" $pname ", " $pval ", $priv_expr);
-	}
-
-	\rkphplib\lib\log_debug("AMenu.checkPrivileges> priv_expr=[$priv_expr] after @priv");
-	$priv_expr = preg_replace('/ [a-z_\.]+ /', 0, $priv_expr);
-	$priv_expr = str_replace(' ', '', $priv_expr);
-
-  $rp_check = trim(strtr($priv_expr, '01)(&|!', '       '));
- 	if ($rp_check != '') {
-		throw new Exception('invalid privilege ['.$rp_check.']', "priv_expr=[$priv_expr] require_priv=[$require_priv]");
-	}
-
-	$res = eval('return '.$priv_expr.';');
-	\rkphplib\lib\log_debug("AMenu.checkPrivileges> res=[$res] priv_expr=[$priv_expr]");
-	return $res;
 }
 
 
