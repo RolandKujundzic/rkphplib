@@ -54,14 +54,14 @@ public function getPlugins($tok) {
  * @return string
  */
 public function tok_http_get($name) {
+	$custom = [ 'ip', 'is_msie', 'host', 'abs_host', 'script', 'query', 'script_query', 
+		'port', 'protocol', 'url', 'abs_url', 'http_url', 'https_url' ];	
   $res = '';
 
 	if ($name == '*') {
 		$res = \rkphplib\lib\kv2conf($_SERVER);
 	}
 	else if ($name == 'custom') {
-		$custom = [ 'ip', 'is_msie', 'host', 'script', 'port', 'protocol', 'url', 'abs_url', 
-			'http_url', 'https_url' ];	
 		$res = [];
 
 		foreach ($custom as $key) {
@@ -79,11 +79,27 @@ public function tok_http_get($name) {
 		}
 	}
 	else {
+		$port = getenv('SERVER_PORT');
+		$host = getenv('HTTP_HOST');
+
+		if ($port == 80) {
+			$port_host = 'http://'.$host;
+		}
+		else if ($port == 443) {
+			$port_host = 'https://'.$host;
+		}
+		else if ($port > 0) {
+			$port_host = 'http://'.$host.':'.$port;
+		}
+
 		if ($name == 'ip') {
 			$res = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '127.0.0.1';
 		}
 		else if ($name == 'is_msie') {
 			$res = (strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE') !== false) ? '1' : '';
+		}
+		else if ($name == 'abs_host') {
+			$res = $port_host;
 		}
 		else if ($name == 'host') {
 			$res = getenv('HTTP_HOST');
@@ -100,26 +116,11 @@ public function tok_http_get($name) {
 		else if ($name == 'query') {
 			$res = empty($_SERVER['QUERY_STRING']) ?  '' : $_SERVER['QUERY_STRING'];
 		}
+		else if ($name == 'script_query') {
+			$res = $_SERVER['REQUEST_URI'];
+		}
 		else if ($name == 'url' || $name == 'abs_url') {
-			if ($name == 'abs_url') {
-				$port = getenv('SERVER_PORT');
-				$host = getenv('HTTP_HOST');
-
-				if ($port == 80) {
-					$res = 'http://'.$host;
-				}
-				else if ($port == 443) {
-					$res = 'https://'.$host;
-				}
-				else if ($port > 0) {
-					$res = 'http://'.$host.':'.$port;
-				}
-			}
-			else {
-				$res = getenv('HTTP_HOST');
-			}
-
-			$res .= getenv('REQUEST_URI');
+			$res = ($name == 'abs_url') ? $port_host.getenv('REQUEST_URI') : getenv('HTTP_HOST').getenv('REQUEST_URI');
 		}
 		else if ($name == 'http_url') {
 			$res = 'http://'.getenv('HTTP_HOST');
@@ -134,7 +135,7 @@ public function tok_http_get($name) {
 			$res = 'https://'.getenv('HTTP_HOST').getenv('SCRIPT_NAME');
 		}
 		else {
-			throw new Exception("no such alias [$name] - use: ip|is_msie|host|script|port|protocol|url|http_url|https_url|query");
+			throw new Exception("no such alias [$name] - use: ".join('|', $custom));
 		}
 	}
 
