@@ -79,15 +79,17 @@ private function getMapKeys($path_str, $map) {
 	$path = explode('.', $path_str);
 	$is_array = true;
 	$found = true; 
+	$fkey = '';
 	$pkey = '';
 
-	// assume multi-map
+	\rkphplib\lib\log_debug("TokHelper.getMapKeys($path_str, ...)> path=[".join('|', $path)."] map: ".print_r($map, true));
 	while (count($path) > 0) {
 		$pkey = array_shift($path);
 
 		if (isset($map[$pkey]) || array_key_exists($pkey, $map)) {
 			if (is_array($map[$pkey])) {
 				$map = $map[$pkey];
+				$fkey = join('.', $path);
 			}
 			else {
 				$is_array = false;
@@ -99,20 +101,32 @@ private function getMapKeys($path_str, $map) {
 		}
 	}
 
+	\rkphplib\lib\log_debug("TokHelper.getMapKeys> found=[$found] fkey=[$fkey] pkey=[$pkey] is_array=[$is_array] map: ".print_r($map, true));
+	if (isset($map[$fkey])) {
+		$path_str = $fkey;
+		$found = false;
+	}
+
 	if (!$found) {
 		// check if we are using multi-map-keys
 		$len = mb_strlen($path_str); 
+		$last_value = false;
 		$res = [];
 
 		foreach ($map as $mkey => $value) {
 			if (mb_strpos($mkey, $path_str) === 0) {
 				if ($mkey == $path_str) {
-					return $value;
+					$last_value = $value;
 				}
 				
 				$key = mb_substr($mkey, $len + 1);
 				$res[$key] = $value;
 			}
+			\rkphplib\lib\log_debug("TokHelper.getMapKeys> path_str=[$path_str] mkey=[$mkey] value=[$value] res: ".print_r($res, true));
+		}
+
+		if (count($res) == 1) {
+			return $last_value;
 		}
 
 		return (count($res) > 0) ? $res : false;
