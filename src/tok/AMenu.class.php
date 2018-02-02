@@ -178,6 +178,11 @@ public function tok_menu_add($level, $node) {
 		$this->ignore_level = $level + 1;
 		return;
 	}
+	else if (preg_match('/^apps\/([A-Za-z0-9_\-]+)$/', $node['dir'], $match) && !empty($match[1]) && 
+						!$this->tok->callPlugin('login', 'tok_login', [ $match[1].'?' ])) {
+		$this->ignore_level = $level + 1;
+		return;
+	}
 		
 	$node['level'] = $level;
 	$node['type'] = 'l';	// set to leaf first
