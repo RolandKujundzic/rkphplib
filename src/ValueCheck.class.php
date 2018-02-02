@@ -80,6 +80,7 @@ public static function run($key, $value, $check) {
 	$pn = count($check);
 	$res = false;
 
+	// \rkphplib\lib\log_debug("ValueCheck::run> method=[$method] pn=[$pn] check: ".print_r($check, true));
 	if ($pn > 3) {
 		$res = self::$method($value, $check);
 	}
@@ -107,6 +108,7 @@ public static function run($key, $value, $check) {
  * Required, Int, UInt, Integer (=UInt), Real, UReal, Email, EmailPrefix, URL, URLPrefix, URLPath, HTTP, HTTPS, 
  * Phone, PhoneNumber (=Phone), Variable, PLZ
  * 
+ * @throws if no match
  * @param string
  * @return string (empty if not found)
  */
@@ -132,7 +134,11 @@ public static function getMatch($name) {
 		'Variable' => '/^[0-9A-Z_]+$/i',
 		'PLZ' => '/^[0-9]{5}$/');
 
-  return isset($rx[$name]) ? $rx[$name] : '';
+	if (!isset($rx[$name])) {
+		throw new Exception("invalid regular expression check $name - try: ".join(', ', array_keys($rx)));
+	}
+
+  return $rx[$name];
 }
 
 
@@ -163,12 +169,17 @@ public static function isUnique($value, $p) {
 /**
  * True if value matches regular expression (e.g. /[0-9]/).
  * Slash at start and end of regular expression are optional.
+ *
+ * @throws if rx is empty
  * @param string $value
  * @param string $rx
  * @return boolean
  */
 public static function isMatch($value, $rx) {
-  $res = '';
+	// \rkphplib\lib\log_debug("ValueCheck::isMatch> value=[$value] rx=[$rx]");
+	if (empty($rx)) {
+		throw new Exception('empty regular expression', "value=[$value]");
+	}
 
   if (mb_substr($rx, 0, 1) != '/' && mb_substr($rx, -1) != '/') {
 		$rx = self::getMatch($rx);
@@ -177,7 +188,9 @@ public static function isMatch($value, $rx) {
 		$rx = '/'.$rx.'/';
 	}
 
-  return preg_match($rx, $value);
+  $res = preg_match($rx, $value);
+	// \rkphplib\lib\log_debug("ValueCheck($value, $rx)> return res=[".intval($res)."]");
+  return $res;
 }
 
 
