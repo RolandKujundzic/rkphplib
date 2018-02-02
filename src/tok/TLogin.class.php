@@ -5,6 +5,7 @@ namespace rkphplib\tok;
 $parent_dir = dirname(__DIR__);
 
 require_once(__DIR__.'/TokPlugin.iface.php');
+require_once(__DIR__.'/TokHelper.trait.php');
 require_once($parent_dir.'/Database.class.php');
 require_once($parent_dir.'/Session.class.php');
 require_once($parent_dir.'/lib/kv2conf.php');
@@ -28,6 +29,7 @@ use \rkphplib\Database;
  *
  */
 class TLogin implements TokPlugin {
+use TokHelper;
 
 /** @var Tokenizer $tok */
 var $tok = null;
@@ -415,42 +417,13 @@ private function selectFromDatabase($p) {
 
 
 /**
- * Return conf path value.
- *
- * @tok {login:getConf:*.privileges} = cms.super,cms.translation,shop.admin,shop.super,...
- * @tok {login:getConf:cms.apps} 
- *
- * @throws
- * @param string $path
- * @param string $arg
- * @return string
- */
-public function tok_login_getConf($path) {
-	$sess = $this->sess->getHash();
-	$priv = [];
-
-	foreach ($sess as $key => $value) {
-		if (substr($key, 0, 5) == 'conf.' && substr($key, -11) == '.privileges') {
-			$app = substr($key, 5, -11);
-			$priv_list = \rkphplib\lib\split_str(',', $value);
-
-			foreach ($priv_list as $entry) {
-				array_push($priv, $app.'.'.$entry);
-			}
-		}
-	}
-
-	return join(',', $priv);
-}
-
-
-/**
  * Return login key value. If key is empty return yes if login[id] is set.
  * Forbidden session value keys in {login:key} are "is_null" and "getConf".
  *
  * @tok {login:} -> yes (if logged in)
  * @tok {login:id} -> ID (value of session key id)
  * @tok {login:*} -> key=value|#|... (show all key value pairs)
+ * @tok {login:conf.role.*} -> conf.role.a=value|#|... (show all key value pairs)
  *
  * @tok {login:?age} -> 1|'' (1: {login:age} == null)
  *
@@ -470,7 +443,14 @@ public function tok_login($key) {
 		// do nothing ...
 	}
 	else if ($key == '*') {
-		$res = \rkphplib\lib\kv2conf($this->sess->getHash());
+		$res = $this->sess->getHash();
+	}
+	else if (substr($key, -2) == '.*') {
+		$name = substr($key, 0, -2);
+		$res = $this->getMapKeys($name, $this->sess->getHash());
+	}
+	else if (strpos($key, '.') > 0) {
+		$res = $this->getMapKeys($key, $this->sess->getHash());
 	}
 	else if (substr($key, 0, 1) == '?') {
 		$name = substr($key, 1);
@@ -478,8 +458,9 @@ public function tok_login($key) {
 	}
 	else if (substr($key, 0, 1) == '@') {
 		$mkey = substr($key, 1);
+
 		if ($mkey == '*') {
-			$res = \rkphplib\lib\kv2conf($this->sess->getMetaHash());
+			$res = $this->sess->getMetaHash();
 		}
 		else if ($mkey == 'since') {
 			$res = date('d.m.Y H:i:s', $this->sess->getMeta('start'));
@@ -499,6 +480,10 @@ public function tok_login($key) {
 	}
 	else if ($this->sess->has('id')) {
 		$res = 'yes';
+	}
+
+	if (is_array($res)) {
+		$res = \rkphplib\lib\kv2conf($res);
 	}
 
 	return $res;
