@@ -69,6 +69,62 @@ public function getPlugins($tok) {
 
 
 /**
+ * Return 1|'' if privileges do (not) exist. Check sess.priv for 2^N privileges.
+ * Value of 2^N privileges: super=1, ToDo=2. Check sess.role.app for app privileges.
+ *
+ * @param string $require_priv boolean expression e.g (priv1 | priv2) & !priv3 
+ * @param string (default = '') 
+ * @return 1|''
+ */
+public function hasPrivileges($require_priv, $dir = '') {
+
+	if (strlen(trim($require_priv)) == 0) {
+		return 1;
+	}
+
+	$priv = intval($this->sess->get('priv')); // 2^n | 2^m | ...
+
+	$tmp = \rkphplib\lib\conf2kv($this->tok_login('conf.role'));
+	$privileges = str_replace('=,', '', join(',', $tmp)); // app1.priv1,app1.priv2,app2.priv1,...
+
+	\rkphplib\lib\log_debug("TLogin.hasPrivileges> require_priv=[$require_priv] dir=[$dir] priv=[$priv] privileges=[$privileges]");
+	$priv_list  = explode(',', $privileges);
+	$priv_expr  = $require_priv;
+
+	foreach ($priv_list as $pname) {
+		$priv_expr = str_replace($this->tok->getTag($pname), '1', $priv_expr);
+	}
+
+	\rkphplib\lib\log_debug("TLogin.hasPrivileges> priv_expr=[$priv_expr] after @privileges");
+	$priv_map = [ 'shop' => 1, 'ToDo' => 2 ];
+	foreach ($priv_map as $pname => $pval) {
+		$ptag = $this->tok->getTag($pname);
+
+		if (mb_strpos($require_priv, $ptag) === false) {
+			continue;
+		}
+
+		$pval = intval($pval);
+		$pval = ($priv & $pval) ? 1 : 0;
+		$priv_expr = str_replace($ptag, $pval, $priv_expr);
+  }
+
+	\rkphplib\lib\log_debug("TLogin.hasPrivileges> priv_expr=[$priv_expr] after @priv");
+	$priv_expr = $this->tok->removeTags($priv_expr, '0');
+  $priv_expr = str_replace(' ', '', $priv_expr);
+
+  $rp_check = trim(strtr($priv_expr, '01)(&|!', '       '));
+  if ($rp_check != '') {
+    throw new Exception('invalid privilege ['.$rp_check.']', "priv_expr=[$priv_expr] require_priv=[$require_priv]");
+  }
+
+  $res = eval('return '.$priv_expr.';');
+  \rkphplib\lib\log_debug("TLogin.hasPrivileges> res=[$res] priv_expr=[$priv_expr]");
+  return $res;
+}
+
+
+/**
  * Set session key value.
  *
  * @param string $key
