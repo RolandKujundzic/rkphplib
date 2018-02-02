@@ -4,6 +4,7 @@ namespace rkphplib\lib;
 
 require_once(dirname(__DIR__).'/Exception.class.php');
 require_once(__DIR__.'/entity.php');
+require_once(__DIR__.'/is_map.php');
 
 use rkphplib\Exception;
 
@@ -29,7 +30,8 @@ if (!defined('HASH_DELIMITER')) {
  */
 function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1) {
 
-	$conf = $ikv ? '@@1="",","'.$d2."\n".'@@2="'.$d1.'","'.$d2.'"'.$d2."\n" : '';
+	$d3 = '|:|';
+	$conf = $ikv ? '@@1="",","'.$d2."\n".'@@2="'.$d1.'","'.$d2.'"'.$d2."\n".'@@3="'.$d1.'","'.$d3.'"'.$d2."\n" : '';
 	$e_d2 = entity($d2);
 	
 	foreach ($kv as $key => $value) {
@@ -56,9 +58,9 @@ function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1)
 			$conf .= $value.$d2."\n";
 		}
 		else if (is_array($value)) {
-			if (count(array_filter(array_keys($value), 'is_string')) == 0) {
+			if (is_map($value)) {
 				$q = str_pad("", $level, '"');
-				$conf .= $q.'@2 '.kv2conf($value, $d1, $d2, false, $level + 1).$q.$d2."\n";
+				$conf .= $q.'@_3 '.kv2conf($value, $d1, $d3, false, $level + 1).$q.$d3."\n";
 			}
 			else {
 				$arr = array();
@@ -79,7 +81,7 @@ function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1)
 					array_push($arr, $val);
 				}
 
-				$conf .= '@1 '.join(',', $arr).$d2."\n";
+				$conf .= '@_1 '.join(',', $arr).$d2."\n";
 			}
 		}
 		else {
