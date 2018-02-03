@@ -86,7 +86,7 @@ private function getMapKeys($path_str, $map) {
 	$fkey = '';
 	$pkey = '';
 
-	// \rkphplib\lib\log_debug("TokHelper.getMapKeys($path_str, ...)> path=[".join('|', $path)."] map: ".print_r($map, true));
+	\rkphplib\lib\log_debug("TokHelper.getMapKeys($path_str, ...)> path=[".join('|', $path)."] map: ".print_r($map, true));
 	while (count($path) > 0) {
 		$pkey = array_shift($path);
 
@@ -105,7 +105,7 @@ private function getMapKeys($path_str, $map) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TokHelper.getMapKeys> found=[$found] fkey=[$fkey] pkey=[$pkey] is_array=[$is_array] map: ".print_r($map, true));
+	\rkphplib\lib\log_debug("TokHelper.getMapKeys> found=[$found] fkey=[$fkey] pkey=[$pkey] is_array=[$is_array] map: ".print_r($map, true));
 	if (isset($map[$fkey])) {
 		$path_str = $fkey;
 		$found = false;
@@ -126,11 +126,11 @@ private function getMapKeys($path_str, $map) {
 				$key = mb_substr($mkey, $len + 1);
 				$res[$key] = $value;
 			}
-			// \rkphplib\lib\log_debug("TokHelper.getMapKeys> path_str=[$path_str] mkey=[$mkey] value=[$value] res: ".print_r($res, true));
+			\rkphplib\lib\log_debug("TokHelper.getMapKeys> path_str=[$path_str] mkey=[$mkey] value=[$value] res: ".print_r($res, true));
 		}
 
 		if (count($res) == 1) {
-			return $last_value;
+			return ($last_value === false && count($res) > 0) ? $res : $last_value;
 		}
 
 		return (count($res) > 0) ? $res : false;
