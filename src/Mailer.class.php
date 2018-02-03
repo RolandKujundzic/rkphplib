@@ -420,6 +420,8 @@ private function _email_name($email, $name) {
  * @param string $name
  */
 private function _add_address($typ, $email, $name) {
+	$email = trim($email);
+	$name = trim($name);
 
 	if (empty($name) && strpos($email, ',')) {
 		$email_name_list = array();
