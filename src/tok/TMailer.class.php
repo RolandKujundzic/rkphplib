@@ -19,6 +19,8 @@ use \rkphplib\Mailer;
  *
  */
 class TMailer implements TokPlugin {
+use TokHelper;
+
 
 /** @var Tokenizer $tok = null */
 protected $tok = null;
@@ -38,7 +40,7 @@ public function getPlugins($tok) {
 	$this->tok = $tok;
 
   $plugin = [];
-  $plugin['mail:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+  $plugin['mail:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
   $plugin['mail:html'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
   $plugin['mail:txt'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
   $plugin['mail:send'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
@@ -91,8 +93,11 @@ public function tok_mail_init($conf) {
 
 	$this->mail = new Mailer();
 	
+	if (!empty($conf['subject'])) {
+		$this->mail->setSubject($conf['subject']); 
+	}
+
 	$map = [ 
-		'subject' => [ 'setSubject' ], 
 		'from' => [ 'setFrom', 'from.name', 'from.sender' ],
 		'to' => [ 'setTo', 'to.name' ], 
 		'cc' => [ 'setCc', 'cc.name' ],
@@ -101,33 +106,45 @@ public function tok_mail_init($conf) {
 	];
 
 	foreach ($map as $key => $info) {
-		if (isset($conf[$key])) {
-			$func = $info[0];
-			$param_1 = $conf[$key];
+		if (empty($conf[$key])) {
+			continue;
+		}
 
-			if (count($info) == 1) {
-				$this->mail->$func($param_1);
-			}
-			else if (count($info) == 2) {
-				$param_2 = isset($conf[$info[1]]) ? $conf[$info[1]] : '';
-				$this->mail->$func($param_1, $param_2);
-			}
-			else if (count($info) == 3) {
-				$param_2 = isset($conf[$info[1]]) ? $conf[$info[1]] : '';
-				$param_3 = isset($conf[$info[2]]) ? $conf[$info[2]] : '';
-				$this->mail->$func($param_1, $param_2, $param_3);
-			}
+		$func = $info[0];
+		$param_1 = $conf[$key];
+
+		if (count($info) == 1) {
+			$this->mail->$func($param_1);
+		}
+		else if (count($info) == 2) {
+			$param_2 = isset($conf[$info[1]]) ? $conf[$info[1]] : '';
+			$this->mail->$func($param_1, $param_2);
+		}
+		else if (count($info) == 3) {
+			$param_2 = isset($conf[$info[1]]) ? $conf[$info[1]] : '';
+			$param_3 = isset($conf[$info[2]]) ? $conf[$info[2]] : '';
+			$this->mail->$func($param_1, $param_2, $param_3);
 		}
 	}
 
+	$this->mail->useSMTP($conf['smtp.host']);
+
+	/*
 	$smtp = $this->getMapKeys('smtp', $conf);
-	if (count($smtp) > 0) {
+	print "<pre>SMTP: ".print_r($smtp, true)."<br>\nconf: ".print_r($conf, true)."</pre>"; exit(1);
+	if (is_array($smtp) && count($smtp) > 0) {
 		$this->mail->useSMTP($smtp);
 	}
+	else {
+		throw new Exception('you must use SMTP [mail:init]smtp.host=...');
+	}
+	*/
 
 	$header = $this->getMapKeys('header', $conf);
-	foreach ($header as $key => $value) {
-		$this->mail->setHeader($key, $value);
+	if (is_array($header)) {
+		foreach ($header as $key => $value) {
+			$this->mail->setHeader($key, $value);
+		}
 	}
 }
 
