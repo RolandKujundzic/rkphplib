@@ -87,7 +87,7 @@ public function hasPrivileges($require_priv, $dir = '') {
 	$tmp = \rkphplib\lib\conf2kv($this->tok_login('conf.role'));
 	$privileges = str_replace('=,', '', join(',', $tmp)); // app1.priv1,app1.priv2,app2.priv1,...
 
-	\rkphplib\lib\log_debug("TLogin.hasPrivileges> require_priv=[$require_priv] dir=[$dir] priv=[$priv] privileges=[$privileges]");
+	// \rkphplib\lib\log_debug("TLogin.hasPrivileges> require_priv=[$require_priv] dir=[$dir] priv=[$priv] privileges=[$privileges]");
 	$priv_list  = explode(',', $privileges);
 	$priv_expr  = $require_priv;
 
@@ -95,14 +95,14 @@ public function hasPrivileges($require_priv, $dir = '') {
 		$priv_expr = str_replace($this->tok->getTag($pname), '1', $priv_expr);
 	}
 
-	\rkphplib\lib\log_debug("TLogin.hasPrivileges> priv=[$priv] priv_expr=[$priv_expr] after @privileges");
+	// \rkphplib\lib\log_debug("TLogin.hasPrivileges> priv=[$priv] priv_expr=[$priv_expr] after @privileges");
 	$priv_map = [ 'super' => 1, 'ToDo' => 2 ];
 	foreach ($priv_map as $pname => $pval) {
 		$pval = ($priv & $pval) ? 1 : 0;
 		$priv_expr = str_replace($this->tok->getTag($pname), $pval, $priv_expr);
   }
 
-	\rkphplib\lib\log_debug("TLogin.hasPrivileges> priv_expr=[$priv_expr] after @priv");
+	// \rkphplib\lib\log_debug("TLogin.hasPrivileges> priv_expr=[$priv_expr] after @priv");
 	$priv_expr = $this->tok->removeTags($priv_expr, '0');
   $priv_expr = str_replace(' ', '', $priv_expr);
 
@@ -112,7 +112,7 @@ public function hasPrivileges($require_priv, $dir = '') {
   }
 
   $res = eval('return '.$priv_expr.';');
-  \rkphplib\lib\log_debug("TLogin.hasPrivileges> res=[$res] priv_expr=[$priv_expr]");
+  // \rkphplib\lib\log_debug("TLogin.hasPrivileges> res=[$res] priv_expr=[$priv_expr]");
   return $res;
 }
 
@@ -286,7 +286,7 @@ public function tok_login_update($do, $p) {
 
 	if (!is_null($this->db) && count($kv) > 1) {
 		$query = $this->db->buildQuery($table, 'update', $kv);	
-		\rkphplib\lib\log_debug("tok_login_update> update $table: $query");
+		// \rkphplib\lib\log_debug("tok_login_update> update $table: $query");
 		$this->db->execute($query);
 	}
 
@@ -295,7 +295,7 @@ public function tok_login_update($do, $p) {
 	}
 
 	if (count($kv) > 1) {
-		\rkphplib\lib\log_debug("tok_login_update> #kv=".(count($kv))." update session: ".print_r($kv, true));
+		// \rkphplib\lib\log_debug("tok_login_update> #kv=".(count($kv))." update session: ".print_r($kv, true));
 		$this->sess->setHash($kv, true);
 	}
 
@@ -468,6 +468,7 @@ private function selectFromDatabase($p) {
 /**
  * Return login key value. If key is empty return yes if login[id] is set.
  * Forbidden session value keys in {login:key} are "is_null" and "getConf".
+ * Append suffix "?" to prevent Exception if key is missing.
  *
  * @tok {login:} -> yes (if logged in)
  * @tok {login:id} -> ID (value of session key id)
@@ -494,12 +495,22 @@ public function tok_login($key) {
 	else if ($key == '*') {
 		$res = $this->sess->getHash();
 	}
-	else if (substr($key, -2) == '.*') {
-		$name = substr($key, 0, -2);
-		$res = $this->getMapKeys($name, $this->sess->getHash());
-	}
 	else if (strpos($key, '.') > 0) {
+		if (substr($key, -2) == '.*') {
+			$key = substr($key, 0, -2);
+		}
+
+		$required = true;
+		if (substr($key, -1) == '?') {
+			$key = substr($key, 0, -1);
+			$required = false;
+		}
+
 		$res = $this->getMapKeys($key, $this->sess->getHash());
+
+		if (($res === false || (is_string($res) && strlen($res) == 0)) && $required) {
+			throw new Exception('[login:'.$key.'] no such key in session (use '.$key.'?)');
+		}
 	}
 	else if (substr($key, 0, 1) == '?') {
 		$name = substr($key, 1);
