@@ -1123,6 +1123,7 @@ private function tryPluginMap($name) {
 		'TLanguage' => [ 'language:init', 'language:get', 'language', 'txt:js', 'txt', 'ptxt' ],
 		'TLogin' => [ 'login', 'login_account', 'login_check', 'login_auth', 'login_update', 'login_clear' ],
 		'TLoop' => [ 'loop:var', 'loop:list', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
+		'TMailer' => [ 'mail:init', 'mail:html', 'mail:txt', 'mail:send', 'mail:attach', 'mail' ],
 		'TMath' => [ 'nf', 'number_format' ],
 		'TMenu' => [ 'menu', 'menu:add', 'menu:conf' ],
 		'TOutput' => [ 'output:set', 'output:get', 'output:conf', 'output:init', 'output:loop', 'output:header', 'output:footer', 'output:empty', 'output', 'sort', 'search' ],
