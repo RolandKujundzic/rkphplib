@@ -76,6 +76,10 @@ private function getMapKeys($path_str, $map) {
 		throw new Exception('empty path', 'map: '.print_r($map, true));
 	}
 
+	if (!is_array($map)) {
+		throw new Exception('invalid map', "path_str=[$path_str] map: ".print_r($map, true));
+	}
+
 	$path = explode('.', $path_str);
 	$is_array = true;
 	$found = true; 
