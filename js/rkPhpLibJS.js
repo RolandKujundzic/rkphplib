@@ -37,4 +37,4 @@ this.searchOutput = function(el) {
 }
 
 
-rkphplib = new rkPhpLibJS();
+var rkphplib = new rkPhpLibJS();
