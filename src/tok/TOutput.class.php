@@ -12,7 +12,7 @@ require_once($parent_dir.'/lib/split_str.php');
 require_once($parent_dir.'/lib/conf2kv.php');
 require_once($parent_dir.'/lib/is_map.php');
 
-use \rkphplib\Exception;
+/se \rkphplib\Exception;
 use \rkphplib\ADatabase;
 use \rkphplib\Database;
 use \rkphplib\File;
@@ -70,13 +70,13 @@ public function getPlugins($tok) {
 
 
 /**
- * Return search input. Always call searchOutput() (auto-appended after output:init). Examples:
+ * Return search input. Always call rkphplib.searchOutput() (include js/rkPhpLibJS.js). Examples:
  * 
  * @tok {search:status}options= 1={txt:}active{:txt},99={txt:}deleted{:txt},100={txt:}inactive{:txt}{:search} =
- *   <select name="s_status" onchange="searchOutput(this)"><option value="">...</option><option value="1">{txt:}active{:txt}</option>...</select>
+ *   <select name="s_status" onchange="rkphplib.searchOutput(this)"><option value="">...</option><option value="1">{txt:}active{:txt}</option>...</select>
  *
  * @tok {search:name}width=5{:search} =
- *   <input type="text" name="s_name" value="{get:s_name}" style="width:$WIDTHch" onkeypress="searchOutput(this)">
+ *   <input type="text" name="s_name" value="{get:s_name}" style="width:$WIDTHch" onkeypress="rkphplib.searchOutput(this)">
  *
  * @tok {search:name}overlay=1|#|sort=1|#|label=NAME|#| ...{:search} = NAME
  *
@@ -98,8 +98,9 @@ public function tok_search($col, $p) {
 
 	$value = isset($_REQUEST['s_'.$col]) ? \rkphplib\lib\htmlescape($_REQUEST['s_'.$col]) : '';
 
+	\rkphplib\lib\log_debug("tok_search($col, ...)> type=[".$p['type']."] value=[$value]");
 	if ($p['type'] == 'select') {
-		$res = '<select name="s_'.$col.'" onchange="searchOutput(this)">';
+		$res = '<select name="s_'.$col.'" onchange="rkphplib.searchOutput(this)">';
 		$options = \rkphplib\lib\conf2kv($p['options'], '=', ',');
 
 		if (isset($options['@_1'])) {
@@ -133,7 +134,7 @@ public function tok_search($col, $p) {
 		$res .= '</select>';
 	}
 	else if ($p['type'] == 'text') {
-		$res = '<input type="text" name="s_'.$col.'" value="'.$value.'" placeholder="'.$this->getSearchPlaceholder($col).'" onkeypress="searchOutput(this)"';
+		$res = '<input type="text" name="s_'.$col.'" value="'.$value.'" placeholder="'.$this->getSearchPlaceholder($col).'" onkeypress="rkphplib.searchOutput(this)"';
 
 		if (!empty($p['width'])) {
 			$res .= 'style="width:'.intval($p['width']).'ch"';
@@ -147,6 +148,7 @@ public function tok_search($col, $p) {
 		$res = empty($p['sort']) ? $p['label'] : $p['label'].' '.$this->tok->getPluginTxt('sort:'.$col);
 	}
 
+	\rkphplib\lib\log_debug("tok_search> return [$res]");
 	return $res;
 }
 
