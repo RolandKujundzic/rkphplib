@@ -96,9 +96,9 @@ public function tok_search($col, $p) {
 		}
 	}
 
-	$value = isset($_REQUEST['s_'.$col]) ? \rkphplib\lib\htmlescape($_REQUEST['s_'.$col]) : '';
+	$s_value = isset($_REQUEST['s_'.$col]) ? \rkphplib\lib\htmlescape($_REQUEST['s_'.$col]) : '';
 
-	\rkphplib\lib\log_debug("tok_search($col, ...)> type=[".$p['type']."] value=[$value]");
+	\rkphplib\lib\log_debug("tok_search($col, ...)> type=[".$p['type']."] s_value=[$s_value]");
 	if ($p['type'] == 'select') {
 		$res = '<select name="s_'.$col.'" onchange="rkphplib.searchOutput(this)">';
 		$options = \rkphplib\lib\conf2kv($p['options'], '=', ',');
@@ -112,29 +112,25 @@ public function tok_search($col, $p) {
 			if (isset($this->set_search['s_'.$col.'_options'])) {
 				$options = \rkphplib\lib\split_str(',', $this->set_search['s_'.$col.'_options']);
 				foreach ($options as $opt_value) {
+					$selected = ($opt_value == $s_value) ? ' selected' : '';
 					$opt_value = \rkphplib\lib\htmlescape($opt_value);
 					$label = $opt_value ? $this->tok->getPluginTxt('txt:', $opt_value) : $this->tok->getPluginTxt('txt:any');
-					$res .= '<option value="'.$opt_value.'">'.$label."</option>\n";
+					$res .= '<option value="'.$opt_value.'"'.$selected.'>'.$label."</option>\n";
 				}
 			}
 		}
 		else {
 			foreach ($options as $value => $label) {
-				$res .= '<option value="'.\rkphplib\lib\htmlescape($value).'">'.\rkphplib\lib\htmlescape($label)."</option>\n";
+				$selected = ($value == $s_value) ? ' selected' : '';
+				$res .= '<option value="'.\rkphplib\lib\htmlescape($value).'"'.$selected.'>'.\rkphplib\lib\htmlescape($label)."</option>\n";
 			}
-		}
-
-		if ($value) {
-			$res = str_replace('<option value="'.$value.'">', '<option value="'.$value.'" selected>', $res);
-		}
-		else {
-			$res = str_replace('<option value="">', '<option value="" selected>', $res);
 		}
 
 		$res .= '</select>';
 	}
 	else if ($p['type'] == 'text') {
-		$res = '<input type="text" name="s_'.$col.'" value="'.$value.'" placeholder="'.$this->getSearchPlaceholder($col).'" onkeypress="rkphplib.searchOutput(this)"';
+		$res = '<input type="text" name="s_'.$col.'" value="'.\rkphplib\lib\htmlescape($s_value).'" placeholder="'.
+			$this->getSearchPlaceholder($col).'" onkeypress="rkphplib.searchOutput(this)"';
 
 		if (!empty($p['width'])) {
 			$res .= 'style="width:'.intval($p['width']).'ch"';
