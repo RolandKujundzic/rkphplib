@@ -494,6 +494,11 @@ public function tok_link($name_list, $p) {
 		unset($p['@']);
 	}
 
+	$rbase = basename($_SERVER['SCRIPT_NAME']);
+	if (!empty($rbase) && $res == '?') {
+		$res = dirname($_SERVER['SCRIPT_NAME']).'?';
+	}
+
 	return $res.self::encodeHash($p);
 }
 
