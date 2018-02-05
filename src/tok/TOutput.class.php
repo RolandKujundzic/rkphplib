@@ -12,7 +12,7 @@ require_once($parent_dir.'/lib/split_str.php');
 require_once($parent_dir.'/lib/conf2kv.php');
 require_once($parent_dir.'/lib/is_map.php');
 
-/se \rkphplib\Exception;
+use \rkphplib\Exception;
 use \rkphplib\ADatabase;
 use \rkphplib\Database;
 use \rkphplib\File;
