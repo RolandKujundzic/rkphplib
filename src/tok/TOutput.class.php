@@ -133,7 +133,7 @@ public function tok_search($col, $p) {
 			$this->getSearchPlaceholder($col).'" onkeypress="rkphplib.searchOutput(this)"';
 
 		if (!empty($p['width'])) {
-			$res .= 'style="width:'.intval($p['width']).'ch"';
+			$res .= ' style="width:'.intval($p['width']).'ch"';
 		}
 
 		$res .= '/>'; 
@@ -1058,23 +1058,29 @@ private function getRangeExpression($col, $value, $range) {
 		return $col."='$value'";
 	}
 
-	list ($a, $b) = explode(',', $value, 2);
-
-	if (mb_strlen($a) == 0) {
-		throw new Exception("invalid number a=[$a] in a,b");
-	}
-
-	if (mb_strlen($b) == 0) {
-		throw new Exception("invalid number b=[$b] in a,b");
-	}
-
 	$bracket_op = [ '[' => '<=', ']' => '>=' ];
 	$bracket_1 = mb_substr($range, 0, 1);
 	$bracket_2 = mb_substr($range, -1);
 	$op1 = $bracket_op[$bracket_1];
 	$op2 = $bracket_op[$bracket_2];
 
-	$expr = "('$a' $op1 $col AND '$b' $op2 $col)";
+	list ($a, $b) = explode(',', $value, 2);
+	$len_a = mb_strlen($a);
+	$len_b = mb_strlen($b);
+
+	if ($len_a == 0 && $len_b == 0) {
+		throw new Exception("invalid range [$a,$b]");
+	}
+	else if ($len_a == 0) {
+		$expr = "('$b' $op2 $col)";
+	}
+	else if ($len_b == 0) {
+		$expr = "('$a' $op1 $col)";
+	}
+	else {
+		$expr = "('$a' $op1 $col AND '$b' $op2 $col)";
+	}
+
 	return $expr;
 }
 
