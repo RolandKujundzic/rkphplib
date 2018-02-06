@@ -75,7 +75,7 @@ protected $_qinfo = [];
 
 
 /**
- * Return md5 hash base on dsn and $query_map (see setQueryMap).
+ * Return md5 hash based on dsn and $query_map (see setQueryMap).
  * 
  * @throws
  * @param string $dsn
@@ -105,6 +105,23 @@ public static function computeId($dsn, $query_map = null) {
 	}
 
 	return $res;
+}
+
+
+/**
+ * Compute md5 of map.
+ * 
+ * @param map $p
+ * @return string
+ */
+public static function getMapId($p) {
+	$id = '';
+
+	foreach ($p as $key => $value) {
+		$id = md5($key.':'.$value.'|'.$id);
+	}
+
+	return $id;
 }
 
 
