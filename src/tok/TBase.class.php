@@ -460,6 +460,15 @@ public function tok_link($name_list, $p) {
 		}
 	}
 
+	$kv = $this->_tok->getVar('link_keep');
+	if (is_array($kv)) {
+		foreach ($kv as $key => $value) {
+			if (!isset($p[$key]) && $key != SETTINGS_REQ_DIR) {
+				$p[$key] = $value;
+			}
+		}
+	}
+
 	if (empty(SETTINGS_REQ_CRYPT)) {
 		$dir = '';
 

@@ -479,9 +479,9 @@ public function tok_output_conf($p) {
 		$this->conf = [
 			'search' => '',
 			'sort' => '',
-			'sort.desc' => '<a href="{link:$keep}"><img src="img/sort/desc.gif" border="0" alt=""></a>',
-      'sort.asc' => '<a href="{link:$keep}"><img src="img/sort/asc.gif" border="0" alt=""></a>',
-      'sort.no' => '<a href="{link:$keep}"><img src="img/sort/no.gif" border="0" alt=""></a>',
+			'sort.desc' => '<a href="{link:}@={get:dir}{:link}"><img src="img/sort/desc.gif" border="0" alt=""></a>',
+      'sort.asc' => '<a href="{link:}@={get:dir}{:link}"><img src="img/sort/asc.gif" border="0" alt=""></a>',
+      'sort.no' => '<a href="{link:}@={get:dir}{:link}"><img src="img/sort/no.gif" border="0" alt=""></a>',
 			'reset' => 1,
 			'req.last' => 'last',
 			'req.sort' => 'sort',
@@ -497,7 +497,7 @@ public function tok_output_conf($p) {
 			'table.type' => '',			
 			'table.data' => '',
 			'table.url' => '',
-			'scroll.link' => '<a href="index.php?'.$this->tok->getTag('keep').'">'.$this->tok->getTag('link').'</a>',
+			'scroll.link' => '<a href="{link:}@={get:dir}|#|last={:=last}{:link}">'.$this->tok->getTag('link').'</a>',
 			'scroll.first' => '<img src="img/scroll/first.gif" border="0">',
 			'scroll.prev' => '<img src="img/scroll/prev.gif" border="0">',
 			'scroll.next' => '<img src="img/scroll/next.gif" border="0">',
@@ -525,12 +525,12 @@ public function tok_output_conf($p) {
  *  reset= 1
  *  search = 
  *  sort =
- *  sort.desc = <a href="{link:$keep}"><img src="img/sort/desc.gif" border="0" alt=""></a>
- *  sort.asc = <a href="{link:$keep}"><img src="img/sort/asc.gif" border="0" alt=""></a>
- *  sort.no = <a href="{link:$keep}"><img src="img/sort/no.gif" border="0" alt=""></a>
+ *  sort.desc = <a href="{link:}@={get:dir}{:link}"><img src="img/sort/desc.gif" border="0" alt=""></a>
+ *  sort.asc = <a href="{link:}@={get:dir}{:link}"><img src="img/sort/asc.gif" border="0" alt=""></a>
+ *  sort.no = <a href="{link:}@={get:dir}{:link}"><img src="img/sort/no.gif" border="0" alt=""></a>
  *  req.sort= sort
  *  req.last= last
- *  keep= SETTINGS_REQ_DIR, $req.sort, $req.last (comma separated list)
+ *  keep= SETTINGS_REQ_DIR, $req.sort, $req.last (comma separted list - if search add s_*)
  *  images= (use {:=_image_num}, {:=_image1}, {:=_image_preview})  
  *  pagebreak= 0
  *  pagebreak_fill= 1
@@ -544,7 +544,7 @@ public function tok_output_conf($p) {
  *  table.columns= array_keys (or: col_1n / first_list / tag1, ... )
  *  table.url= (e.g. path/to/file = file://path/to/file or http[s]://...) 
  *  table.data= 
- *  scroll.link= <a href="index.php?{:=keep}">{:=link}</a>
+ *  scroll.link= <a href="{link:}@={get:dir}|#|last={:=last}{:link}">{:=link}</a>
  *  scroll.first= <img src="img/scroll/first.gif" border="0">
  *  scroll.prev= <img src="img/scroll/prev.gif" border="0">
  *  scroll.next= <img src="img/scroll/next.gif" border="0">
@@ -579,6 +579,7 @@ public function tok_output_init($p) {
 	  $this->fillTable();
 	}
 
+	$this->exportLinkKeep();
 	$this->computeEnv();
 
 	if ($this->env['pagebreak'] > 0) {
@@ -882,32 +883,49 @@ private function getScrollJumpHtml() {
 
 
 /**
- * Return scroll link. Replace {:=link}, {:=keep[_crypt]} and {:=last} in conf[scroll.$key].
+ * Return scroll link. Replace {:=link} and {:=last} in conf[scroll.$key].
  * 
  * @param string $key
  * @param int $last
  * @return string
  */
 private function _scroll_link($key, $last) {
+	$tpl = $this->conf['scroll.link'];
+	$link = $this->conf['scroll.'.$key];
 
-	$kv = [ $this->conf['req.last'] => rawurlencode($last) ];
+	$res = $this->tok->replaceTags($tpl, [ 'link' => $link, 'last' => $last ]);
+	\rkphplib\lib\log_debug("_scroll_link($key, $last)> tpl=[$tpl] link=[$link] last=[$last] res=[$res]");
+	return $res;
+}
+
+
+/**
+ * Export link keep map {v:=#link_keep}dir={get:dir}|#|last={get:last}|#|...
+ */
+private function exportLinkKeep() {
 	$keep_param = \rkphplib\lib\split_str(',', $this->conf['keep']);
+	$kv = [];
 
-	foreach ($keep_param as $name) {
-		if (isset($_REQUEST[$name])) {
-			$value = $this->getValue($name);
-			$kv[$name] = $value;
+	$last = $this->conf['req.last'];
+	if (!in_array($last, $keep_param)) {
+		array_push($keep_param, $last);
+	}
+
+	if (!empty($this->conf['search'])) {
+		$tmp = array_keys(\rkphplib\lib\conf2kv($this->conf['search'], ':', ','));
+		foreach ($tmp as $key) {
+			array_push($keep_param, 's_'.$key);
 		}
 	}
 
-	$res = $this->tok->replaceTags($this->conf['scroll.link'], [
-		'link' => $this->conf['scroll.'.$key],
-		'keep' => http_build_query($kv), 
-		'keep_crypt' => TBase::encodeHash($kv),
-		'last' => $last
-	]);
+	\rkphplib\lib\log_debug("exportLinkKeep> ".join('|', $keep_param));
+	foreach ($keep_param as $name) {
+		if (isset($_REQUEST[$name])) {
+			$kv[$name] = $this->getValue($name);
+		}
+	}
 
-	return $res;
+	$this->tok->setVar('link_keep', $kv);
 }
 
 
