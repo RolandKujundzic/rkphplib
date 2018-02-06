@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Javascript functions referenced from rkphplib.
  *
@@ -5,7 +7,6 @@
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 function rkPhpLibJS() {
-'use strict';
 
 /** @var this me */
 var me = this;
@@ -37,4 +38,6 @@ this.searchOutput = function(el) {
 }
 
 
+
 var rkphplib = new rkPhpLibJS();
+
