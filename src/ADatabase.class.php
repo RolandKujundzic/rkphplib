@@ -109,16 +109,19 @@ public static function computeId($dsn, $query_map = null) {
 
 
 /**
- * Compute md5 of map.
+ * Compute md5 of map. Ignore columns in exclude list.
  * 
  * @param map $p
+ * @param vector $exclude
  * @return string
  */
-public static function getMapId($p) {
+public static function getMapId($p, $exclude = []) {
 	$id = '';
 
 	foreach ($p as $key => $value) {
-		$id = md5($key.':'.$value.'|'.$id);
+		if (!in_array($key, $exclude)) {
+			$id = md5($key.':'.$value.'|'.$id);
+		}
 	}
 
 	return $id;
