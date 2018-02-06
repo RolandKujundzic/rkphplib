@@ -283,6 +283,20 @@ public function has($key, $map = '') {
  * @param string $map (default = '')
  * @return bool
  */
+public function count($key, $map = '') {
+	$skey = $this->sessKey($map);
+	return count($_SESSION[$skey]);
+}
+
+
+/**
+ * Remove session key.
+ * 
+ * @throws
+ * @param string $key
+ * @param string $map (default = '')
+ * @return bool
+ */
 public function remove($key, $map = '') {
 	$skey = $this->sessKey($map);
 

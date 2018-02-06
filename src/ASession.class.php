@@ -409,6 +409,16 @@ abstract public function remove($key, $map = '');
 
 
 /**
+ * Return count of session (map) keys.
+ * 
+ * @param string $key
+ * @param string $map = ''
+ * @return int
+ */
+abstract public function count($key, $map = '');
+
+
+/**
  * Destroy session data.
  */
 abstract public function destroy();
