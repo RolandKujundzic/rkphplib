@@ -93,7 +93,7 @@ public function init($conf) {
 	}
 	
 	$skey = $this->getSessionKey();
-	$skey_meta =$this->getSessionKey(true); 
+	$skey_meta =$this->getSessionKey('meta'); 
 
 	// \rkphplib\lib\log_debug('Session::init> session_id='.session_id()." in ".ini_get('session.save_path')." - skey=$skey meta=$skey_meta");
 
@@ -142,21 +142,28 @@ public function init($conf) {
 
 
 /**
- * Return (meta) session key. If $key is not empty check if key was set.
- * 
- * @param bool $meta (default = false)
- * @param string $key (default = '')
+ * Return (map) session key. Use map = meta for meta data. 
+ *
+ * @throws 
+ * @param string $map (default = '')
  * @return string
  */
-private function sessKey($meta = false, $key = '') {
-	$skey = $this->getSessionKey($meta);
+private function sessKey($map = '') {
+	$skey = $this->getSessionKey($map);
 
-	if (!isset($_SESSION[$skey]) || !is_array($_SESSION[$skey])) {
-		throw new Exception('call init first', "skey=$skey");
+	if (!isset($_SESSION[$skey])) {
+		if ($map == '' || $map == 'meta') {
+			throw new Exception("call init $map first", "skey=$skey");
+		}
+		else {
+			// create new map ... record maps in meta.map
+			$_SESSION[$skey] = [];	
+			$this->push('map', $map, 'meta');
+		}
 	}
 
-	if (!empty($key) && !array_key_exists($key, $_SESSION[$skey])) {
-		throw new Exception('no such session key: '.$key, "skey=$skey");
+	if (!is_array($_SESSION[$skey])) {
+		throw new Exception("session map [$map] conflict", "skey=$skey");
 	}
 
 	return $skey;
@@ -168,92 +175,59 @@ private function sessKey($meta = false, $key = '') {
  */
 public function destroy() {
 	$skey = $this->sessKey();
-	$skey_meta = $this->sessKey(true);
+	$skey_meta = $this->sessKey('meta');
+
+	if (isset($_SESSION[$skey_meta]['map'])) {
+		foreach ($_SESSION[$skey_meta]['map'] as $map) {
+			$mkey = $this->sessKey($map);
+			unset($_SESSION[$mkey]);
+		}
+	}
 
 	unset($_SESSION[$skey]);
 	unset($_SESSION[$skey_meta]);
 }
 
 
-/**
- * Set session metadata.
+/*
+ * Set session value. Use map=meta for metadata.
  *
+ * @throws 
  * @param string $key
  * @param any $value
+ * @param string $map (default = '' = no session map)
  */
-public function setMeta($key, $value) {
-	$skey = $this->sessKey(true);
+public function set($key, $value, $map = '') {
+	$skey = $this->sessKey($map);
 	$_SESSION[$skey][$key] = $value;
-}
-
-
-/**
- * Get session metadata.
- * 
- * @throws if key is not set
- * @param string $key
- * @return any
- */
-public function getMeta($key) {
-	$skey = $this->sessKey(true, $key);
-	return $_SESSION[$skey][$key];
-}
-
-
-/**
- * Get session metadata hash.
- * 
- * @return map<string:any>
- */
-public function getMetaHash() {
-	$skey = $this->sessKey(true);
-	return $_SESSION[$skey];
-}
-
-
-/**
- * True if session metadata key exists.
- * 
- * @param string $key
- * @return bool
- */
-public function hasMeta($key) {
-	$skey = $this->sessKey(true);
-	return array_key_exists($key, $_SESSION[$skey]);
 }
 
 
 /*
- * Set session value.
+ * Push value to session vector|map $key. If value is pair assume session map. 
+ * Auto create vector|map if missing. Use map=meta for metadata.
  *
+ * @throws 
  * @param string $key
- * @param any $value
+ * @param any|pair $value
+ * @param string $map (default = '' = no session map)
  */
-public function set($key, $value) {
-	$skey = $this->sessKey();
-	$_SESSION[$skey][$key] = $value;
-}
-
-
-/**
- * Set session map. Overwrite existing unless merge = true.
- *
- * @param map<string:any> $key
- * @param bool $merge (default = false)
- * @param any $value
- */
-public function setHash($p, $merge = false) {
-	$skey = $this->sessKey();
-
-	if (!is_array($p)) {
-		throw new Exception('invalid parameter');
+public function push($key, $value, $map = '') {
+	$skey = $this->sessKey($map);
+	
+	if (!isset($_SESSION[$skey][$key])) {
+		$_SESSION[$skey][$key] = [];
 	}
 
-	if ($merge) {
-		$_SESSION[$skey] = array_merge($_SESSION[$skey], $p);
+	if (!is_array($_SESSION[$skey][$key])) {
+		throw new Exception('session key is not array', "key=$key map=$map skey=$skey");
+	}
+
+	if (is_array($value) && count($value) == 2) {
+		$_SESSION[$skey][$key][$value[0]] = $value[1];
 	}
 	else {
-		$_SESSION[$skey] = $p;
+		array_push($_SESSION[$skey][$key], $value);
 	}
 }
 
@@ -264,10 +238,12 @@ public function setHash($p, $merge = false) {
  * 
  * @throws if key is not set and required
  * @param string $key
+ * @param bool $required (default = true)
+ * @param string $map (default = '')
  * @return any|null (if not found)
  */
-public function get($key, $required = true) {
-	$skey = $this->sessKey();
+public function get($key, $required = true, $map = '') {
+	$skey = $this->sessKey($map);
 	$res = null;
 
 	if (mb_substr($key, -1) == '?') {
@@ -279,7 +255,7 @@ public function get($key, $required = true) {
 		$res = $_SESSION[$skey][$key];
 	}
 	else if ($required) {
-		throw new Exception('[login:'.$key.'] no such key in session (use '.$key.'?)', "skey=$skey");
+		throw new Exception('[login:'.$key.'] no such key in session (use '.$key.'?)', "skey=$skey map=$map");
 	}
 
 	return $res;
@@ -287,25 +263,51 @@ public function get($key, $required = true) {
 
 
 /**
+ * True if session key exists.
+ * 
+ * @param string $key
+ * @param string $map (default = '')
+ * @return bool
+ */
+public function has($key, $map = '') {
+	$skey = $this->sessKey($map);
+	return array_key_exists($key, $_SESSION[$skey]);
+}
+
+
+/**
  * Get session hash.
  * 
+ * @param map (default = '')
  * @return map<string:any>
  */
-public function getHash() {
-	$skey = $this->sessKey();
+public function getHash($map = '') {
+	$skey = $this->sessKey($map);
 	return $_SESSION[$skey];
 }
 
 
 /**
- * True if session key exists.
- * 
- * @param string $key
- * @return bool
+ * Set session map. Overwrite existing unless merge = true.
+ *
+ * @param map<string:any> $key
+ * @param bool $merge (default = false)
+ * @param string $map (default = '')
+ * @param any $value
  */
-public function has($key) {
-	$skey = $this->sessKey();
-	return array_key_exists($key, $_SESSION[$skey]);
+public function setHash($p, $merge = false, $map = '') {
+	$skey = $this->sessKey($map);
+
+	if (!is_array($p)) {
+		throw new Exception('invalid parameter');
+	}
+
+	if ($merge) {
+		$_SESSION[$skey] = array_merge($_SESSION[$skey], $p);
+	}
+	else {
+		$_SESSION[$skey] = $p;
+	}
 }
 
 

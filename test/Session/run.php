@@ -13,12 +13,12 @@ $th->load('src/Session.class.php');
 $sess = new \rkphplib\Session();
 $sess->init([ 'name' => 'test' ]);
 
-$th->compareHash('Session init', $sess->getMetaHash(), [ 'script' => 'run.php' ]);
-$th->compare('hasMeta(script)', [ $sess->hasMeta('script') ], [ true ]);
-$th->compare('getMeta(docroot)', [ $sess->getMeta('docroot') ], [ '' ]);
+$th->compareHash('Session init', $sess->getHash('meta'), [ 'script' => 'run.php' ]);
+$th->compare('has(script, meta)', [ $sess->has('script', 'meta') ], [ true ]);
+$th->compare('get(docroot, true, meta)', [ $sess->get('docroot', true, 'meta') ], [ '' ]);
 
-$sess->setMeta('host', 'localhost');
-$th->compare('set|getMeta(host)', [ $sess->getMeta('host') ], [ 'localhost' ]);
+$sess->set('host', 'localhost', 'meta');
+$th->compare('set|get(host, true, meta)', [ $sess->get('host', true, 'meta') ], [ 'localhost' ]);
 
 $th->compare('getConf(inactive)', [ $sess->getConf('inactive') ], [ 7200 ]);
 $th->compare('getSessionKey()', [ $sess->getSessionKey() ], [ md5('test:docroot') ]);

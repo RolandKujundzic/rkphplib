@@ -520,16 +520,16 @@ public function tok_login($key) {
 		$mkey = substr($key, 1);
 
 		if ($mkey == '*') {
-			$res = $this->sess->getMetaHash();
+			$res = $this->sess->getHash('meta');
 		}
 		else if ($mkey == 'since') {
-			$res = date('d.m.Y H:i:s', $this->sess->getMeta('start'));
+			$res = date('d.m.Y H:i:s', $this->sess->get('start', true, 'meta'));
 		}
 		else if ($mkey == 'lchange') {
-			$res = date('d.m.Y H:i:s', $this->sess->getMeta('last'));
+			$res = date('d.m.Y H:i:s', $this->sess->get('last', true, 'meta'));
 		}
-		else if ($this->sess->hasMeta($mkey)) {
-			$res = $this->sess->getMeta($mkey);
+		else if ($this->sess->has($mkey, 'meta')) {
+			$res = $this->sess->get($mkey, true, 'meta');
 		}
 		else {
 			$res = $this->sess->getConf($mkey);

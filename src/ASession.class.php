@@ -81,16 +81,16 @@ public function initMeta() {
 	}
 
 	$script = empty($_SERVER['SCRIPT_FILENAME']) ? '' : $_SERVER['SCRIPT_FILENAME'];
-	$this->setMeta('script', $script);
+	$this->set('script', $script, 'meta');
 
 	$docroot = empty($_SERVER['DOCUMENT_ROOT']) ? '' : $_SERVER['DOCUMENT_ROOT'];
-	$this->setMeta('docroot', $docroot);
+	$this->set('docroot', $docroot, 'meta');
 
 	$host = empty($_SERVER['HTTP_HOST']) ? '' : $_SERVER['HTTP_HOST'];
-	$this->setMeta('host', $host);
+	$this->set('host', $host, 'meta');
 
-	$this->setMeta('start', time());
-	$this->setMeta('last', time());
+	$this->set('start', time(), 'meta');
+	$this->set('last', time(), 'meta');
 
 	$this->conf['init_meta'] = 1;
 }
@@ -207,29 +207,31 @@ public function validScope() {
 	$docroot = empty($_SERVER['DOCUMENT_ROOT']) ? '' : $_SERVER['DOCUMENT_ROOT'];
 	$ok = false;
 
+	$m_script = $this->get('script', true, 'meta');
+
 	switch ($this->conf['scope']) {
 		case 'script':
-			if ($script == $this->getMeta('script')) {
+			if ($script == $m_script) {
 				$ok = true;
 			}
 			break;
 		case "dir":
-			if (dirname($script) == dirname($this->getMeta('script'))) {
+			if (dirname($script) == dirname($m_script)) {
 				$ok = true;
 			}
 			break;
 		case "subdir":
-			if (mb_strpos(dirname($script), dirname($this->getMeta('script'))) === 0) {
+			if (mb_strpos(dirname($script), dirname($m_script)) === 0) {
 				$ok = true;
 			}
 			break;
 		case "host":
-			if ($host == $this->getMeta('host')) {
+			if ($host == $this->get('host', true, 'meta')) {
 				$ok = true;
 			}
 			break;
 		case 'docroot':
-			if ($docroot == $this->getMeta('docroot')) {
+			if ($docroot == $this->get('docroot', true, 'meta')) {
 				$ok = true;
 			}
 			break;
@@ -287,14 +289,14 @@ public function hasExpired() {
 	$now = time();
 	$expire_reason = '';
 
-	if ($now - $this->getMeta('start') > $this->conf['ttl']) {
+	if ($now - $this->get('start', true, 'meta') > $this->conf['ttl']) {
 		$expire_reason = 'ttl';
 	}
-	else if ($now - $this->getMeta('last') > $this->conf['inactive']) {
+	else if ($now - $this->get('last', true, 'meta') > $this->conf['inactive']) {
 		$expire_reason = 'inactive';
 	}
 	else {
-		$this->setMeta('last', time());
+		$this->set('last', time(), 'meta');
 	}
 
 	return $expire_reason;
@@ -305,10 +307,10 @@ public function hasExpired() {
  * Return (meta) session key. Key is md5(conf.name:conf.scope)[_meta].
  *
  * @throws if setConf was not called
- * @param bool $meta (default = true)
+ * @param string $map (default = '')
  * @return string
  */
-public function getSessionKey($meta = false) {
+public function getSessionKey($map = '') {
 
 	if (empty($this->conf['name'])) {
 		throw new Exception('call setConf first');
@@ -316,8 +318,8 @@ public function getSessionKey($meta = false) {
 
 	$skey = md5($this->conf['name'].':'.$this->conf['scope']);
 
-	if ($meta) {
-		$skey .= '_meta';
+	if ($map != '') {
+		$skey .= '_'.$map;
 	}
 
 	return $skey;
@@ -336,84 +338,65 @@ abstract public function init($conf);
 
 
 /**
- * Set session value.
+ * Set session (map) value.
  *
  * @param string $key
  * @param any $value
+ * @param string $map = ''
  */
-abstract public function set($key, $value);
+abstract public function set($key, $value, $map = '');
 
 
 /**
- * Set session map. Overwrite existing.
+ * Push value into session (map) key. If value is pair assume
+ * key is map otherwise assume key is vector (auto-create if missing).
  *
- * @param map<string:any> $key
+ * @param string $key
  * @param any $value
+ * @param string $map = ''
  */
-abstract public function setHash($p);
+abstract public function push($key, $value, $map = '');
 
 
 /**
- * Get session value.
+ * Set session (map) map. Overwrite existing unless merge = true.
+ *
+ * @param map<string:any> $p
+ * @param bool $merge = false
+ * @param string $map = ''
+ */
+abstract public function setHash($p, $merge = false, $map = '');
+
+
+/**
+ * Get session (map) value.
  * 
  * @throws if key is not set and required
  * @param string $key
+ * @param bool $required = true
+ * @param string $map = ''
  * @return any
  */
-abstract public function get($key, $required = true);
+abstract public function get($key, $required = true, $map = '');
 
 
 /**
- * Get session hash.
+ * Get session (map) hash.
  * 
+ * @param string $map = ''
  * @return map<string:any>
  */
-abstract public function getHash();
+abstract public function getHash($map = '');
 
 
 /**
- * True if session key exists.
+ * True if session (map) key exists.
  * 
  * @param string $key
+ * @param string $map = ''
  * @return bool
  */
-abstract public function has($key);
-
-
-/**
- * Set session metadata value.
- *
- * @param string $key
- * @param any $value
- */
-abstract public function setMeta($key, $value);
-
-
-/**
- * Get session metadata value.
- * 
- * @throws if key is not set
- * @param string $key
- * @return any
- */
-abstract public function getMeta($key);
-
-
-/**
- * Get session metadata hash.
- * 
- * @return map<string:any>
- */
-abstract public function getMetaHash();
-
-
-/**
- * True if session metadata key exists.
- * 
- * @param string $key
- * @return bool
- */
-abstract public function hasMeta($key);
+abstract public function has($key, $map = '');
 
 
 /**
