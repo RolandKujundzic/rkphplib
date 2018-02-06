@@ -400,6 +400,15 @@ abstract public function has($key, $map = '');
 
 
 /**
+ * Remove session (map) key.
+ * 
+ * @param string $key
+ * @param string $map = ''
+ */
+abstract public function remove($key, $map = '');
+
+
+/**
  * Destroy session data.
  */
 abstract public function destroy();
