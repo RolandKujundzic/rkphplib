@@ -276,6 +276,25 @@ public function has($key, $map = '') {
 
 
 /**
+ * Remove session key.
+ * 
+ * @throws
+ * @param string $key
+ * @param string $map (default = '')
+ * @return bool
+ */
+public function remove($key, $map = '') {
+	$skey = $this->sessKey($map);
+
+	if (!isset($_SESSION[$skey][$key])) {
+		throw new Exception('no such key in session map', "key=$key map=$map skey=$skey");
+	}
+
+	unset($_SESSION[$skey][$key]);
+}
+
+
+/**
  * Get session hash.
  * 
  * @param map (default = '')
