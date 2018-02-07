@@ -1064,6 +1064,12 @@ public function replaceTags($tpl, $replace, $prefix = '') {
 			$tag = $this->rx[1].$this->rx[2].'='.$prefix.$key.$this->rx[3];
 			$tpl = str_replace($tag, $value, $tpl);
 		}
+		else {
+			foreach ($value as $akey => $aval) {
+				$tag = $this->rx[1].$this->rx[2].'='.$prefix.$key.'.'.$akey.$this->rx[3];
+				$tpl = str_replace($tag, $aval, $tpl);
+			}
+		}
 	}
 
 	return $tpl;
