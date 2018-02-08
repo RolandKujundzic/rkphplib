@@ -55,6 +55,7 @@ public function getPlugins($tok) {
  * picture_dir: data/picture/upload
  * preview_dir: data/picture/preview
  * convert.resize: convert -colorspace sRGB -geometry {:=resize} {:=source} {:=target}
+ * convert.resize^: convert -colorspace sRGB -geometry {:=resize}^ -gravity center -extent {:=resize} {:=source} {:=target}
  * module: convert (=default) | gdlib
  * use_cache: 1
  * ignore_missing: 1
@@ -75,6 +76,9 @@ public function tok_picture_init($p) {
   	$default['preview_dir'] = 'data/picture/preview';
  		$default['convert.resize'] = 'convert -colorspace sRGB -geometry '.
 			$this->tok->getTag('resize').' '.$this->tok->getTag('source').' '.$this->tok->getTag('target');
+		$default['convert.resize^'] = 'convert -colorspace sRGB -geometry '.
+			$this->tok->getTag('resize').'^ -gravity center -extent '.$this->tok->getTag('resize').' '.
+			$this->tok->getTag('source').' '.$this->tok->getTag('target');
 	  $default['default'] = 'default.jpg';
 		$default['ignore_missing'] = 1;
 		$default['module'] = 'convert';
@@ -190,14 +194,15 @@ private function computeImgSource() {
 
 
 /**
- * Resize conf.source to conf.target according to conf.resize. 
+ * Resize conf.source to conf.target according to conf.resize. Use trailing ^ for exact resize
+ * (center and clip image). 
  *
  * @see http://www.imagemagick.org/script/convert.php
  * @see http://www.imagemagick.org/script/command-line-processing.php#geometry
  */
 public function resize() {
 	$resize = $this->conf['resize'];
-  $resize_dir = str_replace([ '>', '<', '!' ], [ 'g', 'l', 'x' ], $resize);
+  $resize_dir = str_replace([ '>', '<', '!', '^' ], [ 'g', 'l', 'x', '' ], $resize);
 
 	if (basename(dirname($this->conf['target'])) != $resize_dir) {
 		$target_dir = dirname($this->conf['target']).'/'.$resize_dir;
@@ -212,9 +217,18 @@ public function resize() {
   Dir::create(dirname($this->conf['target']), 0777, true);
 
 	if ($this->conf['module'] == 'convert') {
-		$r = [ 'resize' => $resize, 'source' => $this->conf['source'], 'target' => $this->conf['target'] ];
-		// \rkphplib\lib\log_debug('resize> '.$this->conf['convert.resize'].' r: '.print_r($r, true));
-		\rkphplib\lib\execute($this->conf['convert.resize'], $r); 
+		if (substr($resize, -1) == '^') {
+			// resize to exact extend, center and clip image
+			$resize = substr($resize, 0, -1);
+			$r = [ 'resize' => $resize, 'source' => $this->conf['source'], 'target' => $this->conf['target'] ];
+			// \rkphplib\lib\log_debug('resize> '.$this->conf['convert.resize^'].' r: '.print_r($r, true));
+			\rkphplib\lib\execute($this->conf['convert.resize^'], $r); 
+		}
+		else {
+			$r = [ 'resize' => $resize, 'source' => $this->conf['source'], 'target' => $this->conf['target'] ];
+			// \rkphplib\lib\log_debug('resize> '.$this->conf['convert.resize'].' r: '.print_r($r, true));
+			\rkphplib\lib\execute($this->conf['convert.resize'], $r);
+		}
 	}
 	else if ($this->conf['module'] == 'gdlib') {
 		throw new Exception('todo');
