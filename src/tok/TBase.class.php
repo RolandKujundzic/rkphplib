@@ -505,7 +505,8 @@ public function tok_link($name_list, $p) {
 
 	$rbase = basename($_SERVER['SCRIPT_NAME']);
 	if (!empty($rbase) && $res == '?') {
-		$res = dirname($_SERVER['SCRIPT_NAME']).'/?';
+		$script_dir = dirname($_SERVER['SCRIPT_NAME']);
+		$res = ($script_dir == '/') ? '/?' : $script_dir.'/?';
 	}
 
 	return $res.self::encodeHash($p);
