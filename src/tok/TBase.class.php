@@ -902,7 +902,8 @@ public function tok_get($param, $arg) {
 
 /**
  * Return escaped value. Parameter:
- * 
+ *
+ * - url: rawurlencode 
  * - js: same as javascript encodeURIcomponent = rawurlencode without "!,*,',(,)"
  * - tok: Tokenizer->escape $txt
  * - html: replace [ '&lt;', '&gt;', '&quot;' ] with [ '<', '>', '"' ]
@@ -911,6 +912,7 @@ public function tok_get($param, $arg) {
  * @tok {escape:arg}a|#|b{:escape} = &#124;&#35;&#124; (|#| = HASH_DELIMITER)
  * @tok {escape:entity}|@||#|a|@|b{:escape} = a&#124;&#64;&#124b
  * @tok {escape:js}-_.|~!*'();:@&=+$,/?%#[]{:escape} = -_.%7C~!*'()%3B%3A%40%26%3D%2B%24%2C%2F%3F%25%23%5B%5D
+ * @tok {escape:url}a b{:escape} = a%20b
  * @tok {escape:html}<a href="abc">{:escape} = &lt;a href=&quot;abc&quot;&gt;
  *  
  * @throws
@@ -923,6 +925,9 @@ public function tok_escape($param, $txt) {
 
 	if ($param == 'tok') {
 		$res = $this->_tok->escape($txt);
+	}
+	else if ($param == 'url') {
+		$res = rawurlencode($txt);
 	}
 	else if ($param == 'entity') {
 		list ($entity, $txt) = explode(HASH_DELIMITER, $txt, 2);
@@ -960,6 +965,7 @@ public function tok_escape($param, $txt) {
  * @tok {unescape:entity}|@||#|a&#124;&#64;&#124;b{:unescape} = a|@|b
  * @tok {unescape:html}&lt;a href=&quot;abc&quot;&gt;{:unescape} = <a href="abc">
  * @tok {unescape:js}-_.%7C~!*'()%3B%3A%40%26%3D%2B%24%2C%2F%3F%25%23%5B%5D{:unescape} = -_.|~!*'();:@&=+$,/?%#[]
+ * @tok {unescape:url}a%20b{:unescape} = a b
  * 
  * @throws 
  * @param string $param
@@ -971,6 +977,9 @@ public function tok_unescape($param, $txt) {
 
 	if ($param == 'tok') {
 		$res = $this->_tok->unescape($txt);
+	}
+	else if ($param == 'url') {
+		$res = rawurldecode($txt);
 	}
 	else if ($param == 'arg') {
     $res = str_replace(\rkphplib\lib\entity(HASH_DELIMITER), HASH_DELIMITER, $txt);
