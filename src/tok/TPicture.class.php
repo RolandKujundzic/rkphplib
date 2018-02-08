@@ -148,7 +148,7 @@ public function tok_picture_src($p) {
 	}
 
 	$this->conf = $conf; 
-	return $img;
+	return dirname($img).'/'.rawurlencode(basename($img));
 }
     
 
