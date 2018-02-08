@@ -37,7 +37,7 @@ private $save_as = null;
  */
 public function open($zip_file) {
 
-	if (!is_null($zip_dir)) {
+	if (!is_null($this->zip_dir)) {
 		throw new Exception('zip archive already open', "zip_file=$zip_file zip_dir=$zip_dir");
 	}
 
@@ -45,14 +45,14 @@ public function open($zip_file) {
 		throw new Exception('empty zip filename');
 	}
 
-  $this->zip = new ZipArchive();
+  $this->zip = new \ZipArchive();
 
   if (self::$is_broken) {
 		$zip_dir = DOCROOT.'/data/tmp/'.basename($zip_file).'.'.mt_rand(10000000, 99999999);
 		Dir::create($zip_dir, 0, true);
   }
   else {
-    if ($this->zip->open($zip_file, ZIPARCHIVE::CREATE) !== true) {
+    if ($this->zip->open($zip_file, \ZIPARCHIVE::CREATE) !== true) {
       throw new Exception('open zip archive '.$zip_file.' failed');
 		}
 	}
@@ -105,7 +105,7 @@ public function addFile($file, $local_file = '') {
 			File::copy($file, $this->zip_dir.'/'.$save_as);
 		}
 	}
-	else if (File::exists($file, true) && !$this->_zip->addFile($file, $local_file)) {
+	else if (File::exists($file, true) && !$this->zip->addFile($file, $local_file)) {
 		throw new Exception("failed to add file [$file] rel_path=[$local_file]", "zip=".$this->save_as);
 	}
 }
@@ -135,6 +135,15 @@ public function close() {
 		if (!File::exists($this->save_as)) {
 			throw new Exception('failed to create zip file '.$this->save_as);
     }
+
+		$zip_dir = dirname($this->save_as).'/'.File::basename($this->save_as, true);
+		if (Dir::exists($zip_dir)) {
+			Dir::remove($zip_dir);
+		}
+
+		if (Dir::exists($this->zip_dir)) {
+			Dir::remove($this->zip_dir);
+		}
   }
 }
 
@@ -144,7 +153,7 @@ public function close() {
  */
 public static function extract($zip_file, $target_dir = '') {
 
-	$zip = new ZipArchive;
+	$zip = new \ZipArchive();
 
 	if (empty($target_dir)) {
 		if (substr($zip_file, -4) == '.zip' || substr($zip_file, -4) == '.ZIP') {
@@ -217,7 +226,7 @@ public function addText($file, $text) {
 		File::save($this->zip_dir.'/'.$file, $text);
 	}
 	else {
-		$this->_zip->addFromString($file, $text);
+		$this->zip->addFromString($file, $text);
 	}
 }
 
@@ -233,7 +242,7 @@ public function createArchive($archive, $files, $path = '') {
 	$this->open($archive);
 
 	foreach ($files as $file) {
-		$local_file = empty($path) ? '' : str_replace($path, '', $file);
+		$local_file = empty($path) ? '' : str_replace($path.'/', '', $file);
 		$this->addFile($file, $local_file);
 	}
 
