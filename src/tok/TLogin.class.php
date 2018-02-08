@@ -62,7 +62,7 @@ public function getPlugins($tok) {
 	$plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_update'] = TokPlugin::KV_BODY;
-	$plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
+	$plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 
 	return $plugin;
 }
@@ -131,25 +131,48 @@ public function set($key, $value) {
 /**
  * Logout. Example:
  *
- * {login_clear:}log_table=cms_login_history{:login_clear}
+ * @tok {login_clear:}
  *
  * @return ''
  */
-public function tok_login_clear($p) {
+public function tok_login_clear() {
 	if ($this->sess) {
-		if (!empty($p['log_table'])) {
-			$r = [];
-			$r['lid'] = $this->sess->get('id');
-			$r['session_md5'] = md5(session_id());
-			$r['_table'] = ADatabase::escape_name($p['log_table']);
- 			$this->db->execute($this->db->getQuery('log_logout', $r));
-		}
-
+		$this->setLoginHistory('LOGOUT');
 		$this->sess->destroy();
 		$this->sess = null;
 	}
 
 	return '';
+}
+
+
+/**
+ * Insert entry into login history table.
+ *
+ * @param string $info
+ * @param string $data (default = null)
+ */
+private function setLoginHistory($info, $data = null) {
+	if (!$this->sess || !$this->sess->has('id') || !$this->sess->has('login_history_table')) {
+		return;
+	}
+
+	$r = [];
+	$r['mid'] = null;
+	$r['lid'] = $this->sess->get('id');
+	$r['fingerprint'] = $this->sess->get('fingerprint');
+	$r['ip'] = empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR'];
+	$r['info'] = $info;
+	$r['data'] = $data;
+	$r['session_md5'] = md5(session_id());
+	$r['_table'] = ADatabase::escape_name($this->sess->get('login_history_table'));
+
+	if ($this->sess->has('admin2user')) {
+		$admin = $this->sess->get('admin2user');
+		$r['mid'] = $admin['id'];
+	}
+
+	$this->db->execute($this->db->getQuery('login_history', $r));
 }
 
 
@@ -192,12 +215,11 @@ public function tok_login_check($p) {
 		$table = ADatabase::escape($p['table']);
 
 		$query_map = [
-			'select_login' => "SELECT *, PASSWORD({:=password}) AS password_input FROM $table WHERE login={:=login}",
+			'select_login' => "SELECT *, PASSWORD({:=password}) AS password_input FROM $table WHERE login={:=login} AND status != 99",
 			'insert' => "INSERT INTO $table (login, password, type, person, language, priv) VALUES ".
 				"({:=login}, PASSWORD({:=password}), {:=type}, {:=person}, {:=language}, {:=priv})",
-			'log_login' => "INSERT INTO {:=_table} (lid, session_md5, fingerprint, ip) VALUES ".
-				"({:=lid}, {:=session_md5}, {:=fingerprint}, {:=ip})",
-			'log_logout' => "UPDATE {:=_table} SET logout=NOW() WHERE lid={:=lid} AND session_md5={:=session_md5}"
+			'login_history' => "INSERT INTO {:=_table} (lid, mid, session_md5, fingerprint, ip, info, data) VALUES ".
+				"({:=lid}, {:=mid}, {:=session_md5}, {:=fingerprint}, {:=ip}, {:=info}, {:=data})"
 			];
 
 		$this->db = Database::getInstance(SETTINGS_DSN, $query_map);
@@ -309,6 +331,10 @@ public function tok_login_update($do, $p) {
  *
  * @tok {login_auth:}login={get:login}|#|password={get:password}|#|redirect=...|#|log_table=...{:login_auth}
  * @tok {login_auth:}login={get:login}|#|password={get:pass}|#|callback=cms,tok_cms_conf2login{:login_auth}
+ * @tok {login_auth:}admin2user=admin:user:visitor:...|#|...{:login_auth}
+ *
+ * If admin2user is set any admin account can login as user account if login is ADMIN_LOGIN:=USER_LOGIN and
+ * password is ADMIN_PASSWORD.
  *
  * If login is invalid set {var:login_error} = error.
  * If password is invalid set {var:password_error} = error.
@@ -361,7 +387,7 @@ public function tok_login_auth($p) {
 	}
 
 	if (!empty($p['log_table'])) {
-		$this->logAuthInTable($p['log_table'], $user['id']);
+		$this->logAuth($p['log_table'], $user);
 	}
 
 	if (!empty($user['redirect'])) {
@@ -378,21 +404,19 @@ public function tok_login_auth($p) {
  *
  * @throws
  * @param string $table
- * @param string $id
+ * @param map $user
  */
-private function logAuthInTable($table, $id) {
+private function logAuth($table, $user) {
 	$fingerprint = '';
 
 	foreach (getallheaders() as $key => $value) {
   	$fingerprint = md5("$fingerprint:$key=$value");
 	}
 
-	$r = [ 'fingerprint' => $fingerprint, 'lid' => $id ];
-	$r['ip'] = empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR'];
-	$r['_table'] = ADatabase::escape_name($table);
-	$r['session_md5'] = md5(session_id()); 
+	$this->sess->set('login_history_table', $table);
+	$this->sess->set('fingerprint', $fingerprint);
 
-	$this->db->execute($this->db->getQuery('log_login', $r));
+	$this->setLoginHistory('LOGIN');
 }
 
 
@@ -439,12 +463,22 @@ private function selectFromAccount($p) {
 
 
 /**
- * Select user from database. Parameter: login, password.
- *
+ * Select user from database. Parameter: login, password. Allow admin2user if set.
+ * Use ADMIN_LOGIN:=USER_LOGIN as login for admin2user mode, if successfull add
+ * user.admin2user = [ id, status, type, ... ]. 
+ * 
  * @param array $p
  * @return array|null
  */
 private function selectFromDatabase($p) {
+
+	$admin2user = false;
+
+	if (!empty($p['admin2user']) && ($pos = mb_strpos($p['login'], ':=')) > 0) {
+		list ($admin_login, $user_login) = explode(':=', $p['login']);
+		$admin2user = explode(':', $p['admin2user']);
+		$p['login'] = $admin_login;
+	}
 
 	$dbres = $this->db->select($this->db->getQuery('select_login', $p));
 	if (count($dbres) == 0) {
@@ -455,6 +489,30 @@ private function selectFromDatabase($p) {
  	if (count($dbres) != 1 || empty($dbres[0]['password']) || $dbres[0]['password'] != $dbres[0]['password_input']) {
 		$this->tok->setVar('password_error', 'error');
 		return;
+	}
+
+	if ($admin2user !== false) {
+		$admin_type = array_shift($admin2user);
+		$admin = $dbres[0];
+		unset($admin['password_input']);
+		unset($admin['password']);
+
+		if ($admin_type != $admin['type']) {
+			throw new Exception("Only $admin_type can use admin2user mode");
+		}
+
+		$p['login'] = $user_login;
+		$dbres = $this->db->select($this->db->getQuery('select_login', $p));
+		if (count($dbres) != 1) {
+			$this->tok->setVar('login_error', 'error');
+			return null;
+		}
+
+		if (!in_array($dbres[0]['type'], $admin2user)) {
+			throw new Exception('admin2user is forbidden for user type '.$dbres[0]['type']);
+		}
+
+		$dbres[0]['admin2user'] = $admin;
 	}
 
 	// login + password ok ... update login session
