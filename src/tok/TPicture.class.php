@@ -57,7 +57,7 @@ public function getPlugins($tok) {
  * convert.resize: convert -colorspace sRGB -geometry {:=resize} {:=source} {:=target}
  * convert.resize^: convert -colorspace sRGB -geometry {:=resize}^ -gravity center -extent {:=resize} {:=source} {:=target}
  * module: convert (=default) | gdlib
- * use_cache: 1
+ * use_cache: 1 | dimension:300x300
  * ignore_missing: 1
  * default: default.jpg
  * reset: 1 
@@ -211,7 +211,16 @@ public function resize() {
 
 	// \rkphplib\lib\log_debug('resize> this.conf: '.print_r($this->conf, true));
 	if (File::exists($this->conf['target']) && !empty($this->conf['use_cache'])) {
-		return;
+		if (mb_substr($this->conf['use_cache'], 0, 10) == 'dimension:') {
+			$wxh = mb_substr($this->conf['use_cache'], 10);
+			$ii = File::imageInfo($this->conf['target']);
+			if ($ii['width'].'x'.$ii['height'] == $wxh) {
+				return;
+			}
+		}
+		else {
+			return;
+		}
   }
 
   Dir::create(dirname($this->conf['target']), 0777, true);
