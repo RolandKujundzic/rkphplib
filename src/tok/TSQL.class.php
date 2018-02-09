@@ -374,6 +374,11 @@ public function tok_sql_col($name) {
  * Use spreadsheet_js for "var spreadsheet_rows = [ [ ... ] ... ]; var spreadsheet_cols = [ '...', ... ];",
  * configure via {var:=#sql:json:spreadsheet_js}...{:var} (@see spreadSheetJS).
  * Otherwise return table (vector<map>).
+ *
+ * @tok {sql:json:hash}SELECT name, value FROM abc{:sql} -> return json encoded map
+ * @tok {sql:json[:table]}SELECT * FROM somewhere{:sql} -> return json encoded table
+ * @tok {sql:spreadsheet}SELECT * FROM somewhere{:sql} -> return json encoded csv table (table[0] = column names)
+ * @tok {sql:spreadsheet_js}SELECT * FROM somewhere{:sql} -> @see spreadSheetJS
  * 
  * @throws
  * @param string $mode table=''|hash|spreadsheet_js
@@ -438,21 +443,12 @@ public function tok_sql_json($mode, $query) {
  */
 private function spreadSheetJS($table) {
 
-	$config = $this->tok->getVar('sql:json:spreadsheet_js');
-	if (!is_array($config)) {
-		$config = $this->createSpreadSheetConf();
-	}
-	else {
-		if (isset($config['readonly'])) {
-			$config['readonly'] = \rkphplib\lib\split_str(',', $config['readonly']);
-		}
+	$config = $this->tok->getVar('sql:json:spreadsheet_js!');
 
-		if (isset($config['columns'])) {
-			$config['columns'] = \rkphplib\lib\split_str(',', $config['columns']);
-		}
-
-		if (isset($config['required'])) {
-			$config['required'] = \rkphplib\lib\split_str(',', $config['required']);
+	$split_str = [ 'readonly', 'columns', 'required' ];
+	foreach ($split_str as $name) {
+		if (!empty($config[$name])) {
+			$config[$name] = \rkphplib\lib\split_str(',', $config[$name]);
 		}
 	}
 
