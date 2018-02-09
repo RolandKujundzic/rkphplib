@@ -487,6 +487,7 @@ public function tok_output_conf($p) {
 			'req.sort' => 'sort',
 			'keep' => SETTINGS_REQ_DIR.',sort,last',
 			'images' => '',
+			'skip' => 0,
 			'pagebreak' => 0,
 			'pagebreak_fill' => 1,
 			'rowbreak' => 0,
@@ -1168,9 +1169,16 @@ protected function selectData() {
 
 	$db->setFirstRow($this->env['start']);
 	$n = ($this->env['pagebreak'] > 0) ? 0 : -100000;
+	$skip = intval($this->conf['skip']);
+	$this->env['total'] -= $skip;
 
 	// \rkphplib\lib\log_debug("TOutput::selectData> show max. $n rows");
 	while (($row = $db->getNextRow()) && $n < $this->env['pagebreak']) {
+		if ($skip > 0) {
+			$skip--;
+			continue;
+		}
+
 		array_push($this->table, $row);
 		$n++;
 	}
