@@ -541,6 +541,13 @@ public static function encodeHash($p) {
  * @return hash
  */
 public static function decodeHash($data, $export_into_req = false) {
+	$unencoded = '';
+
+	if (($pos = strpos($data, '&')) > 0) {
+		$unencoded = substr($data, $pos);
+		$data = substr($data, 0, $pos);
+	}
+
 	$data = base64_decode(rawurldecode($data));
 	$len = strlen($data);
 	$secret = SETTINGS_CRYPT_SECRET;
@@ -552,6 +559,8 @@ public static function decodeHash($data, $export_into_req = false) {
 
 	$res = array();
 	parse_str($data, $res);
+	// parse_str($data.'&'.$unencoded, $res);
+	// print "<!-- data: [".print_r($res, true)."] -->\n";
 
 	if ($export_into_req) {
 		foreach ($res as $key => $value) {
