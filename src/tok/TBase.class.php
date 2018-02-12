@@ -10,6 +10,7 @@ require_once($parent_dir.'/lib/htmlescape.php');
 require_once($parent_dir.'/lib/split_str.php');
 require_once($parent_dir.'/lib/redirect.php');
 require_once($parent_dir.'/lib/conf2kv.php');
+require_once($parent_dir.'/lib/kv2conf.php');
 require_once($parent_dir.'/lib/entity.php');
 
 use \rkphplib\Exception;
@@ -40,7 +41,7 @@ if (!defined('SETTINGS_CRYPT_SECRET')) {
 
 
 /**
- * Basic Tokenizer plugins.
+ * Basic Tokenizer plugins. Decode encrypted links in constructor.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
@@ -57,8 +58,16 @@ public function __construct() {
 	if (!empty($_REQUEST[SETTINGS_REQ_CRYPT])) {
 		self::decodeHash($_REQUEST[SETTINGS_REQ_CRYPT], true);
 	}
-	else if (isset($_SERVER['QUERY_STRING']) && strlen($_SERVER['QUERY_STRING']) > 2 && strpos($_SERVER['QUERY_STRING'], '=') === false) {
+	else if (!empty($_SERVER['QUERY_STRING']) && self::isEncodedHash($_SERVER['QUERY_STRING'])) {
 		self::decodeHash($_SERVER['QUERY_STRING'], true);
+	}
+	else {
+		foreach ($_REQUEST as $key => $value) {
+			if (strlen($value) == 0 && self::isEncodedHash($key)) {
+				self::decodeHash($key, true);
+				unset($_REQUEST[$key]);
+			}
+		}
 	}
 }
 
@@ -514,6 +523,41 @@ public function tok_link($name_list, $p) {
 
 
 /**
+ * Return true if string is encoded hash.
+ * 
+ * @param string $txt
+ * @return boolean
+ */
+private static function isEncodedHash($txt) {
+	if (strlen($txt) < 5) {
+		return false;
+	}
+
+	$checksum = substr($txt, 0, 2);
+	$txt = substr($txt, 2);
+
+	return self::checksum($txt) == $checksum;
+}
+
+
+/**
+ * Return checksum (hex, 2 character) for text.
+ * 
+ * @param string $txt
+ * @return char(2) (hex in ]15,255[)
+ */
+private static function checksum($txt) {
+	$res = array_sum(str_split($txt.':'.strlen($txt).':'.crc32($txt))) % 255;
+
+	if ($res < 16) {
+		$res += 16;
+	}
+
+	return dechex($res);
+}
+
+
+/**
  * Convert map into encrypted string. 
  *
  * @param array[string]string $p
@@ -529,7 +573,8 @@ public static function encodeHash($p) {
 		$query_string[$i] = chr(ord($query_string[$i]) ^ ord($secret[$i % $slen]));
 	}
 
-	return rawurlencode(base64_encode($query_string));
+	$res = base64_encode($query_string);
+	return rawurlencode(self::checksum($res).$res);
 }
 
 
@@ -538,17 +583,18 @@ public static function encodeHash($p) {
  *
  * @param string $data
  * @param bool export into _REQUEST
- * @return hash
+ * @return hash|false
  */
 public static function decodeHash($data, $export_into_req = false) {
-	$unencoded = '';
+	$data = rawurldecode($data);
+	$checksum = substr($data, 0, 2);
+	$data = substr($data, 2);
 
-	if (($pos = strpos($data, '&')) > 0) {
-		$unencoded = substr($data, $pos);
-		$data = substr($data, 0, $pos);
+	if (self::checksum($data) != $checksum) {
+		return false;
 	}
 
-	$data = base64_decode(rawurldecode($data));
+	$data = base64_decode($data);
 	$len = strlen($data);
 	$secret = SETTINGS_CRYPT_SECRET;
 	$slen = strlen($secret);
@@ -559,8 +605,6 @@ public static function decodeHash($data, $export_into_req = false) {
 
 	$res = array();
 	parse_str($data, $res);
-	// parse_str($data.'&'.$unencoded, $res);
-	// print "<!-- data: [".print_r($res, true)."] -->\n";
 
 	if ($export_into_req) {
 		foreach ($res as $key => $value) {
@@ -870,7 +914,8 @@ public function tok_const($param, $arg) {
  * @tok {get:a}, !isset(_REQUEST['a']) && _FILES['a']['name'] = test.jpg: test.jpg
  * @tok {get:a.x}, _REQUEST['a'] = [ 'x' => 5, 'y' => 10 ]: 5
  * @tok {get:a}, _REQUEST['a'] = [ 3 ]: 3
- * @tok {get:a}, _REQUEST['a'] = [ 1, 2, 3 ]: '' 
+ * @tok {get:a}, _REQUEST['a'] = [ 1, 2, 3 ]: ''
+ * @tok {get:*}, return kv2conf(_REQUEST) 
  *
  * @param string $param
  * @param string $arg
@@ -904,6 +949,9 @@ public function tok_get($param, $arg) {
 		}
 
 		$res = $this->_tok->escape($res);
+	}
+	else if ($key == '*') {
+		$res = \rkphplib\lib\kv2conf($_REQUEST);
 	}
 
 	return $res;
