@@ -543,7 +543,6 @@ public static function check($path, $action) {
 			}
 		}
 		else if (FSEntry::isDir($entry, false)) {
-			print "entry=$entry ".intval(is_writeable($entry))."<br>\n";
 			if ($check_write && !is_writable($entry)) {
 				return false;
 			}
