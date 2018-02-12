@@ -2,6 +2,10 @@
 
 namespace rkphplib;
 
+if (!defined('PATH_RKPHPLIB')) {
+	define('PATH_RKPHPLIB', __DIR__);
+}
+
 require_once(__DIR__.'/lib/config.php');
 require_once(__DIR__.'/lib/log_debug.php');
 require_once(__DIR__.'/FSEntry.class.php');
