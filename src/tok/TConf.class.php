@@ -253,7 +253,21 @@ public function set($lid, $name, $value) {
 		$path_pid = join('.', $path);
 
 		$r = [ 'lid' => $lid, 'path' => $path_pid ];
-		$parent = $this->db->selectOne($this->db->getQuery($qtype, $r));
+
+		try {
+			$parent = $this->db->selectOne($this->db->getQuery($qtype, $r));
+		}
+		catch (\Exception $e) {
+			if ($e->getMessage() == 'no result' && count($path) == 1) {
+				$rp = [ 'lid' => $lid, 'pid' => null, 'path' => $path[0], 'name' => '', 'value' => '' ];
+				$this->db->execute($this->db->getQuery('insert', $rp));
+				$parent = $this->db->selectOne($this->db->getQuery($qtype, $r));
+			}
+			else {
+				throw $e;
+			}
+		}
+
 		$r = [ 'lid' => $lid, 'pid' => $parent['id'], 'path' => $name, 'name' => $path_last, 'value' => $value ];
 	}
 	else {
