@@ -60,7 +60,7 @@ function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1)
 		else if (is_array($value)) {
 			if (is_map($value)) {
 				$q = str_pad("", $level, '"');
-				$conf .= $q.'@_3 '.kv2conf($value, $d1, $d3, false, $level + 1).$q.$d3."\n";
+				$conf .= $q.'@_3 '.kv2conf($value, $d1, $d3, false, $level + 1).$q.$d2."\n";
 			}
 			else {
 				$arr = array();
