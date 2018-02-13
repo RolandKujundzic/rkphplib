@@ -1,5 +1,7 @@
 "use strict";
-/* global $ */
+/* global console */
+/* jshint browser: true */
+/* jshint globalstrict: true */
 
 
 /**
@@ -9,6 +11,7 @@
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 function rkPhpLib() {
+/* jshint validthis: true */
 
 /** @var this me */
 var me = this;
@@ -92,21 +95,41 @@ this.searchOutput = function(el) {
 
 
 /**
- * Execute search - redirect to el.getAttribute('data-url') + el.value or call
- * el.getAttribute('data-search_script').
+ * Execute search - redirect to el.getAttribute('data-url') + el.value.
  *
  * @param Element el
  */
 this.search = function(el) {
-	var url, name, search = el.value, old_search = el.getAttribute('data-search');
+	var sval = this.getSearchValue(el);
 
-	if (search.length == 0 || old_search == search) {
+	if (!sval || sval.length == 0) {
 		return;
 	}
-  
-	if ((name = el.getAttribute('name')) && (url = el.getAttribute('data-search_url'))) {
-		window.location.href = url + '&' + name + '=' + encodeURI(search);
+
+	var url = el.getAttribute('data-search_url') + '&' + el.getAttribute('name') + '=' + encodeURI(sval);  
+
+	if (sval !== el.value) {
+		url += '&' + el.getAttribute('name') + '_label=' + encodeURI(el.value); 
 	}
+
+	window.location.href = url;
+};
+
+
+/**
+ * Return data-value or value of selected datalist option.
+ */
+this.getSearchValue = function(el) {
+	var i, opt, found, value = el.value, list = document.getElementById(el.getAttribute('list'));
+
+	for (i = 0; !found && i < list.options.length; i++) {
+		opt = list.options[i];
+		if (opt.value === value) {
+			found = opt.getAttribute('data-value') ? opt.getAttribute('data-value') : value;
+		}
+	}
+
+	return found;
 };
 
 
@@ -141,17 +164,23 @@ this.updateSearchList = function(el) {
 				search_list = document.querySelector(sl_id + ' > select');
 			}
 
+			var n = 0;
 			for (key in list) {
-				if (key) {
-					options += '<option data-id="' + key + '">' + list[key] + '</option>';
+				if (key !== n && key.length > 0) {
+					options += '<option data-value="' + key + '">' + list[key] + '</option>';
 				}
+				else {
+					options += '<option>' + list[key] + '</option>';
+				}
+
+				n++;
 			}
 
 			search_list.innerHTML = options;
 
 			el.setAttribute('data-search', curr_search);
 		}});
-	}, 800);
+	}, 600);
 };
 
 
@@ -189,9 +218,20 @@ function initLiveSearch(el) {
 
 	el.setAttribute('data-search', '');
 	el.setAttribute('autocomplete', 'off');
-	el.setAttribute('onblur', 'rkphplib.search(this)');
-	el.setAttribute('onkeydown', "if (event.keyCode == 13) rkphplib.search(this)");
 	el.setAttribute('oninput', 'rkphplib.updateSearchList(this)');
+
+	if (el.getAttribute('data-search_url')) {
+		el.setAttribute('onkeydown', "if (event.keyCode == 13) rkphplib.search(this)");
+		el.setAttribute('onblur', 'rkphplib.search(this)');
+	}
+	else if (el.getAttribute('data-search_script')) {
+		var search_script = el.getAttribute('data-search_script'); 
+		el.setAttribute('onkeydown', "if (event.keyCode == 13) " + search_script);
+		el.setAttribute('onblur', search_script);
+	}
+	else {
+		throw 'Search #' + id + ' has neiter data-search_url nor data-search_script attribute'; 
+	}
 }
 
 
