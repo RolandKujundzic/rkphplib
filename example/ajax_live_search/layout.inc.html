@@ -11,7 +11,13 @@
 	data-search_url="{link:}@=search{:link}" data-search_list_url="{link:}@=search/ajax{:link}" type="text" />
 
 <input name="search_b" placeholder="Search B"
-	data-search_script="{link:}@=search{:link}" data-search_list_url="{link:}@=search/ajax{:link}" type="text" />
+	data-search_script="search_script(this)" data-search_list_url="{link:}@=search/ajax{:link}" type="text" />
+
+<script>
+function search_script(el) {
+	console.log('search_script(' + el.value + ') = ' + rkphplib.getSearchValue(el) + ' called ...');
+}
+</script>
 
 </body>
 </html>
