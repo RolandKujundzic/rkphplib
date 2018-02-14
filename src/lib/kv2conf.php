@@ -60,7 +60,7 @@ function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1)
 		else if (is_array($value)) {
 			if (is_map($value)) {
 				$q = str_pad("", $level, '"');
-				$conf .= $q.'@_3 '.kv2conf($value, $d1, $d3, false, $level + 1).$q.$d2."\n";
+				$conf .= $q.'@3 '.kv2conf($value, $d1, $d3, false, $level + 1).$q.$d2."\n";
 			}
 			else {
 				$arr = array();
@@ -81,7 +81,7 @@ function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1)
 					array_push($arr, $val);
 				}
 
-				$conf .= '@_1 '.join(',', $arr).$d2."\n";
+				$conf .= '@1 '.join(',', $arr).$d2."\n";
 			}
 		}
 		else {
