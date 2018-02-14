@@ -15,12 +15,12 @@ if (!defined('HASH_DELIMITER')) {
 /**
  * Split text into key value hash. 
  * 
- * Keys must not start with "@@" or "@_". 
+ * Keys must not start with "@@", "@N" or "@_". 
  * Split text at $d2 (|#|) into lines. Split lines at first $d1 (=) into key value.
  * If key is not found return $text or use "@_N" as key (N is autoincrement 1, 2, ...) if mulitple keys are missing.
  * If key already exists rename to key.N (N is autoincrement 1, 2, ...).
  * If value starts with "@N" use conf[@@N]="sd1","sd2" and set value = conf2kv(value, sd1, sd2).
- * Default values are [@@1="",","] and [@@2=$d1,$d2]. 
+ * Default values are [@@1="",","], [@@2=$d1,$d2] and [@@3="=","|:|". 
  * All keys and values are trimmed. Use Quote character ["] to preserve whitespace and delimiter.
  * Use double quote [""] to escape ["]. If $d1 is empty return array with $d2 as delimiter.
  * If text is empty return empty array. Unescape entity($d2).
@@ -99,6 +99,9 @@ function conf2kv($text, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = array()) {
 				}
 				else if ($sf == '@2') {
 					$ikv['@2'] = array($d1, $d2);
+				}
+				else if ($sf == '@3') {
+					$ikv['@3'] = array('=', '|:|');
 				}
 			}
 
