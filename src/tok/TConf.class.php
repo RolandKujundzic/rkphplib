@@ -5,6 +5,9 @@ namespace rkphplib\tok;
 $parent_dir = dirname(__DIR__);
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once($parent_dir.'/Database.class.php');
+require_once($parent_dir.'/lib/conf2kv.php');
+require_once($parent_dir.'/lib/kv2conf.php');
+require_once($parent_dir.'/traits/Map.trait.php');
 
 use \rkphplib\Exception;
 use \rkphplib\ADatabase;
@@ -21,6 +24,7 @@ use \rkphplib\Database;
  *
  */
 class TConf implements TokPlugin {
+use \rkphplib\traits\Map;
 
 /** @param map system configuration */
 public $sconf = [];
@@ -80,8 +84,9 @@ public function getPlugins($tok) {
 	$plugin['conf:id'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['conf:var'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['conf:get'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REDO;
-	$plugin['conf:set'] = TokPlugin::REQUIRE_PARAM | TokPlugin::TEXT;
-	$plugin['conf:set_default'] = TokPlugin::REQUIRE_PARAM | TokPlugin::TEXT;
+	$plugin['conf:set'] = TokPlugin::TEXT;
+	$plugin['conf:set_path'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
+	$plugin['conf:set_default'] = TokPlugin::TEXT;
 	$plugin['conf:append'] = TokPlugin::REQUIRE_PARAM | TokPlugin::TEXT;
   return $plugin;
 }
@@ -137,14 +142,51 @@ public function tok_conf_id($id) {
 
 
 /**
- * Set configuration value. 
+ * Set/Change configuration value.
+ *
+ * @tok {conf:set:spread_sheet}{:conf}
+ * @tok {conf:set}spread_sheet|#|x{:conf}
  *
  * @param string $key
  * @param string $value
  * @return ''
  */
 public function tok_conf_set($key, $value) {
+	if (empty($key)) {
+		list ($key, $value) = explode(HASH_DELIMITER, $value, 2);
+	}
+
 	$this->set($this->lid, $key, $value);
+	return '';
+}
+
+
+/**
+ * Set/Change configuration map $name path value.
+ *
+ * @tok {conf:set_path:spread_sheet.shop_item}column_{get:column}.label|#|{get:label}{:conf}
+ * @tok {conf:set_path}spread_sheet.{get:table}|#|column_{get:column}.label|#|{get:label}{:conf}
+ *
+ * @param string $name
+ * @param vector $p ([name|#|]path|#|value)
+ * @return ''
+ */
+public function tok_conf_set_path($key, $p) {
+
+	if (empty($key)) {
+		$key = array_shift($p);
+	}
+
+	if (count($p) < 2 || empty($p[0])) {
+		throw new Exception('invalid argument', "key=$key p: ".print_r($p, true));
+	}
+
+	$path = array_shift($p);
+	$value = join(HASH_DELIMITER, $p);
+
+	$map = \rkphplib\lib\conf2kv($this->get($this->lib, $name));
+	self::setMapPathValue($map, $path, $value);
+	$this->set($this->lid, $name, \rkphplib\lib\kv2conf($map));
 	return '';
 }
 
@@ -153,12 +195,17 @@ public function tok_conf_set($key, $value) {
  * Set configuration value if still unset.
  * 
  * @tok {conf:set_default:since}{date:now}{:conf} - set since="{date:now}" if not already set
+ * @tok {conf:set_default}since|#|{date:now}{:conf}
  *
  * @param string $key
  * @param string $value
  * @return string
  */
 public function tok_conf_set_default($key, $value) {
+	if (empty($key)) {
+		list ($key, $value) = explode(HASH_DELIMITER, $value, 2);
+	}
+
 	$qtype = (intval($this->lid) > 0) ? 'select_user_path' : 'select_system_path';
 	$lid = ($this->lid > 0) ? intval($this->lid) : null;
 
