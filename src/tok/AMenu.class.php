@@ -5,6 +5,7 @@ namespace rkphplib\tok;
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/../Exception.class.php');
 require_once(__DIR__.'/../lib/split_str.php');
+require_once(__DIR__.'/../lib/redirect.php');
 
 use \rkphplib\Exception;
 
@@ -128,6 +129,7 @@ public function tok_menu_add($level, $node) {
 	// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> level=$level ignore_level=".$this->ignore_level);
 	if ($this->ignore_level > 0 && $level >= $this->ignore_level) {
 		// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> level=$level > ignore_level=".$this->ignore_level.' - return');
+		$this->skipNode($node);
 		return;
 	}
 
@@ -165,22 +167,26 @@ public function tok_menu_add($level, $node) {
 	if (isset($node['if']) && empty($node['if'])) {
 		$this->ignore_level = $level + 1;
 		// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> return - if = false");
+		$this->skipNode($node);
 		return;
 	}
 
 	if (!empty($node['if_table']) && !$this->hasTables($node['if_table'])) {
 		$this->ignore_level = $level + 1;
 		// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> return - no such table ".$node['if_table']);
+		$this->skipNode($node);
 		return;
 	}
 
 	if (isset($node['if_priv']) && !$this->tok->callPlugin('login', 'hasPrivileges', [ $node['if_priv'], $node['dir'] ])) {
 		$this->ignore_level = $level + 1;
+		$this->skipNode($node);
 		return;
 	}
 	else if (preg_match('/^apps\/([A-Za-z0-9_\-]+)$/', $node['dir'], $match) && !empty($match[1]) && 
 						!$this->tok->callPlugin('login', 'tok_login', [ 'conf.'.$match[1].'?' ])) {
 		$this->ignore_level = $level + 1;
+		$this->skipNode($node);
 		return;
 	}
 		
@@ -193,6 +199,27 @@ public function tok_menu_add($level, $node) {
 
 	// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> add node: ".print_r($node, true));
 	array_push($this->node, $node);
+}
+
+
+/**
+ * If skipped node is no current path redirect to conf.redirect_access_denied (= index.php?dir=login/access_denied).
+ *
+ * @param map $node
+ */
+private function skipNode($node) {
+	$dir = empty($_REQUEST[SETTINGS_REQ_DIR]) ? '' : $_REQUEST[SETTINGS_REQ_DIR];
+
+	if (empty($dir) || empty($node['dir']) || mb_strpos($dir, $node['dir']) !== 0) {
+		return;
+	}
+
+	if (isset($node['if_priv']) && !$this->tok->callPlugin('login', 'hasPrivileges', [ $node['if_priv'], $node['dir'] ])) {
+		\rkphplib\lib\log_debug("AMenu.skipNode> current dir is forbidden - node: ".join('|', $node));
+		$redir_url = empty($this->conf['redirect_access_denied']) ? 
+			'index.php?dir=login/access_denied' : $this->conf['redirect_access_denied'];
+		\rkphplib\lib\redirect($redir_url.'&back='.rawurlencode(dirname($dir)));
+	}
 }
 
 
