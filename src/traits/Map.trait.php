@@ -65,5 +65,42 @@ private static function getMapPathValue($map, $path_str, $abort = true) {
 }
 	
 
+/**
+ * Set value of path_str. Example: If $path_str = a.b.c 
+ * set $map['a']['b']['c'] = $value.
+ *
+ * @throws
+ * @param map-reference &$map
+ * @param string $path_str
+ * @param any $value
+ */
+private static function setMapPathValue(&$map, $path_str, $value) {
+
+	if (!is_array($map)) {
+		throw new Exception('invalid map', "path_str=$path_str map: ".print_r($map, true));
+	}
+
+	if (empty($path_str)) {
+		throw new Exception('empty map key', $path_str);
+	}
+
+	$path = explode('.', $path_str);
+
+	if (count($path) > 1) {
+		$key = array_shift($path);
+
+		if (!isset($map[$key]) || !is_array($map[$key])) {
+			$map[$key] = [];
+		}
+
+		self::setMapPathValue($map[$key], join('.', $path), $value);
+	}
+	else {
+		print "set map.$path_str = $value\n";
+		$map[$path_str] = $value;
+	}
+}
+
+
 }
 
