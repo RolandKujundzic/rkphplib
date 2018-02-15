@@ -61,10 +61,21 @@ public function getPlugins($tok) {
 	$plugin['login_account'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
+	$plugin['login_access'] = TokPlugin::KV_BODY;
 	$plugin['login_update'] = TokPlugin::KV_BODY;
 	$plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 
 	return $plugin;
+}
+
+
+/**
+ * Check login access. 
+ *
+ * @param map p
+ */
+public function tok_login_access($p) {
+	throw new Exception('ToDo');
 }
 
 
