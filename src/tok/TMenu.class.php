@@ -123,6 +123,7 @@ private function level_n($start, &$html) {
  * @param int $pos
  */
 private function node_html($pos) {
+	\rkphplib\lib\log_debug("node_html($pos)> node = (".join('|', $this->node[$pos]).")");
 	$node = $this->node[$pos];
 	$lname = 'level_'.$node['level'];
 
