@@ -7,6 +7,7 @@ require_once(__DIR__.'/JSON.class.php');
 require_once(__DIR__.'/XML.class.php');
 require_once(__DIR__.'/File.class.php');
 require_once(__DIR__.'/Dir.class.php');
+require_once(__DIR__.'/traits/Map.trait.php');
 
 
 /**
@@ -21,6 +22,8 @@ require_once(__DIR__.'/Dir.class.php');
  *
  */
 class APICall {
+use \rkphplib\traits\Map;
+
 
 /** 
  * @var map $opt default options: 
@@ -508,25 +511,7 @@ private function exportTags($data, $tag_list) {
 
 		if (is_array($tl_value)) {
 			foreach ($tl_value as $lkey) {
-				$path = explode('.', $key.'.'.$lkey);
-
-				if (count($path) == 2) {
-					$value = $data[$path[0]][$path[1]];
-				}
-				else if (count($path) == 3) {
-					$value = $data[$path[0]][$path[1]][$path[2]];
-				}
-				else if (count($path) == 4) {
-					$value = $data[$path[0]][$path[1]][$path[2]][$path[3]];
-				}
-				else if (count($path) == 5) {
-					$value = $data[$path[0]][$path[1]][$path[2]][$path[3]][$path[4]];
-				}
-				else {
-					throw new Exception('export_tags depth > 5', "key=$key, lkey=$lkey, path=$path, prefix=$prefix"); 
-				}
-
-				$tags[$prefix.$lkey] = $value;
+				$tags[$prefix.$lkey] = self::getMapPathValue($data, $key.'.'.$lkey);
 			}
 		}
 		else {
