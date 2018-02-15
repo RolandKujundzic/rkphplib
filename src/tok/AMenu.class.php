@@ -215,7 +215,7 @@ private function skipNode($node) {
 	}
 
 	if (isset($node['if_priv']) && !$this->tok->callPlugin('login', 'hasPrivileges', [ $node['if_priv'], $node['dir'] ])) {
-		\rkphplib\lib\log_debug("AMenu.skipNode> current dir is forbidden - node: ".join('|', $node));
+		// \rkphplib\lib\log_debug("AMenu.skipNode> current dir is forbidden - node: ".join('|', $node));
 		$redir_url = empty($this->conf['redirect_access_denied']) ? 
 			'index.php?dir=login/access_denied' : $this->conf['redirect_access_denied'];
 		\rkphplib\lib\redirect($redir_url.'&back='.rawurlencode(dirname($dir)));
