@@ -96,7 +96,6 @@ private static function setMapPathValue(&$map, $path_str, $value) {
 		self::setMapPathValue($map[$key], join('.', $path), $value);
 	}
 	else {
-		print "set map.$path_str = $value\n";
 		$map[$path_str] = $value;
 	}
 }
