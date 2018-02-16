@@ -171,20 +171,20 @@ public function tok_conf_set($key, $value) {
  * @param vector $p ([name|#|]path|#|value)
  * @return ''
  */
-public function tok_conf_set_path($key, $p) {
+public function tok_conf_set_path($name, $p) {
 
-	if (empty($key)) {
-		$key = array_shift($p);
+	if (empty($name)) {
+		$name = array_shift($p);
 	}
 
 	if (count($p) < 2 || empty($p[0])) {
-		throw new Exception('invalid argument', "key=$key p: ".print_r($p, true));
+		throw new Exception('invalid argument', "name=$name p: ".print_r($p, true));
 	}
 
 	$path = array_shift($p);
 	$value = join(HASH_DELIMITER, $p);
 
-	$map = \rkphplib\lib\conf2kv($this->get($this->lib, $name));
+	$map = \rkphplib\lib\conf2kv($this->get($this->lid, $name));
 	self::setMapPathValue($map, $path, $value);
 	$this->set($this->lid, $name, \rkphplib\lib\kv2conf($map));
 	return '';
