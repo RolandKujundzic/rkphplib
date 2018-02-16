@@ -84,6 +84,7 @@ public function getPlugins($tok) {
 	$plugin['conf:id'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['conf:var'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['conf:get'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REDO;
+	$plugin['conf:get_path'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY | TokPlugin::REDO;
 	$plugin['conf:set'] = TokPlugin::TEXT;
 	$plugin['conf:set_path'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['conf:set_default'] = TokPlugin::TEXT;
@@ -260,6 +261,35 @@ public function tok_conf_var($key) {
  */
 public function tok_conf_get($key) {
 	return $this->get($this->lid, $key);
+}
+
+
+/**
+ * Return tokenized configuration key.subkey value. If not found
+ * return empty string.
+ * 
+ * @tok {conf:get_path:spread_sheet.shop_item}table{:conf}
+ * @tok {conf:get_path}spread_sheet.shop_item|#|table{:conf}
+ * 
+ * @param string $name
+ * @param vector $p
+ * @return string
+ */
+public function tok_conf_get_path($name, $p) {
+	
+	if (empty($name)) {
+		$name = array_shift($p);
+	}
+
+	$path = array_shift($p);
+
+	if (count($p) > 0) {
+		throw new Exception('invalid parameter list', "name=$name path=$path p: ".print_r($p, true));
+	}
+
+	$map = \rkphplib\lib\conf2kv($this->get($this->lid, $name));
+	$res = \rkphplib\lib\kv2conf(self::getMapPathValue($map, $path));
+	return $res;
 }
 
 
