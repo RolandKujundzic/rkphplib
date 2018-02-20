@@ -802,13 +802,27 @@ public static function readLine($fh, $maxlen = 8192) {
 
 
 /**
- * Save data as json in file.
+ * Save data as json in file. If json conversion fails, save
+ * print_r(data, true) as $base.dump and serialized version
+ * as $base.ser. Return true if successfull.
  *
  * @param string $file
  * @param any $data
+ * @return bool
  */
 public static function saveJSON($file, $data) {
-	File::save($file, JSON::encode($data));
+  $json = json_encode($data, 448);
+
+  if (($err_no = json_last_error()) || strlen($json) == 0) {
+		$base = dirname($file).'/'.File::basename($file, true);				
+		File::save($base.'.dump', print_r($data, true));
+		File::save($base.'.ser', serialize($data));
+		return false;
+	}
+	else {
+		File::save($file, $json);
+		return true;
+	}
 }
 
 
