@@ -3,6 +3,7 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/FSEntry.class.php');
+require_once(__DIR__.'/JSON.class.php');
 require_once(__DIR__.'/lib/execute.php');
 
 
@@ -86,7 +87,6 @@ public static function loadTable($uri, $options = []) {
 		$table = unserialize($data);
 	}
 	else if ($type == 'json') {
-		require_once(__DIR__.'/JSON.class.php');
 		$table = JSON::decode($data);
 	}
 	else if ($type == 'split') {
@@ -798,6 +798,29 @@ public static function readLine($fh, $maxlen = 8192) {
 	}
 
 	return $res;
+}
+
+
+/**
+ * Save data as json in file.
+ *
+ * @param string $file
+ * @param any $data
+ */
+public static function saveJSON($file, $data) {
+	File::save($file, JSON::encode($data));
+}
+
+
+/**
+ * Return file content converted from json.
+ *
+ * @throws 
+ * @param string $file
+ * @return any
+ */
+public static function loadJSON($file) {
+	return JSON::decode(File::load($file));
 }
 
 
