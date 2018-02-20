@@ -48,7 +48,7 @@ public function __construct($message, $internal_message = '') {
 			self::logTrace($stack);
 		}
 	}
-	else if (is_dir($default_log_dir) && is_readable($default_log_dir)) {
+	else if (is_dir($default_log_dir) && is_readable($default_log_dir) && is_writeable($default_log_dir)) {
 		define('SETTINGS_LOG_EXCEPTION', $default_log_dir);
 		$stack = debug_backtrace();
 		self::logTrace($stack);
