@@ -40,7 +40,7 @@ public function __construct($message, $internal_message = '') {
 	parent::__construct($message);
 	$this->internal_message = $internal_message;
 
-	$default_log_dir = 'data/log/exception';
+	$default_log_dir = DOCROOT.'/data/log/exception';
 
 	if (defined('SETTINGS_LOG_EXCEPTION')) {
 		if (!empty(SETTINGS_LOG_EXCEPTION)) {
@@ -57,13 +57,12 @@ public function __construct($message, $internal_message = '') {
 
 
 /**
- * Log debug_backtrace to SETTINGS_LOG_EXCEPTION/NAME.json.
+ * Log debug_backtrace to SETTINGS_LOG_EXCEPTION/NAME.json (or *.dump|.ser is json encode fails).
  * Abort was in stack[1].
  *
  * @param array $stack
  */
 private static function logTrace($stack) {
-	require_once(__DIR__.'/JSON.class.php');
 	require_once(__DIR__.'/File.class.php');
 
 	if (!defined('SETTINGS_TIMEZONE')) {
@@ -88,8 +87,9 @@ private static function logTrace($stack) {
 
 	$save_as  = (!empty($last['file']) && !empty($last['line'])) ? md5($last['file'].':'.$last['line']) : md5($last['TIME']);
 	$save_as .= '.'.$last['TIME'];
-	File::save(SETTINGS_LOG_EXCEPTION.'/'.$save_as.'.last.json', JSON::encode($last));
-	File::save(SETTINGS_LOG_EXCEPTION.'/'.$save_as.'.stack.json', JSON::encode($stack));
+
+	File::saveJSON(SETTINGS_LOG_EXCEPTION.'/'.$save_as.'.last.json', $last);
+	File::saveJSON(SETTINGS_LOG_EXCEPTION.'/'.$save_as.'.stack.json', $stack);
 }
 
 
