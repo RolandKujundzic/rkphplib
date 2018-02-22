@@ -6,6 +6,7 @@ $parent_dir = dirname(__DIR__);
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once($parent_dir.'/Exception.class.php');
 require_once($parent_dir.'/Database.class.php');
+require_once($parent_dir.'/JSON.class.php');
 require_once($parent_dir.'/File.class.php');
 require_once($parent_dir.'/lib/htmlescape.php');
 require_once($parent_dir.'/lib/split_str.php');
@@ -15,6 +16,7 @@ require_once($parent_dir.'/lib/is_map.php');
 use \rkphplib\Exception;
 use \rkphplib\ADatabase;
 use \rkphplib\Database;
+use \rkphplib\JSON;
 use \rkphplib\File;
 
 
@@ -58,6 +60,7 @@ public function getPlugins($tok) {
 	$plugin['output:conf'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['output:init'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['output:loop']   = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
+	$plugin['output:json']   = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 	$plugin['output:header'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
 	$plugin['output:footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
 	$plugin['output:empty'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
@@ -333,6 +336,34 @@ public function tok_output_footer($tpl) {
 
 
 /**
+ * Return table json.
+ *
+ * @throws
+ * @return string
+ */
+public function tok_output_json() {
+
+	if ($this->isEmpty()) {
+		return '';
+	}
+
+	$start = $this->env['start'];
+	$end = $this->env['end'];
+	$lang = empty($this->conf['language']) ? '' : $this->conf['language'];
+	$output = [];
+
+	if (!empty($this->conf['query']) && $this->env['pagebreak'] > 0) {
+		$start = 0;
+		$end = $this->env['end'] % $this->env['pagebreak'];
+	}
+
+	$res = JSON::encode(array_slice($this->table, $start, $end - $start + 1));
+
+	return $res;
+}
+
+
+/**
  * Show if table is not empty. Concat $tpl #env.total. Replace {:=tag} with row value.
  * Default tags are array_keys(row[0]) ({:=0} ... {:=n} if vector or {:=key} if map).
  * If conf.table.columns=col_1n use {:=col_1} ... {:=col_n} as tags. If col.table.columns=first_list
@@ -561,7 +592,7 @@ public function tok_output_conf($p) {
  *
  * @see File::loadTable for table.type 
  * @param array[string]string $p
- * @return if search=yes or conf.images
+ * @return ''
  */
 public function tok_output_init($p) {
 
@@ -586,106 +617,6 @@ public function tok_output_init($p) {
 	if ($this->env['pagebreak'] > 0) {
 		$this->computeScroll();
 	}
-
-	return $this->getJavascript();
-}
-
-
-/**
- * Return javascript for search and edit.
- *
- * @param string
- */
-protected function getJavascript() {
-	
-	if (empty($this->conf['search']) && empty($this->conf['edit']) && empty($this->conf['images'])) {
-		return '';
-	}
-
-	$res = '<script type="text/javascript">';
-
-$search_js = <<<END
-var search_output_timeout = null;
-
-//-----------------------------------------------------------------------------
-function searchOutput(el) {
-  var value = el.value;
-
-  if (search_output_timeout) {
-    clearTimeout(search_output_timeout);
-    search_output_timeout = null;
-  }
-  
-  search_output_timeout = setTimeout(function() { el.form.submit(); }, 1200);
-}
-END;
-
-$edit_js = <<<END
-// ToDo ...
-END;
-
-$images_js = <<<END
-//-----------------------------------------------------------------------------
-function showOLIP(id, picture) {
-	var preview_div = document.getElementById('preview_img_' + id);
-
-  if (!preview_div) {
-    return;
-  }
-  
-  if (!document.getElementById('img_' + id) && picture.length > 4) {
-    var preview_img = document.createElement('img');
-    preview_img.setAttribute('src', picture);
-    preview_img.setAttribute('id', 'img_' + id);
-    document.getElementById('preview_img_' + id).appendChild(preview_img);
-  }
-
-  preview_div.style.visibility = 'visible';   
-}
-
-//-----------------------------------------------------------------------------
-function hideOLIP(id) {
-  var preview_div = document.getElementById('preview_img_' + id);
-  if (preview_div) {
-    preview_div.style.visibility = 'hidden';    
-  }
-}
-END;
-
-	if (!empty($this->conf['search'])) {
-		$res .= $search_js;
-	}
-
-	if (!empty($this->conf['edit'])) {
-		$res .= $edit_js;
-	}
-
-	if (!empty($this->conf['images'])) {
-		$res .= $images_js;
-	}
-
-	$res .= "</script>";
-
-	if (!empty($this->conf['images'])) {
-		$res .= <<<END
-<style type="text/css">
-div.preview_img {
-  position:absolute;
-  visibility:hidden;
-  z-index:1;
-  top: 4px;
-  left:24px;
-  width: 150px;
-  height: 200px;
-  text-align:center;
-  background: #fff;
-  border: 2px solid #cacaca;
-}
-</style>
-END;
-	}
-
-	return $res;
 }
 
 
@@ -950,6 +881,8 @@ protected function getValue($name) {
  *
  * @example conf.search= id:=, age:EQ, firstname:LIKE, lastname:%$%, ...
  *
+ * Search value is either _REQUEST[s_NAME] of if not set and req.search=X: $_REQUEST[X].
+ * 
  * @throws
  * @return array [ _WHERE_SEARCH, _AND_SEARCH ]
  */ 
@@ -967,6 +900,10 @@ protected function getSqlSearch() {
 		list ($col, $method) = explode(':', $col_method, 2);
 		$value = isset($_REQUEST['s_'.$col]) ? $_REQUEST['s_'.$col] : '';
 		$found = false;
+
+		if (!$value && !empty($this->conf['req.search']) && isset($_REQUEST[$this->conf['req.search']])) {
+			$value = $_REQUEST[$this->conf['req.search']];
+		}
 
 		foreach ($compare as $cx => $op) {
 			if ($cx == $method || $op == $method) {
@@ -1036,7 +973,12 @@ protected function getSqlSearch() {
 		$this->set_search = array_merge($this->selectSearch($select_search), $this->set_search);
 	}
 
-	$sql_and = join(' AND ', $expr);
+	if (!empty($this->conf['search_or'])) {
+		$sql_and = '(('.join(') OR (', $expr).'))';
+	}
+	else {
+		$sql_and = join(' AND ', $expr);
+	}
 
 	return [ ' WHERE '.$sql_and, ' AND '.$sql_and ];
 }
