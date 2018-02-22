@@ -401,7 +401,7 @@ public function tok_fv_in($name, $p) {
 		}
 	}
 
-	if ($conf['label_required'] && !empty($p['label']) && in_array($name, $conf['required'])) {
+	if (!empty($conf['label_required']) && !empty($p['label']) && in_array($name, $conf['required'])) {
 		$p['label'] = $this->tok->replaceTags($conf['label_required'], [ 'label' => $p['label'] ]);
 	}
 
