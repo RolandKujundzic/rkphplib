@@ -8,6 +8,7 @@ require_once($parent_dir.'/Database.class.php');
 require_once($parent_dir.'/File.class.php');
 require_once($parent_dir.'/Dir.class.php');
 require_once($parent_dir.'/lib/conf2kv.php');
+require_once($parent_dir.'/lib/kv2conf.php');
 require_once($parent_dir.'/lib/split_str.php');
 
 use \rkphplib\Database;
@@ -350,7 +351,10 @@ public function tok_sql_query($qkey, $query) {
 
 /**
  * Return colum value of last {sql_query:}.
- * 
+ *
+ * @tok {sql:col:name} -> NAME
+ * @tok {sql:col:*} -> name=NAME|#|id=ID
+ *  
  * @throws
  * @param string $name
  * @return string
@@ -362,6 +366,10 @@ public function tok_sql_col($name) {
 		if (is_null($this->first_row)) {
 			$this->first_row = [];
 		}
+	}
+
+	if ($name == '*') {
+		return \rkphplib\lib\kv2conf($this->first_row);
 	}
 
 	return (isset($this->first_row[$name]) || array_key_exists($name, $this->first_row)) ? $this->first_row[$name] : '';
