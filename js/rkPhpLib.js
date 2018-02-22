@@ -20,6 +20,71 @@ var me = this;
 var env = [];
 
 
+/**
+ * Define callback function (e.g. fselect_NAME_[text|change]).
+ *
+ * @param string name
+ * @param function func
+ */
+this.setCallback = function (name, func) {
+	if (!env.callback) {
+		env.callback = [];
+	}
+
+	env.callback[name] = func;
+};
+
+
+/**
+ * Hide fselect_list_NAME. Show fselect_input_NAME.
+ * Call fselect_NAME_text|change(selbox) if defined.
+ * 
+ * @see setCallback(fselect_NAME_[text|change], ...)
+ * @param Node selbox
+ */
+this.fselectInput = function (selbox) {
+	var name = selbox.getAttribute('name');
+
+	if (selbox.value == '_') {
+    document.getElementById('fselect_list_' + name).style.display = 'none';
+    document.getElementById('fselect_input_' + name).style.display = 'block';
+
+    if (env.callback['fselect_' + name + '_text']) {
+			env.callback['fselect_' + name + '_text'](selbox);
+  	}
+  }
+  else if (env.callback['fselect_' + name + '_change']) {
+		env.callback['fselect_' + name + '_change'](selbox);
+  }
+};
+
+
+/**
+ * Close fselect input. Add value as selected.
+ *
+ * @param Node inbox 
+ */
+this.fselectList = function (inbox) {
+	var name = inbox.getAttribute('name').substr(0, -1);
+  var selbox = document.querySelect('fselect_list_' + name + ' > select');
+
+  var newOpt = document.createElement('option');
+  newOpt.text = inbox.value;
+  newOpt.value = inbox.value;
+
+  try {
+    selbox.add(newOpt, null);
+  }
+  catch(ex) {
+    selbox.add(newOpt); // IE only
+  }
+
+  selbox.options[selbox.length - 1].selected = true;
+
+  document.getElementById('fselect_list_'  + name).style.display = 'block';
+	document.getElementById('fselect_input_' + name).style.display = 'none';  
+};
+
 
 /**
  * Execute ajax call. Options:
