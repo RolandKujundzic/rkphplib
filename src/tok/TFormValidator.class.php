@@ -362,6 +362,10 @@ public function tok_fv_error_message($name, $tpl = '') {
  * @return string
  */
 public function tok_fv_in($name, $p) {
+	if (!is_array($this->conf['current']['required'])) {
+		$this->conf['current']['required'] = \rkphplib\lib\split_str(',', $this->conf['current']['required']);
+	}
+
 	$conf = $this->conf['current'];
 	$res = '';
 
@@ -387,6 +391,10 @@ public function tok_fv_in($name, $p) {
 		if (is_null($p['value']) || $p['value'] == 'NULL' || !empty($p['is_null'])) {
 			return '';
 		}
+	}
+
+	if ($conf['label_required'] && !empty($p['label']) && in_array($name, $conf['required'])) {
+		$p['label'] = $this->tok->replaceTags($conf['label_required'], [ 'label' => $p['label'] ]);
 	}
 
 	$r = [];
