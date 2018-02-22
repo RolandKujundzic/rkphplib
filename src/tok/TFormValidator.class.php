@@ -373,7 +373,7 @@ public function tok_fv_in($name, $p) {
 		$res .= $conf['template.header'];
 	}
 
-	$res .= $conf['template.output'];
+	$res .= empty($p['output']) ? $conf['template.output'] : $conf['template.output.'.$p['output']];
 
 	if (!empty($p['footer'])) {
 		$res .= $conf['template.footer'];
@@ -387,6 +387,14 @@ public function tok_fv_in($name, $p) {
 		$p['value'] = isset($_REQUEST[$name]) ? $_REQUEST[$name] : '';
 	}
 
+ 	if (empty($p['id'])) {
+		$p['id'] = 'fvin_'.$name;
+	}
+
+	if (!isset($p['type'])) {
+		throw new Exception('define [fv:init]in.'.$name.'= ...');
+	}
+
 	if ($p['type'] == 'const') {
 		if (is_null($p['value']) || $p['value'] == 'NULL' || !empty($p['is_null'])) {
 			return '';
@@ -398,6 +406,7 @@ public function tok_fv_in($name, $p) {
 	}
 
 	$r = [];
+	$r['id'] = $p['id'];
 	$r['label'] = empty($p['label']) ? '' : $p['label'];
 	$r['input'] = $this->getInput($name, $p);
 
@@ -405,7 +414,7 @@ public function tok_fv_in($name, $p) {
 	$r['error'] = isset($this->error[$name]) ? 'error' : '';
 
 	$res = $this->tok->replaceTags($res, $r);
-	// \rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
+	\rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
 	return $res;
 }
 
@@ -561,7 +570,7 @@ protected function getInput($name, $ri) {
 
 	$tags = '';
 
-	$attributes = [ 'size', 'maxlength', 'placeholder', 'type', 'pattern', 'rows', 'cols', 'style', 'class' ];
+	$attributes = [ 'id', 'size', 'maxlength', 'placeholder', 'pattern', 'rows', 'cols', 'style', 'class' ];
 	foreach ($attributes as $key) {
 		if (isset($ri[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
 			$tags .= $key.'="'.$this->tok->getTag($key).'"';
@@ -576,23 +585,23 @@ protected function getInput($name, $ri) {
 		}
 	}
 
-	if (!empty($ri['options']) && strpos($ri['options'], '</option>') === false) {
-		$tmp = \rkphplib\lib\conf2kv($ri['options'], '=', ',');
-		$ri['options'] = $this->getOptions($tmp, $ri['value']);
-	}
-
 	foreach ($ri as $key => $value) {
 		if ($key != 'options') {
 			$ri[$key] = \rkphplib\lib\htmlescape($value);
 		}
 	}
 
-	// \rkphplib\lib\log_debug("getInput> tags=[$tags] input=[$input] ri: ".print_r($ri, true));
+	$ri['tags'] = $tags;
+	$input = $this->tok->replaceTags($input, [ 'tags' => $tags ]);
 
-	$input = str_replace('$tags', $tags, $input);
+	if (!empty($ri['options']) && strpos($ri['options'], '</option>') === false) {
+		$tmp = \rkphplib\lib\conf2kv($ri['options'], '=', ',');
+		$ri['options'] = $this->getOptions($tmp, $ri['value']);
+	}
+
 	$input = $this->tok->replaceTags($input, $ri);
 
-	// \rkphplib\lib\log_debug("getInput($name): ".print_r($ri, true)."\n$input");
+	\rkphplib\lib\log_debug("getInput($name): ".print_r($ri, true)."\n$input");
 	return $input;
 }
 
