@@ -201,6 +201,10 @@ public function tok_fv_conf($name, $p) {
  */
 public function tok_fv_init($do, $p) {
 
+	if (!is_array($p)) {
+		$p = [];
+	}
+
 	if (empty($p['use'])) {
 		$p['use'] = 'default';
 	}
