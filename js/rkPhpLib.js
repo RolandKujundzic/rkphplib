@@ -41,6 +41,7 @@ this.ajax = function(options) {
 
 	if (!options.error) {
 		options.error = function(code, data) {
+			console.log('ajax query result: ', data);
 			throw 'ajax query failed with code ' + code;
 		};
 	}
@@ -51,7 +52,7 @@ this.ajax = function(options) {
 		if (request.status >= 200 && request.status < 400) {
 			var data = request.responseText;
 
-			if (data.indexOf('html') > -1) {
+			if (data.indexOf('<html') > -1) {
     		options.error(request.status, request.responseText);
 			}
 			else {
@@ -166,11 +167,14 @@ this.updateSearchList = function(el) {
 
 			var n = 0;
 			for (key in list) {
-				if (key !== n && key.length > 0) {
-					options += '<option data-value="' + key + '">' + list[key] + '</option>';
+				if (typeof list[key] === 'object') {
+					options += '<option data-value="' + list[key].value + '">' + list[key].label + "</option>\n";
+				}
+				else if (key !== n && key.length > 0) {
+					options += '<option data-value="' + key + '">' + list[key] + "</option>\n";
 				}
 				else {
-					options += '<option>' + list[key] + '</option>';
+					options += '<option>' + list[key] + "</option>\n";
 				}
 
 				n++;
