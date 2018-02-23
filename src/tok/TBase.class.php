@@ -98,6 +98,7 @@ public function __construct() {
  * - join: KV_BODY
  * - var: REQUIRE_PARAM
  * - view: REQUIRE_PARAM, KV_BODY, REDO
+ * - bootstrap:row:n,n 
  * - esc: 0
  *
  * @param Tokenizer $tok
@@ -107,6 +108,8 @@ public function getPlugins($tok) {
 	$this->_tok = $tok;
 
 	$plugin = [];
+	$plugin['bootstrap:row'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY; 
+	$plugin['bootstrap'] = 0;
 	$plugin['tf'] = TokPlugin::PARAM_LIST; 
 	$plugin['t'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['true'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO; 
@@ -187,6 +190,32 @@ public function tok_var($name, $value) {
 		$res = (string) $this->_tok->getVar($name);
 		return $res;
 	}
+}
+
+
+/**
+ * Place $p into bootstrap row grid.
+ * 
+ * @tok {bootstrap:6,6}a|#|b{:bootstrap} = <div class="row"><div class="col-md-6">a</div><div class="col-md-6">b</div></div>
+ * 
+ * @throws
+ * @param vector<int> $cols
+ * @param vector<string> $p
+ * @return string
+ */
+public function tok_bootstrap_row($cols, $p) {
+	$res = '<div class="row">'."\n";
+
+	if (count($cols) != count($p)) {
+		throw new Exception('[bootstrap:row:'.join(',', $cols).']... - column count != argument count', join(HASH_DELIMITER, $p));
+	}
+
+	for ($i = 0; $i < count($cols); $i++) {
+		$res .= '<div class="col-md-'.$cols[$i].'">'.$p[$i]."</div>\n";
+	}
+
+	$res .= "</div>\n";
+	return $res;
 }
 
 
