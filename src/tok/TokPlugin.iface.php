@@ -73,6 +73,9 @@ const POSTPROCESS = 32768;
 /** @const ONE_PARAM use param or arg if set - error if both are empty */
 const ONE_PARAM = 65536;
 
+/** @const IS_STATIC use if plugin can be resolved in pre-process */
+const IS_STATIC = 131072;
+
 
 
 /**
