@@ -20,9 +20,11 @@ use \rkphplib\ValueCheck;
  * Form validator plugin.
  *
  * {fv:conf:NAME}
- * template.output= {:=label}: {:=input} {fv:error_message}|#|
+ * template.output= default|#|
+ * template.output.default= {:=label}: {:=input} {fv:error_message}|#|
  * template.header|footer= ...|#|
  * template.input= <input type="text" name="{:=name}" value="{:=value}" class="{:=class}"> {fv:error_message:$name}
+ * template.engine= default[|bootstrap]
  * {:fv}
  *
  * {fv:init:[add]}
@@ -101,22 +103,42 @@ public function __construct() {
 	$input = TAG_PREFIX.'input'.TAG_SUFFIX;
 	$error = TAG_PREFIX.'error'.TAG_SUFFIX;
 	$error_message = TAG_PREFIX.'error_message'.TAG_SUFFIX;
+	$id = TAG_PREFIX.'id'.TAG_SUFFIX;
 	$type = TAG_PREFIX.'type'.TAG_SUFFIX;
 	$name = TAG_PREFIX.'name'.TAG_SUFFIX;
 	$value = TAG_PREFIX.'value'.TAG_SUFFIX;
 	$class = TAG_PREFIX.'class'.TAG_SUFFIX;
+	$tags = TAG_PREFIX.'tags'.TAG_SUFFIX;
 	$options = TAG_PREFIX.'options'.TAG_SUFFIX;
+	$fselect_input = TAG_PREFIX.'fselect_input'.TAG_SUFFIX;
 
 	$this->conf['default'] = [
 		'submit' 					=> 'form_action',
+		'label_required'	=> $label.'<sup>*</sup>',
+
+		'template.engine' => 'default',
+		'template.output' => 'default',
+		'template.output.default' => "$label$input$error_message",
 		'template.header' => '',
-		'template.output' => "$label$input$error_message",
 		'template.footer' => '',
-		'option.label_empty'   => '...',
-		'template.in.const'    => $value,
-		'template.in.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" $tags>',
-		'template.in.textarea' => '<textarea name="'.$name.'" class="'.$class.'" $tags>'.$value.'</textarea>',
-		'template.in.select'   => '<select name="'.$name.'" class="'.$class.'" $tags>'.$options.'</select>',
+
+		'option.label_empty'  => '...',
+
+		'default.in.const'    => $value,
+		'default.in.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" '.$tags.'>',
+		'default.in.textarea' => '<textarea name="'.$name.'" class="'.$class.'" '.$tags.'>'.$value.'</textarea>',
+		'default.in.select'   => '<select name="'.$name.'" class="'.$class.'" '.$tags.'>'.$options.'</select>',
+		'default.in.fselect'  => '<span id="fselect_list_'.$id.'"><select name="'.$name.'" class="'.$class.'" '.
+			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
+			'<span id="fselect_input_'.$id.'" style="display:none">'.$fselect_input.'</span>',
+
+		'bootstrap.in.input'	  => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="form-control '.$class.'" '.$tags.'>',
+		'bootstrap.in.textarea' => '<textarea name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$value.'</textarea>',
+		'bootstrap.in.select'   => '<select name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$options.'</select>',
+		'bootstrap.in.fselect'  => '<span id="fselect_list_'.$id.'"><select name="'.$name.'" class="form-control '.$class.'" '.
+			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
+			'<span id="fselect_input_'.$id.'" style="display:none">'.$fselect_input.'</span>',
+
 		'template.error.message' 			  => $error,
 		'template.error.message_concat' => ', ',
 		'template.error.message_multi'  => "<i>$name</i>: <tt>$error</tt><br>",
@@ -355,6 +377,7 @@ public function tok_fv_error_message($name, $tpl = '') {
 
 /**
  * Show input for $name. If $p is empty use conf.[in.name].
+ * If name is header|footer return template.header|footer.
  *
  * @throws
  * @param string $name
@@ -369,15 +392,12 @@ public function tok_fv_in($name, $p) {
 	$conf = $this->conf['current'];
 	$res = '';
 
-	if (!empty($p['header'])) {
-		$res .= $conf['template.header'];
+	if ($name == 'header' || $name == 'footer') {
+		return $this->tok->replaceTags($conf['template.'.$name], $p);
 	}
 
-	$res .= empty($p['output']) ? $conf['template.output'] : $conf['template.output.'.$p['output']];
-
-	if (!empty($p['footer'])) {
-		$res .= $conf['template.footer'];
-	}
+	$out = empty($p['output']) ? $conf['template.output'] : $p['output'];
+	$res .= $conf['template.output.'.$out];
 
 	if (!empty($conf['in.'.$name])) {
 		$this->parseInName($name, $conf['in.'.$name], $p);
@@ -528,12 +548,10 @@ protected function parseInName($name, $value, &$p) {
 
 
 /**
- * Return html input. Use template.input for type=[text|password|radio|checkbox|hidden|image|email|...].
- * Use template.textarea, template.select for type=[textarea|select].
- * Attribute keys: size, maxlength, placeholder, type, class, style, pattern, 
- * rows and cols (add value="{:=value}" if undefined).
- * Boolean attributes: readonly, multiple and disabled (e.g. readonly=1).
- * Other keys: prefix, suffix.
+ * Return html input. Use [template.engine].in.input for type=[text|password|radio|checkbox|hidden|image|email|...].
+ * Use textarea, select for type=[textarea|select]. Attribute keys: size, maxlength, placeholder, type, class, style, 
+ * pattern, rows and cols (add value="{:=value}" if undefined). Boolean attributes: readonly, multiple and disabled 
+ * (e.g. readonly=1). Other keys: prefix, suffix.
  *
  * @param string $name
  * @param map $ri
@@ -556,16 +574,18 @@ protected function getInput($name, $ri) {
 		$ri['class'] = empty($ri['class']) ? 'error' : $ri['class'].' error';
 	}
 
+	$tpl_in = $conf['template.engine'].'.in';
+
 	if (empty($ri['type'])) {
-		$use = join(', ', array_keys($this->getMapKeys('template.in', $conf)));
+		$use = join(', ', array_keys($this->getMapKeys($tpl_in, $conf)));
 		throw new Exception("missing form validator type for $name (use $use)", print_r($ri, true));
 	}
 
-	if (!empty($conf['template.in.'.$ri['type']])) {
-		$input = $conf['template.in.'.$ri['type']];
+	if (!empty($conf[$tpl_in.'.'.$ri['type']])) {
+		$input = $conf[$tpl_in.'.'.$ri['type']];
 	}
 	else {
-		$input = $conf['template.in.input'];
+		$input = $conf[$tpl_in.'.input'];
 	}
 
 	$tags = '';
