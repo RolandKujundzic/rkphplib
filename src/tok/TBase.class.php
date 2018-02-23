@@ -50,6 +50,10 @@ class TBase implements TokPlugin {
 /** @var Tokenizer $_tok */
 private $_tok = null;
 
+/** @var Hash $_tpl */
+private $_tpl = [];
+
+
 
 /** 
  * Constructor. Decode crypted query data. Use either ?SETTINGS_REQ_CRYPT=CRYPTED or ?CRYPTED.
@@ -98,8 +102,10 @@ public function __construct() {
  * - join: KV_BODY
  * - var: REQUIRE_PARAM
  * - view: REQUIRE_PARAM, KV_BODY, REDO
- * - bootstrap:row:n,n 
  * - esc: 0
+ * - bootstrap:row:n,n: REQUIRE_PARAM, PARAM_CSLIST, REQUIRE_BODY, LIST_BODY, IS_STATIC
+ * - tpl_set: REQUIRE_PARAM, PARAM_LIST, REQUIRE_BODY, TEXT, IS_STATIC
+ * - tpl: REQUIRE_PARAM, PARAM_LIST, LIST_BODY, IS_STATIC
  *
  * @param Tokenizer $tok
  * @return map<string:int>
@@ -108,8 +114,17 @@ public function getPlugins($tok) {
 	$this->_tok = $tok;
 
 	$plugin = [];
-	$plugin['bootstrap:row'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY; 
+
 	$plugin['bootstrap'] = 0;
+	$plugin['bootstrap:row'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | 
+		TokPlugin::LIST_BODY | TokPlugin::IS_STATIC;
+
+	$plugin['tpl_set'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::REQUIRE_BODY | 
+		TokPlugin::TEXT | TokPlugin::IS_STATIC;
+
+	$plugin['tpl'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::LIST_BODY | 
+		TokPlugin::REDO | TokPlugin::IS_STATIC;
+
 	$plugin['tf'] = TokPlugin::PARAM_LIST; 
 	$plugin['t'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['true'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO; 
@@ -143,6 +158,98 @@ public function getPlugins($tok) {
 	$plugin['esc'] = 0;
 
 	return $plugin;
+}
+
+
+/**
+ * Define template. First parameter is template name, second parameter is number
+ * of parameters and third parameter number or arguments. Save as this._tpl. 
+ *
+ * @tok {tpl_set:test}Nur ein Test{:tpl_set}
+ * @tok {tpl_set:page:2:2}Page {:=param1}/{:=param2} line {:=arg1} column {:=arg2}{:tpl_set}
+ * 
+ * @throws if same template is defined twice.
+ * @param vector $p 
+ * @param string $arg
+ * @return ''
+ */
+public function tok_tpl_set($p, $arg) {
+	$key = array_shift($p);
+
+	if (isset($this->_tpl[$key])) {
+		throw new Exception("template [tpl_set:$key] is already defined");
+	}
+
+	$pnum = empty($p[0]) ? 0 : intval($p[0]);
+	$anum = empty($p[1]) ? 0 : intval($p[1]);
+
+	if ($pnum) {
+		for ($i = 1; $i <= $pnum; $i++) {
+			$tag = TAG_PREFIX.'param'.$i.TAG_SUFFIX;
+			if (mb_strpos($arg, $tag) === false) {
+				throw new Exception("[tpl_set:$key] is missing $tag", $arg);
+			}
+		}
+	}
+
+	if ($anum) {
+		for ($i = 1; $i <= $anum; $i++) {
+			$tag = TAG_PREFIX.'arg'.$i.TAG_SUFFIX;
+			if (mb_strpos($arg, $tag) === false) {
+				throw new Exception("[tpl_set:$key] is missing $tag", $arg);
+			}
+		}
+	}
+
+	$this->_tpl[$key] = [ 'pnum' => $pnum, 'anum' => $anum, 'tpl' => $arg ];
+}
+
+
+/**
+ * Return filled and parsed template. First parameter is template name, other 
+ * parameter are values of tag param1, param2, ...
+ *
+ * @tok {tpl:test} = Nur ein Test
+ * @tok {tpl:page:3:72}15|#|39{:tpl} = Page 3/72 line 15 column 39
+ * 
+ * @throws
+ * @see tok_tpl_set
+ * @param vector $p 
+ * @param vector $arg
+ * @return string
+ */
+public function tok_tpl($p, $arg) {
+	$key = array_shift($p);
+
+	if (!isset($this->_tpl[$key])) {
+		throw new Exception("call [tpl_set:$key] first");
+	}
+
+	$pnum = $this->_tpl[$key]['pnum'];
+	$anum = $this->_tpl[$key]['anum'];
+	$tpl = $this->_tpl[$key]['tpl'];
+
+	if ($pnum) {
+		if ($pnum != count($p)) {
+			throw new Exception("[tpl:$key] invalid parameter count - ".count($p)." instead of $pnum");
+		}
+
+		for ($i = 1; $i <= $pnum; $i++) {
+			$tpl = str_replace(TAG_PREFIX.'param'.$i.TAG_SUFFIX, $p[$i], $tpl);
+		}
+	}
+
+	if ($anum) {
+		if ($anum != count($arg)) {
+			throw new Exception("[tpl:$key] invalid argument count - ".count($arg)." instead of $anum");
+		}
+
+		for ($i = 1; $i <= $anum; $i++) {
+			$tpl = str_replace(TAG_PREFIX.'arg'.$i.TAG_SUFFIX, $arg[$i], $tpl);
+		}
+	}
+
+	return $tpl;
 }
 
 
@@ -194,7 +301,7 @@ public function tok_var($name, $value) {
 
 
 /**
- * Place $p into bootstrap row grid.
+ * Place $p into bootstrap row grid. Convert into form-row if possible.
  * 
  * @tok {bootstrap:6,6}a|#|b{:bootstrap} = <div class="row"><div class="col-md-6">a</div><div class="col-md-6">b</div></div>
  * 
@@ -204,17 +311,39 @@ public function tok_var($name, $value) {
  * @return string
  */
 public function tok_bootstrap_row($cols, $p) {
-	$res = '<div class="row">'."\n";
 
 	if (count($cols) != count($p)) {
 		throw new Exception('[bootstrap:row:'.join(',', $cols).']... - column count != argument count', join(HASH_DELIMITER, $p));
 	}
 
-	for ($i = 0; $i < count($cols); $i++) {
-		$res .= '<div class="col-md-'.$cols[$i].'">'.$p[$i]."</div>\n";
+	$is_form_row = true;
+
+	for ($i = 0; $is_form_row && $i < count($p); $i++) {
+		if (strpos($p[$i], '<div class="form-group">') === false) {
+			$is_form_row = false;
+		}
 	}
 
-	$res .= "</div>\n";
+	if ($is_form_row) {
+		$res = '<div class="form-row">'."\n";
+
+		for ($i = 0; $i < count($cols); $i++) {
+			$col = 'col-md-'.$cols[$i].' ';
+			$res .= str_replace('<div class="form-group">', '<div class="form-group '.$col.'">', $p[$i]);
+		}
+
+		$res .= "</div>\n";
+	}
+	else {
+		$res = '<div class="row">'."\n";
+
+		for ($i = 0; $i < count($cols); $i++) {
+			$res .= '<div class="col-md-'.$cols[$i].'">'.$p[$i]."</div>\n";
+		}
+
+		$res .= "</div>\n";
+	}
+
 	return $res;
 }
 
