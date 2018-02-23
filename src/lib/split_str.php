@@ -2,6 +2,10 @@
 
 namespace rkphplib\lib;
 
+require_once(dirname(__DIR__).'/Exception.class.php');
+
+use rkphplib\Exception;
+
 
 /**
  * Split string at delimiter.
@@ -39,6 +43,10 @@ function split_str($delim, $txt, $ignore_empty = false, $limit = -1) {
 		}
 
 		return $arr;
+	}
+
+	if (strpos($txt, $delim) === false && $limit > 1) {
+		throw new Exception("text has no delimiter [$delim]", $txt);
 	}
 
 	$esc = '\\';
