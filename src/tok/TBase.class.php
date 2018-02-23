@@ -229,26 +229,17 @@ public function tok_tpl($p, $arg) {
 	$anum = $this->_tpl[$key]['anum'];
 	$tpl = $this->_tpl[$key]['tpl'];
 
-	if ($pnum) {
-		if ($pnum != count($p)) {
-			throw new Exception("[tpl:$key] invalid parameter count - ".count($p)." instead of $pnum");
-		}
-
-		for ($i = 1; $i <= $pnum; $i++) {
-			$tpl = str_replace(TAG_PREFIX.'param'.$i.TAG_SUFFIX, $p[$i], $tpl);
-		}
+	for ($i = 0; $i < $pnum; $i++) {
+		$value = isset($p[$i]) ? $p[$i] : '';
+		$tpl = str_replace(TAG_PREFIX.'param'.($i + 1).TAG_SUFFIX, $value, $tpl);
 	}
 
-	if ($anum) {
-		if ($anum != count($arg)) {
-			throw new Exception("[tpl:$key] invalid argument count - ".count($arg)." instead of $anum");
-		}
-
-		for ($i = 1; $i <= $anum; $i++) {
-			$tpl = str_replace(TAG_PREFIX.'arg'.$i.TAG_SUFFIX, $arg[$i], $tpl);
-		}
+	for ($i = 0; $i < $anum; $i++) {
+		$value = isset($arg[$i]) ? $arg[$i] : '';
+		$tpl = str_replace(TAG_PREFIX.'arg'.($i + 1).TAG_SUFFIX, $value, $tpl);
 	}
 
+	// \rkphplib\lib\log_debug("TBase.tok_tpl> $tpl"); 
 	return $tpl;
 }
 
@@ -841,7 +832,9 @@ public function tok_switch($set, $p) {
 public function tok_if($param, $p) {
 	
 	if (!empty($param)) {
-		list ($do, $param) = \rkphplib\lib\split_str(':', $param, false, 2);
+		$tmp = \rkphplib\lib\split_str(':', $param);
+		$do = $tmp[0];
+		$param = isset($tmp[1]) ? $tmp[1] : '';
 	}
 	else {
 		$do = '';
@@ -936,7 +929,6 @@ public function tok_if($param, $p) {
 		$res = $cmp ? $p[$p_num - 2] : $p[$p_num - 1];
 	}
 	else if ($do === 'cmp') {
-
 		if ($p_num % 2 == 1) {
 			array_push($p, '');
 			$p_num++;
@@ -949,7 +941,7 @@ public function tok_if($param, $p) {
 		if (empty($param) || $param === 'and') {
 			$cmp = true;
 
-			for ($i = 0; $cmp && $i < $pnum - 3; $i = $i + 2) {
+			for ($i = 0; $cmp && $i < $p_num - 3; $i = $i + 2) {
 				if ($p[$i] != $p[$i + 1]) {
 					$cmp = false;
 				}
@@ -958,14 +950,14 @@ public function tok_if($param, $p) {
 		else if ($param === 'or') {
 			$cmp = false;
 
-			for ($i = 0; !$cmp && $i < $pnum - 3; $i = $i + 2) {
+			for ($i = 0; !$cmp && $i < $p_num - 3; $i = $i + 2) {
 				if ($p[$i] == $p[$i + 1]) {
 					$cmp = true;
 				}
 			}
 		}
 
-		$res = ($cmp) ? $p[$pnum - 2] : $p[$pnum - 1];
+		$res = ($cmp) ? $p[$p_num - 2] : $p[$p_num - 1];
 	}
 
 	return $res;
