@@ -1118,8 +1118,8 @@ public function getTag($name) {
 private function tryPluginMap($name) {
 	static $map = [
 		'TArray' => [ 'array', 'array:set', 'array:get', 'array:shift', 'array:unshift', 'array:pop', 'array:push', 'array:join', 'array:length' ],
-		'TBase' => [ 'tf', 't', 'true', 'f', 'false', 'find', 'plugin', 'escape', 'unescape', 'encode', 'decode', 'get', 'const', 'include', 'include_if', 'view', 'clear', 'ignore', 'if', 'switch', 'keep', 'load', 'link', 'redo', 'toupper', 'tolower', 'join', 'set_default', 'redirect', 'var', 'esc' ],
-		'TConf' => [ 'conf', 'conf:id', 'conf:var', 'conf:get', 'conf:set', 'conf:set_default', 'conf:append' ],
+		'TBase' => [ 'bootstrap:row', 'bootstrap', 'tf', 't', 'true', 'f', 'false', 'find', 'plugin', 'escape', 'unescape', 'encode', 'decode', 'get', 'const', 'include', 'include_if', 'view', 'clear', 'ignore', 'if', 'switch', 'keep', 'load', 'link', 'redo', 'toupper', 'tolower', 'join', 'set_default', 'redirect', 'var', 'esc' ],
+		'TConf' => [ 'conf', 'conf:id', 'conf:var', 'conf:get', 'conf:get_path', 'conf:set', 'conf:set_path', 'conf:set_default', 'conf:append' ],
 		'TDate' => [ 'date' ],
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval' ],
 		'TFileSystem' => [ 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'directory', 'file:size', 'file:copy', 'file:exists', 'file', 'dirname', 'basename' ],
@@ -1127,12 +1127,12 @@ private function tryPluginMap($name) {
 		'THtml' => [ 'html:inner', 'html:tidy', 'html:xml', 'html:uglify', 'html' ],
 		'THttp' => [ 'http:get', 'http' ],
 		'TLanguage' => [ 'language:init', 'language:get', 'language', 'txt:js', 'txt', 'ptxt' ],
-		'TLogin' => [ 'login', 'login_account', 'login_check', 'login_auth', 'login_update', 'login_clear' ],
+		'TLogin' => [ 'login', 'login_account', 'login_check', 'login_auth', 'login_access', 'login_update', 'login_clear' ],
 		'TLoop' => [ 'loop:var', 'loop:list', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
 		'TMailer' => [ 'mail:init', 'mail:html', 'mail:txt', 'mail:send', 'mail:attach', 'mail' ],
 		'TMath' => [ 'nf', 'number_format' ],
 		'TMenu' => [ 'menu', 'menu:add', 'menu:conf' ],
-		'TOutput' => [ 'output:set', 'output:get', 'output:conf', 'output:init', 'output:loop', 'output:header', 'output:footer', 'output:empty', 'output', 'sort', 'search' ],
+		'TOutput' => [ 'output:set', 'output:get', 'output:conf', 'output:init', 'output:loop', 'output:json', 'output:header', 'output:footer', 'output:empty', 'output', 'sort', 'search' ],
 		'TPicture' => [ 'picture:init', 'picture:src', 'picture' ],
 		'TSQL' => [ 'sql:query', 'sql:dsn', 'sql:name', 'sql:qkey', 'sql:json', 'sql:col', 'sql:getId', 'sql:nextId', 'sql:in', 'sql:hasTable', 'sql:password', 'sql:import', 'sql', 'null' ],
 		'TTwig' => [ 'autoescape', 'block', 'do', 'embed', 'extends', 'filter', 'flush', 'for', 'from', 'if', 'import', 'include', 'macro', 'sandbox', 'set', 'spaceless', 'use', 'verbatim', 'v' ]
