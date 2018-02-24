@@ -213,12 +213,15 @@ public function tok_sql_nextId($table) {
 		$owner_id = $this->tok->callPlugin('login', 'tok_login', [ 'owner' ]);
 
 		if (!$this->db->hasQuery('shop_owner_next_item_id')) {
-	    $this->db->setQuery('shop_owner_next_item_id', "UPDATE show_owner SET item_id = LAST_INSERT_ID(item_id + 1) ".
-				"WHERE id={:=id} AND item_id + 1 < item_id_max AND item_id + 1 > item_id_min");
+	    $this->db->setQuery('shop_owner_next_item_id', "UPDATE shop_owner SET item_id = LAST_INSERT_ID(item_id + 1) ".
+				"WHERE id={:=id} AND item_id + 1 < item_max AND item_id + 1 > item_min");
 		}
 
+		$query = $this->db->getQuery('shop_owner_next_item_id', [ 'id' => $owner_id ]);
 		$this->db->execute($this->db->getQuery('shop_owner_next_item_id', [ 'id' => $owner_id ]));
-		return $this->db->getInsertId();
+		$next_id = $this->db->getInsertId();
+		\rkphplib\lib\log_debug("TSQL.tok_sql_nextId($table)> $next_id=[$query]");
+		return $next_id;
 	}
 	else {
 		return $this->db->nextId($table);
