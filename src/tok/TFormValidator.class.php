@@ -357,7 +357,8 @@ public function tok_fv_error_message($name, $tpl = '') {
 		}
 
 		// \rkphplib\lib\log_debug("tok_fv_error_message($name, ...)> name=[$name] res=[$res] - error: ".print_r($this->error, true));
-		return $res;
+		return join(',', array_keys($this->error));
+		// return $res;
 	}
 
 	if (empty($tpl)) {
