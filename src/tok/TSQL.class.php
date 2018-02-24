@@ -202,26 +202,29 @@ public function tok_sql_import($p) {
  * Return next unique id. 
  *
  * @tok {sql:nextId:$table}
- * @tok {sql:nextId:shop_owner.item_id}
+ * @tok {sql:nextId:$ignore_owner.$name_id} ({login:owner}, $name_min and $name_max must exist too)
  *
  * @see ADatabase.nextId($table)
  * @param string $table
  * @return int
  */
 public function tok_sql_nextId($table) {
-	if ($table == 'shop_owner.item_id') {
-		$owner_id = $this->tok->callPlugin('login', 'tok_login', [ 'owner' ]);
 
-		if (!$this->db->hasQuery('shop_owner_next_item_id')) {
-	    $this->db->setQuery('shop_owner_next_item_id', "UPDATE shop_owner SET item_id = LAST_INSERT_ID(item_id + 1) ".
-				"WHERE id={:=id} AND item_id + 1 < item_max AND item_id + 1 > item_min");
+	if (($pos = strpos($table, '_owner.')) !== false) {
+		$owner_id = $this->tok->callPlugin('login', 'tok_login', [ 'owner' ]);
+		$owner_table = ADatabase::escape_name(substr($table, 0, $pos + 6));
+		$id_count = ADatabase::escape_name(substr($table, $pos + 7));
+		$id_max = str_replace('_id', '_max', $id_count);
+		$id_min = str_replace('_id', '_max', $id_count);
+		$qkey = str_replace('.', '_next_', $table);
+
+		if (!$this->db->hasQuery($qkey)) {
+	    $this->db->setQuery($qkey, "UPDATE $owner_table SET $id_count = LAST_INSERT_ID($id_count + 1) ".
+				"WHERE id={:=id} AND $id_count + 1 < $id_max AND $id_count + 1 > $id_min");
 		}
 
-		$query = $this->db->getQuery('shop_owner_next_item_id', [ 'id' => $owner_id ]);
-		$this->db->execute($this->db->getQuery('shop_owner_next_item_id', [ 'id' => $owner_id ]));
-		$next_id = $this->db->getInsertId();
-		\rkphplib\lib\log_debug("TSQL.tok_sql_nextId($table)> $next_id=[$query]");
-		return $next_id;
+		$this->db->execute($this->db->getQuery($qkey, [ 'id' => $owner_id ]));
+		return $this->db->getInsertId();
 	}
 	else {
 		return $this->db->nextId($table);
