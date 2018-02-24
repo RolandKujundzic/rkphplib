@@ -1008,14 +1008,23 @@ public function tok_esc($param, $arg) {
 /**
  * Set _REQUEST[$name] = $value if unset.
  *
+ * @tok {set_default:id!}value{:set_default} - abort if _REQUEST['id'] is set
  * @tok {set_default:key}value{:set_default}
  * @tok {set_default:}key=value|#|...{:set_default}
  *
+ * @throws if name! and _REQUEST[name] already defined
  * @param string $name
  * @param string $value
  * @return ''
  */
 public function tok_set_default($name, $value) {
+
+	if (substr($name, -1) == '!') {
+		$name = substr($name, 0, 1);
+		if (isset($_REQUEST[$name])) {
+			throw new Exception('[set_default:'.$name.'!] - _REQUEST['.$name.'] is already set');
+		}
+	}
 
   if (empty($name)) {
 		$kv = \rkphplib\lib\conf2kv($value);
