@@ -150,7 +150,8 @@ public function tok_mail_init($conf) {
 
 
 /**
- * Set html mail body.
+ * Set html mail body. Prepend [<!DOCTYPE html><html> ... </head><body>] and append [</body></html>] 
+ * if body has no [<html ] and [</html].
  *
  * @tok {mail:html}HTML BODY{:mail} 
  *
@@ -159,6 +160,12 @@ public function tok_mail_init($conf) {
  * @return ''
  */
 public function tok_mail_html($body) {
+
+	if (mb_strpos($body, '<html ') === false && mb_strpos($body, '</html>') === false) {
+		$body = "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\" />\n</head>\n<body>\n".
+			$body."\n</body>\n</html>\n";
+	}
+
 	$basedir = isset($this->conf['basedir']) ? $this->conf['basedir'] : '';
 	$this->mail->setHtmlBody($body, $basedir);
 }
