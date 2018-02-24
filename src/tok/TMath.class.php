@@ -22,7 +22,76 @@ public function getPlugins($tok) {
   $plugin = [];
 	$plugin['nf'] = 0;
   $plugin['number_format'] = 0;
+	$plugin['rand'] = TokPlugin::LIST_BODY;
   return $plugin;
+}
+
+
+/**
+ * Return random number or alphanumeric string.
+ *
+ * @tok {rand:} - md5(microtime() . rand())
+ * @tok {rand:8} = aUlPmvei
+ * @tok {rand:}5|#|10{:rand} = 10
+ *
+ * @param int $param
+ * @param vector<int> $p  [min, max ]
+ */
+public function tok_rand($param, $p) {
+	$res = '';
+
+	if (empty($arg)) {
+		if (empty($param)) {
+			$res = md5(microtime() . rand());
+		}
+		else {
+			$res = self::randomString(intval($param));
+		}
+	}
+	else if (!empty($p['min']) && !empty($p['max'])) {
+		$res = mt_rand($p['min'], $p['max']);
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return random alphanumeric string with $len length. 
+ *
+ * @param int $len (default=8)
+ * @return string
+ */
+public static function randomString($len = 8) {
+
+	if ($len == 0) {
+		$len = 8;
+	}
+
+	srand((double)microtime()*1000000);
+	$rand_str = '';
+
+	$lchar = 0;
+	$char = 0;
+
+	for($i = 0; $i < $len; $i++) {
+		while($char == $lchar) {
+			$char = rand(48, 109);
+
+			if ($char > 57) {
+				$char += 7;
+			}
+
+			if($char > 90) {
+				$char += 6;
+			}
+		}
+
+		$rand_str .= chr($char);
+		$lchar = $char;
+	}
+
+	return $rand_str;
 }
 
 
