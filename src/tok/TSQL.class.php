@@ -25,6 +25,9 @@ use \rkphplib\Dir;
  */
 class TSQL implements TokPlugin {
 
+/** @var Tokenizer $tok */
+protected $tok = null;
+
 /** @var ADatabase $db */
 protected $db = null;
 
@@ -199,13 +202,27 @@ public function tok_sql_import($p) {
  * Return next unique id. 
  *
  * @tok {sql:nextId:$table}
+ * @tok {sql:nextId:shop_owner.item_id}
  *
  * @see ADatabase.nextId($table)
  * @param string $table
  * @return int
  */
 public function tok_sql_nextId($table) {
-	return $this->db->nextId($table);
+	if ($table == 'shop_owner.item_id') {
+		$owner_id = $this->tok->callPlugin('login', 'tok_login', [ 'owner' ]);
+
+		if (!$this->db->hasQuery('shop_owner_next_item_id')) {
+	    $this->db->setQuery('shop_owner_next_item_id', "UPDATE show_owner SET item_id = LAST_INSERT_ID(item_id + 1) ".
+				"WHERE id={:=id} AND item_id + 1 < item_id_max AND item_id + 1 > item_id_min");
+		}
+
+		$this->db->execute($this->db->getQuery('shop_owner_next_item_id', [ 'id' => $owner_id ]));
+		return $this->db->getInsertId();
+	}
+	else {
+		return $this->db->nextId($table);
+	}
 }
 
 
