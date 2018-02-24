@@ -425,6 +425,12 @@ public function tok_fv_in($name, $p) {
 		$p['label'] = $this->tok->replaceTags($conf['label_required'], [ 'label' => $p['label'] ]);
 	}
 
+	$tag_form_group = $this->tok->getTag('form_group');
+	if (mb_strpos($res, $tag_form_group) !== false) {
+		$tag_error = $this->tok->getTag('error');
+		$res = str_replace($tag_form_group, $tag_error.' form-group', $res);
+	}
+
 	$r = [];
 	$r['id'] = $p['id'];
 	$r['label'] = empty($p['label']) ? '' : $p['label'];
@@ -434,7 +440,7 @@ public function tok_fv_in($name, $p) {
 	$r['error'] = isset($this->error[$name]) ? 'error' : '';
 
 	$res = $this->tok->replaceTags($res, $r);
-	// \rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
+	\rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
 	return $res;
 }
 
