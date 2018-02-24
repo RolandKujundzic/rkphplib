@@ -161,7 +161,7 @@ public function tok_mail_init($conf) {
  */
 public function tok_mail_html($body) {
 
-	if (mb_strpos($body, '<html ') === false && mb_strpos($body, '</html>') === false) {
+	if (mb_stripos($body, '<html ') === false && mb_stripos($body, '</html>') === false) {
 		$body = "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\" />\n</head>\n<body>\n".
 			$body."\n</body>\n</html>\n";
 	}
