@@ -87,6 +87,7 @@ public function getPlugins($tok) {
 	$plugin['fv:check'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY; 
 	$plugin['fv:in'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
 	$plugin['fv:hidden'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
+	$plugin['fv:preset'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['fv:error'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:error_message'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:set_error_message'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY;
@@ -144,6 +145,33 @@ public function __construct() {
 		'template.error.message_multi'  => "<i>$name</i>: <tt>$error</tt><br>",
 		'template.error.const' 					=> 'error'
 		];
+}
+
+
+/**
+ * Tokenize output $arg if form is in preset mode. Don't preset if 
+ * _REQUEST.form_action is set or _REQUEST.id = add.
+ *
+ * @tok_example[
+ * {fv:preset}
+ * {sql:query}SELECT * FROM table WHERE id={esc:id}{:sql}
+ * {set_default:}password=|#|{sql:col:*}{:set_default}
+ * {:fv}
+ * @]
+ *
+ * @param string $arg
+ * @return ''|string
+ */
+public function tok_fv_preset($arg) {
+	$skey = $this->conf['current']['submit'];
+
+	if (isset($_REQUEST[$skey])) {
+		return '';
+	}
+
+	if (!empty($_REQUEST['id']) && $_REQUEST['id'] == 'add') {
+		return '';
+	}
 }
 
 
