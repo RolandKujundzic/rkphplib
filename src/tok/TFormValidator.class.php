@@ -503,8 +503,8 @@ protected function parseInName($name, $value, &$p) {
 			unset($r[2]);
 		}
 
-		if ($type == 'text') {
-			$p['type'] = 'input';
+		if ($type == 'input') {
+			$p['type'] = 'text';
 		}
 		else if ($type == 'pass') {
 			$p['type'] = 'password';
