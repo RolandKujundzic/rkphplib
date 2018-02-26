@@ -956,6 +956,9 @@ public function tok_if($param, $p) {
 				}
 			}
 		}
+		else {
+			throw new Exception("invalid [if:cmp:$param]", join('|', $p));
+		}
 
 		$res = ($cmp) ? $p[$p_num - 2] : $p[$p_num - 1];
 	}
