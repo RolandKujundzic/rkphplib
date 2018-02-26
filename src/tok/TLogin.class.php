@@ -61,7 +61,7 @@ public function getPlugins($tok) {
 	$plugin['login_account'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
-	$plugin['login_access'] = TokPlugin::KV_BODY;
+	$plugin['login_access'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['login_update'] = TokPlugin::KV_BODY;
 	$plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 
@@ -72,10 +72,24 @@ public function getPlugins($tok) {
 /**
  * Check login access. 
  *
- * @param map p
+ * @tok {login_access:}redirect={link:}@=login/access_denied{:link}|#|allow={:=super}{:login_access} = redirect to login/access_denied if no super priv
+ * @tok {login_access:}privilege={:=super}{:login_access} = 1
+ *
+ * @param map $p
+ * @return 1|''
  */
 public function tok_login_access($p) {
-	throw new Exception('ToDo');
+	$res = '';
+
+	if (!empty($p['allow']) && !$this->hasPrivileges($p['allow'])) {
+		$redir_url = empty($p['redirect_access_denied']) ? 'login/access_denied' : $p['redirect_access_denied'];
+		\rkphplib\lib\redirect($redir_url, [ '@link' => 1, '@back' => 1 ]);
+	}
+	else if (!empty($p['privilege'])) {
+		$res = $this->hasPrivileges($p['privilege']);
+	}
+
+	return $res;
 }
 
 
@@ -93,6 +107,11 @@ public function hasPrivileges($require_priv) {
 	}
 
 	$priv = intval($this->sess->get('priv')); // 2^n | 2^m | ...
+
+	if ($priv & 1) {
+		// super can do anything ...
+		return 1;
+	}
 
 	$tmp = \rkphplib\lib\conf2kv($this->tok_login('conf.role'));
 	$privileges = str_replace('=,', '', join(',', $tmp)); // app1.priv1,app1.priv2,app2.priv1,...
