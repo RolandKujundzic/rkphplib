@@ -19,11 +19,75 @@ class TMath implements TokPlugin {
  *
  */
 public function getPlugins($tok) {
-  $plugin = [];
+	$plugin = [];
 	$plugin['nf'] = 0;
-  $plugin['number_format'] = 0;
+	$plugin['number_format'] = 0;
+	$plugin['intval'] = TokPlugin::NO_PARAM;
+	$plugin['floatval'] = 0;
 	$plugin['rand'] = TokPlugin::LIST_BODY;
-  return $plugin;
+	return $plugin;
+}
+
+
+/**
+ * Replace ',' with '.'. Remove '.' from 1.000,83.
+ *
+ * @param string $arg
+ * @return string 
+ */
+private function removeNumberFormat($arg) {
+
+	if (strpos($arg, '.') === false) {
+		// 1382,00 = 1382.00
+		$arg = str_replace(',', '.', $arg);
+	}
+	else if (strpos($arg, ',') !== false) {
+		// 1.003,95 = 1003.95
+		$arg = str_replace('.', '', $arg);
+		$arg = str_replace(',', '.', $arg);
+	}
+	else if (($tmp = explode('.', $arg)) && count($tmp) > 1) {
+		// 2.658.388 = 2658388
+		$arg = join('', $tmp);
+	}
+
+	return $arg;
+}
+
+
+/**
+ * Return inval($arg).
+ *
+ * @tok {intval:}37.32{:intval} = 37
+ * @tok {intval:}abc{:intval) = 0
+ *
+ * @param string $arg
+ * @return int
+ */
+public function tok_intval($arg) {
+	return intval($this->removeNumberFormat($arg));
+}
+
+
+/**
+ * Return floatval($arg).
+ *
+ * @tok {floatval:}37.32{:floatval} = 37.32
+ * @tok {floatval:2}37.32783{:floatval} = 37.33
+ * @tok {floatval:}abc{:floatval) = 0
+ *
+ * @param string $arg
+ * @param int $round
+ * @return int
+ */
+public function tok_floatval($round, $arg) {
+	$value = intval($this->removeNumberFormat($arg));
+
+	if (strlen($round) > 0 && intval($round).'' == $round) {
+		$value = round($value, $round);
+	}
+
+	return $value;
 }
 
 
