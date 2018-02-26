@@ -8,7 +8,8 @@ use rkphplib\Exception;
 
 
 /**
- * Send redirect header and exit. 
+ * Send redirect header and exit. If $p['@link'] use {link:}@=$url{:link}. 
+ * If $p['@back']=1 append parameter back=parent/dir.  
  * 
  * @param string $url
  * @param map<string:string> $p (extra parameter, default = [])
@@ -22,12 +23,28 @@ function redirect($url, $p = []) {
 		throw new Exception('redirect loop', $url);
 	}
 
-	// append parameter _ld for loop detection
-	$url .= mb_strpos($url, '?') ? '&_ld='.$md5 : '?_ld='.$md5;
+	if (!empty($p['@back']) && !empty($_REQUEST[SETTINGS_REQ_DIR])) {
+		$p['back'] = dirname($_REQUEST[SETTINGS_REQ_DIR]);
+		unset($p['@back']);
+	}
 
-	// append optional parameter
-	foreach ($p as $key => $value) {
-		$url .= '&'.$key.'='.rawurlencode($value);
+	if (!empty($p['@link'])) {
+		require_once(dirname(__DIR__).'/tok/Tokenizer.class.php');
+
+		unset($p['@link']);
+		$p['@'] = $url;
+		$p['_ld'] = $md5;
+
+		$url = \rkphplib\tok\Tokenizer::$site->callPlugin('link', 'tok_link', [ [], $p ]);
+	}
+	else {
+		// append parameter _ld for loop detection
+		$url .= mb_strpos($url, '?') ? '&_ld='.$md5 : '?_ld='.$md5;
+
+		// append optional parameter
+		foreach ($p as $key => $value) {
+			$url .= '&'.$key.'='.rawurlencode($value);
+		}
 	}
 
 	// header('P3P: CP="CAO PSA OUR"'); // IE will not accept Frameset SESSIONS without this header 
