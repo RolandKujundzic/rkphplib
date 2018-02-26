@@ -84,10 +84,9 @@ public function tok_login_access($p) {
  * Value of 2^N privileges: super=1, ToDo=2. Check sess.role.app for app privileges.
  *
  * @param string $require_priv boolean expression e.g (priv1 | priv2) & !priv3 
- * @param string (default = '') 
  * @return 1|''
  */
-public function hasPrivileges($require_priv, $dir = '') {
+public function hasPrivileges($require_priv) {
 
 	if (strlen(trim($require_priv)) == 0) {
 		return 1;
@@ -98,7 +97,7 @@ public function hasPrivileges($require_priv, $dir = '') {
 	$tmp = \rkphplib\lib\conf2kv($this->tok_login('conf.role'));
 	$privileges = str_replace('=,', '', join(',', $tmp)); // app1.priv1,app1.priv2,app2.priv1,...
 
-	// \rkphplib\lib\log_debug("TLogin.hasPrivileges> require_priv=[$require_priv] dir=[$dir] priv=[$priv] privileges=[$privileges]");
+	// \rkphplib\lib\log_debug("TLogin.hasPrivileges> require_priv=[$require_priv] priv=[$priv] privileges=[$privileges]");
 	$priv_list  = explode(',', $privileges);
 	$priv_expr  = $require_priv;
 
