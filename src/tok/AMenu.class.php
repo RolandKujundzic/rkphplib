@@ -178,7 +178,7 @@ public function tok_menu_add($level, $node) {
 		return;
 	}
 
-	if (isset($node['if_priv']) && !$this->tok->callPlugin('login', 'hasPrivileges', [ $node['if_priv'], $node['dir'] ])) {
+	if (isset($node['if_priv']) && !$this->tok->callPlugin('login', 'hasPrivileges', [ $node['if_priv'] ])) {
 		$this->ignore_level = $level + 1;
 		$this->skipNode($node);
 		return;
@@ -214,7 +214,7 @@ private function skipNode($node) {
 		return;
 	}
 
-	if (isset($node['if_priv']) && !$this->tok->callPlugin('login', 'hasPrivileges', [ $node['if_priv'], $node['dir'] ])) {
+	if (isset($node['if_priv']) && !$this->tok->callPlugin('login', 'hasPrivileges', [ $node['if_priv'] ])) {
 		// \rkphplib\lib\log_debug("AMenu.skipNode> current dir is forbidden - node: ".join('|', $node));
 		$redir_url = empty($this->conf['redirect_access_denied']) ? 
 			'index.php?dir=login/access_denied' : $this->conf['redirect_access_denied'];
