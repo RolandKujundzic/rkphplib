@@ -822,6 +822,7 @@ public function tok_switch($set, $p) {
  * @tok {if:and:2}1|#|1|#|true|#|false{:if} = true
  * @tok {if:or:3}0|#|0|#|1|#|true|#|false{:if} = true
  * @tok {if:cmp}a|#|a|#|b|#|c|#|true|#|false{:if} = false - same as {if:cmp:and}...
+ * @tok {if:cmp:a}a|#|true|#|false{:if} = true
  * @tok {if:cmp:or}a|#|a|#|b|#|c|#|true|#|false{:if} = true
  *
  * @throws 
@@ -929,6 +930,12 @@ public function tok_if($param, $p) {
 		$res = $cmp ? $p[$p_num - 2] : $p[$p_num - 1];
 	}
 	else if ($do === 'cmp') {
+		if (!empty($param) && $param != 'and' && $param != 'or') {
+			array_unshift($p, $param);
+			$param = '';
+			$p_num++;
+		}
+
 		if ($p_num % 2 == 1) {
 			array_push($p, '');
 			$p_num++;
