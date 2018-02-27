@@ -949,6 +949,11 @@ protected function getSqlSearch() {
 				array_push($select_search, "MAX($col) AS s_".$col."_max");
 			}
 
+			if (!$value && isset($_REQUEST['s_'.$col.'_min']) && isset($_REQUEST['s_'.$col.'_max']) &&
+					(!empty($_REQUEST['s_'.$col.'_min']) || !empty($_REQUEST['s_'.$col.'_max']))) {
+				$value = $_REQUEST['s_'.$col.'_min'].','.$_REQUEST['s_'.$col.'_max'];
+			}
+
 			if ($value) {
 				array_push($expr, $this->getRangeExpression($col, $value, $method));
 			}
@@ -1004,11 +1009,16 @@ private function selectSearch($cols) {
 
 
 /**
- * Return range expression. Example:
+ * Return range expression. You can use col_[min|max] suffix too.
+ * Example:
  * 
  * age, "18,24", [] = (18 <= age AND age <= 24)
+ * s_age_min=18, s_age_max=24
  *
  * @throws
+ * @param string $col
+ * @param string $value
+ * @param string $range
  * @return string
  */
 private function getRangeExpression($col, $value, $range) {
@@ -1030,7 +1040,7 @@ private function getRangeExpression($col, $value, $range) {
 	$len_b = mb_strlen($b);
 
 	if ($len_a == 0 && $len_b == 0) {
-		throw new Exception("invalid range [$a,$b]");
+		throw new Exception("invalid range $col=[$a,$b]");
 	}
 	else if ($len_a == 0) {
 		$expr = "('$b' $op2 $col)";
