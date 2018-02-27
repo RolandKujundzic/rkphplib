@@ -178,7 +178,7 @@ public function tok_menu_add($level, $node) {
 		return;
 	}
 
-	if (isset($node['if_priv']) && !$this->tok->callPlugin('login', 'hasPrivileges', [ $node['if_priv'] ])) {
+	if (isset($node['if_priv']) && !$this->tok->callPlugin('login', 'hasPrivileges', [ $node['if_priv'], true ])) {
 		$this->ignore_level = $level + 1;
 		$this->skipNode($node);
 		return;

@@ -98,9 +98,10 @@ public function tok_login_access($p) {
  * Value of 2^N privileges: super=1, ToDo=2. Check sess.role.app for app privileges.
  *
  * @param string $require_priv boolean expression e.g (priv1 | priv2) & !priv3 
+ * @param boolean $ignore_super (default = false)
  * @return 1|''
  */
-public function hasPrivileges($require_priv) {
+public function hasPrivileges($require_priv, $ignore_super = false) {
 
 	if (strlen(trim($require_priv)) == 0) {
 		return 1;
@@ -108,7 +109,7 @@ public function hasPrivileges($require_priv) {
 
 	$priv = intval($this->sess->get('priv')); // 2^n | 2^m | ...
 
-	if ($priv & 1) {
+	if (!$ignore_super && ($priv & 1)) {
 		// super can do anything ...
 		return 1;
 	}
