@@ -477,7 +477,7 @@ public function tok_redo($txt) {
  * Include view file.
  *
  * @tok {view:overview}name=Overview{:view} = 
- *   <div id="overview" class="view" data-name="Overview">{include:}{get:dir}/overview.inc.html</div>
+ *   <div id="overview" class="view" data-name="Overview">{include:}{get:dir}/overview.inc.html{:include}</div>
  * 
  * @throws if file {get:dir}/$name.inc.html does not exists
  * @param string $name
