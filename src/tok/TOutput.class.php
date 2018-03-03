@@ -11,6 +11,7 @@ require_once($parent_dir.'/File.class.php');
 require_once($parent_dir.'/lib/htmlescape.php');
 require_once($parent_dir.'/lib/split_str.php');
 require_once($parent_dir.'/lib/conf2kv.php');
+require_once($parent_dir.'/lib/kv2conf.php');
 require_once($parent_dir.'/lib/is_map.php');
 
 use \rkphplib\Exception;
@@ -224,6 +225,11 @@ public function tok_output_set($name, $value) {
 /**
  * Get env ($name = key) or conf key ($name = conf.key) value.
  *
+ * @tok {output:get:conf.query} = SELECT ...
+ * @tok {output:get:start|end|pagebreak|rownum|page_num|total|visible|rownum|tags.*|scroll.*} = ...
+ * @tok {output:get:conf.*} = conf.query= ... |#| ...
+ * @tok {output:get:*} = rownum= ... |#| ...
+ * 
  * @throws
  * @param string $name
  * @return string
@@ -236,11 +242,19 @@ public function tok_output_get($name) {
 	if (mb_substr($name, 0, 5) == 'conf.') {
 		$name = mb_substr($name, 5);
 
+		if ($name == '*') {
+			return \rkphplib\lib\kv2conf($this->conf);
+		}
+
 		if (!isset($this->conf[$name])) {
 			throw new Exception('No such conf key', $name);
 		}
 		
 		return $this->conf[$name];
+	}
+
+	if ($name == '*') {
+		return \rkphplib\lib\kv2conf($this->env);
 	}
 	
 	if (!isset($this->env[$name])) {
