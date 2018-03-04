@@ -60,6 +60,7 @@ public function getPlugins($tok) {
 	$plugin['sql:qkey'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['sql:json'] = TokPlugin::REQUIRE_BODY;
 	$plugin['sql:col'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+	$plugin['sql:options'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['sql:getId'] = TokPlugin::NO_PARAM;
 	$plugin['sql:nextId'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['sql:in'] = TokPlugin::CSLIST_BODY;
@@ -369,6 +370,38 @@ public function tok_sql_query($qkey, $query) {
 
 	$this->db->execute($query, $use_result);
 	return '';
+}
+
+
+/**
+ * Return options list. Parameter:
+ *
+ * - mode = html (default)
+ * - selected = ...
+ *
+ * @tok {sql:query}SELECT country_id AS value, name AS label FROM shop_country_translation 
+ *   WHERE language={esc:}{language:get}{:esc} AS label ORDER BY language{:sql}
+ * @tok {sql:options}selected=de{:sql}
+ * 
+ * @param hash $p
+ * @return string
+ */
+public function tok_sql_options($p = []) {
+	$default = [ 'mode' => 'html' ];
+	$p = array_merge($default, $p);
+	$res = '';
+
+	if ($p['mode'] == 'html') {
+		$country = empty($p['selected']) ? '' : $p['selected'];
+
+		while (($row = $this->db->getNextRow())) {
+			$selected = ($row['value'] == $country) ? ' selected' : '';
+			$res .= '<option value="'.\rkphplib\lib\htmlescape($row['value']).'"'.$selected.'>'.
+				\rkphplib\lib\htmlescape($row['label'])."</option>\n";
+		}
+	}
+
+	return $res;
 }
 
 
