@@ -568,7 +568,15 @@ public function dropDatabase($dsn = '') {
 /**
  *
  */
-public function saveDump($file, $opt = null) {
+public function saveDump($opt) {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
+ *
+ */
+public function saveTableDump($opt) {
 	throw new Exception('ToDo ...');
 }
 

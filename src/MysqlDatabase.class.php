@@ -204,8 +204,98 @@ public function dropDatabase($dsn = '') {
 /**
  *
  */
-public function saveDump($file, $opt = null) {
-  throw new Exception('ToDo ...');
+public function saveDump($opt) {
+
+	if (empty($opt['save_dir'])) {
+		$opt['save_dir'] = getcwd();
+	}
+
+	if (empty($opt['tables'])) {
+		$opt['tables'] = $this->getTableList();
+	}
+
+	$use = [ 'ignore_foreign_keys', 'delete_entries' ];
+
+	foreach ($opt['tables'] as $table) {
+		$t_opt = [ 'table' => $table ];
+		$t_opt['save_as'] = $opt['save_dir'].'/'.$table.'.sql';
+
+		foreach ($opt as $key => $value) {
+			if (in_array($key, $use)) {
+				$t_opt[$key] = $value;
+			}
+			else if (strpos($key, $table.'.') === 0) {
+				$tkey = substr($key, strlen($table.'.'));
+				$t_opt[$tkey] = $value;
+			}
+		}
+
+		$this->saveTableDump($t_opt);
+	}
+}
+
+
+/**
+ *
+ */
+public function saveTableDump($opt) {
+	$table = self::escape_name($opt['table']);
+
+	if (empty($opt['query'])) {
+		if (!empty($opt['table'])) {
+			$opt['query'] = "SELECT * FROM $table";
+		}
+		else {
+			throw new Exception('Parameter table and query are empty', print_r($opt, true));
+		}
+	}
+
+	if (empty($opt['save_as'])) {
+		throw new Exception('Parameter save_as is empty', print_r($opt, true));
+	}
+
+	$fh = File::open($opt['save_as'], 'wb');
+
+	if (!empty($opt['ignore_foreign_keys'])) {
+		File::write($fh, "SET FOREIGN_KEY_CHECKS=0;\n");
+	}
+
+	if (empty($opt['delete_query']) && !empty($opt['delete_entries'])) {
+		$opt['delete_query'] = "DELETE FROM $table";
+	}
+
+	if (!empty($opt['delete_query'])) {
+		File::write($fh, $opt['delete_query'].";\n");
+	}
+
+	if (empty($opt['cols'])) {
+		$opt['cols'] = array_keys($this->getTableDesc($table));
+	}
+
+	$col_tags = [];
+	foreach ($opt['cols'] as $col) {
+		array_push($col_tags, TAG_PREFIX.$col.TAG_SUFFIX); 
+	}
+
+	$col_tags_list = join(', ', $col_tags);
+	if (strlen($col_tags_list) < 60) {
+		$this->setQuery('saveTableDump_insert', "INSERT INTO $table (".join(', ', $opt['cols']).") VALUES ($col_tags_list);\n");
+	}
+	else {
+		$this->setQuery('saveTableDump_insert', "INSERT INTO $table (".join(', ', $opt['cols']).") VALUES \n\t($col_tags_list);\n");
+	}
+
+	$this->execute($opt['query'], true);
+
+	while (($row = $this->getNextRow())) {
+		File::write($fh, $this->getQuery('saveTableDump_insert', $row));
+	}
+
+	if (!empty($opt['ignore_foreign_keys'])) {
+		File::write($fh, "SET FOREIGN_KEY_CHECKS=1;\n");
+	}
+
+	File::close($fh);
 }
 
 

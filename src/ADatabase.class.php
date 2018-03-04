@@ -894,14 +894,34 @@ abstract public function dropDatabase($dsn = '');
 /**
  * Export database dump into file. Opt parameter:
  *
+ * - save_dir: getcwd() if empty
  * - tables: table1, table2, ...
+ * - ignore_foreign_keys: 1|0
+ * - delete_entries: 1|0
+ * - table.*: optional - see saveTableDump
  *
- * @param string $file
- * @param array[string]mixed $opt
+ * @param hash $opt
  */
-abstract public function saveDump($file, $opt = null);
+abstract public function saveDump($opt);
 
 
+/**
+ * Create sql insert dump. Options:
+ *
+ * - table: required if query is empty
+ * - query: select * from table order by id 
+ * - cols: auto-detect if empty
+ * - save_as: required
+ * - ignore_foreign_keys: 1|0
+ * - delete_entries: 1|0
+ * - delete_query: 
+ *
+ * @throws
+ * @param hash $opt
+ */
+abstract public function saveTableDump($opt);
+
+ 
 /**
  * Import database dump. Basename $file (without .sql suffix) must be tablename. Flags are 
  *
