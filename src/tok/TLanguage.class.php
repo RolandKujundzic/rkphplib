@@ -162,7 +162,7 @@ public function tok_language_init($p) {
 		}
 	}
 
-	$p['use'] = empty($p['use']) ? $p['default'] : $p['use'];
+	$p['use'] = empty($p['use']) ? $p['default'] : strtolower($p['use']);
 	$this->setDSN($p['dsn'], $p);
 	$this->initSession($p['use'], $p['table']);
 	$this->conf = $p;
