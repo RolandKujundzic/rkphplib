@@ -321,29 +321,31 @@ public function tok_login_update($do, $p) {
 		unset($kv['password']);
 	}
 
-	if (empty($kv['@where'])) {
-		$id = empty($p['id']) ? '' : $p['id'];
-		if (!$id) {
-			$id = empty($sess['id']) ? '' : $sess['id'];
+	if (!is_null($this->db)) {
+		if (empty($kv['@where'])) {
+			$id = empty($p['id']) ? '' : $p['id'];
+			if (!$id) {
+				$id = empty($sess['id']) ? '' : $sess['id'];
+			}
+
+			if ($id && is_numeric($id)) {
+				$kv['@where'] = "WHERE id='".intval($id)."'";
+			}
 		}
 
-		if ($id && is_numeric($id)) {
-			$kv['@where'] = "WHERE id='".intval($id)."'";
+		if (empty($kv['@where'])) {
+			throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
 		}
-	}
 
-	if (empty($kv['@where'])) {
-		throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
-	}
+		if (count($kv) > 1) {
+			$query = $this->db->buildQuery($table, 'update', $kv);	
+			// \rkphplib\lib\log_debug("tok_login_update> update $table: $query");
+			$this->db->execute($query);
+		}
 
-	if (!is_null($this->db) && count($kv) > 1) {
-		$query = $this->db->buildQuery($table, 'update', $kv);	
-		// \rkphplib\lib\log_debug("tok_login_update> update $table: $query");
-		$this->db->execute($query);
-	}
-
-	if (!is_null($this->db) && $do == 'reload') {
-		$kv = $this->db->selectOne("SELECT * FROM $table ".$kv['@where']);
+		if ($do == 'reload') {
+			$kv = $this->db->selectOne("SELECT * FROM $table ".$kv['@where']);
+		}
 	}
 
 	if (count($kv) > 1) {
