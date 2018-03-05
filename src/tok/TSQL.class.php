@@ -115,9 +115,9 @@ public function tok_sql_hasTable($param, $arg) {
  *
  * @tok {sql:import}directory=apps/shop/setup/sql|#|tables={const:DOCROOT}/setup/sql{:sql}
  *
- * If table parameter not empty try: directory/table.sql, directory/alter/table.sql, directory/insert/table.sql.
- * Otherwise import all sql files (directory/[alter/|insert/]*.sql). If cms/[APP|cms=]/setup/sql/tables.txt exists 
- * assume tables= table names in tables.txt.
+ * If table parameter not empty try: directory/table.sql, directory/alter/table.sql, directory/insert/table.sql, 
+ * directory/update/table.sql. Otherwise import all sql files (directory/[alter/|insert/|update/]*.sql). 
+ * If cms/[APP|cms=]/setup/sql/tables.txt exists assume tables= table names in tables.txt.
  *
  * @tok {sql:import}dump=path/to/dump.sql|#|drop_table=1|#|ignore_foreign_keys=0{:sql}
  *
@@ -190,6 +190,11 @@ public function tok_sql_import($p) {
 		}
 
 		$file = $p['directory'].'/insert/'.$base.'.sql';
+		if (File::exists($file)) {
+			$this->db->loadDump($file, $flags);
+		}
+
+		$file = $p['directory'].'/update/'.$base.'.sql';
 		if (File::exists($file)) {
 			$this->db->loadDump($file, $flags);
 		}
