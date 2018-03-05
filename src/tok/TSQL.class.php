@@ -195,6 +195,11 @@ public function tok_sql_import($p) {
 		}
 	}
 
+	$file = $p['directory'].'/view.sql';
+	if (File::exists($file)) {
+		$this->db->loadDump($file, $flags);
+	}
+
 	return '';
 }
 
