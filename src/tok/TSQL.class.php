@@ -60,7 +60,7 @@ public function getPlugins($tok) {
 	$plugin['sql:qkey'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['sql:json'] = TokPlugin::REQUIRE_BODY;
 	$plugin['sql:col'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
-	$plugin['sql:options'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['sql:options'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['sql:getId'] = TokPlugin::NO_PARAM;
 	$plugin['sql:nextId'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['sql:in'] = TokPlugin::CSLIST_BODY;
@@ -402,13 +402,22 @@ public function tok_sql_options($p = []) {
 	$res = '';
 
 	if ($p['mode'] == 'html') {
-		$country = empty($p['selected']) ? '' : $p['selected'];
-
+		$sval = empty($p['selected']) ? '' : $p['selected'];
 		while (($row = $this->db->getNextRow())) {
-			$selected = ($row['value'] == $country) ? ' selected' : '';
+			$selected = ($row['value'] == $sval) ? ' selected' : '';
 			$res .= '<option value="'.\rkphplib\lib\htmlescape($row['value']).'"'.$selected.'>'.
 				\rkphplib\lib\htmlescape($row['label'])."</option>\n";
 		}
+	}
+	else if ($p['mode'] == 'list') {
+		$kv = [];
+
+		while (($row = $this->db->getNextRow())) {
+			$key = $row['value'];
+			$kv[$key] = $row['label'];
+		}
+
+		$res = \rkphplib\lib\kv2conf($kv, '=', ',');
 	}
 
 	return $res;
