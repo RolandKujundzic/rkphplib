@@ -297,8 +297,11 @@ public function tok_fv_check() {
 		return '';
 	}
 
-	$required = \rkphplib\lib\split_str(',', $this->conf['current']['required']);
-	foreach ($required as $key) {
+	if (!is_array($this->conf['current']['required'])) {
+		$this->conf['current']['required'] = \rkphplib\lib\split_str(',', $this->conf['current']['required']);
+	}
+
+	foreach ($this->conf['current']['required'] as $key) {
 		if (!isset($_REQUEST[$key]) || mb_strlen($_REQUEST[$key]) == 0) {
 			if (!isset($this->error[$key])) {
 				$this->error[$key] = [];
@@ -638,6 +641,12 @@ protected function getInput($name, $ri) {
 			$tags .= ' '.$this->tok->getTag($key);
 			$ri[$key] = $key;
 		}
+	}
+
+	// add required attribute
+	if (in_array($name, $conf['required'])) {
+		$tags .= ' '.$this->tok->getTag('required');
+		$ri['required'] = 'required';
 	}
 
 	foreach ($ri as $key => $value) {
