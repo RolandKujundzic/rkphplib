@@ -108,7 +108,12 @@ public function load($file) {
 	$fh = File::open($file, 'rb');
 
 	while (!feof($fh)) { 
-		File::write($this->pipe[0], fread($fh, 4096)); 
+		if (($buffer = fread($fh, 4096)) === false) {
+			throw new Exception('fread file failed', "file=$file buffer=$buffer");
+		}
+		else {
+			File::write($this->pipe[0], $buffer); 
+		}
 	}
 }
 
