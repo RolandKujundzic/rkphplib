@@ -739,8 +739,17 @@ public static function write($fh, $data) {
 		throw new Exception('invalid file handle');
 	}
 
-	if (($byte = fwrite($fh, $data)) === false || (strlen($data) > 0 && $byte == 0)) {
-		throw new Exception('could not write data', 'fh=['.$fh.'] data=['.mb_substr($data, 0, 40).' ... ]');
+	if (($byte = fwrite($fh, $data)) === false) {
+		throw new Exception('could not write data', 'fh=['.$fh.'] byte=['.$byte.']');
+	}
+	else if (($data_len = strlen($data)) > 0 && $byte == 0) {
+		// retry ... works with e.g. pipe write to mysql
+		usleep(100000);
+		$byte = fwrite($fh, $data);
+		if ($byte === false || ($byte == 0 && $data_len > 0)) {
+			$msg = ($data_len > 80) ? substr($data, 0, 40).' ... '.substr($data, -40) : $data;
+			throw new Exception('retry write data failed', "data.length=[$data_len] data=[$msg]");
+		}
 	}
 }
 
