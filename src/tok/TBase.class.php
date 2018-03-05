@@ -151,6 +151,7 @@ public function getPlugins($tok) {
 	$plugin['redo'] = TokPlugin::NO_PARAM | TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
 	$plugin['toupper'] = TokPlugin::NO_PARAM;
 	$plugin['tolower'] = TokPlugin::NO_PARAM;
+	$plugin['trim'] = 0;
 	$plugin['join'] = TokPlugin::KV_BODY;
 	$plugin['set_default'] =  0;
 	$plugin['redirect'] =  TokPlugin::NO_PARAM;
@@ -158,6 +159,63 @@ public function getPlugins($tok) {
 	$plugin['esc'] = 0;
 
 	return $plugin;
+}
+
+
+/**
+ * Trim text. 
+ *
+ * @tok {trim:dlines|ignore_empty|lines|pre|space|comma} ... {:trim}
+ *
+ * @param string $param
+ * @param string $txt
+ * @return string
+ */
+public function tok_trim($param, $txt) {
+	$res = trim($txt);
+
+	if ($param == 'dlines') {
+		$res = preg_replace("/\r?\n[\r\n]+/", "\r\n\r\n", $res);
+	}
+	else if ($param == 'ignore_empty') {
+		$lines = preg_split("/\r?\n/", $res);
+		$new_lines = array();
+
+		for ($ln = 0; $ln < count($lines); $ln++) {
+			if (trim($lines[$ln])) {
+				array_push($new_lines, $lines[$ln]);
+			}
+		}
+
+		$res = join("\r\n", $new_lines);
+	}
+	else if ($param == 'lines' || $param == 'pre') {
+		$lines = preg_split("/\r?\n/", $res);
+		$new_lines = array();
+
+		for ($ln = 0; $ln < count($lines); $ln++) {
+			$line = trim($lines[$ln]);
+
+			if ($line) {
+				array_push($new_lines, $line);
+			}
+		}
+
+		$res = join("\r\n", $new_lines);
+
+		if ($param == 'pre') {
+			$res = '<pre style="padding:0;margin:0">'.$res.'</pre>';
+		}
+	}
+	else if ($param == 'space') {
+		$res = preg_replace("/[\r\n\t]+/", ' ', $res);
+		$res = preg_replace("/ +/", ' ', $res);
+	}
+	else if ($param == 'comma') {
+		$res = preg_replace("/[\r\n]+/", ', ', $res);
+	}
+
+	return $res;
 }
 
 
