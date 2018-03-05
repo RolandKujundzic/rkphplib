@@ -721,6 +721,8 @@ private function getOptions(&$p, $opt_value) {
 		throw new Exception('leftover keys', "html=[$html] p: ".print_r($p, true));
 	}
 
+	$html = preg_replace('/value\=\"@_[0-9]+\"/', '', $html);
+
 	// \rkphplib\lib\log_debug("getOptions> $html");
 	return $html;
 }
