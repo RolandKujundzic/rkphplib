@@ -348,7 +348,7 @@ public function tok_login_update($do, $p) {
 		}
 	}
 
-	if (count($kv) > 1) {
+	if (count($kv) > 0) {
 		// \rkphplib\lib\log_debug("tok_login_update> #kv=".(count($kv))." update session: ".print_r($kv, true));
 		$this->sess->setHash($kv, true);
 	}
