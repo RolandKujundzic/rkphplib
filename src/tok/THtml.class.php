@@ -63,10 +63,10 @@ public function tok_html_meta($name, $value, $html) {
 	$search = '<meta name="'.$name.'" content="';
 	$start = mb_stripos($html, $search);
 	$search_len = mb_strlen($search);
-	$end = mb_stripos($html, '"', $start + $search_len + 1);
+	$end = mb_stripos($html, '"', $start + $search_len);
 
 	if ($start > 0 && $end >= $start + $search_len) {
-		$res = mb_substr($html, 0, $start).$search.$value.'"'.mb_substr($html, $end + 1);
+		$res = mb_substr($html, 0, $start).$search.$value.mb_substr($html, $end);
 	}
 	else {
 		throw new Exception('failed to find meta tag content', "search=[$search] start=$start end=$end");
