@@ -22,6 +22,7 @@ class THtml implements TokPlugin {
 public function getPlugins($tok) {
   $plugin = [];
   $plugin['html:inner'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
+	$plugin['html:meta'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:tidy'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:xml'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:uglify'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
@@ -48,6 +49,34 @@ public function tok_html_tidy($html) {
 
 
 /**
+ * Replace meta tag value.
+ * 
+ * @tok {html:meta:keywords}new,key,words{:html} -> <meta name="keywords" content="new,key,words"
+ * 
+ * @throws
+ * @param string $name
+ * @param string $value
+ * @param string $html
+ * @return string
+ */
+public function tok_html_meta($name, $value, $html) {
+	$search = '<meta name="'.$name.'" content="';
+	$start = mb_stripos($html, $search);
+	$search_len = mb_strlen($search);
+	$end = mb_stripos($html, '"', $start + $search_len + 1);
+
+	if ($start > 0 && $end >= $start + $search_len) {
+		$res = mb_substr($html, 0, $start).$search.$value.'"'.mb_substr($html, $end + 1);
+	}
+	else {
+		throw new Exception('failed to find meta tag content', "search=[$search] start=$start end=$end");
+	}
+
+  return $res;
+}
+
+
+/**
  * Postprocess output. Replace inner html of tag (= <tag>).
  *
  * @tok {innerHtml:title}Replace "title" with this{:innerHtml}
@@ -65,6 +94,9 @@ public function tok_html_inner($tag, $innerHtml, $html) {
 	if ($start > 0 && $end >= $start + $tag_len) {
 		$res = mb_substr($html, 0, $start).'<'.$tag.'>'.$innerHtml.'</'.$tag.'>'.mb_substr($html, $end + $tag_len + 1);
 	}
+  else {
+    throw new Exception('failed to find tag body', "search=[<$tag>] start=$start end=$end");
+  }
 
 	return $res;
 }
