@@ -134,9 +134,7 @@ public static function getMapId($p, $exclude = []) {
  * @throws
  * @return string
  */
-public function getId() {
-	return self::computeId($this->_dsn, $this->_query);
-}
+abstract public function getId();
 
 
 /**
@@ -513,7 +511,7 @@ public function hasQuery($qkey, $query = '') {
  * @return boolean
  */
 public function hasQueries($query_map) {
-
+	\rkphplib\lib\log_debug("ADatabase.hasQueries> ".print_r($query_map, true));
 	if (!is_array($query_map)) {
 		return false;
 	}
