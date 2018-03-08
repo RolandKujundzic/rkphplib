@@ -889,6 +889,42 @@ protected function getValue($name) {
 
 
 /**
+ * Return sql search expression.
+ *
+ * @see getSqlSearch
+ */
+protected function getSearch() {
+	$options = [];
+
+	if (!empty($this->conf['req.search']) && isset($_REQUEST[$this->conf['req.search']])) {
+		$s_key = $this->conf['req.search'];
+		$s_val = $_REQUEST[$this->conf['req.search']];
+		$s_list = empty($this->conf['search.'.$s_key]) ? $this->conf['search'] : $this->conf['search.'.$s_key];
+
+		$options['join_or'] = 1;
+		$options['value'] = $s_val;
+		$options['search_cols'] = \rkphplib\lib\split_str(',', $s_list);		
+		list ($where, $and) = $this->getSqlSearch($options);
+
+		if (!empty($this->conf['search.'.$s_key]) && !empty($this->conf['search'])) {
+			$options = [ 'no_value' => 1 ];
+			$options['search_cols'] = \rkphplib\lib\split_str(',', $this->conf['search']);		
+			list ($ignore, $and2) = $this->getSqlSearch($options); 
+
+			$where .= $and2;
+			$and .= $and2;
+		}
+	}
+	else {
+		$options['search_cols'] = \rkphplib\lib\split_str(',', $this->conf['search']);		
+		list ($where, $and) = $this->getSqlSearch($options);
+	}
+
+	return [ $where, $and ];
+}
+
+
+/**
  * Return sql search expression. Define search via conf.search= COLUMN:METHOD, .... 
  * Search methods: =|EQ, %$%|LIKE, %$|LLIKE, $%|RLIKE, [a,b], [] (with value = a,b), 
  * ]], [[, ][, ?|OPTION, <|LT, >|GT, <=|LE, >=|GE. Place _[WHERE¦AND]_SEARCH in query.
@@ -896,11 +932,12 @@ protected function getValue($name) {
  * @example conf.search= id:=, age:EQ, firstname:LIKE, lastname:%$%, ...
  *
  * Search value is either _REQUEST[s_NAME] of if not set and req.search=X: $_REQUEST[X].
- * 
+ *
  * @throws
+ * @param hash $options ({ value: '...', join_or: 1|0, no_value: 1|0, search_cols: [ col:method, ... ] })
  * @return array [ _WHERE_SEARCH, _AND_SEARCH ]
  */ 
-protected function getSqlSearch() {
+protected function getSqlSearch($options = []) {
 	$compare = [ 'EQ' => '=', 'LT' => '<', 'GT' => '>', 'LE' => '<=', 'GE' => '>=' ];
 	$like = [ 'LIKE' => '%$%', 'LLIKE' => '$%', 'RLIKE' => '%$' ];
 
@@ -908,14 +945,23 @@ protected function getSqlSearch() {
 	$select_search = [];
 	$expr = [];
 
-	$search_cols = \rkphplib\lib\split_str(',', $this->conf['search']);
+	if (isset($options['search_cols'])) {
+		$search_cols = $options['search_cols'];
+	}
+	else {
+		$search_cols = \rkphplib\lib\split_str(',', $this->conf['search']);
+	}
 
 	foreach ($search_cols as $col_method) {
 		list ($col, $method) = explode(':', $col_method, 2);
 		$value = isset($_REQUEST['s_'.$col]) ? $_REQUEST['s_'.$col] : '';
 		$found = false;
 
-		if (!$value && !empty($this->conf['req.search']) && isset($_REQUEST[$this->conf['req.search']])) {
+		if (!empty($options['value'])) {
+			$value = $options['value'];
+		}
+		else if (empty($options['no_value']) && !$value && !empty($this->conf['req.search']) && 
+							isset($_REQUEST[$this->conf['req.search']])) {
 			$value = $_REQUEST[$this->conf['req.search']];
 		}
 
@@ -992,7 +1038,7 @@ protected function getSqlSearch() {
 		$this->set_search = array_merge($this->selectSearch($select_search), $this->set_search);
 	}
 
-	if (!empty($this->conf['search_or'])) {
+	if (!empty($options['join_or']) || !empty($this->conf['search_or'])) {
 		$sql_and = '(('.join(') OR (', $expr).'))';
 	}
 	else {
@@ -1110,7 +1156,7 @@ protected function selectData() {
 	$query = $this->conf['query'];
 
 	if (!empty($this->conf['search'])) {
-		$query = str_replace([ '_WHERE_SEARCH', '_AND_SEARCH' ], $this->getSqlSearch(), $query);
+		$query = str_replace([ '_WHERE_SEARCH', '_AND_SEARCH' ], $this->getSearch(), $query);
 	}
 
 	if (!empty($this->conf['sort'])) {
