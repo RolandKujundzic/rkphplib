@@ -172,6 +172,8 @@ public function tok_fv_preset($arg) {
 	if (!empty($_REQUEST['id']) && $_REQUEST['id'] == 'add') {
 		return '';
 	}
+
+	return $arg;
 }
 
 
