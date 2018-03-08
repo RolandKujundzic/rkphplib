@@ -188,6 +188,10 @@ this.search = function(el) {
 this.getSearchValue = function(el) {
 	var i, opt, found, value = el.value, list = document.getElementById(el.getAttribute('list'));
 
+	if (!list) {
+		return el.value;
+	}
+
 	for (i = 0; !found && i < list.options.length; i++) {
 		opt = list.options[i];
 		if (opt.value === value) {
