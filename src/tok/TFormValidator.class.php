@@ -570,7 +570,7 @@ protected function parseInName($name, $value, &$p) {
 			$p['value'] = isset($_REQUEST[$name]) ? $_REQUEST[$name] : '';
 		}
 
-		$p['options'] = $this->getOptions($r, $p['value']);
+		$p['options'] = $this->getOptions($r, $p['value'], $value);
 	}
 	else if ($type == 'const') {
 		// ok ...
@@ -662,7 +662,7 @@ protected function getInput($name, $ri) {
 
 	if (!empty($ri['options']) && strpos($ri['options'], '</option>') === false) {
 		$tmp = \rkphplib\lib\conf2kv($ri['options'], '=', ',');
-		$ri['options'] = $this->getOptions($tmp, $ri['value']);
+		$ri['options'] = $this->getOptions($tmp, $ri['value'], $ri['options']);
 	}
 
 	$input = $this->tok->replaceTags($input, $ri);
@@ -678,12 +678,15 @@ protected function getInput($name, $ri) {
  * @throws
  * @param map-reference $p
  * @param string $opt_value
+ * @param string $str_options
  * @return string
  */
-private function getOptions(&$p, $opt_value) {
+private function getOptions(&$p, $opt_value, $str_options) {
 	// options are conf2kv result map ...
 	$html = '';
 	$empty_label = null;
+
+	// \rkphplib\lib\log_debug("TFormValidator.getOptions|enter> opt_value=[$opt_value] str_options=[$str_options] p: ".print_r($p, true)); 
 
 	if (!empty($p['@_1']) && substr($p['@_1'], 0, 1) == '=') {
 		$empty_label = substr($p['@_1'], 1);
@@ -701,7 +704,10 @@ private function getOptions(&$p, $opt_value) {
 		$html .= '<option value=""'.$selected.'>'.$empty_label."</option>\n";
 	}
 
-	if (!\rkphplib\lib\is_map($p, 2)) {
+	$value_equal_comma = preg_replace('/[^\=,]/', '', $str_options);
+	$map_check = (strlen($value_equal_comma) == 2 * count($p)) ? 0 : 2;
+
+	if (!\rkphplib\lib\is_map($p, $map_check)) {
 		foreach ($p as $key => $value) {
 			if (strlen($value) > 0) {
 				$selected = ($opt_value == $value) ? ' selected' : '';
