@@ -159,8 +159,20 @@ public function getPlugins($tok) {
 	$plugin['redirect'] =  TokPlugin::NO_PARAM;
 	$plugin['var'] = 0;
 	$plugin['esc'] = 0;
+	$plugin['log'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 
 	return $plugin;
+}
+
+
+/**
+ * Write message via log_debug.
+ * 
+ * @param string $txt
+ * @return ''
+ */
+public function tok_log($txt) {
+	\rkphplib\lib\log_debug("tok_log> $txt");
 }
 
 
@@ -1123,7 +1135,7 @@ public function tok_esc($param, $arg) {
 public function tok_set_default($name, $value) {
 
 	if (substr($name, -1) == '!') {
-		$name = substr($name, 0, 1);
+		$name = substr($name, 0, -1);
 		if (isset($_REQUEST[$name])) {
 			throw new Exception('[set_default:'.$name.'!] - _REQUEST['.$name.'] is already set');
 		}
