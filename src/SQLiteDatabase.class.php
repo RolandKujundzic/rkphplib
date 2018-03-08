@@ -19,6 +19,14 @@ private $_seek = -1;
 
 
 /**
+ *
+ */
+public function getId() {
+	throw new Exception('ToDo');
+}
+
+
+/**
  * Connect to sqlite3 database.
  */
 private function _connect() {
