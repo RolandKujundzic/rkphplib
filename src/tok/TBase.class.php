@@ -99,6 +99,7 @@ public function __construct() {
  * - redo: NO_PARAM, REDO 
  * - toupper: NO_PARAM
  * - tolower: NO_PARAM
+ * - hidden: PARAM_CSLIST, CSLIST_BODY
  * - join: KV_BODY
  * - var: REQUIRE_PARAM
  * - view: REQUIRE_PARAM, KV_BODY, REDO
@@ -151,6 +152,7 @@ public function getPlugins($tok) {
 	$plugin['redo'] = TokPlugin::NO_PARAM | TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
 	$plugin['toupper'] = TokPlugin::NO_PARAM;
 	$plugin['tolower'] = TokPlugin::NO_PARAM;
+	$plugin['hidden'] = TokPlugin::PARAM_CSLIST | TokPlugin::CSLIST_BODY;
 	$plugin['trim'] = 0;
 	$plugin['join'] = TokPlugin::KV_BODY;
 	$plugin['set_default'] =  0;
@@ -159,6 +161,29 @@ public function getPlugins($tok) {
 	$plugin['esc'] = 0;
 
 	return $plugin;
+}
+
+
+/**
+ * Return hidden input.
+ *
+ * @param array $param
+ * @param array $arg
+ * @return string
+ */
+public function tok_hidden($param, $arg) {
+	$list = (count($param) > 0) ? $param : $arg;
+	$res = '';
+
+	foreach ($list as $key) {
+		$value = isset($_REQUEST[$key]) ? $_REQUEST[$key] : '';
+
+		if (strlen($value) > 0) {
+			$res .= '<input type="hidden" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($value).'">'."\n";
+		}
+  }
+
+  return $res;
 }
 
 
@@ -679,9 +704,19 @@ public function tok_link($name_list, $p) {
 	$kv = $this->_tok->getVar('link_keep');
 	if (is_array($kv)) {
 		foreach ($kv as $key => $value) {
-			if (!isset($p[$key]) && $key != SETTINGS_REQ_DIR) {
+			if (!isset($p[$key]) && $key != SETTINGS_REQ_DIR && strlen($value) > 0) {
 				$p[$key] = $value;
 			}
+		}
+	}
+
+	foreach ($_REQUEST as $key => $value) {
+		if (strlen($value) == 0 || isset($p[$key]) || $key == SETTINGS_REQ_DIR) {
+			continue;
+		}
+
+		if (substr($key, 0, 2) == 's_') {
+			$p[$key] = $value;
 		}
 	}
 
