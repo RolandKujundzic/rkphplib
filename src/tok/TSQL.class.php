@@ -226,7 +226,7 @@ public function tok_sql_nextId($table) {
 		$owner_table = ADatabase::escape_name(substr($table, 0, $pos + 6));
 		$id_count = ADatabase::escape_name(substr($table, $pos + 7));
 		$id_max = str_replace('_id', '_max', $id_count);
-		$id_min = str_replace('_id', '_max', $id_count);
+		$id_min = str_replace('_id', '_min', $id_count);
 		$qkey = str_replace('.', '_next_', $table);
 
 		if (!$this->db->hasQuery($qkey)) {
@@ -235,11 +235,18 @@ public function tok_sql_nextId($table) {
 		}
 
 		$this->db->execute($this->db->getQuery($qkey, [ 'id' => $owner_id ]));
-		return $this->db->getInsertId();
+		$res = $this->db->getInsertId();
 	}
 	else {
-		return $this->db->nextId($table);
+		$res = $this->db->nextId($table);
 	}
+
+	if (intval($res) < 1) {
+		throw new Exception('[sql:nextId] failed', "table=$table res=$res"); 
+	}
+
+	\rkphplib\lib\log_debug("TSQL.tok_sql_nextId($table)> res=$res");
+	return $res;
 }
 
 
