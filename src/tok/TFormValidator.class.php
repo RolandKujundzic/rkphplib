@@ -705,7 +705,7 @@ private function getOptions(&$p, $opt_value, $str_options) {
 	}
 
 	$value_equal_comma = preg_replace('/[^\=,]/', '', $str_options);
-	$map_check = (strlen($value_equal_comma) == 2 * count($p)) ? 0 : 2;
+	$map_check = (strlen($value_equal_comma) >= 2 * count($p)) ? 0 : 2;
 
 	if (!\rkphplib\lib\is_map($p, $map_check)) {
 		foreach ($p as $key => $value) {
