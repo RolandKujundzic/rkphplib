@@ -245,7 +245,7 @@ public function tok_sql_nextId($table) {
 		throw new Exception('[sql:nextId] failed', "table=$table res=$res"); 
 	}
 
-	\rkphplib\lib\log_debug("TSQL.tok_sql_nextId($table)> res=$res");
+	// \rkphplib\lib\log_debug("TSQL.tok_sql_nextId($table)> res=$res");
 	return $res;
 }
 

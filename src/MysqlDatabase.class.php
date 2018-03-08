@@ -103,7 +103,7 @@ private function _connect() {
 
 	if (is_object($this->_db)) {
 		if ($this->_conn_ttl < time() && !$this->_db->ping()) {
-			\rkphplib\lib\log_debug('MysqlDatabase._connect> close expired connection '.$this->getId());
+			// \rkphplib\lib\log_debug('MysqlDatabase._connect> close expired connection '.$this->getId());
 			$this->close();
 		}
 		else {
@@ -143,7 +143,7 @@ private function _connect() {
 		$this->execute("SET time_zone = '".self::escape(self::$time_zone)."'");
 	}
 	
-	\rkphplib\lib\log_debug('MysqlDatabase._connect> '.$dsn['login'].'@'.$dsn['host'].' to '.$dsn['name'].'='.$this->getId());
+	// \rkphplib\lib\log_debug('MysqlDatabase._connect> '.$dsn['login'].'@'.$dsn['host'].' to '.$dsn['name'].'='.$this->getId());
 	$this->_conn_ttl = time() + 5 * 60; // re-check connection in 5 minutes ...
 }
 
@@ -394,7 +394,7 @@ public function dropTable($table) {
  * @param bool $use_result (default = false)
  */
 public function execute($query, $use_result = false) {
-	\rkphplib\lib\log_debug("MysqlDatabase.execute|".$this->getId()."> query=[$query] use_result=[$use_result]");
+	// \rkphplib\lib\log_debug("MysqlDatabase.execute|".$this->getId()."> query=[$query] use_result=[$use_result]");
 	if (is_array($query)) {
 		if ($use_result) {
 			$stmt = $this->_exec_stmt($query);
@@ -1059,7 +1059,7 @@ public function getTableDesc($table) {
  * @return int 
  */
 public function getInsertId() {
-	\rkphplib\lib\log_debug("MysqlDatabase.getInsertId|".$this->getId()."> insert_id=".$this->_db->insert_id);
+	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId|".$this->getId()."> insert_id=".$this->_db->insert_id);
 	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) === 0) {
 		throw new Exception('no_id', $this->_db->insert_id);
 	}

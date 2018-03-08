@@ -172,7 +172,7 @@ public function getPlugins($tok) {
  * @return ''
  */
 public function tok_log($txt) {
-	\rkphplib\lib\log_debug("tok_log> $txt");
+	// \rkphplib\lib\log_debug("tok_log> $txt");
 }
 
 

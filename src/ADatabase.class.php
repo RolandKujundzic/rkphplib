@@ -511,7 +511,7 @@ public function hasQuery($qkey, $query = '') {
  * @return boolean
  */
 public function hasQueries($query_map) {
-	\rkphplib\lib\log_debug("ADatabase.hasQueries> ".print_r($query_map, true));
+	// \rkphplib\lib\log_debug("ADatabase.hasQueries> ".print_r($query_map, true));
 	if (!is_array($query_map)) {
 		return false;
 	}
