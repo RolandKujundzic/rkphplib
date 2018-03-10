@@ -297,6 +297,38 @@ private function isEmpty() {
 
 
 /**
+ * Return header_label tag replacement.
+ * 
+ * @return string
+ */
+protected function getHeaderLabel() {
+	$label_suffix = empty($this->conf['label_suffix']) ? [] : \rkphplib\lib\conf2kv($this->conf['label_suffix'], ':', ',');
+	$column_label = \rkphplib\lib\conf2kv($this->conf['column_label'], ':', ',');
+	$this->conf['column_label'] = $column_label;
+	$header_label = [];
+
+	foreach ($column_label as $column => $label) {
+		$suffix = empty($label_suffix[$column]) ? '' : ' data-suffix="'.\rkphplib\lib\htmlescape($label_suffix[$column]).'"';
+		$sort = empty($this->conf['table_desc'][$column]['key']) ? '' : ' {sort:'.$column.'}';
+
+		if (empty($this->conf['shorten.label'])) {
+			$entry = str_replace([ '$column', '$label', '$sort', '$suffix' ], [ $column, $label, $sort, $suffix ], 
+				$this->conf['template.header_label']);
+		}
+		else {
+			$entry = str_replace([ '$column', '$label', '$sort', '$suffix', '$shorten' ], 
+				[ $column, $label, $sort, $suffix, intval($this->conf['shorten.label']) ], 
+				$this->conf['template.header_label_shorten']);
+		}
+
+		array_push($header_label, $entry);
+	}
+
+	return join("\n", $header_label); 
+}
+
+
+/**
  * Show if table is not empty.
  *
  * @param string $tpl
@@ -305,6 +337,11 @@ private function isEmpty() {
 public function tok_output_header($tpl) {
 	if ($this->isEmpty()) {
 		return '';
+	}
+
+	if (!empty($this->conf['column_label'])) {
+		$tpl = $this->tok->replaceTags($tpl, [ 'header_label' => $this->getHeaderLabel() ]); 
+		\rkphplib\lib\log_debug("TOutput.tok_output_header> tpl: $tpl");
 	}
 
 	if (!empty($this->env['tags'][0]) && $this->tok->hasReplaceTags($tpl, [ $this->env['tags'][0] ])) {
@@ -378,6 +415,43 @@ public function tok_output_json() {
 
 
 /**
+ * Return $tpl with {:=loop_column} replaced.
+ * 
+ * @param string $tpl
+ * @return string
+ */
+protected function getOutputLoopTemplate($tpl) {
+	$loop_column = [];
+
+	$language = $this->tok->callPlugin('language:get', 'tok_language_get');
+
+	foreach ($this->conf['column_label'] as $column => $label) {
+		$cinfo = $this->conf['table_desc'][$column];
+		$is_number = $cinfo['type'] == 'double' || strpos($cinfo['type'], 'int(') !== false;
+		$align = $is_number ? ' align="right"' : '';
+		$column_tag = $this->tok->getTag($column);
+
+		if ($column == 'status') {
+			$column_tag = '<img src="img/status/'.$column_tag.'.gif" title="'.$this->tok->getPluginTxt('txt:', $column_tag).'">';
+		}
+		else if (in_array($cinfo['type'], [ 'date', 'datetime', 'timestamp' ])) {
+			$column_tag = $this->tok->getPluginTxt('date:sql,'.$language, $column_tag);
+		}
+		else if (!empty($this->conf['shorten.cell']) && (strpos($cinfo['type'], 'varchar(') === 0 || $cinfo['type'] == 'text')) {
+			$column_tag = $this->tok->getPluginTxt('shorten:'.intval($this->conf['shorten.cell']), $column_tag);
+		}
+
+		$entry = str_replace([ '$column_tag', '$align' ], [ $column_tag, $align ], $this->conf['template.loop_column']);
+		array_push($loop_column, $entry);
+	}
+	
+	$tpl = $this->tok->replaceTags($tpl, [ 'loop_column' => join("\n", $loop_column) ]); 
+	\rkphplib\lib\log_debug("TOutput.getOutputLoopTemplate> tpl: [$tpl]");
+	return $tpl;
+}
+
+
+/**
  * Show if table is not empty. Concat $tpl #env.total. Replace {:=tag} with row value.
  * Default tags are array_keys(row[0]) ({:=0} ... {:=n} if vector or {:=key} if map).
  * If conf.table.columns=col_1n use {:=col_1} ... {:=col_n} as tags. If col.table.columns=first_list
@@ -396,6 +470,10 @@ public function tok_output_json() {
 public function tok_output_loop($tpl) {
 	if ($this->isEmpty()) {
 		return '';
+	}
+
+	if (!empty($this->conf['column_label'])) {
+		$tpl = $this->getOutputLoopTemplate($tpl);
 	}
 
 	$start = $this->env['start'];
@@ -520,13 +598,18 @@ public function tok_output_conf($p) {
 	if (count($this->conf) == 0 || !empty($p['reset'])) {
 		$tag_min = $this->tok->getTag('min');
 		$tag_max = $this->tok->getTag('max');
+		$tag_last = $this->tok->getTag('last');
+		$get_dir = $this->tok->getPluginTxt('get:dir');
+		$link = $this->tok->getPluginTxt('link:', '@='.$get_dir);
+		$link_last = $this->tok->getPluginTxt('link:', '@='.$get_dir.HASH_DELIMITER.'last='.$tag_last);
+		$txt_label = $this->tok->getPluginTxt('txt:col_$column', '$label');
 
 		$this->conf = [
 			'search' => '',
 			'sort' => '',
-			'sort.desc' => '<a href="{link:}@={get:dir}{:link}"><img src="img/sort/desc.gif" border="0" alt=""></a>',
-      'sort.asc' => '<a href="{link:}@={get:dir}{:link}"><img src="img/sort/asc.gif" border="0" alt=""></a>',
-      'sort.no' => '<a href="{link:}@={get:dir}{:link}"><img src="img/sort/no.gif" border="0" alt=""></a>',
+			'sort.desc' => '<a href="'.$link.'"><img src="img/sort/desc.gif" border="0" alt=""></a>',
+      'sort.asc' => '<a href="'.$link.'"><img src="img/sort/asc.gif" border="0" alt=""></a>',
+      'sort.no' => '<a href="'.$link.'"><img src="img/sort/no.gif" border="0" alt=""></a>',
 			'reset' => 1,
 			'req.last' => 'last',
 			'req.sort' => 'sort',
@@ -543,7 +626,12 @@ public function tok_output_conf($p) {
 			'table.type' => '',			
 			'table.data' => '',
 			'table.url' => '',
-			'scroll.link' => '<a href="{link:}@={get:dir}|#|last={:=last}{:link}">'.$this->tok->getTag('link').'</a>',
+			'template.header_label_shorten' => '<td nowrap align="center"$suffix>'.$this->tok->getPluginTxt('shorten:$shorten', $txt_label).'$sort</td>',
+			'template.header_label' => '<td nowrap align="center"$suffix>'.$txt_label.'$sort</td>',
+			'template.loop_column' => '<td valign="top"$align>$column_tag</td>',
+			'shorten.label' => 10,
+			'shorten.cell' => 60,
+			'scroll.link' => '<a href="'.$link_last.'">'.$this->tok->getTag('link').'</a>',
 			'scroll.first' => '<img src="img/scroll/first.gif" border="0">',
 			'scroll.prev' => '<img src="img/scroll/prev.gif" border="0">',
 			'scroll.next' => '<img src="img/scroll/next.gif" border="0">',
@@ -589,8 +677,13 @@ public function tok_output_conf($p) {
  *  table.type= (use: "split, |&|, |@|", "split, |&|, |@|, =", csv, unserialize or json)
  *  table.columns= array_keys (or: col_1n / first_list / tag1, ... )
  *  table.url= (e.g. path/to/file = file://path/to/file or http[s]://...) 
- *  table.data= 
- *  scroll.link= <a href="{link:}@={get:dir}|#|last={:=last}{:link}">{:=link}</a>
+ *  table.data=
+ *  template.header_label_shorten= {escape:tok}<td nowrap align="center"$suffix>{shorten:$shorten}{txt:col_$column}$label{:txt}{:shorten}$sort</td>{:escape}
+ *  template.header_label= {escape:tok}<td nowrap align="center"$suffix>{txt:col_$column}$label{:txt}$sort</td>{:escape}
+ *  template.loop_column= <td valign="top"$align>$column_tag</td>
+ *  shorten.label=10
+ *  shorten.cell=60
+ *  scroll.link= {escape:tok}<a href="{link:}@={get:dir}|#|last={:=last}{:link}">{:=link}</a>{:escape}
  *  scroll.first= <img src="img/scroll/first.gif" border="0">
  *  scroll.prev= <img src="img/scroll/prev.gif" border="0">
  *  scroll.next= <img src="img/scroll/next.gif" border="0">
@@ -1193,6 +1286,10 @@ protected function selectData() {
 
 		array_push($this->table, $row);
 		$n++;
+	}
+
+	if (!empty($this->conf['column_label'])) {
+		$this->conf['table_desc'] = $db->getTableDesc($this->conf['query.table']);
 	}
 
 	$db->freeResult();
