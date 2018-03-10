@@ -308,6 +308,138 @@ function initLiveSearch(el) {
 }
 
 
+/**
+ * Return vector with distinct column values.
+ * 
+ * @param table tbl
+ * @return vector<hash>
+ */
+function getColumnValues(tbl) {
+	var i, j, hide = 0, rows = tbl.children[0].children;
+
+	var column_values = [];
+
+	for (i = 2; i < rows.length - 1; i++) {
+		var value, row = rows[i].children;
+  
+		for (j = 0; j < row.length; j++) {
+			value = "x" + row[j].innerHTML;
+
+			if (!column_values[j]) {
+				column_values[j] = {};
+			}
+
+			if (value === "x") {
+				continue;
+			}
+
+			if (Object.keys(column_values).length > 15) {
+				continue;
+			}
+
+			if (column_values[j][value]) {
+				column_values[j][value]++;
+			}
+			else {
+				column_values[j][value] = 1;
+			}
+		}
+	}
+
+	return column_values;
+}
+
+
+/**
+ * Hide empty columns.
+ *
+ * @param table tpl
+ * @param vector<hash> colval
+ */
+function hideEmptyColumns(tbl, colval) {
+	var i, j, hide = 0, rows = tbl.children[0].children;
+
+	for (i = 0; i < rows.length; i++) {
+		var row = rows[i].children;
+
+		if (i == 1 || i == rows.length - 1) {
+			rows[i].setAttribute('colspan', rows[0].length - hide);
+			continue;
+		} 
+
+		for (j = 0; j < row.length; j++) {
+			if (Object.keys(colval[j]).length === 0) {
+				if (i == 0) {
+					hide++;
+				}
+
+				row[j].style.display = 'none';
+			}
+		}
+	}
+}
+
+
+/**
+ * Unshorten label if possible.
+ *
+ * @param table tbl
+ * @param vector<hash> colval
+ */	
+function unshortenTableColumnLabel(tbl, colval) {
+	var i, j, hide = 0, rows = tbl.children[0].children;
+	var w = tbl.offsetWidth, row = rows[0].children;
+
+	for (j = 0; j < row.length; j++) {
+		if (Object.keys(colval[j]).length === 0) {
+			continue;
+		}
+
+		var has_span = -1;
+
+		for (i = 0; has_span === -1 && i < row[j].children.length; i++) {
+			if (row[j].children[i].tagName === 'SPAN') {
+				has_span = i;
+			}
+		}
+
+		if (has_span === -1) {
+			continue;
+		}
+
+		var span = row[j].children[has_span];
+		if (!span.getAttribute('data-short')) {
+			continue;
+		}
+
+		var old = span.innerHTML;
+		span.innerHTML = span.getAttribute('title');
+
+		if (tbl.offsetWidth > w + 10) {
+			span.innerHTML = old;
+			return;
+		}
+		
+		span.removeAttribute('title');		
+	}
+}
+
+
+/**
+ * Prepare output table. Hide empty columns. Prolong shortened lables if possible.
+ * 
+ * @param table tbl
+ */
+function prepareOutputTable(tbl) {
+	tbl.style.display = 'none';
+	var column_values = getColumnValues(tbl);
+	hideEmptyColumns(tbl, column_values);
+	unshortenTableColumnLabel(tbl, column_values);
+	tbl.style.display = '';
+}
+
+
+
 /*
  * Constructor
  */
@@ -318,6 +450,12 @@ document.addEventListener('DOMContentLoaded', function () {
 	if ((list = document.querySelectorAll('input[data-search_list_url]'))) {
 		for (i = 0; i < list.length; i++) {
 			initLiveSearch(list[i]);
+		}
+	}
+
+	if ((list = document.querySelectorAll('table.output'))) {
+		for (i = 0; i < list.length; i++) {
+			prepareOutputTable(list[i]);
 		}
 	}
 
