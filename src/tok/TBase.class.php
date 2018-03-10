@@ -107,6 +107,7 @@ public function __construct() {
  * - bootstrap:row:n,n: REQUIRE_PARAM, PARAM_CSLIST, REQUIRE_BODY, LIST_BODY, IS_STATIC
  * - tpl_set: REQUIRE_PARAM, PARAM_LIST, REQUIRE_BODY, TEXT, IS_STATIC
  * - tpl: REQUIRE_PARAM, PARAM_LIST, LIST_BODY, IS_STATIC
+ * - shorten: REQUIRE_PARAM
  *
  * @param Tokenizer $tok
  * @return map<string:int>
@@ -160,8 +161,52 @@ public function getPlugins($tok) {
 	$plugin['var'] = 0;
 	$plugin['esc'] = 0;
 	$plugin['log'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['shorten'] = TokPlugin::REQUIRE_PARAM;
 
 	return $plugin;
+}
+
+
+/**
+ * Return html escaped shortened text, wrappend in <span title="original text">shortened text</span>.
+ * If maxlen < 20 and length($txt) > 20 use substr($txt, 0, maxlen - 3).' ...' as short text.
+ * If maxlen >= 20 use substr($txt, 0, maxlen/2 - 2).' ... '.substr($txt, -maxlen/2 + 2).
+ * If maxlen >= 60 use substr($txt, 0, maxlen - 25).' ... '.substr($txt, -20).
+ *
+ * @tok {shorten:10}Shorten this Text{:shorten} -> <span title="Shorten this Text">Shorten ...</span>
+ * @tok {shorten:20}Shorten this long Text{:shorten} -> <span title="Shorten this long Text">Shorten ... ong Text</span> 
+ * 
+ * @param int $maxlen
+ * @param string $txt
+ * @return string
+ */
+public function tok_shorten($maxlen, $txt) {
+	$len = mb_strlen($txt);
+
+	if ($len < $maxlen) {
+		return \rkphplib\lib\htmlescape($txt);
+	}
+
+	if ($maxlen < 20) {
+		$short = mb_substr($txt, 0, $maxlen - 3);
+		$rest = '';
+	}
+	else if ($maxlen >= 60) {
+		$short = mb_substr($txt, 0, $maxlen - 25);
+		$rest = mb_substr($txt, -20); 
+	}
+	else {
+		$len2 = floor($maxlen / 2 - 2);
+		$short = mb_substr($txt, 0, $len2);
+		$rest = mb_substr($txt, -1 * $len2);
+	}
+
+	$title = ($len > 512) ? '' : ' title="'.\rkphplib\lib\htmlescape($txt).'"';
+
+	$res = '<span data-short="1"'.$title.'>'.\rkphplib\lib\htmlescape($short).
+		'<span style="opacity:0.6"> ... '.\rkphplib\lib\htmlescape($rest).'</span></span>';
+
+	return $res;
 }
 
 
