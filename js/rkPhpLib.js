@@ -333,7 +333,7 @@ function getColumnValues(tbl) {
 				continue;
 			}
 
-			if (Object.keys(column_values).length > 15) {
+			if (Object.keys(column_values[j]).length > 15) {
 				continue;
 			}
 
@@ -388,7 +388,12 @@ function hideEmptyColumns(tbl, colval) {
  */	
 function unshortenTableColumnLabel(tbl, colval) {
 	var i, j, hide = 0, rows = tbl.children[0].children;
-	var w = tbl.offsetWidth, row = rows[0].children;
+	var row = rows[0].children;
+
+	if (tbl.scrollWidth > tbl.clientWidth) {
+		// we have horizontal scroll bar
+		return;
+	}
 
 	for (j = 0; j < row.length; j++) {
 		if (Object.keys(colval[j]).length === 0) {
@@ -415,7 +420,7 @@ function unshortenTableColumnLabel(tbl, colval) {
 		var old = span.innerHTML;
 		span.innerHTML = span.getAttribute('title');
 
-		if (tbl.offsetWidth > w + 10) {
+		if (tbl.scrollWidth > tbl.clientWidth) {
 			span.innerHTML = old;
 			return;
 		}
@@ -431,11 +436,11 @@ function unshortenTableColumnLabel(tbl, colval) {
  * @param table tbl
  */
 function prepareOutputTable(tbl) {
-	tbl.style.display = 'none';
+	tbl.style.visibility = 'hidden';
 	var column_values = getColumnValues(tbl);
 	hideEmptyColumns(tbl, column_values);
 	unshortenTableColumnLabel(tbl, column_values);
-	tbl.style.display = '';
+	tbl.style.visibility = 'visible';
 }
 
 
