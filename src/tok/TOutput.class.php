@@ -261,15 +261,45 @@ public function tok_output_get($name) {
 		return $this->conf[$name];
 	}
 
+	$res = '';
+
 	if ($name == '*') {
-		return \rkphplib\lib\kv2conf($this->env);
+		$res = \rkphplib\lib\kv2conf($this->env);
 	}
-	
-	if (!isset($this->env[$name])) {
+	else if (isset($this->env[$name])) {
+		$res = $this->env[$name];
+	}
+	else if ($name == 'colnum') {
+		$res = count($this->conf['column_label']);
+	}
+	else if (method_exists($this, 'get_'.$name)) {
+		$func = 'get_'.$name;
+		$res = $this->$func();
+	}
+	else {
 		throw new Exception('No such env key '.$name, print_r($this->env, true));
 	}
 
-	return $this->env[$name];
+	return $res;
+}
+
+
+/**
+ * Dynamic call in tok_output_get(). Return html option list of searchable columns.
+ *
+ * @return string
+ */
+private function get_search_col_options() {
+	$search_keys = [];
+
+	foreach ($this->conf as $key => $value)	{
+		if ($key == 'search' || strpos($key, 'search.') === 0) {
+			$list = array_keys(\rkphplib\lib\conf2kv($value, ':', ','));
+			$search_keys = array_merge($search_keys, $list);
+		}
+	}
+
+	return '<option value="">{txt:}search in ...{:txt}</option>'."\n<option>".join("</option>\n<option>", $search_keys)."</option>\n";
 }
 
 
@@ -305,17 +335,44 @@ private function isEmpty() {
 
 
 /**
+ * Process conf.column_label. Split into hash, add columns if necessary and save to conf-Table if 
+ * necessary.
+ */
+protected function checkColumnLabel() {
+	$column_label = \rkphplib\lib\conf2kv($this->conf['column_label'], ':', ',');
+	$table_cols = $this->conf['table_desc'];
+
+	foreach ($column_label as $column => $label) {
+		if (!isset($table_cols[$column])) {
+			unset($column_label[$column]);
+		}
+		else {
+			unset($table_cols[$column]);
+		}
+	}
+
+	foreach ($table_cols as $column => $cinfo) {
+		if (!in_array($column, [ 'owner' ])) {
+			$column_label[$column] = $this->tok->getPluginTxt('txt:col_'.$column, $column);
+		}
+	}
+
+	$this->conf['column_label'] = $column_label;
+
+	// ToDo: ... $this->tok->callPlugin('conf', 'tok_conf_get');
+}
+
+
+/**
  * Return header_label tag replacement.
  * 
  * @return string
  */
 protected function getHeaderLabel() {
 	$label_suffix = empty($this->conf['label_suffix']) ? [] : \rkphplib\lib\conf2kv($this->conf['label_suffix'], ':', ',');
-	$column_label = \rkphplib\lib\conf2kv($this->conf['column_label'], ':', ',');
-	$this->conf['column_label'] = $column_label;
 	$header_label = [];
 
-	foreach ($column_label as $column => $label) {
+	foreach ($this->conf['column_label'] as $column => $label) {
 		$suffix = empty($label_suffix[$column]) ? '' : ' data-suffix="'.\rkphplib\lib\htmlescape($label_suffix[$column]).'"';
 		$sort = empty($this->conf['table_desc'][$column]['key']) ? '' : ' {sort:'.$column.'}';
 
@@ -1297,6 +1354,7 @@ protected function selectData() {
 
 	if (!empty($this->conf['column_label'])) {
 		$this->conf['table_desc'] = $db->getTableDesc($this->conf['query.table']);
+		$this->checkColumnLabel();
 	}
 
 	$db->freeResult();
