@@ -185,21 +185,29 @@ private function getSearchPlaceholder($col) {
  * @return string
  */
 public function tok_sort($col) {
-  $sort = empty($_REQUEST[$this->conf['req.sort']]) ? $this->conf['sort'] : $_REQUEST[$this->conf['req.sort']];
-	$res = $this->conf['sort.no'];
  
-	if (empty($this->conf['sort'])) {
-		throw new Exception('missing [output:init]sort=...');
+	if (!isset($this->conf['req.sort']) || !isset($this->conf['sort'])) {
+		throw new Exception('missing [output:init]sort=...|#|req.sort=...');
 	}
 
+	$sort = isset($_REQUEST[$this->conf['req.sort']]) ? $_REQUEST[$this->conf['req.sort']] : $this->conf['sort'];
+	$res = $this->conf['sort.no'];
+	$new_sort = $this->conf['req.sort'].'=a'.$col;
+ 
 	if ($sort == 'd'.$col) {
 		$res = $this->conf['sort.desc'];
+		$new_sort = $this->conf['req.sort'].'=';
   }
 	else if ($sort == 'a'.$col) {
 		$res = $this->conf['sort.asc'];
+		$new_sort = $this->conf['req.sort'].'=d'.$col;
   }
 
-	return str_replace('$keep', $this->conf['keep'], $res);
+	$get_dir = $this->tok->getPluginTxt('get:dir');
+	$reset_last = $this->conf['req.last'].'=';
+	$link = $this->tok->getPluginTxt('link:', '@='.$get_dir.HASH_DELIMITER.$new_sort.HASH_DELIMITER.$reset_last);
+
+	return str_replace('$link', $link, $res);
 }
 
 
@@ -340,10 +348,10 @@ public function tok_output_header($tpl) {
 	}
 
 	if (!empty($this->conf['column_label'])) {
-		$tpl = $this->tok->replaceTags($tpl, [ 'header_label' => $this->getHeaderLabel() ]); 
-		\rkphplib\lib\log_debug("TOutput.tok_output_header> tpl: $tpl");
+		$tpl = $this->tok->getPluginTxt('redo:', $this->tok->replaceTags($tpl, [ 'header_label' => $this->getHeaderLabel() ]));
 	}
 
+	\rkphplib\lib\log_debug("TOutput.tok_output_header> replace tpl: $tpl");
 	if (!empty($this->env['tags'][0]) && $this->tok->hasReplaceTags($tpl, [ $this->env['tags'][0] ])) {
 		$replace = [];
 
@@ -362,6 +370,7 @@ public function tok_output_header($tpl) {
   	}
 	}
 
+	\rkphplib\lib\log_debug("TOutput.tok_output_header> exit tpl: $tpl");
 	return $tpl;
 }
 
@@ -607,9 +616,9 @@ public function tok_output_conf($p) {
 		$this->conf = [
 			'search' => '',
 			'sort' => '',
-			'sort.desc' => '<a href="'.$link.'"><img src="img/sort/desc.gif" border="0" alt=""></a>',
-      'sort.asc' => '<a href="'.$link.'"><img src="img/sort/asc.gif" border="0" alt=""></a>',
-      'sort.no' => '<a href="'.$link.'"><img src="img/sort/no.gif" border="0" alt=""></a>',
+			'sort.desc' => '<a href="$link"><img src="img/sort/desc.gif" border="0" alt=""></a>',
+      'sort.asc' => '<a href="$link"><img src="img/sort/asc.gif" border="0" alt=""></a>',
+      'sort.no' => '<a href="$link"><img src="img/sort/no.gif" border="0" alt=""></a>',
 			'reset' => 1,
 			'req.last' => 'last',
 			'req.sort' => 'sort',
@@ -659,9 +668,9 @@ public function tok_output_conf($p) {
  *  reset= 1
  *  search = 
  *  sort =
- *  sort.desc = <a href="{link:}@={get:dir}{:link}"><img src="img/sort/desc.gif" border="0" alt=""></a>
- *  sort.asc = <a href="{link:}@={get:dir}{:link}"><img src="img/sort/asc.gif" border="0" alt=""></a>
- *  sort.no = <a href="{link:}@={get:dir}{:link}"><img src="img/sort/no.gif" border="0" alt=""></a>
+ *  sort.desc = <a href="$link"><img src="img/sort/desc.gif" border="0" alt=""></a>
+ *  sort.asc = <a href="$link"><img src="img/sort/asc.gif" border="0" alt=""></a>
+ *  sort.no = <a href="$link"><img src="img/sort/no.gif" border="0" alt=""></a>
  *  req.sort= sort
  *  req.last= last
  *  keep= SETTINGS_REQ_DIR, $req.sort, $req.last (comma separted list - if search add s_*)
@@ -1217,7 +1226,7 @@ private function getRangeExpression($col, $value, $range) {
  * @return string ''|ORDER BY ...
  */
 protected function getSqlSort() {
-  $sort = empty($_REQUEST[$this->conf['req.sort']]) ? $this->conf['sort'] : $_REQUEST[$this->conf['req.sort']];
+  $sort = isset($_REQUEST[$this->conf['req.sort']]) ? $_REQUEST[$this->conf['req.sort']] : $this->conf['sort'];
 
 	if (empty($sort)) {
 		return '';
@@ -1252,9 +1261,7 @@ protected function selectData() {
 		$query = str_replace([ '_WHERE_SEARCH', '_AND_SEARCH' ], $this->getSearch(), $query);
 	}
 
-	if (!empty($this->conf['sort'])) {
-		$query = str_replace('_SORT', $this->getSqlSort(), $query);
-	}
+	$query = str_replace('_SORT', $this->getSqlSort(), $query);
 
 	$this->conf['query'] = $query;
 	$db = Database::getInstance($this->conf['query.dsn'], [ 'output' => $this->conf['query'] ]);
