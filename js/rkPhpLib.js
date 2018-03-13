@@ -258,6 +258,125 @@ this.updateSearchList = function(el) {
 
 
 /**
+ * Create search box for output table.
+ *
+ * @param Element el
+ */
+this.setOutputSearch = function (el) {
+	var tbl_num = parseInt(el.getAttribute('data-output'));
+	var tbl = env.output[tbl_num - 1];
+	var tr = tbl.children[0].children[1].children;
+	var column = el.value;
+	var i, label;
+
+	for (i = 0; !label && i < el.options.length; i++) {
+		if (el.options[i].selected) {
+			label = el.options[i].innerText;
+		}
+	}
+
+	var input = document.createElement('input');
+	var other = tbl.querySelectorAll('input[name=s_' + column + ']');
+	if (other.length > 0) {
+		input.setAttribute('name', 's_' + column + '.' + other.length);
+	}
+	else {
+		input.setAttribute('name', 's_' + column);
+	}
+
+	input.setAttribute('class', 'output_search');
+	input.setAttribute('placeholder', label);
+	input.setAttribute('value', '');
+	input.onchange = function () { el.form.submit(); };
+	input.addEventListener('keypress', function (evt) {
+		var input = evt.target;
+		if (!input.value && (evt.keyCode === 8 || evt.keyCode === 46)) {
+			input.parentNode.removeChild(input);
+		}
+	});
+
+	el.parentNode.appendChild(input);
+	el.value = '';
+};
+
+
+/**
+ * Execute output action. If type is link show select.
+ *
+ * @param element el
+ * @param string type
+ */
+this.outputAction = function (el, type) {
+	var id, url, td = el.parentNode, value = el.value;
+
+	if (!td.getAttribute('data-id')) {
+		id = el.getAttribute('data-id') ? el.getAttribute('data-id') : el.innerText;
+		td.setAttribute('data-id', id);
+		td.setAttribute('data-edit', el.getAttribute('data-edit'));
+	}
+	else {
+		id = td.getAttribute('data-id');
+	}
+
+	if (type == 'link') {
+		td.innerHTML = document.getElementById('output_action_select').innerHTML;
+	}
+	else if ((type == 'select' || type == 'category_click') && (!value || value == '.')) {
+		td.innerHTML = '<a onclick="rkphplib.outputAction(this, ' + "'link'" + ')">' + id + '</a>';
+	}
+	else if (type == 'category_click') {
+		url = el.getAttribute('data-set');
+		var i, cat_id = [];
+
+		for (i = 0; i < el.options.length; i++) {
+			if (el.options[i].selected) {
+				cat_id.push(el.options[i].value);
+			}
+		}
+
+		this.ajax({ url: url + '&item_id=' + encodeURI(id) + '&cat_id=' + encodeURI(cat_id.join(',')), json: false, 
+			success: function (data) {
+				if (data.trim() == 'OK') {
+					td.innerHTML = '<a onclick="rkphplib.outputAction(this, ' + "'link'" + ')">' + id + '</a>';
+				}
+			}
+		});
+	}
+	else if (type == 'select') {
+		if (value == 'edit') {
+			window.location.href = td.getAttribute('data-edit');
+		}
+		else if (value == 'category') {
+			td.innerHTML = document.getElementById('output_action_category').innerHTML;
+			var sbox = td.children[0];
+			sbox.setAttribute('id', 'cat_item_' + id);
+			url = sbox.getAttribute('data-get');
+
+			this.ajax({ url: url + '&id=' + encodeURI(id), json: false, success: function (data) {
+				var i, key, sbox = document.getElementById('cat_item_' + id), list = data.trim().split(',');
+				for (key in list) {
+					for (i = 0; i < sbox.options.length; i++) {
+						if (sbox.options[i].value == list[key]) {
+							sbox.options[i].selected = 1;
+						}
+					}
+				}
+			}});
+		}
+		else if (value == 'image') {
+			console.log('show image');
+		}
+		else if (value == 'delete') {
+			console.log('delete entry');
+		}
+		else if (value == 'purge') {
+			console.log('purge entry');
+		}
+	}
+};
+
+
+/**
  * Initialize search input. Attribute name and data-search_list_url required.
  * 
  * @param Element el
@@ -381,31 +500,46 @@ function hideEmptyColumns(tbl, colval) {
 
 
 /**
- * Unshorten label if possible.
+ * Return child tag position (or -1 if not found).
+ *
+ * @param element el
+ * @param string name
+ * @return int
+ */
+function getChildTag(el, name) {
+	var i, found = -1, uname = name.toUpperCase();
+
+	for (i = 0; found === -1 && i < el.children.length; i++) {
+		if (el.children[i].tagName === uname) {
+			found = i;
+		}
+	}
+
+	return found;
+}
+
+
+/**
+ * Unshorten label if possible. Return column name label name hash.
  *
  * @param table tbl
  * @param vector<hash> colval
+ * @return hash 
  */	
 function unshortenTableColumnLabel(tbl, colval) {
 	var i, j, hide = 0, rows = tbl.children[0].children;
-	var row = rows[0].children;
-
-	if (tbl.scrollWidth > tbl.clientWidth) {
-		// we have horizontal scroll bar
-		return;
-	}
+	var row = rows[0].children, column_label = { };
 
 	for (j = 0; j < row.length; j++) {
 		if (Object.keys(colval[j]).length === 0) {
 			continue;
 		}
 
-		var has_span = -1;
-
-		for (i = 0; has_span === -1 && i < row[j].children.length; i++) {
-			if (row[j].children[i].tagName === 'SPAN') {
-				has_span = i;
-			}
+		var column = row[j].getAttribute('data-column');
+		var label, has_span = getChildTag(row[j], 'span');
+	
+		if (row[j].firstChild.nodeType === 3) {
+			column_label[column] = row[j].firstChild.data;
 		}
 
 		if (has_span === -1) {
@@ -417,15 +551,43 @@ function unshortenTableColumnLabel(tbl, colval) {
 			continue;
 		}
 
-		var old = span.innerHTML;
-		span.innerHTML = span.getAttribute('title');
+		if ((label = span.getAttribute('title'))) {
+			column_label[column] = label;
 
-		if (tbl.scrollWidth > tbl.clientWidth) {
-			span.innerHTML = old;
-			return;
+			if (tbl.scrollWidth <= tbl.clientWidth) {
+				span.innerHTML = label;
+				span.removeAttribute('title');		
+			}
 		}
-		
-		span.removeAttribute('title');		
+	}
+
+	return column_label;
+}
+
+
+/**
+ * Add label to search box add disabled if column is invisible.
+ * 
+ * @param select sbox
+ * @param hash column_label
+ */
+function fixSearchColumn(sbox, column_label) {
+	sbox.setAttribute('data-output', env.output.length);
+
+	for (var i = 0; i < sbox.options.length; i++) {
+		var value = sbox.options[i].value;
+
+		if (!value) {
+			continue;
+		}
+
+		if (!column_label[value]) {
+			sbox.options[i].setAttribute('disabled', 'disabled');
+		}
+		else {
+			sbox.options[i].innerText = column_label[value];
+			sbox.options[i].value = value;
+		}
 	}
 }
 
@@ -439,7 +601,14 @@ function prepareOutputTable(tbl) {
 	tbl.style.visibility = 'hidden';
 	var column_values = getColumnValues(tbl);
 	hideEmptyColumns(tbl, column_values);
-	unshortenTableColumnLabel(tbl, column_values);
+	var sbox, column_label = unshortenTableColumnLabel(tbl, column_values);
+
+	env.output.push(tbl);
+
+	if ((sbox = tbl.querySelector('select.search_column'))) {
+		fixSearchColumn(sbox, column_label);
+	}
+
 	tbl.style.visibility = 'visible';
 }
 
@@ -459,6 +628,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	if ((list = document.querySelectorAll('table.output'))) {
+		env.output = [];
 		for (i = 0; i < list.length; i++) {
 			prepareOutputTable(list[i]);
 		}
