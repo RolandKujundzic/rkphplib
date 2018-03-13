@@ -375,6 +375,7 @@ protected function getHeaderLabel() {
 	foreach ($this->conf['column_label'] as $column => $label) {
 		$suffix = empty($label_suffix[$column]) ? '' : ' data-suffix="'.\rkphplib\lib\htmlescape($label_suffix[$column]).'"';
 		$sort = empty($this->conf['table_desc'][$column]['key']) ? '' : ' {sort:'.$column.'}';
+		$suffix .= ' data-column="'.$column.'"';
 
 		if (empty($this->conf['shorten.label'])) {
 			$entry = str_replace([ '$column', '$label', '$sort', '$suffix' ], [ $column, $label, $sort, $suffix ], 
@@ -481,7 +482,8 @@ public function tok_output_json() {
 
 
 /**
- * Return $tpl with {:=loop_column} replaced.
+ * Return $tpl with {:=loop_column} replaced. If conf.action="id,TEMPLATE" is defined
+ * use {tpl:TEMPLATE}{:=id}{:tpl} instead of {:=id}.
  * 
  * @param string $tpl
  * @return string
@@ -490,6 +492,11 @@ protected function getOutputLoopTemplate($tpl) {
 	$loop_column = [];
 
 	$language = $this->tok->callPlugin('language:get', 'tok_language_get');
+	$action = [];
+
+	if (!empty($this->conf['action'])) {
+		$action = \rkphplib\lib\split_str(',', $this->conf['action'], 2);
+	}
 
 	foreach ($this->conf['column_label'] as $column => $label) {
 		$cinfo = $this->conf['table_desc'][$column];
@@ -497,7 +504,10 @@ protected function getOutputLoopTemplate($tpl) {
 		$align = $is_number ? ' align="right"' : '';
 		$column_tag = $this->tok->getTag($column);
 
-		if ($column == 'status') {
+		if (count($action) == 2 && $column == $action[0]) {
+			$column_tag = $this->tok->getPluginTxt('tpl:'.$action[1], $column_tag);
+		}
+		else if ($column == 'status') {
 			$column_tag = '<img src="img/status/'.$column_tag.'.gif" title="'.$this->tok->getPluginTxt('txt:', $column_tag).'">';
 		}
 		else if (in_array($cinfo['type'], [ 'date', 'datetime', 'timestamp' ])) {
