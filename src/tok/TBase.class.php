@@ -735,21 +735,33 @@ public function tok_load($param, $file) {
  * If parameter "_" is missing assume "_" = index.php.
  *
  * {link:}dir=a/b/c|#|t=382{:link} -> index.php?cx=eiEveLHO83821
- * {link:}_=|#|dir=a/b/c|#|t=382{:link} -> ?eiEveLHO83821
- * {link:}@=a/b/c|#|t=382{:link} -> ?eiEveLHO83821
- * {link:@,t} -> {link:}@={get:dir}|#|t={get:t}{:link} -> index.php?cx=eiEveLHO83821
- * {link:dir,t} -> {link:}dir={get:dir}|#|t={get:t}{:link} -> ?eiEveLHO83821
+ * {link:}dir=a/b/c|#|t=382{:link} -> index.php?dir=a/b/c&t=382 (falls SETTINGS_REQ_CRYPT = '')
+ * {link:}_=a/b/c|#|t=382{:link} -> ?eiEveLHO83821
+ * {link:}@=a/b/c|#|t=382{:link} -> ?eiEveLHO83821 (append s_*, search if _REQUEST is set)
+ *
+ * {link:@,t} -> {link:}@={get:dir}|#|t={get:t}{:link}
+ * {link:_,t} -> {link:}_={get:dir}|#|t={get:t}{:link}
+ *
+ * Use parameter @ to enable keep (_, dir = no keep mode).
+ *
+ * Keep mode: Add all s_* and sort parameter if _REQUEST value is not empty. Add all parameter
+ * from vector tok->getVar(link_keep).
+ *
+ * If SETTINGS_REQ_CRYPT is empty do not encode link.
  *
  * @param array $name_list
  * @param array[string]string $p
  * @return string
  */
 public function tok_link($name_list, $p) {
+	\rkphplib\lib\log_debug([ "TBase.tok_link|enter> ", $name_list, $p ]);
 	$res = 'index.php?'.SETTINGS_REQ_CRYPT.'=';
+	$keep = false;
 
 	foreach ($name_list as $name) {
-		if ($name == '@') {
+		if ($name == '@' || $name == '_') {
 			$name = SETTINGS_REQ_DIR;
+			$keep = ($name == '@');
 			$res = '?';
 		}
 
@@ -757,23 +769,40 @@ public function tok_link($name_list, $p) {
 			$p[$name] = $_REQUEST[$name];
 		}
 	}
+	
+	if (isset($p['@']) || isset($p['_'])) {
+		$keep = isset($p['@']);
+		$res = '?';
 
-	$kv = $this->_tok->getVar('link_keep');
-	if (is_array($kv)) {
-		foreach ($kv as $key => $value) {
-			if (!isset($p[$key]) && $key != SETTINGS_REQ_DIR && strlen($value) > 0) {
-				$p[$key] = $value;
-			}
+		if (isset($p['@'])) {
+			$p[SETTINGS_REQ_DIR] = $p['@'];
+			unset($p['@']);
+		}
+
+		if (isset($p['_'])) {
+			$p[SETTINGS_REQ_DIR] = $p['_'];
+			unset($p['_']);
 		}
 	}
 
-	foreach ($_REQUEST as $key => $value) {
-		if (strlen($value) == 0 || isset($p[$key]) || $key == SETTINGS_REQ_DIR) {
-			continue;
+	if ($keep) {
+		$kv = $this->_tok->getVar('link_keep');
+		if (is_array($kv)) {
+			foreach ($kv as $key => $value) {
+				if (!isset($p[$key]) && strlen($value) > 0) {
+					$p[$key] = $value;
+				}	
+			}
 		}
 
-		if (substr($key, 0, 2) == 's_') {
-			$p[$key] = $value;
+		foreach ($_REQUEST as $key => $value) {
+			if (strlen($value) == 0 || isset($p[$key])) {
+				continue;
+			}
+
+			if ((in_array($key, [ 'sort' ]) || substr($key, 0, 2) == 's_') && !isset($p[$key])) {
+				$p[$key] = $value;
+			}
 		}
 	}
 
@@ -782,42 +811,31 @@ public function tok_link($name_list, $p) {
 
 		if (isset($p[SETTINGS_REQ_DIR])) {
 			$dir = $p[SETTINGS_REQ_DIR];
+			unset($p[SETTINGS_REQ_DIR]);
 		}
-		else if (isset($p['@'])) {
-			$dir = $p['@'];
-		}
-		else if (!empty($_REQUEST[SETTINGS_REQ_CRYPT])) {
+		else if (!empty($_REQUEST[SETTINGS_REQ_DIR])) {
 			$dir = $_REQUEST[SETTINGS_REQ_CRYPT];
 		}
 
-		$res = 'index.php?'.SETTINGS_REQ_DIR.'='.$dir;
+		$res = 'index.php?'.SETTINGS_REQ_DIR.'='.rawurlencode($dir);
 
 		foreach ($p as $key => $value) {
-			if (!in_array($key, [ '@', '_' ])) { 
-				$res .= '&'.$key.'='.rawurlencode($value);
-			}
+			$res .= '&'.$key.'='.rawurlencode($value);
+		}
+	}
+	else {
+		$rbase = basename($_SERVER['SCRIPT_NAME']);
+
+		if (!empty($rbase) && $res == '?') {
+			$script_dir = dirname($_SERVER['SCRIPT_NAME']);
+			$res = ($script_dir == '/') ? '/?' : $script_dir.'/?';
 		}
 
-		return $res;
+		$res .= self::encodeHash($p);
 	}
 
-	if (isset($p['_'])) {
-		$res  = empty($p['_']) ? '?' : $p['_'].'?'.SETTINGS_REQ_CRYPT.'=';
-		unset($p['_']);
-	}
-	else if (isset($p['@'])) {
-		$p[SETTINGS_REQ_DIR] = $p['@'];
-		$res = '?';
-		unset($p['@']);
-	}
-
-	$rbase = basename($_SERVER['SCRIPT_NAME']);
-	if (!empty($rbase) && $res == '?') {
-		$script_dir = dirname($_SERVER['SCRIPT_NAME']);
-		$res = ($script_dir == '/') ? '/?' : $script_dir.'/?';
-	}
-
-	return $res.self::encodeHash($p);
+	\rkphplib\lib\log_debug([ "TBase.tok_link|exit> $res", $name_list, $p ]);
+	return $res;
 }
 
 
