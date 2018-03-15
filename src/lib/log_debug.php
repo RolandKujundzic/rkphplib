@@ -27,13 +27,33 @@ else {
  * before inclusion of this file.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @param string $msg
+ * @param string|vector $msg
  * @param bool $prepend_info (default = false, prepend timestamp and trace information)
  */
 function log_debug($msg, $prepend_info = false) {
 
 	if (!defined('SETTINGS_LOG_DEBUG') || empty(SETTINGS_LOG_DEBUG)) {
 		return;
+	}
+
+	if (is_array($msg)) {
+		$out = $msg[0].' ';
+
+		for ($i = 1; $i < count($msg); $i++) {
+			if (is_string($msg[$i])) {
+				$out .= $i.'=['.$msg[$i];
+			}
+			else {
+				$out .= $i.'=[';
+				foreach ($msg[$i] as $key => $value) {
+					$out .= '('.$key.'|'.$value.')';
+				}
+			}
+
+			$out .= '] ';
+		}
+
+		$msg = $out;
 	}
 
 	if ($prepend_info) {
