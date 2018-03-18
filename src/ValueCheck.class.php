@@ -334,6 +334,10 @@ public static function getParameterArray($p1 = null, $p2 = null, $p3 = null) {
  * @return boolean
  */
 public static function isEnum($value, $p1 = null, $p2 = null, $p3 = null) {
+	if (is_array($p1)) {
+		return in_array($value, $p1);
+	}
+
 	return in_array($value, self::getParameterArray($p1, $p2, $p3));
 }
 
