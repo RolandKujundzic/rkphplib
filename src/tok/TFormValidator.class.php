@@ -125,7 +125,7 @@ public function __construct() {
 
 		'option.label_empty'  => '...',
 
-		'default.in.const'    => $value,
+		'default.in.const'    => '<span class="const">'.$value.'</span>',
 		'default.in.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" '.$tags.'>',
 		'default.in.textarea' => '<textarea name="'.$name.'" class="'.$class.'" '.$tags.'>'.$value.'</textarea>',
 		'default.in.select'   => '<select name="'.$name.'" class="'.$class.'" '.$tags.'>'.$options.'</select>',
