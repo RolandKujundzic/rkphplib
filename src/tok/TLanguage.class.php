@@ -210,7 +210,7 @@ public function getTxtId($param, $txt) {
 			$id = md5($txt_id);
 		}
 		else {
-			throw new Exception('empty txt id - look for {txt:}without closure');
+			throw new Exception('empty txt id - look for {txt:}without closure', "param=[$param] txt=[$txt]");
 		}
 	}
 
@@ -261,6 +261,10 @@ public function tok_txt($param, $txt) {
 	// \rkphplib\lib\log_debug("TLanguage->tok_txt> param=$param txt=$txt is_null(this->db)=".is_null($this->db));
 	if (is_null($txt)) {
 		$txt = '';
+	}
+
+	if (empty($param) && empty($txt)) {
+		return $txt;
 	}
 
 	$id = $this->getTxtId($param, $txt);
