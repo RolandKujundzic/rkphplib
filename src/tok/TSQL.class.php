@@ -4,6 +4,7 @@ namespace rkphplib\tok;
 
 $parent_dir = dirname(__DIR__);
 require_once(__DIR__.'/TokPlugin.iface.php');
+require_once(__DIR__.'/TokHelper.trait.php');
 require_once($parent_dir.'/Database.class.php');
 require_once($parent_dir.'/File.class.php');
 require_once($parent_dir.'/Dir.class.php');
@@ -24,6 +25,7 @@ use \rkphplib\Dir;
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 class TSQL implements TokPlugin {
+use TokHelper;
 
 /** @var Tokenizer $tok */
 protected $tok = null;
@@ -55,6 +57,7 @@ public function getPlugins($tok) {
 
 	$plugin = [];
 	$plugin['sql:query'] = 0;
+	$plugin['sql:change'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['sql:dsn'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY; 
 	$plugin['sql:name'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['sql:qkey'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY;
@@ -350,6 +353,60 @@ public function tok_sql_dsn($dsn) {
  */
 public function tok_sql_qkey($qkey, $query) {
 	$this->db->setQuery($qkey, $query);
+}
+
+
+/**
+ * Create and execute insert (id=add) or update query. Parameter:
+ *
+ * table= table_name
+ * id_col= id, auto_increment (default)
+ * col_value= lchange=now(), images={esc:images}
+ * add_col_value= since=now()
+ * 
+ * @param hash $p
+ */
+public function tok_sql_change($p) {
+	$this->checkMap($this->tok->getPluginTxt('sql:change'), $p, [ 'table!', 'id_col!' ]);
+
+	list ($id, $id_mode) = \rkphplib\lib\split_str(',', $p['id_col'], 2);
+
+	if (!empty($p['col_value'])) {
+		$p['col_value'] = \rkphplib\lib\conf2kv($p['col_value'], '=', ',');
+	}
+	else {
+		$p['col_value'] = [];
+	}
+
+	if (!empty($p['add_col_value'])) {
+		$p['add_col_value'] = \rkphplib\lib\conf2kv($p['add_col_value'], '=', ',');
+	}
+	else {
+		$p['add_col_value'] = [];
+	}
+
+	if (empty($_REQUEST[$id])) {
+		throw new Exception('id is empty', "_REQUEST[$id] is empty");
+	}
+
+	$do = ('add' == $_REQUEST[$id]) ? 'insert' : 'update';
+	$r = $_REQUEST;
+
+	if (count($p['col_value']) > 0) {
+		$r = array_merge($r, $p['col_value']);
+	}
+
+	if ($do == 'insert' && count($p['add_col_value']) > 0) {
+		$r = array_merge($r, $p['add_col_value']);
+	}
+	
+	if ($do == 'update') {
+		$r['@where'] = 'WHERE '.$this->db->escape_name($id).'='.$this->db->escape($_REQUEST[$id]);
+	}
+
+	$query = $this->db->buildQuery($p['table'], $do, $r);
+	\rkphplib\lib\log_debug("TSQL.tok_sql_change|$do> $query");
+	$this->db->execute($query);
 }
 
 
