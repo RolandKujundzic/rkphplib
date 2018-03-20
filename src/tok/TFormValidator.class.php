@@ -83,9 +83,10 @@ public function getPlugins($tok) {
 	$plugin = [];
 	$plugin['fv'] = 0;
 	$plugin['fv:init'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY; 
-	$plugin['fv:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['fv:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY | TokPlugin::TEXT;
 	$plugin['fv:check'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY; 
 	$plugin['fv:in'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
+	$plugin['fv:tpl'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY | TokPlugin::REDO;
 	$plugin['fv:hidden'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 	$plugin['fv:preset'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['fv:error'] = TokPlugin::REQUIRE_PARAM;
@@ -281,6 +282,10 @@ public function tok_fv_init($do, $p) {
 	}
 
 	$this->conf['current'] = array_merge($conf, $p);
+
+	if (!is_array($this->conf['current']['required'])) {
+		$this->conf['current']['required'] = \rkphplib\lib\split_str(',', $this->conf['current']['required']);
+	}
 }
 
 
@@ -410,8 +415,25 @@ public function tok_fv_error_message($name, $tpl = '') {
 
 
 /**
+ * Return conf.template.$name. Replace and remove tags.
+ *
+ * @throws
+ * @param string $name
+ * @param array $p
+ * @return string
+ */
+public function tok_fv_tpl($name, $p) {
+	if (!isset($this->conf['current']['template.'.$name])) {
+		throw new Exception('no template.'.$name.' template');
+	}
+
+	$res = $this->tok->replaceTags($this->conf['current']['template.'.$name], $p);
+	return $this->tok->removeTags($res);
+}
+
+
+/**
  * Show input for $name. If $p is empty use conf.[in.name].
- * If name is header|footer return template.header|footer.
  *
  * @throws
  * @param string $name
@@ -419,19 +441,15 @@ public function tok_fv_error_message($name, $tpl = '') {
  * @return string
  */
 public function tok_fv_in($name, $p) {
-	if (!is_array($this->conf['current']['required'])) {
-		$this->conf['current']['required'] = \rkphplib\lib\split_str(',', $this->conf['current']['required']);
-	}
 
 	$conf = $this->conf['current'];
-	$res = '';
+	$out = empty($p['output']) ? $conf['template.output'] : $p['output'];
 
-	if ($name == 'header' || $name == 'footer') {
-		return $this->tok->replaceTags($conf['template.'.$name], $p);
+	if (!isset($conf['template.output.'.$out])) {
+		throw new Exception('no template.output.'.$out.' template');
 	}
 
-	$out = empty($p['output']) ? $conf['template.output'] : $p['output'];
-	$res .= $conf['template.output.'.$out];
+	$res = $conf['template.output.'.$out];
 
 	if (!empty($conf['in.'.$name])) {
 		$this->parseInName($name, $conf['in.'.$name], $p);
@@ -465,15 +483,13 @@ public function tok_fv_in($name, $p) {
 		$res = str_replace($tag_form_group, $tag_error.' form-group', $res);
 	}
 
-	$r = [];
-	$r['id'] = $p['id'];
-	$r['label'] = empty($p['label']) ? '' : $p['label'];
+	$r = $p;
 	$r['input'] = $this->getInput($name, $p);
 
 	$r['error_message'] = isset($this->error[$name]) ? join('|', $this->error[$name]) : '';
 	$r['error'] = isset($this->error[$name]) ? 'error' : '';
 
-	$res = $this->tok->replaceTags($res, $r);
+	$res = $this->tok->removeTags($this->tok->replaceTags($res, $r));
 	// \rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
 	return $res;
 }
@@ -633,7 +649,7 @@ protected function getInput($name, $ri) {
 	$attributes = [ 'id', 'size', 'maxlength', 'placeholder', 'pattern', 'rows', 'cols', 'style', 'class' ];
 	foreach ($attributes as $key) {
 		if (isset($ri[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
-			$tags .= $key.'="'.$this->tok->getTag($key).'"';
+			$tags .= ' '.$key.'="'.$this->tok->getTag($key).'"';
 		}
 	}
 
