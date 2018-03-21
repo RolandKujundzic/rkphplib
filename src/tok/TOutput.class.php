@@ -1148,6 +1148,7 @@ protected function getSqlSearch($options = []) {
 			foreach ($like as $cx => $op) {
 				if ($cx == $method || $op == $method) {
 					if ($value) {
+						$value = preg_replace('/ +/', '%', $value);
 						$value = ADatabase::escape(str_replace('$', $value, $op));
 						array_push($expr, $col." LIKE '$value'");
 					}
