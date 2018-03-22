@@ -301,12 +301,53 @@ this.setOutputSearch = function (el) {
 
 
 /**
- * Execute output action. If type is link show select.
+ * Execute output action (el.value). If action == add redirect to data-add.
  *
  * @param element el
  * @param string type
  */
 this.outputAction = function (el, type) {
+	var action = el.value, doItemSbox = document.getElementById('output_action_select').innerHTML;
+	var doItemLink = '<a onclick="rkphplib.outputItemAction(this, ' + "'link'" + ')"></a>';
+	var tbody = el.parentNode.parentNode.parentNode;
+
+	if (action == 'add') {
+		window.location.href = el.getAttribute('data-add');
+	}
+	else if (action == 'do_on' || action == 'do_off') {
+		var i, rows = tbody.children;
+
+  	for (i = 2; i < rows.length - 1; i++) {
+			var td = rows[i].children[0];
+			var tdc = td.children[0];
+
+			if (action == 'do_on' && tdc.tagName == 'SELECT' || action == 'do_off' && tdc.tagName == 'A') {
+				continue;
+			}
+			else if (action == 'do_on') {
+				if (!td.getAttribute('data-id')) {
+					td.setAttribute('data-id', tdc.innerText);
+				}
+
+				td.innerHTML = doItemSbox;
+				td.children[0].options[0].innerText = td.getAttribute('data-id');
+			}
+			else if (action == 'do_off') {
+				td.innerHTML = doItemLink;
+				td.children[0].innerText = td.getAttribute('data-id');
+			}
+    }
+	}
+};
+
+
+/**
+ * Execute output item action. If type is link show select.
+ *
+ * @param element el
+ * @param string type
+ */
+this.outputItemAction = function (el, type) {
 	var id, url, td = el.parentNode, value = el.value;
 
 	if (!td.getAttribute('data-id')) {
@@ -320,9 +361,10 @@ this.outputAction = function (el, type) {
 
 	if (type == 'link') {
 		td.innerHTML = document.getElementById('output_action_select').innerHTML;
+		td.children[0].options[0].innerText = el.innerText;
 	}
 	else if ((type == 'select' || type == 'category_click') && (!value || value == '.')) {
-		td.innerHTML = '<a onclick="rkphplib.outputAction(this, ' + "'link'" + ')">' + id + '</a>';
+		td.innerHTML = '<a onclick="rkphplib.outputItemAction(this, ' + "'link'" + ')">' + id + '</a>';
 	}
 	else if (type == 'category_click') {
 		url = el.getAttribute('data-set');
@@ -337,7 +379,7 @@ this.outputAction = function (el, type) {
 		this.ajax({ url: url + '&item_id=' + encodeURI(id) + '&cat_id=' + encodeURI(cat_id.join(',')), json: false, 
 			success: function (data) {
 				if (data.trim() == 'OK') {
-					td.innerHTML = '<a onclick="rkphplib.outputAction(this, ' + "'link'" + ')">' + id + '</a>';
+					td.innerHTML = '<a onclick="rkphplib.outputItemAction(this, ' + "'link'" + ')">' + id + '</a>';
 				}
 			}
 		});
@@ -593,12 +635,47 @@ function fixSearchColumn(sbox, column_label) {
 
 
 /**
+ * If #output_add_action exists, add all children with data-action=value and data-label=label to 
+ * #output_action_select.
+ */
+function updateOutputAction() {
+	var add_action = document.getElementById('output_add_action');
+	var select_action = document.getElementById('output_action_select');
+
+	if (!add_action || !select_action) {
+		return;
+	}
+
+	for (var i = 0; i < add_action.children.length; i++) {
+		var html, id, value, label, el = add_action.children[i];
+
+		if (el.tagName == 'DIV' && (value = el.getAttribute('data-action')) && (label = el.getAttribute('data-label'))) {
+			if ((id = el.getAttribute('data-id'))) {
+				var div = document.createElement('div');
+				div.setAttribute('id', id);
+				div.innerHTML = el.innerHTML;
+				document.getElementById('output_action_wrapper').appendChild(div);
+			}
+
+			var action_select = document.getElementById('output_action_select').children[0];
+			for (var j = action_select.options.length; j > 2; j--) {
+				action_select.options[j] = new Option(action_select.options[j-1].text, action_select.options[j-1].value);
+			}
+
+			action_select.options[2] = new Option(label, value, false, true);
+		}
+	}
+}
+
+
+/**
  * Prepare output table. Hide empty columns. Prolong shortened lables if possible.
  * 
  * @param table tbl
  */
 function prepareOutputTable(tbl) {
 	tbl.style.visibility = 'hidden';
+	updateOutputAction();
 	var column_values = getColumnValues(tbl);
 	hideEmptyColumns(tbl, column_values);
 	var sbox, column_label = unshortenTableColumnLabel(tbl, column_values);
