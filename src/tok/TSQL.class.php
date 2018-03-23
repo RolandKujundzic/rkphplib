@@ -12,6 +12,7 @@ require_once($parent_dir.'/lib/conf2kv.php');
 require_once($parent_dir.'/lib/kv2conf.php');
 require_once($parent_dir.'/lib/split_str.php');
 
+use \rkphplib\Exception;
 use \rkphplib\Database;
 use \rkphplib\ADatabase;
 use \rkphplib\File;
@@ -369,7 +370,13 @@ public function tok_sql_qkey($qkey, $query) {
 public function tok_sql_change($p) {
 	$this->checkMap($this->tok->getPluginTxt('sql:change'), $p, [ 'table!', 'id_col!' ]);
 
-	list ($id, $id_mode) = \rkphplib\lib\split_str(',', $p['id_col'], 2);
+	$tmp = \rkphplib\lib\split_str(',', $p['id_col']);
+	$id = $tmp[0];
+	$id_mode = empty($tmp[1]) ? '' : $tmp[1];
+
+	if (!empty($tmp[2])) {
+		$_REQUEST[$id] = $tmp[2];
+	}
 
 	if (!empty($p['col_value'])) {
 		$p['col_value'] = \rkphplib\lib\conf2kv($p['col_value'], '=', ',');
