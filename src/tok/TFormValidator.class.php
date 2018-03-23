@@ -494,7 +494,7 @@ public function tok_fv_in($name, $p) {
 	$r['error'] = isset($this->error[$name]) ? $conf['template.error.const'] : '';
 
 	$res = $this->tok->removeTags($this->tok->replaceTags($res, $r));
-	\rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
+	// \rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
 	return $res;
 }
 
@@ -696,7 +696,7 @@ protected function getInput($name, $ri) {
 
 	$input = $this->tok->replaceTags($input, $ri);
 
-	\rkphplib\lib\log_debug("getInput($name): ".print_r($ri, true)."\n$input");
+	// \rkphplib\lib\log_debug("getInput($name): ".print_r($ri, true)."\n$input");
 	return $input;
 }
 
