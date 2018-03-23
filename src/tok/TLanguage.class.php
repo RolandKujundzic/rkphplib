@@ -146,7 +146,7 @@ public function initSession($language, $name = 'language') {
  *  default: 'txt' (default)
  *  untranslated: mark untranslaged, e.g. keep (return {txt:$param}$arg{:txt}, 
  *    <font style="background-color:red">{:=txt}</font>) (default = '' = return $arg)
- *  use: switch language e.g. {get:language} (default = '' = use p.default)
+ *  use: switch language e.g. {get:language} - disable with _REQUEST[ignore_language] (default = '' = use p.default)
  *
  * @throws  
  * @param map<string:string> $p
@@ -160,6 +160,10 @@ public function tok_language_init($p) {
 		if (empty($p[$key])) {
 			$p[$key] = $value;
 		}
+	}
+
+	if (!empty($_REQUEST['ignore_language'])) {
+		$p['use'] = '';
 	}
 
 	$p['use'] = empty($p['use']) ? $p['default'] : strtolower($p['use']);
