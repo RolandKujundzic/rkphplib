@@ -409,7 +409,7 @@ public function tok_output_header($tpl) {
 		$tpl = $this->tok->getPluginTxt('redo:', $this->tok->replaceTags($tpl, [ 'header_label' => $this->getHeaderLabel() ]));
 	}
 
-	\rkphplib\lib\log_debug("TOutput.tok_output_header> replace tpl: $tpl");
+	// \rkphplib\lib\log_debug("TOutput.tok_output_header> replace tpl: $tpl");
 	if (!empty($this->env['tags'][0]) && $this->tok->hasReplaceTags($tpl, [ $this->env['tags'][0] ])) {
 		$replace = [];
 
@@ -428,7 +428,7 @@ public function tok_output_header($tpl) {
   	}
 	}
 
-	\rkphplib\lib\log_debug("TOutput.tok_output_header> exit tpl: $tpl");
+	// \rkphplib\lib\log_debug("TOutput.tok_output_header> exit tpl: $tpl");
 	return $tpl;
 }
 
@@ -522,7 +522,7 @@ protected function getOutputLoopTemplate($tpl) {
 	}
 	
 	$tpl = $this->tok->replaceTags($tpl, [ 'loop_column' => join("\n", $loop_column) ]); 
-	\rkphplib\lib\log_debug("TOutput.getOutputLoopTemplate> tpl: [$tpl]");
+	// \rkphplib\lib\log_debug("TOutput.getOutputLoopTemplate> tpl: [$tpl]");
 	return $tpl;
 }
 
