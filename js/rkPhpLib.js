@@ -329,6 +329,10 @@ this.outputAction = function (el, type) {
 					td.setAttribute('data-id', tdc.innerText);
 				}
 
+				if (!td.getAttribute('data-edit')) {
+					td.setAttribute('data-edit', tdc.getAttribute('data-edit'));
+				}
+
 				td.innerHTML = doItemSbox;
 				td.children[0].options[0].innerText = td.getAttribute('data-id');
 			}
