@@ -417,7 +417,7 @@ public function tok_sql_change($p) {
 	}
 
 	$query = $this->db->buildQuery($p['table'], $do, $r);
-	\rkphplib\lib\log_debug("TSQL.tok_sql_change|$do> $query");
+	// \rkphplib\lib\log_debug("TSQL.tok_sql_change|$do> $query");
 	$this->db->execute($query);
 
 	if ($do == 'insert' && $id_mode == 'auto_increment') {
