@@ -1587,11 +1587,11 @@ public function buildQuery($table, $type, $kv = []) {
 	foreach ($p as $col => $cinfo) {
 		$val = false;
 
-		if (array_key_exists($col, $kv) && (is_null($kv[$col]) || (!empty($kv[$col]) && $kv[$col] === 'NULL'))) {
+		if (isset($kv[$col]) && (is_null($kv[$col]) || strtolower($kv[$col]) == 'null' || empty($kv[$col]) && !empty($cinfo['is_null']))) {
 			$val = 'NULL';
 		}
 		else if (isset($kv[$col])) {
-			if (preg_match('/^[a-zA-Z0-9_]+\(\'.+?\'\)$/', $kv[$col])) {
+			if (preg_match('/^([a-z][a-z0-9_]*)\((.*)\)$/i', $kv[$col], $match)) {
 				$val = $kv[$col];
 			}
 			else {
@@ -1599,8 +1599,7 @@ public function buildQuery($table, $type, $kv = []) {
 			}
 		}
 		else if ($add_default) {
-			if ((isset($p['is_null']) && $p['is_null']) || 
-					(isset($p['default']) && (is_null($p['default']) || $p['default'] === 'NULL'))) {
+			if (!empty($cinfo['is_null']) || $cinfo['default'] === 'NULL') {
 				$val = 'NULL';
 			}
 			else if (!empty($p['default'])) {
