@@ -392,6 +392,11 @@ public function tok_sql_change($p) {
 	$do = ('add' == $_REQUEST[$id]) ? 'insert' : 'update';
 	$r = $_REQUEST;
 
+	if (!empty($p['password'])) {
+		$pcol = $p['password'];
+		$r[$pcol] = "PASSWORD('".$r[$pcol]."')";
+	}
+
 	if (count($p['col_value']) > 0) {
 		$r = array_merge($r, $p['col_value']);
 	}
