@@ -304,6 +304,10 @@ public function tok_fv_check() {
 		return '';
 	}
 
+	if (count($this->error) > 0) {
+		return 'error';
+	}
+
 	if (!is_array($this->conf['current']['required'])) {
 		$this->conf['current']['required'] = \rkphplib\lib\split_str(',', $this->conf['current']['required']);
 	}
@@ -368,7 +372,7 @@ public function tok_fv_error($name, $tpl) {
 		return '';
 	}
 
-	return empty($tpl) ? $this->conf['template.error.const'] : $tpl;
+	return empty($tpl) ? $this->conf['current']['template.error.const'] : $tpl;
 }
 
 
@@ -443,6 +447,7 @@ public function tok_fv_tpl($name, $p) {
 public function tok_fv_in($name, $p) {
 
 	$conf = $this->conf['current'];
+
 	$out = empty($p['output']) ? $conf['template.output'] : $p['output'];
 
 	if (!isset($conf['template.output.'.$out])) {
@@ -485,12 +490,11 @@ public function tok_fv_in($name, $p) {
 
 	$r = $p;
 	$r['input'] = $this->getInput($name, $p);
-
 	$r['error_message'] = isset($this->error[$name]) ? join('|', $this->error[$name]) : '';
-	$r['error'] = isset($this->error[$name]) ? 'error' : '';
+	$r['error'] = isset($this->error[$name]) ? $conf['template.error.const'] : '';
 
 	$res = $this->tok->removeTags($this->tok->replaceTags($res, $r));
-	// \rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
+	\rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
 	return $res;
 }
 
@@ -498,7 +502,7 @@ public function tok_fv_in($name, $p) {
 /**
  * Parse value and add to input map p. Examples:
  *
- *  - in.name= checkbox,
+ *  - in.name= checkbox[,VALUES] - default = single checkbox with value 1
  *  - in.name= radio,
  *  - in.name= area(=textarea),ROWS,COLS,WRAP
  *  - in.name= text(=input),SIZE|WIDTHcc,MAXLENGTH
@@ -520,7 +524,7 @@ protected function parseInName($name, $value, &$p) {
 
 	if (is_string($r)) {
 		$p['type'] = $r;
-		return;
+		$r = [];
 	}
 
 	if (!empty($r['@_1'])) {
@@ -591,6 +595,15 @@ protected function parseInName($name, $value, &$p) {
 	else if ($type == 'const') {
 		// ok ...
 	}
+	else if ($type == 'checkbox') {
+		if (count($r) == 0) {
+			$p['value'] = 1;
+			$p['checked'] = isset($_REQUEST[$name]) && $_REQUEST[$name] == 1;
+		}
+		else {
+			$p['value'] = $r;
+		}
+	}
 	else {
 		throw new Exception('ToDo: name='.$name.' p: '.join('|', $p));
 	}
@@ -627,7 +640,7 @@ protected function getInput($name, $ri) {
 	}
 
 	if (isset($this->error[$name])) {
-		$ri['class'] = empty($ri['class']) ? 'error' : $ri['class'].' error';
+		$ri['class'] = empty($ri['class']) ? $conf['template.error.const'] : $ri['class'].' '.$conf['template.error.const'];
 	}
 
 	$tpl_in = $conf['template.engine'].'.in';
@@ -653,7 +666,7 @@ protected function getInput($name, $ri) {
 		}
 	}
 
-	$boolean_attributes = [ 'readonly', 'multiple', 'disabled' ];
+	$boolean_attributes = [ 'readonly', 'multiple', 'disabled', 'checked' ];
 	foreach ($boolean_attributes as $key) {
 		if (!empty($ri[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
 			$tags .= ' '.$this->tok->getTag($key);
@@ -683,7 +696,7 @@ protected function getInput($name, $ri) {
 
 	$input = $this->tok->replaceTags($input, $ri);
 
-	// \rkphplib\lib\log_debug("getInput($name): ".print_r($ri, true)."\n$input");
+	\rkphplib\lib\log_debug("getInput($name): ".print_r($ri, true)."\n$input");
 	return $input;
 }
 
