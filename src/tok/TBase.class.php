@@ -814,7 +814,7 @@ public function tok_link($name_list, $p) {
 			unset($p[SETTINGS_REQ_DIR]);
 		}
 		else if (!empty($_REQUEST[SETTINGS_REQ_DIR])) {
-			$dir = $_REQUEST[SETTINGS_REQ_CRYPT];
+			$dir = $_REQUEST[SETTINGS_REQ_DIR];
 		}
 
 		$res = 'index.php?'.SETTINGS_REQ_DIR.'='.rawurlencode($dir);
