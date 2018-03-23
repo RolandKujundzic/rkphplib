@@ -754,7 +754,7 @@ public function tok_load($param, $file) {
  * @return string
  */
 public function tok_link($name_list, $p) {
-	\rkphplib\lib\log_debug([ "TBase.tok_link|enter> ", $name_list, $p ]);
+	// \rkphplib\lib\log_debug([ "TBase.tok_link|enter> ", $name_list, $p ]);
 	$res = 'index.php?'.SETTINGS_REQ_CRYPT.'=';
 	$keep = false;
 
@@ -834,7 +834,7 @@ public function tok_link($name_list, $p) {
 		$res .= self::encodeHash($p);
 	}
 
-	\rkphplib\lib\log_debug([ "TBase.tok_link|exit> $res", $name_list, $p ]);
+	// \rkphplib\lib\log_debug([ "TBase.tok_link|exit> $res", $name_list, $p ]);
 	return $res;
 }
 
