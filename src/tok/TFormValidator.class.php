@@ -720,25 +720,15 @@ private function getOptions(&$p, $opt_value, $str_options) {
 		$html .= '<option value=""'.$selected.'>'.$empty_label."</option>\n";
 	}
 
-	$value_equal_comma = preg_replace('/[^\=,]/', '', $str_options);
-	$map_check = (strlen($value_equal_comma) >= 2 * count($p)) ? 0 : 2;
+	foreach ($p as $value => $label) {
+		unset($p[$value]);
 
-	if (!\rkphplib\lib\is_map($p, $map_check)) {
-		foreach ($p as $key => $value) {
-			if (strlen($value) > 0) {
-				$selected = ($opt_value == $value) ? ' selected' : '';
-				$html .= '<option value="'.$value.'"'.$selected.'>'.$value."</option>\n";
-			}
+		if (substr($value, 0, 2) == '@_') {
+			$value = $label;			
+		}
 
-			unset($p[$key]);
-		}
-	}
-	else {
-		foreach ($p as $value => $label) {
-			$selected = ($opt_value == $value) ? ' selected' : '';
-			$html .= '<option value="'.$value.'"'.$selected.'>'.$label."</option>\n";
-			unset($p[$value]);
-		}
+		$selected = ($opt_value == $value) ? ' selected' : '';
+		$html .= '<option value="'.$value.'"'.$selected.'>'.$label."</option>\n";
 	}
 
 	if (count($p) > 0) {
