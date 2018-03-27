@@ -1197,6 +1197,10 @@ public function tok_esc($param, $arg) {
  */
 public function tok_set_default($name, $value) {
 
+	if (strlen($value) == 0) {
+		return;
+	}
+
 	if (substr($name, -1) == '!') {
 		$name = substr($name, 0, -1);
 		if (isset($_REQUEST[$name])) {
