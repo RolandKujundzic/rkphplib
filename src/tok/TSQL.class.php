@@ -401,7 +401,7 @@ public function tok_sql_change($p) {
 
 	if (!empty($p['password'])) {
 		$pcol = $p['password'];
-		$r[$pcol] = "PASSWORD('".$r[$pcol]."')";
+		$r[$pcol] = "PASSWORD('".$p[$pcol]."')";
 	}
 
 	if (count($p['col_value']) > 0) {
