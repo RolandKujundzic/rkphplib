@@ -242,22 +242,35 @@ public function tok_login_check($p) {
 	$this->sess->init($p);
 
 	if (!empty($p['table'])) {
-		$table = ADatabase::escape($p['table']);
-
-		$query_map = [
-			'select_login' => "SELECT *, PASSWORD({:=password}) AS password_input FROM $table ".
-				"WHERE login={:=login} AND (status='active' OR status='registered')",
-			'registered2active' => "UPDATE $table SET status='active' WHERE id={:=id}",
-			'insert' => "INSERT INTO $table (login, password, type, person, language, priv) VALUES ".
-				"({:=login}, PASSWORD({:=password}), {:=type}, {:=person}, {:=language}, {:=priv})",
-			'login_history' => "INSERT INTO {:=_table} (lid, mid, session_md5, fingerprint, ip, info, data) VALUES ".
-				"({:=lid}, {:=mid}, {:=session_md5}, {:=fingerprint}, {:=ip}, {:=info}, {:=data})"
-			];
-
-		$this->db = Database::getInstance(SETTINGS_DSN, $query_map);
+		$this->setDBVariable($p['table']);
+	}
+	else if ($this->sess->has('table', 'meta')) {
+		$this->setDBVariable($this->sess->get('table', true, 'meta'));
 	}
 
 	return empty($p['refresh']) ? '' : "<script>\n".$this->sess->getJSRefresh($p['refresh'], '', 10)."\n</script>";
+}
+
+
+/**
+ * Set db variable.
+ *
+ * @param string table name
+ */
+private function setDBVariable($table) {
+	$table = ADatabase::escape($table);
+
+	$query_map = [
+		'select_login' => "SELECT *, PASSWORD({:=password}) AS password_input FROM $table ".
+			"WHERE login={:=login} AND (status='active' OR status='registered')",
+		'registered2active' => "UPDATE $table SET status='active' WHERE id={:=id}",
+		'insert' => "INSERT INTO $table (login, password, type, person, language, priv) VALUES ".
+			"({:=login}, PASSWORD({:=password}), {:=type}, {:=person}, {:=language}, {:=priv})",
+		'login_history' => "INSERT INTO {:=_table} (lid, mid, session_md5, fingerprint, ip, info, data) VALUES ".
+			"({:=lid}, {:=mid}, {:=session_md5}, {:=fingerprint}, {:=ip}, {:=info}, {:=data})"
+		];
+
+	$this->db = Database::getInstance(SETTINGS_DSN, $query_map);
 }
 
 
@@ -400,6 +413,11 @@ public function tok_login_auth($p) {
 		return;
 	}
 
+	if (is_null($this->db) && !empty($p['table'])) {
+		$this->setDBVariable($p['table']);
+		$this->sess->set('table', $p['table'], 'meta');
+	}
+
 	if (!is_null($this->db)) {
 		$user = $this->selectFromDatabase($p);
 	}
@@ -464,7 +482,7 @@ private function selectFromAccount($p) {
 	$found = false;
 
 	if (count($this->account) == 0) {
-		lib_abort("no account defined - use [login_account:]...");
+		throw new Exception('no account defined - use [login_account:]...');
 	}
 
 	$login_ok = false;
