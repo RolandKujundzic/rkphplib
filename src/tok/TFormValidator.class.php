@@ -91,7 +91,7 @@ public function getPlugins($tok) {
 	$plugin['fv:preset'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['fv:error'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:error_message'] = TokPlugin::REQUIRE_PARAM;
-	$plugin['fv:set_error_message'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['fv:set_error_message'] = TokPlugin::REQUIRE_PARAM;
 
   return $plugin;
 }
