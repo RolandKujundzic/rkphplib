@@ -245,7 +245,9 @@ public function tok_login_check($p) {
 		$table = ADatabase::escape($p['table']);
 
 		$query_map = [
-			'select_login' => "SELECT *, PASSWORD({:=password}) AS password_input FROM $table WHERE login={:=login} AND status != 99",
+			'select_login' => "SELECT *, PASSWORD({:=password}) AS password_input FROM $table ".
+				"WHERE login={:=login} AND (status='active' OR status='registered')",
+			'registered2active' => "UPDATE $table SET status='active' WHERE id={:=id}",
 			'insert' => "INSERT INTO $table (login, password, type, person, language, priv) VALUES ".
 				"({:=login}, PASSWORD({:=password}), {:=type}, {:=person}, {:=language}, {:=priv})",
 			'login_history' => "INSERT INTO {:=_table} (lid, mid, session_md5, fingerprint, ip, info, data) VALUES ".
@@ -545,6 +547,11 @@ private function selectFromDatabase($p) {
 		}
 
 		$dbres[0]['admin2user'] = $admin;
+	}
+
+	if ($dbres[0]['status'] == 'registered') {
+		// auto-activate
+		$this->db->execute($this->db->getQuery('registered2active', $dbres[0]));
 	}
 
 	// login + password ok ... update login session
