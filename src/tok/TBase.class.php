@@ -53,6 +53,9 @@ private $_tok = null;
 /** @var Hash $_tpl */
 private $_tpl = [];
 
+/** @var Hash $_conf  */
+private $_conf = [];
+
 
 
 /** 
@@ -104,7 +107,7 @@ public function __construct() {
  * - var: REQUIRE_PARAM
  * - view: REQUIRE_PARAM, KV_BODY, REDO
  * - esc: 0
- * - bootstrap:row:n,n: REQUIRE_PARAM, PARAM_CSLIST, REQUIRE_BODY, LIST_BODY, IS_STATIC
+ * - row:n,n: REQUIRE_PARAM, PARAM_CSLIST, REQUIRE_BODY, LIST_BODY, IS_STATIC
  * - tpl_set: REQUIRE_PARAM, PARAM_LIST, REQUIRE_BODY, TEXT, IS_STATIC
  * - tpl: REQUIRE_PARAM, PARAM_LIST, LIST_BODY, IS_STATIC
  * - shorten: REQUIRE_PARAM
@@ -117,8 +120,8 @@ public function getPlugins($tok) {
 
 	$plugin = [];
 
-	$plugin['bootstrap'] = 0;
-	$plugin['bootstrap:row'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | 
+	$plugin['row:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['row'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | 
 		TokPlugin::LIST_BODY | TokPlugin::IS_STATIC;
 
 	$plugin['tpl_set'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::REQUIRE_BODY | 
@@ -432,19 +435,114 @@ public function tok_var($name, $value) {
 
 
 /**
- * Place $p into bootstrap row grid. Convert into form-row if possible.
+ * Initialize row plugin. Parameter: 
+ *
+ * mode: bootstrap4 (=default, or: bootstrap3|table)
+ * colnum: 2 (=default)
+ * border: 0
+ * cellpadding: 0
+ * cellspacing: 0 
+ * rownum: 1 (=default = add header before and footer after each row)
+ */
+public function tok_row_init($p) {
+	$default = [ 'mode' => 'bootstrap4', 'colnum' => 2, 'rownum' => 1, 'border' => 0, 'cellpadding' => 0, 'cellspacing' => 0 ];
+	$this->_conf['row'] = array_merge($default, $p);
+}
+
+
+/**
+ *  Place $p into into bootstrap|table row grid.
+ */
+public function tok_row($cols, $p) {
+
+	if (!isset($this->_conf['row']) || empty($this->_conf['row']['mode'])) {
+		throw new Exception('call [row:init]mode=... first');
+	}
+
+	if ($this->_conf['row']['mode'] == 'bootstrap4' || $this->_conf['row']['mode'] == 'bootstrap3') {
+		return $this->bootstrapRow($cols, $p);
+	}
+	else if ($this->_conf['row']['mode'] == 'table') {
+		return $this->tableRow($cols, $p);
+	}
+	else {
+		throw new Exception('call [row:init]mode=... first');
+	}
+}
+
+
+/**
+ * Place $p into table row grid. Wrap with row:header and row:footer.
  * 
- * @tok {bootstrap:6,6}a|#|b{:bootstrap} = <div class="row"><div class="col-md-6">a</div><div class="col-md-6">b</div></div>
+ * @tok {row:6,6}a|#|b{:row} = <tr class="row"><td colspan="6">a</td><td colspan="6">b</td></tr>
  * 
  * @throws
  * @param vector<int> $cols
  * @param vector<string> $p
  * @return string
  */
-public function tok_bootstrap_row($cols, $p) {
+private function tableRow($cols, $p) {
 
 	if (count($cols) != count($p)) {
-		throw new Exception('[bootstrap:row:'.join(',', $cols).']... - column count != argument count', join(HASH_DELIMITER, $p));
+		throw new Exception('[row:'.join(',', $cols).']... - column count != argument count', join(HASH_DELIMITER, $p));
+	}
+
+	$colnum = 0;
+	for ($i = 0; $i < count($cols); $i++) {
+		$colnum += $cols[$i];
+	}
+
+	$conf = $this->_conf['row'];
+
+	if ($colnum != $conf['colnum']) {
+		throw new Exception('[row:'.join(',', $cols).']... - colnum (='.$colnum.') != '.$conf['colnum'], join(HASH_DELIMITER, $p));
+	}
+
+	$res = '';
+
+	if (!empty($conf['rownum'])) {
+		if (!isset($conf['current'])) {
+			$this->_conf['row']['current'] = 1;
+			$res = '<table border="'.$conf['border'].'" cellpadding="'.$conf['cellpadding'].'" cellspacing="'.$conf['cellspacing'].'">'."\n";
+		}
+		else {
+			$this->_conf['row']['current']++;
+		}
+	}
+
+	$res .= "<tr>\n";
+
+	for ($i = 0; $i < count($cols); $i++) {
+		$colspan = ($cols[$i] > 1) ? ' colspan="'.$cols[$i].'"' : '';
+		$res .= '<td'.$colspan.'>'.$p[$i].'</td>'."\n";
+	}
+
+	$res .= "</tr>\n";
+
+	if (!empty($conf['rownum']) && $this->_conf['row']['current'] == $conf['rownum']) {
+		unset($this->_conf['row']['current']);
+		$res .= "</table>\n";
+	}
+
+	\rkphplib\lib\log_debug("TBase.tableRow> $res");
+	return $res;
+}
+
+
+/**
+ * Place $p into bootstrap row grid. Convert into form-row if possible.
+ * 
+ * @tok {row:6,6}a|#|b{:row} = <div class="row"><div class="col-md-6">a</div><div class="col-md-6">b</div></div>
+ * 
+ * @throws
+ * @param vector<int> $cols
+ * @param vector<string> $p
+ * @return string
+ */
+private function bootstrapRow($cols, $p) {
+
+	if (count($cols) != count($p)) {
+		throw new Exception('[row:'.join(',', $cols).']... - column count != argument count', join(HASH_DELIMITER, $p));
 	}
 
 	$is_form_row = true;
