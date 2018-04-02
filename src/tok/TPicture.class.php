@@ -98,6 +98,30 @@ public function tok_picture_init($p) {
 
 
 /**
+ * Check conf keys. Reset source and target. Add values from $p.
+ *
+ * @throws
+ * @param hash $p
+ */
+private function checkConf($p) {
+	$this->conf['source'] = '';
+	$this->conf['target'] = '';
+
+	foreach ($p as $key => $value) {
+		$this->conf[$key] = $value;
+	}
+
+	$required = [ 'default' ];
+
+	foreach ($required as $key) {
+		if (empty($this->conf[$key])) {
+			throw new Exception('missing picture plugin parameter '.$key, print_r($this->conf, true));
+		}
+	}
+}
+
+
+/**
  * Return picture source path. Apply conversion if configured. Parameter:
  *
  *  source: auto-compute
@@ -116,12 +140,7 @@ public function tok_picture_init($p) {
 public function tok_picture_src($p) {
 	$conf = $this->conf;
 
-	$this->conf['source'] = '';
-	$this->conf['target'] = '';
-
-	foreach ($p as $key => $value) {
-		$this->conf[$key] = $value;
-	}
+	$this->checkConf($p);
 
 	if (!empty($this->conf['target_dir']) && !empty($this->conf['name']) && !empty($this->conf['use_cache'])) {
 		return $this->conf['target_dir'].'/'.$this->conf['name'];
