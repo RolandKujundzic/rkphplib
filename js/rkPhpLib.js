@@ -66,7 +66,7 @@ this.fselectInput = function (selbox) {
  */
 this.fselectList = function (inbox) {
 	var name = inbox.getAttribute('name').substr(0, -1);
-  var selbox = document.querySelect('fselect_list_' + name + ' > select');
+  var selbox = document.querySelector('fselect_list_' + name + ' > select');
 
   var newOpt = document.createElement('option');
   newOpt.text = inbox.value;
