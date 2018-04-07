@@ -740,7 +740,7 @@ public function nextId($table, $use_table = '') {
 		}
 	}
 	else if (strpos($table, '.') > 0) {
-		$where = $use_table;
+		$where = ' '.$use_table;
 		list ($use_table, $id_col) = explode('.', $table);
 	}
 
