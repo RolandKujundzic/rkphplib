@@ -716,7 +716,7 @@ abstract public function getAffectedRows();
  * The sequence table use_table will be auto-created.
  *  
  * If table has dot assume table.name_id as sequence. In this case use_table = where condition.
- * 
+ * If use_table is @table_seq.owner assume table has owner and start end columns.
  *
  * @throws
  * @param string $table
@@ -737,6 +737,11 @@ public function nextId($table, $use_table = '') {
 		$use_table = mb_substr($use_table, 1);
 		if (mb_strlen($use_table) > 50) {
 			throw new Exception('table name too lang', "table=$table (max 50 char)");
+		}
+
+		if (strpos($use_table, '.') > 0) {
+			list ($use_table, $owner) = explode('.', $use_table);
+			$where .= " AND owner='".intval($owner)."' AND id >= start AND id < end - 1";
 		}
 	}
 	else if (strpos($table, '.') > 0) {
