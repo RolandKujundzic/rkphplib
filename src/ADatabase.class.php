@@ -712,9 +712,12 @@ abstract public function getAffectedRows();
 
 /**
  * Return next id for table. Create table_seq as sequence table by default.
- * Name use_table with '@' prefix (e.g. @table_id) to use a single table for all sequences.
+ * Name use_table with '@' prefix (e.g. @table_id) to use a single table (columns: id, name=table) for all sequences.
  * The sequence table use_table will be auto-created.
  *  
+ * If table has dot assume table.name_id as sequence. In this case use_table = where condition.
+ * 
+ *
  * @throws
  * @param string $table
  * @param string $use_table = '' = $table.'_seq'
@@ -726,6 +729,7 @@ public function nextId($table, $use_table = '') {
 		throw new Exception('empty table name');
 	}
 
+	$id_col = 'id';
 	$where = '';
 
 	if (mb_substr($use_table, 0, 1) === '@') {
@@ -735,6 +739,10 @@ public function nextId($table, $use_table = '') {
 			throw new Exception('table name too lang', "table=$table (max 50 char)");
 		}
 	}
+	else if (strpos($table, '.') > 0) {
+		$where = $use_table;
+		list ($use_table, $id_col) = explode('.', $table);
+	}
 
 	if (empty($use_table)) {
 		$use_table = $table.'_seq';
@@ -743,7 +751,7 @@ public function nextId($table, $use_table = '') {
 	$table_seq = self::escape_name($use_table);
 
 	try {
-		$this->execute("UPDATE $table_seq SET id = LAST_INSERT_ID(id + 1)".$where);
+		$this->execute("UPDATE $table_seq SET $id_col = LAST_INSERT_ID($id_col + 1)".$where);
 		$id = $this->getInsertId();
 	}
 	catch (\Exception $e) {
