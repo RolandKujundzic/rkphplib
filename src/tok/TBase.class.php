@@ -443,6 +443,8 @@ public function tok_var($name, $value) {
  * cellpadding: 0
  * cellspacing: 0 
  * rownum: 1 (=default = add header before and footer after each row)
+ *
+ * @param hash $p
  */
 public function tok_row_init($p) {
 	$default = [ 'mode' => 'bootstrap4', 'colnum' => 2, 'rownum' => 1, 'border' => 0, 'cellpadding' => 0, 'cellspacing' => 0 ];
@@ -451,12 +453,18 @@ public function tok_row_init($p) {
 
 
 /**
- *  Place $p into into bootstrap|table row grid.
+ * Place $p into into bootstrap|table row grid.
+ * If [row:init] was not called assume mode=bootstrap4.
+ * 
+ * @tok {row:6,6}1-6|#|7-12{:row} -> <div class="row"><div class="col-md-6">1-6</div><div class="col-md-6">7-12</div></div>
+ *
+ * @param string $cols
+ * @param vector $p
  */
 public function tok_row($cols, $p) {
 
 	if (!isset($this->_conf['row']) || empty($this->_conf['row']['mode'])) {
-		throw new Exception('call [row:init]mode=... first');
+		$this->tok_row_init([ 'mode' => 'bootstrap4' ]);
 	}
 
 	if ($this->_conf['row']['mode'] == 'bootstrap4' || $this->_conf['row']['mode'] == 'bootstrap3') {
