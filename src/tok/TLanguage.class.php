@@ -119,21 +119,35 @@ public function createTable($table = 'language', $language_list = [ 'de', 'en' ]
  * 
  * @throws
  * @see Session
- * @param string $language
- * @param string $name (default = language)
+ * @param hash $p (use p.use, p.default, p.table)
+ * @return string(2) current language
  */
-public function initSession($language, $name = 'language') {
+public function initSession($p) {
+	$p['use'] = empty($p['use']) ? '' : strtolower($p['use']);
 
-	if (empty($language) || mb_strlen($language) !== 2) {
-		throw new Exception('invalid language', "language=$language");
+	if (!empty($p['use']) && strlen($p['use']) !== 2) {
+		throw new Exception('invalid language', "language=".$p['use']);
 	}
+
+	$name = empty($p['table']) ? 'language' : $p['table'];
 
 	$this->sess = new Session();
 	$this->sess->init([ 'name' => $name, 'scope' => 'docroot', 'unlimited' => 1 ]);
 
-	if (!$this->sess->has('language') || !$this->sess->get('language') !== $language) {
-		$this->sess->set('language', $language);
+	$res = $p['default'];
+
+	if (!empty($p['use'])) {
+		$this->sess->set('language', $p['use']);
+		$res = $p['use'];
 	}
+	else if (!$this->sess->has('language')) {
+		$this->sess->set('language', $p['default']);
+	}
+	else {
+		$res = $this->sess->get('language');
+	}
+
+	return $res;
 }
 
 
@@ -166,9 +180,8 @@ public function tok_language_init($p) {
 		$p['use'] = '';
 	}
 
-	$p['use'] = empty($p['use']) ? $p['default'] : strtolower($p['use']);
+	$p['use'] = $this->initSession($p);
 	$this->setDSN($p['dsn'], $p);
-	$this->initSession($p['use'], $p['table']);
 	$this->conf = $p;
 
 	// \rkphplib\lib\log_debug("TLanguage->tok_language_init> conf=".print_r($p, true));
