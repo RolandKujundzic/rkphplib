@@ -130,11 +130,14 @@ public function __construct() {
 		'default.in.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" '.$tags.'>',
 		'default.in.textarea' => '<textarea name="'.$name.'" class="'.$class.'" '.$tags.'>'.$value.'</textarea>',
 		'default.in.select'   => '<select name="'.$name.'" class="'.$class.'" '.$tags.'>'.$options.'</select>',
+		'default.in.file'			=> '<input type="file" name="'.$name.'" class="'.$class.'" '.$tags.'>',
+
 		'default.in.fselect'  => '<span id="fselect_list_'.$id.'"><select name="'.$name.'" class="'.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$id.'" style="display:none">'.$fselect_input.'</span>',
 
 		'bootstrap.in.input'	  => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="form-control '.$class.'" '.$tags.'>',
+		'bootstrap.in.file'     => '<input class="form-control-file '.$class.'" name="'.$name.'" type="file" '.$tags.'>',
 		'bootstrap.in.textarea' => '<textarea name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$value.'</textarea>',
 		'bootstrap.in.select'   => '<select name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$options.'</select>',
 		'bootstrap.in.fselect'  => '<span id="fselect_list_'.$id.'"><select name="'.$name.'" class="form-control '.$class.'" '.
@@ -604,6 +607,11 @@ protected function parseInName($name, $value, &$p) {
 			$p['value'] = $r;
 		}
 	}
+	else if ($type == 'file') {
+		if (!empty($r[1])) {
+			$p['data-max'] = 8;
+		}
+	}
 	else {
 		throw new Exception('ToDo: name='.$name.' p: '.join('|', $p));
 	}
@@ -659,7 +667,7 @@ protected function getInput($name, $ri) {
 
 	$tags = '';
 
-	$attributes = [ 'id', 'size', 'maxlength', 'placeholder', 'pattern', 'rows', 'cols', 'style', 'class' ];
+	$attributes = [ 'id', 'size', 'maxlength', 'placeholder', 'pattern', 'rows', 'cols', 'style', 'class', 'accept' ];
 	foreach ($attributes as $key) {
 		if (isset($ri[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
 			$tags .= ' '.$key.'="'.$this->tok->getTag($key).'"';
