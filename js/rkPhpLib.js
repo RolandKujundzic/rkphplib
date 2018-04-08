@@ -694,6 +694,50 @@ function prepareOutputTable(tbl) {
 }
 
 
+/**
+ * Create span with upload preview.
+ *
+ * @param event evt
+ */
+function showUploadPreview(evt) {
+	var i, f, input_id, old_preview, files = evt.target.files;
+
+	// remove old preview
+	input_id = evt.target.getAttribute('id');
+	if ((old_preview = document.querySelectorAll('span[data-preview="' + input_id + '"]'))) {
+		for (i = 0; i < old_preview.length; i++) {
+			old_preview[i].parentNode.removeChild(old_preview[i]);
+		}
+	}
+
+	for (i = 0; i < files.length; i++) {
+		f = files[i];
+
+		if (!f.type.match('image.*')) {
+			continue;
+		}
+	
+		var reader = new FileReader();
+
+		// Closure to capture the file information.
+		reader.onload = (function(theFile) {
+			return function(e) {
+				// Render thumbnail.
+				var span = document.createElement('span');
+				span.innerHTML = [
+					'<img style="height: 75px; border: 1px solid #000; margin: 5px" src="', e.target.result, '" title="', 
+					escape(theFile.name), '"/>' ].join('');
+
+				span.setAttribute('data-preview', input_id);
+				evt.target.parentNode.insertBefore(span, null);
+			};
+		})(f);
+
+		// Read in the image file as a data URL.
+		reader.readAsDataURL(f);
+	}
+}
+
 
 /*
  * Constructor
@@ -715,6 +759,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	}
 
+	if ((list = document.querySelectorAll('input[type="file"]'))) {
+		for (i = 0; i < list.length; i++) {
+			list[i].addEventListener('change', showUploadPreview, false);
+		}
+	}
 });
 
 
