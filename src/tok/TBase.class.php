@@ -1363,6 +1363,7 @@ public function tok_const($param, $arg) {
  * @tok {get:a}, _REQUEST['a'] = [ 3 ]: 3
  * @tok {get:a}, _REQUEST['a'] = [ 1, 2, 3 ]: ''
  * @tok {get:*}, return kv2conf(_REQUEST) 
+ * @tok {get:a?}, (!isset(_REQUEST[a]) || strlen($_REQUEST[a]) == 0) = 0 : 1
  *
  * @param string $param
  * @param string $arg
@@ -1372,7 +1373,11 @@ public function tok_get($param, $arg) {
 	$key = empty($arg) ? $param : trim($arg);
 	$res = '';
 
-	if (isset($_REQUEST[$key])) {
+	if (substr($key, -1) == '?') {
+		$key = substr($key, 0, -1);
+		$res = (!isset($_REQUEST[$key]) || strlen($_REQUEST[$key]) == 0) ? '0' : '1';
+	}
+	else if (isset($_REQUEST[$key])) {
 		if (is_array($_REQUEST[$key])) {
 			if (count($_REQUEST[$key]) === 1 && isset($_REQUEST[$key][0])) {
 				$res = $_REQUEST[$key];
