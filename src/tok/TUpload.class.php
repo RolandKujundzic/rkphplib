@@ -43,6 +43,7 @@ public function getPlugins($tok) {
   $plugin['upload:get'] = 0;
   $plugin['upload:file'] = 0;
   $plugin['upload:exists'] = 0;
+	$plugin['upload'] = 0;
 
 	return $plugin;
 }
@@ -54,7 +55,7 @@ public function getPlugins($tok) {
  * url: retrieve upload from url
  * stream: yes=upload is stream, no=ignore stream, []=normal post upload
  * save_in: save directory (auto-create) (default = data/upload/name)
- * save_as: basename (default = name) @see get_save_as
+ * save_as: basename (default = name) @see getSaveAs
  * allow_suffix: jpg, png, ...
  * type: image 
  * overwrite: yes|no (only if save_as is empty) - default = no (add suffix _nn)
@@ -104,7 +105,7 @@ public function tok_upload_init($name, $p) {
 	}
 
 	if ($upload_type == 'file') {
-		$this->_save_upload($fup);
+		$this->saveFileUpload($fup);
 	}
 
 /*
@@ -130,7 +131,7 @@ public function tok_upload_init($name, $p) {
 
 /**
  * Export error message as _REQUEST[upload_NAME_error]. 
- * Set _REQUEST[upload_NAME(_file)] = '' and _REQUEST[upload_name_saved] = no.
+ * Set _REQUEST[upload_error], _REQUEST[upload_NAME(_file)] = '' and _REQUEST[upload_NAME_saved] = no.
  *
  * @exit
  * @param string $message
@@ -142,6 +143,8 @@ private function error($message) {
   $_REQUEST['upload_'.$name] = '';
   $_REQUEST['upload_'.$name.'_error'] = $message;
 
+	$_REQUEST['upload_error'] = 1;
+
 	exit(0);
 }
 
@@ -149,12 +152,13 @@ private function error($message) {
 /**
  * Save upload. Autocreate conf.save_in directory. 
  *
- * @see get_save_as 
+ * @see getSaveAs 
  * @param string $fup
  */
-private function _save_upload($fup) {
-	Dir::create($this->_conf['save_in'], 0777, 0);
-	$target = $this->_conf['save_in'].'/'.$this->get_save_as($_FILES[$fup]['name'], $_FILES[$fup]['tmp_name']);
+private function saveFileUpload($fup) {
+	\rkphplib\lib\log_debug("TUpload.saveUpload> fup=$fup conf: ".print_r($this->conf, true));
+	Dir::create($this->conf['save_in'], 0777, true);
+	$target = $this->conf['save_in'].'/'.$this->getSaveAs($_FILES[$fup]['name'], $_FILES[$fup]['tmp_name']);
 
 	if (!empty($this->conf['image_convert'])) {
 		$this->convertImage($_FILES[$fup]['tmp_name'], $target);
@@ -236,23 +240,31 @@ private function convertImage($source, $target) {
 /**
  * Return save_as base filename (normalize suffix). Save as values:
  *
- * - md5: md5(upload).SUFFIX 
- * - name: UPLOAD_NAME.SUFFIX (= default)
- * - count: 01.SUFFIX
- * - base_count: BASE_01.SUFFIX
- * - original: FILE_NAME.SUFFIX
+ * - @md5: md5(upload).SUFFIX 
+ * - @name: UPLOAD_NAME.SUFFIX (= default)
+ * - @count: 01.SUFFIX
+ * - @base_count: BASE_01.SUFFIX
+ * - @original: FILE_NAME.SUFFIX
+ * - value: basename(value) (e.g. logo, floorplan, ...)
  *
  * @throws
  * @param string $upload_file
  * @param string $temp_file
  */
-private function _get_save_as($upload_file, $temp_file) {
+private function getSaveAs($upload_file, $temp_file) {
 	$base = File::basename($upload_file, true);
 	$suffix = File::suffix($upload_file, true);
 	$save_as = $this->conf['save_as'];
+	$fsize = File::size($temp_file);
 	$res = '';
+	
+	\rkphplib\lib\log_debug("TUpload.getSaveAS> upload_file=$upload_file temp_file=$temp_file base=$base suffix=$suffix fsize=$fsize");
 
-	if (!empty($this->conf['max_size']) && File::size($temp_file) > $this->_conf['max_size']) {
+	if ($fsize == 0) {
+		$this->error('upload is 0 byte');
+	}
+
+	if (!empty($this->conf['max_size']) && $fsize > $this->conf['max_size']) {
    	$this->error('upload is &gt; '.$this->conf['max_size'].' byte');
   }
  
@@ -277,23 +289,23 @@ private function _get_save_as($upload_file, $temp_file) {
 		$this->error('could not detect suffix');
 	}		
 
-	if ($save_as == 'md5') {
+	if ($save_as == '@md5') {
 		$res = File::md5($temp_file);
 	}
-	else if ($save_as == 'name') {
+	else if ($save_as == '@name') {
 		$res = $base.$suffix;
 	}
-	else if ($save_as == 'original') {
+	else if ($save_as == '@original') {
 		$res = $base.$suffix;
 	}
-	else if ($save_as == 'count') {
+	else if ($save_as == '@count') {
 		$res = sprintf("%02d", 1).$suffix;
 	}
-	else if ($save_as == 'base_count') {
+	else if ($save_as == '@base_count') {
 		$res = $base.'_'.sprintf("%02d", 1).$suffix;
 	}
 	else {
-		throw new Exception('invalid conf.save_as', print_r($this->conf, true));
+		$res = basename($save_as).$suffix;
 	}
 
 /*
@@ -311,6 +323,7 @@ private function _get_save_as($upload_file, $temp_file) {
 		}
 	}
 
+	\rkphplib\lib\log_debug("TUpload.getSaveAS> return [$res]");
 	return $res;
 }
 
@@ -536,11 +549,11 @@ private function _save_stream() {
     
   // use save_as parameter to overwrite existing files or overwrite = yes!!!
   if (!empty($this->_conf['save_as'])) {
-    $save_as = $this->_get_save_as($_SERVER['HTTP_X_FILE_NAME']);
+    $save_as = $this->getSaveAs($_SERVER['HTTP_X_FILE_NAME']);
   }
   
   $target = $this->_conf['save_in'].'/'.$save_as;
-  Dir::create($this->_conf['save_in'], 0777);
+  Dir::create($this->_conf['save_in'], 0777, true);
   file_put_contents($target, file_get_contents("php://input")); 
 	File::chmod($target, 0666);
 			
@@ -558,7 +571,7 @@ private function _use_other() {
   $key = $_REQUEST['use_other'].'_file';
 
   if (!empty($this->_conf[$key]) && FSEntry::isFile($this->_conf[$key], false)) {
-    Dir::create($this->_conf['save_in'], 0777);
+    Dir::create($this->_conf['save_in'], 0777, true);
     File::copy($this->_conf[$key], $this->_conf['save_in'].'/'.$this->_conf['save_as']);
     $this->_use_existing();
   }
@@ -610,7 +623,7 @@ private function _retrieve_from_url($url) {
   $save_as = empty($this->_conf['save_as']) ? basename($url) : $this->_conf['save_as'];
   $target = $this->_conf['save_in'].'/'.$save_as;
 
-  Dir::create($this->_conf['save_in'], 0777);
+  Dir::create($this->_conf['save_in'], 0777, true);
   File::httpGet($url, $target);
 
   $_REQUEST['upload_saved'] = 'yes';
