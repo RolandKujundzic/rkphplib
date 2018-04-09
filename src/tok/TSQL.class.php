@@ -218,12 +218,17 @@ public function tok_sql_import($p) {
  *
  * @tok {sql:nextId:$table}
  * @tok {sql:nextId:$ignore_owner.$name_id} ({login:owner}, $name_min and $name_max must exist too)
+ * @tok {sql:nextId:item:@shop_seq.3}
  *
  * @see ADatabase.nextId($table)
  * @param string $table
  * @return int
  */
 public function tok_sql_nextId($table) {
+	$use_table = '';
+	if (strpos($table, ':') != false) {
+		list ($table, $use_table) = explode(':', $table, 2);
+	}
 
 	if (($pos = strpos($table, '_owner.')) !== false) {
 		$owner_id = $this->tok->callPlugin('login', 'tok_login', [ 'owner' ]);
@@ -242,11 +247,11 @@ public function tok_sql_nextId($table) {
 		$res = $this->db->getInsertId();
 	}
 	else {
-		$res = $this->db->nextId($table);
+		$res = $this->db->nextId($table, $use_table);
 	}
 
 	if (intval($res) < 1) {
-		throw new Exception('[sql:nextId] failed', "table=$table res=$res"); 
+		throw new Exception('[sql:nextId] failed', "table=$table use_table=$use_table res=$res"); 
 	}
 
 	// \rkphplib\lib\log_debug("TSQL.tok_sql_nextId($table)> res=$res");
