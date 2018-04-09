@@ -130,14 +130,14 @@ public function __construct() {
 		'default.in.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" '.$tags.'>',
 		'default.in.textarea' => '<textarea name="'.$name.'" class="'.$class.'" '.$tags.'>'.$value.'</textarea>',
 		'default.in.select'   => '<select name="'.$name.'" class="'.$class.'" '.$tags.'>'.$options.'</select>',
-		'default.in.file'			=> '<input type="file" name="'.$name.'" class="'.$class.'" '.$tags.'>',
+		'default.in.file'			=> '<input type="file" name="'.$name.'" class="'.$class.'" data-value="'.$value.'" '.$tags.'>',
 
 		'default.in.fselect'  => '<span id="fselect_list_'.$id.'"><select name="'.$name.'" class="'.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$id.'" style="display:none">'.$fselect_input.'</span>',
 
 		'bootstrap.in.input'	  => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="form-control '.$class.'" '.$tags.'>',
-		'bootstrap.in.file'     => '<input class="form-control-file '.$class.'" name="'.$name.'" type="file" '.$tags.'>',
+		'bootstrap.in.file'     => '<input class="form-control-file '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
 		'bootstrap.in.textarea' => '<textarea name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$value.'</textarea>',
 		'bootstrap.in.select'   => '<select name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$options.'</select>',
 		'bootstrap.in.fselect'  => '<span id="fselect_list_'.$id.'"><select name="'.$name.'" class="form-control '.$class.'" '.
