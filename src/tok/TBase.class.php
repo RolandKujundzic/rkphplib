@@ -902,7 +902,8 @@ public function tok_link($name_list, $p) {
 		}
 
 		foreach ($_REQUEST as $key => $value) {
-			if (strlen($value) == 0 || isset($p[$key])) {
+
+			if (is_array($value) || strlen($value) == 0 || isset($p[$key])) {
 				continue;
 			}
 
