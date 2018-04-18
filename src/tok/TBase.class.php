@@ -522,7 +522,7 @@ private function tableRow($cols, $p) {
 
 	for ($i = 0; $i < count($cols); $i++) {
 		$colspan = ($cols[$i] > 1) ? ' colspan="'.$cols[$i].'"' : '';
-		$res .= '<td'.$colspan.'>'.$p[$i].'</td>'."\n";
+		$res .= '<td'.$colspan.' valign="top">'.$p[$i].'</td>'."\n";
 	}
 
 	$res .= "</tr>\n";
