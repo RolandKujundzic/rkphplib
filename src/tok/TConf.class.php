@@ -124,6 +124,8 @@ public function tok_conf($key, $value) {
 /**
  * Set login id. If id is empty reset to null (= no login).
  *
+ * @tok {conf:id}{login:id}{:conf}
+ * 
  * @param string
  * @return ''
  */
