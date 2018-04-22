@@ -361,7 +361,7 @@ public function tok_tpl_set($p, $arg) {
  * @throws
  * @see tok_tpl_set
  * @param vector $p 
- * @param vector $arg
+ * @param string $arg
  * @return string
  */
 public function tok_tpl($p, $arg) {
@@ -389,7 +389,7 @@ public function tok_tpl($p, $arg) {
 		}
 	}
 	else {
-		$tpl = $this->tok->replaceTags($tpl, \rkphplib\lib\conf2kv($arg));
+		$tpl = $this->_tok->replaceTags($tpl, \rkphplib\lib\conf2kv($arg));
 	}
 
 	// \rkphplib\lib\log_debug("TBase.tok_tpl> $tpl"); 
