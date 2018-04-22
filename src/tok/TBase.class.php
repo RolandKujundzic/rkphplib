@@ -127,8 +127,7 @@ public function getPlugins($tok) {
 	$plugin['tpl_set'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::REQUIRE_BODY | 
 		TokPlugin::TEXT | TokPlugin::IS_STATIC;
 
-	$plugin['tpl'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::LIST_BODY | 
-		TokPlugin::REDO | TokPlugin::IS_STATIC;
+	$plugin['tpl'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::REDO | TokPlugin::IS_STATIC;
 
 	$plugin['tf'] = TokPlugin::PARAM_LIST; 
 	$plugin['t'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
@@ -352,9 +351,13 @@ public function tok_tpl_set($p, $arg) {
  * Return filled and parsed template. First parameter is template name, other 
  * parameter are values of tag param1, param2, ...
  *
- * @tok {tpl:test} = Nur ein Test
+ * @tok {tpl_set:test}Nur ein Test{:tpl_set} - {tpl:test} = Nur ein Test 
+ * @tok {tpl_set:page:2:2}Page {:=param1}/{:=param2} line {:=arg1} column {:=arg2}{:tpl_set}
  * @tok {tpl:page:3:72}15|#|39{:tpl} = Page 3/72 line 15 column 39
  * 
+ * @tok {tpl_set:map}Hello {:=firstname} {:=lastname}{:tpl_set}
+ * @tok {tpl:map}firstname=John|#|lastname=Doe{:tpl} = Hello John Doe
+ *
  * @throws
  * @see tok_tpl_set
  * @param vector $p 
@@ -377,9 +380,16 @@ public function tok_tpl($p, $arg) {
 		$tpl = str_replace(TAG_PREFIX.'param'.($i + 1).TAG_SUFFIX, $value, $tpl);
 	}
 
-	for ($i = 0; $i < $anum; $i++) {
-		$value = isset($arg[$i]) ? $arg[$i] : '';
-		$tpl = str_replace(TAG_PREFIX.'arg'.($i + 1).TAG_SUFFIX, $value, $tpl);
+	if ($anum > 0) {
+		$arg = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
+
+		for ($i = 0; $i < $anum; $i++) {
+			$value = isset($arg[$i]) ? $arg[$i] : '';
+			$tpl = str_replace(TAG_PREFIX.'arg'.($i + 1).TAG_SUFFIX, $value, $tpl);
+		}
+	}
+	else {
+		$tpl = $this->tok->replaceTags($tpl, \rkphplib\lib\conf2kv($arg));
 	}
 
 	// \rkphplib\lib\log_debug("TBase.tok_tpl> $tpl"); 
