@@ -1724,8 +1724,8 @@ public function backup(&$options) {
 			File::write($fh, "UNLOCK TABLES;\n");
 			File::close($fh);
 
-			$options[$app.'_tables'][$table]['size'] = File::size($tx['file']);
-			$options[$app.'_tables'][$table]['last_modified'] = File::lastModified($tx['file']);
+			$options[$app.'_tables'][$table]['size'] = File::size($tx['file'], true);
+			$options[$app.'_tables'][$table]['last_modified'] = File::lastModified($tx['file'], true);
 		}
 	}
 }
@@ -1785,8 +1785,8 @@ private function addAppTables(&$options) {
 			$tx['file'] = $options['directory'].'/'.$app.'/insert/'.$table.'.sql';
 
 			if (File::exists($tx['file'])) {
-				$tx['size'] = File::size($tx['file']);
-				$tx['last_modified'] = File::lastModified($tx['file']);
+				$tx['size'] = File::size($tx['file'], true);
+				$tx['last_modified'] = File::lastModified($tx['file'], true);
 			}
 
 			$options[$app.'_tables'][$table] = $tx;
