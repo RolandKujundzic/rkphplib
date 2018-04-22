@@ -3,6 +3,8 @@
 namespace rkphplib;
 
 require_once(__DIR__.'/Exception.class.php');
+require_once(__DIR__.'/File.class.php');
+require_once(__DIR__.'/Dir.class.php');
 require_once(__DIR__.'/lib/split_str.php');
 require_once(__DIR__.'/lib/is_map.php');
 
@@ -1650,6 +1652,146 @@ public function buildQuery($table, $type, $kv = []) {
 
 	// \rkphplib\lib\log_debug("buildQuery($table, $type, ...)> $res");
 	return $res;
+}
+
+
+/**
+ * Backup table content. Parameter:
+ *
+ * - directory: required (auto-create if missing)
+ * - application: cms, shop, ... (required)
+ * - cms_prefix: cms_ (optional if prefix is used)
+ * - cms_tables: a, b, c, ... (optional if prefix is not used)
+ * - create: 1|0 (if 0 scan only current backup information) or app.table (single table backup)
+ * 
+ * @example
+ * // create cms_conf.sql, ... in setup/sql/cms/insert
+ * $db->backup([ 'prefix' => 'cms_', 'directory' => 'setup/sql/cms/insert' ]);
+ *
+ * @throws
+ * @param hash-ref &$options 
+ */
+public function backup(&$options) {
+	$this->addAppTables($options);
+
+	if (empty($options['create'])) {
+		return;
+	}
+
+	$use_app = null;
+	$use_table = null;
+	if (strpos($options['create'], '.') > 0) {
+		list ($use_app, $use_table) = explode('.', $options['create']);
+	}
+
+	foreach ($options['application'] as $app) {
+		foreach ($options[$app.'_tables'] as $table => $tx) {
+			if (($use_app != null && $app != $use_app) || ($use_table != null && $use_table != $table)) {
+				continue;
+			}
+
+			$fh = File::open($tx['file'], 'wb');
+			$tname = self::escape_name($table);
+
+			File::write($fh, "LOCK TABLES $tname WRITE;\n");
+			File::write($fh, "SET FOREIGN_KEY_CHECKS=0;\n");
+			File::write($fh, "DELETE FROM $tname;\n");
+
+			$this->execute("SELECT * FROM $table", true);
+			$insert = '';
+			$keys = null;
+
+			while (($row = $this->getNextRow())) {
+				if (is_null($keys)) {
+					$keys = array_keys($row);
+					$insert = "INSERT INTO $table (".join(', ', $keys).")\n\tVALUES (";
+				}
+
+				$values = [];
+				foreach ($keys as $col) {
+					if (is_null($row[$col])) {
+						array_push($values, 'NULL');
+					}
+					else {
+						array_push($values, "'".self::escape($row[$col])."'");
+					}
+				}
+
+				File::write($fh, $insert.join(', ', $values).");\n");
+			}
+
+			File::write($fh, "SET FOREIGN_KEY_CHECKS=1;\n");
+			File::write($fh, "UNLOCK TABLES;\n");
+			File::close($fh);
+
+			$options[$app.'_tables'][$table]['size'] = File::size($tx['file']);
+			$options[$app.'_tables'][$table]['last_modified'] = File::lastModified($tx['file']);
+		}
+	}
+}
+
+
+/**
+ * Add application tables to $options.
+ * Change app_tables into map with table => [ size => null, last_modified => null ].
+ * 
+ * @throws if table directory does not exist
+ * @param map-ref &$options
+ */
+private function addAppTables(&$options) {
+
+	if (empty($options['directory'])) {
+		throw new Exception('missing directory parameter');
+	}
+
+	Dir::create($options['directory'], 0, true);
+
+	if (empty($options['application'])) {
+		throw new Exception('missing application parameter');
+	}
+
+	$options['application'] = \rkphplib\lib\split_str(',', $options['application']);
+	$table_list = $this->getTableList();
+	$tables = [];
+
+	foreach ($options['application'] as $app) {
+		Dir::create($options['directory'].'/'.$app.'/insert', 0, true);
+
+ 		if (!empty($options[$app.'_prefix'])) {
+			foreach ($table_list as $table) {
+				if (strpos($table, $options[$app.'_prefix']) === 0) {
+					array_push($tables, $table);
+				}
+			}
+		}
+		else if (!empty($options[$app.'_tables'])) {
+			$app_tables = \rkphplib\lib\split_str(',', $options[$app.'_tables']);
+			foreach ($app_tables as $table) {
+				if (in_array($table, $table_list)) {
+					array_push($tables, $table);
+				}
+				else {
+					throw new Exception('no such table '.$table);
+				}
+			}
+		}
+		else {
+			throw new Exception('missing '.$app.'[_tables|prefix]');
+		}
+
+		$options[$app.'_tables'] = [];
+		foreach ($tables as $table) {
+			$tx = [ 'size' => null, 'last_modified' => null ];
+			$tx['file'] = $options['directory'].'/'.$app.'/insert/'.$table.'.sql';
+
+			if (File::exists($tx['file'])) {
+				$tx['size'] = File::size($tx['file']);
+				$tx['last_modified'] = File::lastModified($tx['file']);
+			}
+
+			$options[$app.'_tables'][$table] = $tx;
+		}
+	}
 }
 
 
