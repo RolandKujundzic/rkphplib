@@ -298,8 +298,13 @@ public function tok_fv_init($do, $p) {
 
 	$this->conf['current'] = array_merge($conf, $p);
 
+	if (!isset($this->conf['current']['required'])) {
+		$this->conf['current']['required'] = [];
+	}
+
 	if (!is_array($this->conf['current']['required'])) {
-		$this->conf['current']['required'] = \rkphplib\lib\split_str(',', $this->conf['current']['required']);
+		$this->conf['current']['required'] = empty($this->conf['current']['required']) ? [] : 
+			\rkphplib\lib\split_str(',', $this->conf['current']['required']);
 	}
 }
 
