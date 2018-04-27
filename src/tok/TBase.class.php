@@ -159,6 +159,7 @@ public function getPlugins($tok) {
 	$plugin['trim'] = 0;
 	$plugin['join'] = TokPlugin::KV_BODY;
 	$plugin['set_default'] =  0;
+	$plugin['set'] =  0;
 	$plugin['redirect'] =  TokPlugin::NO_PARAM;
 	$plugin['var'] = 0;
 	$plugin['esc'] = 0;
@@ -1334,6 +1335,32 @@ public function tok_set_default($name, $value) {
 		}
 	}
 	else if (!isset($_REQUEST[$name])) {
+		$_REQUEST[$name] = $value;
+	}
+
+	return '';
+}
+
+
+/**
+ * Set _REQUEST[$name] = $value.
+ *
+ * @tok {set:id}value{:set} - set _REQUEST['id']=value
+ * @tok {set:}key=value|#|...{:set}
+ *
+ * @param string $name
+ * @param string $value
+ * @return ''
+ */
+public function tok_set($name, $value) {
+
+  if (empty($name)) {
+		$kv = \rkphplib\lib\conf2kv($value);
+		foreach ($kv as $key => $value) {
+			$_REQUEST[$key] = $value;
+		}
+	}
+	else {
 		$_REQUEST[$name] = $value;
 	}
 
