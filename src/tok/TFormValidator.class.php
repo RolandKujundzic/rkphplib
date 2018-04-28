@@ -652,7 +652,7 @@ protected function parseInName($name, $value, &$p) {
  * @return string
  */
 protected function getInput($name, $ri) {
-	$ri['name'] = $name;
+	$ri['name'] = isset($ri['multiple']) ? $name.'[]' : $name;
 
 	$conf = $this->conf['current'];
 
