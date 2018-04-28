@@ -1765,10 +1765,10 @@ private function addAppTables(&$options) {
 
 	$options['application'] = \rkphplib\lib\split_str(',', $options['application']);
 	$table_list = $this->getTableList();
-	$tables = [];
 
 	foreach ($options['application'] as $app) {
 		Dir::create($options['directory'].'/'.$app.'/insert', 0, true);
+		$tables = [];
 
  		if (!empty($options[$app.'_prefix'])) {
 			foreach ($table_list as $table) {
