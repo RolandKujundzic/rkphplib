@@ -99,13 +99,22 @@ public function tok_upload_init($name, $p) {
 			$this->error($_FILES[$fup]['error']);
 		}
 
-		if (isset($_FILES[$fup]) && is_array($_FILES[$fup]) && !empty($_FILES[$fup]['tmp_name']) && $_FILES[$fup]['tmp_name'] != 'none') {
-			$upload_type = 'file';
+		if (isset($_FILES[$fup]) && is_array($_FILES[$fup])) {
+			if (!empty($p['multiple']) && is_array($_FILES[$fup]['tmp_name'])) {
+				$upload_type = 'multiple_files';
+			}
+			else if (!empty($_FILES[$fup]['tmp_name']) && $_FILES[$fup]['tmp_name'] != 'none') {
+				$upload_type = 'file';
+			}
 		}
 	}
 
 	if ($upload_type == 'file') {
 		$this->saveFileUpload($fup);
+	}
+	else if ($upload_type == 'multiple_files') {
+		$max = empty($p['max']) ? 0 : intval($p['max']);
+		$this->saveMultipleFileUpload($fup, $max);			
 	}
 
 /*
@@ -154,9 +163,39 @@ private function error($message) {
  *
  * @see getSaveAs 
  * @param string $fup
+ * @param int $max
+ */
+private function saveMultipleFileUpload($fup, $max) {
+	\rkphplib\lib\log_debug("TUpload.saveMultipleFileUpload> fup=$fup max=$max conf: ".print_r($this->conf, true));
+	Dir::create($this->conf['save_in'], 0777, true);
+
+/*
+	$target = $this->conf['save_in'].'/'.$this->getSaveAs($_FILES[$fup]['name'], $_FILES[$fup]['tmp_name']);
+
+	if (!empty($this->conf['image_convert'])) {
+		$this->convertImage($_FILES[$fup]['tmp_name'], $target);
+	}
+	else {
+		File::move($_FILES[$fup]['tmp_name'], $target, 0666);
+	}
+
+	$name = $this->conf['upload'];
+	$_REQUEST['upload_'.$name.'_saved'] = 'yes';
+	$_REQUEST['upload_'.$name.'_file'] = $target;
+	$_REQUEST['upload_'.$name.'_error'] = '';
+	$_REQUEST['upload_'.$name] = $_FILES[$fup]['name'];
+*/
+}
+
+
+/**
+ * Save upload. Autocreate conf.save_in directory. 
+ *
+ * @see getSaveAs 
+ * @param string $fup
  */
 private function saveFileUpload($fup) {
-	\rkphplib\lib\log_debug("TUpload.saveUpload> fup=$fup conf: ".print_r($this->conf, true));
+	\rkphplib\lib\log_debug("TUpload.saveFileUpload> fup=$fup conf: ".print_r($this->conf, true));
 	Dir::create($this->conf['save_in'], 0777, true);
 	$target = $this->conf['save_in'].'/'.$this->getSaveAs($_FILES[$fup]['name'], $_FILES[$fup]['tmp_name']);
 
