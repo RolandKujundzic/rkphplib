@@ -95,8 +95,16 @@ public function tok_upload_init($name, $p) {
 			$fup .= '_';
 		}
 
-		if (!empty($_FILES[$fup]['name']) && $_FILES[$fup]['error']) {
-			$this->error($_FILES[$fup]['error']);
+		if (!empty($_FILES[$fup]['name'])) {
+			if (is_array($_FILES[$fup]['error'])) {
+				$error = str_replace('0', '', join('', $_FILES[$fup]['error']));
+				if ($error) {
+					$this->error(join('. ', $_FILES[$fup]['error']));
+				}
+			}
+			else if (!empty($_FILES[$fup]['error'])) {
+				$this->error($_FILES[$fup]['error']);
+			}
 		}
 
 		if (isset($_FILES[$fup]) && is_array($_FILES[$fup])) {
@@ -160,6 +168,7 @@ private function error($message) {
 
 /**
  * Save upload. Autocreate conf.save_in directory. 
+ * Use save_as=@count|@base_count|NAME(_nn.suffix).
  *
  * @see getSaveAs 
  * @param string $fup
@@ -169,22 +178,37 @@ private function saveMultipleFileUpload($fup, $max) {
 	\rkphplib\lib\log_debug("TUpload.saveMultipleFileUpload> fup=$fup max=$max conf: ".print_r($this->conf, true));
 	Dir::create($this->conf['save_in'], 0777, true);
 
-/*
-	$target = $this->conf['save_in'].'/'.$this->getSaveAs($_FILES[$fup]['name'], $_FILES[$fup]['tmp_name']);
+	$name = $this->conf['upload'];
+	$file_list = [];
+	$save_list = [];
 
-	if (!empty($this->conf['image_convert'])) {
-		$this->convertImage($_FILES[$fup]['tmp_name'], $target);
+	for ($i = 0; $i < count($_FILES[$fup]['tmp_name']); $i++) {
+		$fname = $_FILES[$fup]['name'][$i];
+		$tmp_name = $_FILES[$fup]['tmp_name'][$i];
+		$target = $this->conf['save_in'].'/'.$this->getSaveAs($fname, $tmp_name, ($i + 1));
+
+		if (!empty($this->conf['image_convert'])) {
+			$this->convertImage($tmp_name, $target);
+		}
+		else {
+			File::move($tmp_name, $target, 0666);
+		}
+
+		array_push($save_list, $target);
+		array_push($file_list, $fname);
+	}
+
+	$_REQUEST['upload_'.$name.'_file'] = join(',', $save_list);
+	$_REQUEST['upload_'.$name] = join(',', $file_list);
+
+	if (count($_FILES[$fup]['tmp_name']) == count($save_list)) {
+		$_REQUEST['upload_'.$name.'_saved'] = 'yes';
+		$_REQUEST['upload_'.$name.'_error'] = '';
 	}
 	else {
-		File::move($_FILES[$fup]['tmp_name'], $target, 0666);
+		$_REQUEST['upload_'.$name.'_saved'] = '';
+		$_REQUEST['upload_'.$name.'_error'] = (count($_FILES[$fup]['tmp_name']) - count($save_list)).' missing';
 	}
-
-	$name = $this->conf['upload'];
-	$_REQUEST['upload_'.$name.'_saved'] = 'yes';
-	$_REQUEST['upload_'.$name.'_file'] = $target;
-	$_REQUEST['upload_'.$name.'_error'] = '';
-	$_REQUEST['upload_'.$name] = $_FILES[$fup]['name'];
-*/
 }
 
 
@@ -289,15 +313,17 @@ private function convertImage($source, $target) {
  * @throws
  * @param string $upload_file
  * @param string $temp_file
+ * @param int $nc (default = 0) 
+ * @return string
  */
-private function getSaveAs($upload_file, $temp_file) {
+private function getSaveAs($upload_file, $temp_file, $nc = 0) {
 	$base = File::basename($upload_file, true);
 	$suffix = File::suffix($upload_file, true);
 	$save_as = $this->conf['save_as'];
 	$fsize = File::size($temp_file);
 	$res = '';
 	
-	\rkphplib\lib\log_debug("TUpload.getSaveAS> upload_file=$upload_file temp_file=$temp_file base=$base suffix=$suffix fsize=$fsize");
+	\rkphplib\lib\log_debug("TUpload.getSaveAS> upload_file=$upload_file temp_file=$temp_file nc=$nc base=$base suffix=$suffix fsize=$fsize");
 
 	if ($fsize == 0) {
 		$this->error('upload is 0 byte');
@@ -338,13 +364,13 @@ private function getSaveAs($upload_file, $temp_file) {
 		$res = $base.$suffix;
 	}
 	else if ($save_as == '@count') {
-		$res = sprintf("%02d", 1).$suffix;
+		$res = sprintf("%02d", $nc).$suffix;
 	}
 	else if ($save_as == '@base_count') {
-		$res = $base.'_'.sprintf("%02d", 1).$suffix;
+		$res = $base.'_'.sprintf("%02d", $nc).$suffix;
 	}
 	else {
-		$res = basename($save_as).$suffix;
+		$res = ($nc > 0) ? basename($save_as).'_'.sprintf("%02d", $nc).$suffix : basename($save_as).$suffix;
 	}
 
 /*
