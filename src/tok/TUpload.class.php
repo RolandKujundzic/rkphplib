@@ -95,25 +95,31 @@ public function tok_upload_init($name, $p) {
 			$fup .= '_';
 		}
 
-		if (!empty($_FILES[$fup]['name'])) {
-			if (is_array($_FILES[$fup]['error'])) {
-				$error = str_replace('0', '', join('', $_FILES[$fup]['error']));
-				if ($error) {
-					$this->error(join('. ', $_FILES[$fup]['error']));
-				}
-			}
-			else if (!empty($_FILES[$fup]['error'])) {
-				$this->error($_FILES[$fup]['error']);
-			}
+		if (!isset($_FILES[$fup]) || (empty($_FILES[$fup]['name']) && empty($_FILES[$fup]['tmp_name']))) {
+			return;
+		} 
+
+		if (is_array($_FILES[$fup]['name']) && count($_FILES[$fup]['name']) == 1 && 
+				(empty($_FILES[$fup]['name'][0]) && empty($_FILES[$fup]['tmp_name'][0]))) {
+			return;
 		}
 
-		if (isset($_FILES[$fup]) && is_array($_FILES[$fup])) {
-			if (!empty($p['multiple']) && is_array($_FILES[$fup]['tmp_name'])) {
-				$upload_type = 'multiple_files';
+		if (is_array($_FILES[$fup]['error'])) {
+			$error = str_replace('0', '', join('', $_FILES[$fup]['error']));
+			if ($error) {
+				$this->error(join('. ', $_FILES[$fup]['error']));
 			}
-			else if (!empty($_FILES[$fup]['tmp_name']) && $_FILES[$fup]['tmp_name'] != 'none') {
-				$upload_type = 'file';
-			}
+		}
+		else if (!empty($_FILES[$fup]['error'])) {
+			$this->error($_FILES[$fup]['error']);
+		}
+
+		\rkphplib\lib\log_debug("_FILES[$fup]: ".print_r($_FILES[$fup], true));
+		if (is_array($_FILES[$fup]['tmp_name'])) {
+			$upload_type = 'multiple_files';
+		}
+		else if (!empty($_FILES[$fup]['tmp_name']) && $_FILES[$fup]['tmp_name'] != 'none') {
+			$upload_type = 'file';
 		}
 	}
 
@@ -181,8 +187,9 @@ private function saveMultipleFileUpload($fup, $max) {
 	$name = $this->conf['upload'];
 	$file_list = [];
 	$save_list = [];
+	$max = ($max == 0) ? count($_FILES[$fup]['tmp_name']) : min($max, count($_FILES[$fup]['tmp_name']));
 
-	for ($i = 0; $i < count($_FILES[$fup]['tmp_name']); $i++) {
+	for ($i = 0; $i < $max; $i++) {
 		$fname = $_FILES[$fup]['name'][$i];
 		$tmp_name = $_FILES[$fup]['tmp_name'][$i];
 		$target = $this->conf['save_in'].'/'.$this->getSaveAs($fname, $tmp_name, ($i + 1));
