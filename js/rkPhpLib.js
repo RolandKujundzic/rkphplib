@@ -749,7 +749,7 @@ function showPreviewImage(target, src) {
 	var span = document.createElement('span');
 	span.innerHTML = [
 		'<img style="height: 75px; border: 1px solid #000; margin: 5px" src="', src, '" title="', 
-			escape(src), '"/>' ].join('');
+			escape(src) + '?rx=' + Math.floor(Math.random() * 1000000), '"/>' ].join('');
 
 	span.setAttribute('data-preview', target.getAttribute('id'));
 	target.parentNode.insertBefore(span, null);
@@ -782,7 +782,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		for (i = 0; i < list.length; i++) {
 			list[i].addEventListener('change', showUploadPreview, false);
 			if (list[i].getAttribute('data-value')) {
-				showPreviewImage(list[i], list[i].getAttribute('data-value'));
+				var j, images = list[i].getAttribute('data-value').split(',');
+				for (j = 0; j < images.length; j++) {
+					showPreviewImage(list[i], images[j]);
+				}
 			}
 		}
 	}
