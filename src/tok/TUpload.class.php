@@ -3,6 +3,7 @@
 namespace rkphplib\tok;
 
 require_once(__DIR__.'/TokPlugin.iface.php');
+require_once(__DIR__.'/../Database.class.php');
 require_once(__DIR__.'/../Dir.class.php');
 require_once(__DIR__.'/../File.class.php');
 require_once(__DIR__.'/../lib/split_str.php');
@@ -55,6 +56,7 @@ public function getPlugins($tok) {
  * url: retrieve upload from url
  * stream: yes=upload is stream, no=ignore stream, []=normal post upload
  * save_in: save directory (auto-create) (default = data/upload/name)
+ * save_dir: if set remove from path export
  * save_as: basename (default = name) @see getSaveAs
  * allow_suffix: jpg, png, ...
  * type: image 
@@ -68,6 +70,8 @@ public function getPlugins($tok) {
  * @param hash $p
  */
 public function tok_upload_init($name, $p) {
+	try {
+
 	// reset save upload export
 	$_REQUEST['upload_'.$name.'_saved'] = 'no';
 	$_REQUEST['upload_'.$name.'_file'] = '';
@@ -82,7 +86,10 @@ public function tok_upload_init($name, $p) {
 
 	$upload_type = '';
 
-	if (!empty($p['stream'])) {
+	if (!empty($p['remove_image']) && !empty($p['table_id'])) {
+		$this->removeImage();
+	}
+	else if (!empty($p['stream'])) {
 		if ($p['stream'] == 'yes') {
 			$upload_type = 'stream';
 		}
@@ -149,6 +156,40 @@ public function tok_upload_init($name, $p) {
 		$this->_retrieve_from_url($_REQUEST[$p['url']]);
 	}
 */
+
+	}
+	catch (\Exception $e) {
+		// do nothing ... 
+	}
+}
+
+
+/**
+ * Remove image if conf.remove_image=name:num and table_id=table.id:val is set.
+ *
+ */
+private function removeImage() {
+	list ($name, $num) = explode(':', $this->conf['remove_image']);
+	list ($tmp, $id_val) = explode(':', $this->conf['table_id']);
+	list ($table, $id_col) = explode('.', $tmp);
+
+	$db = Database::getInstance(SETTINGS_DSN, [
+		'select_images' => "SELECT {:=^name} FROM {:=^table} WHERE {:=^id_col}={:=id_val}",
+		'update_images' => "UPDATE {:=^table} SET {:=^name}={:=images} WHERE {:=^id_col}={:=id_val}"
+		]);
+
+	$r = [ 'name' => $name, 'table' => $table, 'id_col' => $id_col, 'id_val' => $id_val, 'images' => '' ];
+
+	\rkphplib\lib\log_debug("name=$name num=$num table=$table $id_col=$id_val");
+	$dbres = $db->selectOne($db->getQuery('select_images', $r));
+	$images = lib_split_str(',', $dbres[$name]);
+	$remove_img = array_splice($images, $num - 1, 1);
+	$r['images'] = join(',', $images);
+
+	$update_query = $db->getQuery('update_images', $r);
+	\rkphplib\lib\log_debug("update_query (remove: $remove_img): $update_query");
+	$db->execute($update_query);
+	File::remove($this->conf['save_in'].'/'.$remove_img);
 }
 
 
@@ -156,7 +197,7 @@ public function tok_upload_init($name, $p) {
  * Export error message as _REQUEST[upload_NAME_error]. 
  * Set _REQUEST[upload_error], _REQUEST[upload_NAME(_file)] = '' and _REQUEST[upload_NAME_saved] = no.
  *
- * @exit
+ * @throws
  * @param string $message
  */
 private function error($message) {
@@ -168,7 +209,7 @@ private function error($message) {
 
 	$_REQUEST['upload_error'] = 1;
 
-	exit(0);
+	throw new Exception('upload error', "$name: $message");
 }
 
 
@@ -199,6 +240,10 @@ private function saveMultipleFileUpload($fup, $max) {
 		}
 		else {
 			File::move($tmp_name, $target, 0666);
+		}
+
+		if (!empty($this->conf['save_dir'])) {
+			$target = str_replace($this->conf['save_dir'].'/', '', $target);
 		}
 
 		array_push($save_list, $target);
@@ -235,6 +280,10 @@ private function saveFileUpload($fup) {
 	}
 	else {
 		File::move($_FILES[$fup]['tmp_name'], $target, 0666);
+	}
+
+	if (!empty($this->conf['save_dir'])) {
+		$target = str_replace($this->conf['save_dir'].'/', '', $target);
 	}
 
 	$name = $this->conf['upload'];

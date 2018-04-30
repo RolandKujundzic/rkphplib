@@ -691,6 +691,13 @@ protected function getInput($name, $ri) {
 		}
 	}
 
+	// data- attributes
+	foreach ($ri as $key => $value) {
+		if (strpos($key, 'data-') === 0) {
+			$tags .= ' '.$key.'="'.$this->tok->getTag($key).'"';
+		}
+	}
+
 	$boolean_attributes = [ 'readonly', 'multiple', 'disabled', 'checked' ];
 	foreach ($boolean_attributes as $key) {
 		if (!empty($ri[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {

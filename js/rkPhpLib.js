@@ -301,6 +301,78 @@ this.setOutputSearch = function (el) {
 
 
 /**
+ * Toggle delete and replace links.
+ */
+this.modifyImage = function (el, num) {
+	var fvin_id = el.parentNode.getAttribute('data-preview');
+	var fvin = document.getElementById(fvin_id);
+
+	if (document.getElementById(fvin_id + '_' + num + '_remove')) {
+		var icon = document.getElementById(fvin_id + '_' + num + '_remove');
+		icon.parentNode.removeChild(icon);
+
+		icon = document.getElementById(fvin_id + '_' + num + '_replace');
+		icon.parentNode.removeChild(icon);
+	}
+	else {
+		addOverlayIcon(el, num);
+	}
+};
+
+
+/**
+ * Remove image from list.
+ '
+ * @param novel el
+ * @param int num
+ */
+this.removeImage = function (el, num) {
+	var fvin_id = el.parentNode.getAttribute('data-preview');
+	var f = document.getElementById(fvin_id).form;
+	f.elements['remove_image'].value = fvin_id.substr(5) + ':' + num; 
+	f.submit();
+};
+
+
+/**
+ * Replace existing image.
+ *
+ * @param element el
+ * @param int num
+ */
+this.replaceImage = function (el, num) {
+	console.log('replaceImage', el, num);
+};
+
+
+/**
+ * Create overlay icon (remove|replace).
+ *
+ * @param element el
+ * @param int num
+ */
+function addOverlayIcon(el, num) {
+	var fvin_id = el.parentNode.getAttribute('data-preview');
+	var fvin = document.getElementById(fvin_id);
+	var action, icon_list = { 'remove': 'left', 'replace': 'right' };
+	
+	for (action in icon_list) {
+		if (!fvin.hasAttribute('data-' + action)) {
+			continue;
+		}
+
+		var icon = document.createElement('img');
+		icon.src = fvin.getAttribute('data-' + action);	
+		icon.setAttribute('style', 'position: absolute; ' + icon_list[action] + ': 5%; bottom: 5%; z-index: 1');
+		icon.setAttribute('id', fvin_id + '_' + num + '_' + action);
+		icon.setAttribute('onclick', 'rkphplib.' + action + 'Image(this, ' + num + ')');
+
+		el.parentNode.appendChild(icon);
+	}
+}
+
+
+/**
  * Execute output action (el.value). If action == add redirect to data-add.
  *
  * @param element el
@@ -726,7 +798,7 @@ function showUploadPreview(evt) {
 				var span = document.createElement('span');
 				span.innerHTML = [
 					'<img style="height: 75px; border: 1px solid #000; margin: 5px" src="', e.target.result, '" title="', 
-					escape(theFile.name), '"/>' ].join('');
+					theFile.name, '"/>' ].join('');
 
 				span.setAttribute('data-preview', input_id);
 				evt.target.parentNode.insertBefore(span, null);
@@ -744,15 +816,18 @@ function showUploadPreview(evt) {
  * 
  * @param element target
  * @param string src
+ * @param int img_num (0 = single image)
  */
-function showPreviewImage(target, src) {
-	var span = document.createElement('span');
-	span.innerHTML = [
-		'<img style="height: 75px; border: 1px solid #000; margin: 5px" src="', src, '" title="', 
-			escape(src) + '?rx=' + Math.floor(Math.random() * 1000000), '"/>' ].join('');
+function showPreviewImage(target, src, img_num) {
+	var wrapper = document.createElement('div');
+	wrapper.setAttribute('style', 'position:relative; border: 1px solid black; display: inline-block; margin: 5px;');
+	wrapper.setAttribute('data-preview', target.getAttribute('id'));
 
-	span.setAttribute('data-preview', target.getAttribute('id'));
-	target.parentNode.insertBefore(span, null);
+	wrapper.innerHTML = [
+		'<img style="height: 120px; width:auto" onclick="rkphplib.modifyImage(this, ' + img_num + 
+		')" src="', src, '" title="', src + '?rx=' + Math.floor(Math.random() * 1000000), '"/>' ].join('');
+
+	target.parentNode.insertBefore(wrapper, null);
 }
 
 
@@ -783,8 +858,9 @@ document.addEventListener('DOMContentLoaded', function () {
 			list[i].addEventListener('change', showUploadPreview, false);
 			if (list[i].getAttribute('data-value')) {
 				var j, images = list[i].getAttribute('data-value').split(',');
+				var dir = list[i].getAttribute('data-dir') ? list[i].getAttribute('data-dir') + '/' : '';
 				for (j = 0; j < images.length; j++) {
-					showPreviewImage(list[i], images[j]);
+					showPreviewImage(list[i], dir + images[j], j);
 				}
 			}
 		}
