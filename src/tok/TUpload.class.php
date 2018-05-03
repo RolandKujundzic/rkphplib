@@ -9,6 +9,7 @@ require_once(__DIR__.'/../File.class.php');
 require_once(__DIR__.'/../lib/split_str.php');
 
 use \rkphplib\Exception;
+use \rkphplib\Database;
 use \rkphplib\FSEntry;
 use \rkphplib\File;
 use \rkphplib\Dir;
@@ -60,6 +61,9 @@ public function getPlugins($tok) {
  * save_as: basename (default = name) @see getSaveAs
  * allow_suffix: jpg, png, ...
  * type: image 
+ * table_id: e.g. shop_customer.id:382
+ * remove_image: (default = {get:remove_image})
+ * replace_image: (default = {get:replace_image})
  * overwrite: yes|no (only if save_as is empty) - default = no (add suffix _nn)
  * min_width: nnn 
  * min_height: nnn
@@ -82,12 +86,24 @@ public function tok_upload_init($name, $p) {
 	$p['save_as'] = empty($p['save_as']) ? 'count' : $p['save_as'];
 	$p['overwrite'] = empty($p['overwrite']) ? 'yes' : $p['overwrite'];
 
-	$this->conf = $p;
-
 	$upload_type = '';
 
-	if (!empty($p['remove_image']) && !empty($p['table_id'])) {
+	if (!isset($p['remove_image']) && !empty($_REQUEST['remove_image'])) {
+		$p['remove_image'] = $_REQUEST['remove_image'];
+	}
+	else if (!isset($p['replace_image']) && !empty($_REQUEST['replace_image'])) {
+		$p['replace_image'] = $_REQUEST['replace_image'];
+	}
+
+	$this->conf = $p;
+
+	\rkphplib\lib\log_debug("TUpload.tok_upload_init> conf: ".print_r($this->conf, true));
+
+	if (!empty($p['remove_image']) && !empty($p['table_id']) && strpos($p['remove_image'], $name) === 0) {
 		$this->removeImage();
+	}
+	else if (!empty($p['replace_image']) && !empty($p['table_id']) && strpos($p['replace_image'], $name) === 0) {
+		$this->replaceImage();
 	}
 	else if (!empty($p['stream'])) {
 		if ($p['stream'] == 'yes') {
@@ -103,11 +119,13 @@ public function tok_upload_init($name, $p) {
 		}
 
 		if (!isset($_FILES[$fup]) || (empty($_FILES[$fup]['name']) && empty($_FILES[$fup]['tmp_name']))) {
+			\rkphplib\lib\log_debug("TUpload.tok_upload_init> exit - no single _FILES[$fup] upload");
 			return;
 		} 
 
 		if (is_array($_FILES[$fup]['name']) && count($_FILES[$fup]['name']) == 1 && 
 				(empty($_FILES[$fup]['name'][0]) && empty($_FILES[$fup]['tmp_name'][0]))) {
+			\rkphplib\lib\log_debug("TUpload.tok_upload_init> exit - no multi _FILES[$fup] upload");
 			return;
 		}
 
@@ -160,7 +178,13 @@ public function tok_upload_init($name, $p) {
 	}
 	catch (\Exception $e) {
 		// do nothing ... 
+		$msg = "TUpload.tok_upload_init> Exception: ".$e->getMessage();
+		$trace = $e->getFile()." on line ".$e->getLine()."\n".$e->getTraceAsString();
+		$internal = property_exists($e, 'internal_message') ? "INFO: ".$e->internal_message : '';
+		\rkphplib\lib\log_debug("$msg\n$trace\n$internal");
 	}
+
+	\rkphplib\lib\log_debug("TUpload.tok_upload_init> return");
 }
 
 
@@ -180,16 +204,69 @@ private function removeImage() {
 
 	$r = [ 'name' => $name, 'table' => $table, 'id_col' => $id_col, 'id_val' => $id_val, 'images' => '' ];
 
-	\rkphplib\lib\log_debug("name=$name num=$num table=$table $id_col=$id_val");
-	$dbres = $db->selectOne($db->getQuery('select_images', $r));
-	$images = lib_split_str(',', $dbres[$name]);
+	$query = $db->getQuery('select_images', $r);
+	\rkphplib\lib\log_debug("TUpload.removeImage> name=$name num=$num table=$table $id_col=$id_val - query: $query");
+	$dbres = $db->selectOne($query);
+	$images = \rkphplib\lib\split_str(',', $dbres[$name]);
 	$remove_img = array_splice($images, $num - 1, 1);
 	$r['images'] = join(',', $images);
+	\rkphplib\lib\log_debug("TUpload.removeImage> r.images=".$r['images']." remove_img=".$remove_img[0]." images: ".print_r($images, true));
+
+	$path_prefix = empty($this->conf['save_dir']) ? '' : $this->conf['save_dir'].'/';
+	$update_query = $db->getQuery('update_images', $r);
+	\rkphplib\lib\log_debug("TUpload.removeImage> update_query (remove: ".$path_prefix.$remove_img[0]."): $update_query");
+	$db->execute($update_query);
+	File::remove($path_prefix.$remove_img[0]);
+}
+
+
+/**
+ * Replace image if conf.replace_image=name:num and table_id=table.id:val is set.
+ *
+ */
+private function replaceImage() {
+	list ($name, $num) = explode(':', $this->conf['replace_image']);
+	list ($tmp, $id_val) = explode(':', $this->conf['table_id']);
+	list ($table, $id_col) = explode('.', $tmp);
+
+	$db = Database::getInstance(SETTINGS_DSN, [
+		'select_images' => "SELECT {:=^name} FROM {:=^table} WHERE {:=^id_col}={:=id_val}",
+		'update_images' => "UPDATE {:=^table} SET {:=^name}={:=images} WHERE {:=^id_col}={:=id_val}"
+		]);
+
+	$r = [ 'name' => $name, 'table' => $table, 'id_col' => $id_col, 'id_val' => $id_val, 'images' => '' ];
+
+	$query = $db->getQuery('select_images', $r);
+	\rkphplib\lib\log_debug("TUpload.replaceImage> name=$name num=$num table=$table $id_col=$id_val - query: $query");
+	$dbres = $db->selectOne($query);
+	$images = \rkphplib\lib\split_str(',', $dbres[$name]);
+	$r['images'] = $dbres[$name]; // images entry in database does not change
+
+	// recursion: upload image ...
+	$name = $this->conf['upload'];
+	$this->conf['replace_image'] = '';
+	// recursion is single file upload - images column is single file ($target) afterwards
+	$this->tok_upload_init($name, $this->conf);
+
+	$saved = isset($_REQUEST['upload_'.$name.'_saved']) ? $_REQUEST['upload_'.$name.'_saved'] : '';
+  $target = isset($_REQUEST['upload_'.$name.'_file']) ? $_REQUEST['upload_'.$name.'_file'] : '';
+
+	if ($saved != 'yes' || empty($target)) {
+		$this->error('no replace upload');	
+	}
+
+	// reset upload export
+	unset($_REQUEST['upload_'.$name]);
+	unset($_REQUEST['upload_'.$name.'_saved']);
+	unset($_REQUEST['upload_'.$name.'_file']);
+
+	$old_img = $images[$num - 1];
+	$path_prefix = empty($this->conf['save_dir']) ? '' : $this->conf['save_dir'].'/';
+	\rkphplib\lib\log_debug("TUpload.replaceImage> move $path_prefix$target to $path_prefix$old_img - r.images=".$r['images']);
+	File::move($path_prefix.$target, $path_prefix.$old_img);
 
 	$update_query = $db->getQuery('update_images', $r);
-	\rkphplib\lib\log_debug("update_query (remove: $remove_img): $update_query");
-	$db->execute($update_query);
-	File::remove($this->conf['save_in'].'/'.$remove_img);
+	\rkphplib\lib\log_debug("TUpload.replaceImage> exit - update_query: $update_query");
 }
 
 
@@ -304,7 +381,7 @@ private function saveFileUpload($fup) {
 private function convertImage($source, $target) {
 
 	throw new Exception('ToDo ...');
-
+/*
 	$img_info = lib_exec("identify -verbose {:=image}", array('image' => $_REQUEST['upload_file']));
 	$cmd = '';
 
@@ -353,6 +430,7 @@ private function convertImage($source, $target) {
  		File::copy($_REQUEST['upload_file'], $orig_file);
  		lib_exec($cmd, array('source' => $orig_file, 'target' => $_REQUEST['upload_file'])); 				
  	}
+*/
 }
 
 
@@ -401,9 +479,11 @@ private function getSaveAs($upload_file, $temp_file, $nc = 0) {
 			$this->error('image height '.$ii['height'].' &lt; '.$p['min_height']);
 		}
 
+/* ToDo:
 		if (!empty($p['image_ratio'])) {
 			$this->checkImageRatio($ii['width'], $ii['height']);
 		}
+*/
 	}
 
 	if (empty($suffix)) {
@@ -446,310 +526,6 @@ private function getSaveAs($upload_file, $temp_file, $nc = 0) {
 
 	\rkphplib\lib\log_debug("TUpload.getSaveAS> return [$res]");
 	return $res;
-}
-
-
-/**
- * Compare image ratio with conf.image_ratio. If wrong call error(...).
- * Shave image if conf.image_shave=yes.
- *
- * @param int $w
- * @param int $h
- */
-private function checkImageRatio($w, $h) {
-	$w = $this->_upload_file('image_width');
-	$w_min = intval($this->_conf['min_width']);
-
-	$h = $this->_upload_file('image_height');
-	$h_min = intval($this->_conf['min_height']); 	
-	
-	$rn = strlen($this->_conf['image_ratio']) - strpos($this->_conf['image_ratio'], '.') - 1;
-  $ratio = round($w / $h, $rn);
-  	
-	if (floatval($this->_conf['image_ratio']) != $ratio) {
-		if (!empty($this->_conf['image_shave']) && $this->_conf['image_shave'] == 'yes' && 
-				$h > 0 && $h_min > 0 && $w > 0 && $w_min > 0) {
-			$ra = min(round($w / $w_min, 4), round($h / $h_min, 4));
-			$w2 = round($w_min * $ra, 0);
-			$h2 = round($h_min * $ra, 0);
-			$sw = ($w - $w2 > 1) ? round(($w - $w2) / 2, 0) : 0;
-			$sh = ($h - $h2 > 1) ? round(($h - $h2) / 2, 0) : 0;
-  		
-			throw new Exception('ToDo ...');
-	
-			$orig_file = dirname($_REQUEST['upload_file']).'/pre_shave_'.basename($_REQUEST['upload_file']);
-			File::copy($_REQUEST['upload_file'], $orig_file);
-			lib_exec('convert -shave '.$sw.'x'.$sh." {:=upload} {:=shaved}", 
-				array('upload' => $orig_file, 'shaved' => $_REQUEST['upload_file'])); 				
-		}
-		else {
-			$this->error("image ratio != $ratio");
-		}
-	}
-}
-
-
-/**
- * 
- */
-public function tokCall($action, $param, $arg) {
-  $res = '';
-
-  if ($action == 'upload') {
-    $this->_upload(lib_arg2hash($arg));
-  }
-  else if ($action == 'upload_file') {
-    $res = $this->_upload_file($param, false);
-  }
-  else if ($action == 'upload_exists') {
-    $res = $this->_upload_exists($param);
-  }
-  else if ($action == 'upload_get') {
-    $res = $this->_upload_get($param);
-  }
-
-  return $res;
-}
-
-
-/**
- * Return [upload_get:max_file|max_post|has_uploadprogress].
- * Parameter is max_file|max_post|has_uploadprogress.
- * 
- * @param string $param
- * @return string
- */
-private function _upload_get($param) {
-  $res = '';
-
-  if ($param == 'max_file') {
-    $res = ini_get('upload_max_filesize');
-  }
-  else if ($param == 'max_post') {
-    $res = ini_get('post_max_size');
-  }
-  else if ($param == 'has_uploadprogress') {
-    if (function_exists("uploadprogress_get_info")) {
-     $log = ini_get("uploadprogress.file.filename_template");
-
-     if (strpos($log, '%s') == false) {
-       // default log is: /tmp/upt_%s.txt
-       lib_abort("invalid uploadprogress logfile", "log=[$log]");
-     }
-
-     // is uploadprogress directory writable ?
-
-     $res = 1;
-    }
-  }
-
-  return $res;
-}
-
-
-/**
- * Return [upload_exists:param].
- * Result is "yes" if upload exists.
- * 
- * @param string $param
- * @return string
- */
-private function _upload_exists($param) {
-
-  if ($param) {
-    $file = $this->_conf[$param.'_file'];
-  }
-  else {
-    $file = $this->_conf['save_in'].'/'.$this->_conf['save_as'];
-  }
-
-  $res = FSEntry::isFile($file, false) ? 'yes' : '';
-
-  return $res;
-}
-
-
-/**
- * Return [upload_file:size|path|md5|suffix|name|save_as|save_in|image_XXX] info.
- * 
- * @param string $action
- * @param boolean $required
- * @return string
- */
-private function _upload_file($action, $required = true) {
-  $res = '';
-
-  if (empty($_REQUEST['upload_file']) ||  empty($_REQUEST['upload_name'])) {
-
-    if ($required) {
-      lib_abort("no upload file");
-    }
-    else {
-
-      if (!empty($this->_conf['optional']) && $this->_conf['optional'] == 'yes') {
-        // upload is not required ...
-        return '';
-      }
-
-      if (!empty($this->_conf['error_redirect'])) {
-        $this->_error_redirect('no_upload');
-      }
-      else {
-        lib_abort("no upload file");
-      }
-    }
-  }
-
-  $file = $_REQUEST['upload_file'];
-
-  if ($action == 'size') {
-    $res = File::size($file, false);
-  }
-  else if ($action == 'path') {
-    $res = $file;
-  }
-  else if ($action == 'md5') {
-    $res = File::md5($file);
-  }
-  else if ($action == 'suffix') {
-    $res = File::suffix($file);
-  }
-  else if ($action == 'name' && !empty($_REQUEST['upload_name'])) {
-    $res = $_REQUEST['upload_name'];
-  }
-  else if ($action == 'save_as' && !empty($_REQUEST['upload_file'])) {
-    $res = basename($_REQUEST['upload_file']);
-  }
-  else if ($action == 'save_in' && !empty($_REQUEST['upload_file'])) {
-    $res = dirname($_REQUEST['upload_file']);
-  }
-  else if ($action == 'file' && !empty($_REQUEST['upload_file'])) {
-    $res = $_REQUEST['upload_file'];
-  }
-  else if (substr($action, 0, 6) == 'image_') {
-
-    if (!isset($this->_image['file']) || $this->_image['file'] != $file) {
-      $this->_image = File::imageInfo($file, false);
-      $this->_image['type'] = $this->_image['mime'];
-    }
-
-    $info = substr($action, 6);
-    if (!isset($this->_image[$info])) {
-      lib_abort("no such action [upload_file:$action]");
-    }
-
-    $res = $this->_image[$info];
-  }
-  else {
-    lib_abort("no such action [upload_file:$action]");
-  }
-
-  return $res;
-}
-
-
-/**
- * Save file upload stream.
- */
-private function _save_stream() {
-	
-	if (empty($_SERVER['HTTP_X_FILE_NAME']) || empty($_SERVER['CONTENT_LENGTH'])) {
-  	lib_abort("Error retrieving headers");
-	}
-
-	$file_name = $_SERVER['HTTP_X_FILE_NAME'];
-  if (!empty($this->_conf['fix_name'])) {
-  	if ($this->_conf['fix_name'] == 'yes') {
-    	$file_name = preg_replace('/[^0-9A-Za-z_\-\.\,]/', '', $file_name);
-  	}
-  }
-	
-  // if upload name already exists ... try basename_[01,02,...,99].suffix
-  $save_as = ($this->_conf['overwrite'] == 'yes') ? $file_name : 
-  	basename(File::uniqueName($this->_conf['save_in'].'/'.$file_name));
-    
-  // use save_as parameter to overwrite existing files or overwrite = yes!!!
-  if (!empty($this->_conf['save_as'])) {
-    $save_as = $this->getSaveAs($_SERVER['HTTP_X_FILE_NAME']);
-  }
-  
-  $target = $this->_conf['save_in'].'/'.$save_as;
-  Dir::create($this->_conf['save_in'], 0777, true);
-  file_put_contents($target, file_get_contents("php://input")); 
-	File::chmod($target, 0666);
-			
-  $_REQUEST['upload_saved'] = 'yes';
-  $_REQUEST['upload_file'] = $target;
-  $_REQUEST['upload_name'] = $_SERVER['HTTP_X_FILE_NAME'];
-}
-
-
-/**
- *
- */
-private function _use_other() {
-
-  $key = $_REQUEST['use_other'].'_file';
-
-  if (!empty($this->_conf[$key]) && FSEntry::isFile($this->_conf[$key], false)) {
-    Dir::create($this->_conf['save_in'], 0777, true);
-    File::copy($this->_conf[$key], $this->_conf['save_in'].'/'.$this->_conf['save_as']);
-    $this->_use_existing();
-  }
-}
-
-/**
- * 
- * @param string $target
- */
-private function _use_existing($target = '') {
-
-  if (!$target) {
-    $target = $this->_conf['save_in'].'/'.$this->_conf['save_as'];
-  }
-
-  if (FSEntry::isFile($target, false)) {
-    $_REQUEST['upload_saved'] = 'yes';
-    $_REQUEST['upload_reused'] = 'yes';
-    $_REQUEST['upload_file'] = $target;
-    $_REQUEST['upload_name'] = basename($target);
-  }
-}
-
-
-/**
- * Redirect to conf.error_redirect url is not empty.
- * Use xxx={:=upload_error} in conf.error_redirect url to get abort reason.
- * 
- * @param string $reason
- */
-private function _error_redirect($reason) {
-
-	if (empty($this->_conf['error_redirect'])) {
-		return;
-  }
-
-  $url = str_replace('{:=upload_error}', $reason, $this->_conf['error_redirect']);
-  lib_redirect($url);
-}
-
-
-/**
- * Retrieve upload from url.
- * 
- * @param string $url
- */
-private function _retrieve_from_url($url) {
-
-  $save_as = empty($this->_conf['save_as']) ? basename($url) : $this->_conf['save_as'];
-  $target = $this->_conf['save_in'].'/'.$save_as;
-
-  Dir::create($this->_conf['save_in'], 0777, true);
-  File::httpGet($url, $target);
-
-  $_REQUEST['upload_saved'] = 'yes';
-  $_REQUEST['upload_file'] = $target;
-  $_REQUEST['upload_name'] = basename($url);
 }
 
 

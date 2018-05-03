@@ -65,7 +65,7 @@ this.fselectInput = function (selbox) {
  * @param Node inbox 
  */
 this.fselectList = function (inbox) {
-	var name = inbox.getAttribute('name').substr(0, -1);
+	var name = inbox.getAttribute('name').slice(0, -1);
   var selbox = document.querySelector('fselect_list_' + name + ' > select');
 
   var newOpt = document.createElement('option');
@@ -307,42 +307,126 @@ this.modifyImage = function (el, num) {
 	var fvin_id = el.parentNode.getAttribute('data-preview');
 	var fvin = document.getElementById(fvin_id);
 
-	if (document.getElementById(fvin_id + '_' + num + '_remove')) {
-		var icon = document.getElementById(fvin_id + '_' + num + '_remove');
-		icon.parentNode.removeChild(icon);
+	restoreMultiple();
 
-		icon = document.getElementById(fvin_id + '_' + num + '_replace');
-		icon.parentNode.removeChild(icon);
-	}
-	else {
+	var pel = removeOverlayIcon(fvin_id);
+
+	if (pel != el.parentNode) {
 		addOverlayIcon(el, num);
 	}
 };
 
 
 /**
+ * Remove overlay icons.
+ * 
+ * @param string fvin_id
+ * @return null|element (parent node)
+ */
+function removeOverlayIcon(fvin_id) {
+	var i, icon, pel;
+
+	if (!env['lastOverlayIcon_' + fvin_id]) {
+		return null;
+	}
+
+	for (i = 0; i < env['lastOverlayIcon_' + fvin_id].length; i++) {
+		icon = env['lastOverlayIcon_' + fvin_id][i];
+		pel = icon.parentNode;
+		pel.removeChild(icon);
+	}
+
+	delete env['lastOverlayIcon_' + fvin_id];
+
+	return pel;
+}
+
+
+/**
  * Remove image from list.
- '
+ *
  * @param novel el
  * @param int num
  */
 this.removeImage = function (el, num) {
 	var fvin_id = el.parentNode.getAttribute('data-preview');
 	var f = document.getElementById(fvin_id).form;
-	f.elements['remove_image'].value = fvin_id.substr(5) + ':' + num; 
-	f.submit();
+	submitForm(f, { 'remove_image': fvin_id.substr(5) + ':' + (num + 1) });
 };
 
 
 /**
- * Replace existing image.
+ * Submit form f. Add hidden input.
+ *
+ * @param form f
+ * @param hash hidden_input
+ */
+function submitForm(f, hidden_input) {
+	// add form_action=1
+	var key, input, type;
+
+	hidden_input.form_action = 1;
+
+	for (key in hidden_input) {
+		if (f.elements[key]) {
+			type = f.elements[key].getAttribute('type');
+
+			if (type != 'submit' && type != 'button') {
+				f.elements[key].value = hidden_input[key];
+				continue;
+			}
+		}
+
+		input = document.createElement('input');
+		input.setAttribute('name', key);
+		input.setAttribute('value', hidden_input[key]);
+		input.setAttribute('type', 'hidden');
+		f.appendChild(input);
+	}
+
+	f.submit();
+}
+
+
+/**
+ * Replace existing image. Hidden input replace_image must exist.
  *
  * @param element el
  * @param int num
  */
 this.replaceImage = function (el, num) {
-	console.log('replaceImage', el, num);
+	var fvin_id = el.parentNode.getAttribute('data-preview');
+	var fvin = document.getElementById(fvin_id);
+
+	if (fvin.hasAttribute('multiple')) {
+		fvin.removeAttribute('multiple');
+		var name = fvin.getAttribute('name');
+		fvin.setAttribute('name', name.slice(0, -2));
+		removeOverlayIcon(fvin_id);
+		env['restoreMultiple'] = fvin_id;
+	}
+
+	fvin.addEventListener('change', function(evt) {
+		submitForm(evt.target.form, { 'replace_image': fvin_id.substr(5) + ':' + (num + 1) });
+	});
 };
+
+
+/**
+ * If env.restoreMultiple (=id) is set, change name to name[] and add multiple attribute.
+ */
+function restoreMultiple() {
+	if (!env['restoreMultiple']) {
+		return;
+	}
+
+	var fvin = document.getElementById(env['restoreMultiple']);
+	fvin.setAttribute('multiple', 'multiple');
+	var name = fvin.getAttribute('name');
+	fvin.setAttribute('name', name + '[]');
+
+	delete env['restoreMultiple'];
+}
 
 
 /**
@@ -355,6 +439,8 @@ function addOverlayIcon(el, num) {
 	var fvin_id = el.parentNode.getAttribute('data-preview');
 	var fvin = document.getElementById(fvin_id);
 	var action, icon_list = { 'remove': 'left', 'replace': 'right' };
+
+	env['lastOverlayIcon_' + fvin_id] = [];
 	
 	for (action in icon_list) {
 		if (!fvin.hasAttribute('data-' + action)) {
@@ -364,10 +450,10 @@ function addOverlayIcon(el, num) {
 		var icon = document.createElement('img');
 		icon.src = fvin.getAttribute('data-' + action);	
 		icon.setAttribute('style', 'position: absolute; ' + icon_list[action] + ': 5%; bottom: 5%; z-index: 1');
-		icon.setAttribute('id', fvin_id + '_' + num + '_' + action);
 		icon.setAttribute('onclick', 'rkphplib.' + action + 'Image(this, ' + num + ')');
 
 		el.parentNode.appendChild(icon);
+		env['lastOverlayIcon_' + fvin_id].push(icon);
 	}
 }
 
@@ -825,7 +911,7 @@ function showPreviewImage(target, src, img_num) {
 
 	wrapper.innerHTML = [
 		'<img style="height: 120px; width:auto" onclick="rkphplib.modifyImage(this, ' + img_num + 
-		')" src="', src, '" title="', src + '?rx=' + Math.floor(Math.random() * 1000000), '"/>' ].join('');
+		')" src="', src + '?rx=' + Math.floor(Math.random() * 1000000), '" title="', src, '"/>' ].join('');
 
 	target.parentNode.insertBefore(wrapper, null);
 }
