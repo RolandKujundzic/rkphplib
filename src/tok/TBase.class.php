@@ -1266,13 +1266,21 @@ public function tok_if($param, $p) {
  * Null argument if empty and param = null and _REQUEST[null] is not set.
  *
  * @tok {esc:} ab'c {:esc} -> [ ab''c ]
- * @tok {esc:t} 'a"' {:esc} -> [''a"'']
  * @tok {esc:a} AND _REQUEST[a] = " x " -> ' x '
  * @tok {esc:t} AND _REQUEST[t] = " x " -> 'x'
  * @tok {esc:}null{:esc} -> NULL
  * @tok {esc:}NULL{:esc} -> NULL
  * @tok {esc:null}{:esc} -> NULL
- *  
+ * 
+ * Escape options: @trim, @escape_html. 
+ *
+ * @tok {esc:@trim} = trim value
+ * @tok {esc:@escape_html} = replace [ '<', '>', '"' ] with [ '&lt;', '&gt;', '&quot;' ]
+ * @tok {esc:@escape_arg} = 
+ * @tok {esc:@trim,escape_html} = set trim + escape_html as default option
+ * @tok {esc:@default} = set default options (trim + escape_html)
+ * @tok {esc:@} = use no options
+ *
  * @param string $param
  * @param string $arg
  * @return string|null
@@ -1282,20 +1290,38 @@ public function tok_esc($param, $arg) {
 	if (!empty($param) && isset($_REQUEST[$param])) {
 		$arg = trim($_REQUEST[$param]);
 	}
-	else if ($param == 't') {
-		$arg = trim($arg);
-	}
 	else if ($param == 'null' && trim($arg) == '') {
 		$arg = null;
 	}
 
 	if (is_null($arg) || $arg === 'null' || $arg === 'NULL') {
-		$res = 'NULL';
+		return 'NULL';
 	}
-	else {
-		require_once(PATH_RKPHPLIB.'ADatabase.class.php');
-		$res = "'".\rkphplib\ADatabase::escape($arg)."'";
+
+	if (!isset($this->_conf['esc'])) {
+		// set default escape options
+		$this->_conf['esc'] = [ 'trim', 'escape_html' ];
 	}
+
+
+	if (substr($param, 0, 1) == '@') {
+		if ($param == '@default') {
+			$param = 'trim,escape_html';
+		}
+
+		$this->conf['esc'] = \rkphplib\lib\split_str(',', substr($param, 1));
+	}
+
+	if (in_array('trim', $this->_conf['esc'])) {
+		$arg = trim($arg);
+	}
+
+	if (in_array('escape_html', $this->_conf['esc'])) {
+		$arg = str_replace([ '<', '>', '"' ], [ '&lt;', '&gt;', '&quot;' ], $arg);
+	}
+
+	require_once(PATH_RKPHPLIB.'ADatabase.class.php');
+	$res = "'".\rkphplib\ADatabase::escape($arg)."'";
 
 	return $res;
 }
