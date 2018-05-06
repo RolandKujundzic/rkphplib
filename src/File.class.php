@@ -202,15 +202,16 @@ public static function fromURL($url, $required = true) {
 /**
  * Return content of file $file.
  *
- * Start reading at byte offset if offset is set (default = -1).
- * Use flock if self::USE_FLOCK is true.
+ * Start reading at byte offset if offset is set (default = 0).
+ * Use flock if self::USE_FLOCK is true. Negative file offset
+ * works only from php 7.2.x upwards.
  *
  * @throws
  * @param string $file
- * @param int $offset start reading at byte offset if >= 0
+ * @param int $offset start reading at byte offset (-n: last n bytes)
  * @return string
  */
-public static function load($file, $offset = -1) {
+public static function load($file, $offset = 0) {
 
 	if (empty($file)) {
 		throw new Exception("empty filename");
