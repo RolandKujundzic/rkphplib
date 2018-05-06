@@ -70,7 +70,7 @@ public function __construct() {
 	}
 	else {
 		foreach ($_REQUEST as $key => $value) {
-			if (strlen($value) == 0 && self::isEncodedHash($key)) {
+			if (is_string($value) && strlen($value) == 0 && self::isEncodedHash($key)) {
 				self::decodeHash($key, true);
 				unset($_REQUEST[$key]);
 			}
