@@ -428,7 +428,7 @@ public static function scanDir($path, $suffix_list = array(), $rel_dir = '') {
 	$found = array();
 
 	foreach ($entries as $entry) {
-		if (FSEntry::isFile($entry, false) && in_array(File::suffix($entry), $suffix_list)) {
+		if (FSEntry::isFile($entry, false) && self::_has_suffix($entry, $suffix_list)) {
 			if ($rel_dir) {
 				array_push($found, str_replace($rel_dir, '', $entry));
 			}
