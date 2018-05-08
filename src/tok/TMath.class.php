@@ -96,6 +96,7 @@ public function tok_floatval($round, $arg) {
  *
  * @tok {rand:} - md5(microtime() . rand())
  * @tok {rand:8} = aUlPmvei
+ * @tok {rand:password} = str_replace(['0', 'O', 'i', 'l', 'o'], ['3', '7', '5', '2', 'e'], {rand:8})
  * @tok {rand:}5|#|10{:rand} = 10
  *
  * @param int $param
@@ -107,6 +108,9 @@ public function tok_rand($param, $p) {
 	if (empty($arg)) {
 		if (empty($param)) {
 			$res = md5(microtime() . rand());
+		}
+		else if ($param == 'password') {
+			$res = str_replace([ '0', 'O', 'i', 'l', 'o' ], [ '3', '7', '5', '2', 'e' ], self::randomString(intval($param)));
 		}
 		else {
 			$res = self::randomString(intval($param));
