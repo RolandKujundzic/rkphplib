@@ -378,6 +378,7 @@ public function tok_login_update($do, $p) {
  *
  * @tok {login_auth:}login={get:login}|#|password={get:password}|#|redirect=...|#|log_table=...{:login_auth}
  * @tok {login_auth:}login={get:login}|#|password={get:pass}|#|callback=cms,tok_cms_conf2login{:login_auth}
+ * @tok {login_auth:}login={get:email}|#|password={get:postcode}|#|select= SELECT *, postcode AS password_input, email AS login ...
  * @tok {login_auth:}admin2user=admin:user:visitor:...|#|...{:login_auth}
  *
  * If admin2user is set any admin account can login as user account if login is ADMIN_LOGIN:=USER_LOGIN and
@@ -532,7 +533,9 @@ private function selectFromDatabase($p) {
 		$p['login'] = $admin_login;
 	}
 
-	$dbres = $this->db->select($this->db->getQuery('select_login', $p));
+	$query = empty($p['select']) ? $this->db->getQuery('select_login', $p) : $p['select'];
+	$dbres = $this->db->select($query);
+	\rkphplib\lib\log_debug("TLogin.selectFromDatabase> query=$query - ".print_r($dbres, true));
 	if (count($dbres) == 0) {
 		$this->tok->setVar('login_error', 'error');
 		return null;
@@ -554,7 +557,8 @@ private function selectFromDatabase($p) {
 		}
 
 		$p['login'] = $user_login;
-		$dbres = $this->db->select($this->db->getQuery('select_login', $p));
+		$query = empty($p['select']) ? $this->db->getQuery('select_login', $p) : $p['select'];
+		$dbres = $this->db->select($query);
 		if (count($dbres) != 1) {
 			$this->tok->setVar('login_error', 'error');
 			return null;
@@ -576,6 +580,7 @@ private function selectFromDatabase($p) {
 	unset($dbres[0]['password_input']);
 	unset($dbres[0]['password']);
 
+	\rkphplib\lib\log_debug("TLogin.selectFromDatabase> return user: ".print_r($dbres[0], true));
 	return $dbres[0];
 }
 
