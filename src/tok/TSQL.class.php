@@ -490,8 +490,9 @@ public function tok_sql_options($p = []) {
 		$sval = empty($p['selected']) ? '' : $p['selected'];
 		while (($row = $this->db->getNextRow())) {
 			$selected = ($row['value'] == $sval) ? ' selected' : '';
+			$label = isset($row['label']) ? $row['label'] : $row['value'];
 			$res .= '<option value="'.\rkphplib\lib\htmlescape($row['value']).'"'.$selected.'>'.
-				\rkphplib\lib\htmlescape($row['label'])."</option>\n";
+				\rkphplib\lib\htmlescape($label)."</option>\n";
 		}
 	}
 	else if ($p['mode'] == 'list') {
@@ -499,7 +500,7 @@ public function tok_sql_options($p = []) {
 
 		while (($row = $this->db->getNextRow())) {
 			$key = $row['value'];
-			$kv[$key] = $row['label'];
+			$kv[$key] = isset($row['label']) ? $row['label'] : $row['value'];
 		}
 
 		$res = \rkphplib\lib\kv2conf($kv, '=', ',');
