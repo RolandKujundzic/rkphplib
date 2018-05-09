@@ -1858,11 +1858,14 @@ public function tok_tf($p, $arg) {
 	}
 
 	if ($do == 'cmp') {
-		if (count($ap) != 2) {
+		if (count($ap) % 2 != 0) {
 			throw new Exception("invalid tf:$do", 'ap=['.join('|', $ap).']');
 		}
 
-		$tf = ($ap[0] === $ap[1]);
+		$tf = true;
+		for ($i = 0; $tf && $i < count($ap); $i = $i + 2) {
+			$tf = ($ap[$i] === $ap[$i + 1]);
+		}
 	}
 	else if ($do == 'set') {
 		$tf = $ap;
