@@ -74,19 +74,24 @@ public function getPlugins($tok) {
  *
  * @tok {login_access:}redirect={link:}@=login/access_denied{:link}|#|allow={:=super}{:login_access} = redirect to login/access_denied if no super priv
  * @tok {login_access:}privilege={:=super}{:login_access} = 1
+ * @tok {login_access:}type=seller{:login_access} -> redirect if login.type != seller
  *
+ * @redirect login/access_denied or p.redirect
  * @param map $p
  * @return 1|''
  */
 public function tok_login_access($p) {
+	$redir_url = empty($p['redirect_access_denied']) ? 'login/access_denied' : $p['redirect_access_denied'];
 	$res = '';
 
 	if (!empty($p['allow']) && !$this->hasPrivileges($p['allow'])) {
-		$redir_url = empty($p['redirect_access_denied']) ? 'login/access_denied' : $p['redirect_access_denied'];
 		\rkphplib\lib\redirect($redir_url, [ '@link' => 1, '@back' => 1 ]);
 	}
 	else if (!empty($p['privilege'])) {
 		$res = $this->hasPrivileges($p['privilege']);
+	}
+	else if (!empty($p['type']) && $this->tok_login('type?') != $p['type']) {
+		\rkphplib\lib\redirect($redir_url, [ '@link' => 1, '@back' => 1 ]);
 	}
 
 	return $res;
