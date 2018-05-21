@@ -356,7 +356,7 @@ public function loadDump($file, $flags = 0) {
 		$mysql->load($file);
 
 		if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
-			$mysql->write("SET FOREIGN_KEY_CHECKS=1;");
+			$mysql->write("SET FOREIGN_KEY_CHECKS=1; -- $file");
 		}
 
 		list ($retval, $error, $output) = $mysql->close();
