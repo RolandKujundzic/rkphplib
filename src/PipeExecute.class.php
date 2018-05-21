@@ -92,7 +92,7 @@ private function readStream($num) {
  */
 public function write($txt) {
 	if (!fwrite($this->pipe[0], $txt)) {
-		$log_txt = (strlen($txt) > 80) ? substr($txt, 0, 20).' ... '.substr($txt, -20) : $txt;
+		$log_txt = (strlen($txt) > 180) ? substr($txt, 0, 20).' ... '.substr($txt, -20) : $txt;
 		throw new Exception('write failed', "cmd=[".$this->command."] txt=[$log_txt]");
 	}
 }
@@ -102,13 +102,13 @@ public function write($txt) {
  * Pipe in $file. Close is necessary.
  *
  * @throws
- * @string $file
+ * @param string $file
  */
 public function load($file) {
 	$fh = File::open($file, 'rb');
 
 	while (!feof($fh)) { 
-		if (($buffer = fread($fh, 4096)) === false) {
+		if (($buffer = fread($fh, 8192)) === false) {
 			throw new Exception('fread file failed', "file=$file buffer=$buffer");
 		}
 		else {
