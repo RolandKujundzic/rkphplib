@@ -731,8 +731,9 @@ public static function writeCSV($fh, $data, $delimiter = ',', $enclosure = '"', 
  * @param string $data
  */
 public static function write($fh, $data) {
+	$data_len = strlen($data);
 
-	if (!$data) {
+	if ($data_len == 0) {
 		return;
 	}
 
@@ -741,18 +742,25 @@ public static function write($fh, $data) {
 	}
 
 	if (($byte = fwrite($fh, $data)) === false) {
-		throw new Exception('could not write data', 'fh=['.$fh.'] byte=['.$byte.']');
+		throw new Exception('could not write data', "fh=[$fh] byte=[$byte] len=[$data_len]");
 	}
-	else if (($data_len = strlen($data)) > 0 && $byte == 0) {
-		// retry 5x - error occurs with e.g. pipe write to mysql
+
+	// beware: writing to network stream or pipe might end before whole string is written
+	if ($data_len > $byte) {
+		// retry 10x
 		$n = 0;
 
 		while ($n < 10) {
-			usleep(100000);
-			$byte = fwrite($fh, $data);
+			usleep(100000 + $n * 30000);
+
+			$prev_len = $data_len;
+			$data_len = $data_len - $byte;
+			$byte = fwrite($fh, substr($data, $byte));
+			$msg = ($data_len > 80) ? substr($data, 0, 40).' ... '.substr($data, -40) : $data;
+			\rkphplib\lib\log_debug("retry write: n=[$n] prev_len=[$prev_len] data_len=[$data_len] byte=[$byte] data=[$msg]");
 
 			if ($byte === false) {
-				throw new Exception('could not write data', 'fh=['.$fh.'] byte=['.$byte.']');
+				throw new Exception('could not write data', "retry=[$n] fh=[$fh] byte=[$byte] len=[$data_len] prev_len=[$prev_len]");
 			}
 			else if ($byte == $data_len) {
 				$n = 10;
@@ -761,9 +769,9 @@ public static function write($fh, $data) {
 			$n++;
 		}
 
-		if ($byte == 0 && $data_len > 0) {
+		if ($data_len > $byte) {
 			$msg = ($data_len > 80) ? substr($data, 0, 40).' ... '.substr($data, -40) : $data;
-			throw new Exception('retry write data failed', "data.length=[$data_len] data=[$msg]");
+			throw new Exception('retry write data failed', "data.length=[$data_len] byte=[$byte] data=[$msg] n=[$n]");
 		}
 	}
 }
@@ -807,18 +815,20 @@ public static function end($fh) {
 
 
 /**
- * Read line from filehandle (until \n or maxlen is reached).
+ * Read line from filehandle (until \n or EOF is reached).
  *
  * @throws
  * @param resource $fh file handle
- * @param int $maxlen
- * @return string|false
+ * @return string|boolean
  */
-public static function readLine($fh, $maxlen = 8192) {
-	$res = fgets($fh, $maxlen);
+public static function readLine($fh) {
 
-	if (mb_strlen($res) === $maxlen - 1 && !feof($fh)) {
-		throw new Exception('line too long', $res);
+	if (!$fh) {
+		throw new Exception('invalid file handle');
+	}
+
+	if (($res = fgets($fh)) === false && !feof($fh)) {
+		throw new Exception('error reading line');
 	}
 
 	return $res;
