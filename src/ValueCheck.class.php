@@ -146,21 +146,34 @@ public static function getMatch($name) {
  * Execute database query to check if value is unique. Example: 
  *
  * self::run(login, 'Joe', '{login:@table}:login:{get:login}:id:{login:id}')
- *
+ * check.email = isUnique:shop_customer@3:email:{get:email}:id: ({get:id} missing because unknown)
+ * 
  * @param string $value
  * @array $p
  */
 public static function isUnique($value, $p) {
 	require_once(__DIR__.'/Database.class.php');
 
-	$table = \rkphplib\ADatabase::escape_name($p[0]);
-	$id_col = \rkphplib\ADatabase::escape_name($p[3]);
-	$u_col = \rkphplib\ADatabase::escape_name($p[1]);
+	$query = 'SELECT count(*) AS anz FROM ';
 
-	$query = "SELECT count(*) AS anz FROM $table WHERE $id_col!={:=id_val} AND $u_col={:=u_val}";
+	if (strpos($p[0], '@') !== false) {
+		list ($table, $owner) = explode('@', $p[0]);
+		$query .= \rkphplib\ADatabase::escape_name($table).' WHERE owner='.intval($owner).' AND ';
+	}
+	else {
+		$query .= \rkphplib\ADatabase::escape_name($p[0]).' WHERE ';
+	}
+
+	$query .= \rkphplib\ADatabase::escape_name($p[1]).' = {:=u_val}';
+	$id_val = '';
+
+	if (!empty($p[4])) {
+		$query .= ' AND '.\rkphplib\ADatabase::escape_name($p[3]).' != {:=id_val}';
+		$id_val = $p[4];
+	}
 
 	$db = \rkphplib\Database::getInstance('', [ 'select_unique' => $query ]);
-	$query = $db->getQuery('select_unique', [ 'id_val' => $p[4], 'u_val' => $p[2] ]);
+	$query = $db->getQuery('select_unique', [ 'id_val' => $id_val, 'u_val' => $p[2] ]);
 	$dbres = $db->select($query);
 	return intval($dbres[0]['anz']) == 0;
 }
