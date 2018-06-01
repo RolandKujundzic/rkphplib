@@ -1110,7 +1110,8 @@ public function tok_switch($set, $p) {
  * @tok {if:cmp}a|#|a|#|b|#|c|#|true|#|false{:if} = false - same as {if:cmp:and}...
  * @tok {if:cmp:a}a|#|true|#|false{:if} = true
  * @tok {if:cmp:or}a|#|a|#|b|#|c|#|true|#|false{:if} = true
- *
+ * @tok {if:match}roland.+@inkoeln.com|#|{get:email}|#|roland@inkoeln.com|#|{get:email}{:if}
+ * 
  * @throws 
  * @param string $param
  * @param string $arg
@@ -1214,6 +1215,18 @@ public function tok_if($param, $p) {
 		}
 
 		$res = $cmp ? $p[$p_num - 2] : $p[$p_num - 1];
+	}
+	else if ($do === 'match') {
+		if ($p_num < 3) {
+			throw new Exception('invalid if', "do=$do p=".print_r($p, true));
+		}
+
+		if (preg_match('/'.$p[0].'/', $p[1])) {
+			$res = $p[2];
+		}
+		else {
+			$res = ($p_num == 4) ? $p[3] : '';
+		}
 	}
 	else if ($do === 'cmp') {
 		if (!empty($param) && $param != 'and' && $param != 'or') {
