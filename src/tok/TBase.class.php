@@ -1831,7 +1831,7 @@ public function tok_tf($p, $arg) {
 			$tf = empty($ta);
 		}
 		else if ($p[0] === 'switch') {
-			$tf = empty($ta) ? false : $ta;
+			$tf = empty($ta) ? false : 'switch:'.$ta;
 		}
 		else if ($p[0] === 'set') {
 			$tf = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
@@ -2000,7 +2000,14 @@ public function tok_t($param, $arg) {
  */
 public function tok_true($val, $out) {
 	$tf = $this->_tok->getCallStack('tf');
-	return ((is_bool($tf) && $tf) || (is_string($tf) && $tf === $val) || 
+
+	if (is_string($tf) && strpos($tf, 'switch:') === 0) {
+		$val = \rkphplib\lib\split_str(',', $val);
+		$tf = substr($tf, 7);
+	}
+
+	// \rkphplib\lib\log_debug('tok_true: val='.print_r($val, true).' tf='.print_r($tf, true));
+	return ((is_bool($tf) && $tf) || (is_array($val) && in_array($tf, $val)) || (is_string($tf) && $tf === $val) || 
 		(is_array($tf) && !empty($val) && in_array($val, $tf))) ? $out : '';
 }
 
