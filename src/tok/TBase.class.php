@@ -448,7 +448,7 @@ public function tok_var($name, $value) {
 /**
  * Initialize row plugin. Parameter: 
  *
- * mode: bootstrap4 (=default, or: bootstrap3|table)
+ * mode: bootstrap4 (=default, or: bootstrap3|material|table)
  * colnum: 2 (=default)
  * border: 0
  * cellpadding: 0
@@ -469,6 +469,7 @@ public function tok_row_init($p) {
  * 
  * @tok {row:6,6}1-6|#|7-12{:row} -> <div class="row"><div class="col-md-6">1-6</div><div class="col-md-6">7-12</div></div>
  *
+ * @see getRowColAttributes
  * @param string $cols
  * @param vector $p
  */
@@ -480,6 +481,9 @@ public function tok_row($cols, $p) {
 
 	if ($this->_conf['row']['mode'] == 'bootstrap4' || $this->_conf['row']['mode'] == 'bootstrap3') {
 		return $this->bootstrapRow($cols, $p);
+	}
+	else if ($this->_conf['row']['mode'] == 'material') {
+		return $this->materialRow($cols, $p);
 	}
 	else if ($this->_conf['row']['mode'] == 'table') {
 		return $this->tableRow($cols, $p);
@@ -496,13 +500,19 @@ public function tok_row($cols, $p) {
  * @tok {row:6,6}a|#|b{:row} = <tr class="row"><td colspan="6">a</td><td colspan="6">b</td></tr>
  * 
  * @throws
+ * @see getRowColAttributes
  * @param vector<int> $cols
  * @param vector<string> $p
  * @return string
  */
 private function tableRow($cols, $p) {
+	$attributes = [];
+	$p_last = count($p) - 1;
 
-	if (count($cols) != count($p)) {
+	if (count($cols) == $p_last) {
+		$attributes = $this->getRowColAttributes($p[$p_last]);
+	}
+	else if (count($cols) != count($p)) {
 		throw new Exception('[row:'.join(',', $cols).']... - column count != argument count', join(HASH_DELIMITER, $p));
 	}
 
@@ -533,7 +543,9 @@ private function tableRow($cols, $p) {
 
 	for ($i = 0; $i < count($cols); $i++) {
 		$colspan = ($cols[$i] > 1) ? ' colspan="'.$cols[$i].'"' : '';
-		$res .= '<td'.$colspan.' valign="top">'.$p[$i].'</td>'."\n";
+		$class = isset($attributes[$i]['class']) ? ' class="'.$attributes[$i]['class'].'"' : '';
+		$other = isset($attributes[$i]['other']) ? ' '.$attributes[$i]['other'] : '';
+		$res .= '<td'.$colspan.' valign="top"'.$other.$class.'>'.$p[$i].'</td>'."\n";
 	}
 
 	$res .= "</tr>\n";
@@ -549,48 +561,107 @@ private function tableRow($cols, $p) {
 
 
 /**
- * Place $p into bootstrap row grid. Convert into form-row if possible.
+ * Return extra attributes map vector (keys: class and other).
+ *
+ * @tok {row:init:material}
+ * 
+ * @tok {row:6,6}a|#|b|#|@1.class="mdl-cell--8-col-tablet" @2.class="mdl-cell--4-col-phone"{:row} = <div class="mdl-grid">
+ *		<div class="mdl-cell mdl-cell--6-col mdl-cell--8-col-tablet">a</div>
+ * 		<div class="mdl-cell mdl-cell--6-col mdl-cell--4-col-phone">b</div></div>
+ * 
+ * @tok {row:2,4}a|#|b|#|@1.style="background-image: url('bg.jpg')" @2.style="text-align:right"{:row} = <div class="mdl-grid">
+ * 		<div class="mdl-cell mdl-cell--2-col" style="background-image: url('bg.jpg')">
+ *		<div class="mdl-cell mdl-cell--4-col" style="text-align:right"></div>
+ *
+ * @param string $extra
+ * @return vector<map> 
+ */
+private function getRowColAttributes($extra) {
+	$res = [];
+
+	while (preg_match('/^@([0-9]+)\.([a-z_\-]+)\=\"(.+?)\"/', $extra, $match)) {
+		$col = parseInt($match[1]) - 1;
+		$attribute = $match[2];
+		$class = ($attribute == 'class') ? $match[3] : '';
+		$other = ($attribute == 'class') ? '' : ' '.$attribute.'="'.$match[3].'"';
+		$res[$col] = [ 'class' => $class, 'other' => $other ];
+		$len = mb_strlen($match[0]);
+		$extra = mb_substr($extra, $len);
+	} 
+
+	return $res;
+}
+
+
+/**
+ * Place $p into material row grid. Add extra attributes if necessary.
+ * 
+ * @tok {row:6,6}a|#|b{:row} = <div class="mdl-grid">
+ * 		<div class="mdl-cell mdl-cell--6-col">a</div>
+ * 		<div class="mdl-cell mdl-cell--6-col">b</div></div>
+ *
+ * @throws
+ * @see getRowColAttributes
+ * @param vector<int> $cols
+ * @param vector<string> $p
+ * @return string
+ */
+private function materialRow($cols, $p) {
+	$attributes = [];
+	$p_last = count($p) - 1;
+
+	if (count($cols) == $p_last) {
+		$attributes = $this->getRowColAttributes($p[$p_last]);
+	}
+	else if (count($cols) != count($p)) {
+		throw new Exception('[row:'.join(',', $cols).']... - column count != argument count', join(HASH_DELIMITER, $p));
+	}
+
+	$res = '<div class="mdl-grid">'."\n";
+
+	for ($i = 0; $i < count($cols); $i++) {
+		$class = isset($attributes[$i]['class']) ? ' '.$attributes[$i]['class'] : '';
+		$other = isset($attributes[$i]['other']) ? ' '.$attributes[$i]['other'] : '';
+		$res .= '<div class="mdl-cell mdl-cell--'.$cols[$i].'-col'.$class.$other.'">'.$p[$i]."</div>\n";
+	}
+
+	$res .= "</div>\n";
+
+	return $res;
+}
+
+
+/**
+ * Place $p into bootstrap row grid.
  * 
  * @tok {row:6,6}a|#|b{:row} = <div class="row"><div class="col-md-6">a</div><div class="col-md-6">b</div></div>
  * 
  * @throws
+ * @see getRowColAttributes
  * @param vector<int> $cols
  * @param vector<string> $p
  * @return string
  */
 private function bootstrapRow($cols, $p) {
+	$attributes = [];
+	$p_last = count($p) - 1;
 
-	if (count($cols) != count($p)) {
+	if (count($cols) == $p_last) {
+		$attributes = $this->getRowColAttributes($p[$p_last]);
+	}
+	else if (count($cols) != count($p)) {
 		throw new Exception('[row:'.join(',', $cols).']... - column count != argument count', join(HASH_DELIMITER, $p));
 	}
 
-	$is_form_row = true;
+	$res = '<div class="row">'."\n";
 
-	for ($i = 0; $is_form_row && $i < count($p); $i++) {
-		if (strpos($p[$i], '<div class="form-group">') === false) {
-			$is_form_row = false;
-		}
+	for ($i = 0; $i < count($cols); $i++) {
+		$class = isset($attributes[$i]['class']) ? ' '.$attributes[$i]['class'] : '';
+		$other = isset($attributes[$i]['other']) ? ' '.$attributes[$i]['other'] : '';
+		$res .= '<div class="col-md-'.$cols[$i].$class.'"'.$other.'>'.$p[$i]."</div>\n";
 	}
 
-	if ($is_form_row) {
-		$res = '<div class="form-row">'."\n";
-
-		for ($i = 0; $i < count($cols); $i++) {
-			$col = 'col-md-'.$cols[$i].' ';
-			$res .= str_replace('<div class="form-group">', '<div class="form-group '.$col.'">', $p[$i]);
-		}
-
-		$res .= "</div>\n";
-	}
-	else {
-		$res = '<div class="row">'."\n";
-
-		for ($i = 0; $i < count($cols); $i++) {
-			$res .= '<div class="col-md-'.$cols[$i].'">'.$p[$i]."</div>\n";
-		}
-
-		$res .= "</div>\n";
-	}
+	$res .= "</div>\n";
 
 	return $res;
 }
