@@ -144,6 +144,14 @@ public function __construct() {
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$id.'" style="display:none">'.$fselect_input.'</span>',
 
+		'material.in.input'	   => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="mdl-textfield__input '.$class.'" '.$tags.'>',
+		'material.in.file'     => '<input class="mdl-textfield__input '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
+		'material.in.textarea' => '<textarea name="'.$name.'" class="mdl-textfield__input '.$class.'" '.$tags.'>'.$value.'</textarea>',
+		'material.in.select'   => '<select name="'.$name.'" class="mdl-textfield__input '.$class.'" '.$tags.'>'.$options.'</select>',
+		'material.in.fselect'  => '<span id="fselect_list_'.$id.'"><select name="'.$name.'" class="mdl-textfield__input '.$class.'" '.
+			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
+			'<span id="fselect_input_'.$id.'" style="display:none">'.$fselect_input.'</span>',
+
 		'template.error.message' 			  => $error,
 		'template.error.message_concat' => ', ',
 		'template.error.message_multi'  => "<i>$name</i>: <tt>$error</tt><br>",
@@ -447,6 +455,7 @@ public function tok_fv_error_message($name, $tpl = '') {
  * @return string
  */
 public function tok_fv_tpl($name, $p) {
+
 	if (!isset($this->conf['current']['template.'.$name])) {
 		throw new Exception('no template.'.$name.' template');
 	}
