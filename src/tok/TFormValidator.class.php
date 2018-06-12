@@ -124,7 +124,7 @@ public function __construct() {
 		'template.header' => '',
 		'template.footer' => '',
 
-		'option.label_empty'  => '...',
+		'option.label_empty'  => '',
 
 		'default.in.const'    => '<span class="const">'.$value.'</span>',
 		'default.in.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" '.$tags.'>',
@@ -151,6 +151,9 @@ public function __construct() {
 		'material.in.fselect'  => '<span id="fselect_list_'.$id.'"><select name="'.$name.'" class="mdl-textfield__input '.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$id.'" style="display:none">'.$fselect_input.'</span>',
+		'material.in.checkbox' => '<label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="'.$id.'"><input type="checkbox" '.
+			'name="'.$name.'" value="'.$value.'" class="mdl-checkbox__input '.$class.'" '.$tags.
+			'><span class="mdl-checkbox__label">'.$label.'</span></label>',
 
 		'template.error.message' 			  => $error,
 		'template.error.message_concat' => ', ',
@@ -693,7 +696,7 @@ protected function getInput($name, $ri) {
 
 	$tags = '';
 
-	$attributes = [ 'id', 'size', 'maxlength', 'placeholder', 'pattern', 'rows', 'cols', 'style', 'class', 'accept' ];
+	$attributes = [ 'id', 'size', 'maxlength', 'placeholder', 'pattern', 'rows', 'cols', 'style', 'class', 'accept', 'onchange' ];
 	foreach ($attributes as $key) {
 		if (isset($ri[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
 			$tags .= ' '.$key.'="'.$this->tok->getTag($key).'"';
@@ -722,7 +725,7 @@ protected function getInput($name, $ri) {
 	}
 
 	foreach ($ri as $key => $value) {
-		if ($key != 'options') {
+		if (!in_array($key, [ 'options', 'label' ])) {
 			$ri[$key] = \rkphplib\lib\htmlescape($value);
 		}
 	}
@@ -737,7 +740,7 @@ protected function getInput($name, $ri) {
 
 	$input = $this->tok->replaceTags($input, $ri);
 
-	// \rkphplib\lib\log_debug("getInput($name): ".print_r($ri, true)."\n$input");
+	\rkphplib\lib\log_debug("getInput($name): ".print_r($ri, true)."\n$input");
 	return $input;
 }
 
