@@ -548,11 +548,7 @@ private function _join_tok_plugin(&$i) {
 	if (isset($this->_plugin[$name])) {
 		$tp = $this->_plugin[$name][1];
 
-		if (isset($this->_plugin['any'])) {
-			$param = $tok;
-			$name = 'any';
-		}
-		else if ($tp & TokPlugin::TOKCALL) {
+		if ($tp & TokPlugin::TOKCALL) {
 			if (!method_exists($this->_plugin[$name][0], 'tokCall')) {
 				throw new Exception('invalid plugin', "$name has no tokCall() method");
 			}
