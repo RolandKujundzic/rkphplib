@@ -368,7 +368,7 @@ public static function scan($path, $sort = SCANDIR_SORT_ASCENDING) {
  *
  * @param array &$suffix_list list is changed
  */
-private static function _fix_suffix_list(&$suffix_list) {
+public static function fixSuffixList(&$suffix_list) {
   for ($i = 0; $i < count($suffix_list); $i++) {
 		$s = $suffix_list[$i];
 
@@ -422,7 +422,7 @@ private static function _has_suffix($file, $suffix_list) {
  */
 public static function scanDir($path, $suffix_list = array(), $rel_dir = '') {
 
-	self::_fix_suffix_list($suffix_list);
+	self::fixSuffixList($suffix_list);
 
 	$entries = Dir::entries($path);
 	$found = array();
@@ -456,7 +456,7 @@ public static function scanDir($path, $suffix_list = array(), $rel_dir = '') {
 public static function scanTree($path, $suffix_list = array(), $exclude_dir = array(), $_recursion = false) {
 
 	if (!$_recursion) {
-		self::_fix_suffix_list($suffix_list);
+		self::fixSuffixList($suffix_list);
 
 		// prepend path to exclude_dir ...
 		for ($i = 0; $i < count($exclude_dir); $i++) {
