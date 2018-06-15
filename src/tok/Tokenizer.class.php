@@ -34,6 +34,9 @@ public $rx = [ "/\{([a-zA-Z0-9_]*\:.*?)\}/s", '{', ':', '}', '&#123;', '&#58;', 
 /** @var string $file Token data from $file - defined if load($file) was used */
 public $file = '';
 
+/** @var $last last plugin processed */
+public $last = '';
+
 
 /** @const TOK_IGNORE remove unkown plugin */
 const TOK_IGNORE = 2;
@@ -530,6 +533,13 @@ private function _join_tok_plugin(&$i) {
 	$buildin = '';
 	$check_np = 0;
 	$tp = 0;
+
+	$this->last = $name;
+
+	if (isset($this->_plugin['catchall'])) {
+		// if [catchall] was registered as plugin run everything through this handler ...
+		$name = 'catchall';
+	}
 
 	if (!isset($this->_plugin[$name])) {
 		$this->tryPluginMap($name);
