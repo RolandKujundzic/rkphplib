@@ -120,7 +120,7 @@ public function getPlugins($tok) {
 
 	$plugin = [];
 
-	$plugin['row:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['row:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY | TokPlugin::IS_STATIC;
 	$plugin['row'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | 
 		TokPlugin::LIST_BODY | TokPlugin::IS_STATIC;
 
