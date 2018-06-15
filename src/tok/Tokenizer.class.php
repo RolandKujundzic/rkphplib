@@ -777,15 +777,33 @@ private function _buildin($action, $name, $param, $arg = null) {
  * If number of args < 4 call $name.$func($args[0], $args[1], $args[2]) otherwise
  * call $name.$func($args). 
  *
+ * If func has not 'tok_' prefix and args is string use _call_plugin(name, func, args).
+ *
+ * Example: 
+ *   callPlugin('login', 'tok_login');
+ *   callPlugin('login', 'tok_login', [ 'id' ]);
+ *
+ *   callPlugin('row', 'init', 'mode=material');
+ *   callPlugin('row', '2,3', 'a|#|b');
+ * 
  * @param string $name
  * @param string $func
- * @param vector|map $args
+ * @param string|vector|map $args
  * @return any
  */
 public function callPlugin($name, $func, $args = []) {
 
 	if (empty($this->_plugin[$name])) {
 		throw new Exception('no such plugin '.$name, join('|', array_keys($this->_plugin)));
+	}
+
+	if (strpos($func, 'tok_') !== 0 && is_string($args)) {
+		if (isset($this->_plugin[$name.':'.$func])) {
+			$name = $name.':'.$func;
+			$func = '';
+		}
+
+		return $this->_call_plugin($name, $func, $args);
 	}
 
 	if (!method_exists($this->_plugin[$name][0], $func)) {
@@ -1155,5 +1173,25 @@ private function tryPluginMap($name) {
 		}
 	}
 }
+
+
+/**
+ * Return plugin features. If plugin is build return null.
+ * 
+ * @param string $name
+ * @return int|null (null = buildin) 
+ */
+public function getPluginFeatures($name) {
+
+	if (in_array($name, [ 'ignore', 'keep', 'debug' ])) {
+		return null;
+	}
+	else if (!isset($this->_plugin[$name])) {
+		$this->tryPluginMap($name);
+	}
+
+	return $this->_plugin[$name][1];
+}
+
 
 }
