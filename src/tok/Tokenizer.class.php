@@ -34,9 +34,6 @@ public $rx = [ "/\{([a-zA-Z0-9_]*\:.*?)\}/s", '{', ':', '}', '&#123;', '&#58;', 
 /** @var string $file Token data from $file - defined if load($file) was used */
 public $file = '';
 
-/** @var $last last plugin processed */
-public $last = '';
-
 
 /** @const TOK_IGNORE remove unkown plugin */
 const TOK_IGNORE = 2;
@@ -54,6 +51,9 @@ const VAR_MUST_NOT_EXIST = 1;
 /** @const VAR_APPEND append value to vector key in setVar() */
 const VAR_APPEND = 2;
 
+
+/** @var $last plugin call stack */
+public $last = [];
 
 /** @var map $vmap plugin variable interchange */
 private $vmap = [];
@@ -513,6 +513,20 @@ private function _join_tok($start, $end) {
 
 
 /**
+ * Return current plugin name. Call only once before executing callPlugin().
+ * 
+ * @return string
+ */
+public function getCurrentPlugin() {
+	if (count($this->last) < 1) {
+		throw new Exception('last is not set');
+	}
+
+	return array_pop($this->last);
+}
+
+
+/**
  * Compute plugin output.
  * Loop position $i will change.
  *
@@ -534,7 +548,7 @@ private function _join_tok_plugin(&$i) {
 	$check_np = 0;
 	$tp = 0;
 
-	$this->last = $name;
+	array_push($this->last, $name);
 
 	if (isset($this->_plugin['catchall'])) {
 		// if [catchall] was registered as plugin run everything through this handler ...
