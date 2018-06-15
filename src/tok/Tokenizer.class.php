@@ -797,7 +797,11 @@ public function callPlugin($name, $func, $args = []) {
 		throw new Exception('no such plugin '.$name, join('|', array_keys($this->_plugin)));
 	}
 
-	if (strpos($func, 'tok_') !== 0 && is_string($args)) {
+	if (strpos($func, 'tok_') !== 0) {
+		if (is_null($args) || (is_array($args) && count($args) == 0)) {
+			$args = '';
+		}
+
 		if (isset($this->_plugin[$name.':'.$func])) {
 			$name = $name.':'.$func;
 			$func = '';
