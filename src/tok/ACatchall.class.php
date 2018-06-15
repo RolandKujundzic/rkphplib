@@ -29,6 +29,46 @@ abstract class ACatchall implements TokPlugin {
 /** @var Tokenizer $tok */
 protected $tok = null;
 
+/** @var hash $crawl_dir */
+protected $crawl_dir = [];
+
+/** @var string $layout */
+protected $layout = '';
+
+/** @var string $source_dir */
+protected $source_dir = '';
+
+
+
+/**
+ * Set layout and include files.
+ * 
+ * @param string $source_dir
+ * @param string $layout (e.g. 'layout.inc.html')
+ * @param array $include (e.g. [ 'content.inc.html' ])
+ */
+public function setLayoutInclude($source_dir, $layout, $include) {
+	$this->crawl_dir = [];
+	$this->source_dir = $source_dir;
+	$this->layout = $layout;
+
+	$inc_html = Dir::scanTree($source_dir, [ 'inc.html' ]);
+	$slen = strlen($source_dir);
+
+	foreach ($inc_html as $file) {
+		$base = basename($file);
+
+		if (in_array($base, $include)) {
+			$dir = substr(dirname($file), $slen + 1).'';
+
+			if (!isset($crawl_dir[$dir])) {
+				$this->crawl_dir[$dir] = [];
+			}
+
+			array_push($this->crawl_dir[$dir], $base);
+    }
+  }
+}
 
 
 /**
@@ -58,6 +98,29 @@ abstract public function tok_catchall($param, $arg);
  * @param string $data
  */
 abstract public function processFile($file, $data);
+
+
+/**
+ * Return tokenized via layout. Assume _REQUEST[dir] is exported.
+ * 
+ * @param string $file
+ * @return string
+ */
+public function parseLayout($file) {
+	$curr = getcwd();
+	chdir($this->source_dir);
+
+	$this->tok = new Tokenizer();
+	$tbase = new TBase();
+	$this->tok->register($tbase);
+	$this->tok->register($this);
+
+	$this->tok->load($this->layout);
+	$res = $this->tok->toString();
+
+	chdir($curr);
+	return $res;
+}
 
 
 /**
@@ -131,14 +194,23 @@ public function copy($source_dir, $target_dir, $parse_suffix_list = [ 'inc.html'
 
   		Dir::create(dirname($target), 0, true);
 
+			$dir = dirname($relpath);
+			if ($dir == '.') {
+				$dir = '';
+			}
+
+			$_REQUEST['dir'] = $dir;
+			$base = basename($entry);
+
+			if (isset($this->crawl_dir[$dir]) && in_array($base, $this->crawl_dir[$dir])) {
+				$this->processFile(dirname($target).'/index.html', $this->parseLayout($entry));
+			}
 			if (in_array($suffix, $parse_suffix_list)) {
-				$dir = dirname($relpath);
-				$_REQUEST['dir'] = ($dir != '.') ? $dir : '';
-				$content = $this->processFile($target, $this->parseFile($entry));
+				$this->processFile($target, $this->parseFile($entry));
 			}
 			else {
-				$this->log("copy $entry to $target");
-				File::copy($entry, $target);
+				$this->log("load file $entry");
+				$this->processFile($target, File::load($entry));
 			}
     }
   }
