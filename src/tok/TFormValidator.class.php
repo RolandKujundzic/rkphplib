@@ -152,7 +152,7 @@ public function __construct() {
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$id.'" style="display:none">'.$fselect_input.'</span>',
 		'material.in.checkbox' => '<label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="'.$id.'"><input type="checkbox" '.
-			'name="'.$name.'" value="'.$value.'" class="mdl-checkbox__input '.$class.'" '.$tags.
+			'id="'.$id.'" name="'.$name.'" value="'.$value.'" class="mdl-checkbox__input mdl-js-ripple-effect '.$class.'" '.$tags.
 			'><span class="mdl-checkbox__label">'.$label.'</span></label>',
 
 		'template.error.message' 			  => $error,
