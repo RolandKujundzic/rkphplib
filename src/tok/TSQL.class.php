@@ -367,8 +367,8 @@ public function tok_sql_qkey($qkey, $query) {
  *
  * table= table_name
  * id_col= id, auto_increment (default)
- * col_value= lchange=now(), images={esc:images}
- * add_col_value= since=now()
+ * col_value= lchange=now(), images={get:images}, ...
+ * add_col_value= since=now(), login={get:email}, ...
  * 
  * @param hash $p
  */
