@@ -660,6 +660,7 @@ private function _join_tok_plugin(&$i) {
 		}
 	}
 
+/*
 	if ($tp & TokPlugin::REDO) {
 		$old_tok = $this->_tok;
 		$old_endpos = $this->_endpos;
@@ -671,6 +672,7 @@ private function _join_tok_plugin(&$i) {
 		$this->_tok = $old_tok;
 		$this->_endpos = $old_endpos;
 	}
+*/
 
 	return $out;
 }
@@ -953,6 +955,18 @@ private function _call_plugin($name, $param, $arg = null) {
 	else {
 		$res = call_user_func(array($this->_plugin[$name][0], $func), $param, $arg);
 	}
+
+  if ($this->_plugin[$name][1] & TokPlugin::REDO) {
+    $old_tok = $this->_tok;
+    $old_endpos = $this->_endpos;
+
+    // \rkphplib\lib\log_debug("REDO:\n---\n$res\n---\n");
+    $this->setText($res);
+    $res = $this->_join_tok(0, count($this->_tok));
+
+    $this->_tok = $old_tok;
+    $this->_endpos = $old_endpos;
+  }
 
 	return $res;
 }
