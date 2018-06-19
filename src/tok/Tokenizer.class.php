@@ -813,7 +813,7 @@ public function callPlugin($name, $func, $args = []) {
 		throw new Exception('no such plugin '.$name, join('|', array_keys($this->_plugin)));
 	}
 
-	if (strpos($func, 'tok_') !== 0) {
+	if (strpos($func, 'tok_') !== 0 && !method_exists($this->_plugin[$name][0], $func)) {
 		if (is_null($args) || (is_array($args) && count($args) == 0)) {
 			$args = '';
 		}
@@ -883,6 +883,11 @@ private function _call_plugin($name, $param, $arg = null) {
 	$func = 'tok_'.$name;
 	$pconf = $this->_plugin[$name][1];
 	$plen = strlen($param);
+
+	if (is_array($arg)) {
+		throw new Exception("call plugin [$name:$param] argument is array", print_r($arg, true));
+	}
+
 	$alen = strlen($arg);
 
 	if (($pos = mb_strpos($name, $this->rx[2])) > 0) {
