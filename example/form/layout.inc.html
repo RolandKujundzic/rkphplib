@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<script src="../../js/rkPhpLib.js"></script>
+</head>
+
+<body>
+
+{fv:init}
+required= id, name, brand|#|
+hidden_keep= id, dir|#|
+hidden.form_action=1|#|
+
+in.name= text|#|
+in.brand= fselect, =choose ..., Audi, BMW, Volkswagen, _=add ...|#|
+{:fv}
+
+<form method="get">
+{fv:hidden}
+check = {fv:check}<br>
+{fv:in:name}label=Name{:fv}<br>
+{fv:in:brand}label=Brand{:fv}<br>
+<input type="submit">
+</form>
+
+</body>
+</html>
