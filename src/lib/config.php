@@ -22,6 +22,8 @@ namespace rkphplib\lib;
  *
  */
 
+require_once(__DIR__.'/log_debug.php');
+
 // E_ERROR | E_WARNING | E_PARSE | E_NOTICE or E_ALL or E_ALL ^ E_NOTICE
 // error_reporting(E_ALL);
 
