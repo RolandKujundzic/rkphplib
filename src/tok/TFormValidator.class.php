@@ -30,6 +30,7 @@ use \rkphplib\ValueCheck;
  * {fv:init:[add]}
  * use= NAME|#| (default: use=default)
  * hidden_keep= dir, ...|#|
+ * hidden.form_action=1|#|
  * hidden.id= 5|#|
  * required= login, password|#|
  * check.login= minLength:2|#|
@@ -132,25 +133,25 @@ public function __construct() {
 		'default.in.select'   => '<select name="'.$name.'" class="'.$class.'" '.$tags.'>'.$options.'</select>',
 		'default.in.file'			=> '<input type="file" name="'.$name.'" class="'.$class.'" data-value="'.$value.'" '.$tags.'>',
 
-		'default.in.fselect'  => '<span id="fselect_list_'.$id.'"><select name="'.$name.'" class="'.$class.'" '.
+		'default.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="'.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
-			'<span id="fselect_input_'.$id.'" style="display:none">'.$fselect_input.'</span>',
+			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
 
 		'bootstrap.in.input'	  => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="form-control '.$class.'" '.$tags.'>',
 		'bootstrap.in.file'     => '<input class="form-control-file '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
 		'bootstrap.in.textarea' => '<textarea name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$value.'</textarea>',
 		'bootstrap.in.select'   => '<select name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$options.'</select>',
-		'bootstrap.in.fselect'  => '<span id="fselect_list_'.$id.'"><select name="'.$name.'" class="form-control '.$class.'" '.
+		'bootstrap.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="form-control '.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
-			'<span id="fselect_input_'.$id.'" style="display:none">'.$fselect_input.'</span>',
+			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
 
 		'material.in.input'	   => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="mdl-textfield__input '.$class.'" '.$tags.'>',
 		'material.in.file'     => '<input class="mdl-textfield__input '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
 		'material.in.textarea' => '<textarea name="'.$name.'" class="mdl-textfield__input '.$class.'" '.$tags.'>'.$value.'</textarea>',
 		'material.in.select'   => '<select name="'.$name.'" class="mdl-textfield__input '.$class.'" '.$tags.'>'.$options.'</select>',
-		'material.in.fselect'  => '<span id="fselect_list_'.$id.'"><select name="'.$name.'" class="mdl-textfield__input '.$class.'" '.
+		'material.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="mdl-textfield__input '.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
-			'<span id="fselect_input_'.$id.'" style="display:none">'.$fselect_input.'</span>',
+			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
 		'material.in.checkbox' => '<label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="'.$id.'"><input type="checkbox" '.
 			'id="'.$id.'" name="'.$name.'" value="'.$value.'" class="mdl-checkbox__input mdl-js-ripple-effect '.$class.'" '.$tags.
 			'><span class="mdl-checkbox__label">'.$label.'</span></label>',
@@ -665,6 +666,7 @@ protected function parseInName($name, $value, &$p) {
  */
 protected function getInput($name, $ri) {
 	$ri['name'] = isset($ri['multiple']) ? $name.'[]' : $name;
+	$ri2 = $ri;
 
 	$conf = $this->conf['current'];
 
@@ -736,6 +738,15 @@ protected function getInput($name, $ri) {
 	if (!empty($ri['options']) && strpos($ri['options'], '</option>') === false) {
 		$tmp = \rkphplib\lib\conf2kv($ri['options'], '=', ',');
 		$ri['options'] = $this->getOptions($tmp, $ri['value'], $ri['options']);
+	}
+
+	if ($ri['type'] == 'fselect') {
+		$ri2['id'] .= '_';
+		$ri2['name'] .= '_';
+		$ri2['type'] = 'text';
+		$ri2['value'] = '';
+		$ri2['onchange'] = "rkphplib.fselectList(this)";
+		$ri['fselect_input'] = $this->getInput($ri2['name'], $ri2);
 	}
 
 	$input = $this->tok->replaceTags($input, $ri);
