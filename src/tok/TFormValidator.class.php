@@ -698,7 +698,8 @@ protected function getInput($name, $ri) {
 
 	$tags = '';
 
-	$attributes = [ 'id', 'size', 'maxlength', 'placeholder', 'pattern', 'rows', 'cols', 'style', 'class', 'accept', 'onchange' ];
+	$attributes = [ 'id', 'size', 'maxlength', 'placeholder', 'pattern', 'rows', 'cols', 'style', 'class', 
+		'accept', 'onchange', 'onblur' ];
 	foreach ($attributes as $key) {
 		if (isset($ri[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
 			$tags .= ' '.$key.'="'.$this->tok->getTag($key).'"';
@@ -746,6 +747,7 @@ protected function getInput($name, $ri) {
 		$ri2['type'] = 'text';
 		$ri2['value'] = '';
 		$ri2['onchange'] = "rkphplib.fselectList(this)";
+		$ri2['onblur'] = "rkphplib.fselectList(this)";
 		$ri['fselect_input'] = $this->getInput($ri2['name'], $ri2);
 	}
 
