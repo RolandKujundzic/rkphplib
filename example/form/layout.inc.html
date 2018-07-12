@@ -14,6 +14,7 @@ hidden.form_action=1|#|
 
 in.name= text|#|
 in.brand= fselect, =choose ..., Audi, BMW, Volkswagen, _=add ...|#|
+in.interior= multi_checkbox, 1=Klima, 2=AHK, 4=Radio|#|
 {:fv}
 
 <form method="get" data-key13="prevent">
@@ -21,6 +22,7 @@ in.brand= fselect, =choose ..., Audi, BMW, Volkswagen, _=add ...|#|
 check = {fv:check}<br>
 {fv:in:name}label=Name{:fv}<br>
 {fv:in:brand}label=Brand{:fv}<br>
+{fv:in:interior}label=Interior{:fv}<br>
 <input type="submit">
 </form>
 

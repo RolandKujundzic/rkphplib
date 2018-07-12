@@ -470,6 +470,70 @@ public function tok_fv_tpl($name, $p) {
 
 
 /**
+ * Return 2^N data as hash. Export $_REQUEST[$name]. Example (name=x, p= 1:a, 2:b, 4:c):
+ * 
+ * { x0: a, x1: b, x2: c }
+ *
+ * @param string $name
+ * @param hash $p
+ * @return hash { variable1: label1, ... }
+ */
+private function get2NData($name, $p) {
+	$res = $p;
+	$value = 0;
+	$done = false;
+
+	for ($n = 0; !$done; $n++) {
+		$v = pow(2, $n);
+
+		if (!isset($p[$v])) {
+			$done = true;
+			$res['n_max'] = $n;
+		}
+		else {
+			$var = $name.$n;
+			$res[$var] = $p[$v];
+
+			if (!empty($_REQUEST[$var]) && $_REQUEST[$var] == $v) {
+				$value += $v;
+			}
+		}
+	}
+
+	$_REQUEST[$name] = $value;
+	return $res;
+}
+
+
+/**
+ * Return multi-checkbox html.
+ *
+ * @param string $name
+ * @param hash $p
+ * @return string
+ */
+private function multiCheckbox($name, $p) {
+	$res = '';
+
+	for ($n = 0; $n < $p['n_max']; $n++) {
+		$var = $name.$n;
+
+		$r = [];
+		$r['type'] = $p['type'];
+		$r['value'] = pow(2, $n);
+
+		if (!empty($_REQUEST[$var]) && $_REQUEST[$var] == $r['value']) {
+			$r['checked'] = 'checked';
+		}
+
+		$res .= $this->getInput($var, $r).' '.$p[$var];
+	}
+
+	return $res;
+}
+
+
+/**
  * Show input for $name. If $p is empty use conf.[in.name].
  *
  * @throws
@@ -491,6 +555,10 @@ public function tok_fv_in($name, $p) {
 
 	if (!empty($conf['in.'.$name])) {
 		$this->parseInName($name, $conf['in.'.$name], $p);
+	}
+
+	if (!empty($p['multi'])) {
+		return $this->multiCheckbox($name, $p);
 	}
 
 	if (!isset($p['value'])) {
@@ -625,6 +693,11 @@ protected function parseInName($name, $value, &$p) {
 
 		$p['options'] = $this->getOptions($r, $p['value'], $value);
 	}
+	else if ($type == 'multi_checkbox') {
+		$p = $this->get2NData($name, $r);
+		$p['type'] = 'checkbox';
+		$p['multi'] = 1;
+	}
 	else if ($type == 'const') {
 		// ok ...
 	}
@@ -642,6 +715,9 @@ protected function parseInName($name, $value, &$p) {
 			$p['data-max'] = 8;
 		}
 	}
+  else if ($type == 'set' || $type == 'multi_select') {
+		// ToDo ...
+  }
 	else {
 		throw new Exception('ToDo: name='.$name.' p: '.join('|', $p));
 	}
