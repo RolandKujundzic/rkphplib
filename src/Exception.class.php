@@ -40,6 +40,10 @@ public function __construct($message, $internal_message = '') {
 	parent::__construct($message);
 	$this->internal_message = $internal_message;
 
+	if (!defined('DOCROOT')) {
+		return;
+	}
+
 	$default_log_dir = DOCROOT.'/data/log/exception';
 
 	if (defined('SETTINGS_LOG_EXCEPTION')) {
