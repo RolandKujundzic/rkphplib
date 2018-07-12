@@ -21,69 +21,57 @@ var env = [];
 
 
 /**
- * Define callback function (e.g. fselect_NAME_[text|change]).
- *
- * @param string name
- * @param function func
- */
-this.setCallback = function (name, func) {
-	if (!env.callback) {
-		env.callback = [];
-	}
-
-	env.callback[name] = func;
-};
-
-
-/**
  * Hide fselect_list_NAME. Show fselect_input_NAME.
- * Call fselect_NAME_text|change(selbox) if defined.
  * 
- * @see setCallback(fselect_NAME_[text|change], ...)
  * @param Node selbox
  */
 this.fselectInput = function (selbox) {
+
+	if (selbox.value != '_') {
+		return;
+	}
+
 	var name = selbox.getAttribute('name');
 
-	if (selbox.value == '_') {
-    document.getElementById('fselect_list_' + name).style.display = 'none';
-    document.getElementById('fselect_input_' + name).style.display = 'block';
+	var sbox_in = document.getElementById('fvin_' + name + '_');
+	sbox_in.value = '';
 
-    if (env.callback['fselect_' + name + '_text']) {
-			env.callback['fselect_' + name + '_text'](selbox);
-  	}
-  }
-  else if (env.callback['fselect_' + name + '_change']) {
-		env.callback['fselect_' + name + '_change'](selbox);
-  }
+	toggleDisplay('fselect_list_' + name);
+	toggleDisplay('fselect_input_' + name);
 };
 
 
 /**
- * Close fselect input. Add value as selected.
+ * Close fselect input. Add value as selected (if length > 0).
+ * Debounced because multiple calls are possible.
  *
  * @param Node inbox 
  */
-this.fselectList = function (inbox) {
+this.fselectList = debounce(function (inbox) {
 	var name = inbox.getAttribute('name').slice(0, -1);
-  var selbox = document.querySelector('fselect_list_' + name + ' > select');
+  var selbox = document.getElementById('fvin_' + name);
 
-  var newOpt = document.createElement('option');
-  newOpt.text = inbox.value;
-  newOpt.value = inbox.value;
+	if (inbox.value.length == 0) {
+  	selbox.options[0].selected = true;
+	}
+	else {
+	  var newOpt = document.createElement('option');
+	  newOpt.text = inbox.value;
+	  newOpt.value = inbox.value;
 
-  try {
-    selbox.add(newOpt, null);
-  }
-  catch(ex) {
-    selbox.add(newOpt); // IE only
-  }
+	  try {
+  	  selbox.add(newOpt, null);
+	  }
+  	catch(ex) {
+	    selbox.add(newOpt); // IE only
+	  }
 
-  selbox.options[selbox.length - 1].selected = true;
+	  selbox.options[selbox.length - 1].selected = true;
+	}
 
-  document.getElementById('fselect_list_'  + name).style.display = 'block';
-	document.getElementById('fselect_input_' + name).style.display = 'none';  
-};
+	toggleDisplay('fselect_list_'  + name);
+	toggleDisplay('fselect_input_' + name);  
+}, 1000, true);
 
 
 /**
@@ -301,45 +289,27 @@ this.setOutputSearch = function (el) {
 
 
 /**
- * Toggle delete and replace links.
+ * Replace existing image. Hidden input replace_image must exist.
+ *
+ * @param element el
+ * @param int num
  */
-this.modifyImage = function (el, num) {
+this.replaceImage = function (el, num) {
 	var fvin_id = el.parentNode.getAttribute('data-preview');
 	var fvin = document.getElementById(fvin_id);
 
-	restoreMultiple();
-
-	var pel = removeOverlayIcon(fvin_id);
-
-	if (pel != el.parentNode) {
-		addOverlayIcon(el, num);
+	if (fvin.hasAttribute('multiple')) {
+		fvin.removeAttribute('multiple');
+		var name = fvin.getAttribute('name');
+		fvin.setAttribute('name', name.slice(0, -2));
+		removeOverlayIcon(fvin_id);
+		env.restoreMultiple = fvin_id;
 	}
+
+	fvin.addEventListener('change', function(evt) {
+		submitForm(evt.target.form, { 'replace_image': fvin_id.substr(5) + ':' + (num + 1) });
+	});
 };
-
-
-/**
- * Remove overlay icons.
- * 
- * @param string fvin_id
- * @return null|element (parent node)
- */
-function removeOverlayIcon(fvin_id) {
-	var i, icon, pel;
-
-	if (!env['lastOverlayIcon_' + fvin_id]) {
-		return null;
-	}
-
-	for (i = 0; i < env['lastOverlayIcon_' + fvin_id].length; i++) {
-		icon = env['lastOverlayIcon_' + fvin_id][i];
-		pel = icon.parentNode;
-		pel.removeChild(icon);
-	}
-
-	delete env['lastOverlayIcon_' + fvin_id];
-
-	return pel;
-}
 
 
 /**
@@ -356,106 +326,20 @@ this.removeImage = function (el, num) {
 
 
 /**
- * Submit form f. Add hidden input.
- *
- * @param form f
- * @param hash hidden_input
+ * Toggle delete and replace links.
  */
-function submitForm(f, hidden_input) {
-	// add form_action=1
-	var key, input, type;
-
-	hidden_input.form_action = 1;
-
-	for (key in hidden_input) {
-		if (f.elements[key]) {
-			type = f.elements[key].getAttribute('type');
-
-			if (type != 'submit' && type != 'button') {
-				f.elements[key].value = hidden_input[key];
-				continue;
-			}
-		}
-
-		input = document.createElement('input');
-		input.setAttribute('name', key);
-		input.setAttribute('value', hidden_input[key]);
-		input.setAttribute('type', 'hidden');
-		f.appendChild(input);
-	}
-
-	f.submit();
-}
-
-
-/**
- * Replace existing image. Hidden input replace_image must exist.
- *
- * @param element el
- * @param int num
- */
-this.replaceImage = function (el, num) {
+this.modifyImage = function (el, num) {
 	var fvin_id = el.parentNode.getAttribute('data-preview');
 	var fvin = document.getElementById(fvin_id);
 
-	if (fvin.hasAttribute('multiple')) {
-		fvin.removeAttribute('multiple');
-		var name = fvin.getAttribute('name');
-		fvin.setAttribute('name', name.slice(0, -2));
-		removeOverlayIcon(fvin_id);
-		env['restoreMultiple'] = fvin_id;
-	}
+	restoreMultiple();
 
-	fvin.addEventListener('change', function(evt) {
-		submitForm(evt.target.form, { 'replace_image': fvin_id.substr(5) + ':' + (num + 1) });
-	});
+	var pel = removeOverlayIcon(fvin_id);
+
+	if (pel != el.parentNode) {
+		addOverlayIcon(el, num);
+	}
 };
-
-
-/**
- * If env.restoreMultiple (=id) is set, change name to name[] and add multiple attribute.
- */
-function restoreMultiple() {
-	if (!env['restoreMultiple']) {
-		return;
-	}
-
-	var fvin = document.getElementById(env['restoreMultiple']);
-	fvin.setAttribute('multiple', 'multiple');
-	var name = fvin.getAttribute('name');
-	fvin.setAttribute('name', name + '[]');
-
-	delete env['restoreMultiple'];
-}
-
-
-/**
- * Create overlay icon (remove|replace).
- *
- * @param element el
- * @param int num
- */
-function addOverlayIcon(el, num) {
-	var fvin_id = el.parentNode.getAttribute('data-preview');
-	var fvin = document.getElementById(fvin_id);
-	var action, icon_list = { 'remove': 'left', 'replace': 'right' };
-
-	env['lastOverlayIcon_' + fvin_id] = [];
-	
-	for (action in icon_list) {
-		if (!fvin.hasAttribute('data-' + action)) {
-			continue;
-		}
-
-		var icon = document.createElement('img');
-		icon.src = fvin.getAttribute('data-' + action);	
-		icon.setAttribute('style', 'position: absolute; ' + icon_list[action] + ': 5%; bottom: 5%; z-index: 1');
-		icon.setAttribute('onclick', 'rkphplib.' + action + 'Image(this, ' + num + ')');
-
-		el.parentNode.appendChild(icon);
-		env['lastOverlayIcon_' + fvin_id].push(icon);
-	}
-}
 
 
 /**
@@ -578,6 +462,110 @@ this.outputItemAction = function (el, type) {
 		}
 	}
 };
+
+
+/**
+ * Remove overlay icons.
+ * 
+ * @param string fvin_id
+ * @return null|element (parent node)
+ */
+function removeOverlayIcon(fvin_id) {
+	var i, icon, pel;
+
+	if (!env['lastOverlayIcon_' + fvin_id]) {
+		return null;
+	}
+
+	for (i = 0; i < env['lastOverlayIcon_' + fvin_id].length; i++) {
+		icon = env['lastOverlayIcon_' + fvin_id][i];
+		pel = icon.parentNode;
+		pel.removeChild(icon);
+	}
+
+	delete env['lastOverlayIcon_' + fvin_id];
+
+	return pel;
+}
+
+
+/**
+ * Submit form f. Add hidden input.
+ *
+ * @param form f
+ * @param hash hidden_input
+ */
+function submitForm(f, hidden_input) {
+	// add form_action=1
+	var key, input, type;
+
+	hidden_input.form_action = 1;
+
+	for (key in hidden_input) {
+		if (f.elements[key]) {
+			type = f.elements[key].getAttribute('type');
+
+			if (type != 'submit' && type != 'button') {
+				f.elements[key].value = hidden_input[key];
+				continue;
+			}
+		}
+
+		input = document.createElement('input');
+		input.setAttribute('name', key);
+		input.setAttribute('value', hidden_input[key]);
+		input.setAttribute('type', 'hidden');
+		f.appendChild(input);
+	}
+
+	f.submit();
+}
+
+
+/**
+ * If env.restoreMultiple (=id) is set, change name to name[] and add multiple attribute.
+ */
+function restoreMultiple() {
+	if (!env.restoreMultiple) {
+		return;
+	}
+
+	var fvin = document.getElementById(env.restoreMultiple);
+	fvin.setAttribute('multiple', 'multiple');
+	var name = fvin.getAttribute('name');
+	fvin.setAttribute('name', name + '[]');
+
+	delete env.restoreMultiple;
+}
+
+
+/**
+ * Create overlay icon (remove|replace).
+ *
+ * @param element el
+ * @param int num
+ */
+function addOverlayIcon(el, num) {
+	var fvin_id = el.parentNode.getAttribute('data-preview');
+	var fvin = document.getElementById(fvin_id);
+	var action, icon_list = { 'remove': 'left', 'replace': 'right' };
+
+	env['lastOverlayIcon_' + fvin_id] = [];
+	
+	for (action in icon_list) {
+		if (!fvin.hasAttribute('data-' + action)) {
+			continue;
+		}
+
+		var icon = document.createElement('img');
+		icon.src = fvin.getAttribute('data-' + action);	
+		icon.setAttribute('style', 'position: absolute; ' + icon_list[action] + ': 5%; bottom: 5%; z-index: 1');
+		icon.setAttribute('onclick', 'rkphplib.' + action + 'Image(this, ' + num + ')');
+
+		el.parentNode.appendChild(icon);
+		env['lastOverlayIcon_' + fvin_id].push(icon);
+	}
+}
 
 
 /**
@@ -917,6 +905,65 @@ function showPreviewImage(target, src, img_num) {
 }
 
 
+/**
+ * If element (#id) style.display == 'none' set to previous value (data-display).
+ * 
+ * @param string id
+ */
+function toggleDisplay(id) {
+	var el = document.getElementById(id);
+
+	if (!el) {
+		throw 'no such element id ' + id; 
+	}
+
+	var display = '';
+	if (el.hasAttribute('data-display')) {
+		display = el.getAttribute('data-display');
+	}
+	else if (el.style.display && el.style.display != 'none') {
+		el.setAttribute('data-display', el.style.display);
+	}
+	
+	if (el.style.display == 'none') {
+		el.style.display = display;
+	}
+	else {
+		el.style.display = 'none';
+	}
+}
+
+
+/**
+ * Delay function call for wait milliseconds. Execute only once after wait.
+ *  
+ *
+ * @param function func
+ * @param int wait (in milliseconds, e.g. 250)
+ * @param boolean immediate
+ */
+function debounce(func, wait, immediate) {
+	var timeout;
+
+	return function() {
+		var context = this, args = arguments;
+
+		var later = function() {
+			timeout = null;
+			if (!immediate) {
+				func.apply(context, args);
+			}
+		};
+
+		var callNow = immediate && !timeout;
+		clearTimeout(timeout);
+		timeout = setTimeout(later, wait);
+		if (callNow) {
+			func.apply(context, args);
+		}
+	};
+};
+
 
 
 /*
@@ -929,6 +976,19 @@ document.addEventListener('DOMContentLoaded', function () {
 	if ((list = document.querySelectorAll('input[data-search_list_url]'))) {
 		for (i = 0; i < list.length; i++) {
 			initLiveSearch(list[i]);
+		}
+	}
+
+	if ((list = document.querySelectorAll('form[data-key13="prevent"] input[type="text"], form[data-key13="prevent"] textarea'))) {
+		for (i = 0; i < list.length; i++) {
+			list[i].addEventListener('keydown', function (e) {
+				if (e.keyCode == '13') {
+					// stop event - disable form submit via enter - send change event instead
+					e.preventDefault();
+					var evt2 = new CustomEvent('change');
+					e.target.dispatchEvent(evt2);
+				}
+			});
 		}
 	}
 
