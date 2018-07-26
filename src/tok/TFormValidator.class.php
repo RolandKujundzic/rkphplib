@@ -121,7 +121,7 @@ public function __construct() {
 
 		'template.engine' => 'default',
 		'template.output' => 'default',
-		'template.output.default' => "$label$input$error_message",
+		'template.output.default' => '<span class="label">'.$label.'</span>'.$input.$error_message,
 		'template.header' => '',
 		'template.footer' => '',
 
@@ -132,7 +132,7 @@ public function __construct() {
 		'default.in.textarea' => '<textarea name="'.$name.'" class="'.$class.'" '.$tags.'>'.$value.'</textarea>',
 		'default.in.select'   => '<select name="'.$name.'" class="'.$class.'" '.$tags.'>'.$options.'</select>',
 		'default.in.file'			=> '<input type="file" name="'.$name.'" class="'.$class.'" data-value="'.$value.'" '.$tags.'>',
-
+		'default.in.multi_checkbox'	=> '<span style="margin-right:4ch">'.$input.'</span>',
 		'default.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="'.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
@@ -156,10 +156,10 @@ public function __construct() {
 			'id="'.$id.'" name="'.$name.'" value="'.$value.'" class="mdl-checkbox__input mdl-js-ripple-effect '.$class.'" '.$tags.
 			'><span class="mdl-checkbox__label">'.$label.'</span></label>',
 
-		'template.error.message' 			  => $error,
-		'template.error.message_concat' => ', ',
-		'template.error.message_multi'  => "<i>$name</i>: <tt>$error</tt><br>",
-		'template.error.const' 					=> 'error'
+		'template.error.message' 				 => '<span class="error_message">'.$error.'</span>',
+		'template.error.message_concat'  => ', ',
+		'template.error.message_multi'   => "<i>$name</i>: <tt>$error</tt><br>",
+		'template.error.const' 					 => 'error'
 		];
 }
 
@@ -318,6 +318,12 @@ public function tok_fv_init($do, $p) {
 		$this->conf['current']['required'] = empty($this->conf['current']['required']) ? [] : 
 			\rkphplib\lib\split_str(',', $this->conf['current']['required']);
 	}
+
+	foreach ($this->conf['current'] as $key => $value) {
+		if (substr($key, 0, 3) == 'in.' && substr($value, 0, 14) == 'multi_checkbox') {
+			$this->conf['current'][$key] = $this->get2NData(substr($key, 3), $value);
+		}
+	}
 }
 
 
@@ -418,8 +424,8 @@ public function tok_fv_error($name, $tpl) {
  * @return string 
  */
 public function tok_fv_error_message($name, $tpl = '') {
-	$res = '';
 	$conf = $this->conf['current'];
+	$res = '';
 
 	if ($name == '*') {
 		if (empty($tpl)) {
@@ -430,23 +436,21 @@ public function tok_fv_error_message($name, $tpl = '') {
 			$res .= $this->tok_fv_error_message($key, $tpl);
 		}
 
-		// \rkphplib\lib\log_debug("tok_fv_error_message($name, ...)> name=[$name] res=[$res] - error: ".print_r($this->error, true));
-		return join(',', array_keys($this->error));
-		// return $res;
+		$res = join(',', array_keys($this->error));
+	}
+	else if (isset($this->error[$name])) {
+		if (empty($tpl)) {
+			$tpl = $this->conf['current']['template.error.message'];
+		}
+
+		$r = [ 'name' => $name ];
+		$r['error'] = join($conf['template.error.message_concat'], $this->error[$name]);
+
+		$res = $this->tok->replaceTags($tpl, $r);
 	}
 
-	if (empty($tpl)) {
-		$tpl = $conf['template.error.message'];
-	}
-
-	if (!isset($this->error[$name])) {
-		return $res;
-	}
-
-	$r['name'] = $name;
-	$r['error'] = join($conf['template.error.message_concat'], $this->error[$name]);
-
-	$res = $this->tok->replaceTags($tpl, $r);
+	// \rkphplib\lib\log_debug("tok_fv_error_message($name, ...)> name=[$name] res=[$res] - error: ".print_r($this->error, true));
+	return $res;
 }
 
 
@@ -470,37 +474,50 @@ public function tok_fv_tpl($name, $p) {
 
 
 /**
- * Return 2^N data as hash. Export $_REQUEST[$name]. Example (name=x, p= 1:a, 2:b, 4:c):
+ * Transform 2^N data definition. Example:
  * 
- * { x0: a, x1: b, x2: c }
+ * (value) in.interior= multi_checkbox, Klima, AHK, Radio
+ * (return) multi_checkbox, interior0=Klima, interior1=AHK, interior2=Radio 
  *
  * @param string $name
- * @param hash $p
- * @return hash { variable1: label1, ... }
+ * @param string $name_def
+ * @return string
  */
-private function get2NData($name, $p) {
-	$res = $p;
-	$value = 0;
-	$done = false;
+private function get2NData($name, $name_def) {
+	// [0] => multi_checkbox, [1] => value_2^0, [2] => value_2^1, ...
+	$r = \rkphplib\lib\conf2kv($name_def, '=', ',');
 
-	for ($n = 0; !$done; $n++) {
-		$v = pow(2, $n);
-
-		if (!isset($p[$v])) {
-			$done = true;
-			$res['n_max'] = $n;
-		}
-		else {
-			$var = $name.$n;
-			$res[$var] = $p[$v];
-
-			if (!empty($_REQUEST[$var]) && $_REQUEST[$var] == $v) {
-				$value += $v;
-			}
-		}
+	if ($r[0] != 'multi_checkbox') {
+		throw new Exception('invalid value of conf.in.'.$name, "$name=[$name_def] r: ".print_r($r, true));
 	}
 
+	$r['type'] = 'checkbox';
+	$r['multi'] = 1;
+	unset($r[0]);
+
+	// \rkphplib\lib\log_debug("name=[$name] value=[$name_def] r: ".print_r($r, true));
+	$done = false;
+	$value = 0;
+	$n = 1;
+
+	while (!empty($r[$n]) && $n < 33) {
+		$var = $name.($n - 1);
+		$v = pow(2, ($n - 1));
+
+		$r[$var] = $r[$n];
+		unset($r[$n]);
+
+		if (!empty($_REQUEST[$var]) && $_REQUEST[$var] == $v) {
+			$value += $v;
+		}
+
+		$n++;
+	}
+
+	$r['n_max'] = $n - 1;
 	$_REQUEST[$name] = $value;
+	$res = \rkphplib\lib\kv2conf($r, '=', ',');
+	// \rkphplib\lib\log_debug("name=[$name] value=[$value] res=[$res] r: ".print_r($r, true));
 	return $res;
 }
 
@@ -508,12 +525,18 @@ private function get2NData($name, $p) {
 /**
  * Return multi-checkbox html.
  *
+ * conf.
  * @param string $name
  * @param hash $p
  * @return string
  */
 private function multiCheckbox($name, $p) {
+	// \rkphplib\lib\log_debug("multiCheckbox: name=$name p: ".print_r($p, true));
 	$res = '';
+
+	$conf = $this->conf['current'];
+  $tpl_in = $conf['template.engine'].'.in.multi_checkbox';
+	$input = empty($conf[$tpl_in]) ? $conf['default.in.multi_checkbox'] : $conf[$tpl_in];
 
 	for ($n = 0; $n < $p['n_max']; $n++) {
 		$var = $name.$n;
@@ -526,7 +549,8 @@ private function multiCheckbox($name, $p) {
 			$r['checked'] = 'checked';
 		}
 
-		$res .= $this->getInput($var, $r).' '.$p[$var];
+		$html = $this->getInput($var, $r).' '.$p[$var];
+		$res .= $this->tok->replaceTags($input, [ 'input' => $html ]);
 	}
 
 	return $res;
@@ -591,7 +615,7 @@ public function tok_fv_in($name, $p) {
 
 	$r = $p;
 	$r['input'] = $this->getInput($name, $p);
-	$r['error_message'] = isset($this->error[$name]) ? join('|', $this->error[$name]) : '';
+	$r['error_message'] = $this->tok_fv_error_message($name);
 	$r['error'] = isset($this->error[$name]) ? $conf['template.error.const'] : '';
 
 	$res = $this->tok->removeTags($this->tok->replaceTags($res, $r));
@@ -637,7 +661,13 @@ protected function parseInName($name, $value, &$p) {
 		unset($r[0]);
 	}
 
-	// \rkphplib\lib\log_debug("parseInName($name, $value, ...)> r: ".print_r($r, true));
+	if (!empty($r['multi'])) {
+		$p = $r;
+		// \rkphplib\lib\log_debug("parseInName($name, $value, ...)> multi p: ".print_r($p, true));
+		return;
+	}
+
+	// \rkphplib\lib\log_debug("parseInName($name, $value, ...)> r: ".print_r($r, true)."\np: ".print_r($p, true));
 	$type = $p['type'];
 
 	if (in_array($type, [ 'text', 'pass', 'input', 'password' ])) {
@@ -691,12 +721,11 @@ protected function parseInName($name, $value, &$p) {
 			$p['value'] = isset($_REQUEST[$name]) ? $_REQUEST[$name] : '';
 		}
 
+		if ($type == 'fselect') {
+			$r['fselect'] = $name;
+		}
+
 		$p['options'] = $this->getOptions($r, $p['value'], $value);
-	}
-	else if ($type == 'multi_checkbox') {
-		$p = $this->get2NData($name, $r);
-		$p['type'] = 'checkbox';
-		$p['multi'] = 1;
 	}
 	else if ($type == 'const') {
 		// ok ...
@@ -829,7 +858,7 @@ protected function getInput($name, $ri) {
 
 	$input = $this->tok->replaceTags($input, $ri);
 
-	\rkphplib\lib\log_debug("getInput($name): ".print_r($ri, true)."\n$input");
+	// \rkphplib\lib\log_debug("getInput($name): ".print_r($ri, true)."\n$input");
 	return $input;
 }
 
@@ -848,7 +877,7 @@ private function getOptions(&$p, $opt_value, $str_options) {
 	$html = '';
 	$empty_label = null;
 
-	// \rkphplib\lib\log_debug("TFormValidator.getOptions|enter> opt_value=[$opt_value] str_options=[$str_options] p: ".print_r($p, true)); 
+	\rkphplib\lib\log_debug("TFormValidator.getOptions|enter> opt_value=[$opt_value] str_options=[$str_options] p: ".print_r($p, true)); 
 
 	if (!empty($p['@_1']) && substr($p['@_1'], 0, 1) == '=') {
 		$empty_label = substr($p['@_1'], 1);
@@ -864,6 +893,19 @@ private function getOptions(&$p, $opt_value, $str_options) {
 		$selected = ($opt_value == '') ? ' selected' : '';
 		$empty_label = empty($empty_label) ? $this->conf['current']['option.label_empty'] : $empty_label;
 		$html .= '<option value=""'.$selected.'>'.$empty_label."</option>\n";
+	}
+
+	if (!empty($p['fselect'])) {
+		$name = $p['fselect'];
+		unset($p['fselect']);
+
+		if (!empty($_REQUEST[$name.'_']) && $_REQUEST[$name] == $_REQUEST[$name.'_']) {
+			$value = $_REQUEST[$name];
+
+			if (!isset($p[$value])) {
+				$p[$value] = $value;
+			}
+		}
 	}
 
 	foreach ($p as $value => $label) {

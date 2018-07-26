@@ -59,14 +59,26 @@ this.fselectList = debounce(function (inbox) {
 	  newOpt.text = inbox.value;
 	  newOpt.value = inbox.value;
 
-	  try {
-  	  selbox.add(newOpt, null);
-	  }
-  	catch(ex) {
-	    selbox.add(newOpt); // IE only
-	  }
+		var i, has_option = -1;
+		for (i = 0; has_option == -1 && i < selbox.length; i++) {
+			if (selbox.options[i].value == inbox.value) {
+				has_option = i;
+			}
+		}
 
-	  selbox.options[selbox.length - 1].selected = true;
+		if (has_option > -1) {
+	  	selbox.options[has_option].selected = true;
+		}
+		else {
+		  try {
+  		  selbox.add(newOpt, null);
+	  	}
+  		catch(ex) {
+	    	selbox.add(newOpt); // IE only
+	  	}
+
+	  	selbox.options[selbox.length - 1].selected = true;
+		}
 	}
 
 	toggleDisplay('fselect_list_'  + name);

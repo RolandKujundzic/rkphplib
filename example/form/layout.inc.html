@@ -3,28 +3,55 @@
 <head>
 <meta charset="utf-8" />
 <script src="../../js/rkPhpLib.js"></script>
+<style>
+form br {
+	display: block;
+	margin-top:1.4ch;
+}
+
+form span.label {
+	display: inline-block;
+	min-width: 12ch;
+}
+
+form span.error_message {
+	display: inline-block;
+	color: red;
+	margin-left: 2ch;
+}
+</style>
 </head>
 
 <body>
 
 {fv:init}
-required= id, name, brand|#|
+required= name, brand|#|
 hidden_keep= id, dir|#|
 hidden.form_action=1|#|
 
 in.name= text|#|
 in.brand= fselect, =choose ..., Audi, BMW, Volkswagen, _=add ...|#|
-in.interior= multi_checkbox, 1=Klima, 2=AHK, 4=Radio|#|
+in.interior= multi_checkbox, Klima, AHK, Radio|#|
 {:fv}
 
-<form method="get" data-key13="prevent">
+{tf:cmp:yes}{fv:check}{:tf}
+
+{true:}
+Form-Submit: check=[{fv:check}] interior=[{get:interior}]
+{:true}
+
+{false:}
+<form method="get" data-key13="prevent" novalidate>
 {fv:hidden}
-check = {fv:check}<br>
 {fv:in:name}label=Name{:fv}<br>
 {fv:in:brand}label=Brand{:fv}<br>
 {fv:in:interior}label=Interior{:fv}<br>
 <input type="submit">
 </form>
+
+<pre>check=[{fv:check}] interior=[{get:interior}] error=[{fv:error_message:*}]</pre>
+{:false}
+
 
 </body>
 </html>
