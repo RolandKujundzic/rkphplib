@@ -1187,6 +1187,7 @@ private function tryPluginMap($name) {
 		'TFormValidator' => [ 'fv', 'fv:init', 'fv:conf', 'fv:check', 'fv:in', 'fv:tpl', 'fv:hidden', 'fv:preset', 'fv:error', 'fv:error_message', 'fv:set_error_message' ],
 		'THtml' => [ 'html:inner', 'html:meta', 'html:tidy', 'html:xml', 'html:uglify', 'html' ],
 		'THttp' => [ 'http:get', 'http' ],
+		'TJob' => [ 'job' ],
 		'TLanguage' => [ 'language:init', 'language:get', 'language', 'txt:js', 'txt', 'ptxt' ],
 		'TLogin' => [ 'login', 'login_account', 'login_check', 'login_auth', 'login_access', 'login_update', 'login_clear' ],
 		'TLoop' => [ 'loop:var', 'loop:list', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
@@ -1210,25 +1211,5 @@ private function tryPluginMap($name) {
 		}
 	}
 }
-
-
-/**
- * Return plugin features. If plugin is build return null.
- * 
- * @param string $name
- * @return int|null (null = buildin) 
- */
-public function getPluginFeatures($name) {
-
-	if (in_array($name, [ 'ignore', 'keep', 'debug' ])) {
-		return null;
-	}
-	else if (!isset($this->_plugin[$name])) {
-		$this->tryPluginMap($name);
-	}
-
-	return $this->_plugin[$name][1];
-}
-
 
 }
