@@ -4,10 +4,10 @@ namespace rkphplib\tok;
 
 $parent_dir = dirname(__DIR__);
 require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(PATH_RKPHPLIB.'tok/Tokenizer.class.php');
-require_once(PATH_RKPHPLIB.'tok/TBase.class.php');
-require_once(PATH_RKPHPLIB.'File.class.php');
-require_once(PATH_RKPHPLIB.'Dir.class.php');
+require_once(__DIR__.'/Tokenizer.class.php');
+require_once(__DIR__.'/TBase.class.php');
+require_once($parent_dir.'/File.class.php');
+require_once($parent_dir.'/Dir.class.php');
 
 use \rkphplib\Exception;
 use \rkphplib\tok\Tokenizer;
