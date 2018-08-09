@@ -39,6 +39,11 @@ public function scan($dir = 'src/tok') {
 		require_once($file);
 		$cname = '\\rkphplib'.substr(str_replace('/', '\\', $file), 3, -10);
 
+		// skip abstract class ...
+		if (substr($cname, 0, 15) == '\rkphplib\tok\A') {
+			continue;
+		}
+
 		print "$file: $cname\n";
 		$obj[$n] = new $cname();
 		$this->register($obj[$n], $cname);
