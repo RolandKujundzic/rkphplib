@@ -13,6 +13,7 @@ use rkphplib\Exception;
  * Command parameter {:=param} are replaced with escaped (\') hash values
  * Append [ 2>&1] to command to catch stderr. Append
  * [> /dev/null 2> /dev/null &] for background job.
+ * Append [ && echo $! > /dev/null 2>&1 & ] for background job with pid output (= return value).
  * 
  * @param string $cmd e.g. "rm -f {:=file}"
  * @param hash|empty $parameter optional parameter hash (default = null)
