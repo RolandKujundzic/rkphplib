@@ -8,6 +8,7 @@ require_once($parent_dir.'/Exception.class.php');
 require_once($parent_dir.'/JSON.class.php');
 require_once($parent_dir.'/File.class.php');
 require_once($parent_dir.'/Dir.class.php');
+require_once($parent_dir.'/lib/ps.php');
 require_once($parent_dir.'/lib/execute.php');
 require_once($parent_dir.'/lib/kv2conf.php');
 
@@ -128,7 +129,7 @@ private function running() {
 	$lock = JSON::decode(File::load($this->conf['lockfile']));
 	$res = true;
 
-	if (!$lock['progress']) {
+	if (!isset($lock['progress'])) {
 		$lock['progress'] = 0;
 	}
 
@@ -167,14 +168,18 @@ private function running() {
  * Create conf.lock file with shell jobs. 
  */
 private function run() {
-	\rkphplib\lib\log_debug("TJob.run> start job");
 	$cmd = '';
 
+	$bg_pid = ' && echo $! > /dev/null 2>&1 &';
+
   if (!empty($this->conf['execute'])) {
-		$cmd = $this->conf['execute'].' < /dev/null >& /dev/null &';
+		$cmd = $this->conf['execute'].$bg_pid;
 		$this->lock([ 'execute' => $cmd, 'start' => microtime(), 'status' => 'start' ]);
-		\rkphplib\lib\execute($cmd);
-		\rkphplib\lib\log_debug("TJob.run> $cmd");
+		$pid = \rkphplib\lib\execute($cmd);
+		$ps = \rkphplib\lib\ps($pid);
+		if (isset($ps['PID']) && $ps['PID'] == $pid) {
+			$this->lock([ 'pid' => $pid, 'status' => 'running' ]);
+		}
 	}
 	else if (!empty($this->conf['zip_dir'])) {
 		Dir::exists($this->conf['zip_dir'], true);
@@ -185,10 +190,13 @@ private function run() {
 
 		Dir::create(dirname($this->conf['zip_file']), 0, true);
 		$cmd = "cd '".dirname($this->conf['zip_dir'])."' && zip -r '".$this->conf['zip_file']."' '".
-			basename($this->conf['zip_dir'])."' < /dev/null >& /dev/null &"; 
+			basename($this->conf['zip_dir']).$bg_pid; 
 		$this->lock([ 'execute' => $cmd, 'start' => microtime(), 'status' => 'start' ]);
-		\rkphplib\lib\execute($cmd);
-		\rkphplib\lib\log_debug("TJob.run> $cmd");
+		$pid = \rkphplib\lib\execute($cmd);
+		$ps = \rkphplib\lib\ps($pid);
+		if (isset($ps['PID']) && $ps['PID'] == $pid) {
+			$this->lock([ 'pid' => $pid, 'status' => 'running' ]);
+		}
 	}
 	else if (!empty($this->conf['include'])) {
 		$this->lock([ 'start' => microtime(), 'status' => 'start' ]);
