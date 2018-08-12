@@ -60,11 +60,14 @@ class TFormValidator implements TokPlugin {
 use TokHelper;
 
 
-/** @var array $conf */
+/** @var hash $conf */
 protected $conf = [ 'default' => [], 'current' => [] ];
 
-/** @var array $error */
+/** @var hash $error */
 protected $error = [];
+
+/** @var hash $example */
+protected $example = [];
 
 
 
@@ -372,6 +375,7 @@ public function tok_fv_check() {
 					$this->error[$name] = [];
 				}
 
+				$this->setExample($name, $check);
 				array_push($this->error[$name], $this->getErrorMessage($path));
 				// \rkphplib\lib\log_debug("TFormValidator->tok_fv_check> path=$key name=$name error: ".print_r($this->error[$name], true));
 			}
@@ -379,6 +383,30 @@ public function tok_fv_check() {
 	}
 
 	return (count($this->error) == 0) ? 'yes' : 'error';
+}
+
+
+/**
+ * Set example. Use conf.example.$name_$check= example if set.
+ *
+ * @param string $name
+ * @param string $check
+ */
+private function setExample($name, $check) {
+	$map = [
+		'isMobile' => '+490176123456'
+	];
+
+	$example = '';
+
+	if (!empty($this->conf['example.'.$name.'_'.$check])) {
+		$example = $this->conf['example.'.$name.'_'.$check];
+	}
+	else if (!empty($map[$check])) {
+		$example = $map[$check];
+	}
+
+	$this->example[$name] = $example;
 }
 
 
@@ -618,6 +646,7 @@ public function tok_fv_in($name, $p) {
 	$r['input'] = $this->getInput($name, $p);
 	$r['error_message'] = $this->tok_fv_error_message($name);
 	$r['error'] = isset($this->error[$name]) ? $conf['template.error.const'] : '';
+	$r['example'] = isset($this->example[$name]) ? $this->example[$name] : '';
 
 	$res = $this->tok->removeTags($this->tok->replaceTags($res, $r));
 	// \rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
