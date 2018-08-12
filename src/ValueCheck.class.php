@@ -130,6 +130,7 @@ public static function getMatch($name) {
 		'HTTP' => '/^http\:\/\//i',
 		'HTTPS' => '/^https\:\/\//i',
 		'Phone' => '/^[\+0-9\(\)\/ \.\-]+$/i',
+		'Mobile' => '/^\+[0-9]+$/',
 		'PhoneNumber' => '/^[\+0-9\(\)\/ \.\-]+$/i',
 		'Variable' => '/^[0-9A-Z_]+$/i',
 		'PLZ' => '/^[0-9]{5}$/');
