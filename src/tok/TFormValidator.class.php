@@ -377,7 +377,7 @@ public function tok_fv_check() {
 
 				$this->setExample($name, $check);
 				array_push($this->error[$name], $this->getErrorMessage($path));
-				// \rkphplib\lib\log_debug("TFormValidator->tok_fv_check> path=$key name=$name error: ".print_r($this->error[$name], true));
+				\rkphplib\lib\log_debug("TFormValidator->tok_fv_check> path=$key name=$name error: ".print_r($this->error[$name], true));
 			}
 		}
 	}
@@ -646,10 +646,10 @@ public function tok_fv_in($name, $p) {
 	$r['input'] = $this->getInput($name, $p);
 	$r['error_message'] = $this->tok_fv_error_message($name);
 	$r['error'] = isset($this->error[$name]) ? $conf['template.error.const'] : '';
-	$r['example'] = isset($this->example[$name]) ? $this->example[$name] : '';
+	$r['example'] = empty($this->example[$name]) ? '' : '<span class="example">'.$this->example[$name].'</span>';
 
 	$res = $this->tok->removeTags($this->tok->replaceTags($res, $r));
-	// \rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
+	\rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
 	return $res;
 }
 
