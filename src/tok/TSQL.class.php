@@ -409,6 +409,18 @@ public function tok_sql_change($p) {
 		$r[$pcol] = "PASSWORD('".$p[$pcol]."')";
 	}
 
+	if (!empty($p['de2sql'])) {
+		foreach ($p['de2sql'] as $key) {
+			list ($dmy, $his) = (strlen($r[$key]) > 8) ? explode(' ', $r[$key], 2) : [ $r[$key], null ];
+			list ($d, $m, $y) = explode('.', $dmy);
+			$r[$key] = $y.'-'.$m.'-'.$d;
+
+			if (!is_null($his)) {
+				$r[$key] .= ' '.$his;
+			}
+		}
+	}
+
 	if (count($p['col_value']) > 0) {
 		$r = array_merge($r, $p['col_value']);
 	}
