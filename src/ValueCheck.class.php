@@ -144,13 +144,20 @@ public static function getMatch($name) {
 
 
 /**
- * Execute database query to check if value is unique. Example: 
+ * Execute database query to check if value is unique (does not exist in database yet). Example: 
  *
  * self::run(login, 'Joe', '{login:@table}:login:{get:login}:id:{login:id}')
  * check.email = isUnique:shop_customer@3:email:{get:email}:id: ({get:id} missing because unknown)
- * 
+ *
+ * Array p: 
+ *  0: Table name or TableName@N (N: where owner=N)
+ *  1: Column name
+ *  2: Column value
+ *  3: 1 or column name - if 1 return true if result.anz == 1
+ *  4: If not empty and 3 not empty add to where: AND p[3] != p[4]
+ *
  * @param string $value
- * @array $p
+ * @param array $p
  */
 public static function isUnique($value, $p) {
 	require_once(__DIR__.'/Database.class.php');
@@ -175,8 +182,11 @@ public static function isUnique($value, $p) {
 
 	$db = \rkphplib\Database::getInstance('', [ 'select_unique' => $query ]);
 	$query = $db->getQuery('select_unique', [ 'id_val' => $id_val, 'u_val' => $p[2] ]);
+	\rkphplib\lib\log_debug("ValueCheck::isUnique($value): p=".print_r($p, true)."\n$query");
 	$dbres = $db->select($query);
-	return intval($dbres[0]['anz']) == 0;
+	$anz = intval($dbres[0]['anz']);
+	\rkphplib\lib\log_debug("ValueCheck::isUnique: anz=$anz");
+	return (!empty($p[3]) && $p[3] == '1') ? $anz == 1 : $anz == 0;
 }
 
 
