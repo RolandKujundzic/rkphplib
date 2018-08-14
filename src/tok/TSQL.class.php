@@ -410,7 +410,8 @@ public function tok_sql_change($p) {
 	}
 
 	if (!empty($p['de2sql'])) {
-		foreach ($p['de2sql'] as $key) {
+		$de2sql = \rkphplib\lib\split_str(',', $p['de2sql']);
+		foreach ($de2sql as $key) {
 			list ($dmy, $his) = (strlen($r[$key]) > 8) ? explode(' ', $r[$key], 2) : [ $r[$key], null ];
 			list ($d, $m, $y) = explode('.', $dmy);
 			$r[$key] = $y.'-'.$m.'-'.$d;
