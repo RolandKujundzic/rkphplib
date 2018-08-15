@@ -397,6 +397,12 @@ public function tok_login_update($do, $p) {
  *
  * @tok <pre>{login:*}</pre> = id=...|#|login=...|#|type=...|#|priv=...|#|language=...
  * 
+ * If select_list=a,b is set execute p.select_a and p.select_b (replace {:=id}) and add result with prefix a. (b.).
+ *
+ * @tok {login_auth:}login={get:login}|#|password={get:password}|#|select_list=contract,bag|#|
+ * 				select_contract= SELECT * FROM shop_contract WHERE customer={:=id} ORDER BY id DESC LIMIT 1|#|
+ * 				select_bag= SELECT * FROM shop_bag WHERE customer={:=id} ORDER BY id DESC LIMIT 1{:login_auth}
+ *
  * @param map $p
  */
 public function tok_login_auth($p) {
@@ -426,6 +432,15 @@ public function tok_login_auth($p) {
 
 	if (!is_null($this->db)) {
 		$user = $this->selectFromDatabase($p);
+
+		if (!is_null($user) && !empty($p['select_list'])) {
+			$list = \rkphplib\lib\split_str(',', $p['select_list']);
+			$r = $user;
+
+			foreach ($list as $prefix) {
+				$user = array_merge($user, $this->selectExtraData($prefix, $p, $r));
+			}
+		}
 	}
 	else {
 		$user = $this->selectFromAccount($p);
@@ -521,12 +536,45 @@ private function selectFromAccount($p) {
 
 
 /**
+ * Select extra data from database. Parameter: login, password. Allow admin2user if set.
+ * Use ADMIN_LOGIN:=USER_LOGIN as login for admin2user mode, if successfull add
+ * user.admin2user = [ id, status, type, ... ]. 
+ *
+ * @throws 
+ * @param string $prefix
+ * @param hash $p
+ * @param hash $replace
+ * @return hash
+ */
+private function selectExtraData($prefix, $p, $replace) {
+
+	$this->db->setQuery('extra_data', $p['select_'.$prefix]);
+	$dbres = $this->db->select($this->db->getQuery('extra_data', $replace));
+	if (count($dbres) == 0) {
+		return $dbres;
+	}
+
+ 	if (count($dbres) > 1) {
+		throw new Exception('more than one result row', "query=".$this->db->getQuery('extra_data', $replace)."\ndbres: ".print_r($dbres, true));
+	}
+
+	$res = [];
+	foreach ($dbres[0] as $key => $value) {
+		$res[$prefix.'.'.$key] = $value;
+	}
+
+	\rkphplib\lib\log_debug("TLogin.selectExtraDatabase> res: ".print_r($res, true));
+	return $res;
+}
+
+
+/**
  * Select user from database. Parameter: login, password. Allow admin2user if set.
  * Use ADMIN_LOGIN:=USER_LOGIN as login for admin2user mode, if successfull add
  * user.admin2user = [ id, status, type, ... ]. 
  * 
- * @param array $p
- * @return array|null
+ * @param hash $p
+ * @return hash|null
  */
 private function selectFromDatabase($p) {
 
