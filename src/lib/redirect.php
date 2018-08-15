@@ -9,13 +9,19 @@ use rkphplib\Exception;
 
 /**
  * Send redirect header and exit. If $p['@link'] use {link:}@=$url{:link}. 
- * If $p['@back']=1 append parameter back=parent/dir.  
+ * If $p['@back']=1 append parameter back=parent/dir. If url matches
+ * /^[a-z0-9_\-\/]+$/i assume {link:}_=$url{:link}.
  * 
  * @param string $url
  * @param map<string:string> $p (extra parameter, default = [])
  */
 function redirect($url, $p = []) {
 	// \rkphplib\lib\log_debug('enter redirect: url='.$url.' _ld?'.!empty($_REQUEST['_ld']));
+
+	if (preg_match('/^[a-z0-9_\-\/]+$/i', $url)) {
+		// assume {link:}_=$url{:link}
+		$url = \rkphplib\tok\Tokenizer::$site->callPlugin('link', 'tok_link', [ [], [ '_' => $url ] ]);
+	}
 	
 	// avoid [index.php?dir=xxx] redirect loop
 	$md5 = md5($url);
