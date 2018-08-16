@@ -91,9 +91,9 @@ public function tok_date($p, $arg) {
 		}
 	}
 
-  $format_in = '';
-  $format_out = 'de';
-  $xin = '';
+	$format_in = '';
+	$format_out = 'de';
+	$xin = '';
 
 	if (count($p) == 2) {
 		$format_in = $p[0];
@@ -128,10 +128,10 @@ public function tok_date($p, $arg) {
 			$format_in = $xin;
 		}
 
-    $format_out = $arg[2];
-  }
+		$format_out = $arg[2];
+	}
 
-  if ($format_in == 'xde') {
+	if ($format_in == 'xde') {
 		if (strlen($date_str) == 10 || strlen($date_str) == 19) {
 			$format_in = 'de';
 		}
@@ -140,7 +140,7 @@ public function tok_date($p, $arg) {
 		}
 	}
 
-  $res = '???';
+	$res = '???';
 
 	if (!empty($date_str)) {
 		if ($date_str == '0000-00-00 00:00:00' || (empty($date_str) && $format_in == 'sql')) {
