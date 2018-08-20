@@ -25,7 +25,40 @@ public function getPlugins($tok) {
 	$plugin['intval'] = TokPlugin::NO_PARAM;
 	$plugin['floatval'] = 0;
 	$plugin['rand'] = TokPlugin::LIST_BODY;
+	$plugin['math'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	return $plugin;
+}
+
+
+/**
+ * Evaluate math expression.
+ *
+ * @throws
+ * @param string $arg
+ * @return float
+ */
+public function tok_math($arg) {
+	$expr = preg_replace("/[\r\n\t ]+/", '', $arg);
+	$expr = str_replace(',', '.', $expr);
+	$expr_check = strtr($expr, '.0123456789+-*/()&', '                  ');
+	$res = '';
+
+	if (trim($expr_check) == '' && preg_match('/[0-9]+/', $expr)) {
+		if (strpos($expr, '/0') !== false && preg_match('/\/([0-9\.]+)/', $expr, $match)) {
+			if (floatval($match[1]) == 0) {
+				throw new Exception('division by zero in [math:]', "arg=[$arg] expr=[$expr]");
+			}
+		}
+
+		if (eval('$res = '.$expr.';') === false) {
+			throw new Exception("evaluation of [$expr]; failed");
+		}
+	}
+	else {
+		throw new Exception("invalid expression [$expr]");
+	}
+
+	return $res;
 }
 
 
