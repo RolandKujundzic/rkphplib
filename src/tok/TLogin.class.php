@@ -562,7 +562,7 @@ private function selectExtraData($qkey, $p, $replace) {
 		$res[$key] = $value;
 	}
 
-	\rkphplib\lib\log_debug("TLogin.selectExtraDatabase> res: ".print_r($res, true));
+	\rkphplib\lib\log_debug("TLogin.selectExtraData($qkey, ...)> res: ".print_r($res, true));
 	return $res;
 }
 
