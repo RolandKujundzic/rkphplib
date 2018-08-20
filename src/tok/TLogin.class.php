@@ -357,9 +357,8 @@ public function tok_login_update($do, $p) {
 			throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
 		}
 
-		if (count($kv) > 1) {
-			$query = $this->db->buildQuery($table, 'update', $kv);	
-			// \rkphplib\lib\log_debug("tok_login_update> update $table: $query");
+		if (count($kv) > 1 && ($query = $this->db->buildQuery($table, 'update', $kv))) {
+			\rkphplib\lib\log_debug("tok_login_update> update $table: $query\nkv: ".print_r($kv, true));
 			$this->db->execute($query);
 		}
 
