@@ -48,7 +48,8 @@ define('RKPHPLIB_VERSION', 1.0);
 
 
 /**
- * Default Exception catch.
+ * Default Exception catch. Define ABORT_DIR (e.g. login/abort) and use {get:error_msg} and
+ * {var:=#error}original error=translated error|#|...{:var} (before error) to show tokenized abort messages.
  * 
  * @param Exception $e
  */
@@ -60,7 +61,19 @@ function exception_handler($e) {
 	if (php_sapi_name() !== 'cli') {
 		$ts = date('d.m.Y H:i:s');
 		error_log("$ts $msg\n$internal\n\n$trace\n\n", 3, '/tmp/php.fatal');
-		die("<h3 style='color:red'>$msg</h3>");
+
+		if (defined('ABORT_DIR') && class_exists('\rkphplib\tok\Tokenizer') && class_exists('\rkphplib\tok\TBase')) {
+			$tok =& \rkphplib\tok\Tokenizer::$site;
+			$localized_error_msg = $tok->getVar('error.'.$e->getMessage());
+			$_REQUEST['error_msg'] = $localized_error_msg ? $localized_error_msg : $e->getMessage();
+			$_REQUEST['old_dir'] = $_REQUEST['dir'];
+			$_REQUEST['dir'] = ABORT_DIR;
+			include('index.php');
+			return;
+		}
+		else {
+			die("<h3 style='color:red'>$msg</h3>");
+		}
 	}
 	else if (php_sapi_name() === 'cli' && property_exists($e, 'internal_message') && substr($e->internal_message, 0, 1) === '@') {
 		if ($e->internal_message == '@ABORT') {
