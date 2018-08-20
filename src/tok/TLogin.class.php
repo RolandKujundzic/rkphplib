@@ -397,10 +397,11 @@ public function tok_login_update($do, $p) {
  *
  * @tok <pre>{login:*}</pre> = id=...|#|login=...|#|type=...|#|priv=...|#|language=...
  * 
- * If select_list=a,b is set execute p.select_a and p.select_b (replace {:=id}) and add result with prefix a. (b.).
+ * If select_list=a,b is set execute p.select_a and p.select_b (replace {:=id}).
  *
  * @tok {login_auth:}login={get:login}|#|password={get:password}|#|select_list=contract,bag|#|
- * 				select_contract= SELECT * FROM shop_contract WHERE customer={:=id} ORDER BY id DESC LIMIT 1|#|
+ * 				select_contract= SELECT sum(item_num) AS `contract.item_num` FROM shop_contract 
+ *          WHERE customer={:=id} AND start <= NOW() and end > NOW()|#|
  * 				select_bag= SELECT * FROM shop_bag WHERE customer={:=id} ORDER BY id DESC LIMIT 1{:login_auth}
  *
  * @param map $p
@@ -438,7 +439,7 @@ public function tok_login_auth($p) {
 			$r = $user;
 
 			foreach ($list as $prefix) {
-				$user = array_merge($user, $this->selectExtraData($prefix, $p, $r));
+				$user = array_merge($user, $this->selectExtraData('select_'.$prefix, $p, $r));
 			}
 		}
 	}
@@ -536,19 +537,17 @@ private function selectFromAccount($p) {
 
 
 /**
- * Select extra data from database. Parameter: login, password. Allow admin2user if set.
- * Use ADMIN_LOGIN:=USER_LOGIN as login for admin2user mode, if successfull add
- * user.admin2user = [ id, status, type, ... ]. 
+ * Select extra data from database. Query is p[qkey].
  *
  * @throws 
- * @param string $prefix
+ * @param string $qkey
  * @param hash $p
  * @param hash $replace
  * @return hash
  */
-private function selectExtraData($prefix, $p, $replace) {
+private function selectExtraData($qkey, $p, $replace) {
 
-	$this->db->setQuery('extra_data', $p['select_'.$prefix]);
+	$this->db->setQuery('extra_data', $p[$qkey]);
 	$dbres = $this->db->select($this->db->getQuery('extra_data', $replace));
 	if (count($dbres) == 0) {
 		return $dbres;
@@ -560,7 +559,7 @@ private function selectExtraData($prefix, $p, $replace) {
 
 	$res = [];
 	foreach ($dbres[0] as $key => $value) {
-		$res[$prefix.'.'.$key] = $value;
+		$res[$key] = $value;
 	}
 
 	\rkphplib\lib\log_debug("TLogin.selectExtraDatabase> res: ".print_r($res, true));
