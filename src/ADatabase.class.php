@@ -1596,7 +1596,7 @@ public static function columnList($cols, $prefix = '') {
  * @param string $table
  * @param string $type insert|update
  * @param array[string]string $kv
- * @return string
+ * @return ""|string
  */
 public function buildQuery($table, $type, $kv = []) {
 
@@ -1633,6 +1633,10 @@ public function buildQuery($table, $type, $kv = []) {
 			array_push($key_list, self::escape_name($col));
 			array_push($val_list, $val);
 		}
+	}
+
+	if (count($key_list) == 0) {
+		return '';
 	}
 
 	if ($type === 'insert') {
