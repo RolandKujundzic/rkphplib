@@ -782,7 +782,14 @@ public function nextId($table, $use_table = '') {
 		}
 		else if ($where && $this->getAffectedRows() === 0) {
 			// create missing sequence table entry with value = 0 ...
-			$this->execute("INSERT INTO $table_seq (name, id) VALUES ('".self::escape($table)."', 0)");
+			if ($owner > 0 && $table_seq != $table) {
+				$owner = intval($owner);
+				$this->execute("INSERT INTO $table_seq (name, id, owner) VALUES ('".self::escape($table)."', 0, $owner)");
+			}
+			else {
+				$this->execute("INSERT INTO $table_seq (name, id) VALUES ('".self::escape($table)."', 0)");
+			}
+
 			$this->execute("UPDATE $table_seq SET id = LAST_INSERT_ID(id + 1)".$where);
 			$id = $this->getInsertId();
 		}
