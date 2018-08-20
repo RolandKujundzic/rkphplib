@@ -1192,7 +1192,7 @@ private function tryPluginMap($name) {
 		'TLogin' => [ 'login', 'login_account', 'login_check', 'login_auth', 'login_access', 'login_update', 'login_clear' ],
 		'TLoop' => [ 'loop:var', 'loop:list', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
 		'TMailer' => [ 'mail:init', 'mail:html', 'mail:txt', 'mail:send', 'mail:attach', 'mail' ],
-		'TMath' => [ 'nf', 'number_format', 'intval', 'floatval', 'rand' ],
+		'TMath' => [ 'nf', 'number_format', 'intval', 'floatval', 'rand', 'math' ],
 		'TMenu' => [ 'menu', 'menu:add', 'menu:conf' ],
 		'TOutput' => [ 'output:set', 'output:get', 'output:conf', 'output:init', 'output:loop', 'output:json', 'output:header', 'output:footer', 'output:empty', 'output', 'sort', 'search' ],
 		'TPicture' => [ 'picture:init', 'picture:src', 'picture' ],
