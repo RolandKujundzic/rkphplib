@@ -448,6 +448,9 @@ public function getQuery($qkey, $replace = null) {
 			if (is_null($value) || $value === 'NULL' || $value === 'null') {
 				$value = 'NULL';
 			}
+			else if (TAG_PREFIX.$key.TAG_SUFFIX == $value) {
+				$value = $value;
+			}
 			else {
 				$value = "'".$this->esc($value)."'";
 			}
