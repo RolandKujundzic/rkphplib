@@ -93,7 +93,7 @@ public function __construct() {
  * - decode: REQUIRE_PARAM
  * - get: 0
  * - include: REDO, REQUIRE_BODY
- * - include_if: REDO, REQUIRE_BODY, KV_BODY
+ * - include_if: REDO, REQUIRE_BODY, LIST_BODY
  * - ignore: NO_PARAM, TEXT, REQUIRE_BODY
  * - if: REQUIRE_BODY, LIST_BODY
  * - keep: TEXT, REUIRE_BODY
@@ -143,7 +143,7 @@ public function getPlugins($tok) {
 	$plugin['get'] = 0;
 	$plugin['const'] = 0;
 	$plugin['include'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
-	$plugin['include_if'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['include_if'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['view'] = TokPlugin::REDO | TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
 	$plugin['clear'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['ignore'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
@@ -883,7 +883,12 @@ public function tok_include_if($param, $a) {
 		$a[2] = '';
 	}
 
-	$file = ($param == $a[0]) ? $a[1] : $a[2];
+	if (strlen($param) == 0) {
+		$file = empty($a[0]) ? $a[2] : $a[1];
+	}
+	else {
+		$file = ($param == $a[0]) ? $a[1] : $a[2];
+	}
 	
 	if (empty($file)) {
 		return '';
