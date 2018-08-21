@@ -407,7 +407,7 @@ public function tok_tpl($p, $arg) {
  * @tok get optional a: {var:a} or {var:}a{:var}
  * @tok get required a: {var:a!} (abort if not found)
  * @tok set multi-map: {var:=person.age}42{:var}
- * @tok get multi-map: {var:person.age}
+ * @tok get multi-map: {var:person.age} or {var:person.}age{:var}
  *
  * @throws
  * @param string $name
@@ -437,6 +437,9 @@ public function tok_var($name, $value) {
 			else {
 				throw new Exception("invalid plugin ".$this->_tok->getPluginTxt("loop:", $value));
 			}
+		}
+		else if (substr($name, -1) == '.' && !empty($value)) {
+			$name .= trim($value);
 		}
 
 		$res = (string) $this->_tok->getVar($name);
