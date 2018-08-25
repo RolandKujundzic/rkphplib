@@ -68,6 +68,7 @@ public function getPlugins($tok) {
  * min_width: nnn 
  * min_height: nnn
  * max_size: nnn 
+ * jpeg2jpg: 1 (=default)
  * image_ratio: image.width % image.height
  * image_convert: execute convert command
  * 
@@ -93,6 +94,10 @@ public function tok_upload_init($name, $p) {
 	}
 	else if (!isset($p['replace_image']) && !empty($_REQUEST['replace_image'])) {
 		$p['replace_image'] = $_REQUEST['replace_image'];
+	}
+
+	if (!isset($p['jpeg2jpg'])) {
+		$p['jpeg2jpg'] = 1;
 	}
 
 	$this->conf = $p;
@@ -456,6 +461,10 @@ private function getSaveAs($upload_file, $temp_file, $nc = 0) {
 	$save_as = $this->conf['save_as'];
 	$fsize = File::size($temp_file);
 	$res = '';
+
+	if (!empty($this->conf['jpeg2jpg']) && $suffix == '.jpeg') {
+		$suffix = '.jpg';
+	}
 	
 	\rkphplib\lib\log_debug("TUpload.getSaveAS> upload_file=$upload_file temp_file=$temp_file nc=$nc base=$base suffix=$suffix fsize=$fsize");
 
