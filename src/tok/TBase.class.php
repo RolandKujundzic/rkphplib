@@ -558,7 +558,7 @@ private function tableRow($cols, $p) {
 		$res .= "</table>\n";
 	}
 
-	\rkphplib\lib\log_debug("TBase.tableRow> $res");
+	// \rkphplib\lib\log_debug("TBase.tableRow> $res");
 	return $res;
 }
 

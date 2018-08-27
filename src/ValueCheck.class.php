@@ -182,10 +182,10 @@ public static function isUnique($value, $p) {
 
 	$db = \rkphplib\Database::getInstance('', [ 'select_unique' => $query ]);
 	$query = $db->getQuery('select_unique', [ 'id_val' => $id_val, 'u_val' => $p[2] ]);
-	\rkphplib\lib\log_debug("ValueCheck::isUnique($value): p=".print_r($p, true)."\n$query");
+	// \rkphplib\lib\log_debug("ValueCheck::isUnique($value): p=".print_r($p, true)."\n$query");
 	$dbres = $db->select($query);
 	$anz = intval($dbres[0]['anz']);
-	\rkphplib\lib\log_debug("ValueCheck::isUnique: anz=$anz");
+	// \rkphplib\lib\log_debug("ValueCheck::isUnique: anz=$anz");
 	return (!empty($p[3]) && $p[3] == '1') ? $anz == 1 : $anz == 0;
 }
 

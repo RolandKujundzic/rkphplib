@@ -358,7 +358,7 @@ public function tok_login_update($do, $p) {
 		}
 
 		if (count($kv) > 1 && ($query = $this->db->buildQuery($table, 'update', $kv))) {
-			\rkphplib\lib\log_debug("tok_login_update> update $table: $query\nkv: ".print_r($kv, true));
+			// \rkphplib\lib\log_debug("tok_login_update> update $table: $query\nkv: ".print_r($kv, true));
 			$this->db->execute($query);
 		}
 
@@ -561,7 +561,7 @@ private function selectExtraData($qkey, $p, $replace) {
 		$res[$key] = $value;
 	}
 
-	\rkphplib\lib\log_debug("TLogin.selectExtraData($qkey, ...)> res: ".print_r($res, true));
+	// \rkphplib\lib\log_debug("TLogin.selectExtraData($qkey, ...)> res: ".print_r($res, true));
 	return $res;
 }
 
@@ -586,7 +586,7 @@ private function selectFromDatabase($p) {
 
 	$query = empty($p['select']) ? $this->db->getQuery('select_login', $p) : $p['select'];
 	$dbres = $this->db->select($query);
-	\rkphplib\lib\log_debug("TLogin.selectFromDatabase> query=$query - ".print_r($dbres, true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase> query=$query - ".print_r($dbres, true));
 	if (count($dbres) == 0) {
 		$this->tok->setVar('login_error', 'error');
 		return null;
@@ -631,7 +631,7 @@ private function selectFromDatabase($p) {
 	unset($dbres[0]['password_input']);
 	unset($dbres[0]['password']);
 
-	\rkphplib\lib\log_debug("TLogin.selectFromDatabase> return user: ".print_r($dbres[0], true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase> return user: ".print_r($dbres[0], true));
 	return $dbres[0];
 }
 

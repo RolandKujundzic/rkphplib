@@ -106,7 +106,7 @@ public function write($txt) {
  */
 public function load($file) {
 	$fh = File::open($file, 'rb');
-	\rkphplib\lib\log_debug("PipeExecute.load> open file=[$file] fh=[$fh]\n");
+	// \rkphplib\lib\log_debug("PipeExecute.load> open file=[$file] fh=[$fh]\n");
 	while (!feof($fh)) { 
 		if (($buffer = fread($fh, 4096)) === false) {
 			throw new Exception('fread file failed', "file=$file buffer=$buffer");
