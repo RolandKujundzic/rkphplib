@@ -144,7 +144,9 @@ public function __construct() {
 		'bootstrap.in.file'     => '<input class="form-control-file '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
 		'bootstrap.in.textarea' => '<textarea name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$value.'</textarea>',
 		'bootstrap.in.select'   => '<select name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$options.'</select>',
-		'bootstrap.in.multi_checkbox'	=> '<div style="display:inline-block;margin-right:4ch">'.$input.'</div>',
+		'bootstrap.in.multi_checkbox'	=> '<div class="col-md-1">'.$input.'</div><div class="col-md-3">'.$label.'</div>',
+		'bootstrap.in.multi_header' => '<div class="row no-gutters">',
+		'bootstrap.in.multi_footer' => '</div>',
 		'bootstrap.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="form-control '.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
@@ -322,12 +324,6 @@ public function tok_fv_init($do, $p) {
 		$this->conf['current']['required'] = empty($this->conf['current']['required']) ? [] : 
 			\rkphplib\lib\split_str(',', $this->conf['current']['required']);
 	}
-
-	foreach ($this->conf['current'] as $key => $value) {
-		if (substr($key, 0, 3) == 'in.' && substr($value, 0, 14) == 'multi_checkbox') {
-			$this->conf['current'][$key] = $this->get2NData(substr($key, 3), $value);
-		}
-	}
 }
 
 
@@ -341,6 +337,13 @@ public function tok_fv_init($do, $p) {
  */
 public function tok_fv_check() {
 	$submit = $this->conf['current']['submit'];
+
+	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_check> submit=$submit _REQUEST: ".print_r($_REQUEST, true));
+	foreach ($this->conf['current'] as $key => $value) {
+		if (substr($key, 0, 3) == 'in.' && substr($value, 0, 14) == 'multi_checkbox') {
+			$this->conf['current'][$key] = $this->get2NData(substr($key, 3), $value);
+		}
+	}
 
 	if (empty($_REQUEST[$submit])) {
 		return '';
@@ -377,7 +380,7 @@ public function tok_fv_check() {
 
 				$this->setExample($name, $check);
 				array_push($this->error[$name], $this->getErrorMessage($path));
-				\rkphplib\lib\log_debug("TFormValidator->tok_fv_check> path=$key name=$name error: ".print_r($this->error[$name], true));
+				// \rkphplib\lib\log_debug("TFormValidator->tok_fv_check> path=$key name=$name error: ".print_r($this->error[$name], true));
 			}
 		}
 	}
@@ -524,9 +527,9 @@ private function get2NData($name, $name_def) {
 	$r['multi'] = 1;
 	unset($r[0]);
 
-	// \rkphplib\lib\log_debug("name=[$name] value=[$name_def] r: ".print_r($r, true));
+	// \rkphplib\lib\log_debug("TFormValidator.get2NData($name, ...)> r: ".print_r($r, true));
+	$value = isset($_REQUEST[$name]) ? intval($_REQUEST[$name]) : null;
 	$done = false;
-	$value = 0;
 	$n = 1;
 
 	while (!empty($r[$n]) && $n < 33) {
@@ -536,17 +539,16 @@ private function get2NData($name, $name_def) {
 		$r[$var] = $r[$n];
 		unset($r[$n]);
 
-		if (!empty($_REQUEST[$var]) && $_REQUEST[$var] == $v) {
-			$value += $v;
+		if (!is_null($value) && !isset($_REQUEST[$var]) && ($value & $v) == $v) {
+			$_REQUEST[$var] = $v;
 		}
 
 		$n++;
 	}
 
 	$r['n_max'] = $n - 1;
-	$_REQUEST[$name] = $value;
 	$res = \rkphplib\lib\kv2conf($r, '=', ',');
-	// \rkphplib\lib\log_debug("name=[$name] value=[$value] res=[$res] r: ".print_r($r, true));
+	// \rkphplib\lib\log_debug("TFormValidator.get2NData($name, ...)> value=[$value] res=[$res] r: ".print_r($r, true));
 	return $res;
 }
 
@@ -560,13 +562,16 @@ private function get2NData($name, $name_def) {
  * @return string
  */
 private function multiCheckbox($name, $p) {
-	// \rkphplib\lib\log_debug("multiCheckbox: name=$name p: ".print_r($p, true));
-	$res = '';
+	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> name=$name p: ".print_r($p, true));
 
 	$conf = $this->conf['current'];
-  $tpl_in = $conf['template.engine'].'.in.multi_checkbox';
-	$input = empty($conf[$tpl_in]) ? $conf['default.in.multi_checkbox'] : $conf[$tpl_in];
+	$tpl_prefix = $conf['template.engine'].'.in.multi_';
+	$header = empty($conf[$tpl_prefix.'header']) ? '' : $conf[$tpl_prefix.'header'];
+	$footer = empty($conf[$tpl_prefix.'footer']) ? '' : $conf[$tpl_prefix.'footer'];
+  $input = empty($conf[$tpl_prefix.'checkbox']) ? $conf['default.in.multi_checkbox'] : $conf[$tpl_prefix.'checkbox'];
+	$res = $header;
 
+	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> tpl_prefix=[$tpl_prefix] header=[$header] input=[$input] footer=[$footer]");
 	for ($n = 0; $n < $p['n_max']; $n++) {
 		$var = $name.$n;
 
@@ -578,10 +583,13 @@ private function multiCheckbox($name, $p) {
 			$r['checked'] = 'checked';
 		}
 
-		$html = $this->getInput($var, $r).' '.$p[$var];
-		$res .= $this->tok->replaceTags($input, [ 'input' => $html ]);
+		$html = $this->getInput($var, $r);
+		$res .= $this->tok->replaceTags($input, [ 'input' => $html, 'label' => $p[$var] ]);
 	}
 
+	$res .= $footer;
+
+	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> res=[$res]");
 	return $res;
 }
 
@@ -649,7 +657,7 @@ public function tok_fv_in($name, $p) {
 	$r['example'] = empty($this->example[$name]) ? '' : '<span class="example">'.$this->example[$name].'</span>';
 
 	$res = $this->tok->removeTags($this->tok->replaceTags($res, $r));
-	\rkphplib\lib\log_debug("TFormValidator->tok_fv_in> res=[$res] r: ".print_r($r, true));
+	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_in($name, ...)> res=[$res] r: ".print_r($r, true));
 	return $res;
 }
 
@@ -693,11 +701,11 @@ protected function parseInName($name, $value, &$p) {
 
 	if (!empty($r['multi'])) {
 		$p = $r;
-		// \rkphplib\lib\log_debug("parseInName($name, $value, ...)> multi p: ".print_r($p, true));
+		// \rkphplib\lib\log_debug("TFormValidator.parseInName($name, $value, ...)> multi p: ".print_r($p, true));
 		return;
 	}
 
-	// \rkphplib\lib\log_debug("parseInName($name, $value, ...)> r: ".print_r($r, true)."\np: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TFormValidator.parseInName($name, $value, ...)> r: ".print_r($r, true)."\np: ".print_r($p, true));
 	$type = $p['type'];
 
 	if (in_array($type, [ 'text', 'pass', 'input', 'password' ])) {
@@ -785,7 +793,7 @@ protected function parseInName($name, $value, &$p) {
 		$p[$key] = $value;
 	}
 
-	// \rkphplib\lib\log_debug("parseInName($name, $value, ...)> p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TFormValidator.parseInName($name, $value, ...)> p: ".print_r($p, true));
 }
 
 
@@ -888,7 +896,7 @@ protected function getInput($name, $ri) {
 
 	$input = $this->tok->replaceTags($input, $ri);
 
-	// \rkphplib\lib\log_debug("getInput($name): ".print_r($ri, true)."\n$input");
+	// \rkphplib\lib\log_debug("TFormValidator.getInput($name, ...)> input=[$input] ri: ".print_r($ri, true));
 	return $input;
 }
 
@@ -907,7 +915,7 @@ private function getOptions(&$p, $opt_value, $str_options) {
 	$html = '';
 	$empty_label = null;
 
-	\rkphplib\lib\log_debug("TFormValidator.getOptions|enter> opt_value=[$opt_value] str_options=[$str_options] p: ".print_r($p, true)); 
+	// \rkphplib\lib\log_debug("TFormValidator.getOptions|enter> opt_value=[$opt_value] str_options=[$str_options] p: ".print_r($p, true)); 
 
 	if (!empty($p['@_1']) && substr($p['@_1'], 0, 1) == '=') {
 		$empty_label = substr($p['@_1'], 1);
