@@ -165,9 +165,10 @@ public static function loadCSV($file, $delimiter = ',', $quote = '"', $trim = tr
  * @throws
  * @param string $url
  * @param boolean $required 
+ * @param hash $header
  * @return string
  */
-public static function fromURL($url, $required = true) {
+public static function fromURL($url, $required = true, $header = []) {
 
 	if (empty($url)) {
 		throw new Exception('empty url');
@@ -180,6 +181,16 @@ public static function fromURL($url, $required = true) {
 	curl_setopt($cu, CURLOPT_SSL_VERIFYHOST, false);
 	curl_setopt($cu, CURLOPT_SSL_VERIFYPEER, false);
 	curl_setopt($cu, CURLOPT_FOLLOWLOCATION, true);
+
+	if (count($header) > 0) {
+		$header_lines = [];
+
+		foreach ($header as $key => $value) {
+			array_push($header_lines, $key.': '.$value);
+		}
+
+		curl_setopt($cu, CURLOPT_HTTPHEADER, $header_lines);
+	}
 
 	$res = curl_exec($cu);
 	$info = curl_getinfo($cu);
