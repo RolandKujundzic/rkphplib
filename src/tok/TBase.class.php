@@ -2083,6 +2083,10 @@ public function tok_true($val, $out) {
 	if (is_string($tf) && strpos($tf, 'switch:') === 0) {
 		$val = \rkphplib\lib\split_str(',', $val);
 		$tf = substr($tf, 7);
+
+		if (count($val) == 1 && substr($val[0], 0, 1) == '!' && substr($val[0], 1) != $tf) {
+			$val[0] = $tf;
+		}
 	}
 
 	// \rkphplib\lib\log_debug('tok_true: val='.print_r($val, true).' tf='.print_r($tf, true));
