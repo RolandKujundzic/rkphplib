@@ -539,7 +539,10 @@ private function get2NData($name, $name_def) {
 		$r[$var] = $r[$n];
 		unset($r[$n]);
 
-		if (!is_null($value) && !isset($_REQUEST[$var]) && ($value & $v) == $v) {
+		if (!empty($_REQUEST[$var]) && $_REQUEST[$var] == $v) {
+			$value += $v;
+		}
+		else if (!is_null($value) && !isset($_REQUEST[$var]) && ($value & $v) == $v) {
 			$_REQUEST[$var] = $v;
 		}
 
@@ -548,6 +551,11 @@ private function get2NData($name, $name_def) {
 
 	$r['n_max'] = $n - 1;
 	$res = \rkphplib\lib\kv2conf($r, '=', ',');
+
+	if (empty($_REQUEST[$name]) && !is_null($value)) {
+		$_REQUEST[$name] = $value;
+	}
+
 	// \rkphplib\lib\log_debug("TFormValidator.get2NData($name, ...)> value=[$value] res=[$res] r: ".print_r($r, true));
 	return $res;
 }
