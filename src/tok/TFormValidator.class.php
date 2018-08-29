@@ -779,11 +779,12 @@ protected function parseInName($name, $value, &$p) {
 	else if ($type == 'checkbox') {
 		if (count($r) == 0) {
 			$p['value'] = 1;
-			$p['checked'] = isset($_REQUEST[$name]) && $_REQUEST[$name] == 1;
 		}
 		else {
-			$p['value'] = $r;
+			$p['value'] = array_shift($r);
 		}
+
+		$p['checked'] = isset($_REQUEST[$name]) && $_REQUEST[$name] == $p['value'];
 	}
 	else if ($type == 'file') {
 		if (!empty($r[1])) {
