@@ -24,7 +24,7 @@ use \rkphplib\ValueCheck;
  * template.output.default= {:=label}: {:=input} {fv:error_message}|#|
  * template.header|footer= ...|#|
  * template.input= <input type="text" name="{:=name}" value="{:=value}" class="{:=class}"> {fv:error_message:$name}
- * template.engine= default[|bootstrap]
+ * template.engine= default[|bootstrap|material]
  * {:fv}
  *
  * {fv:init:[add]}
@@ -102,15 +102,22 @@ public function getPlugins($tok) {
 
 
 /**
- * Set default configuration.
+ * Set default configuration. Configuration Parameter:
+ *
+ * template.engine= default|bootstrap|material
+ * ENGINE.in.[const|input|textarea|select|file|multi_checkbox|fselect] = ...
+ * 
+ * Render ENGINE.in.TYPE, label and ERROR_MESSAGE into template.output.TEMPLATE.OUTPUT
  */
 public function __construct() {
 	$label = TAG_PREFIX.'label'.TAG_SUFFIX;
 	$input = TAG_PREFIX.'input'.TAG_SUFFIX;
 	$error = TAG_PREFIX.'error'.TAG_SUFFIX;
 	$error_message = TAG_PREFIX.'error_message'.TAG_SUFFIX;
+	$example = TAG_PREFIX.'example'.TAG_SUFFIX;
 	$id = TAG_PREFIX.'id'.TAG_SUFFIX;
 	$type = TAG_PREFIX.'type'.TAG_SUFFIX;
+	$form_group = TAG_PREFIX.'form_group'.TAG_SUFFIX; 
 	$name = TAG_PREFIX.'name'.TAG_SUFFIX;
 	$value = TAG_PREFIX.'value'.TAG_SUFFIX;
 	$class = TAG_PREFIX.'class'.TAG_SUFFIX;
@@ -123,8 +130,6 @@ public function __construct() {
 		'label_required'	=> $label.'<sup>*</sup>',
 
 		'template.engine' => 'default',
-		'template.output' => 'default',
-		'template.output.default' => '<span class="label">'.$label.'</span>'.$input.$error_message,
 		'template.header' => '',
 		'template.footer' => '',
 
@@ -140,6 +145,14 @@ public function __construct() {
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
 
+		'default.error.message'					=> '<span class="error_message">'.$error.'</span>',
+		'default.error.message_concat'	=> ', ',
+		'default.error.message_multi'		=> "<i>$name</i>: <tt>$error</tt><br>",
+		'default.error.const'						=> 'error',
+
+		'default.output.in'		=> '<span class="label">'.$label.'</span>'.$input.$example.$error_message,
+		'default.example'			=> '<span class="example">'.$example.'</span>',
+
 		'bootstrap.in.input'	  => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="form-control '.$class.'" '.$tags.'>',
 		'bootstrap.in.file'     => '<input class="form-control-file '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
 		'bootstrap.in.textarea' => '<textarea name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$value.'</textarea>',
@@ -151,6 +164,11 @@ public function __construct() {
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
 
+		'bootstrap.error.const'						=> 'is-invalid',
+
+		'bootstrap.output.in'		=> '<div class="'.$form_group.'">'."\n".'<label for="'.$id.'" text-right>'.$label.'</label>'.
+			"$example$error_message\n$input\n</div>",
+
 		'material.in.input'	   => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="mdl-textfield__input '.$class.'" '.$tags.'>',
 		'material.in.file'     => '<input class="mdl-textfield__input '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
 		'material.in.textarea' => '<textarea name="'.$name.'" class="mdl-textfield__input '.$class.'" '.$tags.'>'.$value.'</textarea>',
@@ -160,12 +178,7 @@ public function __construct() {
 			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
 		'material.in.checkbox' => '<label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="'.$id.'"><input type="checkbox" '.
 			'id="'.$id.'" name="'.$name.'" value="'.$value.'" class="mdl-checkbox__input mdl-js-ripple-effect '.$class.'" '.$tags.
-			'><span class="mdl-checkbox__label">'.$label.'</span></label>',
-
-		'template.error.message' 				 => '<span class="error_message">'.$error.'</span>',
-		'template.error.message_concat'  => ', ',
-		'template.error.message_multi'   => "<i>$name</i>: <tt>$error</tt><br>",
-		'template.error.const' 					 => 'error'
+			'><span class="mdl-checkbox__label">'.$label.'</span></label>'
 		];
 }
 
@@ -185,7 +198,7 @@ public function __construct() {
  * @return ''|string
  */
 public function tok_fv_preset($arg) {
-	$skey = $this->conf['current']['submit'];
+	$skey = $this->getConf('submit');
 
 	if (isset($_REQUEST[$skey])) {
 		return '';
@@ -238,10 +251,9 @@ public function tok_fv_set_error_message($name, $msg) {
  */
 public function tok_fv_hidden() {
 	$res = '';
-	$conf = $this->conf['current'];
 
-	if (!empty($conf['hidden_keep'])) {
-		$list = \rkphplib\lib\split_str(',', $conf['hidden_keep']);
+	if (!empty($hidden_keep = $this->getConf('hidden_keep'))) {
+		$list = \rkphplib\lib\split_str(',', $hidden_keep);
 		foreach ($list as $key) {
 			if (isset($_REQUEST[$key])) {
 				$res .= '<input type="hidden" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($_REQUEST[$key]).'">'."\n";
@@ -249,7 +261,7 @@ public function tok_fv_hidden() {
 		}
 	}
 
-	foreach ($conf as $key => $value) {
+	foreach ($this->conf['current'] as $key => $value) {
 		if (mb_substr($key, 0, 7) == 'hidden.') {
 			$key = mb_substr($key, 7);
 			$res .= '<input type="hidden" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($value).'">'."\n";
@@ -265,7 +277,7 @@ public function tok_fv_hidden() {
  * name=default to overwrite default configuration.
  * 
  * @param string $name
- * @param array $p
+ * @param hash $p
  * @return ''
  */
 public function tok_fv_conf($name, $p) {
@@ -328,7 +340,8 @@ public function tok_fv_init($do, $p) {
 
 
 /**
- * Return validation result (yes|error|).
+ * Return validation result (yes|error|). Call get2NData() if multi_checkbox input exists.
+ * If _REQUEST[conf[submit]] is empty do nothing. Apply all conf[check.*] value checks.
  *
  * @tok {fv_check:} -> [|yes|error]
  * 
@@ -336,7 +349,7 @@ public function tok_fv_init($do, $p) {
  * @return string (yes|error|)
  */
 public function tok_fv_check() {
-	$submit = $this->conf['current']['submit'];
+	$submit = $this->getConf('submit');
 
 	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_check> submit=$submit _REQUEST: ".print_r($_REQUEST, true));
 	foreach ($this->conf['current'] as $key => $value) {
@@ -402,8 +415,8 @@ private function setExample($name, $check) {
 
 	$example = '';
 
-	if (!empty($this->conf['example.'.$name.'_'.$check])) {
-		$example = $this->conf['example.'.$name.'_'.$check];
+	if (!empty($this->conf['current']['example.'.$name.'_'.$check])) {
+		$example = $this->conf['current']['example.'.$name.'_'.$check];
 	}
 	else if (!empty($map[$check])) {
 		$example = $map[$check];
@@ -414,12 +427,13 @@ private function setExample($name, $check) {
 
 
 /**
- * Return error message (error.path[1..2]). Example:
+ * Return error message (error.path[1..2]). Overwrite default error message 'invalid'
+ * with conf[error.CHECK_NAME]. Example:
  *
  * check.login.1= isUnique:{login:@table}:...|#|
  * error.login.1= {txt:}already taken{:txt}|#|
  *
- * @param array $path
+ * @param array $path e.g. [ check, name, 1 ] (= check.name.1)
  * @return string
  */
 protected function getErrorMessage($path) {
@@ -430,7 +444,7 @@ protected function getErrorMessage($path) {
 
 
 /**
- * Return "error" (= template.error.const or $tpl if set) if $name check failed.
+ * Return "error" (= ENGINE.error.const or $tpl if set) if $name check failed.
  *
  * @throws
  * @param string $name
@@ -442,26 +456,27 @@ public function tok_fv_error($name, $tpl) {
 		return '';
 	}
 
-	return empty($tpl) ? $this->conf['current']['template.error.const'] : $tpl;
+	return empty($tpl) ? $this->getConf('error.const', true) : $tpl;
 }
 
 
 /**
- * Return error message. Replace {:=name} and {:=error} in template.error.message[_multi] (overwrite with $tpl). If there are
- * multiple errors concatenate template.error.message with template.error.message_concat.
+ * Return error message. Replace {:=name} and {:=error} in ENGINE.error.message[_multi] (overwrite with $tpl). If there are
+ * multiple errors concatenate ENGINE.error.message with ENGINE.error.message_concat.
  *
- * Use name=* to return all error messages (concatenate template.error.message_multi).
+ * Use name=* to return all error messages (concatenate ENGINE.error.message_multi).
  *
  * @throws
  * @return string 
  */
 public function tok_fv_error_message($name, $tpl = '') {
 	$conf = $this->conf['current'];
+	$prefix = $conf['template.engine'].'.error';
 	$res = '';
 
 	if ($name == '*') {
 		if (empty($tpl)) {
-			$tpl = $conf['template.error.message_multi'];
+			$tpl = $conf[$prefix.'.message_multi'];
 		}
 
 		foreach ($this->error as $key => $value) {
@@ -472,11 +487,11 @@ public function tok_fv_error_message($name, $tpl = '') {
 	}
 	else if (isset($this->error[$name])) {
 		if (empty($tpl)) {
-			$tpl = $this->conf['current']['template.error.message'];
+			$tpl = $conf[$prefix.'.message'];
 		}
 
 		$r = [ 'name' => $name ];
-		$r['error'] = join($conf['template.error.message_concat'], $this->error[$name]);
+		$r['error'] = join($conf[$prefix.'message_concat'], $this->error[$name]);
 
 		$res = $this->tok->replaceTags($tpl, $r);
 	}
@@ -603,7 +618,9 @@ private function multiCheckbox($name, $p) {
 
 
 /**
- * Show input for $name. If $p is empty use conf.[in.name].
+ * Show input for $name. Default input template conf[ENGINE.in.$type].
+ * Default output template is conf[ENGINE.output.in]. If $p[output] is not empty 
+ * use conf[ENGINE.in.OUTPUT].
  *
  * @throws
  * @param string $name
@@ -613,14 +630,12 @@ private function multiCheckbox($name, $p) {
 public function tok_fv_in($name, $p) {
 
 	$conf = $this->conf['current'];
-
-	$out = empty($p['output']) ? $conf['template.output'] : $p['output'];
-
-	if (!isset($conf['template.output.'.$out])) {
-		throw new Exception('no template.output.'.$out.' template');
+	$out = $conf['template.engine'].'.output';
+	if (!isset($conf[$out.'.in'])) {
+		throw new Exception("no $out.in template");
 	}
 
-	$res = $conf['template.output.'.$out];
+	$res = empty($p['output']) ? $conf[$out.'.in'] : $conf[$out.'.in.'.$p['output']];
 
 	if (!empty($conf['in.'.$name])) {
 		$this->parseInName($name, $conf['in.'.$name], $p);
@@ -661,12 +676,50 @@ public function tok_fv_in($name, $p) {
 	$r = $p;
 	$r['input'] = $this->getInput($name, $p);
 	$r['error_message'] = $this->tok_fv_error_message($name);
-	$r['error'] = isset($this->error[$name]) ? $conf['template.error.const'] : '';
-	$r['example'] = empty($this->example[$name]) ? '' : '<span class="example">'.$this->example[$name].'</span>';
+	$r['error'] = isset($this->error[$name]) ? $this->getConf('error.conf', true) : '';
+	$r['example'] = empty($this->example[$name]) ? '' : 
+		$this->tok->replaceTags($this->getConf('example', true), [ 'example' => $this->example[$name] ]);
 
 	$res = $this->tok->removeTags($this->tok->replaceTags($res, $r));
 	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_in($name, ...)> res=[$res] r: ".print_r($r, true));
 	return $res;
+}
+
+
+/**
+ * Return configuration key. Use 1|true for template.engine or name engine.
+ *
+ * @throws
+ * @param string $key
+ * @param string $engine (default = '')
+ */
+public function getConf($key, $engine = '') {
+	$conf = $this->conf['current'];
+
+	if (!empty($engine)) {
+		if (is_bool($engine)) {
+			$engine = $conf['template.engine'].'.';
+		}
+		else {
+			$engine .= '.'; 
+		}
+	}
+
+	$ckey = $engine.$key;
+	if (!isset($conf[$ckey])) {
+		if (!empty($engine) && $engine != 'default.') {
+			// try fallback to default engine
+			$ckey = 'default.'.$key;
+
+			if (isset($conf[$ckey])) {
+				return $conf[$ckey];
+			}
+		}
+
+		throw new Exception("no such configuration key $ckey");
+	}
+
+	return $conf[$ckey];
 }
 
 
