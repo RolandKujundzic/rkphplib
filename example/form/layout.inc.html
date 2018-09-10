@@ -25,7 +25,7 @@ form span.error_message {
 <body>
 
 {fv:init}
-required= name, brand|#|
+required= id, name, brand|#|
 hidden_keep= id, dir|#|
 hidden.form_action=1|#|
 
@@ -41,17 +41,14 @@ Form-Submit: check=[{fv:check}] interior=[{get:interior}]
 {:true}
 
 {false:}
-<form method="get" data-key13="prevent" novalidate>
-{fv:hidden}
+{fv:tpl:header}
 {fv:in:name}label=Name{:fv}<br>
 {fv:in:brand}label=Brand{:fv}<br>
 {fv:in:interior}label=Interior{:fv}<br>
-<input type="submit">
-</form>
+{fv:in:footer}label=absenden{:fv}
 
 <pre>check=[{fv:check}] interior=[{get:interior}] error=[{fv:error_message:*}]</pre>
 {:false}
-
 
 </body>
 </html>
