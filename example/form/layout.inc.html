@@ -4,14 +4,63 @@
 <meta charset="utf-8" />
 <script src="../../js/rkPhpLib.js"></script>
 <style>
+form {
+	font-family: Arial, Helvetica;
+}
+
 form br {
 	display: block;
 	margin-top:1.4ch;
 }
 
-form span.label {
+@supports (-webkit-appearance:none) {
+	form input {
+		font-size: 1em;
+	}
+
+	form select {
+		font-size: 1.1em;
+	}
+
+	form br {
+		line-height: 2em;
+	}
+}
+
+form div.multi_checkbox_wrapper {
 	display: inline-block;
+	border: 1px solid green;
+	width: 51ch;
+}
+
+form div.multi_checkbox {
+	display: inline-block;
+	min-width: 25ch;
+}
+
+form div.multi_checkbox span:nth-child(1) input[type=checkbox] {
+	margin-right: 1ch;
+}
+
+@supports (-moz-appearance:none) {
+	form div.multi_checkbox span:nth-child(1) input[type=checkbox] {
+		position: relative;
+		bottom: -2px;
+	}
+}
+
+form span.label {
+	border: 1px solid red;
+	display: inline-block;
+	vertical-align: top;
 	min-width: 12ch;
+}
+
+@supports (-moz-appearance:none) {
+	form span.label {
+		position: relative;
+		top: 2px;
+	}
 }
 
 form span.error_message {
@@ -25,7 +74,7 @@ form span.error_message {
 <body>
 
 {fv:init}
-required= id, name, brand|#|
+required= id, name, brand, interior|#|
 hidden_keep= id, dir|#|
 hidden.form_action=1|#|
 
@@ -41,11 +90,11 @@ Form-Submit: check=[{fv:check}] interior=[{get:interior}]
 {:true}
 
 {false:}
-{fv:tpl:header}
+{fv:tpl:header}method=get|#|upload=0{:fv}
 {fv:in:name}label=Name{:fv}<br>
 {fv:in:brand}label=Brand{:fv}<br>
 {fv:in:interior}label=Interior{:fv}<br>
-{fv:in:footer}label=absenden{:fv}
+{fv:tpl:footer}label=absenden{:fv}
 
 <pre>check=[{fv:check}] interior=[{get:interior}] error=[{fv:error_message:*}]</pre>
 {:false}

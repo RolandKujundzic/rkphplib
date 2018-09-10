@@ -59,6 +59,9 @@ class TFormValidator implements TokPlugin {
 use TokHelper;
 
 
+/** @var Tokenizer $tok */
+private $tok;
+
 /** @var hash $conf */
 protected $conf = [ 'default' => [], 'current' => [] ];
 
@@ -126,6 +129,8 @@ public function __construct() {
 	$options = TAG_PREFIX.'options'.TAG_SUFFIX;
 	$fselect_input = TAG_PREFIX.'fselect_input'.TAG_SUFFIX;
 
+	$tok = is_null($this->tok) ? Tokenizer::$site : $this->tok;
+
 	$this->conf['default'] = [
 		'submit' 					=> 'form_action',
 		'label_required'	=> $label.'<sup>*</sup>',
@@ -139,7 +144,8 @@ public function __construct() {
 		'default.in.textarea' => '<textarea name="'.$name.'" class="'.$class.'" '.$tags.'>'.$value.'</textarea>',
 		'default.in.select'   => '<select name="'.$name.'" class="'.$class.'" '.$tags.'>'.$options.'</select>',
 		'default.in.file'			=> '<input type="file" name="'.$name.'" class="'.$class.'" data-value="'.$value.'" '.$tags.'>',
-		'default.in.multi_checkbox'	=> '<span style="margin-right:4ch">'.$input.'</span>',
+		'default.in.multi_checkbox'	=> '<div class="multi_checkbox_wrapper">'.$input.'</div>',
+		'default.in.multi_checkbox.entry' => '<div class="multi_checkbox"><span>'.$input.'</span><span>'.$label.'</span></div>',
 		'default.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="'.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
@@ -150,11 +156,14 @@ public function __construct() {
 		'default.error.const'						=> 'error',
 
 		'default.output.in'		=> '<span class="label">'.$label.'</span>'.$input.$example.$error_message,
+
 		'default.example'			=> '<span class="example">'.$example.'</span>',
-		'default.header' => '<form method="'.$this->tok->getPluginTxt([ 'if', '' ], $method.'|#|'.$method.'|#|get').'" '.
-			$this->tok->getPluginTxt([ 'if', '' ], $upload.'|#|enctype="multipart/form-data"').' data-key13="prevent" novalidate>'."\n".
-			$this->tok->getPluginTxt([ 'fv', 'hidden' ], null),
-		'default.footer' => '<input type="submit" name="'.$label.'">'."\n</form>",
+
+		'default.header' => '<form method="'.$tok->getPluginTxt([ 'if', '' ], $method.'|#|'.$method.'|#|get').'" '.
+			$tok->getPluginTxt([ 'if', '' ], $upload.'|#|enctype="multipart/form-data"').' data-key13="prevent" novalidate>'."\n".
+			$tok->getPluginTxt([ 'fv', 'hidden' ], null),
+
+		'default.footer' => '<input type="submit" value="'.$label.'">'."\n</form>",
 
 		'bootstrap.in.input'	  => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="form-control '.$class.'" '.$tags.'>',
 		'bootstrap.in.file'     => '<input class="form-control-file '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
@@ -584,16 +593,12 @@ private function get2NData($name, $name_def) {
  * @return string
  */
 private function multiCheckbox($name, $p) {
-	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> name=$name p: ".print_r($p, true));
+	\rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> name=$name p: ".print_r($p, true));
+	$entry = $this->getConf('in.multi_checkbox.entry', true);
+  $entries = $this->getConf('in.multi_checkbox', true);
+	$entry_list = '';
 
-	$conf = $this->conf['current'];
-	$tpl_prefix = $conf['template.engine'].'.in.multi_';
-	$header = empty($conf[$tpl_prefix.'header']) ? '' : $conf[$tpl_prefix.'header'];
-	$footer = empty($conf[$tpl_prefix.'footer']) ? '' : $conf[$tpl_prefix.'footer'];
-  $input = $this->getConf('in.multi_checkbox', true);
-	$res = $header;
-
-	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> tpl_prefix=[$tpl_prefix] header=[$header] input=[$input] footer=[$footer]");
+	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> entry=[$entry] entries=[$entries]");
 	for ($n = 0; $n < $p['n_max']; $n++) {
 		$var = $name.$n;
 
@@ -606,11 +611,17 @@ private function multiCheckbox($name, $p) {
 		}
 
 		$html = $this->getInput($var, $r);
-		$res .= $this->tok->replaceTags($input, [ 'input' => $html, 'label' => $p[$var] ]);
+		// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox> ".join('|', $r).": $html");
+		$entry_list .= $this->tok->replaceTags($entry, [ 'input' => $html, 'label' => $p[$var] ]);
 	}
 
-	$res .= $footer;
+	if (!empty($this->conf['current']['label_required']) && !empty($p['label']) && in_array($name, $this->conf['current']['required'])) {
+		$p['label'] = $this->tok->replaceTags($this->conf['current']['label_required'], [ 'label' => $p['label'] ]);
+	}
 
+	$p['input'] = $this->tok->replaceTags($entries, [ 'input' => $entry_list ]);
+  $res = empty($p['output']) ? $this->getConf('output.in', true) : $this->getConf('output.in.'.$p['output']);
+  $res = $this->tok->removeTags($this->tok->replaceTags($res, $p));	
 	\rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> res=[$res]");
 	return $res;
 }
@@ -627,14 +638,9 @@ private function multiCheckbox($name, $p) {
  * @return string
  */
 public function tok_fv_in($name, $p) {
-
+	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_in($name, ...)> p: ".print_r($p, true));
 	$conf = $this->conf['current'];
-	$out = $conf['template.engine'].'.output';
-	if (!isset($conf[$out.'.in'])) {
-		throw new Exception("no $out.in template");
-	}
-
-	$res = empty($p['output']) ? $conf[$out.'.in'] : $conf[$out.'.in.'.$p['output']];
+	$res = empty($p['output']) ? $this->getConf('output.in', true) : $this->getConf('output.in.'.$p['output']);
 
 	if (!empty($conf['in.'.$name])) {
 		$this->parseInName($name, $conf['in.'.$name], $p);
@@ -760,8 +766,8 @@ protected function parseInName($name, $value, &$p) {
 	}
 
 	if (!empty($r['multi'])) {
-		$p = $r;
-		// \rkphplib\lib\log_debug("TFormValidator.parseInName($name, $value, ...)> multi p: ".print_r($p, true));
+		$p = array_merge($p, $r);
+		\rkphplib\lib\log_debug("TFormValidator.parseInName($name, $value, ...)> multi p: ".print_r($p, true));
 		return;
 	}
 
@@ -976,7 +982,7 @@ private function getOptions(&$p, $opt_value, $str_options) {
 	$html = '';
 	$empty_label = null;
 
-	// \rkphplib\lib\log_debug("TFormValidator.getOptions|enter> opt_value=[$opt_value] str_options=[$str_options] p: ".print_r($p, true)); 
+	\rkphplib\lib\log_debug("TFormValidator.getOptions|enter> opt_value=[$opt_value] str_options=[$str_options] p: ".print_r($p, true)); 
 
 	if (!empty($p['@_1']) && substr($p['@_1'], 0, 1) == '=') {
 		$empty_label = substr($p['@_1'], 1);
@@ -998,7 +1004,8 @@ private function getOptions(&$p, $opt_value, $str_options) {
 		$name = $p['fselect'];
 		unset($p['fselect']);
 
-		if (!empty($_REQUEST[$name.'_']) && $_REQUEST[$name] == $_REQUEST[$name.'_']) {
+		if ((empty($_REQUEST[$name.'_']) && !empty($_REQUEST[$name])) ||
+				(!empty($_REQUEST[$name.'_']) && $_REQUEST[$name] == $_REQUEST[$name.'_'])) {
 			$value = $_REQUEST[$name];
 
 			if (!isset($p[$value])) {
