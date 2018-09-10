@@ -113,13 +113,17 @@ public function getPlugins($tok) {
  */
 public function __construct() {
 	$label = TAG_PREFIX.'label'.TAG_SUFFIX;
+	$label2 = TAG_PREFIX.'label2'.TAG_SUFFIX;
 	$input = TAG_PREFIX.'input'.TAG_SUFFIX;
 	$error = TAG_PREFIX.'error'.TAG_SUFFIX;
 	$error_message = TAG_PREFIX.'error_message'.TAG_SUFFIX;
 	$example = TAG_PREFIX.'example'.TAG_SUFFIX;
 	$id = TAG_PREFIX.'id'.TAG_SUFFIX;
 	$type = TAG_PREFIX.'type'.TAG_SUFFIX;
+	$get = TAG_PREFIX.'get'.TAG_SUFFIX;
+	$col = TAG_PREFIX.'col'.TAG_SUFFIX;
 	$form_group = TAG_PREFIX.'form_group'.TAG_SUFFIX; 
+	$fadeout_confirm = TAG_PREFIX.'fadeout_confirm'.TAG_SUFFIX;
 	$name = TAG_PREFIX.'name'.TAG_SUFFIX;
 	$value = TAG_PREFIX.'value'.TAG_SUFFIX;
 	$class = TAG_PREFIX.'class'.TAG_SUFFIX;
@@ -159,11 +163,13 @@ public function __construct() {
 
 		'default.example'			=> '<span class="example">'.$example.'</span>',
 
-		'default.header' => '<form method="'.$tok->getPluginTxt([ 'if', '' ], $method.'|#|'.$method.'|#|get').'" '.
-			$tok->getPluginTxt([ 'if', '' ], $upload.'|#|enctype="multipart/form-data"').' data-key13="prevent" novalidate>'."\n".
+		'default.header' => '<form action="'.$tok->getPluginTxt([ 'link', '' ], '_='.$get).'" method="'.
+			$tok->getPluginTxt([ 'if', '' ], $method.HASH_DELIMITER.$method.HASH_DELIMITER.'get').'" '.
+			$tok->getPluginTxt([ 'if', '' ], $upload.HASH_DELIMITER.'enctype="multipart/form-data"').' data-key13="prevent" novalidate>'."\n".
 			$tok->getPluginTxt([ 'fv', 'hidden' ], null),
 
 		'default.footer' => '<input type="submit" value="'.$label.'">'."\n</form>",
+
 
 		'bootstrap.in.input'	  => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="form-control '.$class.'" '.$tags.'>',
 		'bootstrap.in.file'     => '<input class="form-control-file '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
@@ -176,10 +182,25 @@ public function __construct() {
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
 
-		'bootstrap.error.const'						=> 'is-invalid',
+		'bootstrap.error.const'	=> 'is-invalid',
 
 		'bootstrap.output.in'		=> '<div class="'.$form_group.'">'."\n".'<label for="'.$id.'" text-right>'.$label.'</label>'.
 			"$example$error_message\n$input\n</div>",
+
+		'bootstrap.header'	=> '<div class="container {:=class}">'."\n".'<div class="row">'."\n".'<div class="'.
+			$tok->getPluginTxt([ 'if', '' ], '{:=col}'.HASH_DELIMITER.$col.HASH_DELIMITER.'col-md-12').'">'."\n".'<form class="form" method="'.
+			$tok->getPluginTxt([ 'if', '' ], $method.HASH_DELIMITER.$method.HASH_DELIMITER.'get').'" action="'.
+			$tok->getPluginTxt([ 'link', '' ], '_='.$get).'" '.$tok->getPluginTxt([ 'if', '' ], $upload.HASH_DELIMITER.
+			'enctype="multipart/form-data"').' data-key13="prevent" novalidate>'."\n".$tok->getPluginTxt([ 'fv', 'hidden' ], null),
+	
+		'bootstrap.footer'	=> '<div class="row">'."\n".'<div class="col-md-4">'."\n".
+			'<button type="submit" class="btn" name="form_action" value="1">'.$label.'</button>'."\n".'</div>'."\n".
+			'<div class="col-md-8">'.$tok->getPluginTxt([ 'if', '' ], $label2.HASH_DELIMITER.'<button type="submit" name="form_action" '.
+			'value="2" class="btn">'.$label2.'</button>')."\n".$tok->getPluginTxt([ 'if', 'cmp:yes' ], 
+			$tok->getPluginTxt([ 'fv', 'check' ], '').HASH_DELIMITER.'<h4 style="color:#006600" data-effect="fadeout">'.
+			$fadeout_confirm."</h4>\n<script>\n".'setTimeout(function() { $('."'h4[data-effect=\"fadeout\"]').fadeOut(); }, 2000);</script>").
+			"\n</div>\n</div>\n</form>\n</div>\n</div>\n</div>",
+
 
 		'material.in.input'	   => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="mdl-textfield__input '.$class.'" '.$tags.'>',
 		'material.in.file'     => '<input class="mdl-textfield__input '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
