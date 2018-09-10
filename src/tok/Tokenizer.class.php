@@ -718,12 +718,20 @@ public function dump($flag = 3) {
 /**
  * Return {PLUGIN:PARAM}$arg{:PLUGIN}.
  *
- * @param string $tok (PLUGIN:PARAM)
+ * @param string|array(2) $tok (PLUGIN:PARAM)
  * @param string $arg (default = null = no argument)
  * @return string
  */
 public function getPluginTxt($tok, $arg = null) {
-	list ($name, $param) = mb_split($this->rx[2], $tok, 2);
+
+	if (is_array($tok) && count($tok) == 2) {
+		list ($name, $param) = $tok;
+		$tok = $name.$this->rx[2].$param;
+	}
+	else {
+		list ($name, $param) = mb_split($this->rx[2], $tok, 2);
+	}
+
 	$res = '';
 
 	if (is_null($arg)) {
