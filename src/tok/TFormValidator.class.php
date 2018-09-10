@@ -20,11 +20,10 @@ use \rkphplib\ValueCheck;
  * Form validator plugin.
  *
  * {fv:conf:NAME}
- * template.output= default|#|
- * template.output.default= {:=label}: {:=input} {fv:error_message}|#|
- * template.header|footer= ...|#|
- * template.input= <input type="text" name="{:=name}" value="{:=value}" class="{:=class}"> {fv:error_message:$name}
  * template.engine= default[|bootstrap|material]
+ * default.in.text= <input type="text" name="{:=name}" value="{:=value}" class="{:=class}"> {fv:error_message:$name}
+ * default.output.in= {:=label}: {:=input} {fv:error_message}|#|
+ * default.header|footer= ...|#|
  * {:fv}
  *
  * {fv:init:[add]}
@@ -121,6 +120,8 @@ public function __construct() {
 	$name = TAG_PREFIX.'name'.TAG_SUFFIX;
 	$value = TAG_PREFIX.'value'.TAG_SUFFIX;
 	$class = TAG_PREFIX.'class'.TAG_SUFFIX;
+	$method = TAG_PREFIX.'method'.TAG_SUFFIX;
+	$upload = TAG_PREFIX.'upload'.TAG_SUFFIX;
 	$tags = TAG_PREFIX.'tags'.TAG_SUFFIX;
 	$options = TAG_PREFIX.'options'.TAG_SUFFIX;
 	$fselect_input = TAG_PREFIX.'fselect_input'.TAG_SUFFIX;
@@ -130,8 +131,6 @@ public function __construct() {
 		'label_required'	=> $label.'<sup>*</sup>',
 
 		'template.engine' => 'default',
-		'template.header' => '',
-		'template.footer' => '',
 
 		'option.label_empty'  => '',
 
@@ -152,6 +151,10 @@ public function __construct() {
 
 		'default.output.in'		=> '<span class="label">'.$label.'</span>'.$input.$example.$error_message,
 		'default.example'			=> '<span class="example">'.$example.'</span>',
+		'default.header' => '<form method="'.$this->tok->getPluginTxt([ 'if', '' ], $method.'|#|'.$method.'|#|get').'" '.
+			$this->tok->getPluginTxt([ 'if', '' ], $upload.'|#|enctype="multipart/form-data"').' data-key13="prevent" novalidate>'."\n".
+			$this->tok->getPluginTxt([ 'fv', 'hidden' ], null),
+		'default.footer' => '<input type="submit" name="'.$label.'">'."\n</form>",
 
 		'bootstrap.in.input'	  => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="form-control '.$class.'" '.$tags.'>',
 		'bootstrap.in.file'     => '<input class="form-control-file '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
@@ -470,13 +473,11 @@ public function tok_fv_error($name, $tpl) {
  * @return string 
  */
 public function tok_fv_error_message($name, $tpl = '') {
-	$conf = $this->conf['current'];
-	$prefix = $conf['template.engine'].'.error';
 	$res = '';
 
 	if ($name == '*') {
 		if (empty($tpl)) {
-			$tpl = $conf[$prefix.'.message_multi'];
+			$tpl = $this->getConf('error.message_multi', true);
 		}
 
 		foreach ($this->error as $key => $value) {
@@ -487,11 +488,11 @@ public function tok_fv_error_message($name, $tpl = '') {
 	}
 	else if (isset($this->error[$name])) {
 		if (empty($tpl)) {
-			$tpl = $conf[$prefix.'.message'];
+			$tpl = $this->getConf('error.message', true);
 		}
 
 		$r = [ 'name' => $name ];
-		$r['error'] = join($conf[$prefix.'message_concat'], $this->error[$name]);
+		$r['error'] = join($this->getConf('error.message_concat', true), $this->error[$name]);
 
 		$res = $this->tok->replaceTags($tpl, $r);
 	}
@@ -504,18 +505,16 @@ public function tok_fv_error_message($name, $tpl = '') {
 /**
  * Return conf.template.$name. Replace and remove tags.
  *
+ * @tok {fv:tpl:header}method=post|#|upload=1{:fv}
+ * @tok {fv:tpl:footer}label=absenden{:fv}
+ * 
  * @throws
  * @param string $name
  * @param array $p
  * @return string
  */
 public function tok_fv_tpl($name, $p) {
-
-	if (!isset($this->conf['current']['template.'.$name])) {
-		throw new Exception('no template.'.$name.' template');
-	}
-
-	$res = $this->tok->replaceTags($this->conf['current']['template.'.$name], $p);
+	$res = $this->tok->replaceTags($this->getConf($name, true), $p);
 	return $this->tok->removeTags($res);
 }
 
@@ -591,7 +590,7 @@ private function multiCheckbox($name, $p) {
 	$tpl_prefix = $conf['template.engine'].'.in.multi_';
 	$header = empty($conf[$tpl_prefix.'header']) ? '' : $conf[$tpl_prefix.'header'];
 	$footer = empty($conf[$tpl_prefix.'footer']) ? '' : $conf[$tpl_prefix.'footer'];
-  $input = empty($conf[$tpl_prefix.'checkbox']) ? $conf['default.in.multi_checkbox'] : $conf[$tpl_prefix.'checkbox'];
+  $input = $this->getConf('in.multi_checkbox', true);
 	$res = $header;
 
 	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> tpl_prefix=[$tpl_prefix] header=[$header] input=[$input] footer=[$footer]");
@@ -612,7 +611,7 @@ private function multiCheckbox($name, $p) {
 
 	$res .= $footer;
 
-	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> res=[$res]");
+	\rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> res=[$res]");
 	return $res;
 }
 
@@ -676,7 +675,7 @@ public function tok_fv_in($name, $p) {
 	$r = $p;
 	$r['input'] = $this->getInput($name, $p);
 	$r['error_message'] = $this->tok_fv_error_message($name);
-	$r['error'] = isset($this->error[$name]) ? $this->getConf('error.conf', true) : '';
+	$r['error'] = isset($this->error[$name]) ? $this->getConf('error.const', true) : '';
 	$r['example'] = empty($this->example[$name]) ? '' : 
 		$this->tok->replaceTags($this->getConf('example', true), [ 'example' => $this->example[$name] ]);
 
@@ -884,7 +883,7 @@ protected function getInput($name, $ri) {
 	}
 
 	if (isset($this->error[$name])) {
-		$ri['class'] = empty($ri['class']) ? $conf['template.error.const'] : $ri['class'].' '.$conf['template.error.const'];
+		$ri['class'] = empty($ri['class']) ? $this->getConf('error.const', true) : $ri['class'].' '.$this->getConf('error.const', true);
 	}
 
 	$tpl_in = $conf['template.engine'].'.in';
