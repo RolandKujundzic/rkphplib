@@ -163,7 +163,7 @@ public function __construct() {
 
 		'default.example'			=> '<span class="example">'.$example.'</span>',
 
-		'default.header' => '<form action="'.$tok->getPluginTxt([ 'link', '' ], '_='.$get).'" method="'.
+		'default.header' => '<form class="fv" action="'.$tok->getPluginTxt([ 'link', '' ], '_='.$get).'" method="'.
 			$tok->getPluginTxt([ 'if', '' ], $method.HASH_DELIMITER.$method.HASH_DELIMITER.'get').'" '.
 			$tok->getPluginTxt([ 'if', '' ], $upload.HASH_DELIMITER.'enctype="multipart/form-data"').' data-key13="prevent" novalidate>'."\n".
 			$tok->getPluginTxt([ 'fv', 'hidden' ], null),
@@ -175,20 +175,19 @@ public function __construct() {
 		'bootstrap.in.file'     => '<input class="form-control-file '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
 		'bootstrap.in.textarea' => '<textarea name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$value.'</textarea>',
 		'bootstrap.in.select'   => '<select name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$options.'</select>',
-		'bootstrap.in.multi_checkbox'	=> '<div class="col-md-1">'.$input.'</div><div class="col-md-3">'.$label.'</div>',
-		'bootstrap.in.multi_header' => '<div class="row no-gutters">',
-		'bootstrap.in.multi_footer' => '</div>',
+		'bootstrap.in.multi_checkbox' => '<div class="row form-group">'.$input.'</div>',
+		'bootstrap.in.multi_checkbox.entry'	=> '<div class="col-md-4>'.$input.'<label>'.$label.'</label></div>',
 		'bootstrap.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="form-control '.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
 
 		'bootstrap.error.const'	=> 'is-invalid',
 
-		'bootstrap.output.in'		=> '<div class="'.$form_group.'">'."\n".'<label for="'.$id.'" text-right>'.$label.'</label>'.
+		'bootstrap.output.in'		=> '<div class="'.$form_group.'">'."\n".'<label for="'.$id.'">'.$label.'</label>'.
 			"$example$error_message\n$input\n</div>",
 
 		'bootstrap.header'	=> '<div class="container {:=class}">'."\n".'<div class="row">'."\n".'<div class="'.
-			$tok->getPluginTxt([ 'if', '' ], '{:=col}'.HASH_DELIMITER.$col.HASH_DELIMITER.'col-md-12').'">'."\n".'<form class="form" method="'.
+			$tok->getPluginTxt([ 'if', '' ], '{:=col}'.HASH_DELIMITER.$col.HASH_DELIMITER.'col-md-12').'">'."\n".'<form class="fv form" method="'.
 			$tok->getPluginTxt([ 'if', '' ], $method.HASH_DELIMITER.$method.HASH_DELIMITER.'get').'" action="'.
 			$tok->getPluginTxt([ 'link', '' ], '_='.$get).'" '.$tok->getPluginTxt([ 'if', '' ], $upload.HASH_DELIMITER.
 			'enctype="multipart/form-data"').' data-key13="prevent" novalidate>'."\n".$tok->getPluginTxt([ 'fv', 'hidden' ], null),
