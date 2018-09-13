@@ -1,61 +1,61 @@
-form {
+form.fv {
 	font-family: Arial, Helvetica;
 }
 
-form br {
+form.fv br {
 	display: block;
 	margin-top:1.4ch;
 }
 
 @supports (-webkit-appearance:none) {
-	form input {
+	form.fv input {
 		font-size: 1em;
 	}
 
-	form select {
+	form.fv select {
 		font-size: 1.1em;
 	}
 
-	form br {
+	form.fv br {
 		line-height: 2em;
 	}
 }
 
-form div.multi_checkbox_wrapper {
+form.fv div.multi_checkbox_wrapper {
 	display: inline-block;
 	width: 51ch;
 }
 
-form div.multi_checkbox {
+form.fv div.multi_checkbox {
 	display: inline-block;
 	min-width: 25ch;
 }
 
-form div.multi_checkbox span:nth-child(1) input[type=checkbox] {
+form.fv div.multi_checkbox span:nth-child(1) input[type=checkbox] {
 	margin-right: 1ch;
 }
 
 @supports (-moz-appearance:none) {
-	form div.multi_checkbox span:nth-child(1) input[type=checkbox] {
+	form.fv div.multi_checkbox span:nth-child(1) input[type=checkbox] {
 		position: relative;
 		bottom: -2px;
 	}
 }
 
-form span.label {
+form.fv span.label {
 	display: inline-block;
 	vertical-align: top;
 	min-width: 12ch;
 }
 
 @supports (-moz-appearance:none) {
-	form span.label {
+	form.fv span.label {
 		position: relative;
 		top: 2px;
 	}
 }
 
-form span.error_message {
+form.fv span.error_message {
 	display: inline-block;
 	color: red;
 	margin-left: 2ch;
