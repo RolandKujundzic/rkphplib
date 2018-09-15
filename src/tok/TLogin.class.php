@@ -388,8 +388,8 @@ public function tok_login_update($do, $p) {
  * If admin2user is set any admin account can login as user account if login is ADMIN_LOGIN:=USER_LOGIN and
  * password is ADMIN_PASSWORD.
  *
- * If login is invalid set {var:login_error} = error.
- * If password is invalid set {var:password_error} = error.
+ * If login is invalid set {var:login_error} = invalid.
+ * If password is invalid set {var:password_error} = invalid.
  * If redirect is set - redirect after successfull login or if still logged in.
  * If user.redirect is set - redirect after successfull login or if still logged in.
  * If log_table is set - insert log entry into log table. 
@@ -418,10 +418,18 @@ public function tok_login_auth($p) {
 			$this->createTable($this->sess->getConf('table'));
 		}
 
+		if (!empty($p['password'])) {
+			$this->tok->setVar('login_error', 'required');
+		}
+
 		return;
 	}
 
 	if (empty($p['password'])) {
+		if (!empty($p['login'])) {
+			$this->tok->setVar('password_error', 'required');
+		}
+
 		return;
 	}
 
@@ -468,6 +476,9 @@ public function tok_login_auth($p) {
 	}
 	else if (!empty($p['redirect'])) {
 		\rkphplib\lib\redirect($p['redirect']);	
+	}
+	else if (!empty($user['type']) && !empty($p['redirect_'.$user['type']])) {
+		\rkphplib\lib\redirect($p['redirect_'.$user['type']]);
 	}
 }
 
@@ -524,11 +535,11 @@ private function selectFromAccount($p) {
 	}
 
 	if (!$login_ok) {
-		$this->tok->setVar('login_error', 'error');
+		$this->tok->setVar('login_error', 'invalid');
 	}
 
 	if (!$password_ok) {
-		$this->tok->setVar('password_error', 'error');
+		$this->tok->setVar('password_error', 'invalid');
 	}
 
 	return ($found !== false) ? $this->account[$found] : null;
@@ -588,12 +599,12 @@ private function selectFromDatabase($p) {
 	$dbres = $this->db->select($query);
 	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase> query=$query - ".print_r($dbres, true));
 	if (count($dbres) == 0) {
-		$this->tok->setVar('login_error', 'error');
+		$this->tok->setVar('login_error', 'invalid');
 		return null;
 	}
 
  	if (count($dbres) != 1 || empty($dbres[0]['password']) || $dbres[0]['password'] != $dbres[0]['password_input']) {
-		$this->tok->setVar('password_error', 'error');
+		$this->tok->setVar('password_error', 'invalid');
 		return;
 	}
 
@@ -611,7 +622,7 @@ private function selectFromDatabase($p) {
 		$query = empty($p['select']) ? $this->db->getQuery('select_login', $p) : $p['select'];
 		$dbres = $this->db->select($query);
 		if (count($dbres) != 1) {
-			$this->tok->setVar('login_error', 'error');
+			$this->tok->setVar('login_error', 'invalid');
 			return null;
 		}
 

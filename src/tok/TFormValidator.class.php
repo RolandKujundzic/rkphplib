@@ -120,7 +120,7 @@ public function __construct() {
 	$example = TAG_PREFIX.'example'.TAG_SUFFIX;
 	$id = TAG_PREFIX.'id'.TAG_SUFFIX;
 	$type = TAG_PREFIX.'type'.TAG_SUFFIX;
-	$get = TAG_PREFIX.'get'.TAG_SUFFIX;
+	$dir = isset($_REQUEST[SETTINGS_REQ_DIR]) ? $_REQUEST[SETTINGS_REQ_DIR] : '';
 	$col = TAG_PREFIX.'col'.TAG_SUFFIX;
 	$form_group = TAG_PREFIX.'form_group'.TAG_SUFFIX; 
 	$fadeout_confirm = TAG_PREFIX.'fadeout_confirm'.TAG_SUFFIX;
@@ -163,7 +163,7 @@ public function __construct() {
 
 		'default.example'			=> '<span class="example">'.$example.'</span>',
 
-		'default.header' => '<form class="fv" action="'.$tok->getPluginTxt([ 'link', '' ], '_='.$get).'" method="'.
+		'default.header' => '<form class="fv" action="'.$tok->getPluginTxt([ 'link', '' ], '_='.$dir).'" method="'.
 			$tok->getPluginTxt([ 'if', '' ], $method.HASH_DELIMITER.$method.HASH_DELIMITER.'get').'" '.
 			$tok->getPluginTxt([ 'if', '' ], $upload.HASH_DELIMITER.'enctype="multipart/form-data"').' data-key13="prevent" novalidate>'."\n".
 			$tok->getPluginTxt([ 'fv', 'hidden' ], null),
@@ -189,7 +189,7 @@ public function __construct() {
 		'bootstrap.header'	=> '<div class="container {:=class}">'."\n".'<div class="row">'."\n".'<div class="'.
 			$tok->getPluginTxt([ 'if', '' ], '{:=col}'.HASH_DELIMITER.$col.HASH_DELIMITER.'col-md-12').'">'."\n".'<form class="fv form" method="'.
 			$tok->getPluginTxt([ 'if', '' ], $method.HASH_DELIMITER.$method.HASH_DELIMITER.'get').'" action="'.
-			$tok->getPluginTxt([ 'link', '' ], '_='.$get).'" '.$tok->getPluginTxt([ 'if', '' ], $upload.HASH_DELIMITER.
+			$tok->getPluginTxt([ 'link', '' ], '_='.$dir).'" '.$tok->getPluginTxt([ 'if', '' ], $upload.HASH_DELIMITER.
 			'enctype="multipart/form-data"').' data-key13="prevent" novalidate>'."\n".$tok->getPluginTxt([ 'fv', 'hidden' ], null),
 	
 		'bootstrap.footer'	=> '<div class="row">'."\n".'<div class="col-md-4">'."\n".
@@ -284,7 +284,7 @@ public function tok_fv_set_error_message($name, $msg) {
 public function tok_fv_hidden() {
 	$res = '';
 
-	if (!empty($hidden_keep = $this->getConf('hidden_keep'))) {
+	if (!empty($hidden_keep = $this->getConf('hidden_keep', '', false))) {
 		$list = \rkphplib\lib\split_str(',', $hidden_keep);
 		foreach ($list as $key) {
 			if (isset($_REQUEST[$key])) {
@@ -717,8 +717,10 @@ public function tok_fv_in($name, $p) {
  * @throws
  * @param string $key
  * @param string $engine (default = '')
+ * @param boolean $required (default = true)
+ * @return string
  */
-public function getConf($key, $engine = '') {
+public function getConf($key, $engine = '', $required = true) {
 	$conf = $this->conf['current'];
 
 	if (!empty($engine)) {
@@ -731,20 +733,30 @@ public function getConf($key, $engine = '') {
 	}
 
 	$ckey = $engine.$key;
+
 	if (!isset($conf[$ckey])) {
+		$res = '';
+
 		if (!empty($engine) && $engine != 'default.') {
 			// try fallback to default engine
 			$ckey = 'default.'.$key;
 
 			if (isset($conf[$ckey])) {
-				return $conf[$ckey];
+				$res = $conf[$ckey];
+			}
+			else if ($required) {
+				throw new Exception("no such configuration key $ckey", "engine=$engine");
 			}
 		}
-
-		throw new Exception("no such configuration key $ckey");
+		else if ($required) {
+			throw new Exception("no such configuration key $ckey", "no engine");
+		}
+	}
+	else {
+		$res = $conf[$ckey];
 	}
 
-	return $conf[$ckey];
+	return $res;
 }
 
 
