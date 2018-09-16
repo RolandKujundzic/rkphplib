@@ -168,7 +168,12 @@ public function __construct() {
 			$tok->getPluginTxt([ 'if', '' ], $upload.HASH_DELIMITER.'enctype="multipart/form-data"').' data-key13="prevent" novalidate>'."\n".
 			$tok->getPluginTxt([ 'fv', 'hidden' ], null),
 
-		'default.footer' => '<input type="submit" value="'.$label.'">'."\n</form>",
+		'default.footer' => '<button type="submit" name="form_action" value="1">'.$label.'</button>'.
+			'<div class="label2">'.$tok->getPluginTxt([ 'if', '' ], $label2.HASH_DELIMITER.'<button type="submit" name="form_action" '.
+			'value="2">'.$label2.'</button>')."\n".$tok->getPluginTxt([ 'if', 'cmp:yes' ], 
+			$tok->getPluginTxt([ 'fv', 'check' ], '').HASH_DELIMITER.'<h4 style="color:#006600" data-effect="fadeout">'.
+			$fadeout_confirm."</h4>\n<script>\n".'setTimeout(function() { $('."'h4[data-effect=\"fadeout\"]').fadeOut(); }, 2000);</script>").
+			"\n</div>\n</form>",
 
 
 		'bootstrap.in.input'	  => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="form-control '.$class.'" '.$tags.'>',
