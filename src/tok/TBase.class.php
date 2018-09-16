@@ -145,7 +145,7 @@ public function getPlugins($tok) {
 	$plugin['include'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
 	$plugin['include_if'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['view'] = TokPlugin::REDO | TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
-	$plugin['clear'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['clear'] = TokPlugin::NO_PARAM;
 	$plugin['ignore'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['if'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['switch'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
