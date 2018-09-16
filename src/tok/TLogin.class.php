@@ -408,6 +408,12 @@ public function tok_login_update($do, $p) {
 public function tok_login_auth($p) {
 
 	if ($this->sess->has('id')) {
+		if (($type = $this->sess->has('type'))) {
+			if (!empty($p['redirect_'.$type])) {
+				\rkphplib\lib\redirect($p['redirect_'.$type]);
+			}
+		}
+		
 		if (!empty($p['redirect'])) {
 			\rkphplib\lib\redirect($p['redirect']);
 		}
@@ -474,11 +480,11 @@ public function tok_login_auth($p) {
 	if (!empty($user['redirect'])) {
 		\rkphplib\lib\redirect($user['redirect']);	
 	}
-	else if (!empty($p['redirect'])) {
-		\rkphplib\lib\redirect($p['redirect']);	
-	}
 	else if (!empty($user['type']) && !empty($p['redirect_'.$user['type']])) {
 		\rkphplib\lib\redirect($p['redirect_'.$user['type']]);
+	}
+	else if (!empty($p['redirect'])) {
+		\rkphplib\lib\redirect($p['redirect']);	
 	}
 }
 
