@@ -55,6 +55,11 @@ form.fv span.label {
 	}
 }
 
+form.fv div.label2 {
+	display: inline-block;
+	margin-left: 16ch; 
+}
+
 form.fv span.error_message {
 	display: inline-block;
 	color: red;

@@ -12,7 +12,6 @@
 {fv:init}
 required= id, name, brand, interior|#|
 hidden_keep= id, dir|#|
-hidden.form_action=1|#|
 
 in.name= text|#|
 in.brand= fselect, =choose ..., Audi, BMW, Volkswagen, _=add ...|#|
@@ -30,9 +29,9 @@ Form-Submit: check=[{fv:check}] interior=[{get:interior}]
 {fv:in:name}label=Name{:fv}<br>
 {fv:in:brand}label=Brand{:fv}<br>
 {fv:in:interior}label=Interior{:fv}<br>
-{fv:tpl:footer}label=absenden{:fv}
+{fv:tpl:footer}label=absenden|#|label2={:fv}
 
-<pre>check=[{fv:check}] interior=[{get:interior}] error=[{fv:error_message:*}]</pre>
+<pre>check=[{fv:check}] form_action=[{get:form_action}] interior=[{get:interior}] error=[{fv:error_message:*}]</pre>
 {:false}
 
 </body>
