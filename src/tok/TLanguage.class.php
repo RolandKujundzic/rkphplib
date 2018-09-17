@@ -101,7 +101,7 @@ public function createTable($table = 'language', $language_list = [ 'de', 'en' ]
 	$tconf = [];
 	$tconf['@table'] = $table;
 	$tconf['@timestamp'] = 2;
-	$tconf['id'] = 'varbinary:35::3';
+	$tconf['id'] = 'varbinary:50::3';
 	$tconf['dir'] = 'varbinary:255::8';
 	$tconf['txt'] = 'text:::1';
 
