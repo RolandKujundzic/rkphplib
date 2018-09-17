@@ -26,7 +26,19 @@ public function getPlugins($tok) {
 	$plugin['floatval'] = 0;
 	$plugin['rand'] = TokPlugin::LIST_BODY;
 	$plugin['math'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['md5'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	return $plugin;
+}
+
+
+/**
+ * Return md5(trim($arg)).
+ *
+ * @param string $arg
+ * @return string
+ */
+public function tok_md5($arg) {
+	return md5(trim($arg));
 }
 
 
