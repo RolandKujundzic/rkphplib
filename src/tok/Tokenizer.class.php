@@ -797,6 +797,17 @@ private function _buildin($action, $name, $param, $arg = null) {
 
 
 /**
+ * Return true if plugin exists.
+ *
+ * @param string $name
+ * @return boolean
+ */
+public function hasPlugin($name) {
+	return !empty($this->_plugin[$name]);
+}
+
+
+/**
  * Return result of plugin $name function $func.
  * If number of args < 4 call $name.$func($args[0], $args[1], $args[2]) otherwise
  * call $name.$func($args). 
@@ -1200,7 +1211,7 @@ private function tryPluginMap($name) {
 		'TLogin' => [ 'login', 'login_account', 'login_check', 'login_auth', 'login_access', 'login_update', 'login_clear' ],
 		'TLoop' => [ 'loop:var', 'loop:list', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
 		'TMailer' => [ 'mail:init', 'mail:html', 'mail:txt', 'mail:send', 'mail:attach', 'mail' ],
-		'TMath' => [ 'nf', 'number_format', 'intval', 'floatval', 'rand', 'math' ],
+		'TMath' => [ 'nf', 'number_format', 'intval', 'floatval', 'rand', 'math', 'md5' ],
 		'TMenu' => [ 'menu', 'menu:add', 'menu:conf' ],
 		'TOutput' => [ 'output:set', 'output:get', 'output:conf', 'output:init', 'output:loop', 'output:json', 'output:header', 'output:footer', 'output:empty', 'output', 'sort', 'search' ],
 		'TPicture' => [ 'picture:init', 'picture:src', 'picture' ],
