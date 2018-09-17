@@ -6,6 +6,7 @@ $parent_dir = dirname(__DIR__);
 
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/TokHelper.trait.php');
+require_once(__DIR__.'/Tokenizer.class.php');
 require_once($parent_dir.'/ValueCheck.class.php');
 require_once($parent_dir.'/lib/htmlescape.php');
 require_once($parent_dir.'/lib/split_str.php');
@@ -13,6 +14,7 @@ require_once($parent_dir.'/lib/conf2kv.php');
 require_once($parent_dir.'/lib/is_map.php');
 
 use \rkphplib\Exception;
+use \rkphplib\tok\Tokenizer;
 use \rkphplib\ValueCheck;
 
 
@@ -91,7 +93,7 @@ public function getPlugins($tok) {
 	$plugin['fv:init'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY; 
 	$plugin['fv:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY | TokPlugin::TEXT;
 	$plugin['fv:check'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY; 
-	$plugin['fv:in'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
+	$plugin['fv:in'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY | TokPlugin::REDO;
 	$plugin['fv:tpl'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY | TokPlugin::REDO;
 	$plugin['fv:hidden'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 	$plugin['fv:preset'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
@@ -134,6 +136,9 @@ public function __construct() {
 	$fselect_input = TAG_PREFIX.'fselect_input'.TAG_SUFFIX;
 
 	$tok = is_null($this->tok) ? Tokenizer::$site : $this->tok;
+	if (is_null($tok)) {
+		$tok = new Tokenizer();
+	}
 
 	$this->conf['default'] = [
 		'submit' 					=> 'form_action',
@@ -525,13 +530,21 @@ public function tok_fv_error_message($name, $tpl = '') {
 			$tpl = $this->getConf('error.message', true);
 		}
 
+		$error_list = $this->error[$name]; 
+		if ($this->tok->hasPlugin('txt')) {
+			for ($i = 0; $i < count($error_list); $i++) {
+				// localize error message
+				$error_list[$i] = $this->tok->getPluginTxt([ 'txt', 'fv_error_'.md5($error_list[$i]) ], $error_list[$i]);
+			}
+		}
+
 		$r = [ 'name' => $name ];
-		$r['error'] = join($this->getConf('error.message_concat', true), $this->error[$name]);
+		$r['error'] = join($this->getConf('error.message_concat', true), $error_list);
 
 		$res = $this->tok->replaceTags($tpl, $r);
 	}
 
-	// \rkphplib\lib\log_debug("tok_fv_error_message($name, ...)> name=[$name] res=[$res] - error: ".print_r($this->error, true));
+	\rkphplib\lib\log_debug("tok_fv_error_message($name, ...)> name=[$name] res=[$res] - error: ".print_r($this->error, true));
 	return $res;
 }
 
