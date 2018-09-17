@@ -283,7 +283,8 @@ private function setDBVariable($table) {
  * Update login table and session. Use $_REQUEST[key] (key = session key).
  * Overwrite $_REQUEST session map with values from $p. Export _REQUEST['login_update_cols'].
  *
- * @tok {login_update:} -> Use $_REQUEST[key] (key = session key)
+ * @tok {login_update:} -> Use $_REQUEST[key] (key = session key) 
+ *   short syntax: @request_keys= a,b,... instead of a={get:a}|#|b={get:b}|#|...
  * @tok {login_update:reload}password=PASSWORD({esc:password}){:login_update} -> update password
  * @tok {login_update:}if=|#|name=Mr. T{:login_update} -> do nothing because if is empty
  * @tok {login_update:}type=admin|#|...{:login_update} -> throw exception if previous type != 'admin'
@@ -311,6 +312,16 @@ public function tok_login_update($do, $p) {
 	if (!empty($p['@allow_cols'])) {
 		$allow_cols = \rkphplib\lib\split_str(',', $p['@allow_cols']);
 		unset($p['@allow_cols']);	
+	}
+
+	if (!empty($p['@request_keys'])) {
+		$request_keys = \rkphplib\lib\split_str(',', $p['@request_keys']);
+
+		foreach ($request_keys as $key) {
+			$p[$key] = isset($_REQUEST[$key]) ? $_REQUEST[$key] : '';
+		}
+
+		unset($p['@request_keys']);
 	}
 
 	// only add (key,value) to kv where value has changed
@@ -357,9 +368,13 @@ public function tok_login_update($do, $p) {
 			throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
 		}
 
-		if (count($kv) > 1 && ($query = $this->db->buildQuery($table, 'update', $kv))) {
-			// \rkphplib\lib\log_debug("tok_login_update> update $table: $query\nkv: ".print_r($kv, true));
-			$this->db->execute($query);
+		if (count($kv) > 1) {
+			$query = empty($p['id']) ? $this->db->buildQuery($table, 'update', $kv) : $this->db->buildQuery($table, 'insert', $kv);
+
+			if (!empty($query)) {
+				// \rkphplib\lib\log_debug("tok_login_update> $table: $query\nkv: ".print_r($kv, true));
+				$this->db->execute($query);
+			}
 		}
 
 		if ($do == 'reload') {
