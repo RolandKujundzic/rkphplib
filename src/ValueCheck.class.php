@@ -144,6 +144,34 @@ public static function getMatch($name) {
 
 
 /**
+ * Execute database query to check if columnn values exist.
+ *
+ * check.postcode= sqlQuery:email,postcode:SELECT 1 AS ok FROM shop_customer WHERE type='consumer' AND status='active'
+ *
+ * @param string $name
+ * @param string $parameter
+ * @param string $query
+ * @return boolean
+ */
+public static function sqlQuery($value, $parameter, $query) {
+  require_once(__DIR__.'/Database.class.php');
+
+  $db = \rkphplib\Database::getInstance();
+
+  $columns = \rkphplib\lib\split_str(',', $parameter);
+  foreach ($columns as $column) {
+		if (isset($_REQUEST[$column])) {
+			$query .= ' AND '.$db->escape_name($column)."='".$db->esc($_REQUEST[$column])."'";
+		}
+  }
+
+  \rkphplib\lib\log_debug("ValueCheck::sqlQuery($value, ...)> parameter=[$parameter] query: $query");
+  $dbres = $db->select($query);
+  return count($dbres) > 0;
+}
+
+
+/**
  * Execute database query to check if value is unique (does not exist in database yet). Example: 
  *
  * self::run(login, 'Joe', '{login:@table}:login:{get:login}:id:{login:id}')
@@ -158,6 +186,7 @@ public static function getMatch($name) {
  *
  * @param string $value
  * @param array $p
+ * @return boolean
  */
 public static function isUnique($value, $p) {
 	require_once(__DIR__.'/Database.class.php');
