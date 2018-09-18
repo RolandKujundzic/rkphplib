@@ -428,6 +428,7 @@ public function tok_fv_check() {
 		if ($path[0] == 'check') {
 			$name = $path[1];
 			$req_value = isset($_REQUEST[$name]) ? $_REQUEST[$name] : '';
+
 			if (!ValueCheck::run($name, $req_value, $check)) {
 				if (!isset($this->error[$name])) {
 					$this->error[$name] = [];
@@ -757,13 +758,13 @@ public function getConf($key, $engine = '', $required = true) {
 
 		if (!empty($engine) && $engine != 'default.') {
 			// try fallback to default engine
-			$ckey = 'default.'.$key;
+			$ckey2 = 'default.'.$key;
 
-			if (isset($conf[$ckey])) {
-				$res = $conf[$ckey];
+			if (isset($conf[$ckey2])) {
+				$res = $conf[$ckey2];
 			}
 			else if ($required) {
-				throw new Exception("no such configuration key $ckey", "engine=$engine");
+				throw new Exception("no such configuration key $ckey", "ckey2=$ckey2 engine=$engine conf: ".print_r($conf, true));
 			}
 		}
 		else if ($required) {
