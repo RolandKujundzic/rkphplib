@@ -453,7 +453,7 @@ public function tok_fv_check() {
  */
 private function setExample($name, $check) {
 	$map = [
-		'isMobile' => '+490176123456'
+		'isMobile' => '+49176123456'
 	];
 
 	$example = '';
