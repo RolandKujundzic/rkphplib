@@ -14,6 +14,7 @@ required= id, name, brand, interior|#|
 hidden_keep= id, dir|#|
 
 in.name= text|#|
+in.fuel= radio, 1=gasoline, 2=diesel|#|
 in.brand= fselect, =choose ..., Audi, BMW, Volkswagen, _=add ...|#|
 in.interior= multi_checkbox, Klima, AHK, Radio|#|
 {:fv}
@@ -28,6 +29,7 @@ Form-Submit: check=[{fv:check}] interior=[{get:interior}]
 {fv:tpl:header}method=get|#|upload=0{:fv}
 {fv:in:name}label=Name{:fv}<br>
 {fv:in:brand}label=Brand{:fv}<br>
+{fv:in:fuel}label=Fuel{:fv}<br>
 {fv:in:interior}label=Interior{:fv}<br>
 {fv:tpl:footer}label=absenden|#|label2={:fv}
 
