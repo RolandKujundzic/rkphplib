@@ -80,7 +80,7 @@ public function getPlugins($tok) {
 public function tok_job($conf) {
 	$default = [ 'do.run' => 'run=yes', 'do.remove' => 'lock=remove' ];
 	// \rkphplib\lib\log_debug("TJob.tok_job> default: ".print_r($default, true)." conf: ".print_r($conf, true));
-  $this->conf = array_merge($default, $conf);  
+	$this->conf = array_merge($default, $conf);  
 
 	if (isset($this->conf['if']) && empty($this->conf['if'])) {
 		$_REQUEST['job_status'] = 'prepare';
@@ -100,14 +100,14 @@ public function tok_job($conf) {
 		File::move($lockfile, dirname($lockfile).'/'.File::basename($lockfile, true).'.remove.json');
 		$_REQUEST['job_status'] = 'remove';
 		$_REQUEST['job_message'] = 'lockfile has been removed';
-  }
+	}
 
 	list ($key, $value) = explode('=', $this->conf['do.run']);
 	$run = !empty($_REQUEST[$key]) && $_REQUEST[$key] == $value;
 
-  if (!$this->running() && $run) {
-    $this->run();
-  }
+	if (!$this->running() && $run) {
+		$this->run();
+	}
 }
 
 
@@ -172,7 +172,7 @@ private function run() {
 
 	$bg_pid = ' && echo $! > /dev/null 2>&1 &';
 
-  if (!empty($this->conf['execute'])) {
+	if (!empty($this->conf['execute'])) {
 		$cmd = $this->conf['execute'].$bg_pid;
 		$this->lock([ 'execute' => $cmd, 'start' => microtime(), 'status' => 'start' ]);
 		$pid = \rkphplib\lib\execute($cmd);
@@ -188,7 +188,7 @@ private function run() {
 			throw new Exception('missing parameter zip_file');
 		}
 
-		Dir::create(dirname($this->conf['zip_file']), 0, true);
+		Dir::create(dirname($this->conf['zip_file']), 0777, true);
 		$cmd = "cd '".dirname($this->conf['zip_dir'])."' && zip -r '".$this->conf['zip_file']."' '".
 			basename($this->conf['zip_dir']).$bg_pid; 
 		$this->lock([ 'execute' => $cmd, 'start' => microtime(), 'status' => 'start' ]);
@@ -204,9 +204,9 @@ private function run() {
 		$this->lock([ 'status' => 'done', 'end' => microtime() ]);
 		return;
 	}
-  else {
+	else {
 		throw new Exception('missing exec|exec_zip|include parameter');
-  }
+	}
 }
 
 
@@ -223,7 +223,7 @@ public function lock($p = []) {
 	}
 	else {
 		$lock = array_merge($this->conf, $p);
-		Dir::create(dirname($lockfile), 0, true);
+		Dir::create(dirname($lockfile), 0777, true);
 	}
 
 	File::save_rw($lockfile, JSON::encode($lock));
@@ -241,7 +241,13 @@ public function lock($p = []) {
  * @param hash $p
  */
 public static function updateLock($file, $p) {
-	$lock = array_merge(JSON::decode(File::load($file)), $p);
+	if (!File::exists($file)) {
+		Dir::create(dirname($file), 0777, true);
+		$lock = [];
+	}
+	else {
+		$lock = array_merge(JSON::decode(File::load($file)), $p);
+	}
 
 	if (!isset($lock['progress'])) {
 		$lock['progress'] = 0;
