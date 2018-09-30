@@ -161,6 +161,8 @@ public static function loadCSV($file, $delimiter = ',', $quote = '"', $trim = tr
 /**
  * Return filecontent loaded from url.
  * If required (default) abort if result has zero size.
+ * Use pseudo header [return_html_body] = [1|true|y] = NOT_EMPTY
+ * to return body content only.
  *
  * @throws
  * @param string $url
@@ -182,6 +184,12 @@ public static function fromURL($url, $required = true, $header = []) {
 	curl_setopt($cu, CURLOPT_SSL_VERIFYPEER, false);
 	curl_setopt($cu, CURLOPT_FOLLOWLOCATION, true);
 
+	$return_html_body = false;
+	if (!empty($header['return_html_body'])) {
+		$return_html_body = true;
+		unset($header['return_html_body']);
+	}
+
 	if (count($header) > 0) {
 		$header_lines = [];
 
@@ -201,6 +209,15 @@ public static function fromURL($url, $required = true, $header = []) {
 	}
 
 	curl_close($cu);
+
+	if ($return_html_body) {
+		if (preg_match('/<body.*?>(.+?)<\/body>/si', $res, $match)) {
+			$res = trim($match[1]);
+		}
+		else {
+			throw new Exception('no html body found', $res);
+		}
+	}
 
 	if (trim($res) == '' && $required) {
 		throw new Exception('empty file', $url);
