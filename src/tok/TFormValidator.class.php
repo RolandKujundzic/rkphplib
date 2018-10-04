@@ -109,7 +109,7 @@ public function getPlugins($tok) {
  * Set default configuration. Configuration Parameter:
  *
  * template.engine= default|bootstrap|material
- * ENGINE.in.[const|input|textarea|select|file|multi_checkbox|fselect] = ...
+ * ENGINE.in.[const|input|textarea|select|file|multi_checkbox|multi_radio|fselect] = ...
  * 
  * Render ENGINE.in.TYPE, label and ERROR_MESSAGE into template.output.TEMPLATE.OUTPUT
  */
@@ -383,7 +383,7 @@ public function tok_fv_init($do, $p) {
 
 
 /**
- * Return validation result (yes|error|). Call get2NData() if multi_checkbox input exists.
+ * Return validation result (yes|error|). Call get2NData() if multi_checkbox|radio input exists.
  * If _REQUEST[conf[submit]] is empty do nothing. Apply all conf[check.*] value checks.
  *
  * @tok {fv_check:} -> [|yes|error]
@@ -396,7 +396,7 @@ public function tok_fv_check() {
 
 	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_check> submit=$submit _REQUEST: ".print_r($_REQUEST, true));
 	foreach ($this->conf['current'] as $key => $value) {
-		if (substr($key, 0, 3) == 'in.' && substr($value, 0, 14) == 'multi_checkbox') {
+		if (substr($key, 0, 3) == 'in.' && (substr($value, 0, 14) == 'multi_checkbox' || substr($value, 0, 11) == 'multi_radio')) {
 			$this->conf['current'][$key] = $this->get2NData(substr($key, 3), $value);
 		}
 	}
@@ -571,22 +571,30 @@ public function tok_fv_tpl($name, $p) {
 /**
  * Transform 2^N data definition. Example:
  * 
- * (value) in.interior= multi_checkbox, Klima, AHK, Radio
+ * (name_def) in.interior= multi_checkbox, Klima, AHK, Radio
  * (return) multi_checkbox, interior0=Klima, interior1=AHK, interior2=Radio 
+ *
+ * (name_def) in.interior= multi_radio, Klima, AHK, Radio
+ * (return) multi_radio, interior0=Klima, interior1=AHK, interior2=Radio 
  *
  * @param string $name
  * @param string $name_def
  * @return string
  */
 private function get2NData($name, $name_def) {
-	// [0] => multi_checkbox, [1] => value_2^0, [2] => value_2^1, ...
+	// [0] => multi_checkbox|radio, [1] => value_2^0, [2] => value_2^1, ...
 	$r = \rkphplib\lib\conf2kv($name_def, '=', ',');
 
-	if ($r[0] != 'multi_checkbox') {
+	if (isset($r['@_1'])) {
+		$r[0] = $r['@_1'];
+		unset($r['@_1']);
+	}
+
+	if (!isset($r[0]) || ($r[0] != 'multi_checkbox' && $r[0] != 'multi_radio')) {
 		throw new Exception('invalid value of conf.in.'.$name, "$name=[$name_def] r: ".print_r($r, true));
 	}
 
-	$r['type'] = 'checkbox';
+	$r['type'] = substr($r[0], 6);
 	$r['multi'] = 1;
 	unset($r[0]);
 
@@ -595,12 +603,18 @@ private function get2NData($name, $name_def) {
 	$done = false;
 	$n = 1;
 
+	$is_checkbox = $r['type'] == 'checkbox';
+
 	while (!empty($r[$n]) && $n < 33) {
 		$var = $name.($n - 1);
 		$v = pow(2, ($n - 1));
 
 		$r[$var] = $r[$n];
 		unset($r[$n]);
+	
+		if ($is_checkbox) {
+			$var = $name;
+		}
 
 		if (!empty($_REQUEST[$var]) && $_REQUEST[$var] == $v) {
 			$value += $v;
@@ -625,7 +639,7 @@ private function get2NData($name, $name_def) {
 
 
 /**
- * Return multi-checkbox html.
+ * Return multi-checkbox|radio html.
  *
  * conf.
  * @param string $name
@@ -638,6 +652,8 @@ private function multiCheckbox($name, $p) {
   $entries = $this->getConf('in.multi_checkbox', true);
 	$entry_list = '';
 
+	$is_checkbox = $p['type'] == 'checkbox';
+
 	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> entry=[$entry] entries=[$entries]");
 	for ($n = 0; $n < $p['n_max']; $n++) {
 		$var = $name.$n;
@@ -646,12 +662,14 @@ private function multiCheckbox($name, $p) {
 		$r['type'] = $p['type'];
 		$r['value'] = pow(2, $n);
 
-		if (!empty($_REQUEST[$var]) && $_REQUEST[$var] == $r['value']) {
+		$input_name = $is_checkbox ? $var : $name;
+
+		if (!empty($_REQUEST[$input_name]) && $_REQUEST[$input_name] == $r['value']) {
 			$r['checked'] = 'checked';
 		}
 
-		$html = $this->getInput($var, $r);
-		// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox> ".join('|', $r).": $html");
+		$html = $this->getInput($input_name, $r);
+		\rkphplib\lib\log_debug("TFormValidator.multiCheckbox> var=$var input_name=$input_name r: ".join('|', $r).": $html");
 		$entry_list .= $this->tok->replaceTags($entry, [ 'input' => $html, 'label' => $p[$var] ]);
 	}
 
@@ -961,7 +979,7 @@ protected function getInput($name, $ri) {
 	$tags = '';
 
 	$attributes = [ 'id', 'size', 'maxlength', 'placeholder', 'pattern', 'rows', 'cols', 'style', 'class', 
-		'accept', 'onchange', 'onblur' ];
+		'accept', 'onchange', 'onblur', 'autocomplete' ];
 	foreach ($attributes as $key) {
 		if (isset($ri[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
 			$tags .= ' '.$key.'="'.$this->tok->getTag($key).'"';
