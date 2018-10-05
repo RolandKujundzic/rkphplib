@@ -182,12 +182,14 @@ public function __construct() {
 
 
 		'bootstrap.in.input'	  => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="form-control '.$class.'" '.$tags.'>',
+		'bootstrap.in.checkbox'	=> '<input type="checkbox" name="'.$name.'" value="'.$value.'" class="form-check-input '.$class.'" '.$tags.'>',
+		'bootstrap.in.radio'	  => '<input type="radio" name="'.$name.'" value="'.$value.'" class="form-check-input '.$class.'" '.$tags.'>',
 		'bootstrap.in.file'     => '<input class="form-control-file '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
 		'bootstrap.in.textarea' => '<textarea name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$value.'</textarea>',
 		'bootstrap.in.select'   => '<select name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$options.'</select>',
 		'bootstrap.in.multi_checkbox' => '<div class="row">'.$input.'</div>',
 		'bootstrap.in.multi_checkbox.entry'	=> '<div class="col-md-4"><label class="form-check-label">'.$input.' '.$label.'</label></div>',
-		'bootstrap.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'"class="form-control '.$class.'" '.
+		'bootstrap.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="form-control '.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
 
@@ -195,6 +197,9 @@ public function __construct() {
 
 		'bootstrap.output.in'		=> '<div class="'.$form_group.'">'."\n".'<label for="'.$id.'">'.$label.'</label>'.
 			"$example$error_message\n$input\n</div>",
+
+		'bootstrap.output.in.multi'		=> '<div class="row">'."\n".'<div class="col-md-3"><label>'.$label."</label>$example$error_message\n</div>\n".
+			'<div class="col-md-9">'."\n".$input."\n</div>\n</div>",
 
 		'bootstrap.header'	=> '<div class="container {:=class}">'."\n".'<div class="row">'."\n".'<div class="'.
 			$tok->getPluginTxt([ 'if', '' ], '{:=col}'.HASH_DELIMITER.$col.HASH_DELIMITER.'col-md-12').'">'."\n".
@@ -678,7 +683,8 @@ private function multiCheckbox($name, $p) {
 	}
 
 	$p['input'] = $this->tok->replaceTags($entries, [ 'input' => $entry_list ]);
-  $res = empty($p['output']) ? $this->getConf('output.in', true) : $this->getConf('output.in.'.$p['output']);
+	$output_in = $this->getConf('output.in.multi', true) ? $this->getConf('output.in.multi', true) : $this->getConf('output.in', true);
+  $res = empty($p['output']) ? $output_in : $this->getConf('output.in.'.$p['output']);
   $res = $this->tok->removeTags($this->tok->replaceTags($res, $p));	
 	\rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> res=[$res]");
 	return $res;
