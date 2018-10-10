@@ -11,6 +11,7 @@ require_once($parent_dir.'/ValueCheck.class.php');
 require_once($parent_dir.'/lib/htmlescape.php');
 require_once($parent_dir.'/lib/split_str.php');
 require_once($parent_dir.'/lib/conf2kv.php');
+require_once($parent_dir.'/lib/kv2conf.php');
 require_once($parent_dir.'/lib/is_map.php');
 
 use \rkphplib\Exception;
@@ -92,6 +93,7 @@ public function getPlugins($tok) {
 	$plugin['fv'] = 0;
 	$plugin['fv:init'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY; 
 	$plugin['fv:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY | TokPlugin::TEXT;
+	$plugin['fv:get:conf'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:check'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY; 
 	$plugin['fv:in'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY | TokPlugin::REDO;
 	$plugin['fv:tpl'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY | TokPlugin::REDO;
@@ -142,7 +144,7 @@ public function __construct() {
 
 	$this->conf['default'] = [
 		'submit' 					=> 'form_action',
-		'label_required'	=> $label.'<sup>*</sup>',
+		'label_required'	=> '<span class="label_required">'.$label.'</span>',
 
 		'template.engine' => 'default',
 
@@ -317,6 +319,28 @@ public function tok_fv_hidden() {
 	}
 
 	return $res;
+}
+
+
+/**
+ * Return names configuration.
+ */
+public function tok_fv_get_conf($name) {
+	$conf = (isset($this->conf['current']) && count($this->conf['current']) > 0) ? $this->conf['current'] : $this->conf['default'];
+	$name_keys = $this->getMapKeys($name, $conf);
+	$res = [];
+
+	foreach ($conf as $key => $value) {
+		if (strpos($key, '.') === false) {
+			$res[$key] = $value;
+		}
+	}
+
+	foreach ($name_keys as $key => $value) {
+		$res[$name.'.'.$key] = $value;
+	}
+
+	return \rkphplib\lib\kv2conf($res);
 }
 
 
