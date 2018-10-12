@@ -266,8 +266,8 @@ private function setDBVariable($table) {
 	$table = ADatabase::escape($table);
 
 	$query_map = [
-		'select_login' => "SELECT *, PASSWORD({:=password}) AS password_input FROM $table ".
-			"WHERE login={:=login} AND (status='active' OR status='registered')",
+		'select_login' => "SELECT *, PASSWORD({:=password}) AS password_input ".
+			"FROM $table WHERE login={:=login} AND (status='active' OR status='registered')",
 		'registered2active' => "UPDATE $table SET status='active' WHERE id={:=id}",
 		'insert' => "INSERT INTO $table (login, password, type, person, language, priv) VALUES ".
 			"({:=login}, PASSWORD({:=password}), {:=type}, {:=person}, {:=language}, {:=priv})",
@@ -601,7 +601,8 @@ private function selectExtraData($qkey, $p, $replace) {
 /**
  * Select user from database. Parameter: login, password. Allow admin2user if set.
  * Use ADMIN_LOGIN:=USER_LOGIN as login for admin2user mode, if successfull add
- * user.admin2user = [ id, status, type, ... ]. 
+ * user.admin2user = [ id, status, type, ... ]. Use p.master_password to login as
+ * someone else.
  * 
  * @param hash $p
  * @return hash|null
@@ -622,6 +623,11 @@ private function selectFromDatabase($p) {
 	if (count($dbres) == 0) {
 		$this->tok->setVar('login_error', 'invalid');
 		return null;
+	}
+
+	// \rkphplib\lib\log_debug('TLogin.selectFromDatabase> use master_password = PASSWORD('.$p['password'].') = '.$dbres[0]['password_input']);
+	if (!empty($p['master_password']) && $dbres[0]['password_input'] == $p['master_password']) {
+		$dbres[0]['password'] = $p['master_password'];
 	}
 
  	if (count($dbres) != 1 || empty($dbres[0]['password']) || $dbres[0]['password'] != $dbres[0]['password_input']) {
