@@ -19,7 +19,7 @@ class StringHelper {
  * @return string
  */
 public static function removeHtmlWhiteSpace($html) {
-	return preg_replace('/\s+(<)|(>)\s+/', '\2\1', $html);
+	return str_replace([ "^M" ], [ "" ], preg_replace('/\s+(<)|(>)\s+/', '\2\1', $html));
 }
 
 
@@ -44,7 +44,7 @@ public static function removeHtmlAttributes($html) {
  * @return string
  */
 public static function removeHtmlTags($html, $allow = '') {
-	return strip_tags($html);
+	return strip_tags($html, $allow);
 }
 
 
