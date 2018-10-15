@@ -17,6 +17,9 @@ use \rkphplib\Exception;
 use \rkphplib\File;
 
 
+if (!defined('PATH_RKPHPLIB')) {
+	define('PATH_RKPHPLIB', $parent_dir.'/');
+}
 
 if (!defined('SETTINGS_REQ_CRYPT')) {
   /** @const SETTINGS_REQ_CRYPT = 'cx' if undefined */

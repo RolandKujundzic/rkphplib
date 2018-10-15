@@ -3,7 +3,7 @@
 namespace rkphplib;
 
 if (!defined('PATH_RKPHPLIB')) {
-	define('PATH_RKPHPLIB', __DIR__);
+	define('PATH_RKPHPLIB', __DIR__.'/');
 }
 
 require_once(__DIR__.'/lib/config.php');
