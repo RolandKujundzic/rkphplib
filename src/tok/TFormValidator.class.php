@@ -341,6 +341,12 @@ public function tok_fv_get_conf($engine) {
 		if (strpos($key, '.') === false) {
 			$res[$key] = $value;
 		}
+		else if (strpos($key, 'template.') === 0) {
+			$res[$key] = $value;
+		}
+		else if (strpos($key, 'option.') === 0) {
+			$res[$key] = $value;
+		}
 	}
 
 	foreach ($name_keys as $key => $value) {
