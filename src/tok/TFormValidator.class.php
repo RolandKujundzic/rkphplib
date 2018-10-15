@@ -93,7 +93,7 @@ public function getPlugins($tok) {
 	$plugin['fv'] = 0;
 	$plugin['fv:init'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY; 
 	$plugin['fv:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY | TokPlugin::TEXT;
-	$plugin['fv:get:conf'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['fv:get_conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['fv:check'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY; 
 	$plugin['fv:in'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY | TokPlugin::REDO;
 	$plugin['fv:tpl'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY | TokPlugin::REDO;
@@ -323,11 +323,16 @@ public function tok_fv_hidden() {
 
 
 /**
- * Return names configuration.
+ * Return configuration as string hash.
+ *
+ * @tok {fv:get_conf:default} 
+ *
+ * @param string $engine
+ * @return string
  */
-public function tok_fv_get_conf($name) {
+public function tok_fv_get_conf($engine) {
 	$conf = (isset($this->conf['current']) && count($this->conf['current']) > 0) ? $this->conf['current'] : $this->conf['default'];
-	$name_keys = $this->getMapKeys($name, $conf);
+	$name_keys = $this->getMapKeys($engine, $conf);
 	$res = [];
 
 	foreach ($conf as $key => $value) {
@@ -337,7 +342,7 @@ public function tok_fv_get_conf($name) {
 	}
 
 	foreach ($name_keys as $key => $value) {
-		$res[$name.'.'.$key] = $value;
+		$res[$engine.'.'.$key] = $value;
 	}
 
 	return \rkphplib\lib\kv2conf($res);
