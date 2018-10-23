@@ -1014,7 +1014,10 @@ public function loadDump($file, $flags) {
 
 
 /**
- * Return create table query. Parameter examples:
+ * Return create table query. If setup/sql/TABLE.sql (TABLE = conf[@table]) exists use this.
+ * If setup/sql/insert/TABLE.sql exists execute this query too.
+ *
+ * Parameter examples:
  * 
  * - @table|language|multilang|id|status|timestamp: see parseCreateTableConf
  * - colname: TYPE:SIZE:DEFAULT:EXTRA, e.g. 
@@ -1033,9 +1036,20 @@ public function loadDump($file, $flags) {
  */
 public static function createTableQuery($conf) {
 
+	$tname = $conf['@table'];
+
+	if (File::exists('setup/sql/'.$tname.'.sql')) {
+		$query = File::load('setup/sql/'.$tname.'.sql');
+
+		if (File::exists('setup/sql/insert/'.$tname.'.sql')) {
+			$query = "-- @multiQuery\n".$query."\n".File::load('setup/sql/insert/'.$tname.'.sql');
+		}
+
+		return $query;
+	}
+
 	$conf = self::parseCreateTableConf($conf);
 
-	$tname = $conf['@table'];
 	unset($conf['@table']);
 
 	$cols = [];
@@ -1140,7 +1154,7 @@ public static function createTableQuery($conf) {
  * @see createTableQuery
  * @param array[string]string $conf
  * @param bool $drop_existing
- * @return bool
+ * @return 0|1|2 (0=error, 1=create table ok, 2=multi query ok = create table + insert ok)
  */
 public function createTable($conf, $drop_existing = false) {
 
@@ -1156,13 +1170,20 @@ public function createTable($conf, $drop_existing = false) {
 		}
 		else {
 			// ToDo: throw exception if $conf has changed
-			return false;
+			return 0;
 		}
 	}
 
 	$query = self::createTableQuery($conf);
-	$this->execute($query);
-	return true;
+
+	if (strpos($query, '-- @multiQuery') !== false) {
+		$this->multiQuery($query);
+		return 2;
+	}
+	else {
+		$this->execute($query);
+		return 1;
+	}
 }
 
 
