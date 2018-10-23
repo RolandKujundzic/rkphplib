@@ -399,6 +399,7 @@ public function tok_login_update($do, $p) {
  * @tok {login_auth:}login={get:login}|#|password={get:pass}|#|callback=cms,tok_cms_conf2login{:login_auth}
  * @tok {login_auth:}login={get:email}|#|password={get:postcode}|#|select= SELECT *, postcode AS password_input, email AS login ...
  * @tok {login_auth:}admin2user=admin:user:visitor:...|#|...{:login_auth}
+ * @tok {login_auth:}create_table= @1 cms_conf, cms_login_history|#|...{:login_auth}
  *
  * If admin2user is set any admin account can login as user account if login is ADMIN_LOGIN:=USER_LOGIN and
  * password is ADMIN_PASSWORD.
@@ -437,6 +438,11 @@ public function tok_login_auth($p) {
 	if (empty($p['login'])) {
 		if (!is_null($this->db)) {
 			$this->createTable($this->sess->getConf('table'));
+			if (isset($p['create_table']) && is_array($p['create_table'])) {
+				foreach ($p['create_table'] as $table) {
+					$this->db->createTable([ '@table' => $table ]);
+				}
+			}
 		}
 
 		if (!empty($p['password'])) {
@@ -776,10 +782,12 @@ public function createTable($table) {
 	$tconf['priv'] = 'int:::1';
 	$tconf['person'] = 'varchar:120::1';
 
-	if (!is_null($this->db) && $this->db->createTable($tconf)) {
-		$this->db->execute($this->db->getQuery('insert',
-			[ 'login' => 'admin', 'password' => 'admin', 'type' => 'admin',
-				'person' => 'Administrator', 'language' => 'de', 'priv' => 3 ]));
+	if (!is_null($this->db) && ($ct = $this->db->createTable($tconf))) {
+		if ($ct != 2) {
+			$this->db->execute($this->db->getQuery('insert',
+				[ 'login' => 'admin', 'password' => 'admin', 'type' => 'admin',
+					'person' => 'Administrator', 'language' => 'de', 'priv' => 3 ]));
+		}
 	}
 }
 
