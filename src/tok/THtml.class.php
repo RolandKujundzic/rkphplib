@@ -22,6 +22,7 @@ class THtml implements TokPlugin {
 public function getPlugins($tok) {
   $plugin = [];
   $plugin['html:inner'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
+  $plugin['html:append'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:meta'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:tidy'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:xml'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
@@ -79,7 +80,31 @@ public function tok_html_meta($name, $value, $html) {
 /**
  * Postprocess output. Replace inner html of tag (= <tag>).
  *
- * @tok {innerHtml:title}Replace "title" with this{:innerHtml}
+ * @tok {html:inner:title}Replace "title" with this{:html}
+ *
+ * @param string $tag
+ * @param string $innerHtml
+ * @param string $html
+ * @return string
+ */
+public function tok_html_append($tag, $appendHtml, $html) {
+	$tag_end = mb_stripos($html, '</'.$tag.'>');
+
+	if ($tag_end > 0) {
+		$res = mb_substr($html, 0, $tag_end)."\n".trim($appendHtml)."\n".mb_substr($html, $tag_end);
+	}
+  else {
+    throw new Exception('failed to find tag end', "search=[</$tag>] tag_end=$tag_end");
+  }
+
+	return $res;
+}
+
+
+/**
+ * Postprocess output. Replace inner html of tag (= <tag>).
+ *
+ * @tok {html:inner:title}Replace "title" with this{:html}
  *
  * @param string $tag
  * @param string $innerHtml
