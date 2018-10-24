@@ -13,6 +13,7 @@ require_once($parent_dir.'/lib/split_str.php');
 require_once($parent_dir.'/lib/conf2kv.php');
 require_once($parent_dir.'/lib/kv2conf.php');
 require_once($parent_dir.'/lib/is_map.php');
+require_once($parent_dir.'/lib/entity.php');
 
 use \rkphplib\Exception;
 use \rkphplib\tok\Tokenizer;
@@ -116,6 +117,7 @@ public function getPlugins($tok) {
  * Render ENGINE.in.TYPE, label and ERROR_MESSAGE into template.output.TEMPLATE.OUTPUT
  */
 public function __construct() {
+	// TAGS
 	$label = TAG_PREFIX.'label'.TAG_SUFFIX;
 	$label2 = TAG_PREFIX.'label2'.TAG_SUFFIX;
 	$input = TAG_PREFIX.'input'.TAG_SUFFIX;
@@ -124,7 +126,6 @@ public function __construct() {
 	$example = TAG_PREFIX.'example'.TAG_SUFFIX;
 	$id = TAG_PREFIX.'id'.TAG_SUFFIX;
 	$type = TAG_PREFIX.'type'.TAG_SUFFIX;
-	$dir = isset($_REQUEST[SETTINGS_REQ_DIR]) ? $_REQUEST[SETTINGS_REQ_DIR] : '';
 	$col = TAG_PREFIX.'col'.TAG_SUFFIX;
 	$form_group = TAG_PREFIX.'form_group'.TAG_SUFFIX; 
 	$fadeout_confirm = TAG_PREFIX.'fadeout_confirm'.TAG_SUFFIX;
@@ -141,6 +142,22 @@ public function __construct() {
 	if (is_null($tok)) {
 		$tok = new Tokenizer();
 	}
+
+	// PLUGINS with escaped HASH_DELIMITER
+	$ehd = \rkphplib\lib\entity(HASH_DELIMITER);
+	$pl_link = $tok->getPluginTxt([ 'link', '' ], '_='.$tok->getPluginTxt([ 'get', SETTINGS_REQ_DIR ]));
+	$pl_if_method = $tok->getPluginTxt([ 'if', '' ], $method.$ehd.$method.$ehd.'get');
+	$pl_if_upload = $tok->getPluginTxt([ 'if', '' ], $upload.$ehd.'enctype="multipart/form-data"');
+	$pl_fv_hidden = $tok->getPluginTxt([ 'fv', 'hidden' ], null);
+	$pl_if_label2 = $tok->getPluginTxt([ 'if', '' ], $label2.$ehd.
+		'<button type="submit" name="form_action" value="2">'.$label2.'</button>');
+	$pl_if_label2_btn = $tok->getPluginTxt([ 'if', '' ], $label2.$ehd.
+		'<button type="submit" name="form_action" value="2" class="btn">'.$label2.'</button>');
+	$pl_if_yes_fv_check_fadeout = $tok->getPluginTxt([ 'if', 'cmp:yes' ], $tok->getPluginTxt([ 'fv', 'check' ], '').$ehd.
+		'<h4 style="color:#006600" data-effect="fadeout">'.$fadeout_confirm."</h4>\n<script>\n".
+		'setTimeout(function() { $('."'h4[data-effect=\"fadeout\"]').fadeOut(); }, 2000);</script>");
+	$pl_if_col = $tok->getPluginTxt([ 'if', '' ], '{:=col}'.$ehd.$col.$ehd.'col-md-12');
+
 
 	$this->conf['default'] = [
 		'submit' 					=> 'form_action',
@@ -172,17 +189,11 @@ public function __construct() {
 
 		'default.example'			=> '<span class="example">'.$example.'</span>',
 
-		'default.header' => '<form class="fv" action="'.$tok->getPluginTxt([ 'link', '' ], '_='.$dir).'" method="'.
-			$tok->getPluginTxt([ 'if', '' ], $method.HASH_DELIMITER.$method.HASH_DELIMITER.'get').'" '.
-			$tok->getPluginTxt([ 'if', '' ], $upload.HASH_DELIMITER.'enctype="multipart/form-data"').' data-key13="prevent" novalidate>'."\n".
-			$tok->getPluginTxt([ 'fv', 'hidden' ], null),
+		'default.header' => '<form class="fv" action="'.$pl_link.'" method="'.$pl_if_method.'" '.$pl_if_upload.
+			' data-key13="prevent" novalidate>'."\n".$pl_fv_hidden,
 
 		'default.footer' => '<button type="submit" name="form_action" value="1">'.$label.'</button>'.
-			'<div class="label2">'.$tok->getPluginTxt([ 'if', '' ], $label2.HASH_DELIMITER.'<button type="submit" name="form_action" '.
-			'value="2">'.$label2.'</button>')."\n".$tok->getPluginTxt([ 'if', 'cmp:yes' ], 
-			$tok->getPluginTxt([ 'fv', 'check' ], '').HASH_DELIMITER.'<h4 style="color:#006600" data-effect="fadeout">'.
-			$fadeout_confirm."</h4>\n<script>\n".'setTimeout(function() { $('."'h4[data-effect=\"fadeout\"]').fadeOut(); }, 2000);</script>").
-			"\n</div>\n</form>",
+			'<div class="label2">'.$pl_if_label2."\n".$pl_if_yes_fv_check_fadeout."\n</div>\n</form>",
 
 
 		'bootstrap.in.input'	  => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="form-control '.$class.'" '.$tags.'>',
@@ -202,32 +213,32 @@ public function __construct() {
 		'bootstrap.output.in'		=> '<div class="'.$form_group.'">'."\n".'<label for="'.$id.'">'.$label.'</label>'.
 			"$example$error_message\n$input\n</div>",
 
-		'bootstrap.output.in.multi'		=> '<div class="row">'."\n".'<div class="col-md-3"><label>'.$label."</label>$example$error_message\n</div>\n".
-			'<div class="col-md-9">'."\n".$input."\n</div>\n</div>",
+		'bootstrap.output.in.multi'		=> '<div class="row">'."\n".'<div class="col-md-3"><label>'.$label.
+			"</label>$example$error_message\n</div>\n".'<div class="col-md-9">'."\n".$input."\n</div>\n</div>",
 
-		'bootstrap.header'	=> '<div class="container {:=class}">'."\n".'<div class="row">'."\n".'<div class="'.
-			$tok->getPluginTxt([ 'if', '' ], '{:=col}'.HASH_DELIMITER.$col.HASH_DELIMITER.'col-md-12').'">'."\n".
-			'<form class="fv form" method="'.
-			$tok->getPluginTxt([ 'if', '' ], $method.HASH_DELIMITER.$method.HASH_DELIMITER.'get').'" action="'.
-			$tok->getPluginTxt([ 'link', '' ], '_='.$dir).'" '.$tok->getPluginTxt([ 'if', '' ], $upload.HASH_DELIMITER.
-			'enctype="multipart/form-data"').' data-key13="prevent" novalidate>'."\n".$tok->getPluginTxt([ 'fv', 'hidden' ], null),
+		'bootstrap.header'	=> '<div class="container {:=class}">'."\n".'<div class="row">'."\n".'<div class="'.$pl_if_col.'">'."\n".
+			'<form class="fv form" method="'.$pl_if_method.'" action="'.$pl_link.'" '.$pl_if_upload.' data-key13="prevent" novalidate>'.
+			"\n".$pl_fv_hidden,
 	
 		'bootstrap.footer'	=> '<div class="row">'."\n".'<div class="col-md-4">'."\n".
 			'<button type="submit" class="btn" name="form_action" value="1">'.$label.'</button>'."\n".'</div>'."\n".
-			'<div class="col-md-8">'.$tok->getPluginTxt([ 'if', '' ], $label2.HASH_DELIMITER.'<button type="submit" name="form_action" '.
-			'value="2" class="btn">'.$label2.'</button>')."\n".$tok->getPluginTxt([ 'if', 'cmp:yes' ], 
-			$tok->getPluginTxt([ 'fv', 'check' ], '').HASH_DELIMITER.'<h4 style="color:#006600" data-effect="fadeout">'.
-			$fadeout_confirm."</h4>\n<script>\n".'setTimeout(function() { $('."'h4[data-effect=\"fadeout\"]').fadeOut(); }, 2000);</script>").
-			"\n</div>\n</div>\n</form>\n</div>\n</div>\n</div>",
+			'<div class="col-md-8">'.$pl_if_label2_btn."\n".$pl_if_yes_fv_check_fadeout."\n</div>\n</div>\n</form>\n</div>\n</div>\n</div>",
 
 
-		'material.in.input'	   => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="mdl-textfield__input '.$class.'" '.$tags.'>',
-		'material.in.file'     => '<input class="mdl-textfield__input '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
+		'material.in.input'	   => '<input type="'.$type.'" name="'.$name.'" value="'.$value.
+			'" class="mdl-textfield__input '.$class.'" '.$tags.'>',
+
+		'material.in.file'     => '<input class="mdl-textfield__input '.$class.'" name="'.$name.'" type="file" data-value="'.
+			$value.'" '.$tags.'>',
+
 		'material.in.textarea' => '<textarea name="'.$name.'" class="mdl-textfield__input '.$class.'" '.$tags.'>'.$value.'</textarea>',
+
 		'material.in.select'   => '<select name="'.$name.'" class="mdl-textfield__input '.$class.'" '.$tags.'>'.$options.'</select>',
+
 		'material.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="mdl-textfield__input '.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
+
 		'material.in.checkbox' => '<label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="'.$id.'"><input type="checkbox" '.
 			'id="'.$id.'" name="'.$name.'" value="'.$value.'" class="mdl-checkbox__input mdl-js-ripple-effect '.$class.'" '.$tags.
 			'><span class="mdl-checkbox__label">'.$label.'</span></label>'
@@ -348,7 +359,7 @@ public function tok_fv_get_conf($engine) {
 			$res[$key] = $value;
 		}
 	}
-
+	\rkphplib\lib\log_debug("engine=$engine name_keys: [".print_r($name_keys, true)."]\nconf: [".print_r($conf, true)."]");
 	foreach ($name_keys as $key => $value) {
 		$res[$engine.'.'.$key] = $value;
 	}
@@ -1016,7 +1027,7 @@ protected function getInput($name, $ri) {
 		$input = $conf[$tpl_in.'.'.$ri['type']];
 	}
 	else {
-		$input = $conf[$tpl_in.'.input'];
+		$input = $this->getConf('in.input', true);
 	}
 
 	$tags = '';
