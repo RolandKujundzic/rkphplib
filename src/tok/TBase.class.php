@@ -1412,7 +1412,7 @@ public function tok_esc($param, $arg) {
 	}
 
 	if (in_array('escape_html', $this->_conf['esc'])) {
-		$arg = str_replace([ '&', '<', '>', '"' ], [ '&amp,', '&lt;', '&gt;', '&quot;' ], $arg);
+		$arg = str_replace([ '&', '<', '>', '"' ], [ '&amp;', '&lt;', '&gt;', '&quot;' ], $arg);
 	}
 
 	if (in_array('escape_db', $this->_conf['esc'])) {
