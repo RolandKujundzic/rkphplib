@@ -13,7 +13,6 @@ require_once($parent_dir.'/lib/split_str.php');
 require_once($parent_dir.'/lib/conf2kv.php');
 require_once($parent_dir.'/lib/kv2conf.php');
 require_once($parent_dir.'/lib/is_map.php');
-require_once($parent_dir.'/lib/entity.php');
 
 use \rkphplib\Exception;
 use \rkphplib\tok\Tokenizer;
@@ -144,19 +143,19 @@ public function __construct() {
 	}
 
 	// PLUGINS with escaped HASH_DELIMITER
-	$ehd = \rkphplib\lib\entity(HASH_DELIMITER);
+	$d = HASH_DELIMITER;
 	$pl_link = $tok->getPluginTxt([ 'link', '' ], '_='.$tok->getPluginTxt([ 'get', SETTINGS_REQ_DIR ]));
-	$pl_if_method = $tok->getPluginTxt([ 'if', '' ], $method.$ehd.$method.$ehd.'get');
-	$pl_if_upload = $tok->getPluginTxt([ 'if', '' ], $upload.$ehd.'enctype="multipart/form-data"');
+	$pl_if_method = $tok->getPluginTxt([ 'if', '' ], $method.$d.$method.$d.'get');
+	$pl_if_upload = $tok->getPluginTxt([ 'if', '' ], $upload.$d.'enctype="multipart/form-data"');
 	$pl_fv_hidden = $tok->getPluginTxt([ 'fv', 'hidden' ], null);
-	$pl_if_label2 = $tok->getPluginTxt([ 'if', '' ], $label2.$ehd.
+	$pl_if_label2 = $tok->getPluginTxt([ 'if', '' ], $label2.$d.
 		'<button type="submit" name="form_action" value="2">'.$label2.'</button>');
-	$pl_if_label2_btn = $tok->getPluginTxt([ 'if', '' ], $label2.$ehd.
+	$pl_if_label2_btn = $tok->getPluginTxt([ 'if', '' ], $label2.$d.
 		'<button type="submit" name="form_action" value="2" class="btn">'.$label2.'</button>');
-	$pl_if_yes_fv_check_fadeout = $tok->getPluginTxt([ 'if', 'cmp:yes' ], $tok->getPluginTxt([ 'fv', 'check' ], '').$ehd.
+	$pl_if_yes_fv_check_fadeout = $tok->getPluginTxt([ 'if', 'cmp:yes' ], $tok->getPluginTxt([ 'fv', 'check' ], '').$d.
 		'<h4 style="color:#006600" data-effect="fadeout">'.$fadeout_confirm."</h4>\n<script>\n".
 		'setTimeout(function() { $('."'h4[data-effect=\"fadeout\"]').fadeOut(); }, 2000);</script>");
-	$pl_if_col = $tok->getPluginTxt([ 'if', '' ], '{:=col}'.$ehd.$col.$ehd.'col-md-12');
+	$pl_if_col = $tok->getPluginTxt([ 'if', '' ], '{:=col}'.$d.$col.$d.'col-md-12');
 
 
 	$this->conf['default'] = [
