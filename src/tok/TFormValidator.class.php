@@ -358,7 +358,11 @@ public function tok_fv_get_conf($engine) {
 			$res[$key] = $value;
 		}
 	}
-	\rkphplib\lib\log_debug("engine=$engine name_keys: [".print_r($name_keys, true)."]\nconf: [".print_r($conf, true)."]");
+
+	if (!is_array($name_keys) || count($name_keys) == 0) {
+		throw new Exception("no $engine.* keys");
+	}
+
 	foreach ($name_keys as $key => $value) {
 		$res[$engine.'.'.$key] = $value;
 	}
