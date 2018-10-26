@@ -1417,10 +1417,10 @@ public function tok_esc($param, $arg) {
 
 	if (in_array('escape_db', $this->_conf['esc'])) {
 		require_once(PATH_RKPHPLIB.'ADatabase.class.php');
-		$res = "'".\rkphplib\ADatabase::escape($arg)."'";
+		$arg = "'".\rkphplib\ADatabase::escape($arg)."'";
 	}
 
-	return $res;
+	return $arg;
 }
 
 
