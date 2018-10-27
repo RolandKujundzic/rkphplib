@@ -8,8 +8,12 @@
 <link rel="stylesheet" href="../../css/dropzone.css" />
 {:html}
 
+{upload:init:file}
+save_in=data/upload|#|
+{:upload}
 
-<form action="/upload" class="dropzone" id="dropzone_wrapper">
+<form action="/index.php" class="dropzone" id="dropzone_wrapper">
+<input type="hidden" name="method" value="dropzone">
 	<div class="fallback">
 		<input type="file" name="file" multiple />
 	</div>
