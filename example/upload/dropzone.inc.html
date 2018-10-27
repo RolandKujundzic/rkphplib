@@ -1,0 +1,16 @@
+{html:meta:keywords}multiple, file, upload{:html}
+{html:meta:description}Upload based on Dropzone.js{:html}
+{html:inner:title}thumbnail, previews, retina enabled, multiple files, synchronous uploads, browser image resizing,
+  progress update, support for large files, complete theming{:html}
+
+{html:append:head}
+<script src="../../js/dropzone.js"></script>
+<link rel="stylesheet" href="../../css/dropzone.css" />
+{:html}
+
+
+<form action="/upload" class="dropzone" id="dropzone_wrapper">
+	<div class="fallback">
+		<input type="file" name="file" multiple />
+	</div>
+</form>
