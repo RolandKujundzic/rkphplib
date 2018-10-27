@@ -431,6 +431,12 @@ function _opensource {
 	case $1 in
 	dropzone)
   	_git_checkout "https://gitlab.com/meno/dropzone.git" dropzone
+		cd dropzone
+		npm install
+		npm test
+		echo "start dropzone jekyll server on http://127.0.0.1:400 with"
+		echo "cd opensource/dropzone/; grunt build-website; cd website; jekyll serve"
+		cd ..
   	;;
 	*)
 		_syntax "opensource [dropzone]"
