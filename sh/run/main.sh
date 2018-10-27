@@ -24,7 +24,7 @@ docker_osx)
 	_docker_osx
 	;;
 opensource)
-	_opensource
+	_opensource $2
 	;;
 *)
 	_syntax "[opensource|composer|docs|test|mb_check|ubuntu|docker_osx]"

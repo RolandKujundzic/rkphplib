@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #------------------------------------------------------------------------------
-function _ubuntu() {
+function _ubuntu {
 	test -f /usr/bin/apt-get || _abort "apt-get not found"
 	echo "Install php + mysql + nginx"
 	sudo apt-get -y update && sudo apt-get -y install php5-cli php5-sqlite php5-curl php5-gd php5-mcrypt php5-xdebug \
@@ -39,10 +39,12 @@ function _docker_osx {
 
 
 #------------------------------------------------------------------------------
-function _opensource() {
+function _opensource {
 
-	_mkdir opensource
-  _cd opensource
+	if ! test -z "$1"; then
+		_mkdir opensource
+  	_cd opensource
+	fi
 
 	case $1 in
 	dropzone)
