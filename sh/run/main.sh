@@ -1,5 +1,8 @@
 #!/bin/bash
 
+APP=$0
+APP_DESC=
+
 case $1 in
 composer)
 	_composer $2
@@ -20,8 +23,10 @@ ubuntu)
 docker_osx)
 	_docker_osx
 	;;
+opensource)
+	_opensource
+	;;
 *)
-	echo -e "\nSYNTAX: $0 [composer|docs|test|mb_check|ubuntu|docker_osx]\n"
-	exit 1
+	_syntax "[opensource|composer|docs|test|mb_check|ubuntu|docker_osx]"
 esac
 

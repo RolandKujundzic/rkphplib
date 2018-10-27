@@ -37,3 +37,21 @@ function _docker_osx {
 	echo
 }
 
+
+#------------------------------------------------------------------------------
+function _opensource() {
+
+	_mkdir opensource
+  _cd opensource
+
+	case $1 in
+	dropzone)
+  	_git_checkout "https://gitlab.com/meno/dropzone.git" dropzone
+  	;;
+	*)
+		_syntax "opensource [dropzone]"
+	esac
+
+  cd ..
+}
+
