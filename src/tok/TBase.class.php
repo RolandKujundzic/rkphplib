@@ -1367,13 +1367,13 @@ public function tok_if($param, $p) {
  * @tok {esc:}NULL{:esc} -> NULL
  * @tok {esc:null}{:esc} -> NULL
  * 
- * Escape options: @trim, @escape_html. 
+ * Escape options: @trim, @escape_html, @escape_db. 
  *
  * @tok {esc:@trim} = trim value
- * @tok {esc:@escape_html} = replace [ '<', '>', '"' ] with [ '&lt;', '&gt;', '&quot;' ]
- * @tok {esc:@escape_arg} = 
+ * @tok {esc:@escape_html} = replace [ '&', '<', '>', '"' ] with [ '&amp;', '&lt;', '&gt;', '&quot;' ] 
  * @tok {esc:@trim,escape_html} = set trim + escape_html as default option
  * @tok {esc:@default} = set default options (trim + escape_html)
+ * @tok {esc:@escape_db} = escape ['] with ['']
  * @tok {esc:@} = use no options
  *
  * @param string $param
@@ -1412,13 +1412,15 @@ public function tok_esc($param, $arg) {
 	}
 
 	if (in_array('escape_html', $this->_conf['esc'])) {
-		$arg = str_replace([ '<', '>', '"' ], [ '&lt;', '&gt;', '&quot;' ], $arg);
+		$arg = str_replace([ '&', '<', '>', '"' ], [ '&amp;', '&lt;', '&gt;', '&quot;' ], $arg);
 	}
 
-	require_once(PATH_RKPHPLIB.'ADatabase.class.php');
-	$res = "'".\rkphplib\ADatabase::escape($arg)."'";
+	if (in_array('escape_db', $this->_conf['esc'])) {
+		require_once(PATH_RKPHPLIB.'ADatabase.class.php');
+		$arg = "'".\rkphplib\ADatabase::escape($arg)."'";
+	}
 
-	return $res;
+	return $arg;
 }
 
 
@@ -1575,7 +1577,7 @@ public function tok_get($param, $arg) {
  * - url: rawurlencode 
  * - js: same as javascript encodeURIcomponent = rawurlencode without "!,*,',(,)"
  * - tok: Tokenizer->escape $txt
- * - html: replace [ '&lt;', '&gt;', '&quot;' ] with [ '<', '>', '"' ]
+ * - html: replace [ '&', '<', '>', '"' ] with [ '&amp;', '&lt;', '&gt;', '&quot;' ]
  *
  * @tok {escape:tok}{x:}{:escape} = &#123;x&#58;&#125; 
  * @tok {escape:arg}a|#|b{:escape} = &#124;&#35;&#124; (|#| = HASH_DELIMITER)
@@ -1610,9 +1612,7 @@ public function tok_escape($param, $txt) {
 		$res = strtr(rawurlencode($txt), [ '%21' => '!', '%2A' => '*', '%27' => "'", '%28' => '(', '%29' => ')' ]);
 	}
 	else if ($param == 'html') {
-		$res = str_replace('<', '&lt;', $txt);
-		$res = str_replace('>', '&gt;', $res);
-		$res = str_replace('"', '&quot;', $res);
+		$res = str_replace([ '&', '<', '>', '"' ], [ '&amp;', '&lt;', '&gt;', '&quot;' ], $txt);
 	}
 	else {
 		throw new Exception('invalid parameter', $param);
@@ -1627,7 +1627,7 @@ public function tok_escape($param, $txt) {
  * 
  * - tok: Tokenizer->unescape $txt
  * - js: rawurldecode($txt)
- * - html: replace [ '&lt;', '&gt;', '&quot;' ] with [ '<', '>', '"' ]
+ * - html: replace [ '&lt;', '&gt;', '&quot;', '&amp;' ] with [ '<', '>', '"', '&' ]
  *
  * @tok {unescape:tok}&#123;x&#58;&#125;{:unescape} = {x:}
  * @tok {unescape:arg}a&#124;&#35;&#124;b{:unescape} = a|#|b 
@@ -1661,9 +1661,7 @@ public function tok_unescape($param, $txt) {
 		$res = rawurldecode($txt);
 	}
 	else if ($param == 'html') {
-		$res = str_replace('&lt;', '<', $txt);
-		$res = str_replace('&gt;', '>', $res);
-		$res = str_replace('&quot;', '"', $res);
+		$res = str_replace([ '&lt;', '&gt;', '&quot;', '&amp;' ], [ '<', '>', '"', '&' ], $txt);
 	}
 	else {
 		throw new Exception('invalid parameter', $param);
