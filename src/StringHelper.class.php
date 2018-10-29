@@ -44,7 +44,9 @@ public static function removeHtmlAttributes($html) {
  * @return string
  */
 public static function removeHtmlTags($html, $allow = '') {
-	return strip_tags($html, $allow);
+	$html = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $html);
+	$html = strip_tags($html, $allow);
+	return $html;
 }
 
 
