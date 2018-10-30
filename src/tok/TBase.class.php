@@ -99,7 +99,7 @@ public function __construct() {
  * - include_if: REDO, REQUIRE_BODY, LIST_BODY
  * - ignore: NO_PARAM, TEXT, REQUIRE_BODY
  * - if: REQUIRE_BODY, LIST_BODY
- * - keep: TEXT, REUIRE_BODY
+ * - keep: TEXT, REQUIRE_BODY
  * - load: TEXT, REQUIRE_BODY
  * - link: PARAM_CSLIST, KV_BODY
  * - redo: NO_PARAM, REDO 
@@ -114,6 +114,7 @@ public function __construct() {
  * - tpl_set: REQUIRE_PARAM, PARAM_LIST, REQUIRE_BODY, TEXT, IS_STATIC
  * - tpl: REQUIRE_PARAM, PARAM_LIST, LIST_BODY, IS_STATIC
  * - shorten: REQUIRE_PARAM
+ * - strlen: NO_PARAM 
  *
  * @param Tokenizer $tok
  * @return map<string:int>
@@ -168,8 +169,20 @@ public function getPlugins($tok) {
 	$plugin['esc'] = 0;
 	$plugin['log'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['shorten'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['strlen'] = TokPlugin::NO_PARAM;
 
 	return $plugin;
+}
+
+
+/**
+ * Return mb_strlen(trim($txt)).
+ * 
+ * @param string $txt
+ * @return int
+ */
+public function tok_strlen($txt) {
+	return mb_strlen(trim($txt));
 }
 
 
