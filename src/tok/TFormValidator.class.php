@@ -182,7 +182,7 @@ public function __construct() {
 		'default.error.message_multi'		=> "<i>$name</i>: <tt>$error</tt><br>",
 		'default.error.const'						=> 'error',
 
-		'default.output.in'				=> '<span class="label">'.$label.'</span>'.$input.$example.$error_message,
+		'default.output.in'				=> '<span class="label">'.$label.'</span>'.$input.$example.$error_message.'<br>',
 
 		'default.output.in.multi'	=> '<span class="label">'.$label."</span>$input$example$error_message\n",
 
