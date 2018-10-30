@@ -80,10 +80,10 @@ public function tok_html_meta($name, $value, $html) {
 /**
  * Postprocess output. Replace inner html of tag (= <tag>).
  *
- * @tok {html:inner:title}Replace "title" with this{:html}
+ * @tok {html:append:head}<!-- insert appendHtml before </head> -->{:html}
  *
  * @param string $tag
- * @param string $innerHtml
+ * @param string $appendHtml
  * @param string $html
  * @return string
  */
