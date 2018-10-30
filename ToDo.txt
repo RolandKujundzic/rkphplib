@@ -1,0 +1,6 @@
+TFormInput:
+-----------
+Create auto-growning Text input
+http://www.brianchu.com/blog/2013/11/02/creating-an-auto-growing-text-input/
+http://jsfiddle.net/2UDdh/43/?utm_source=website&utm_medium=embed&utm_campaign=2UDdh
+
