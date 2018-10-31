@@ -1,9 +1,12 @@
 #!/usr/bin/php
 <?php
 
-require_once(dirname(__DIR__).'/src/tok/Tokenizer.class.php');
-require_once(dirname(__DIR__).'/src/File.class.php');
-require_once(dirname(__DIR__).'/src/Dir.class.php');
+require_once('settings.php');
+require_once(PATH_RKPHPLIB.'Database.class.php');
+require_once(PATH_RKPHPLIB.'tok/TLanguage.class.php');
+require_once(PATH_RKPHPLIB.'tok/Tokenizer.class.php');
+require_once(PATH_RKPHPLIB.'File.class.php');
+require_once(PATH_RKPHPLIB.'Dir.class.php');
 
 use \rkphplib\tok\Tokenizer;
 use \rkphplib\File;
@@ -11,11 +14,33 @@ use \rkphplib\Dir;
 
 
 /**
- * Tokenizer to twig converter.
+ * Process {txt:} plugins.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class TTwig implements TokPlugin {
+class Translate implements TokPlugin {
+
+/** @var Database $db */
+private $db = null;
+
+/** @var Tokenizer $tok */
+private $tok = null;
+
+/** @var TLanguage $t_lang */
+private $t_lang = null;
+
+/** @var vector $languages */
+private $languages = [];
+
+
+
+/**
+ * Initialize database.
+ *
+ */
+public function __construct() {
+	$this->db = new Database();
+}
 
 
 /**
@@ -28,27 +53,12 @@ class TTwig implements TokPlugin {
  * @return map<string:int>
  */
 public function getPlugins($tok) {
-
+	$this->tok = $tok;
+	
 	$plugin = [
-		'autoescape' => TokPlugin::TOKCALL,
-		'block' => TokPlugin::TOKCALL,
-		'do' => TokPlugin::TOKCALL,
-		'embed' => TokPlugin::TOKCALL,
-		'extends' => TokPlugin::TOKCALL,
-		'filter' => TokPlugin::TOKCALL,
-		'flush' => TokPlugin::TOKCALL,
-		'for' => TokPlugin::TOKCALL,
-		'from' => TokPlugin::TOKCALL,
-		'if' => TokPlugin::TOKCALL,
-		'import' => TokPlugin::TOKCALL,
-		'include' => TokPlugin::TOKCALL,
-		'macro' => TokPlugin::TOKCALL,
-		'sandbox' => TokPlugin::TOKCALL,
-		'set' => TokPlugin::TOKCALL,
-		'spaceless' => TokPlugin::TOKCALL,
-		'use' => TokPlugin::TOKCALL,
-		'verbatim' => TokPlugin::TOKCALL,
-		'v' => TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY
+		'txt' => TokPlugin::TOKCALL,
+		'txt:js' => TokPlugin::TOKCALL,
+		'ptxt' => TokPlugin::TOKCALL
 	];
 
 	return $plugin;
@@ -56,18 +66,7 @@ public function getPlugins($tok) {
 
 
 /**
- * Convert {v:x} to {{ x }}.
- *
- * @param string $param
- * @return string
- */
-public function tok_v($param) {
-	return '{{ '.$param.' }}';
-}
-
-
-/**
- * Return {% $action $param %}$arg{% end$action %}.
+ * Apply TLanguage plugins.
  *
  * @param string $action
  * @param string $param
@@ -75,32 +74,64 @@ public function tok_v($param) {
  * @return string
  */
 public function tokCall($action, $param, $arg) {
-	$pa = mb_strlen($param) > 0 ? $param.' %}' : '%}';
-	$res = '{% '.$action.' '.$pa.$arg.'{% end'.$action.' %}';
-	return $res;
+	print "action=[$action] param=[$param] arg=[$arg]\n";
+	exit(1);
+	return '';
 }
 
+
+/**
+ * Load and parse $file.
+ * @return string
+ */
+public function load($file) {
+	$this->tok->load($file);
+	print $this->tok->toString();
 }
+
+
+/**
+ * Scan $directory. Copy files from $directory/js to js with FILE.[LANG].js suffix.
+ *
+ * @throws
+ * @param string $directory
+ */
+public function scan($directory) {
+	Dir::exists($directory.'/js', true);
+	Dir::exists('js', true);
+
+	$js_files = Dir::scanDir($directory.'/js', [ 'js' ]);
+
+	foreach ($this->languages as $lang) {
+		foreach ($js_files as $file) {
+			$this->tok->load($file);
+			File::save('js/'.File::basename($file, true).'.'.$lang.'.js', $this->tok->toString());
+		}
+	}
+}
+
+
+}
+
+
 
 /*
  * M A I N
  */
 
 $tok = new Tokenizer();
-$txt_scanner = new TxtScanner();
-$tok->register($txt_scanner);
+$translate = new Translate();
+$tok->register($translate);
 
 if (empty($_SERVER['argv'][1])) {
 	print "\nSYNTAX: ".$_SERVER['argv'][0]." [\$PWD|path_to_file]\n\n";
 	exit(1);
 }
 else if (Dir::exists($_SERVER['argv'][1])) {
-	$tok->load($_SERVER['argv'][1]);
-	print $tok->toString();
+	$translate->scan($_SERVER['argv'][1]);
 }
 else if (File::exists($_SERVER['argv'][1])) {
-	$tok->load($_SERVER['argv'][1]);
-	print $tok->toString();
+	$translate->load($_SERVER['argv'][1]);
 }
 else {
 	print "\nSYNTAX: ".$_SERVER['argv'][0]." [\$PWD|path_to_file]\n\n";
