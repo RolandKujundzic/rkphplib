@@ -235,7 +235,8 @@ public function lock($p = []) {
 
 
 /**
- * Update lockfile.
+ * Update lockfile. Create lockfile if it does not exist.
+ * Increment progress counter if message exist.
  *
  * @param string $file
  * @param hash $p
