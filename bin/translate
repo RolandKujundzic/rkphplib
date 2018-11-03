@@ -1,14 +1,19 @@
 #!/usr/bin/php
 <?php
 
-require_once('settings.php');
+// assume: APP/php/rkphplib/bin/
+require_once(dirname(dirname(dirname(__DIR__))).'/settings.php');
+
 require_once(PATH_RKPHPLIB.'Database.class.php');
+require_once(PATH_RKPHPLIB.'tok/TokPlugin.iface.php');
 require_once(PATH_RKPHPLIB.'tok/TLanguage.class.php');
 require_once(PATH_RKPHPLIB.'tok/Tokenizer.class.php');
 require_once(PATH_RKPHPLIB.'File.class.php');
 require_once(PATH_RKPHPLIB.'Dir.class.php');
 
+use \rkphplib\Database;
 use \rkphplib\tok\Tokenizer;
+use \rkphplib\tok\TokPlugin;
 use \rkphplib\File;
 use \rkphplib\Dir;
 
@@ -39,7 +44,7 @@ private $languages = [];
  *
  */
 public function __construct() {
-	$this->db = new Database();
+	$this->db = Database::getInstance();
 }
 
 
@@ -97,15 +102,15 @@ public function load($file) {
  * @param string $directory
  */
 public function scan($directory) {
-	Dir::exists($directory.'/js', true);
-	Dir::exists('js', true);
+	$sysdir = basename($directory);
+	Dir::exists($sysdir, true);
 
-	$js_files = Dir::scanDir($directory.'/js', [ 'js' ]);
+	$js_files = Dir::scanDir($directory, [ 'js' ]);
 
 	foreach ($this->languages as $lang) {
 		foreach ($js_files as $file) {
 			$this->tok->load($file);
-			File::save('js/'.File::basename($file, true).'.'.$lang.'.js', $this->tok->toString());
+			File::save($sysdir.'/'.File::basename($file, true).'.'.$lang.'.js', $this->tok->toString());
 		}
 	}
 }
@@ -123,19 +128,24 @@ $tok = new Tokenizer();
 $translate = new Translate();
 $tok->register($translate);
 
-if (empty($_SERVER['argv'][1])) {
-	print "\nSYNTAX: ".$_SERVER['argv'][0]." [\$PWD|path_to_file]\n\n";
-	exit(1);
-}
-else if (Dir::exists($_SERVER['argv'][1])) {
-	$translate->scan($_SERVER['argv'][1]);
-}
-else if (File::exists($_SERVER['argv'][1])) {
-	$translate->load($_SERVER['argv'][1]);
+if (!empty($_SERVER['argv'][1])) {
+	if (Dir::exists($_SERVER['argv'][1])) {
+		$translate->scan($_SERVER['argv'][1]);
+	}
+	else if (File::exists($_SERVER['argv'][1])) {
+		$translate->load($_SERVER['argv'][1]);
+	}
+	else {
+		print "\nSYNTAX: ".$_SERVER['argv'][0]." [\$PWD|path_to_file]\n\n";
+		exit(1);
+	}
 }
 else {
-	print "\nSYNTAX: ".$_SERVER['argv'][0]." [\$PWD|path_to_file]\n\n";
-	exit(1);
+	$autodetect = [ 'src/js' ];
+	foreach ($autodetect as $dir) {
+		if (Dir::exists($dir)) {
+			$translate->scan($dir);
+		}
+	}
 }
-
 
