@@ -174,7 +174,7 @@ public static function compare($source, $target) {
 	if ($ti['width'] > 0) {
 		$si = File::imageInfo($source);
 
-		if ($si['width'] != $ti['width'] || $si['height'] != $ti['height'] {
+		if ($si['width'] != $ti['width'] || $si['height'] != $ti['height']) {
 			return false;
 		}
 	}
