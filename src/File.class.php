@@ -115,6 +115,79 @@ public static function loadTable($uri, $options = []) {
 
 
 /**
+ * Return file info. Autocreate/Update json file $file.nfo. 
+ * Keys for comparison are size, md5, width, height other keys
+ * are file, name (basename without suffix), mime and 
+ * suffix (with leading dot).
+ *
+ * @param string $file
+ * @return hash
+ */
+public static function nfo($file) {
+	File::exists($file, true);
+
+	$nfo = dirname($file).'/'.File::basename($file, true).'.nfo';
+
+	if (File::exists($nfo) && File::lastModified($file) <= File::lastModified($nfo)) {
+		$json = JSON::decode(File::load($nfo));
+	}
+	else {
+		$json = [];
+		$json['file'] = $file;
+		$json['name'] = File::basename($file, true);
+		$json['size'] = File::size($file);
+		$json['mime'] = File::mime($file);
+		$json['suffix'] = File::suffix($file, true);
+		$json['lastModified'] = File::lastModified($file);
+		$json['md5'] = File::md5($file);
+	
+		if (substr($json['mime'], 0, 6) == 'image/') {
+			$ii = File::imageInfo($file);
+			$json = array_merge($json, $ii);
+		}
+
+		File::save_rw($nfo, JSON::encode($json));
+	}
+}
+
+
+/**
+ * Return true if source and target are the same. Autocreate $target.nfo file.
+ *
+ * @param string $source
+ * @param string $target
+ * @return boolean
+ */
+public static function compare($source, $target) {
+	File::exists($source, true);
+
+	if (!File::exists($target)) {
+		return false;
+	}
+
+	$ti = File::nfo($target);
+
+	if ($ti['size'] != File::size($source)) {
+		return false;
+	}
+
+	if ($ti['width'] > 0) {
+		$si = File::imageInfo($source);
+
+		if ($si['width'] != $ti['width'] || $si['height'] != $ti['height'] {
+			return false;
+		}
+	}
+
+	if ($ti['md5'] != File::md5($source)) {
+		return false;
+	}
+
+	return true;
+}
+
+
+/**
  * Load csv file. Ignore empty lines. If last parameter is callback function instead
  * of bool do $trim($row). If callback returns row push row to table.
  *
