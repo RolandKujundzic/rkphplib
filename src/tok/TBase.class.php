@@ -1648,6 +1648,7 @@ public function tok_escape($param, $txt) {
  * @tok {unescape:html}&lt;a href=&quot;abc&quot;&gt;{:unescape} = <a href="abc">
  * @tok {unescape:js}-_.%7C~!*'()%3B%3A%40%26%3D%2B%24%2C%2F%3F%25%23%5B%5D{:unescape} = -_.|~!*'();:@&=+$,/?%#[]
  * @tok {unescape:url}a%20b{:unescape} = a b
+ * @tok {unescape:utf8}R\u00FCssel{:unescape} = Rüssel
  * 
  * @throws 
  * @param string $param
@@ -1659,6 +1660,9 @@ public function tok_unescape($param, $txt) {
 
 	if ($param == 'tok') {
 		$res = $this->_tok->unescape($txt);
+	}
+	else if ($param == 'utf8') {
+		$res = html_entity_decode(preg_replace("/\\\u([0-9a-fA-F]{4})/", '&#x\1;', $txt));
 	}
 	else if ($param == 'url') {
 		$res = rawurldecode($txt);
