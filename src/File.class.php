@@ -152,13 +152,13 @@ public static function nfo($file) {
 
 
 /**
- * Return true if source and target are the same. Autocreate $target.nfo file.
+ * Return true if source and target files are equal. Autocreate $target.nfo file.
  *
  * @param string $source
  * @param string $target
  * @return boolean
  */
-public static function compare($source, $target) {
+public static function equal($source, $target) {
 	File::exists($source, true);
 
 	if (!File::exists($target)) {
