@@ -120,22 +120,36 @@ public static function loadTable($uri, $options = []) {
  * are file, name (basename without suffix), mime and 
  * suffix (with leading dot).
  *
+ * @throws
  * @param string $file
+ * @param string $source
  * @return hash
  */
-public static function nfo($file) {
+public static function nfo($file, $source = '') {
 	File::exists($file, true);
 
-	$nfo = dirname($file).'/'.File::basename($file, true).'.nfo';
+	$nfo = $file.'.nfo';
 
 	if (File::exists($nfo) && File::lastModified($file) <= File::lastModified($nfo)) {
 		$json = JSON::decode(File::load($nfo));
+
+		if (!empty($source) && (empty($json['source_file']) || $json['source_file'] != $source)) {
+			$source_json = File::nfo($source);
+			foreach ($source_json as $key => $value) {
+				$json['source_'.$key] = $value;
+			}
+		}
 	}
 	else {
 		$json = [];
 		$json['file'] = $file;
 		$json['name'] = File::basename($file, true);
 		$json['size'] = File::size($file);
+
+		if ($json['size'] == 0) {
+			throw new Exception($file.' has zero size');
+		}
+
 		$json['mime'] = File::mime($file);
 		$json['suffix'] = File::suffix($file, true);
 		$json['lastModified'] = File::lastModified($file);
@@ -146,8 +160,17 @@ public static function nfo($file) {
 			$json = array_merge($json, $ii);
 		}
 
+		if (!empty($source)) {
+			$source_json = File::nfo($source);
+			foreach ($source_json as $key => $value) {
+				$json['source_'.$key] = $value;
+			}
+		}
+
 		File::save_rw($nfo, JSON::encode($json));
 	}
+
+	return $json;
 }
 
 
@@ -156,16 +179,17 @@ public static function nfo($file) {
  *
  * @param string $source
  * @param string $target
+ * @param boolean $check_source_nfo
  * @return boolean
  */
-public static function equal($source, $target) {
+public static function equal($source, $target, $check_source_nfo = false) {
 	File::exists($source, true);
 
-	if (!File::exists($target)) {
+	if ($source == $target || !File::exists($target)) {
 		return false;
 	}
 
-	$ti = File::nfo($target);
+	$ti = $check_source_nfo ? File::nfo($source) : File::nfo($target);
 
 	if ($ti['size'] != File::size($source)) {
 		return false;
