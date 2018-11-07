@@ -5,19 +5,43 @@
 <meta charset="utf-8" />
 <meta name="keywords" content="" />
 <meta name="description" content="" />
+<style>
+body {
+	font-family: Arial, Helvetica;
+	font-size: 14px;
+}
+
+a {
+	color: blue;
+	text-decoration: none;
+	font-size: 14px;
+}
+
+a.active {
+	color: red;
+	font-weight: bold;
+}
+
+a.link {
+	color: black;
+}
+</style>
 </head>
 
 <body>
 
-<h3>Select upload module</h3>
-
-<ul>
-<li><a href="index.php?module=buildin">buildin</a></li>
-<li><a href="index.php?module=dropzone">dropzonejs</a> 
-	(<a href="https://www.dropzonejs.com/" target="dropzone">https://www.dropzonejs.com/</a>)</li>
-</ul>
 
 {set_default:module}dropzone{:set_default}
+
+<h3>Select upload module:
+
+<a href="index.php?module=buildin" {if:eq:buildin}{get:module}|#|class="active"{:if} style="margin-left:4ch">buildin</a> |
+<a href="index.php?module=dropzone" {if:eq:dropzone}{get:module}|#|class="active"{:if}>dropzonejs</a> 
+	(<a href="https://www.dropzonejs.com/" class="link" target="dropzone">https://www.dropzonejs.com/</a>)
+
+</h3>
+
+
 {include:}{get:module}.inc.html{:include}
 
 </body>

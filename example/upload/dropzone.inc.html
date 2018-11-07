@@ -8,13 +8,57 @@
 <link rel="stylesheet" href="../../css/dropzone.css" />
 {:html}
 
+{tpl_set:ajax_output_upload}
+{get:*}
+{:tpl_set}
+
 {upload:init:file}
 save_in=data/upload|#|
+ajax_output= ajax_output_upload|#|
 {:upload}
 
-<form action="/index.php" class="dropzone" id="dropzone_wrapper">
-<input type="hidden" name="method" value="dropzone">
+
+<form action="index.php" method="post" class="dropzone" id="dropzone_image" enctype="multipart/form-data">
+	<input type="hidden" name="method" value="dropzone">
 	<div class="fallback">
-		<input type="file" name="file" multiple />
+		<input type="file" name="image" multiple />
 	</div>
 </form>
+
+<br><br>
+
+<form action="index.php" method="post" enctype="multipart/form-data">
+	<input type="hidden" id="method" name="method" value="dropzone">
+	<div class="dropzone" id="myDropzone"></div>
+	<button type="submit" id="submit-all"> upload </button>
+</form>
+
+<script>
+Dropzone.options.myDropzone = {
+	url: 'index.php',
+	autoProcessQueue: false,
+	uploadMultiple: true,
+	parallelUploads: 5,
+	maxFiles: 5,
+	maxFilesize: 20, // mb
+	acceptedFiles: 'image/*',
+	addRemoveLinks: true,
+
+	init: function() {
+		dzClosure = this; // Makes sure that 'this' is understood inside the functions below.
+
+		// for Dropzone to process the queue (instead of default form behavior):
+		document.getElementById("submit-all").addEventListener("click", function(e) {
+			// Make sure that the form isn't actually being sent.
+			e.preventDefault();
+			e.stopPropagation();
+			dzClosure.processQueue();
+		});
+
+		// send all the form data along with the files:
+		this.on("sendingmultiple", function(data, xhr, formData) {
+			formData.append("method", document.getElementById('method').value);
+		});
+	}
+}
+</script>
