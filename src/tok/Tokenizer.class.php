@@ -809,21 +809,19 @@ public function hasPlugin($name) {
 
 /**
  * Return result of plugin $name function $func.
- * If number of args < 4 call $name.$func($args[0], $args[1], $args[2]) otherwise
- * call $name.$func($args). 
  *
- * If func has not 'tok_' prefix and args is string use _call_plugin(name, func, args).
- *
- * Example: 
- *   callPlugin('login', 'tok_login');
- *   callPlugin('login', 'tok_login', [ 'id' ]);
- *
- *   callPlugin('row', 'init', 'mode=material');
- *   callPlugin('row', '2,3', 'a|#|b');
+ * If args is vector (max length 3) use call_user_func(PLUGIN, $func[, args[0], args[1], args[2]]).
+ * If args is hash use call_user_func(PLUGIN, $func, args).
+ * If args is string assume $func=$param and use this._call_plugin($name, $func, $args).
+ * 
+ * Example:
+ *  callPlugin('login', 'tok_login', [ 'id' ]) = callPlugin('login', 'id')
+ *  callPlugin('row', 'init', 'mode=material');
+ *  callPlugin('row', '2,3', 'a|#|b');
  * 
  * @param string $name
  * @param string $func
- * @param string|vector|map $args
+ * @param string|vector|map $args (default = [])
  * @return any
  */
 public function callPlugin($name, $func, $args = []) {
@@ -836,12 +834,16 @@ public function callPlugin($name, $func, $args = []) {
 		if (is_null($args) || (is_array($args) && count($args) == 0)) {
 			$args = '';
 		}
+		else if (!is_string($args)) {
+			throw new Exception('invalid args string', "name=$name func=$func args: ".print_r($args, true));
+		}
 
 		if (isset($this->_plugin[$name.':'.$func])) {
 			$name = $name.':'.$func;
 			$func = '';
 		}
 
+		\rkphplib\lib\log_debug("Tokenizer.callPlugin($name, $func, $args)");
 		return $this->_call_plugin($name, $func, $args);
 	}
 
@@ -849,8 +851,7 @@ public function callPlugin($name, $func, $args = []) {
 		throw new Exception("no such plugin method $name.".$func);
 	}
 
-	// \rkphplib\lib\log_debug("Tokenizer.callPlugin($name, $func> args: ".print_r($args, true));
-
+	\rkphplib\lib\log_debug("Tokenizer.callPlugin($name, $func, ...)> args: ".print_r($args, true));
 	if (count($args) == 0) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func));
 	}
