@@ -41,7 +41,7 @@ public function getPlugins($tok) {
 	$this->tok = $tok;
 
 	$plugin = [];
-  $plugin['upload:init'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+  $plugin['upload:init'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY | TokPlugin::REDO;
   $plugin['upload:get'] = 0;
   $plugin['upload:file'] = 0;
   $plugin['upload:exists'] = 0;
@@ -71,10 +71,14 @@ public function getPlugins($tok) {
  * jpeg2jpg: 1 (=default)
  * image_ratio: image.width % image.height
  * image_convert: execute convert command
+ * ajax_output: AJAX_TEMPLATE
+ *
+ * If ajax_output is specified, print parsed {tpl:AJAX_TEMPLATE} and exit.
  * 
  * @param hash $p
  */
 public function tok_upload_init($name, $p) {
+
 	try {
 
 	// reset save upload export
@@ -102,7 +106,7 @@ public function tok_upload_init($name, $p) {
 
 	$this->conf = $p;
 
-	// \rkphplib\lib\log_debug("TUpload.tok_upload_init> conf: ".print_r($this->conf, true));
+	\rkphplib\lib\log_debug("TUpload.tok_upload_init($name, ...)> this.conf: ".print_r($this->conf, true));
 
 	if (!empty($p['remove_image']) && !empty($p['table_id']) && strpos($p['remove_image'], $name) === 0) {
 		$this->removeImage();
@@ -180,13 +184,18 @@ public function tok_upload_init($name, $p) {
 	}
 */
 
+	if (!empty($p['ajax_output'])) {
+		print $this->tok->callPlugin('tpl', $p['ajax_output']);
+		exit(0);
+	}
+
 	}
 	catch (\Exception $e) {
 		// do nothing ... 
 		$msg = "TUpload.tok_upload_init> Exception: ".$e->getMessage();
 		$trace = $e->getFile()." on line ".$e->getLine()."\n".$e->getTraceAsString();
 		$internal = property_exists($e, 'internal_message') ? "INFO: ".$e->internal_message : '';
-		// \rkphplib\lib\log_debug("$msg\n$trace\n$internal");
+		\rkphplib\lib\log_debug("$msg\n$trace\n$internal");
 	}
 
 	// \rkphplib\lib\log_debug("TUpload.tok_upload_init> return");
