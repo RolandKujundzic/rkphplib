@@ -23,13 +23,34 @@ ajax_output= ajax_output_upload|#|
 	<div class="fallback">
 		<input type="file" name="image" multiple />
 	</div>
+
+<!--
+	<div class="dz-message">
+		<h3>Olo</h3>
+		<i class="fa fa-picture-o fa-5x" aria-hidden="true"></i>
+	</div>
+-->
 </form>
 
 <br><br>
 
+<style>
+#myDropzone {
+  width:600px;
+  height:200px;
+  padding:15px;
+  border-style:dashed;
+  border-color:#2c003a;
+  border-width:2px;
+  background-color:#fdfbfb;
+  color:#462a51;
+}
+</style>
+
 <form action="index.php" method="post" enctype="multipart/form-data">
 	<input type="hidden" id="method" name="method" value="dropzone">
 	<div class="dropzone" id="myDropzone"></div>
+	<br><br>
 	<button type="submit" id="submit-all"> upload </button>
 </form>
 
@@ -59,6 +80,20 @@ Dropzone.options.myDropzone = {
 		this.on("sendingmultiple", function(data, xhr, formData) {
 			formData.append("method", document.getElementById('method').value);
 		});
+
+		// add existing files
+		var existingFiles = [ 
+			{ name: "HTB1e0rIbsbI8KJjy1zdq6ze1VXas.jpg", size: 285645 /*, type: "image/jpeg", kind: 'image', accepted: true,
+					dataURL: "http://172.17.0.2/php/rkphplib/example/upload/data/upload/tbn/HTB1e0rIbsbI8KJjy1zdq6ze1VXas.jpg" */ },
+			{ name: "k1.jpg", size: 175135 /*, type: "image/jpeg", king: 'image', accepted: true, 
+					dataURL: "http://172.17.0.2/php/rkphplib/example/upload/data/upload/tbn/k1.jpg" */ }
+			];
+
+		for (var i = 0; i < existingFiles.length; i++) {
+			this.emit("addedfile", existingFiles[i]);
+			this.emit("thumbnail", existingFiles[i], "http://172.17.0.2/php/rkphplib/example/upload/data/upload/tbn/" + existingFiles[i].name);
+			this.emit("complete", existingFiles[i]);
+		}
 	}
 }
 </script>

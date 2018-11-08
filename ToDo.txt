@@ -1,3 +1,7 @@
+Image Wrapper (to GD/Imagick):
+------------------------------
+http://image.intervention.io/getting_started/installation
+
 TFormInput:
 -----------
 Create auto-growning Text input

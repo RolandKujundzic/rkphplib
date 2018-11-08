@@ -58,7 +58,7 @@ public function getPlugins($tok) {
  * stream: yes=upload is stream, no=ignore stream, []=normal post upload
  * save_in: save directory (auto-create) (default = data/upload/name)
  * save_dir: if set remove from path export
- * save_as: basename (default = name) @see getSaveAs
+ * save_as: basename (default = [at]name) @see getSaveAs
  * allow_suffix: jpg, png, ...
  * type: image 
  * table_id: e.g. shop_customer.id:382
@@ -88,7 +88,7 @@ public function tok_upload_init($name, $p) {
 
 	$p['upload'] = $name;
 	$p['save_in'] = empty($p['save_in']) ? 'data/upload/'.$name : $p['save_in'];
-	$p['save_as'] = empty($p['save_as']) ? 'count' : $p['save_as'];
+	$p['save_as'] = empty($p['save_as']) ? '@name' : $p['save_as'];
 	$p['overwrite'] = empty($p['overwrite']) ? 'yes' : $p['overwrite'];
 
 	$upload_type = '';
