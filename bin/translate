@@ -5,12 +5,15 @@
 require_once(dirname(dirname(dirname(__DIR__))).'/settings.php');
 
 require_once(PATH_RKPHPLIB.'Database.class.php');
+require_once(PATH_RKPHPLIB.'tok/TokPlugin.iface.php');
 require_once(PATH_RKPHPLIB.'tok/TLanguage.class.php');
 require_once(PATH_RKPHPLIB.'tok/Tokenizer.class.php');
 require_once(PATH_RKPHPLIB.'File.class.php');
 require_once(PATH_RKPHPLIB.'Dir.class.php');
 
+use \rkphplib\Exception;
 use \rkphplib\Database;
+use \rkphplib\tok\TokPlugin;
 use \rkphplib\tok\TLanguage;
 use \rkphplib\tok\Tokenizer;
 use \rkphplib\File;
@@ -39,6 +42,40 @@ private $languages = [];
 
 
 /**
+ * Catch {language:[init|get]} plugin and return plugin text.
+ */
+public function getPlugins($tok) {
+  $plugin = [
+    'language:init' => TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY,
+    'language:get' => TokPlugin::NO_PARAM | TokPlugin::NO_BODY,
+    'language' => 0
+  ];
+
+  return $plugin;
+}
+
+
+/**
+ * Catch {language:init}. Return plugin text.
+ *
+ * @param string $arg
+ * @return string
+ */
+public function tok_language_init($arg) {
+	return '{language:init}'.$arg.'{:language}';
+}
+
+
+/**
+ * Catch {language:get}. Return plugin text.
+ * @return string
+ */
+public function tok_language_get() {
+	return '{language:get}';
+}
+
+
+/**
  * Set language table.
  *
  * @param string $name
@@ -50,16 +87,21 @@ public function setTable($name, $txt_lang = 'de') {
 	$this->languages = [];
 
 	foreach ($table_desc as $column => $info) {
-		if (strlen($column) != 2 || $info['type'] != 'text' || !$info['is_null']) {
+		if (strlen($column) != 2 || $info['type'] != 'text') {
 			continue;
 		}
 		
 		array_push($this->languages, $column);
 	}
 
+	if (count($this->languages) < 2) {
+		throw new Exception('no languages detected', "name=$name, table_desc: ".print_r($table_desc, true));
+	}
+
 	$this->tok = new Tokenizer(Tokenizer::TOK_KEEP);
 	$this->t_lang = new TLanguage();
 	$this->tok->register($this->t_lang);
+	$this->tok->register($this);
 	$this->t_lang->tok_language_init([ 'table' => $name, 'default' => $txt_lang, 'txt' => $txt_lang ]);
 }
 
@@ -85,38 +127,35 @@ private function log($message) {
 
 
 /**
- * Scan $directory. Copy files from $directory/js to ../js with FILE.[LANG].js suffix.
+ * Translate all *.inc.html, *.conf and *.js files. Save translation to /LANG.
+ * 
+ * @param string $root_dir
+ * @param string $language_table
+ * @param string $default_language
  *
- * @throws
- * @param string $directory
  */
-public function scanjs($directory) {
-	if (!Dir::exists($directory)) {
-		return;
-	}
+public function run($root_dir, $language_table, $default_language) {
+	$this->setTable($language_table, $default_language);
 
-	$parent_dir = dirname($directory);
-	$this->log("cd $parent_dir");
-	chdir($parent_dir);
-	$js_source = basename($directory);
-	Dir::exists($js_source, true);
-
-	$js_target = '../'.$js_source;
-	Dir::exists($js_target, true);
-
-	$js_files = Dir::scanDir($js_source, [ 'js' ]);
+	$files = Dir::scanTree($root_dir, [ 'inc.html', 'conf', 'js' ], [ 'cms', 'data', 'php', 'setup' ]);
 
 	foreach ($this->languages as $lang) {
-		foreach ($js_files as $file) {
-			$target = $js_target.'/'.File::basename($file, true).'.'.$lang.'.js';
-			$this->log("translate $file to $target");
-			$this->t_lang->tok_language_init([ 'use' => $lang ]);
-			File::save($target, $this->file($file));
+		$this->t_lang->tok_language_init([ 'use' => $lang, 'default' => $default_language, 'txt' => $default_language, 
+			'table' => $language_table ]);
+
+		foreach ($files as $file) {
+			$rel_path = str_replace($root_dir.'/', '', $file);
+			$target = $root_dir.'/'.$lang.'/'.$rel_path;
+			Dir::create(dirname($target), 0, true);
+			$md5 = File::md5($file);
+			$translation = $this->file($file);
+
+			if (md5($translation) != $md5) {
+				$this->log('create '.$target);
+				File::save($target, $translation);
+			}
 		}
 	}
-
-	$this->log('cd '.DOCROOT);
-	chdir(DOCROOT);
 }
 
 
@@ -128,25 +167,14 @@ public function scanjs($directory) {
  * M A I N
  */
 
-$translate = new Translate();
+if (getcwd() != DOCROOT) {
+	print "\nSYNTAX: ".$_SERVER['argv'][0]."\n";
+	print "run in ".DOCROOT."\n";
+	exit(1);
+}
 
-if (!empty($_SERVER['argv'][1])) {
-	if (Dir::exists($_SERVER['argv'][1])) {
-		$translate->scan($_SERVER['argv'][1]);
-	}
-	else if (File::exists($_SERVER['argv'][1])) {
-		print $translate->file($_SERVER['argv'][1]);
-	}
-	else {
-		print "\nSYNTAX: ".$_SERVER['argv'][0]." [\$PWD|path_to_file]\n\n";
-		exit(1);
-	}
-}
-else {
-	$translate->setTable('cms_language', 'en');
-	$js_map = [ 'cms/src/js' ];
-	foreach ($js_map as $dir) {
-		$translate->scanjs($dir);
-	}
-}
+$translate = new Translate();
+$translate->run(DOCROOT, 'language', 'de');
+chdir('cms');
+$translate->run('.', 'cms_language', 'en');
 
