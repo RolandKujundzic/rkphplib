@@ -5,15 +5,14 @@
 require_once(dirname(dirname(dirname(__DIR__))).'/settings.php');
 
 require_once(PATH_RKPHPLIB.'Database.class.php');
-require_once(PATH_RKPHPLIB.'tok/TokPlugin.iface.php');
 require_once(PATH_RKPHPLIB.'tok/TLanguage.class.php');
 require_once(PATH_RKPHPLIB.'tok/Tokenizer.class.php');
 require_once(PATH_RKPHPLIB.'File.class.php');
 require_once(PATH_RKPHPLIB.'Dir.class.php');
 
 use \rkphplib\Database;
+use \rkphplib\tok\TLanguage;
 use \rkphplib\tok\Tokenizer;
-use \rkphplib\tok\TokPlugin;
 use \rkphplib\File;
 use \rkphplib\Dir;
 
@@ -23,7 +22,7 @@ use \rkphplib\Dir;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class Translate implements TokPlugin {
+class Translate {
 
 /** @var Database $db */
 private $db = null;
@@ -40,79 +39,84 @@ private $languages = [];
 
 
 /**
- * Initialize database.
+ * Set language table.
  *
+ * @param string $name
+ * @param string $txt_lang (=de)
  */
-public function __construct() {
+public function setTable($name, $txt_lang = 'de') {
 	$this->db = Database::getInstance();
+	$table_desc = $this->db->getTableDesc($name);
+	$this->languages = [];
+
+	foreach ($table_desc as $column => $info) {
+		if (strlen($column) != 2 || $info['type'] != 'text' || !$info['is_null']) {
+			continue;
+		}
+		
+		array_push($this->languages, $column);
+	}
+
+	$this->tok = new Tokenizer(Tokenizer::TOK_KEEP);
+	$this->t_lang = new TLanguage();
+	$this->tok->register($this->t_lang);
+	$this->t_lang->tok_language_init([ 'table' => $name, 'default' => $txt_lang, 'txt' => $txt_lang ]);
 }
 
 
 /**
- * Return Tokenizer Plugin list:
+ * Load $file and return parsed content.
  *
- * - autoescape, block, do, embed, extends, filter, flush, for, from, if, import, include, macro, sandbox, set, 
- *   spaceless, use, verbatim, v
- *
- * @param Tokenizer $tok
- * @return map<string:int>
- */
-public function getPlugins($tok) {
-	$this->tok = $tok;
-	
-	$plugin = [
-		'txt' => TokPlugin::TOKCALL,
-		'txt:js' => TokPlugin::TOKCALL,
-		'ptxt' => TokPlugin::TOKCALL
-	];
-
-	return $plugin;
-}
-
-
-/**
- * Apply TLanguage plugins.
- *
- * @param string $action
- * @param string $param
- * @param string $arg
+ * @param string $file
  * @return string
  */
-public function tokCall($action, $param, $arg) {
-	print "action=[$action] param=[$param] arg=[$arg]\n";
-	exit(1);
-	return '';
-}
-
-
-/**
- * Load and parse $file.
- * @return string
- */
-public function load($file) {
+public function file($file) {
 	$this->tok->load($file);
-	print $this->tok->toString();
+	return $this->tok->toString();
 }
 
 
 /**
- * Scan $directory. Copy files from $directory/js to js with FILE.[LANG].js suffix.
+ * Print log message.
+ */
+private function log($message) {
+	print $message."\n";
+}
+
+
+/**
+ * Scan $directory. Copy files from $directory/js to ../js with FILE.[LANG].js suffix.
  *
  * @throws
  * @param string $directory
  */
-public function scan($directory) {
-	$sysdir = basename($directory);
-	Dir::exists($sysdir, true);
+public function scanjs($directory) {
+	if (!Dir::exists($directory)) {
+		return;
+	}
 
-	$js_files = Dir::scanDir($directory, [ 'js' ]);
+	$parent_dir = dirname($directory);
+	$this->log("cd $parent_dir");
+	chdir($parent_dir);
+	$js_source = basename($directory);
+	Dir::exists($js_source, true);
+
+	$js_target = '../'.$js_source;
+	Dir::exists($js_target, true);
+
+	$js_files = Dir::scanDir($js_source, [ 'js' ]);
 
 	foreach ($this->languages as $lang) {
 		foreach ($js_files as $file) {
-			$this->tok->load($file);
-			File::save($sysdir.'/'.File::basename($file, true).'.'.$lang.'.js', $this->tok->toString());
+			$target = $js_target.'/'.File::basename($file, true).'.'.$lang.'.js';
+			$this->log("translate $file to $target");
+			$this->t_lang->tok_language_init([ 'use' => $lang ]);
+			File::save($target, $this->file($file));
 		}
 	}
+
+	$this->log('cd '.DOCROOT);
+	chdir(DOCROOT);
 }
 
 
@@ -124,16 +128,14 @@ public function scan($directory) {
  * M A I N
  */
 
-$tok = new Tokenizer();
 $translate = new Translate();
-$tok->register($translate);
 
 if (!empty($_SERVER['argv'][1])) {
 	if (Dir::exists($_SERVER['argv'][1])) {
 		$translate->scan($_SERVER['argv'][1]);
 	}
 	else if (File::exists($_SERVER['argv'][1])) {
-		$translate->load($_SERVER['argv'][1]);
+		print $translate->file($_SERVER['argv'][1]);
 	}
 	else {
 		print "\nSYNTAX: ".$_SERVER['argv'][0]." [\$PWD|path_to_file]\n\n";
@@ -141,11 +143,10 @@ if (!empty($_SERVER['argv'][1])) {
 	}
 }
 else {
-	$autodetect = [ 'src/js' ];
-	foreach ($autodetect as $dir) {
-		if (Dir::exists($dir)) {
-			$translate->scan($dir);
-		}
+	$translate->setTable('cms_language', 'en');
+	$js_map = [ 'cms/src/js' ];
+	foreach ($js_map as $dir) {
+		$translate->scanjs($dir);
 	}
 }
 
