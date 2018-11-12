@@ -44,6 +44,9 @@ const TOK_KEEP = 4;
 /** @const TOK_DEBUG debug unknown plugin */
 const TOK_DEBUG = 8;
 
+/** @const TOK_AUTOLOAD autoload unknown plugin */
+const TOK_AUTOLOAD = 16;
+
 
 /** @const VAR_MUST_NOT_EXIST throw exception in setVar() if key already exists */
 const VAR_MUST_NOT_EXIST = 1;
@@ -82,9 +85,9 @@ private $_postprocess = [];
  * Constructor. Set behavior for unknown plugin (TOK_[IGNORE|KEEP|DEBUG).
  * Default is to abort if unknown plugin is found.
  *
- * @param int $config (0=default, Tokenizer::TOK_[IGNORE|KEEP|DEBUG])
+ * @param int $config (0=default, Tokenizer::TOK_[IGNORE|KEEP|DEBUG|AUTOLOAD])
  */
-public function __construct($config = 0) {
+public function __construct($config = 16) {
 	if (is_null(self::$site)) {
 		self::$site =& $this;
 	}
@@ -555,7 +558,7 @@ private function _join_tok_plugin(&$i) {
 		$name = 'catchall';
 	}
 
-	if (!isset($this->_plugin[$name])) {
+	if (!isset($this->_plugin[$name]) && ($this->_config & self::TOK_AUTOLOAD)) {
 		$this->tryPluginMap($name);
 	}
 
