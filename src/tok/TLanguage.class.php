@@ -168,13 +168,11 @@ public function initSession($p) {
  */
 public function tok_language_init($p) {
 
-	$default = [ 'table' => 'language', 'dsn' => SETTINGS_DSN, 'txt' => SETTINGS_LANGUAGE, 'default' => 'txt', 'use' => '', 'untranslated' => '' ];
+	$default = [ 'table' => 'language', 'dsn' => SETTINGS_DSN, 'txt' => SETTINGS_LANGUAGE, 'default' => 'txt', 
+		'use' => '', 'untranslated' => '' ];
 
-	foreach ($default as $key => $value) {
-		if (empty($p[$key])) {
-			$p[$key] = $value;
-		}
-	}
+	$p = array_merge($this->conf, $p);
+	$p = array_merge($default, $p);
 
 	if (!empty($_REQUEST['ignore_language'])) {
 		$p['use'] = '';
@@ -236,11 +234,10 @@ public function getTxtId($param, $txt) {
 
 
 /**
- * Same as {txt:} but result is either ['id': 'translation'] or ['translation'] (empty id). 
- * Translation is javascript escaped.
+ * Same as {txt:} but result is javascript escaped.
  * 
- * @tok {txt:js:alert}Are you Shure?{:txt} -> 'alert': 'Are your Shure?'
  * @tok {txt:js}Are you Shure?{:txt} -> 'Are your Shure?'
+ * @tok {txt:js}Don't do this!\nOk?{:txt} -> 'Don\'t do this!' + "\n" + 'Ok?'
  *
  * @throws
  * @see tok_txt
@@ -251,9 +248,13 @@ public function getTxtId($param, $txt) {
 public function tok_txt_js($id, $txt) {
 	$translation = str_replace("'", "\\'", $this->tok_txt($id, $txt));
 	$lines = preg_split("/\r?\n/", $translation);
-	$translation = "'".join("' + \"\\n\" + '", $lines)."'";
+	$res = "'".join("' + \"\\n\" + '", $lines)."'";
 
-	return empty($id) ? $translation : "'$id': $translation";
+	if (!empty($id) && substr($id, -1) == '=') {
+		$res = "'".substr($id, 0, -1)."': ".$res;
+	}
+
+	return $res;
 }
 
 
