@@ -137,7 +137,7 @@ private function log($message) {
 public function run($root_dir, $language_table, $default_language) {
 	$this->setTable($language_table, $default_language);
 
-	$files = Dir::scanTree($root_dir, [ 'inc.html', 'conf', 'js' ], [ 'cms', 'data', 'php', 'setup' ]);
+	$files = Dir::scanTree($root_dir, [ 'inc.html', 'conf', 'js', 'css' ], [ 'cms', 'data', 'php', 'setup' ]);
 
 	foreach ($this->languages as $lang) {
 		$this->t_lang->tok_language_init([ 'use' => $lang, 'default' => $default_language, 'txt' => $default_language, 
@@ -146,12 +146,12 @@ public function run($root_dir, $language_table, $default_language) {
 		foreach ($files as $file) {
 			$rel_path = str_replace($root_dir.'/', '', $file);
 			$target = $root_dir.'/'.$lang.'/'.$rel_path;
-			Dir::create(dirname($target), 0, true);
-			$md5 = File::md5($file);
 			$translation = $this->file($file);
+			$md5 = File::md5($file);
 
 			if (md5($translation) != $md5) {
 				$this->log('create '.$target);
+				Dir::create(dirname($target), 0, true);
 				File::save($target, $translation);
 			}
 		}
@@ -169,7 +169,7 @@ public function run($root_dir, $language_table, $default_language) {
 
 if (getcwd() != DOCROOT) {
 	print "\nSYNTAX: ".$_SERVER['argv'][0]."\n";
-	print "run in ".DOCROOT."\n";
+	print "run in ".DOCROOT."\n\n";
 	exit(1);
 }
 
