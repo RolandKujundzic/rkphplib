@@ -71,14 +71,19 @@ public function tok_picture_init($p) {
 		$p['reset'] = 1;
 	}
 
+	$tok = is_null($this->tok) ? Tokenizer::$site : $this->tok;
+	if (is_null($tok)) {
+		$tok = new Tokenizer();
+	}
+
 	if (count($this->conf) == 0 || !empty($p['reset'])) {
 	  $default['picture_dir'] = 'data/picture/upload';
   	$default['preview_dir'] = 'data/picture/preview';
  		$default['convert.resize'] = 'convert -colorspace sRGB -geometry '.
-			$this->tok->getTag('resize').' '.$this->tok->getTag('source').' '.$this->tok->getTag('target');
+			$tok->getTag('resize').' '.$tok->getTag('source').' '.$tok->getTag('target');
 		$default['convert.resize^'] = 'convert -colorspace sRGB -geometry '.
-			$this->tok->getTag('resize').'^ -gravity center -extent '.$this->tok->getTag('resize').' '.
-			$this->tok->getTag('source').' '.$this->tok->getTag('target');
+			$tok->getTag('resize').'^ -gravity center -extent '.$tok->getTag('resize').' '.
+			$tok->getTag('source').' '.$tok->getTag('target');
 	  $default['default'] = 'default.jpg';
 		$default['ignore_missing'] = 1;
 		$default['module'] = 'convert';
@@ -218,6 +223,7 @@ private function computeImgSource() {
  *
  * @see http://www.imagemagick.org/script/convert.php
  * @see http://www.imagemagick.org/script/command-line-processing.php#geometry
+ * @return string (=conf.target)
  */
 public function resize() {
 	$resize = $this->conf['resize'];
@@ -234,11 +240,11 @@ public function resize() {
 			$wxh = mb_substr($this->conf['use_cache'], 10);
 			$ii = File::imageInfo($this->conf['target']);
 			if ($ii['width'].'x'.$ii['height'] == $wxh) {
-				return;
+				return $this->conf['target'];
 			}
 		}
 		else {
-			return;
+			return $this->conf['target'];
 		}
   }
 
@@ -263,6 +269,8 @@ public function resize() {
 	}
 
  	FSEntry::chmod($this->conf['target'], 0666);
+
+	return $this->conf['target'];
 }
 
 
