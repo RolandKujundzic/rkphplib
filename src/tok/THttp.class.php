@@ -54,6 +54,19 @@ public function getPlugins($tok) {
  * @return string
  */
 public function tok_http_get($name) {
+	return self::httpGet($name);
+}
+
+
+/**
+ * Static version of tok_http_get().
+ *
+ * @see tok_http_get
+ * @throws
+ * @param string $name
+ * @return string 
+ */
+public static function httpGet($name) {
 	$custom = [ 'ip', 'is_msie', 'host', 'abs_host', 'script', 'query', 'script_query', 
 		'port', 'protocol', 'url', 'abs_url', 'http_url', 'https_url' ];	
   $res = '';
