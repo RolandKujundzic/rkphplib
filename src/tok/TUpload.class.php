@@ -100,7 +100,9 @@ public function tok_upload_exists($p) {
 
 			if (!empty($ii['width'])) {
 				$tbn = $this->getThumbnail($entry, true);
-				$info = [ 'name' => basename($entry), 'size' => File::size($entry), 'type' => $ii['mime'], 'tbnUrl' => $tbn ];
+				$url = dirname(THttp::httpGet('abs_url')).'/'.$entry;
+				$info = [ 'name' => basename($entry), 'size' => File::size($entry), 'mime' => $ii['mime'], 
+					'path' => $entry, 'url' => $url, 'tbnUrl' => $tbn ];
 				array_push($list, $info);
 			}
 		}
