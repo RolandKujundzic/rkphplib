@@ -453,7 +453,10 @@ public static function resizeImage($wxh, $source, $target = '') {
  */
 public static function imageInfo($file, $abort = true) {
 
-	FSEntry::isFile($file);
+	if (!FSEntry::isFile($file, $abort)) {
+		return false;
+	}
+
 	$info = getimagesize($file);
 	$res = array('width' => 0, 'height' => 0, 'mime' => '', 'suffix' => '', 'file' => '');
 
