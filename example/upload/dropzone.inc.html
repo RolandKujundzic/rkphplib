@@ -37,7 +37,7 @@ ajax_output= ajax_output_upload|#|
 
 <style>
 #myDropzone {
-  width:600px;
+  width:660px;
   height:200px;
   padding:15px;
   border-style:dashed;
@@ -45,11 +45,14 @@ ajax_output= ajax_output_upload|#|
   border-width:2px;
   background-color:#fdfbfb;
   color:#462a51;
+	overflow: auto;
 }
 </style>
 
 <form action="index.php" method="post" enctype="multipart/form-data">
 	<input type="hidden" id="method" name="method" value="dropzone">
+	<input type="hidden" id="remove_image" name="remove_image" value="">
+
 	<div class="dropzone" id="myDropzone"></div>
 	<br><br>
 	<button type="submit" id="submit-all"> upload </button>
@@ -61,10 +64,13 @@ Dropzone.options.myDropzone = {
 	autoProcessQueue: false,
 	uploadMultiple: true,
 	parallelUploads: 5,
-	maxFiles: 5,
+	maxFiles: 7,
 	maxFilesize: 20, // mb
 	acceptedFiles: 'image/*',
 	addRemoveLinks: true,
+	dictMaxFilesExceeded: "You can not upload more than {{maxFiles}} files.",
+	dictRemoveFileConfirmation: "Do you want to remove this file?",
+	rk: { currFiles: 0, newFiles: 0 },
 
 	init: function() {
 		dzClosure = this; // Makes sure that 'this' is understood inside the functions below.
@@ -80,6 +86,31 @@ Dropzone.options.myDropzone = {
 		// send all the form data along with the files:
 		this.on("sendingmultiple", function(data, xhr, formData) {
 			formData.append("method", document.getElementById('method').value);
+			formData.append("remove_image", document.getElementById('remove_image').value);
+		});
+
+		this.on("removedfile", function(file) {
+			if (file.path) {
+				if (document.getElementById('remove_image').value) {
+					document.getElementById('remove_image').value += '|#|' + file.name;
+				}
+				else {
+					document.getElementById('remove_image').value = file.name;
+				}
+			}
+		});
+
+		this.on("addedfile", function(file) {
+			if (file.url) {
+				this.options.rk.currFiles++;
+			}
+			else {
+				this.options.rk.newFiles++;
+			}
+
+			if (this.options.maxFiles < this.options.rk.currFiles + this.options.rk.newFiles) {
+				this.removeFile(file);
+			}
 		});
 
 		// add existing files
