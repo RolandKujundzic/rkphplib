@@ -59,6 +59,7 @@ public function getPlugins($tok) {
 		'language' => 0,
 		'txt:js' => 0,
 		'txt' => 0,
+		't' => 0,
 		'ptxt' => TokPlugin::LIST_BODY
 	];
 
@@ -255,6 +256,14 @@ public function tok_txt_js($id, $txt) {
 	}
 
 	return $res;
+}
+
+
+/**
+ * @alias tok_txt
+ */
+public function tok_t($param, $txt) {
+	return $this->tok_txt($param, $txt);
 }
 
 
