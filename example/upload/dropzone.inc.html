@@ -13,7 +13,8 @@
 {:tpl_set}
 
 {upload:init:file}
-save_in=data/upload|#|
+save_in= data/upload|#|
+thumbnail= 120x120^|#|
 ajax_output= ajax_output_upload|#|
 {:upload}
 
@@ -82,16 +83,11 @@ Dropzone.options.myDropzone = {
 		});
 
 		// add existing files
-		var existingFiles = [ 
-			{ name: "HTB1e0rIbsbI8KJjy1zdq6ze1VXas.jpg", size: 285645 /*, type: "image/jpeg", kind: 'image', accepted: true,
-					dataURL: "http://172.17.0.2/php/rkphplib/example/upload/data/upload/tbn/HTB1e0rIbsbI8KJjy1zdq6ze1VXas.jpg" */ },
-			{ name: "k1.jpg", size: 175135 /*, type: "image/jpeg", king: 'image', accepted: true, 
-					dataURL: "http://172.17.0.2/php/rkphplib/example/upload/data/upload/tbn/k1.jpg" */ }
-			];
+		var existingFiles = {upload:exists}mode=dropzone{:upload};
 
 		for (var i = 0; i < existingFiles.length; i++) {
 			this.emit("addedfile", existingFiles[i]);
-			this.emit("thumbnail", existingFiles[i], "http://172.17.0.2/php/rkphplib/example/upload/data/upload/tbn/" + existingFiles[i].name);
+			this.emit("thumbnail", existingFiles[i], existingFiles[i].tbnUrl);
 			this.emit("complete", existingFiles[i]);
 		}
 	}
