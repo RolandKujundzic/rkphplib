@@ -8,6 +8,7 @@ require_once(PATH_RKPHPLIB.'Database.class.php');
 require_once(PATH_RKPHPLIB.'tok/TokPlugin.iface.php');
 require_once(PATH_RKPHPLIB.'tok/TLanguage.class.php');
 require_once(PATH_RKPHPLIB.'tok/Tokenizer.class.php');
+require_once(PATH_RKPHPLIB.'FSEntry.class.php');
 require_once(PATH_RKPHPLIB.'File.class.php');
 require_once(PATH_RKPHPLIB.'Dir.class.php');
 
@@ -16,6 +17,7 @@ use \rkphplib\Database;
 use \rkphplib\tok\TokPlugin;
 use \rkphplib\tok\TLanguage;
 use \rkphplib\tok\Tokenizer;
+use \rkphplib\FSEntry;
 use \rkphplib\File;
 use \rkphplib\Dir;
 
@@ -128,24 +130,45 @@ private function log($message) {
 
 /**
  * Translate all *.inc.html, *.conf and *.js files. Save translation to /LANG.
+ * If first parameter is string assume root_dir. Default options are:
  * 
- * @param string $root_dir
+ * root_dir = '.'
+ * suffix_list = [ 'inc.html', 'conf', 'js', 'css' ]
+ * exclude_dir = [ 'cms', 'data', 'php', 'setup' ]
+ *
+ * @param string|hash $root_dir
  * @param string $language_table
  * @param string $default_language
  *
  */
-public function run($root_dir, $language_table, $default_language) {
+public function run($option, $language_table, $default_language) {
 	$this->setTable($language_table, $default_language);
 
-	$files = Dir::scanTree($root_dir, [ 'inc.html', 'conf', 'js', 'css' ], [ 'cms', 'data', 'php', 'setup' ]);
+	$default = [ 
+		'root_dir' => '.', 
+		'suffix_list' => [ 'inc.html', 'conf', 'js', 'css' ], 
+		'exclude_dir' => [ 'cms', 'data', 'php', 'setup' ] 
+		];
+
+	if (is_string($option)) {
+		$option = [ 'root_dir' => $option ];
+	}
+
+	$option = array_merge($default, $option);
+
+	$files = Dir::scanTree($option['root_dir'], $option['suffix_list' ], $option['exclude_dir']);
 
 	foreach ($this->languages as $lang) {
+		if (Dir::exists($lang)) {
+			Dir::remove($lang);
+		}
+
 		$this->t_lang->tok_language_init([ 'use' => $lang, 'default' => $default_language, 'txt' => $default_language, 
 			'table' => $language_table ]);
 
 		foreach ($files as $file) {
-			$rel_path = str_replace($root_dir.'/', '', $file);
-			$target = $root_dir.'/'.$lang.'/'.$rel_path;
+			$rel_path = str_replace($option['root_dir'].'/', '', $file);
+			$target = $option['root_dir'].'/'.$lang.'/'.$rel_path;
 			$translation = $this->file($file);
 			$md5 = File::md5($file);
 
@@ -155,6 +178,34 @@ public function run($root_dir, $language_table, $default_language) {
 				File::save($target, $translation);
 			}
 		}
+	}
+}
+
+
+/**
+ * Link all files not in LANG/ directory to parent directory.
+ */
+public function link() {
+	$entries = Dir::entries('.');
+	$found = [];
+
+	foreach ($entries as $entry) {
+		$entry = substr($entry, 2); // remove leading ./
+		if (strlen($entry) != 2 || !in_array($entry, $this->languages)) {
+			array_push($found, $entry);
+		}
+	}
+
+	foreach ($this->languages as $lang) {
+		chdir($lang);
+
+		foreach ($found as $file) {
+			if (!File::exists($file)) {
+				FSEntry::link('../'.$file, $file);
+			}
+		}
+
+		chdir('..');
 	}
 }
 
@@ -173,8 +224,20 @@ if (getcwd() != DOCROOT) {
 	exit(1);
 }
 
-$translate = new Translate();
-$translate->run(DOCROOT, 'language', 'de');
-chdir('cms');
-$translate->run('.', 'cms_language', 'en');
+if (!empty($_SERVER['argv'][1])) {
+	if (Dir::exists($_SERVER['argv'][1])) {
+		$translate = new Translate();
+		chdir($_SERVER['argv'][1]);
 
+		if (Dir::exists('assets') && File::exists('index.html')) {
+			$translate->run([ 'root_dir' => '.', 'suffix_list' => [ 'html' ], 'exclude_dir' => [ 'assets' ] ], 'language', 'de');
+			$translate->link();
+		}
+	}
+}
+else {
+	$translate = new Translate();
+	$translate->run(DOCROOT, 'language', 'de');
+	chdir('cms');
+	$translate->run('.', 'cms_language', 'en');
+}
