@@ -2,15 +2,21 @@
 
 namespace rkphplib\tok;
 
+require_once(__DIR__.'/TPicture.class.php');
 require_once(__DIR__.'/TokPlugin.iface.php');
+require_once(__DIR__.'/THttp.class.php');
 require_once(__DIR__.'/../Database.class.php');
 require_once(__DIR__.'/../Dir.class.php');
 require_once(__DIR__.'/../File.class.php');
+require_once(__DIR__.'/../JSON.class.php');
 require_once(__DIR__.'/../lib/split_str.php');
 
+use \rkphplib\tok\TPicture;
+use \rkphplib\tok\THttp;
 use \rkphplib\Exception;
 use \rkphplib\Database;
 use \rkphplib\FSEntry;
+use \rkphplib\JSON;
 use \rkphplib\File;
 use \rkphplib\Dir;
 
@@ -44,10 +50,66 @@ public function getPlugins($tok) {
   $plugin['upload:init'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY | TokPlugin::REDO;
   $plugin['upload:get'] = 0;
   $plugin['upload:file'] = 0;
-  $plugin['upload:exists'] = 0;
+  $plugin['upload:exists'] = TokPlugin::NO_PARAM |  TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['upload'] = 0;
 
 	return $plugin;
+}
+
+
+/**
+ * Return path to thumbnail of $file.
+ */
+private function getThumbnail($file, $http_path = false) {
+	\rkphplib\lib\log_debug("TUpload.getThumbnail> file=$file http_path=$http_path");
+	$tpic = new TPicture();
+
+	$tpic->tok_picture_init([ 
+		'picture_dir' => $this->conf['save_in'], 
+		'name' => basename($file),
+		'source' => $file,
+		'target' => $this->conf['save_in'].'/tbn/'.basename($file),
+		'resize' => $this->conf['thumbnail'] 
+		]);
+
+	$resize_pic = $tpic->resize();
+	$target = $http_path ? dirname(THttp::httpGet('abs_url')).'/'.$resize_pic : $resize_pic;
+
+	\rkphplib\lib\log_debug("TUpload.getThumbnail> return $target ($resize_pic)");
+	return $target;
+}
+
+
+/**
+ * Return list of existing files. Return format depends on p.mode (e.g. dropzone).
+ * 
+ * @throws
+ * @param hash $p
+ * @return string
+ */
+public function tok_upload_exists($p) {
+	if (empty($p['mode'])) {
+		throw new Exception('missing mode parameter');
+	}
+	else if ($p['mode']	== 'dropzone') {
+		$entries = Dir::entries($this->conf['save_in']);
+		$list = [];
+
+		foreach ($entries as $entry) {
+			$ii = File::imageInfo($entry, false);
+
+			if (!empty($ii['width'])) {
+				$tbn = $this->getThumbnail($entry, true);
+				$info = [ 'name' => basename($entry), 'size' => File::size($entry), 'type' => $ii['mime'], 'tbnUrl' => $tbn ];
+				array_push($list, $info);
+			}
+		}
+
+		return JSON::encode($list);
+	}
+	else {
+		throw new Exception('invalid mode parameter '.$p['mode']);
+	}
 }
 
 
@@ -65,6 +127,7 @@ public function getPlugins($tok) {
  * remove_image: (default = {get:remove_image})
  * replace_image: (default = {get:replace_image})
  * overwrite: yes|no (only if save_as is empty) - default = no (add suffix _nn)
+ * thumbnail= (default = '' = no thumbnail) e.g. 120x120^
  * min_width: nnn 
  * min_height: nnn
  * max_size: nnn 
