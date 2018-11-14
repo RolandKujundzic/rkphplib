@@ -165,7 +165,7 @@ public static function sqlQuery($value, $parameter, $query) {
 		}
   }
 
-  \rkphplib\lib\log_debug("ValueCheck::sqlQuery($value, ...)> parameter=[$parameter] query: $query");
+  // \rkphplib\lib\log_debug("ValueCheck::sqlQuery($value, ...)> parameter=[$parameter] query: $query");
   $dbres = $db->select($query);
   return count($dbres) > 0;
 }

@@ -602,7 +602,7 @@ public function tok_fv_error_message($name, $tpl = '') {
 		$res = $this->tok->replaceTags($tpl, $r);
 	}
 
-	\rkphplib\lib\log_debug("tok_fv_error_message($name, ...)> name=[$name] res=[$res] - error: ".print_r($this->error, true));
+	// \rkphplib\lib\log_debug("tok_fv_error_message($name, ...)> name=[$name] res=[$res] - error: ".print_r($this->error, true));
 	return $res;
 }
 
@@ -703,7 +703,7 @@ private function get2NData($name, $name_def) {
  * @return string
  */
 private function multiCheckbox($name, $p) {
-	\rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> name=$name p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> name=$name p: ".print_r($p, true));
 	$entry = $this->getConf('in.multi_checkbox.entry', true);
   $entries = $this->getConf('in.multi_checkbox', true);
 	$entry_list = '';
@@ -725,7 +725,7 @@ private function multiCheckbox($name, $p) {
 		}
 
 		$html = $this->getInput($input_name, $r);
-		\rkphplib\lib\log_debug("TFormValidator.multiCheckbox> var=$var input_name=$input_name r: ".join('|', $r).": $html");
+		// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox> var=$var input_name=$input_name r: ".join('|', $r).": $html");
 		$entry_list .= $this->tok->replaceTags($entry, [ 'input' => $html, 'label' => $p[$var] ]);
 	}
 
@@ -737,7 +737,7 @@ private function multiCheckbox($name, $p) {
 	$output_in = $this->getConf('output.in.multi', true) ? $this->getConf('output.in.multi', true) : $this->getConf('output.in', true);
   $res = empty($p['output']) ? $output_in : $this->getConf('output.in.'.$p['output']);
   $res = $this->tok->removeTags($this->tok->replaceTags($res, $p));	
-	\rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> res=[$res]");
+	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> res=[$res]");
 	return $res;
 }
 
@@ -894,7 +894,7 @@ protected function parseInName($name, $value, &$p) {
 
 	if (!empty($r['multi'])) {
 		$p = array_merge($p, $r);
-		\rkphplib\lib\log_debug("TFormValidator.parseInName($name, $value, ...)> multi p: ".print_r($p, true));
+		// \rkphplib\lib\log_debug("TFormValidator.parseInName($name, $value, ...)> multi p: ".print_r($p, true));
 		return;
 	}
 
@@ -1109,7 +1109,7 @@ private function getOptions(&$p, $opt_value, $str_options) {
 	$html = '';
 	$empty_label = null;
 
-	\rkphplib\lib\log_debug("TFormValidator.getOptions|enter> opt_value=[$opt_value] str_options=[$str_options] p: ".print_r($p, true)); 
+	// \rkphplib\lib\log_debug("TFormValidator.getOptions|enter> opt_value=[$opt_value] str_options=[$str_options] p: ".print_r($p, true)); 
 
 	if (!empty($p['@_1']) && substr($p['@_1'], 0, 1) == '=') {
 		$empty_label = substr($p['@_1'], 1);

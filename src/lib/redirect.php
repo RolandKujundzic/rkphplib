@@ -16,7 +16,7 @@ use rkphplib\Exception;
  * @param map<string:string> $p (extra parameter, default = [])
  */
 function redirect($url, $p = []) {
-	\rkphplib\lib\log_debug('redirect("'.$url.'", ...): _ld?'.!empty($_REQUEST['_ld']).' p: '.print_r($p, true));
+	// \rkphplib\lib\log_debug('redirect("'.$url.'", ...): _ld?'.!empty($_REQUEST['_ld']).' p: '.print_r($p, true));
 
 	if (preg_match('/^[a-z0-9_\-\/]+$/i', $url)) {
 		// assume {link:}_=$url{:link}
@@ -54,7 +54,7 @@ function redirect($url, $p = []) {
 	}
 
 	// header('P3P: CP="CAO PSA OUR"'); // IE will not accept Frameset SESSIONS without this header 
-	\rkphplib\lib\log_debug('exit redirect: Location '.$url);
+	// \rkphplib\lib\log_debug('exit redirect: Location '.$url);
 	session_write_close(); // avoid redirect delay 
 	header('Location: '.$url);
 	exit();

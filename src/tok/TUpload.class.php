@@ -61,7 +61,7 @@ public function getPlugins($tok) {
  * Return path to thumbnail of $file.
  */
 private function getThumbnail($file, $http_path = false) {
-	\rkphplib\lib\log_debug("TUpload.getThumbnail> file=$file http_path=$http_path");
+	// \rkphplib\lib\log_debug("TUpload.getThumbnail> file=$file http_path=$http_path");
 	$tpic = new TPicture();
 
 	$tpic->tok_picture_init([ 
@@ -75,7 +75,7 @@ private function getThumbnail($file, $http_path = false) {
 	$resize_pic = $tpic->resize();
 	$target = $http_path ? dirname(THttp::httpGet('abs_url')).'/'.$resize_pic : $resize_pic;
 
-	\rkphplib\lib\log_debug("TUpload.getThumbnail> return $target ($resize_pic)");
+	// \rkphplib\lib\log_debug("TUpload.getThumbnail> return $target ($resize_pic)");
 	return $target;
 }
 
@@ -169,7 +169,7 @@ public function tok_upload_init($name, $p) {
 
 	$this->conf = $p;
 
-	\rkphplib\lib\log_debug("TUpload.tok_upload_init($name, ...)> this.conf: ".print_r($this->conf, true));
+	// \rkphplib\lib\log_debug("TUpload.tok_upload_init($name, ...)> this.conf: ".print_r($this->conf, true));
 
 	if (!empty($p['remove_image']) && !empty($p['table_id']) && strpos($p['remove_image'], $name) === 0) {
 		$this->removeImage();
@@ -258,7 +258,7 @@ public function tok_upload_init($name, $p) {
 		$msg = "TUpload.tok_upload_init> Exception: ".$e->getMessage();
 		$trace = $e->getFile()." on line ".$e->getLine()."\n".$e->getTraceAsString();
 		$internal = property_exists($e, 'internal_message') ? "INFO: ".$e->internal_message : '';
-		\rkphplib\lib\log_debug("$msg\n$trace\n$internal");
+		// \rkphplib\lib\log_debug("$msg\n$trace\n$internal");
 	}
 
 	// \rkphplib\lib\log_debug("TUpload.tok_upload_init> return");
