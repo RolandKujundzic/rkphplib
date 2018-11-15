@@ -1104,7 +1104,7 @@ public static function mime($file, $use_only_suffix = false) {
 
 			$suffix2mime = [ 'png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'gif' => 'image/gif', 
 				'tif' => 'image/tiff', 'tiff' => 'image/tiff', 'psd' => 'image/x-photoshop', 'txt' => 'text/plain', 
-				'csv' => 'text/csv', 'xml' => 'application/xml', 'xsd' => 'application/xml' ];
+				'csv' => 'text/csv', 'xml' => 'application/xml', 'xsd' => 'application/xml', 'pdf' => 'application/pdf' ];
 
 			if (isset($suffix2mime[$s])) {
 				$res = $suffix2mime[$s];
@@ -1125,6 +1125,8 @@ public static function mime($file, $use_only_suffix = false) {
  */
 public static function suffix($file, $keep_dot = false) {
 	$res = '';
+
+	$file = basename($file);
 
 	if (($pos = mb_strrpos($file, '.')) !== false) {
 		if ($keep_dot) {
