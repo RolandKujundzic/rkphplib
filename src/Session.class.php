@@ -87,7 +87,7 @@ public function init($conf) {
 		ini_set('session.save_path', $this->conf['save_path']);
 	}
 
-	if (!session_id()) {
+	if (!session_id() && empty($_SERVER['SSH_TTY'])) {
 		session_start();
 		// \rkphplib\lib\log_debug('Session::init> start session');
 	}
