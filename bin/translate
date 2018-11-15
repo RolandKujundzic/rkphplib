@@ -144,6 +144,12 @@ private function log($message) {
 public function run($option, $language_table, $default_language) {
 	$this->setTable($language_table, $default_language);
 
+	foreach ($this->languages as $lang) {
+		if (Dir::exists($lang)) {
+			Dir::remove($lang);
+		}
+	}
+
 	$default = [ 
 		'root_dir' => '.', 
 		'suffix_list' => [ 'inc.html', 'conf', 'js', 'css' ], 
@@ -159,10 +165,6 @@ public function run($option, $language_table, $default_language) {
 	$files = Dir::scanTree($option['root_dir'], $option['suffix_list' ], $option['exclude_dir']);
 
 	foreach ($this->languages as $lang) {
-		if (Dir::exists($lang)) {
-			Dir::remove($lang);
-		}
-
 		$this->t_lang->tok_language_init([ 'use' => $lang, 'default' => $default_language, 'txt' => $default_language, 
 			'table' => $language_table ]);
 
