@@ -306,6 +306,8 @@ public function tok_directory_entries($param, $path) {
  *
  * @tok {directory:create}a/b/c{:directory} = create directory a/b/c in docroot
  * @tok {directory:create:htaccess_protected}test{:directory} = create directory test, create test/.htaccess (no browser access)
+ * @tok {directory:create:htaccess_deny}test{:directory} = same as above
+ * @tok {directory:create:htaccess_no_php}data{:directory} = disable php execution in data/ via .htaccess (php_flag engine off)
  *
  * @throws
  * @param string $param
@@ -315,8 +317,19 @@ public function tok_directory_entries($param, $path) {
 public function tok_directory_create($param, $path) {
 	Dir::create($path, 0, true);
 
-	if ($param == 'htaccess_protected') {
+	if ($param == 'htaccess_protected' || $param == 'htaccess_deny') {
 		File::save($path.'/.htaccess', 'Require all denied');
+	}
+	else if ($param == 'htaccess_no_php') {
+		$no_php = <<<END
+<FilesMatch "(?i)\.(php|php.?|phtml)$">
+Require all denied
+</FilesMatch>
+
+php_flag engine off
+END;
+		
+		File::save($path.'/.htaccess', $no_php);
 	}
 
 	return '';
