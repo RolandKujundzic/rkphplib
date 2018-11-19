@@ -322,11 +322,9 @@ public function tok_directory_create($param, $path) {
 	}
 	else if ($param == 'htaccess_no_php') {
 		$no_php = <<<END
-<FilesMatch "(?i)\.(php|php.?|phtml)$">
+<FilesMatch "(?i).+\.ph(ar|p|tml|p[0-9]+)$">
 Require all denied
 </FilesMatch>
-
-php_flag engine off
 END;
 		
 		File::save($path.'/.htaccess', $no_php);
