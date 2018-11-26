@@ -302,7 +302,8 @@ public function tok_directory_entries($param, $path) {
 
 
 /**
- * Create directory path (recursive).
+ * Create directory path (recursive). Create .htaccess file if param is htaccess_protected|htaccess_deny
+ * or htaccess_no_php.
  *
  * @tok {directory:create}a/b/c{:directory} = create directory a/b/c in docroot
  * @tok {directory:create:htaccess_protected}test{:directory} = create directory test, create test/.htaccess (no browser access)
@@ -310,17 +311,29 @@ public function tok_directory_entries($param, $path) {
  * @tok {directory:create:htaccess_no_php}data{:directory} = disable php execution in data/ via .htaccess (php_flag engine off)
  *
  * @throws
+ * @see self::createDirectory()
  * @param string $param
  * @param string $path
  * @return ''
  */
 public function tok_directory_create($param, $path) {
+	self::createDirectory($path, $param);
+}
+
+
+/**
+ * Create directory path (recursive).
+ *
+ * @param $path string
+ * @param $feature string
+ */
+public static function createDirectory($path, $feature) {
 	Dir::create($path, 0, true);
 
-	if ($param == 'htaccess_protected' || $param == 'htaccess_deny') {
+	if ($feature == 'htaccess_protected' || $feature == 'htaccess_deny') {
 		File::save($path.'/.htaccess', 'Require all denied');
 	}
-	else if ($param == 'htaccess_no_php') {
+	else if ($feature == 'htaccess_no_php') {
 		$no_php = <<<END
 <FilesMatch "(?i).+\.ph(ar|p|tml|p[0-9]+)$">
 Require all denied
@@ -328,6 +341,9 @@ Require all denied
 END;
 		
 		File::save($path.'/.htaccess', $no_php);
+	}
+	else if (!empty($feature)) {
+		throw new Exception('Unkown feature', $feature);
 	}
 
 	return '';
