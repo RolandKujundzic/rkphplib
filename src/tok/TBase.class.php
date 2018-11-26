@@ -360,7 +360,23 @@ public function tok_tpl_set($p, $arg) {
 		}
 	}
 
-	$this->_tpl[$key] = [ 'pnum' => $pnum, 'anum' => $anum, 'tpl' => $arg ];
+	$tag_list = $this->_tok->getTagList($arg, true);
+	$tnum = count($tag_list) - $pnum - $anum;
+	$tags = [];
+
+	foreach ($i = 0; $i < count($tag_list); $i++) {
+		$tag = $tag_list[$i];
+
+		if (!preg_match('/^(arg|param)[1-9][0-9]*$/', $tag)) {
+			array_push($tags, $tag);
+		}
+	}
+
+	if ($tnum != count($tags)) {
+		throw new Exception('Tag detection failed', "tnum=$tnum tags: ".print_r($tag_list, true));
+	}
+
+	$this->_tpl[$key] = [ 'pnum' => $pnum, 'anum' => $anum, 'tnum' => $tnum, 'tags' => $tags, 'tpl' => $arg ];
 }
 
 
@@ -368,12 +384,17 @@ public function tok_tpl_set($p, $arg) {
  * Return filled and parsed template. First parameter is template name, other 
  * parameter are values of tag param1, param2, ...
  *
- * @tok {tpl_set:test}Nur ein Test{:tpl_set} - {tpl:test} = Nur ein Test 
+ * @tok {tpl_set:test}Nur ein Test{:tpl_set}
+ * @tok {tpl:test} = Nur ein Test 
+ *
  * @tok {tpl_set:page:2:2}Page {:=param1}/{:=param2} line {:=arg1} column {:=arg2}{:tpl_set}
  * @tok {tpl:page:3:72}15|#|39{:tpl} = Page 3/72 line 15 column 39
  * 
- * @tok {tpl_set:map}Hello {:=firstname} {:=lastname}{:tpl_set}
+ * @tok {tpl_set:map}Hello {:=firstname} {:=lastname}{:tpl_set} // if arg counter > 0 place args first
  * @tok {tpl:map}firstname=John|#|lastname=Doe{:tpl} = Hello John Doe
+ *
+ * @tok {tpl_set:toc:0:1}Page {:=arg1} ... {:=title}{:tpl_set}
+ * @tok {tpl:toc}1|#|title=Overview{:tpl} = Page 1 ... Overview 
  *
  * @throws
  * @see tok_tpl_set
@@ -405,7 +426,8 @@ public function tok_tpl($p, $arg) {
 			$tpl = str_replace(TAG_PREFIX.'arg'.($i + 1).TAG_SUFFIX, $value, $tpl);
 		}
 	}
-	else {
+
+	if ($tnum > 0) {
 		$tpl = $this->_tok->replaceTags($tpl, \rkphplib\lib\conf2kv($arg));
 	}
 
