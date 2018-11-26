@@ -144,7 +144,8 @@ public function __construct() {
 
 	// PLUGINS with escaped HASH_DELIMITER
 	$d = HASH_DELIMITER;
-	$pl_link = $tok->getPluginTxt([ 'link', '' ], '_='.$tok->getPluginTxt([ 'get', SETTINGS_REQ_DIR ]));
+	$pl_get = $tok->getPluginTxt([ 'get', SETTINGS_REQ_DIR ]);
+	$pl_link = $tok->getPluginTxt([ 'link', '' ], '_='.$pl_get);
 	$pl_if_method = $tok->getPluginTxt([ 'if', '' ], $method.$d.$method.$d.'get');
 	$pl_if_upload = $tok->getPluginTxt([ 'if', '' ], $upload.$d.'enctype="multipart/form-data"');
 	$pl_fv_hidden = $tok->getPluginTxt([ 'fv', 'hidden' ], null);
@@ -223,6 +224,8 @@ public function __construct() {
 			'<button type="submit" class="btn" name="form_action" value="1">'.$label.'</button>'."\n".'</div>'."\n".
 			'<div class="col-md-8">'.$pl_if_label2_btn."\n".$pl_if_yes_fv_check_fadeout."\n</div>\n</div>\n</form>\n</div>\n</div>\n</div>",
 
+		'bootstrap.example'			=> '<span class="example">'.$example.'</span>',
+
 
 		'material.in.input'	   => '<input type="'.$type.'" name="'.$name.'" value="'.$value.
 			'" class="mdl-textfield__input '.$class.'" '.$tags.'>',
@@ -242,6 +245,10 @@ public function __construct() {
 			'id="'.$id.'" name="'.$name.'" value="'.$value.'" class="mdl-checkbox__input mdl-js-ripple-effect '.$class.'" '.$tags.
 			'><span class="mdl-checkbox__label">'.$label.'</span></label>'
 		];
+
+		if (isset($_REQUEST[SETTINGS_REQ_DIR])) {
+			$this->conf['default']['hidden.dir'] = $_REQUEST[SETTINGS_REQ_DIR];
+		}
 }
 
 
@@ -522,7 +529,10 @@ private function setExample($name, $check) {
 		$example = $map[$check];
 	}
 
-	$this->example[$name] = $example;
+	if (empty($this->example[$name])) {
+		// do not overwrite existing example with empty one
+		$this->example[$name] = $example;
+	}
 }
 
 
