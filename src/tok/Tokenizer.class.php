@@ -1179,6 +1179,28 @@ public function removeTags($txt, $replace_with = '') {
 
 
 /**
+ * Return tag list vector.
+ * 
+ * @param string $txt
+ * @param boolean $as_name (default = false)
+ * @return vector
+ */
+public function getTagList($txt, $as_name = false) {
+	$prefix = $this->rx[1].$this->rx[2].'=';
+	$suffix = $this->rx[3];
+  $res = [];
+
+  while (preg_match('/'.preg_quote($prefix).'(.+?)'.preg_quote($suffix).'/', $txt, $match)) {
+		$list_value = $as_name ? $match[1] : $prefix.$match[1].$suffix;
+    array_push($res, $list_value);
+    $txt = preg_replace('/'.preg_quote($prefix).preg_quote($match[1]).preg_quote($suffix).'/', '', $txt);
+  }
+
+  return $res;
+}
+
+
+/**
  * Return {:=$name}. Use $name = 'TAG:PREFIX' for "{:=" and $name = 'TAG:SUFFIX' for "}".
  *
  * @param string $name
