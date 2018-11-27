@@ -342,6 +342,7 @@ public function tok_tpl_set($p, $arg) {
 	$pnum = empty($p[0]) ? 0 : intval($p[0]);
 	$anum = empty($p[1]) ? 0 : intval($p[1]);
 
+print "pnum=[$pnum] anum=[$anum]\n";
 	if ($pnum) {
 		for ($i = 1; $i <= $pnum; $i++) {
 			$tag = TAG_PREFIX.'param'.$i.TAG_SUFFIX;
@@ -364,7 +365,7 @@ public function tok_tpl_set($p, $arg) {
 	$tnum = count($tag_list) - $pnum - $anum;
 	$tags = [];
 
-	foreach ($i = 0; $i < count($tag_list); $i++) {
+	for ($i = 0; $i < count($tag_list); $i++) {
 		$tag = $tag_list[$i];
 
 		if (!preg_match('/^(arg|param)[1-9][0-9]*$/', $tag)) {
@@ -411,6 +412,7 @@ public function tok_tpl($p, $arg) {
 
 	$pnum = $this->_tpl[$key]['pnum'];
 	$anum = $this->_tpl[$key]['anum'];
+	$tnum = $this->_tpl[$key]['tnum'];
 	$tpl = $this->_tpl[$key]['tpl'];
 
 	for ($i = 0; $i < $pnum; $i++) {
@@ -419,10 +421,10 @@ public function tok_tpl($p, $arg) {
 	}
 
 	if ($anum > 0) {
-		$arg = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
+		$list = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
 
 		for ($i = 0; $i < $anum; $i++) {
-			$value = isset($arg[$i]) ? $arg[$i] : '';
+			$value = isset($list[$i]) ? $list[$i] : '';
 			$tpl = str_replace(TAG_PREFIX.'arg'.($i + 1).TAG_SUFFIX, $value, $tpl);
 		}
 	}
