@@ -342,7 +342,6 @@ public function tok_tpl_set($p, $arg) {
 	$pnum = empty($p[0]) ? 0 : intval($p[0]);
 	$anum = empty($p[1]) ? 0 : intval($p[1]);
 
-print "pnum=[$pnum] anum=[$anum]\n";
 	if ($pnum) {
 		for ($i = 1; $i <= $pnum; $i++) {
 			$tag = TAG_PREFIX.'param'.$i.TAG_SUFFIX;
