@@ -9,7 +9,6 @@
 /.buildpath
 /.project
 /.settings
-/example/
 /example/api/.htaccess
 /example/api/routing.php
 /example/upload/data
