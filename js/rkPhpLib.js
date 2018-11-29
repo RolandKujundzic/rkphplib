@@ -89,7 +89,7 @@ this.fselectList = debounce(function (inbox) {
 /**
  * Execute ajax call. Options:
  *
- * - method: GET (=default, or POST)
+ * - method: GET (=default, or POST - autodetect)
  * - url: required (with urlencoded data)
  * - no_html: true (error is responseText has "<html ")
  * - json: true|false (JSON.parse result, default = false)
@@ -107,13 +107,17 @@ this.fselectList = debounce(function (inbox) {
 this.ajax = function(options) {
 	var xhr = new XMLHttpRequest();
 
+	if (!options.method && (options.form || options.data)) {
+		options.method = 'POST';
+	}
+
 	// options.json|form_urlencoded|form_json
 	options.no_html = (typeof options.no_html === undefined) ? true : options.no_html;
 	options.method = options.method ? options.method.toUpperCase() : 'GET';
 
 	if (!options.error) {
 		options.error = function(code, data) {
-			console.log('ajax query failed', data);
+			console.error('ajax query failed', data);
 			throw 'ajax query failed with code ' + code;
 		};
 	}
@@ -169,7 +173,7 @@ this.ajax = function(options) {
 			}
 
 			xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-			data = kv_urlencoded.join('&').replace(/%20/g, '+');
+			data = kv_urlencoded.join('&'); //.replace(/%20/g, '+');
 		}
 		else if (options.form_json) {
 			let hash = {};

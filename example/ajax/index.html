@@ -11,14 +11,14 @@
 
 <pre id="ajax_result" style="border:1px solid #333;background-color:#ccc;padding:2ch"></pre>
 
-<form method="get" action="javascript:doAjax()">
+<form method="post" action="javascript:doAjax()">
 <input type="text" name="txt" value="">
 <input type="submit">
 </form>
 
 <script>
 function doAjax() {
-	rkphplib.ajax({ url: 'ajax.php?do=header_request', method: 'post', form: 'form', form_urlencoded: true });
+	rkphplib.ajax({ url: 'ajax.php?do=header_request', form: 'form', form_urlencoded: true });
 }
 
 function showAjaxResult(data) {
@@ -27,7 +27,7 @@ function showAjaxResult(data) {
 
 rkphplib.ajax({ url: 'ajax.php?do=request', success: showAjaxResult });
 
-rkphplib.ajax({ url: 'ajax.php?do=header_json', method: 'POST', data: { id: 7, name: 'Joe Smith' }, success: showAjaxResult });
+rkphplib.ajax({ url: 'ajax.php?do=header_json', data: { id: 7, name: 'Joe Smith' }, success: showAjaxResult });
 </script>
 
 </body>
