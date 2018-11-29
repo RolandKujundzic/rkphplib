@@ -89,36 +89,49 @@ this.fselectList = debounce(function (inbox) {
 /**
  * Execute ajax call. Options:
  *
- * - method: GET (=default)
- * - url: required
+ * - method: GET (=default, or POST)
+ * - url: required (with urlencoded data)
+ * - no_html: true (error is responseText has "<html ")
  * - json: true|false (JSON.parse result, default = false)
- * - success: callback success(data) if sucess
+ * - success: callback success(data) if sucess (default = console.log)
  * - error: callback error(status, data) if server error or error(0, '') if connection error - if not set throw exception
- *
+ * - form: selector e.g. form or #form_id (method = post)
+ * - form_urlencoded: unset (default is multipart/form-data for form)
+ * - form_json: convert form data into json
+ * - data: json encoded data (method = post)
+ * - header: e.g. [ [ 'Content-Type', 'application/x-www-form-urlencoded|json|xml' ], [ 'Content-Length', '512' ] ]
+ * 
  * @param map options
+ * @param map data
  */
 this.ajax = function(options) {
-	var request = new XMLHttpRequest();
+	var xhr = new XMLHttpRequest();
 
-	if (!options.method) {
-		options.method = 'GET';
-	}
+	// options.json|form_urlencoded|form_json
+	options.no_html = (typeof options.no_html === undefined) ? true : options.no_html;
+	options.method = options.method ? options.method.toUpperCase() : 'GET';
 
 	if (!options.error) {
 		options.error = function(code, data) {
-			console.log('ajax query result: ', data);
+			console.log('ajax query failed', data);
 			throw 'ajax query failed with code ' + code;
 		};
 	}
 
-	request.open(options.method, options.url, true);
+	if (!options.success) {
+		options.success = function(data) {
+			console.log('ajax query succeeded', data);
+		};
+	}
 
-	request.onload = function() {
-		if (request.status >= 200 && request.status < 400) {
-			var data = request.responseText;
+	xhr.open(options.method, options.url, true);
 
-			if (data.indexOf('<html') > -1) {
-    		options.error(request.status, request.responseText);
+	xhr.onload = function() {
+		if (xhr.status >= 200 && xhr.status < 300) {
+			var data = xhr.responseText;
+
+			if (options.no_html && data.indexOf('<html') > -1) {
+    		options.error(xhr.status, xhr.responseText);
 			}
 			else {
 				if (options.json) {
@@ -129,15 +142,56 @@ this.ajax = function(options) {
 			}
 		}
 		else {
-    	options.error(request.status, request.responseText);
+    	options.error(xhr.status, xhr.responseText);
 		}
 	};
 
-	request.onerror = function() {
+	xhr.onerror = function() {
   	options.error(0, '');
 	};
 
-	request.send();
+	if (options.header) {
+		for (let name in options.header) {
+			xhr.setRequestHeader(name, options.header[name]);
+		}
+	}
+
+	let data = null;
+
+	if (options.form) {
+		data = new FormData(document.querySelector(options.form));
+
+		if (options.form_urlencoded) {
+			let kv_urlencoded = [];
+
+			for (let pair of data.entries()) {
+				kv_urlencoded.push(encodeURIComponent(pair[0]) + '=' + encodeURIComponent(pair[1]));
+			}
+
+			xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+			data = kv_urlencoded.join('&').replace(/%20/g, '+');
+		}
+		else if (options.form_json) {
+			let hash = {};
+
+			for (let pair of data.entries()) {
+				hash[pair[0]] = hash[pair[1]];
+			}
+
+			xhr.setRequestHeader('Content-Type', 'application/json');
+			data = JSON.stringify(hash);
+		}
+	}
+	else if (options.data) {
+		xhr.setRequestHeader('Content-Type', 'application/json');
+		data = JSON.stringify(options.data);
+	}
+
+	if (data && options.method == 'GET') {
+		throw 'use method=POST for data submission';
+	}
+
+	xhr.send(data);
 };
 
 
@@ -974,7 +1028,7 @@ function debounce(func, wait, immediate) {
 			func.apply(context, args);
 		}
 	};
-};
+}
 
 
 
