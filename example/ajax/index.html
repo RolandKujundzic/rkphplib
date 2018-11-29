@@ -25,9 +25,10 @@ function showAjaxResult(data) {
 	document.getElementById('ajax_result').innerText += "\n---\n" + data;
 }
 
-rkphplib.ajax({ url: 'ajax.php?do=request', success: showAjaxResult });
-
-rkphplib.ajax({ url: 'ajax.php?do=header_json', data: { id: 7, name: 'Joe Smith' }, success: showAjaxResult });
+document.addEventListener("DOMContentLoaded", function() {
+	rkphplib.ajax({ url: 'ajax.php?do=request', success: showAjaxResult });
+	rkphplib.ajax({ url: 'ajax.php?do=header_json', data: { id: 7, name: 'Joe Smith' }, success: showAjaxResult });
+});
 </script>
 
 </body>
