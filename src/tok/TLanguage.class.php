@@ -292,6 +292,10 @@ public function tok_txt($param, $txt) {
 		$txt = '';
 	}
 
+	if (is_null($this->db)) {
+		return $txt;
+	}
+
 	if (empty($param) && empty($txt)) {
 		return $txt;
 	}
