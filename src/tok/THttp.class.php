@@ -134,6 +134,9 @@ public static function httpGet($name) {
 		}
 		else if ($name == 'url' || $name == 'abs_url') {
 			$res = ($name == 'abs_url') ? $port_host.getenv('REQUEST_URI') : getenv('HTTP_HOST').getenv('REQUEST_URI');
+			if (substr($res, -1) == '/') {
+				$res .= basename($_SERVER['SCRIPT_FILENAME']);
+			}
 		}
 		else if ($name == 'http_url') {
 			$res = 'http://'.getenv('HTTP_HOST');
