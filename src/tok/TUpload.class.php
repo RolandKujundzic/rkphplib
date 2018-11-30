@@ -93,16 +93,18 @@ public function tok_upload_exists($p) {
 	}
 	else if ($p['mode']	== 'dropzone') {
 		$entries = Dir::entries($this->conf['save_in']);
+		$url_prefix = dirname(THttp::httpGet('abs_url'));
 		$list = [];
 
 		foreach ($entries as $entry) {
 			$ii = File::imageInfo($entry, false);
 
 			if (!empty($ii['width'])) {
-				$tbn = $this->getThumbnail($entry, true);
-				$url = dirname(THttp::httpGet('abs_url')).'/'.$entry;
+				$tbn_url = $this->getThumbnail($entry, true);
+				$url = $url_prefix.'/'.$entry;
+				\rkphplib\lib\log_debug("entry=$entry tbn=$tbn_url");
 				$info = [ 'name' => basename($entry), 'size' => File::size($entry), 'mime' => $ii['mime'], 
-					'path' => $entry, 'url' => $url, 'tbnUrl' => $tbn ];
+					'path' => $entry, 'url' => $url, 'tbnUrl' => $tbn_url ];
 				array_push($list, $info);
 			}
 		}
