@@ -172,11 +172,17 @@ public function tok_upload_init($name, $p) {
 	}
 
 	$this->conf = $p;
+	$this->conf['@plugin_action'] = 0;
 
-	// \rkphplib\lib\log_debug("TUpload.tok_upload_init($name, ...)> this.conf: ".print_r($this->conf, true));
+	\rkphplib\lib\log_debug("TUpload.tok_upload_init($name, ...)> this.conf: ".print_r($this->conf, true));
 
-	if (!empty($p['remove_image']) && !empty($p['table_id']) && strpos($p['remove_image'], $name) === 0) {
-		$this->removeImage();
+	if (!empty($p['remove_image'])) { 
+		if (defined('SETTINGS_DSN') && !empty($p['table_id']) && strpos($p['remove_image'], $name) === 0) {
+			$this->removeImage();
+		}
+		else {
+			$this->removeFSImages();
+		}
 	}
 	else if (!empty($p['replace_image']) && !empty($p['table_id']) && strpos($p['replace_image'], $name) === 0) {
 		$this->replaceImage();
@@ -251,7 +257,7 @@ public function tok_upload_init($name, $p) {
 	}
 */
 
-	if (!empty($p['ajax_output'])) {
+	if (!empty($p['ajax_output']) && !empty($this->conf['@plugin_action'])) {
 		print $this->tok->callPlugin('tpl', $p['ajax_output']);
 		exit(0);
 	}
@@ -262,7 +268,14 @@ public function tok_upload_init($name, $p) {
 		$msg = "TUpload.tok_upload_init> Exception: ".$e->getMessage();
 		$trace = $e->getFile()." on line ".$e->getLine()."\n".$e->getTraceAsString();
 		$internal = property_exists($e, 'internal_message') ? "INFO: ".$e->internal_message : '';
-		// \rkphplib\lib\log_debug("$msg\n$trace\n$internal");
+
+		\rkphplib\lib\log_debug("ERROR: $msg\n$trace\n$internal");
+
+		if (!empty($p['ajax_output'])) {
+			http_response_code(400);
+			print "ERROR: $msg";
+			exit(0);
+		}
 	}
 
 	// \rkphplib\lib\log_debug("TUpload.tok_upload_init> return");
@@ -286,7 +299,7 @@ private function removeImage() {
 	$r = [ 'name' => $name, 'table' => $table, 'id_col' => $id_col, 'id_val' => $id_val, 'images' => '' ];
 
 	$query = $db->getQuery('select_images', $r);
-	// \rkphplib\lib\log_debug("TUpload.removeImage> name=$name num=$num table=$table $id_col=$id_val - query: $query");
+	\rkphplib\lib\log_debug("TUpload.removeImage> name=$name num=$num table=$table $id_col=$id_val - query: $query");
 	$dbres = $db->selectOne($query);
 	$images = \rkphplib\lib\split_str(',', $dbres[$name]);
 	$remove_img = array_splice($images, $num - 1, 1);
@@ -298,6 +311,45 @@ private function removeImage() {
 	// \rkphplib\lib\log_debug("TUpload.removeImage> update_query (remove: ".$path_prefix.$remove_img[0]."): $update_query");
 	$db->execute($update_query);
 	File::remove($path_prefix.$remove_img[0]);
+	$this->conf['@plugin_action'] = 1;
+}
+
+
+/**
+ * Remove images from filesystem. Use conf.save_in|save_as|remove_image.
+ * Export _REQUEST[removed_files|removed_filenum].
+ */
+private function removeFSImages() {
+	$remove = [];
+
+	$rm_file = basename($this->conf['remove_image']);
+
+	if (!empty($this->conf['save_in']) && !empty($this->conf['save_as']) && $this->conf['save_as'] == '@name') {
+		array_push($remove, $this->conf['save_in'].'/'.$rm_file);
+
+		if (!empty($this->conf['thumbnail'])) {
+			$resize_dir = str_replace([ '>', '<', '!', '^' ], [ 'g', 'l', 'x', '' ], $this->conf['thumbnail']);
+			array_push($remove, $this->conf['save_in']."/tbn/$resize_dir/$rm_file");
+		}
+	}
+	else {
+		throw new Exception('ToDo - removeFSImages');
+	}
+
+	$removed = [];
+
+	for ($i = 0; $i < count($remove); $i++) {
+		$file = $remove[$i];
+		if (File::exists($file)) {
+			\rkphplib\lib\log_debug("TUpload.removeFSImages> remove $file");
+			$this->conf['@plugin_action'] = 1;
+			array_push($removed, $file);
+			File::remove($file);
+		}
+	}
+
+	$_REQUEST['removed_filenum'] = count($removed);
+	$_REQUEST['removed_files'] = join("\n", $removed);
 }
 
 
@@ -408,6 +460,7 @@ private function saveMultipleFileUpload($fup, $max) {
 		array_push($file_list, $fname);
 	}
 
+	$this->conf['@plugin_action'] = 1;
 	$_REQUEST['upload_'.$name.'_file'] = join(',', $save_list);
 	$_REQUEST['upload_'.$name] = join(',', $file_list);
 
@@ -445,6 +498,7 @@ private function saveFileUpload($fup) {
 	}
 
 	$name = $this->conf['upload'];
+	$this->conf['@plugin_action'] = 1;
 	$_REQUEST['upload_'.$name.'_saved'] = 'yes';
 	$_REQUEST['upload_'.$name.'_file'] = $target;
 	$_REQUEST['upload_'.$name.'_error'] = '';
