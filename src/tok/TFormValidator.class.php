@@ -100,6 +100,7 @@ public function getPlugins($tok) {
 	$plugin['fv:hidden'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 	$plugin['fv:preset'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['fv:error'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['fv:appendjs'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['fv:error_message'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:set_error_message'] = TokPlugin::REQUIRE_PARAM;
 
@@ -249,6 +250,48 @@ public function __construct() {
 		if (isset($_REQUEST[SETTINGS_REQ_DIR])) {
 			$this->conf['default']['hidden.dir'] = $_REQUEST[SETTINGS_REQ_DIR];
 		}
+}
+
+
+/**
+ * Return FormData append list.
+ *
+ * @tok {fv:appendjs:formData} = formData.append("firstname", document.getElementById("fvin_firstname").value); ...
+ * 
+ * @param string $name
+ */
+public function tok_fv_appendjs($name) {
+	$conf = $this->conf['current'];
+	$list = [];
+
+	\rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs> conf: ".print_r($conf, true));
+
+	foreach ($conf as $key => $ignore) {
+		$param = '';
+
+		\rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs> $name: $key");
+		if (substr($key, 0, 3) == 'in.') {
+			$param = substr($key, 3);
+		}
+		else if (substr($key, 0, 7) == 'hidden.') {
+			$param = substr($key, 7);
+		}
+
+		if ($param) {
+			array_push($list, $name.'.append("'.$param.'", document.getElementById("fvin_'.$param.'").value);');
+		}
+	}
+
+	if (!empty($conf['hidden_keep'])) {
+		$hidden_keys = \rkphplib\lib\split_str(',', $conf['hidden_keep']);
+		foreach ($hidden_keys as $key) {
+			array_push($list, $name.'.append("'.$key.'", document.getElementById("fvin_'.$key.'").value);');
+		}
+	}
+
+	$res = join("\n", $list);
+	\rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs> ".$res);
+	return $res;
 }
 
 
