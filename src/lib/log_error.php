@@ -42,31 +42,45 @@ function log_error($msg) {
 		$log .= $_SERVER['REMOTE_ADDR'];
 	}
 
+	$e = null;
+
+	if (method_exists($msg, 'getMessage')) {
+		$e = $msg;
+		$msg = "\n\nABORT: ".$e->getMessage();
+		$trace = $e->getFile()." on line ".$e->getLine()."\n".$e->getTraceAsString();
+		$internal = property_exists($e, 'internal_message') ? "INFO: ".$e->internal_message : '';
+	}
+
 	if (isset($_SERVER['SCRIPT_FILENAME']) && isset($_SERVER['QUERY_STRING'])) {
-	  $log .= '] '.$_SERVER['SCRIPT_FILENAME'].$_SERVER['QUERY_STRING']."\n$msg";
+		$log .= '] '.$_SERVER['SCRIPT_FILENAME'].$_SERVER['QUERY_STRING']."\n$msg";
 	}
 	else {
 		$log .= "] $msg";
 	}
 
-	$trace = debug_backtrace();
-	unset($trace[0]); // Remove call to this function from stack trace
-	$i = 1;
+	if (is_null($e)) {
+		$trace = debug_backtrace();
+		unset($trace[0]); // Remove call to this function from stack trace
+		$i = 1;
 
-	foreach($trace as $t) {
-		if (!empty($t['file'])) {
-			$log .= "\n#$i ".$t['file'] ."(" .$t['line']."): "; 
-		}
-		else {
-			$log .= '???'.print_r($t, true).'???';
-		}
+		foreach($trace as $t) {
+			if (!empty($t['file'])) {
+				$log .= "\n#$i ".$t['file'] ."(" .$t['line']."): "; 
+			}
+			else {
+				$log .= '???'.print_r($t, true).'???';
+			}
 	
-		if (!empty($t['class'])) {
-			$log .= $t['class'] . "->"; 
-		}
+			if (!empty($t['class'])) {
+				$log .= $t['class'] . "->"; 
+			}
 
-		$log .= $t['function']."()";
-		$i++;
+			$log .= $t['function']."()";
+			$i++;
+		}
+	}
+	else {
+		$log .= "\n$internal\n$trace";
 	}
 
 	if (mb_strlen(SETTINGS_LOG_ERROR) > 1) {
