@@ -174,6 +174,10 @@ public function tok_upload_init($name, $p) {
 	$this->conf = $p;
 	$this->conf['@plugin_action'] = 0;
 
+	if (!empty($this->conf['save_in']) && !Dir::exists($this->conf['save_in'])) {
+		Dir::create($this->conf['save_in'], 0, true);
+	}
+
 	\rkphplib\lib\log_debug("TUpload.tok_upload_init($name, ...)> this.conf: ".print_r($this->conf, true));
 
 	if (!empty($p['remove_image'])) { 
