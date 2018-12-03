@@ -102,7 +102,7 @@ public function tok_upload_exists($p) {
 			if (!empty($ii['width'])) {
 				$tbn_url = $this->getThumbnail($entry, true);
 				$url = $url_prefix.'/'.$entry;
-				\rkphplib\lib\log_debug("entry=$entry tbn=$tbn_url");
+				// \rkphplib\lib\log_debug("entry=$entry tbn=$tbn_url");
 				$info = [ 'name' => basename($entry), 'size' => File::size($entry), 'mime' => $ii['mime'], 
 					'path' => $entry, 'url' => $url, 'tbnUrl' => $tbn_url ];
 				array_push($list, $info);
@@ -178,7 +178,7 @@ public function tok_upload_init($name, $p) {
 		Dir::create($this->conf['save_in'], 0, true);
 	}
 
-	\rkphplib\lib\log_debug("TUpload.tok_upload_init($name, ...)> this.conf: ".print_r($this->conf, true));
+	// \rkphplib\lib\log_debug("TUpload.tok_upload_init($name, ...)> this.conf: ".print_r($this->conf, true));
 
 	if (!empty($p['remove_image'])) { 
 		if (defined('SETTINGS_DSN') && !empty($p['table_id']) && strpos($p['remove_image'], $name) === 0) {
@@ -273,7 +273,7 @@ public function tok_upload_init($name, $p) {
 		$trace = $e->getFile()." on line ".$e->getLine()."\n".$e->getTraceAsString();
 		$internal = property_exists($e, 'internal_message') ? "INFO: ".$e->internal_message : '';
 
-		\rkphplib\lib\log_debug("ERROR: $msg\n$trace\n$internal");
+		// \rkphplib\lib\log_debug("ERROR: $msg\n$trace\n$internal");
 
 		if (!empty($p['ajax_output'])) {
 			http_response_code(400);
@@ -303,7 +303,7 @@ private function removeImage() {
 	$r = [ 'name' => $name, 'table' => $table, 'id_col' => $id_col, 'id_val' => $id_val, 'images' => '' ];
 
 	$query = $db->getQuery('select_images', $r);
-	\rkphplib\lib\log_debug("TUpload.removeImage> name=$name num=$num table=$table $id_col=$id_val - query: $query");
+	// \rkphplib\lib\log_debug("TUpload.removeImage> name=$name num=$num table=$table $id_col=$id_val - query: $query");
 	$dbres = $db->selectOne($query);
 	$images = \rkphplib\lib\split_str(',', $dbres[$name]);
 	$remove_img = array_splice($images, $num - 1, 1);
@@ -345,7 +345,7 @@ private function removeFSImages() {
 	for ($i = 0; $i < count($remove); $i++) {
 		$file = $remove[$i];
 		if (File::exists($file)) {
-			\rkphplib\lib\log_debug("TUpload.removeFSImages> remove $file");
+			// \rkphplib\lib\log_debug("TUpload.removeFSImages> remove $file");
 			$this->conf['@plugin_action'] = 1;
 			array_push($removed, $file);
 			File::remove($file);

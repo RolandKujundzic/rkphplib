@@ -1092,7 +1092,7 @@ protected function getSearch() {
 		list ($where, $and) = $this->getSqlSearch($options);
 	}
 
-	\rkphplib\lib\log_debug("getSearch> where=[$where]\nand=[$and]");
+	// \rkphplib\lib\log_debug("getSearch> where=[$where]\nand=[$and]");
 	return [ $where, $and ];
 }
 
@@ -1169,7 +1169,7 @@ protected function getSqlSearch($options = []) {
 			}
 		}
 
-		\rkphplib\lib\log_debug("getSqlSearch> col=$col method=$method value=$value expr: ".print_r($expr, true));
+		// \rkphplib\lib\log_debug("getSqlSearch> col=$col method=$method value=$value expr: ".print_r($expr, true));
 		if ($found) {
 			// do nothing ...
 		}
@@ -1345,11 +1345,11 @@ protected function selectData() {
 
 	$this->conf['query'] = $query;
 	$db = Database::getInstance($this->conf['query.dsn'], [ 'output' => $this->conf['query'] ]);
-	\rkphplib\lib\log_debug("TOutput::selectData> ".$db->getQuery('output', $_REQUEST));
+	// \rkphplib\lib\log_debug("TOutput::selectData> ".$db->getQuery('output', $_REQUEST));
 	$db->execute($db->getQuery('output', $_REQUEST), true);
 
 	$this->env['total'] = $db->getRowNumber();
-	\rkphplib\lib\log_debug("TOutput::selectData> found ".$this->env['total'].' entries');
+	// \rkphplib\lib\log_debug("TOutput::selectData> found ".$this->env['total'].' entries');
 	$this->table = [];
 
 	if ($this->env['start'] >= $this->env['total']) {
