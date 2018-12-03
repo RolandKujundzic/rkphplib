@@ -687,6 +687,7 @@ public function tok_output_conf($p) {
       'sort.asc' => '<a href="$link"><img src="img/sort/asc.gif" border="0" alt=""></a>',
       'sort.no' => '<a href="$link"><img src="img/sort/no.gif" border="0" alt=""></a>',
 			'reset' => 1,
+			'req.search' => '',
 			'req.last' => 'last',
 			'req.sort' => 'sort',
 			'keep' => SETTINGS_REQ_DIR.',sort,last',
@@ -726,6 +727,8 @@ public function tok_output_conf($p) {
 	foreach ($p as $key => $value) {
 		$this->conf[$key] = $value;
 	}
+
+	// \rkphplib\lib\log_debug("TOutput::tok_output_conf> this.conf: ".print_r($this->conf, true));
 }
 
 
@@ -1089,6 +1092,7 @@ protected function getSearch() {
 		list ($where, $and) = $this->getSqlSearch($options);
 	}
 
+	\rkphplib\lib\log_debug("getSearch> where=[$where]\nand=[$and]");
 	return [ $where, $and ];
 }
 
@@ -1137,7 +1141,14 @@ protected function getSqlSearch($options = []) {
 		foreach ($compare as $cx => $op) {
 			if ($cx == $method || $op == $method) {
 				if ($value) {
-					array_push($expr, $col.' '.$op." '".preg_replace('/[^0-9\-\+\.]/', '', $value)."'");
+					$num_val = preg_replace('/[^0-9\-\+\.]/', '', $value);
+
+					if ($op != '=' || $num_val == $value) {
+						array_push($expr, $col.' '.$op." '".$num_val."'");
+					}
+					else {
+						array_push($expr, $col.' '.$op." '".ADatabase::escape($value)."'");
+					}
 				}
 
 				$found = true;
@@ -1158,6 +1169,7 @@ protected function getSqlSearch($options = []) {
 			}
 		}
 
+		\rkphplib\lib\log_debug("getSqlSearch> col=$col method=$method value=$value expr: ".print_r($expr, true));
 		if ($found) {
 			// do nothing ...
 		}
@@ -1333,11 +1345,11 @@ protected function selectData() {
 
 	$this->conf['query'] = $query;
 	$db = Database::getInstance($this->conf['query.dsn'], [ 'output' => $this->conf['query'] ]);
-	// \rkphplib\lib\log_debug("TOutput::selectData> ".$db->getQuery('output', $_REQUEST));
+	\rkphplib\lib\log_debug("TOutput::selectData> ".$db->getQuery('output', $_REQUEST));
 	$db->execute($db->getQuery('output', $_REQUEST), true);
 
 	$this->env['total'] = $db->getRowNumber();
-	// \rkphplib\lib\log_debug("TOutput::selectData> found ".$this->env['total'].' entries');
+	\rkphplib\lib\log_debug("TOutput::selectData> found ".$this->env['total'].' entries');
 	$this->table = [];
 
 	if ($this->env['start'] >= $this->env['total']) {
