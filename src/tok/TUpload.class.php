@@ -10,6 +10,7 @@ require_once(__DIR__.'/../Dir.class.php');
 require_once(__DIR__.'/../File.class.php');
 require_once(__DIR__.'/../JSON.class.php');
 require_once(__DIR__.'/../lib/split_str.php');
+require_once(__DIR__.'/../lib/log_error.php');
 
 use \rkphplib\tok\TPicture;
 use \rkphplib\tok\THttp;
@@ -86,8 +87,15 @@ private function getThumbnail($file, $http_path = false) {
  * @throws
  * @param hash $p
  * @return string
+ * @return json
  */
 public function tok_upload_exists($p) {
+
+	if (empty($this->conf['save_in'])) {
+		// no pictures yet
+		return '[]';
+	}
+
 	if (empty($p['mode'])) {
 		throw new Exception('missing mode parameter');
 	}
@@ -268,16 +276,11 @@ public function tok_upload_init($name, $p) {
 
 	}
 	catch (\Exception $e) {
-		// do nothing ... 
-		$msg = "TUpload.tok_upload_init> Exception: ".$e->getMessage();
-		$trace = $e->getFile()." on line ".$e->getLine()."\n".$e->getTraceAsString();
-		$internal = property_exists($e, 'internal_message') ? "INFO: ".$e->internal_message : '';
-
-		// \rkphplib\lib\log_debug("ERROR: $msg\n$trace\n$internal");
+		\rkphplib\lib\log_error($e);
 
 		if (!empty($p['ajax_output'])) {
 			http_response_code(400);
-			print "ERROR: $msg";
+			print "ERROR: catch Exception in TUpload.tok_upload_init(): ".$e->getMessage();
 			exit(0);
 		}
 	}
