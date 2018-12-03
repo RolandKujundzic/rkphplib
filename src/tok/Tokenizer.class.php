@@ -1233,7 +1233,7 @@ private function tryPluginMap($name) {
 		'THtml' => [ 'html:inner', 'html:append', 'html:meta', 'html:tidy', 'html:xml', 'html:uglify', 'html' ],
 		'THttp' => [ 'http:get', 'http' ],
 		'TJob' => [ 'job' ],
-		'TLanguage' => [ 'language:init', 'language:get', 'language', 'txt:js', 'txt', 'ptxt' ],
+		'TLanguage' => [ 'language:init', 'language:get', 'language', 'txt:js', 'txt', 't', 'ptxt' ],
 		'TLogin' => [ 'login', 'login_account', 'login_check', 'login_auth', 'login_access', 'login_update', 'login_clear' ],
 		'TLoop' => [ 'loop:var', 'loop:list', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
 		'TMailer' => [ 'mail:init', 'mail:html', 'mail:txt', 'mail:send', 'mail:attach', 'mail' ],
