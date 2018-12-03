@@ -132,13 +132,13 @@ this.ajax = function(options) {
 
 	xhr.onload = function() {
 		if (xhr.status >= 200 && xhr.status < 300) {
-			var data = xhr.responseText;
+			var data = xhr.responseText.trim();
 
 			if (options.no_html && data.indexOf('<html') > -1) {
     		options.error(xhr.status, xhr.responseText);
 			}
 			else {
-				if (options.json) {
+				if (options.json && data) {
 					data = JSON.parse(data);
 				}
 
@@ -284,7 +284,7 @@ this.updateSearchList = function(el) {
 
 		me.ajax({ url: list_url + encodeURI(curr_search), json: true, success: function (list) {
 			var key, options = '', search_list = document.getElementById(el.getAttribute('list'));
-
+			
 			if (navigator.userAgent.indexOf("Safari") > -1) {
 				// Safari has no datalist support
 				search_list.innerHTML = '<select onChange="rkphplib.search(this)"></select>';
