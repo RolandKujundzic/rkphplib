@@ -477,6 +477,7 @@ public function tok_output_json() {
 
 	$res = JSON::encode(array_slice($this->table, $start, $end - $start + 1));
 
+	// \rkphplib\lib\log_debug("TOutput.tok_output_json> $res");
 	return $res;
 }
 
