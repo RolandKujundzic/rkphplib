@@ -1,0 +1,100 @@
+{html:meta:keywords}multiple, file, upload{:html}
+{html:meta:description}Upload based on Dropzone.js{:html}
+{html:inner:title}thumbnail, previews, retina enabled, multiple files, synchronous uploads, browser image resizing,
+  progress update, support for large files, complete theming{:html}
+
+{html:append:head}
+<script src="../../js/rkPhpLib.js"></script>
+<script src="../../js/dropzone.js"></script>
+<link rel="stylesheet" href="../../css/dropzone.css" />
+{:html}
+
+{tpl_set:ajax_output_upload}
+{get:*}
+{:tpl_set}
+
+{upload:init:file}
+save_in= data/upload|#|
+thumbnail= 120x120^|#|
+ajax_output= ajax_output_upload|#|
+{:upload}
+
+<form action="index.php" method="post" class="dropzone" id="rkDropzone" enctype="multipart/form-data">
+	<input type="hidden" name="method" value="dropzone">
+	<div class="fallback">
+		<input type="file" name="image" multiple />
+	</div>
+
+<!--
+	<div class="dz-message">
+		<h3>Olo</h3>
+		<i class="fa fa-picture-o fa-5x" aria-hidden="true"></i>
+	</div>
+-->
+</form>
+
+<script>
+Dropzone.options.rkDropzone = {
+	url: 'index.php?dir={get:dir}',
+	autoProcessQueue: true,
+	uploadMultiple: true,
+	parallelUploads: 5,
+	maxFiles: 7,
+	maxFilesize: 20, // mb
+	acceptedFiles: 'image/*',
+	addRemoveLinks: true,
+	dictMaxFilesExceeded: "{ptxt:}Sie können nicht mehr als $p1x Dateien hochladen.|#|{{maxFiles}}{:ptxt}",
+	dictRemoveFileConfirmation: "{txt:}Möchsten Sie diese Datei entfernen?{:txt}",
+	dictMaxFilesExceeded: "{txt:}Sie können keine weiteren Dateien hochladen.{:txt}",
+	dictRemoveFile: "{txt:}Löschen{:txt}",
+	dictCancelUploadConfirmation: "{txt:}Möchten Sie diesen Upload wirklich abbrechen?{:txt}",
+	dictUploadCanceled: "{txt:}Upload wurde abgebrochen.{:txt}",
+	dictCancelUpload: "{txt:}Upload abbrechen{:txt}",
+	dictResponseError: "{ptxt:}Server meldet Fehler $p1x|#|{{statusCode}}{:ptxt}",
+	dictInvalidFileType: "{txt:}Dieser Dateityp ist nicht zulässig.{:txt}",
+	dictFileTooBig: "{txt:}Datei ist zu gross ($p1x MiB). Maximale Dateigröße: $p2x MiB.|#|{{filesize}}|#|{{maxFilesize}}{:ptxt}",
+	dictFallbackText: "{txt:}Bitte benutzen Sie den Upload Button.{:txt}",
+	dictFallbackMessage: "{txt:}Ihr Browser unterstützt das Hochladen per Drag &amp; Drop nicht.{:txt}",
+	dictDefaultMessage: "{txt:}Hier klicken oder Dateien hereinziehen, um hochzuladen{:txt}",
+
+	rk: { currFiles: 0, newFiles: 0 },
+
+	init: function() {
+		dzClosure = this; // Makes sure that 'this' is understood inside the functions below.
+
+		// send all the form data along with the files:
+		this.on("sendingmultiple", function(data, xhr, formData) {
+			formData.append("method", document.getElementById('method').value);
+			// ToDo: append your stuff
+		});
+
+		this.on("removedfile", function(file) {
+			if (file.path) {
+				rkphplib.ajax({ url: this.options.url + '&remove_image=' + encodeURIComponent(file.name) });
+			}
+		});
+
+		this.on("addedfile", function(file) {
+			if (file.url) {
+				this.options.rk.currFiles++;
+			}
+			else {
+				this.options.rk.newFiles++;
+			}
+
+			if (this.options.maxFiles < this.options.rk.currFiles + this.options.rk.newFiles) {
+				this.removeFile(file);
+			}
+		});
+
+		// add existing files
+		var existingFiles = {upload:exists}mode=dropzone{:upload};
+
+		for (var i = 0; i < existingFiles.length; i++) {
+			this.emit("addedfile", existingFiles[i]);
+			this.emit("thumbnail", existingFiles[i], existingFiles[i].tbnUrl);
+			this.emit("complete", existingFiles[i]);
+		}
+	}
+}
+</script>
