@@ -34,7 +34,7 @@ ajax_output= ajax_output_upload|#|
 </style>
 
 <form action="index.php" method="post" enctype="multipart/form-data">
-	<input type="hidden" id="method" name="method" value="dropzone">
+	<input type="hidden" id="fvin_module" name="module" value="dropzone">
 
 	<div class="dropzone" id="rkDropzone"></div>
 	<br><br>
@@ -80,8 +80,7 @@ Dropzone.options.rkDropzone = {
 
 		// send all the form data along with the files:
 		this.on("sendingmultiple", function(data, xhr, formData) {
-			formData.append("method", document.getElementById('method').value);
-			// ToDo: append your stuff
+			formData.append("module", document.getElementById('fvin_module').value);
 		});
 
 		this.on("removedfile", function(file) {

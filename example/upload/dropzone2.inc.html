@@ -19,25 +19,40 @@ thumbnail= 120x120^|#|
 ajax_output= ajax_output_upload|#|
 {:upload}
 
-<form action="index.php" method="post" class="dropzone" id="rkDropzone" enctype="multipart/form-data">
-	<input type="hidden" name="method" value="dropzone">
-	<div class="fallback">
-		<input type="file" name="image" multiple />
-	</div>
+<form action="index.php" method="post" enctype="multipart/form-data" onSubmit="return checkDropzone(this);">
+	<div class="dropzone" id="rkDropzone"></div>
 
-<!--
-	<div class="dz-message">
-		<h3>Olo</h3>
-		<i class="fa fa-picture-o fa-5x" aria-hidden="true"></i>
-	</div>
--->
+	<input type="hidden" id="fvin_module" name="module" value="{get:module}">
+	<input type="hidden" id="fvin_id" name="id" value="{rand:8}">
+	<input type="hidden" id="fvin_dir" name="dir" value="{get:dir}">
+
+	<input type="text" name="something" value="{if:}{get:something}|#|{get:something}|#|{rand:8}{:if}">
+	<input type="submit" id="fvin_submit">
 </form>
 
 <script>
+// Dropzone.autoDiscover = false;
+var dropzone_done = false;
+
+function checkDropzone(f) {
+	console.log('checkDropzone', f);
+
+	if (dropzone_done) {
+		f.submit();
+	}
+	else {
+		document.getElementById('fvin_submit').setAttribute('readonly', 'readonly');
+		setTimeout(function(f) { checkDropzone(f); }, 500);
+	}
+
+	return false;
+}
+
 Dropzone.options.rkDropzone = {
 	url: 'index.php?dir={get:dir}',
 	autoProcessQueue: true,
 	uploadMultiple: true,
+//	paramName: "images",
 	parallelUploads: 5,
 	maxFiles: 7,
 	maxFilesize: 20, // mb
@@ -62,10 +77,18 @@ Dropzone.options.rkDropzone = {
 	init: function() {
 		dzClosure = this; // Makes sure that 'this' is understood inside the functions below.
 
-		// send all the form data along with the files:
 		this.on("sendingmultiple", function(data, xhr, formData) {
-			formData.append("method", document.getElementById('method').value);
-			// ToDo: append your stuff
+			console.log('sendingmultiple');
+			formData.append("id", document.getElementById('fvin_id').value);
+			formData.append("dir", document.getElementById('fvin_dir').value);
+			formData.append("module", document.getElementById('fvin_module').value);
+		});
+
+		this.on("queuecomplete", function() {
+			console.log('queuecomplete');
+			// dropzone_done = true;
+			// for testing only
+			setTimeout(function() { dropzone_done = true; }, 3000);
 		});
 
 		this.on("removedfile", function(file) {
