@@ -188,6 +188,11 @@ private function computeImgSource() {
 
 	if (!empty($this->conf['names'])) {
 		$list = \rkphplib\lib\split_str(',', $this->conf['names']);
+
+		if (empty($list[0]) && count($list) > 1) {
+			array_shift($list);
+		}
+
 		$this->conf['source'] = $this->conf['picture_dir'].'/'.$list[0];
 	}
 	else if (!empty($this->conf['name'])) {

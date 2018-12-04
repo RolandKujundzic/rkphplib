@@ -74,7 +74,7 @@ private function getThumbnail($file, $http_path = false) {
 		]);
 
 	$resize_pic = $tpic->resize();
-	$target = $http_path ? dirname(THttp::httpGet('abs_url')).'/'.$resize_pic : $resize_pic;
+	$target = $http_path ? dirname(THttp::httpGet('abs_host')).'/'.$resize_pic : $resize_pic;
 
 	// \rkphplib\lib\log_debug("TUpload.getThumbnail> return $target ($resize_pic)");
 	return $target;
@@ -86,7 +86,7 @@ private function getThumbnail($file, $http_path = false) {
  * Parameter are mode, images (=a1.jpg, ...), save_in and thumbnail (last two 
  * parameter can be defined in upload:init).
  * 
- * @tok {upload:exists}mode=dropzone|#|images={get:images}|#|save_in=...|#|thumbnail=...{:upload}
+ * @tok {upload:exists}mode=dropzone|#|images={get:images}|#|url_prefix=|#|save_in=...|#|thumbnail=...{:upload}
  * 
  * @throws
  * @param hash $p
@@ -129,7 +129,7 @@ public function tok_upload_exists($p) {
 	}
 	else if ($p['mode']	== 'dropzone') {
 		$entries = Dir::entries($this->conf['save_in']);
-		$url_prefix = dirname(THttp::httpGet('abs_url'));
+		$url_prefix = dirname(THttp::httpGet('abs_host'));
 		$list = [];
 
 		foreach ($entries as $entry) {
