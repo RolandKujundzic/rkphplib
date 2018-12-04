@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+</head>
+
+<body>
+
+<h3>Modify URL</h3>
+
+<form method="get" action="index.html">
+<input type="text" name="a" value="" placeholder="parameter a"><br>
+<input type="text" name="b" value="" placeholder="parameter b"><br>
+<input type="text" name="c" value="" placeholder="parameter c"><br>
+<input type="submit"><br>
+<input type="button" value="update URL" onclick="updateURL('c', 'x8')"><br>
+</form>
+
+<script>
+/**
+ *
+ */
+function getUrlVars() {
+	var vars = {};
+
+	var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+		vars[key] = value;
+	});
+
+	return vars;
+}
+
+
+/**
+ *
+ */
+function getUrlParam(parameter, defaultvalue){
+	var urlparameter = defaultvalue;
+
+	if (window.location.href.indexOf(parameter) > -1) {
+		urlparameter = getUrlVars()[parameter];
+	}
+	else {
+		updateURL(parameter, defaultvalue);
+	}
+
+	return urlparameter;
+}
+
+
+/**
+ *
+ */
+function updateURL(name, value) {
+	const params = new URLSearchParams(location.search);
+	params.set(name, value);
+	window.history.replaceState({}, "", decodeURIComponent(`${location.pathname}?${params}`));
+	const el = document.querySelector("input[name=" + name + "]");
+	if (el) {
+		el.value = value;
+	}
+}
+
+/*
+
+var url = new URL(url_string);
+var c = url.searchParams.get("c");
+console.log(c);
+
+
+function parse_query_string(query) {
+  var vars = query.split("&");
+  var query_string = {};
+  for (var i = 0; i < vars.length; i++) {
+    var pair = vars[i].split("=");
+    var key = decodeURIComponent(pair[0]);
+    var value = decodeURIComponent(pair[1]);
+    // If first entry with this name
+    if (typeof query_string[key] === "undefined") {
+      query_string[key] = decodeURIComponent(value);
+      // If second entry with this name
+    } else if (typeof query_string[key] === "string") {
+      var arr = [query_string[key], decodeURIComponent(value)];
+      query_string[key] = arr;
+      // If third or later entry with this name
+    } else {
+      query_string[key].push(decodeURIComponent(value));
+    }
+  }
+  return query_string;
+}
+
+var query_string = "a=1&b=3&c=m2-m3-m4-m5";
+var parsed_qs = parse_query_string(query_string);
+console.log(parsed_qs.c);
+
+
+
+function getQueryParams(qs) {
+    qs = qs.split('+').join(' ');
+
+    var params = {},
+        tokens,
+        re = /[?&]?([^=]+)=([^&]*)/g;
+
+    while (tokens = re.exec(qs)) {
+        params[decodeURIComponent(tokens[1])] = decodeURIComponent(tokens[2]);
+    }
+
+    return params;
+}
+
+//var query = getQueryParams(document.location.search);
+
+
+let url = new URL('http://www.test.com/t.html?a=1&b=3&c=m2-m3-m4-m5');
+let searchParams = new URLSearchParams(url.search);
+console.log(searchParams.get('c'));  // outputs "m2-m3-m4-m5"
+
+
+var url = new URL('http://demo.com?tags=one&tags=two&tags=three&topic=main');
+var search_params = new URLSearchParams(url.search); 
+var tags = search_params.getAll('tags');
+// output : Array [ "one", "two", "three" ]
+console.log(tags);
+
+// @see https://stackoverflow.com/questions/979975/how-to-get-the-value-from-the-get-parameters
+
+*/
+
+document.querySelector("input[name=a]").value = getUrlParam('a', 1);
+document.querySelector("input[name=b]").value = getUrlParam('b', 2);
+document.querySelector("input[name=c]").value = getUrlParam('c', 3); 
+</script>
+
+</body>
+</html>
