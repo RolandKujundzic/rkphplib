@@ -100,7 +100,7 @@ public function getPlugins($tok) {
 	$plugin['fv:hidden'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 	$plugin['fv:preset'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['fv:error'] = TokPlugin::REQUIRE_PARAM;
-	$plugin['fv:appendjs'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+	$plugin['fv:appendjs'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::CSLIST_BODY;
 	$plugin['fv:error_message'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:set_error_message'] = TokPlugin::REQUIRE_PARAM;
 
@@ -256,15 +256,29 @@ public function __construct() {
 /**
  * Return FormData append list.
  *
- * @tok {fv:appendjs:formData} = formData.append("firstname", document.getElementById("fvin_firstname").value); ...
+ * @tok {fv:appendjs:formData}firstname,...{:fv} = formData.append("firstname", document.getElementById("fvin_firstname").value); ...
+ * @tok {fv:appendjs:formData} = autodetect arg e.g. id, dir, ...
  * 
  * @param string $name
+ * @return string
  */
-public function tok_fv_appendjs($name) {
+public function tok_fv_appendjs($name, $id_list = []) {
 	$conf = $this->conf['current'];
 	$list = [];
 
-	\rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs> conf: ".print_r($conf, true));
+	if (count($id_list) > 0) {
+		\rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs> name=$name id_list: ".print_r($id_list, true));
+		foreach ($id_list as $ignore => $param) {
+			array_push($list, $name.'.append("'.$param.'", document.getElementById("fvin_'.$param.'").value);');
+		}
+	
+		$res = join("\n", $list);
+		\rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs> ".$res);
+		return $res;
+	}
+
+	// use all parameter
+	\rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs> name=$name conf: ".print_r($conf, true));
 
 	foreach ($conf as $key => $ignore) {
 		$param = '';
@@ -368,7 +382,7 @@ public function tok_fv_hidden() {
 		$list = \rkphplib\lib\split_str(',', $hidden_keep);
 		foreach ($list as $key) {
 			if (isset($_REQUEST[$key])) {
-				$res .= '<input type="hidden" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($_REQUEST[$key]).'">'."\n";
+				$res .= '<input type="hidden" id="fvin_'.$key.'" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($_REQUEST[$key]).'">'."\n";
 			}
 		}
 	}
@@ -376,7 +390,7 @@ public function tok_fv_hidden() {
 	foreach ($this->conf['current'] as $key => $value) {
 		if (mb_substr($key, 0, 7) == 'hidden.') {
 			$key = mb_substr($key, 7);
-			$res .= '<input type="hidden" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($value).'">'."\n";
+			$res .= '<input type="hidden" id="fvin_'.$key.'" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($value).'">'."\n";
 		}
 	}
 

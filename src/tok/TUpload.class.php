@@ -83,6 +83,10 @@ private function getThumbnail($file, $http_path = false) {
 
 /**
  * Return list of existing files. Return format depends on p.mode (e.g. dropzone).
+ * Parameter are mode, images (=a1.jpg, ...), save_in and thumbnail (last two 
+ * parameter can be defined in upload:init).
+ * 
+ * @tok {upload:exists}mode=dropzone|#|images={get:images}|#|save_in=...|#|thumbnail=...{:upload}
  * 
  * @throws
  * @param hash $p
@@ -92,10 +96,34 @@ private function getThumbnail($file, $http_path = false) {
 public function tok_upload_exists($p) {
 
 	if (empty($this->conf['save_in'])) {
-		// no pictures yet
+		if (!empty($p['save_in'])) {
+			$this->conf['save_in'] = $p['save_in'];
+		}
+		else {
+			if (!empty($p['images'])) {
+				throw new Exception('parameter save_in is empty', print_r($this->conf, true));
+			}
+
+			\rkphplib\lib\log_debug("TUpload.tok_upload_exists> return [] - no pictures");
+			return '[]';
+		}
+	}
+
+	if (!Dir::exists($this->conf['save_in'])) {
+		\rkphplib\lib\log_debug("TUpload.tok_upload_exists> return [] - no such directory ".$this->conf['save_in']);
 		return '[]';
 	}
 
+	if (empty($this->conf['thumbnail'])) {
+		if (!empty($p['thumbnail'])) {
+			$this->conf['thumbnail'] = $p['thumbnail'];
+		}
+		else {
+			throw new Exception('parameter thumbnail is empty');
+		}
+	}
+
+	\rkphplib\lib\log_debug("TUpload.tok_upload_exists> save_in=".$this->conf['save_in']." p: ".print_r($p, true));
 	if (empty($p['mode'])) {
 		throw new Exception('missing mode parameter');
 	}
@@ -348,7 +376,7 @@ private function removeFSImages() {
 	for ($i = 0; $i < count($remove); $i++) {
 		$file = $remove[$i];
 		if (File::exists($file)) {
-			// \rkphplib\lib\log_debug("TUpload.removeFSImages> remove $file");
+			\rkphplib\lib\log_debug("TUpload.removeFSImages> remove $file");
 			$this->conf['@plugin_action'] = 1;
 			array_push($removed, $file);
 			File::remove($file);

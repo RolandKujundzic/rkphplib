@@ -1418,22 +1418,27 @@ public function tok_if($param, $p) {
  */
 public function tok_esc($param, $arg) {
 
-	if (!empty($param) && isset($_REQUEST[$param])) {
-		$arg = trim($_REQUEST[$param]);
+	if (!empty($param) && substr($param, 0, 1) != '@') {
+		if (!isset($_REQUEST[$param])) {
+			$arg = null;
+		}
+		else {
+			$arg = trim($_REQUEST[$param]);
+		}
 	}
 	else if ($param == 'null' && trim($arg) == '') {
 		$arg = null;
 	}
 
 	if (is_null($arg) || $arg === 'null' || $arg === 'NULL') {
+		\rkphplib\lib\log_debug("TBase.tok_esc> return NULL");
 		return 'NULL';
 	}
 
 	if (!isset($this->_conf['esc'])) {
 		// set default escape options
-		$this->_conf['esc'] = [ 'trim', 'escape_html' ];
+		$this->_conf['esc'] = [ 'trim', 'escape_html', 'escape_db' ];
 	}
-
 
 	if (substr($param, 0, 1) == '@') {
 		if ($param == '@default') {
@@ -1451,11 +1456,13 @@ public function tok_esc($param, $arg) {
 		$arg = str_replace([ '&', '<', '>', '"' ], [ '&amp;', '&lt;', '&gt;', '&quot;' ], $arg);
 	}
 
+	\rkphplib\lib\log_debug("TBase.tok_esc> enter param=[$param] arg=[$arg] esc=[".join('|', $this->_conf['esc'])."]");
 	if (in_array('escape_db', $this->_conf['esc'])) {
 		require_once(PATH_RKPHPLIB.'ADatabase.class.php');
 		$arg = "'".\rkphplib\ADatabase::escape($arg)."'";
 	}
 
+	\rkphplib\lib\log_debug("TBase.tok_esc> return [$arg]");
 	return $arg;
 }
 
