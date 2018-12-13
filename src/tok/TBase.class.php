@@ -89,6 +89,7 @@ public function __construct() {
  * - t, true: REQUIRE_BODY, TEXT, REDO
  * - f, false: REQUIRE_BODY, TEXT, REDO, NO_PARAM
  * - find: TEXT, REDO
+ * - filter: REQUIRE_PARAM, REQUIRE_BODY, CSLIST_BODY
  * - plugin: NO_PARAM, REQUIRE_BODY, CSLIST_BODY
  * - escape: REQUIRE_PARAM
  * - unescape: REQUIRE_PARAM
@@ -139,6 +140,7 @@ public function getPlugins($tok) {
 	$plugin['f'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM; 
 	$plugin['false'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM;
 	$plugin['find'] = TokPlugin::TEXT | TokPlugin::REDO;
+	$plugin['filter'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::CSLIST_BODY;
 	$plugin['plugin'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::CSLIST_BODY;
 	$plugin['escape'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['unescape'] = TokPlugin::REQUIRE_PARAM;
@@ -1392,6 +1394,121 @@ public function tok_if($param, $p) {
 
 
 /**
+ * Define tag filter. Available filters:
+ *
+ * trim: trim(' abc ') = 'abc'
+ * escape_html: escape_html('&<>"') = '&amp;&lt;&gt;&quot;'
+ * default: reset tag filter to default value
+ * escape_db: escape_db("a'b") = 'a''b'
+ * escape_tok: escape_tok('{x:}') = '&#123;x&#58;&#125;'
+ * escape_arg: escape_arg('a|#|b') = 'a&#124;&#35;&#124;b'
+ * off: reset tag filter to required value
+ *
+ * Available tags: get and esc
+ *
+ * get.default = escape_html,escape_tok,escape_arg
+ * get.required = 
+ *
+ * esc.default = trim,escape_html,escape_tok,escape_arg,escape_db
+ * esc.required = escape_db
+ *
+ * @tok {filter:get}off{:filter} = no filter
+ * @tok {filter:get}default{:filter} = use default filter
+ * @tok {filter:esc}trim{:filter} = use trim and escape_db filter
+ *
+ * @param string $tag
+ * @param vector $filter_list
+ */
+public function tag_filter($tag, $filter_list) {
+
+	$allow_tag = [ 'esc', 'get' ];
+	if (!in_array($tag, $allow_tag)) {
+		throw new Exception('no filter available for tag '.$tag);
+	}
+
+	if (empty($filter_list[0])) {
+		throw new Exception('invalid filter list', 'tag='.$tag.' filter_list='.join('|', $filter_list));
+	}
+
+	$allow_filter['esc'] = [ 'trim', 'escape_html', 'escape_tok', 'escape_arg', 'escape_db' ]; 
+	$allow_filter['get'] = [ 'trim', 'escape_html', 'escape_tok', 'escape_arg' ];
+
+	if ($filter_list[0] == 'default') {
+		$default_filter['esc'] = [ 'trim', 'escape_html', 'escape_tok', 'escape_arg', 'escape_db' ];
+		$default_filter['get'] = [ 'escape_html', 'escape_tok', 'escape_arg' ];
+
+		$this->_conf['filter.'.$tag] = $default_filter[$tag];
+	}
+	else if ($filter_list[0] == 'off') {
+		$required_filter['esc'] = [ 'escape_db' ];
+		$required_filter['get'] = [ ];
+
+		$this->_conf['filter.'.$tag] = $required_filter[$tag];
+	}
+	else if (in_array($filter_list[0], $allow_filter[$tag])) {
+		$this->_conf['filter.'.$tag] = $filter_list[0];
+	}
+	else {
+		throw new Exception('invalid filter', 'i=0 tag='.$tag.' filter_list='.join('|', $filter_list));
+	}
+
+	for ($i = 1; $i < count($filter_list); $i++) {
+		if (in_array($filter_list[$i], $allow_filter[$tag])) {
+			$this->_conf['filter.'.$tag] .= ','.$filter_list[$i];
+		}
+		else {
+			throw new Exception('invalid filter', "i=$i tag=$tag filter_list=".join('|', $filter_list));
+		}
+	}
+}
+
+
+/**
+ * Apply filter.
+ *
+ * @see tag_filter
+ * @throws
+ * @param string $tag
+ * @param string $value
+ * @return string
+ */
+private function applyFilter($tag, $value) {
+	\rkphplib\lib\log_debug("TBase.applyFilter> tag=$tag value=[$value]");
+
+	if (!isset($this->_conf['filter.'.$tag)) {
+		throw new Exception('no filter', "tag=$tag value=$value");
+	}
+
+	for ($this->_conf['filter.'.$tag] as $filter) {
+
+		if ($filter == 'trim') {
+			$value = trim($value);
+		}
+		else if ($filter == 'escape_tok') {
+			$value = $this->_tok->escape($value);
+		}
+		else if ($filter == 'escape_html') {
+			$value = str_replace([ '&', '<', '>', '"' ], [ '&amp;', '&lt;', '&gt;', '&quot;' ], $value);
+		}
+		else if ($filter == 'escape_arg') {
+			$value = str_replace(HASH_DELIMITER, \rkphplib\lib\entity(HASH_DELIMITER), $value);
+		}
+		else if ($filter == 'escape_db') {
+			require_once(PATH_RKPHPLIB.'ADatabase.class.php');
+			$value = "'".\rkphplib\ADatabase::escape($value)."'";
+		}	
+		else {
+			throw new Exception('invalid filter', "tag=$tag filter=$filter value=[$value]");
+		}
+
+		\rkphplib\lib\log_debug("TBase.applyFilter> filter=$filter value=[$value]");
+	}
+
+	return $value;
+}
+
+
+/**
  * Return sql escaped argument ('$arg'). If argument is empty use trim($_REQUEST[param]).
  * Trim argument if param = t and _REQUEST[t] is not set.
  * Null argument if empty and param = null and _REQUEST[null] is not set.
@@ -1403,14 +1520,7 @@ public function tok_if($param, $p) {
  * @tok {esc:}NULL{:esc} -> NULL
  * @tok {esc:null}{:esc} -> NULL
  * 
- * Escape options: @trim, @escape_html, @escape_db. 
- *
- * @tok {esc:@trim} = trim value
- * @tok {esc:@escape_html} = replace [ '&', '<', '>', '"' ] with [ '&amp;', '&lt;', '&gt;', '&quot;' ] 
- * @tok {esc:@trim,escape_html} = set trim + escape_html as default option
- * @tok {esc:@default} = set default options (trim + escape_html)
- * @tok {esc:@escape_db} = escape ['] with ['']
- * @tok {esc:@} = use no options
+ * @filter trim, escape_html, escape_tok, escape_arg, escape_db
  *
  * @param string $param
  * @param string $arg
@@ -1435,32 +1545,11 @@ public function tok_esc($param, $arg) {
 		return 'NULL';
 	}
 
-	if (!isset($this->_conf['esc'])) {
-		// set default escape options
-		$this->_conf['esc'] = [ 'trim', 'escape_html', 'escape_db' ];
+	if (!isset($this->_conf['filter.esc'])) {
+		$this->tok_filter('esc', [ 'default' ]);
 	}
 
-	if (substr($param, 0, 1) == '@') {
-		if ($param == '@default') {
-			$param = 'trim,escape_html';
-		}
-
-		$this->conf['esc'] = \rkphplib\lib\split_str(',', substr($param, 1));
-	}
-
-	if (in_array('trim', $this->_conf['esc'])) {
-		$arg = trim($arg);
-	}
-
-	if (in_array('escape_html', $this->_conf['esc'])) {
-		$arg = str_replace([ '&', '<', '>', '"' ], [ '&amp;', '&lt;', '&gt;', '&quot;' ], $arg);
-	}
-
-	\rkphplib\lib\log_debug("TBase.tok_esc> enter param=[$param] arg=[$arg] esc=[".join('|', $this->_conf['esc'])."]");
-	if (in_array('escape_db', $this->_conf['esc'])) {
-		require_once(PATH_RKPHPLIB.'ADatabase.class.php');
-		$arg = "'".\rkphplib\ADatabase::escape($arg)."'";
-	}
+	$arg = $this->applyFilter('esc', $arg);
 
 	\rkphplib\lib\log_debug("TBase.tok_esc> return [$arg]");
 	return $arg;
@@ -1590,11 +1679,9 @@ public function tok_get($param, $arg) {
 		else {
 			$res = $_REQUEST[$key];
 		}
-	
-		$res = $this->_tok->escape($res);
 	}
 	else if (isset($_FILES[$key]) && !empty($_FILES[$key]['name'])) {
-		$res = $this->_tok->escape($_FILES[$key]['name']);
+		$res = $_FILES[$key]['name'];
 	}
 	else if (($pos = mb_strpos($key, '.')) !== false) {
 		$key1 = mb_substr($key, 0, $pos);
@@ -1603,11 +1690,18 @@ public function tok_get($param, $arg) {
 		if (isset($_REQUEST[$key1]) && is_array($_REQUEST[$key1]) && isset($_REQUEST[$key1][$key2])) {
 			$res = $_REQUEST[$key1][$key2];
 		}
-
-		$res = $this->_tok->escape($res);
 	}
 	else if ($key == '*') {
-		$res = \rkphplib\lib\kv2conf($_REQUEST);
+		$res = $_REQUEST;
+	}
+
+	if (is_string($res)) {
+  	$res = $this->applyFilter('get', $res);
+	}
+	else if (is_array($res)) {
+		foreach ($res as $key => $value) {
+			$res[$key] = $this->applyFilter('get', $value);
+		}
 	}
 
 	return $res;
