@@ -91,6 +91,7 @@ public function __construct() {
  * - find: TEXT, REDO
  * - filter: REQUIRE_PARAM, REQUIRE_BODY, CSLIST_BODY
  * - plugin: NO_PARAM, REQUIRE_BODY, CSLIST_BODY
+ * - escape:tok: NO_PARAM, TEXT
  * - escape: REQUIRE_PARAM
  * - unescape: REQUIRE_PARAM
  * - encode: REQUIRE_PARAM
@@ -142,6 +143,7 @@ public function getPlugins($tok) {
 	$plugin['find'] = TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['filter'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::CSLIST_BODY;
 	$plugin['plugin'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::CSLIST_BODY;
+	$plugin['escape:tok'] = TokPlugin::NO_PARAM | TokPlugin::TEXT;
 	$plugin['escape'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['unescape'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['encode'] = TokPlugin::REQUIRE_PARAM;
@@ -1397,7 +1399,7 @@ public function tok_if($param, $p) {
  * Define tag filter. Available filters:
  *
  * trim: trim(' abc ') = 'abc'
- * escape_html: escape_html('&<>"') = '&amp;&lt;&gt;&quot;'
+ * escape_html: escape_html('&<>"\'') = '&amp;&lt;&gt;&quot;&#39;'
  * default: reset tag filter to default value
  * escape_db: escape_db("a'b") = 'a''b'
  * escape_tok: escape_tok('{x:}') = '&#123;x&#58;&#125;'
@@ -1488,7 +1490,7 @@ private function applyFilter($tag, $value) {
 			$value = $this->_tok->escape($value);
 		}
 		else if ($filter == 'escape_html') {
-			$value = str_replace([ '&', '<', '>', '"' ], [ '&amp;', '&lt;', '&gt;', '&quot;' ], $value);
+			$value = str_replace([ '&', '<', '>', '"', "'" ], [ '&amp;', '&lt;', '&gt;', '&quot;', '&#39;' ], $value);
 		}
 		else if ($filter == 'escape_arg') {
 			$value = str_replace(HASH_DELIMITER, \rkphplib\lib\entity(HASH_DELIMITER), $value);
@@ -1712,18 +1714,32 @@ public function tok_get($param, $arg) {
 }
 
 
+/** 
+ * Return escape value. No body tokenization. No redo.
+ *
+ * @tok {escape:tok}{get:t}{:escape} = &#123;get&#58;t&#125; 
+ *
+ * @throws
+ * @param string $txt
+ * @return string
+ */
+public function tok_escape_tok($txt) {
+	return $res = $this->_tok->escape($txt);
+}
+
+
 /**
  * Return escaped value. Parameter:
  *
+ * - entity: replace chars with &#N;
+ * - arg: replace |#| with &#124;&#35;&#124;
  * - url: rawurlencode 
- * - js: same as javascript encodeURIcomponent = rawurlencode without "!,*,',(,)"
- * - tok: Tokenizer->escape $txt
- * - html: replace [ '&', '<', '>', '"' ] with [ '&amp;', '&lt;', '&gt;', '&quot;' ]
+ * - js: entity escape
+ * - html: replace [ '&', '<', '>', '"', "'" ] with [ '&amp;', '&lt;', '&gt;', '&quot;', '&#39;' ]
  *
- * @tok {escape:tok}{x:}{:escape} = &#123;x&#58;&#125; 
  * @tok {escape:arg}a|#|b{:escape} = &#124;&#35;&#124; (|#| = HASH_DELIMITER)
  * @tok {escape:entity}|@||#|a|@|b{:escape} = a&#124;&#64;&#124b
- * @tok {escape:js}-_.|~!*'();:@&=+$,/?%#[]{:escape} = -_.%7C~!*'()%3B%3A%40%26%3D%2B%24%2C%2F%3F%25%23%5B%5D
+ * @tok {escape:js}'; alert('test'); '{:escape} = '&#39;; alert&#40;&#39;test&#39;&#41;; &#39;'
  * @tok {escape:url}a b{:escape} = a%20b
  * @tok {escape:html}<a href="abc">{:escape} = &lt;a href=&quot;abc&quot;&gt;
  *  
@@ -1749,11 +1765,10 @@ public function tok_escape($param, $txt) {
 		$res = str_replace(HASH_DELIMITER, \rkphplib\lib\entity(HASH_DELIMITER), $txt);
 	}
 	else if ($param == 'js') {
-		// exclude "!,*,',(,)" to make it same as javascript encodeURIcomponent()
-		$res = strtr(rawurlencode($txt), [ '%21' => '!', '%2A' => '*', '%27' => "'", '%28' => '(', '%29' => ')' ]);
+		$res = str_replace([ '"', "'", '\\', '(', ')', '{', '}', '=' ], [ '&#34;', '&#39;', '&#92;', '&#40;', '&#41;', '&#123;', '&#125;', '&#61;' ], $txt);
 	}
 	else if ($param == 'html') {
-		$res = str_replace([ '&', '<', '>', '"' ], [ '&amp;', '&lt;', '&gt;', '&quot;' ], $txt);
+		$res = str_replace([ '&', '<', '>', '"', "'" ], [ '&amp;', '&lt;', '&gt;', '&quot;', '&#39;' ], $txt);
 	}
 	else {
 		throw new Exception('invalid parameter', $param);
@@ -1767,14 +1782,14 @@ public function tok_escape($param, $txt) {
  * Return unescaped value. Parameter:
  * 
  * - tok: Tokenizer->unescape $txt
- * - js: rawurldecode($txt)
- * - html: replace [ '&lt;', '&gt;', '&quot;', '&amp;' ] with [ '<', '>', '"', '&' ]
+ * - js: entity unescape
+ * - html: replace [ '&lt;', '&gt;', '&quot;', '&amp;', '&#39;' ] with [ '<', '>', '"', '&', "'" ]
  *
  * @tok {unescape:tok}&#123;x&#58;&#125;{:unescape} = {x:}
  * @tok {unescape:arg}a&#124;&#35;&#124;b{:unescape} = a|#|b 
  * @tok {unescape:entity}|@||#|a&#124;&#64;&#124;b{:unescape} = a|@|b
  * @tok {unescape:html}&lt;a href=&quot;abc&quot;&gt;{:unescape} = <a href="abc">
- * @tok {unescape:js}-_.%7C~!*'()%3B%3A%40%26%3D%2B%24%2C%2F%3F%25%23%5B%5D{:unescape} = -_.|~!*'();:@&=+$,/?%#[]
+ * @tok {unescape:js}'&#39;; alert&#40;&#39;test&#39;&#41;; &#39;'{:unescape} =  '; alert('test'); '
  * @tok {unescape:url}a%20b{:unescape} = a b
  * @tok {unescape:utf8}R\u00FCssel{:unescape} = Rüssel
  * 
@@ -1803,10 +1818,10 @@ public function tok_unescape($param, $txt) {
 		$res = str_replace(\rkphplib\lib\entity($entity), $entity, $txt);
 	}
 	else if ($param == 'js') {
-		$res = rawurldecode($txt);
+		$res = str_replace([ '&#34;', '&#39;', '&#92;', '&#40;', '&#41;', '&#123;', '&#125;', '&#61;' ], [ '"', "'", '\\', '(', ')', '{', '}', '=' ], $txt);
 	}
 	else if ($param == 'html') {
-		$res = str_replace([ '&lt;', '&gt;', '&quot;', '&amp;' ], [ '<', '>', '"', '&' ], $txt);
+		$res = str_replace([ '&lt;', '&gt;', '&quot;', '&amp;', '&#39;' ], [ '<', '>', '"', '&', "'" ], $txt);
 	}
 	else {
 		throw new Exception('invalid parameter', $param);
