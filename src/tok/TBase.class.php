@@ -1419,7 +1419,7 @@ public function tok_if($param, $p) {
  * @param string $tag
  * @param vector $filter_list
  */
-public function tag_filter($tag, $filter_list) {
+public function tok_filter($tag, $filter_list) {
 
 	$allow_tag = [ 'esc', 'get' ];
 	if (!in_array($tag, $allow_tag)) {
@@ -1475,11 +1475,11 @@ public function tag_filter($tag, $filter_list) {
 private function applyFilter($tag, $value) {
 	\rkphplib\lib\log_debug("TBase.applyFilter> tag=$tag value=[$value]");
 
-	if (!isset($this->_conf['filter.'.$tag)) {
-		throw new Exception('no filter', "tag=$tag value=$value");
+	if (!isset($this->_conf['filter.'.$tag])) {
+		throw new Exception('no filter', "tag=$tag value=[$value] _conf: ".print_r($this->_conf, true));
 	}
 
-	for ($this->_conf['filter.'.$tag] as $filter) {
+	foreach ($this->_conf['filter.'.$tag] as $filter) {
 
 		if ($filter == 'trim') {
 			$value = trim($value);
@@ -1694,6 +1694,10 @@ public function tok_get($param, $arg) {
 	else if ($key == '*') {
 		$res = $_REQUEST;
 	}
+
+  if (!isset($this->_conf['filter.esc'])) {
+    $this->tok_filter('get', [ 'default' ]);
+  }
 
 	if (is_string($res)) {
   	$res = $this->applyFilter('get', $res);
