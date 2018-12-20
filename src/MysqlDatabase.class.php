@@ -529,15 +529,47 @@ public function selectColumn($query, $colname = 'col') {
  */
 public function selectHash($query, $key_col = 'name', $value_col = 'value', $ignore_double = false) {
 
-	if (is_array($query)) {
-		$res = $this->_fetch_stmt($this->_exec_stmt($query), array($key_col, $value_col)); 
-	}
-	else {
-		$res = $this->_fetch($query, array($key_col, $value_col));
-	}
+	if ($value_col == '*') {
+		$this->execute($query, true);
+		$res = [];
 
-	if (!$ignore_double && isset($this->_cache['FETCH:DOUBLE'])) {
-		throw new Exception('Hashkeys are not unique', print_r($this->_cache['FETCH:DOUBLE'], true));
+		while (($row = $this->getNextRow())) {
+			if (!isset($row[$key_col])) {
+				throw new Exception("no such column $key_col", $query);
+			}
+
+			$id = $row[$key_col];
+
+			if (isset($res[$id])) {
+				if ($ignore_double) {
+					if (isset($res[$id][$key_col]) && $res[$id][$key_col] == $id) {
+						$tmp = $res[$id];
+						$res[$id] = [];
+						array_push($res[$id], $tmp);
+					}
+
+					array_push($res[$id], $row);
+				}
+				else {
+					throw new Exception("$key_col = $id already exists", $query);
+				}
+			}
+			else {
+				$res[$id] = $row;
+			}
+		}
+  }
+	else {
+		if (is_array($query)) {
+			$res = $this->_fetch_stmt($this->_exec_stmt($query), array($key_col, $value_col)); 
+		}
+		else {
+			$res = $this->_fetch($query, array($key_col, $value_col));
+		}
+
+		if (!$ignore_double && isset($this->_cache['FETCH:DOUBLE'])) {
+			throw new Exception('Hashkeys are not unique', print_r($this->_cache['FETCH:DOUBLE'], true));
+		}
 	}
 
 	return $res;
