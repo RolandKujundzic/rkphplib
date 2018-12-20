@@ -1909,6 +1909,7 @@ public function tok_plugin($p) {
 
 			if (basename($path) === $path && defined("PATH_$path")) {
 				$incl_path = constant("PATH_$path").'tok/'.$obj.'.class.php';
+				\rkphplib\lib\log_debug("tok_plugin> path=$path incl_path=$incl_path");
 				require_once($incl_path);
 				$obj = '\\'.strtolower($path).'\\tok\\'.$obj;
 				// \rkphplib\lib\log_debug("tok_plugin> require_once('$incl_path'); new $obj();");
