@@ -1364,6 +1364,8 @@ abstract public function getReferences($table, $column = 'id');
 /**
  * Return hash values (key, value columns). Use
  * "id AS name, val AS value" in setQuery to make key_col and value_col match.
+ * Use $value_col = '*' to get ($id, $row[$id]) hash (if $ignore_double = true 
+ * then doublette is ($id, [ $row[N1], .... ])).
  *
  * @param string|array $query
  * @param string $key_col
