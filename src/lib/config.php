@@ -66,7 +66,11 @@ function exception_handler($e) {
 			$tok =& \rkphplib\tok\Tokenizer::$site;
 			$localized_error_msg = $tok->getVar('error.'.$e->getMessage());
 			$_REQUEST['error_msg'] = $localized_error_msg ? $localized_error_msg : $e->getMessage();
-			$_REQUEST['old_dir'] = $_REQUEST['dir'];
+
+			if (!empty($_REQUEST['dir'])) {
+				$_REQUEST['old_dir'] = $_REQUEST['dir'];
+			}
+
 			$_REQUEST['dir'] = ABORT_DIR;
 			include('index.php');
 			return;
