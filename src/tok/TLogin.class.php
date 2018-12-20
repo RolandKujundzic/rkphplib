@@ -291,7 +291,7 @@ private function setDBVariable($table) {
  * @tok {login_update:}@allow_cols= login, password, ...|#|{sql:password}|#|@where= WHERE id={esc:id}{:login_update}
  * 
  * @throws
- * @param string $do reload
+ * @param string $do reload|no_db
  * @param map $p (optional)
  * @return ''
  */
@@ -302,6 +302,11 @@ public function tok_login_update($do, $p) {
 
 	if (isset($p['if']) && empty($p['if'])) {
 		return '';
+	}
+
+	if (!empty($p['@type_switch'])) {
+		unset($p['@type_switch']);
+		$sess = [];
 	}
 
 	if (isset($p['type']) && isset($sess['type']) && $p['type'] != $sess['type']) {
@@ -368,7 +373,7 @@ public function tok_login_update($do, $p) {
 			throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
 		}
 
-		if (count($kv) > 1) {
+		if (count($kv) > 1 && $do != 'no_db') {
 			$query = empty($p['id']) ? $this->db->buildQuery($table, 'update', $kv) : $this->db->buildQuery($table, 'insert', $kv);
 
 			if (!empty($query)) {
