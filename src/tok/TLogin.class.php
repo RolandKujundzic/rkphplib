@@ -112,14 +112,14 @@ public function hasPrivileges($require_priv, $ignore_super = false) {
 		return 1;
 	}
 
-	$priv = intval($this->sess->get('priv')); // 2^n | 2^m | ...
+	$priv = intval($this->sess->get('priv?')); // 2^n | 2^m | ...
 
 	if (!$ignore_super && ($priv & 1)) {
 		// super can do anything ...
 		return 1;
 	}
 
-	$tmp = \rkphplib\lib\conf2kv($this->tok_login('conf.role'));
+	$tmp = \rkphplib\lib\conf2kv($this->tok_login('conf.role?'));
 	$privileges = str_replace('=,', '', join(',', $tmp)); // app1.priv1,app1.priv2,app2.priv1,...
 
 	// \rkphplib\lib\log_debug("TLogin.hasPrivileges> require_priv=[$require_priv] priv=[$priv] privileges=[$privileges]");
