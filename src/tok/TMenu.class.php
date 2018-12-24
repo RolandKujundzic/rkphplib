@@ -17,6 +17,10 @@ use \rkphplib\Exception;
  */
 class TMenu extends AMenu implements TokPlugin {
 
+/** @var map $html_sub */
+private $html_sub = [];
+
+
 /**
  * Set default conf. Configuration keys (N = 1 ... 6, IDENT: 1=[], 2=[\t], 3=[\t\t], ...):
  *
@@ -80,6 +84,12 @@ public function tok_menu($tpl) {
 		$res = $this->tok->replaceTags($res, [ $lname => $out ]);
 	}
 
+	foreach ($this->html_sub as $tag => $out) {
+		$res = $this->tok->replaceTags($res, [ $tag => $out ]);
+	}
+
+	// \rkphplib\lib\log_debug("TMenu.tok_menu> i=$i res: [$res]");
+
 	// remove next level include
 	$res = $this->tok->replaceTags($res, [ 'level_'.$i => '' ]);
 
@@ -105,11 +115,24 @@ private function level_n($start, &$html) {
 		$node = $this->node[$i];
 
 		if ($node['level'] == $level && $node['parent'] == $parent) {
-			array_push($html[$level], $this->node_html($i));
-			if ($node['type'] == 'b' && !empty($node['hi'])) {
-				// \rkphplib\lib\log_debug("level_n> i=$i node.parent=$parent node.level=$level node.type=".$node['type'].' node.hi='.$node['hi']);
-				$this->level_n($i + 1, $html);
+			$sub_html = $this->node_html($i);
+
+			if ($node['type'] == 'b') {
+				if (!empty($node['hi'])) {
+					$this->level_n($i + 1, $html);
+				}
+				else if (!empty($this->conf['level_show_all'])) {
+					$tag = 'level_'.$this->node[$i]['id'];
+					$lname = 'level_'.($level + 1);
+					$sub = [];
+
+					$this->level_n($i + 1, $sub);
+					$out = $this->conf[$lname.'_header'].join($this->conf[$lname.'_delimiter'], $sub[$level + 1]).$this->conf[$lname.'_footer'];
+					$this->html_sub[$tag] = $out;
+				}
 			}
+
+			array_push($html[$level], $sub_html);
 		}
 	}
 
@@ -149,6 +172,11 @@ private function node_html($pos) {
 			// remove next level include
 			$include_tag = 'level_'.($node['level'] + 1);
 			$tpl = $this->tok->replaceTags($tpl, [ $include_tag => '' ]);
+
+			if (!empty($this->conf['level_show_all'])) {
+				$include_tag = $this->tok->getTag('level_'.$node['id']);
+				$tpl = $this->tok->replaceTags($tpl, [ 'level_sub' => $include_tag ]);
+			}
 		}
 		else if (!empty($this->conf['level_curr'])) {
 			$include_tag = $this->tok->getTag('level_'.($node['level'] + 1));
