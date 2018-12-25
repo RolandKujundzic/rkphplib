@@ -1057,10 +1057,22 @@ public function tok_link($name_list, $p) {
 			$dir = $_REQUEST[SETTINGS_REQ_DIR];
 		}
 
-		$res = 'index.php?'.SETTINGS_REQ_DIR.'='.rawurlencode($dir);
+		if (!empty($dir)) {
+			$p[SETTINGS_REQ_DIR] = $dir;
+		}
 
+		$res = '';
 		foreach ($p as $key => $value) {
-			$res .= '&'.$key.'='.rawurlencode($value);
+			if (empty($res)) {
+				$res .= 'index.php?'.$key.'='.rawurlencode($value);
+			}
+			else {
+				$res .= '&'.$key.'='.rawurlencode($value);
+			}
+		}
+
+		if (empty($res)) {
+			$res = 'index.php';
 		}
 	}
 	else {
