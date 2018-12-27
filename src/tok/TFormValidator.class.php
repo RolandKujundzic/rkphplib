@@ -146,7 +146,7 @@ public function __construct() {
 	// PLUGINS with escaped HASH_DELIMITER
 	$d = HASH_DELIMITER;
 	$pl_get = $tok->getPluginTxt([ 'get', SETTINGS_REQ_DIR ]);
-	$pl_link = $tok->getPluginTxt([ 'link', '' ], '_='.$pl_get);
+	$pl_link = $tok->getPluginTxt([ 'link', '' ], '_=');
 	$pl_if_method = $tok->getPluginTxt([ 'if', '' ], $method.$d.$method.$d.'get');
 	$pl_if_upload = $tok->getPluginTxt([ 'if', '' ], $upload.$d.'enctype="multipart/form-data"');
 	$pl_fv_hidden = $tok->getPluginTxt([ 'fv', 'hidden' ], null);
@@ -162,7 +162,10 @@ public function __construct() {
 
 	$this->conf['default'] = [
 		'submit' 					=> 'form_action',
-		'label_required'	=> '<span class="label_required">'.$label.'</span>',
+
+		'id_prefix'				=> 'fvin_',
+
+		'label_required'	=> '<div class="label_required">'.$label.'</div>',
 
 		'template.engine' => 'default',
 
@@ -188,13 +191,18 @@ public function __construct() {
 
 		'default.output.in.multi'	=> '<span class="label">'.$label."</span>$input$example$error_message\n",
 
-		'default.example'			=> '<span class="example">'.$example.'</span>',
+		'default.example'	=> '<span class="example">'.$example.'</span>',
 
-		'default.header' => '<form class="fv" action="'.$pl_link.'" method="'.$pl_if_method.'" '.$pl_if_upload.
+		'default.header'	=> '<form class="fv" action="'.$pl_link.'" method="'.$pl_if_method.'" '.$pl_if_upload.
 			' data-key13="prevent" novalidate>'."\n".$pl_fv_hidden,
 
-		'default.footer' => '<button type="submit" name="form_action" value="1">'.$label.'</button>'.
+		'default.form'		=> '<form class="fv {:=class}" action="'.$pl_link.'" method="'.$pl_if_method.'" '.$pl_if_upload.
+			' data-key13="prevent" novalidate>'."\n".$pl_fv_hidden,
+
+		'default.footer'	=> '<button type="submit" class="{:=class}">'.$label.'</button>'.
 			'<div class="label2">'.$pl_if_label2."\n".$pl_if_yes_fv_check_fadeout."\n</div>\n</form>",
+
+		'default.submit'	=> '<button type="submit" class="{:=class}">'.$label.'</button>',
 
 
 		'bootstrap.in.input'	  => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="form-control '.$class.'" '.$tags.'>',
@@ -211,7 +219,7 @@ public function __construct() {
 
 		'bootstrap.error.const'	=> 'is-invalid',
 
-		'bootstrap.output.in'		=> '<div class="'.$form_group.'">'."\n".'<label for="'.$id.'">'.$label.'</label>'.
+		'bootstrap.output.in'		=> '<div class="{:=class} '.$form_group.'">'."\n".'<label for="'.$id.'">'.$label.'</label>'.
 			"$example$error_message\n$input\n</div>",
 
 		'bootstrap.output.in.multi'		=> '<div class="row">'."\n".'<div class="col-md-3"><label>'.$label.
@@ -222,10 +230,12 @@ public function __construct() {
 			"\n".$pl_fv_hidden,
 	
 		'bootstrap.footer'	=> '<div class="row">'."\n".'<div class="col-md-4">'."\n".
-			'<button type="submit" class="btn" name="form_action" value="1">'.$label.'</button>'."\n".'</div>'."\n".
+			'<button type="submit" class="btn">'.$label.'</button>'."\n".'</div>'."\n".
 			'<div class="col-md-8">'.$pl_if_label2_btn."\n".$pl_if_yes_fv_check_fadeout."\n</div>\n</div>\n</form>\n</div>\n</div>\n</div>",
 
-		'bootstrap.example'			=> '<span class="example">'.$example.'</span>',
+		'bootstrap.submit'	=> '<button type="submit" class="btn">'.$label.'</button>',
+
+		'bootstrap.example'	=> '<span class="example">'.$example.'</span>',
 
 
 		'material.in.input'	   => '<input type="'.$type.'" name="'.$name.'" value="'.$value.
@@ -264,12 +274,13 @@ public function __construct() {
  */
 public function tok_fv_appendjs($name, $id_list = []) {
 	$conf = $this->conf['current'];
+	$id_prefix = $conf['id_prefix'];
 	$list = [];
 
 	if (count($id_list) > 0) {
 		\rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs> name=$name id_list: ".print_r($id_list, true));
 		foreach ($id_list as $ignore => $param) {
-			array_push($list, $name.'.append("'.$param.'", document.getElementById("fvin_'.$param.'").value);');
+			array_push($list, $name.'.append("'.$param.'", document.getElementById("'.$id_prefix.$param.'").value);');
 		}
 	
 		$res = join("\n", $list);
@@ -292,14 +303,14 @@ public function tok_fv_appendjs($name, $id_list = []) {
 		}
 
 		if ($param) {
-			array_push($list, $name.'.append("'.$param.'", document.getElementById("fvin_'.$param.'").value);');
+			array_push($list, $name.'.append("'.$param.'", document.getElementById("'.$id_prefix.$param.'").value);');
 		}
 	}
 
 	if (!empty($conf['hidden_keep'])) {
 		$hidden_keys = \rkphplib\lib\split_str(',', $conf['hidden_keep']);
 		foreach ($hidden_keys as $key) {
-			array_push($list, $name.'.append("'.$key.'", document.getElementById("fvin_'.$key.'").value);');
+			array_push($list, $name.'.append("'.$key.'", document.getElementById("'.$id_prefix.$key.'").value);');
 		}
 	}
 
@@ -326,7 +337,7 @@ public function tok_fv_appendjs($name, $id_list = []) {
 public function tok_fv_preset($arg) {
 	$skey = $this->getConf('submit');
 
-	if (isset($_REQUEST[$skey])) {
+	if (empty($_REQUEST[$skey])) {
 		return '';
 	}
 
@@ -378,11 +389,13 @@ public function tok_fv_set_error_message($name, $msg) {
 public function tok_fv_hidden() {
 	$res = '';
 
+	$id_prefix = $this->getConf('id_prefix', '', true);
+
 	if (!empty($hidden_keep = $this->getConf('hidden_keep', '', false))) {
 		$list = \rkphplib\lib\split_str(',', $hidden_keep);
 		foreach ($list as $key) {
 			if (isset($_REQUEST[$key])) {
-				$res .= '<input type="hidden" id="fvin_'.$key.'" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($_REQUEST[$key]).'">'."\n";
+				$res .= '<input type="hidden" id="'.$id_prefix.$key.'" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($_REQUEST[$key]).'">'."\n";
 			}
 		}
 	}
@@ -390,7 +403,7 @@ public function tok_fv_hidden() {
 	foreach ($this->conf['current'] as $key => $value) {
 		if (mb_substr($key, 0, 7) == 'hidden.') {
 			$key = mb_substr($key, 7);
-			$res .= '<input type="hidden" id="fvin_'.$key.'" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($value).'">'."\n";
+			$res .= '<input type="hidden" id="'.$id_prefix.$key.'" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($value).'">'."\n";
 		}
 	}
 
@@ -499,6 +512,9 @@ public function tok_fv_init($do, $p) {
 		$this->conf['current']['required'] = empty($this->conf['current']['required']) ? [] : 
 			\rkphplib\lib\split_str(',', $this->conf['current']['required']);
 	}
+
+	$submit_name = $this->conf['current']['submit'];
+	$this->conf['current']['hidden.'.$submit_name] = 1;
 }
 
 
@@ -822,7 +838,17 @@ private function multiCheckbox($name, $p) {
 public function tok_fv_in($name, $p) {
 	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_in($name, ...)> p: ".print_r($p, true));
 	$conf = $this->conf['current'];
+
+  $skey = $conf['submit'];
+  $is_action = !empty($_REQUEST[$skey]);
+
 	$res = empty($p['output']) ? $this->getConf('output.in', true) : $this->getConf('output.in.'.$p['output']);
+
+	if (!$is_action && (isset($p['value']) || isset($_REQUEST[$name]))) {
+		$p['value'] = '';
+	}
+
+print "<!-- [$skey|$is_action] tok_fv_in($name): ".print_r($p, true)." -->\n";
 
 	if (!empty($conf['in.'.$name])) {
 		$this->parseInName($name, $conf['in.'.$name], $p);
@@ -837,7 +863,7 @@ public function tok_fv_in($name, $p) {
 	}
 
  	if (empty($p['id'])) {
-		$p['id'] = 'fvin_'.$name;
+		$p['id'] = $conf['id_prefix'].$name;
 	}
 
 	if (!isset($p['type'])) {
