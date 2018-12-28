@@ -136,6 +136,7 @@ public function __construct() {
 	$upload = TAG_PREFIX.'upload'.TAG_SUFFIX;
 	$tags = TAG_PREFIX.'tags'.TAG_SUFFIX;
 	$options = TAG_PREFIX.'options'.TAG_SUFFIX;
+	$checked = TAG_PREFIX.'checked'.TAG_SUFFIX;
 	$fselect_input = TAG_PREFIX.'fselect_input'.TAG_SUFFIX;
 
 	$tok = is_null($this->tok) ? Tokenizer::$site : $this->tok;
@@ -216,6 +217,11 @@ public function __construct() {
 		'bootstrap.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="form-control '.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
+		
+		'bootstrap.in.check'		=> '<div class="form-check-inline">'.$options.'</div>',
+
+		'bootstrap.in.check.option' => '<label class="form-check-label" for="'.$id.'"><input id="'.$id.'" type="'.$type.'" name="'.
+			$name.'" class="form-check-input '.$class.'" value="'.$value.'" '.$checked.'>'.$label.'</label>',
 
 		'bootstrap.error.const'	=> 'is-invalid',
 
@@ -828,7 +834,8 @@ private function multiCheckbox($name, $p) {
 /**
  * Show input for $name. Default input template conf[ENGINE.in.$type].
  * Default output template is conf[ENGINE.output.in]. If $p[output] is not empty 
- * use conf[ENGINE.in.OUTPUT].
+ * use conf[ENGINE.in.OUTPUT]. If there are multiple forms on same page,
+ * set _REQUEST[use_FORM_ACTION]=1 to enable specific form.
  *
  * @throws
  * @param string $name
@@ -836,19 +843,17 @@ private function multiCheckbox($name, $p) {
  * @return string
  */
 public function tok_fv_in($name, $p) {
-	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_in($name, ...)> p: ".print_r($p, true));
 	$conf = $this->conf['current'];
 
   $skey = $conf['submit'];
   $is_action = !empty($_REQUEST[$skey]);
 
+	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_in($name, ...)> key=$skey is_action=$is_action p: ".print_r($p, true));
 	$res = empty($p['output']) ? $this->getConf('output.in', true) : $this->getConf('output.in.'.$p['output']);
 
-	if (!$is_action && (isset($p['value']) || isset($_REQUEST[$name]))) {
+	if (!$is_action && (isset($p['value']) || isset($_REQUEST[$name])) && $skey != 'form_action' && !isset($_REQUEST['use_'.$skey])) {
 		$p['value'] = '';
 	}
-
-print "<!-- [$skey|$is_action] tok_fv_in($name): ".print_r($p, true)." -->\n";
 
 	if (!empty($conf['in.'.$name])) {
 		$this->parseInName($name, $conf['in.'.$name], $p);
@@ -922,6 +927,7 @@ public function getConf($key, $engine = '', $required = true) {
 
 	$ckey = $engine.$key;
 
+	// \rkphplib\lib\log_debug("TFormValidator.getConf($key, $engine, $required)> ckey = $ckey");
 	if (!isset($conf[$ckey])) {
 		$res = '';
 
@@ -1054,15 +1060,9 @@ protected function parseInName($name, $value, &$p) {
 	else if ($type == 'const') {
 		// ok ...
 	}
-	else if ($type == 'checkbox') {
-		if (count($r) == 0) {
-			$p['value'] = 1;
-		}
-		else {
-			$p['value'] = array_shift($r);
-		}
-
-		$p['checked'] = isset($_REQUEST[$name]) && $_REQUEST[$name] == $p['value'];
+	else if ($type == 'checkbox_hash' || $type == 'radio_hash') {
+		$options = $this->getCheckOptions($r, $name, $value);
+		$p['tpl_in'] = $this->tok->replaceTags($this->getConf('in.check', true, true), [ 'options' => $options ]);
 	}
 	else if ($type == 'file') {
 		if (!empty($r[1])) {
@@ -1073,7 +1073,7 @@ protected function parseInName($name, $value, &$p) {
 		// ToDo ...
   }
 	else {
-		throw new Exception('ToDo: name='.$name.' p: '.join('|', $p));
+		throw new Exception("ToDo: name=$name type=$type p: ".join('|', $p));
 	}
 
 	foreach ($r as $key => $value) {
@@ -1119,7 +1119,12 @@ protected function getInput($name, $ri) {
 		throw new Exception("missing form validator type for $name (use $use)", print_r($ri, true));
 	}
 
-	if (!empty($conf[$tpl_in.'.'.$ri['type']])) {
+	if (!empty($ri['tpl_in'])) {
+		$input = $ri['tpl_in'];
+		\rkphplib\lib\log_debug("TFormValidator.getInput($name, ...)> tpl_in=$tpl_in: $input");
+		unset($ri['tpl_in']);
+	}
+	else if (!empty($conf[$tpl_in.'.'.$ri['type']])) {
 		$input = $conf[$tpl_in.'.'.$ri['type']];
 	}
 	else {
@@ -1185,6 +1190,46 @@ protected function getInput($name, $ri) {
 
 	// \rkphplib\lib\log_debug("TFormValidator.getInput($name, ...)> input=[$input] ri: ".print_r($ri, true));
 	return $input;
+}
+
+
+/**
+ * Return radio|check box html options.
+ *
+ * @throws
+ * @param map-reference $p
+ * @param string $name
+ * @param string $str_options
+ * @return string
+ */
+private function getCheckOptions(&$p, $name, $str_options) {
+	$html = '';
+
+	$conf = $this->conf['current'];
+	$type = (strpos($str_options, 'checkbox') === 0) ? 'checkbox' : 'radio';
+
+	$tpl = $this->getConf('in.check.option', true, true);
+
+	\rkphplib\lib\log_debug("TFormValidator.getCheckOptions|enter> name=[$name] str_options=[$str_options] tpl=[$tpl] p: ".print_r($p, true));
+	foreach ($p as $value => $label) {
+		unset($p[$value]);
+		$r = [ 'name' => $name, 'type' => $type ];
+		$r['id'] = $conf['id_prefix'].$name.'_'.$value;
+		$r['value'] = $value;
+		$r['label'] = $label;
+		$r['checked'] = (!empty($_REQUEST[$name]) && $_REQUEST[$name] == $value) ? 'checked' : '';
+		$html .= $this->tok->replaceTags($tpl, $r);
+	}
+
+	if (count($p) > 0) {
+		throw new Exception('leftover keys', "html=[$html] p: ".print_r($p, true));
+	}
+
+	$p['class'] = 'check_group';
+	$p['id'] = $conf['id_prefix'].$name;
+
+	\rkphplib\lib\log_debug("TFormValidator.getOptions> $html");
+	return $html;
 }
 
 
