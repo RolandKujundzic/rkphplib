@@ -736,6 +736,7 @@ public function nextId($table, $use_table = '') {
 
 	$id_col = 'id';
 	$where = '';
+	$owner = 0;
 
 	if (mb_substr($use_table, 0, 1) === '@') {
 		$where = " WHERE name='".self::escape($table)."'";
