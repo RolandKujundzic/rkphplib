@@ -1571,7 +1571,7 @@ public function tok_esc($param, $arg) {
 
 
 /**
- * Set _REQUEST[$name] = $value if unset.
+ * Set _REQUEST[$name] = $value if empty (use trailing ! for unset).
  *
  * @tok {set_default:id!}value{:set_default} - abort if _REQUEST['id'] is set
  * @tok {set_default:key}value{:set_default}
@@ -1603,7 +1603,7 @@ public function tok_set_default($name, $value) {
 			}
 		}
 	}
-	else if (!isset($_REQUEST[$name])) {
+	else if (!isset($_REQUEST[$name]) || strlen($_REQUEST[$name]) == 0) {
 		$_REQUEST[$name] = $value;
 	}
 
