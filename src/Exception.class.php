@@ -78,7 +78,7 @@ private static function logTrace($stack) {
 		date_default_timezone_set(SETTINGS_TIMEZONE);
 	}
 
-	$last = $stack[1];
+	$last = isset($stack[1]) ? $stack[1] : $stack[0];
 	list($msec, $ts) = explode(" ", microtime());
 	$last['TIME'] = date('YmdHis', $ts).'.'.(1000 * round((float)$msec, 3));
 	
