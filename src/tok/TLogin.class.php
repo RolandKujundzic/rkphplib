@@ -402,12 +402,14 @@ public function tok_login_update($do, $p) {
  *
  * @tok {login_auth:}login={get:login}|#|password={get:password}|#|redirect=...|#|log_table=...{:login_auth}
  * @tok {login_auth:}login={get:login}|#|password={get:pass}|#|callback=cms,tok_cms_conf2login{:login_auth}
- * @tok {login_auth:}login={get:email}|#|password={get:postcode}|#|select= SELECT *, postcode AS password_input, email AS login ...
+ * @tok {login_auth:}login={get:email}|#|password={get:postcode}|#|select_login= SELECT *, postcode AS password_input, email AS login ...
  * @tok {login_auth:}admin2user=admin:user:visitor:...|#|...{:login_auth}
  * @tok {login_auth:}create_table= @1 cms_conf, cms_login_history|#|...{:login_auth}
  *
  * If admin2user is set any admin account can login as user account if login is ADMIN_LOGIN:=USER_LOGIN and
  * password is ADMIN_PASSWORD.
+ *
+ * Use multi_table=table1, table2, ... to check multiple tables (and select_login_TABLE= ... if necessary).
  *
  * If login is invalid set {var:login_error} = invalid.
  * If password is invalid set {var:password_error} = invalid.
@@ -471,7 +473,25 @@ public function tok_login_auth($p) {
 	}
 
 	if (!is_null($this->db)) {
-		$user = $this->selectFromDatabase($p);
+		if (!empty($p['multi_table'])) {
+			if (!is_null($this->db) && !empty($p['login']) && !empty($p['password'])) {
+				$list = \rkphplib\lib\split_str(',', $p['multi_table']);
+				$user = null;
+
+				for ($i = 0; is_null($user) && $i < count($list); $i++) {
+					$p['table'] = $list[$i];
+					$table = ADatabase::escape_name($p['table']);
+					$p['select_login'] = !empty($p['select_login_'.$p['table']]) ? $p['select_login_'.$p['table']] : 
+						"SELECT *, PASSWORD({:=password}) AS password_input FROM $table ".
+						"WHERE login={:=login} AND (status='active' OR status='registered')";
+					$p['registered2active'] = "UPDATE $table SET status='active' WHERE id={:=id}";
+					$user = $this->selectFromDatabase($p);
+				}
+			}
+		}
+		else {
+			$user = $this->selectFromDatabase($p);
+		}
 
 		if (!is_null($user) && !empty($p['select_list'])) {
 			$list = \rkphplib\lib\split_str(',', $p['select_list']);
@@ -628,7 +648,7 @@ private function selectFromDatabase($p) {
 		$p['login'] = $admin_login;
 	}
 
-	$query = empty($p['select']) ? $this->db->getQuery('select_login', $p) : $p['select'];
+	$query = $this->db->getCustomQuery('select_login', $p);
 	$dbres = $this->db->select($query);
 	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase> query=$query - ".print_r($dbres, true));
 	if (count($dbres) == 0) {
@@ -657,7 +677,7 @@ private function selectFromDatabase($p) {
 		}
 
 		$p['login'] = $user_login;
-		$query = empty($p['select']) ? $this->db->getQuery('select_login', $p) : $p['select'];
+		$query = $this->db->getCustomQuery('select_login', $p);
 		$dbres = $this->db->select($query);
 		if (count($dbres) != 1) {
 			$this->tok->setVar('login_error', 'invalid');
@@ -673,7 +693,7 @@ private function selectFromDatabase($p) {
 
 	if ($dbres[0]['status'] == 'registered') {
 		// auto-activate
-		$this->db->execute($this->db->getQuery('registered2active', $dbres[0]));
+		$this->db->execute($this->db->getCustomQuery('registered2active', $dbres[0]));
 	}
 
 	// login + password ok ... update login session
