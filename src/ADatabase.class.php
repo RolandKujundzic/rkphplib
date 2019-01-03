@@ -402,6 +402,22 @@ public function setQuery($qkey, $query, $info = []) {
 
 
 /**
+ * If $replace[$qkey] is not empty return getQuery('_custom_'.$qkey, $replace)
+ * otherwise return getQuery($qkey, $replace).
+ *
+ * @see getQuery
+ */
+public function getCustomQuery($qkey, $replace) {
+	if (!empty($replace[$qkey])) {
+		$this->setQuery('_custom_'.$qkey, $replace[$qkey]);
+		return $this->getQuery('_custom_'.$qkey, $replace);
+	}
+
+	return $this->getQuery($qkey, $replace);
+}
+
+
+/**
  * Return (prepared) query defined via setQuery($qkey, '...').
  *
  * If query is prepared return parameter array (last two entries are query and replace hash). 
