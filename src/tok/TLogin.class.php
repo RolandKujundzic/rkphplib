@@ -63,7 +63,7 @@ public function getPlugins($tok) {
 	$plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_access'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['login_update'] = TokPlugin::KV_BODY;
-	$plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
+	$plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 
 	return $plugin;
 }
@@ -167,14 +167,20 @@ public function set($key, $value) {
  * Logout. Example:
  *
  * @tok {login_clear:}
+ * @tok {login_clear:}redirect=login/byebye{:login_clear}
  *
+ * @param hash $p
  * @return ''
  */
-public function tok_login_clear() {
+public function tok_login_clear($p) {
 	if ($this->sess) {
 		$this->setLoginHistory('LOGOUT');
 		$this->sess->destroy();
 		$this->sess = null;
+	}
+
+	if (!empty($p['redirect'])) {
+		\rkphplib\lib\redirect($p['redirect']);
 	}
 
 	return '';
@@ -427,8 +433,14 @@ public function tok_login_update($do, $p) {
  * 				select_bag= SELECT * FROM shop_bag WHERE customer={:=id} ORDER BY id DESC LIMIT 1{:login_auth}
  *
  * @param map $p
+ * @redirect if $p[redirect], $p[redirect.$user[type]] or $user[redirect]
+ * @return ''
  */
 public function tok_login_auth($p) {
+
+	if (!$this->sess) {
+		return;
+	}
 
 	if ($this->sess->has('id')) {
 		if (($type = $this->sess->has('type'))) {
@@ -524,13 +536,15 @@ public function tok_login_auth($p) {
 	}
 
 	if (!empty($user['redirect'])) {
-		\rkphplib\lib\redirect($user['redirect']);	
+		$redirect_to = $this->tok->replaceTags($user['redirect'], $user);
+		\rkphplib\lib\redirect($redirect_to);	
 	}
 	else if (!empty($user['type']) && !empty($p['redirect_'.$user['type']])) {
 		\rkphplib\lib\redirect($p['redirect_'.$user['type']]);
 	}
 	else if (!empty($p['redirect'])) {
-		\rkphplib\lib\redirect($p['redirect']);	
+		$redirect_to = $this->tok->replaceTags($p['redirect'], $user);
+		\rkphplib\lib\redirect($redirect_to);	
 	}
 }
 
