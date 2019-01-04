@@ -34,6 +34,8 @@ use \rkphplib\ValueCheck;
  * hidden_keep= dir, ...|#|
  * hidden.form_action=1|#|
  * hidden.id= 5|#|
+ * col_val= {get:column}:{get:value}|#| (ajax mode)
+ * allow_column= login, password, ...|#| (ajax mode)
  * required= login, password|#|
  * check.login= minLength:2|#|
  * {sql_select:}SELECT count(*) AS num FROM {esc_name:}{login:@table}{:esc_name}
@@ -555,13 +557,40 @@ public function tok_fv_check() {
 		$this->conf['current']['required'] = \rkphplib\lib\split_str(',', $this->conf['current']['required']);
 	}
 
-	foreach ($this->conf['current']['required'] as $key) {
-		if (!isset($_REQUEST[$key]) || mb_strlen($_REQUEST[$key]) == 0) {
-			if (!isset($this->error[$key])) {
-				$this->error[$key] = [];
+	if (empty($this->conf['current']['col_val'])) {
+		foreach ($this->conf['current']['required'] as $key) {
+			if (!isset($_REQUEST[$key]) || mb_strlen($_REQUEST[$key]) == 0) {
+				if (!isset($this->error[$key])) {
+					$this->error[$key] = [];
+				}
+
+				array_push($this->error[$key], 'required');
+			}
+		}
+	}
+	else {
+		$col_val = trim($this->conf['current']['col_val']);
+
+		if (substr($col_val, 0, 1) == ':') {
+			$this->error['parameter'] = 'empty column name';
+		}
+
+		list ($column, $value) = explode(':', $col_val, 2);
+
+		if (mb_strlen($value) == 0) {
+			if (!isset($this->error[$column])) {
+				$this->error[$column] = [];
 			}
 
-			array_push($this->error[$key], 'required');
+			array_push($this->error[$column], 'required');
+		}
+
+		if (!empty($this->conf['current']['column_allowed'])) {
+			$allow_col = \rkphplib\lib\split_str(',', $this->conf['current']['column_allowed']);
+
+			if (!in_array($column, $allow_col)) {
+				$this->error['parameter'] = $column.' is immutable';
+			}
 		}
 	}
 
@@ -582,6 +611,11 @@ public function tok_fv_check() {
 				// \rkphplib\lib\log_debug("TFormValidator->tok_fv_check> path=$key name=$name error: ".print_r($this->error[$name], true));
 			}
 		}
+	}
+
+	if (count($this->error) > 0 && !empty($this->conf['current']['col_val'])) {
+    print $this->tok->callPlugin('tpl', 'fv_error');
+		exit(0);
 	}
 
 	return (count($this->error) == 0) ? 'yes' : 'error';
@@ -943,7 +977,8 @@ public function getConf($key, $engine = '', $required = true) {
 			}
 		}
 		else if ($required) {
-			throw new Exception("no such configuration key $ckey", "no engine");
+			$msg = (count($conf) == 0) ? 'empty configuration' : 'no engine';
+			throw new Exception("no such configuration key $ckey", $msg);
 		}
 	}
 	else {
