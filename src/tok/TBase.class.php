@@ -6,6 +6,7 @@ $parent_dir = dirname(__DIR__);
 require_once(__DIR__.'/TokPlugin.iface.php');
 require_once($parent_dir.'/Exception.class.php');
 require_once($parent_dir.'/File.class.php');
+require_once($parent_dir.'/JSON.class.php');
 require_once($parent_dir.'/lib/htmlescape.php');
 require_once($parent_dir.'/lib/split_str.php');
 require_once($parent_dir.'/lib/redirect.php');
@@ -15,6 +16,8 @@ require_once($parent_dir.'/lib/entity.php');
 
 use \rkphplib\Exception;
 use \rkphplib\File;
+use \rkphplib\JSON;
+
 
 
 if (!defined('PATH_RKPHPLIB')) {
@@ -104,7 +107,8 @@ public function __construct() {
  * - keep: TEXT, REQUIRE_BODY
  * - load: TEXT, REQUIRE_BODY
  * - link: PARAM_CSLIST, KV_BODY
- * - redo: NO_PARAM, REDO 
+ * - redo: NO_PARAM, REDO
+ * - json:exit: REQUIRE_PARAM, KV_BODY
  * - toupper: NO_PARAM
  * - tolower: NO_PARAM
  * - hidden: PARAM_CSLIST, CSLIST_BODY
@@ -174,6 +178,8 @@ public function getPlugins($tok) {
 	$plugin['log'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['shorten'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['strlen'] = TokPlugin::NO_PARAM;
+	$plugin['json:exit'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
+	$plugin['json'] = 0;
 
 	return $plugin;
 }
@@ -234,6 +240,18 @@ public function tok_shorten($maxlen, $txt) {
 
 
 /**
+ * Output response code header and $kv as json.
+ * 
+ * @exit
+ * @param int $code (default = 200)
+ * @param hash $kv
+ */
+public function tok_json_exit($code = 200, $kv) {
+	JSON::output($kv, $code);
+}
+
+
+/**
  * Write message via log_debug.
  * 
  * @param string $txt
@@ -270,7 +288,8 @@ public function tok_hidden($param, $arg) {
 /**
  * Trim text. 
  *
- * @tok {trim:dlines|ignore_empty|lines|pre|space|comma} ... {:trim}
+ * @tok {trim:dlines|ignore_empty|lines|pre|space|whitespace|comma} ... {:trim}
+ * @tok {trim:whitespace} 1 3\n5\r\n\r\n3 {:trim} = "1353"
  *
  * @param string $param
  * @param string $txt
@@ -315,6 +334,9 @@ public function tok_trim($param, $txt) {
 	else if ($param == 'space') {
 		$res = preg_replace("/[\r\n\t]+/", ' ', $res);
 		$res = preg_replace("/ +/", ' ', $res);
+	}
+	else if ($param == 'whitespace') {
+		$res = preg_replace("/\s/", '', $res);
 	}
 	else if ($param == 'comma') {
 		$res = preg_replace("/[\r\n]+/", ', ', $res);
