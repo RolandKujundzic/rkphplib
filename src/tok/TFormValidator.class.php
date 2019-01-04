@@ -38,7 +38,7 @@ use \rkphplib\ValueCheck;
  * allow_column= login, password, ...|#| (ajax mode)
  * required= login, password|#|
  * check.login= minLength:2|#|
- * {sql_select:}SELECT count(*) AS num FROM {esc_name:}{login:@table}{:esc_name}
+ * {sql_select:}SELECT count(*) AS num FROM {sql:name}{login:@table}{:sql}
  *   WHERE login={esc:}{login:login}{:esc} AND id!={esc:}{login:id}{:esc}{:sql_select}
  * check.login.2= compare:0:eq:{sql_col:num}:error:{txt:}Login name already exists{:txt}|#|
  * check.password= minLength:4|#|
@@ -436,7 +436,7 @@ public function tok_fv_get($name) {
 
 	$required = substr($name, -1) == '!';
 	if ($required) {
-		$name = substr($name, -1);
+		$name = substr($name, 0, -1);
 	}
 
 	$engine = '';
@@ -601,7 +601,7 @@ public function tok_fv_check() {
 		$col_val = trim($this->conf['current']['col_val']);
 
 		if (substr($col_val, 0, 1) == ':') {
-			$this->error['parameter'] = 'empty column name';
+			$this->error['parameter'] = [ 'empty column name' ];
 		}
 
 		list ($column, $value) = explode(':', $col_val, 2);
@@ -618,7 +618,7 @@ public function tok_fv_check() {
 			$allow_col = \rkphplib\lib\split_str(',', $this->conf['current']['allow_column']);
 
 			if (!in_array($column, $allow_col)) {
-				$this->error['parameter'] = $column.' is immutable';
+				$this->error['parameter'] = [ $column.' is immutable' ];
 			}
 		}
 	}
@@ -740,7 +740,12 @@ public function tok_fv_error_message($name, $tpl = '') {
 			$tpl = $this->getConf('error.message', true);
 		}
 
-		$error_list = $this->error[$name]; 
+		$error_list = $this->error[$name];
+
+		if (!is_array($error_list)) {
+			throw new Exception('invalid error list', print_r($error_list, true));
+		}
+ 
 		if ($this->tok->hasPlugin('txt')) {
 			for ($i = 0; $i < count($error_list); $i++) {
 				// localize error message
@@ -750,7 +755,6 @@ public function tok_fv_error_message($name, $tpl = '') {
 
 		$r = [ 'name' => $name ];
 		$r['error'] = join($this->getConf('error.message_concat', true), $error_list);
-
 		$res = $this->tok->replaceTags($tpl, $r);
 	}
 
