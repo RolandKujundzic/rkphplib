@@ -215,7 +215,7 @@ public static function unzip($file, $target_dir = '') {
 public function addText($file, $text) {
 
 	if (empty($file)) {
-		lib_abort("empty filename");
+		throw new Exception("empty filename");
 	}
 
 	if (self::$is_broken) {
