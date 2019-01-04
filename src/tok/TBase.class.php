@@ -1848,7 +1848,7 @@ public function tok_unescape($param, $txt) {
  *
  * - base64: base64 encode $txt
  *
- * @tok {escape:base64}hello{:escape} = aGVsbG8=
+ * @tok {encode:base64}hello{:encode} = aGVsbG8=
  *
  * @throws
  * @param string $param
@@ -1874,7 +1874,7 @@ public function tok_encode($param, $txt) {
  *
  * - base64: base64 decode $txt
  *
- * @tok {escape:base64}aGVsbG8={:escape} = hello
+ * @tok {decode:base64}aGVsbG8={:decode} = hello
  *
  * @throws
  * @param string $param
