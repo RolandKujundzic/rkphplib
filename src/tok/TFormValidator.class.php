@@ -95,6 +95,7 @@ public function getPlugins($tok) {
 	$plugin['fv'] = 0;
 	$plugin['fv:init'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY; 
 	$plugin['fv:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY | TokPlugin::TEXT;
+	$plugin['fv:get'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:get_conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['fv:check'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY; 
 	$plugin['fv:in'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY | TokPlugin::REDO;
@@ -420,6 +421,34 @@ public function tok_fv_hidden() {
 
 
 /**
+ * Return configuration key value.
+ *
+ * @tok {fv:get:submit} = form_action
+ * @tok {fv:get:KEY@ENGINE}
+ * @tok {fv:get:REQUIRED_KEY!} throws if not found
+ *
+ * @see getConf
+ * @throws
+ * @param string $name
+ * @return string
+ */
+public function tok_fv_get($name) {
+
+	$required = substr($name, -1) == '!';
+	if ($required) {
+		$name = substr($name, -1);
+	}
+
+	$engine = '';
+	if (strpos($name, '@') > 0) {
+		list ($name, $engine) = explode('@', $name, 2);
+	}
+
+	return $this->getConf($name, $engine, $required);
+}
+
+
+/**
  * Return configuration as string hash.
  *
  * @tok {fv:get_conf:default} 
@@ -585,8 +614,8 @@ public function tok_fv_check() {
 			array_push($this->error[$column], 'required');
 		}
 
-		if (!empty($this->conf['current']['column_allowed'])) {
-			$allow_col = \rkphplib\lib\split_str(',', $this->conf['current']['column_allowed']);
+		if (!empty($this->conf['current']['allow_column'])) {
+			$allow_col = \rkphplib\lib\split_str(',', $this->conf['current']['allow_column']);
 
 			if (!in_array($column, $allow_col)) {
 				$this->error['parameter'] = $column.' is immutable';
