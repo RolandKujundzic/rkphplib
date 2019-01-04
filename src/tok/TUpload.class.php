@@ -592,7 +592,7 @@ private function convertImage($source, $target) {
 		$cmd = $this->_conf['image_convert'];
 	}
 	else {  
-		lib_abort("invalid image converstion [".$this->_conf['image_convert']."] use cmyk|gray|convert ...");
+		throw new Exception("invalid image converstion [".$this->_conf['image_convert']."] use cmyk|gray|convert ...");
 	}
 	
   if ($cmd) {
