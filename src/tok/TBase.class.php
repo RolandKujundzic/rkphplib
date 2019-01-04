@@ -2277,7 +2277,13 @@ public function tok_true($val, $out) {
 	$tf = $this->_tok->getCallStack('tf');
 
 	if (is_string($tf) && strpos($tf, 'switch:') === 0) {
-		$val = \rkphplib\lib\split_str(',', $val);
+		if (substr($val, 0, 4) == 'var:') {
+			$val = \rkphplib\lib\split_str(',', $this->_tok->getVar(substr($val, 4)));
+		}
+		else {
+			$val = \rkphplib\lib\split_str(',', $val);
+		}
+
 		$tf = substr($tf, 7);
 
 		if (count($val) == 1 && substr($val[0], 0, 1) == '!' && substr($val[0], 1) != $tf) {
