@@ -104,13 +104,13 @@ public function tok_upload_exists($p) {
 				throw new Exception('parameter save_in is empty', print_r($this->conf, true));
 			}
 
-			\rkphplib\lib\log_debug("TUpload.tok_upload_exists> return [] - no pictures");
+			// \rkphplib\lib\log_debug("TUpload.tok_upload_exists> return [] - no pictures");
 			return '[]';
 		}
 	}
 
 	if (!Dir::exists($this->conf['save_in'])) {
-		\rkphplib\lib\log_debug("TUpload.tok_upload_exists> return [] - no such directory ".$this->conf['save_in']);
+		// \rkphplib\lib\log_debug("TUpload.tok_upload_exists> return [] - no such directory ".$this->conf['save_in']);
 		return '[]';
 	}
 
@@ -123,7 +123,7 @@ public function tok_upload_exists($p) {
 		}
 	}
 
-	\rkphplib\lib\log_debug("TUpload.tok_upload_exists> save_in=".$this->conf['save_in']." p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TUpload.tok_upload_exists> save_in=".$this->conf['save_in']." p: ".print_r($p, true));
 	if (empty($p['mode'])) {
 		throw new Exception('missing mode parameter');
 	}
@@ -376,7 +376,7 @@ private function removeFSImages() {
 	for ($i = 0; $i < count($remove); $i++) {
 		$file = $remove[$i];
 		if (File::exists($file)) {
-			\rkphplib\lib\log_debug("TUpload.removeFSImages> remove $file");
+			// \rkphplib\lib\log_debug("TUpload.removeFSImages> remove $file");
 			$this->conf['@plugin_action'] = 1;
 			array_push($removed, $file);
 			File::remove($file);

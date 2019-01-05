@@ -1509,7 +1509,7 @@ public function tok_filter($tag, $filter_list) {
  * @return string
  */
 private function applyFilter($tag, $value) {
-	\rkphplib\lib\log_debug("TBase.applyFilter> tag=$tag value=[$value]");
+	// \rkphplib\lib\log_debug("TBase.applyFilter> tag=$tag value=[$value]");
 
 	if (!isset($this->_conf['filter.'.$tag])) {
 		throw new Exception('no filter', "tag=$tag value=[$value] _conf: ".print_r($this->_conf, true));
@@ -1537,7 +1537,7 @@ private function applyFilter($tag, $value) {
 			throw new Exception('invalid filter', "tag=$tag filter=$filter value=[$value]");
 		}
 
-		\rkphplib\lib\log_debug("TBase.applyFilter> filter=$filter value=[$value]");
+		// \rkphplib\lib\log_debug("TBase.applyFilter> filter=$filter value=[$value]");
 	}
 
 	return $value;
@@ -1577,7 +1577,7 @@ public function tok_esc($param, $arg) {
 	}
 
 	if (is_null($arg) || $arg === 'null' || $arg === 'NULL') {
-		\rkphplib\lib\log_debug("TBase.tok_esc> return NULL");
+		// \rkphplib\lib\log_debug("TBase.tok_esc> return NULL");
 		return 'NULL';
 	}
 
@@ -1587,7 +1587,7 @@ public function tok_esc($param, $arg) {
 
 	$arg = $this->applyFilter('esc', $arg);
 
-	\rkphplib\lib\log_debug("TBase.tok_esc> return [$arg]");
+	// \rkphplib\lib\log_debug("TBase.tok_esc> return [$arg]");
 	return $arg;
 }
 
@@ -1945,7 +1945,7 @@ public function tok_plugin($p) {
 
 			if (basename($path) === $path && defined("PATH_$path")) {
 				$incl_path = constant("PATH_$path").'tok/'.$obj.'.class.php';
-				\rkphplib\lib\log_debug("tok_plugin> path=$path incl_path=$incl_path");
+				// \rkphplib\lib\log_debug("tok_plugin> path=$path incl_path=$incl_path");
 				require_once($incl_path);
 				$obj = '\\'.strtolower($path).'\\tok\\'.$obj;
 				// \rkphplib\lib\log_debug("tok_plugin> require_once('$incl_path'); new $obj();");
