@@ -7,9 +7,31 @@ form.fv br {
 	margin-top:1.4ch;
 }
 
-@supports (-webkit-appearance:none) {
+form.fv input, 
+form.fv select, 
+form.fv button,
+form.fv textarea {
+	padding: 0.2ch 0.5ch 0.2ch 0.5ch;
+}
+
+@supports not (-moz-appearance:none) {
+	/* css for non-firefox */
 	form.fv input {
 		font-size: 1em;
+	}
+
+	form.fv input[type=checkbox], 
+	form.fv input[type=radio] {
+		transform: scale(1.4);
+	}
+
+	form.fv input[type=radio] {
+		margin-right: 0.7ch;
+	}
+
+	form.fv input[type=submit], form.fv button {
+		font-size: 1.2em;
+		padding: 0.3ch 1.2ch 0.3ch 1.2ch;
 	}
 
 	form.fv select {
@@ -62,7 +84,33 @@ form.fv div.label2 {
 
 form.fv span.error_message {
 	display: inline-block;
-	color: red;
+	color: #990000;
 	margin-left: 2ch;
 }
+
+form.fv div.label_required {
+	display: inline-block;
+	font-weight: bold;
+}
+
+form.fv span.error {
+	color: #990000;
+}
+
+form.fv input.error {
+	background-color: #ff8080;
+	border: 1px solid red;
+}
+
+form.fv span.cbox_query {
+	margin-left: 1ch;
+}
+
+@supports (-moz-appearance:none) {
+	form.fv span.cbox_query {
+		position: relative;
+		bottom: 0.25ch;
+	}
+}
+
 
