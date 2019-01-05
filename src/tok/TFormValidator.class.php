@@ -845,16 +845,14 @@ private function get2NData($name, $name_def) {
 		$r[$var] = $r[$n];
 		unset($r[$n]);
 	
-		if ($is_checkbox) {
-			$var = $name;
-		}
-
 		if (!empty($_REQUEST[$var]) && $_REQUEST[$var] == $v) {
 			$value += $v;
 		}
+		/*
 		else if (!is_null($value) && !isset($_REQUEST[$var]) && ($value & $v) == $v) {
 			$_REQUEST[$var] = $v;
 		}
+		*/
 
 		$n++;
 	}
@@ -862,7 +860,7 @@ private function get2NData($name, $name_def) {
 	$r['n_max'] = $n - 1;
 	$res = \rkphplib\lib\kv2conf($r, '=', ',');
 
-	if (empty($_REQUEST[$name]) && !is_null($value)) {
+	if (!is_null($value)) {
 		$_REQUEST[$name] = $value;
 	}
 
@@ -886,6 +884,7 @@ private function multiCheckbox($name, $p) {
 	$entry_list = '';
 
 	$is_checkbox = $p['type'] == 'checkbox';
+	$value = 0;
 
 	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> entry=[$entry] entries=[$entries]");
 	for ($n = 0; $n < $p['n_max']; $n++) {
@@ -894,10 +893,10 @@ private function multiCheckbox($name, $p) {
 		$r = [];
 		$r['type'] = $p['type'];
 		$r['value'] = pow(2, $n);
-
 		$input_name = $is_checkbox ? $var : $name;
 
 		if (!empty($_REQUEST[$input_name]) && $_REQUEST[$input_name] == $r['value']) {
+			$value += $r['value'];
 			$r['checked'] = 'checked';
 		}
 
@@ -908,6 +907,10 @@ private function multiCheckbox($name, $p) {
 
 	if (!empty($this->conf['current']['label_required']) && !empty($p['label']) && in_array($name, $this->conf['current']['required'])) {
 		$p['label'] = $this->tok->replaceTags($this->conf['current']['label_required'], [ 'label' => $p['label'] ]);
+	}
+
+	if ($value > 0) {
+		$_REQUEST[$name] = $value;
 	}
 
 	$p['input'] = $this->tok->replaceTags($entries, [ 'input' => $entry_list ]);
