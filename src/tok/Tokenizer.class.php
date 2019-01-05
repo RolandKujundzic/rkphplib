@@ -504,6 +504,10 @@ private function _join_tok($start, $end) {
 			$out = $this->_join_tok_plugin($i);
 		}
 
+		if (is_array($out)) {
+			throw new Exception('Output of plugin ['.$tok.'] is not string');
+		}
+
 		array_push($tok_out, $out);
 	}
 
