@@ -1742,6 +1742,8 @@ public function tok_get($param, $arg) {
 		foreach ($res as $key => $value) {
 			$res[$key] = $this->applyFilter('get', $value);
 		}
+
+		$res = \rkphplib\lib\kv2conf($res);
 	}
 
 	return $res;
