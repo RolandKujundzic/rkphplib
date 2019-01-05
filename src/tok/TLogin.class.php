@@ -295,6 +295,8 @@ private function setDBVariable($table) {
  * @tok {login_update:}if=|#|name=Mr. T{:login_update} -> do nothing because if is empty
  * @tok {login_update:}type=admin|#|...{:login_update} -> throw exception if previous type != 'admin'
  * @tok {login_update:}@allow_cols= login, password, ...|#|{sql:password}|#|@where= WHERE id={esc:id}{:login_update}
+ *
+ * Overwrite default table with @table=custom_table  
  * 
  * @throws
  * @param string $do reload|no_db
@@ -308,6 +310,11 @@ public function tok_login_update($do, $p) {
 
 	if (isset($p['if']) && empty($p['if'])) {
 		return '';
+	}
+
+	if (!empty($p['@table'])) {
+		$table = $p['@table'];
+		unset($p['@table']);
 	}
 
 	if (!empty($p['@type_switch'])) {
@@ -335,17 +342,21 @@ public function tok_login_update($do, $p) {
 		unset($p['@request_keys']);
 	}
 
+	\rkphplib\lib\log_debug("TLogin.tok_login_update: table=$table, kv ".print_r($kv, true)."\np ".print_r($p, true));
+
 	// only add (key,value) to kv where value has changed
 	foreach ($sess as $key => $value) {
 		if (isset($_REQUEST[$key]) && $value != $_REQUEST[$key]) {
 			$kv[$key] = $_REQUEST[$key];
+			\rkphplib\lib\log_debug("TLogin.tok_login_update: kv (sess + request) - $key=".$_REQUEST[$key]);
 		}
 	}
 
 	foreach ($p as $key => $value) {
 		// e.g. !isset(kv['password'])
-		if (!isset($kv[$key]) || $kv[$key] != $value) {
+		if (substr($key, 0, 1) != '@' && (!isset($kv[$key]) || $kv[$key] != $value)) {
 			$kv[$key] = $value;
+			\rkphplib\lib\log_debug("TLogin.tok_login_update: kv (p) - $key=$value");
 		}
 	}
 
@@ -354,7 +365,8 @@ public function tok_login_update($do, $p) {
 
 		foreach ($has_cols as $col) {
 			if (!in_array($col, $allow_cols)) {
-				throw new Exception('[login_update:] of column '.$col.' is forbidden (see @cols)');
+				\rkphplib\lib\log_debug("TLogin.tok_login_update: unset forbidden column $col");
+				unset($kv[$col]);
 			}
 		}
 	}
