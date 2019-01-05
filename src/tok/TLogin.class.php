@@ -57,7 +57,7 @@ public function getPlugins($tok) {
 	$this->tok = $tok;
 
 	$plugin = [];
-	$plugin['login'] = TokPlugin::NO_BODY;
+	$plugin['login'] = 0;
 	$plugin['login_account'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
@@ -737,7 +737,7 @@ private function selectFromDatabase($p) {
  * Append suffix "?" to prevent Exception if key is missing.
  *
  * @tok {login:} -> yes (if logged in)
- * @tok {login:id} -> ID (value of session key id)
+ * @tok {login:id} or {login:}id{:login} -> ID (value of session key id)
  * @tok {login:*} -> key=value|#|... (show all key value pairs)
  * @tok {login:conf.role.*} -> conf.role.a=value|#|... (show all key value pairs)
  *
@@ -750,10 +750,15 @@ private function selectFromDatabase($p) {
  *
  * @throws if key does not exist (append ? to key to prevent)
  * @param string $key
+ * @param string $alt_key (use body key)
  * @return string
  */
-public function tok_login($key) {
+public function tok_login($key, $alt_key = '') {
 	$res = '';
+
+	if (strlen($key) == 0 && strlen($alt_key) > 0) {
+		$key = trim($alt_key);
+	}
 
 	if (is_null($this->sess)) {
 		// do nothing ...
