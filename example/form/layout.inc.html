@@ -10,13 +10,14 @@
 <body>
 
 {fv:init}
-required= id, name, brand, interior|#|
+required= agb, name, fuel, brand, interior|#|
 hidden_keep= id, dir|#|
 
 in.name= text|#|
 in.fuel= multi_radio, Gasoline, Diesel|#|
 in.brand= fselect, =choose ..., Audi, BMW, Volkswagen, _=add ...|#|
 in.interior= multi_checkbox, Klima, AHK, Radio|#|
+in.agb= checkbox|#|
 {:fv}
 
 {tf:cmp:yes}{fv:check}{:tf}
@@ -27,10 +28,11 @@ Form-Submit: check=[{fv:check}] interior=[{get:interior}]
 
 {false:}
 {fv:tpl:header}method=get|#|upload=0{:fv}
-{fv:in:name}label=Name{:fv}<br>
-{fv:in:brand}label=Brand{:fv}<br>
+{fv:in:name}label=Name{:fv}
+{fv:in:brand}label=Brand{:fv}
 {fv:in:fuel}label=Fuel{:fv}<br>
 {fv:in:interior}label=Interior{:fv}<br>
+{fv:in:agb}label=Do you accept our Terms and Conditions?{:fv}
 {fv:tpl:footer}label=absenden|#|label2={:fv}
 
 <pre>check=[{fv:check}] form_action=[{get:form_action}] interior=[{get:interior}] error=[{fv:error_message:*}]</pre>
