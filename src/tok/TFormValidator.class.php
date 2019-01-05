@@ -31,7 +31,7 @@ use \rkphplib\ValueCheck;
  *
  * {fv:init:[add]}
  * use= NAME|#| (default: use=default)
- * hidden_keep= dir, ...|#|
+ * hidden_keep= (default = empty, cs-list)|#|
  * hidden.form_action=1|#|
  * hidden.id= 5|#|
  * col_val= {get:column}:{get:value}|#| (ajax mode)
@@ -191,9 +191,11 @@ public function __construct() {
 		'default.error.message_multi'		=> "<i>$name</i>: <tt>$error</tt><br>",
 		'default.error.const'						=> 'error',
 
-		'default.output.in'				=> '<span class="label">'.$label.'</span>'.$input.$example.$error_message.'<br>',
+		'default.output.in'				=> '<span class="label '.$error.'">'.$label.'</span>'.$input.$example.$error_message.'<br>',
 
-		'default.output.in.multi'	=> '<span class="label">'.$label."</span>$input$example$error_message\n",
+		'default.output.in.cbox_query' => $input.'<span class="cbox_query '.$error.'">'.$label.'</span><br>',		
+
+		'default.output.in.multi'	=> '<span class="label '.$error.'">'.$label."</span>$input$example$error_message\n",
 
 		'default.example'	=> '<span class="example">'.$example.'</span>',
 
@@ -269,6 +271,25 @@ public function __construct() {
 		if (isset($_REQUEST[SETTINGS_REQ_DIR])) {
 			$this->conf['default']['hidden.dir'] = $_REQUEST[SETTINGS_REQ_DIR];
 		}
+}
+
+
+/**
+ * Return configuration hash.
+ *
+ * @param string $name
+ * @return string
+ */
+public function getConfig($name) {
+	$kv = [];
+
+	foreach ($this->conf['default'] as $ckey => $cval) {
+		if (strpos($ckey, '.') === false || strpos($ckey, $name.'.')) {
+			$kv[$ckey] = $cval;
+		}
+	}
+
+	print \rkphplib\lib\kv2conf($kv);
 }
 
 
@@ -433,7 +454,6 @@ public function tok_fv_hidden() {
  * @return string
  */
 public function tok_fv_get($name) {
-
 	$required = substr($name, -1) == '!';
 	if ($required) {
 		$name = substr($name, 0, -1);
@@ -755,6 +775,7 @@ public function tok_fv_error_message($name, $tpl = '') {
 
 		$r = [ 'name' => $name ];
 		$r['error'] = join($this->getConf('error.message_concat', true), $error_list);
+
 		$res = $this->tok->replaceTags($tpl, $r);
 	}
 
@@ -891,7 +912,8 @@ private function multiCheckbox($name, $p) {
 
 	$p['input'] = $this->tok->replaceTags($entries, [ 'input' => $entry_list ]);
 	$output_in = $this->getConf('output.in.multi', true) ? $this->getConf('output.in.multi', true) : $this->getConf('output.in', true);
-  $res = empty($p['output']) ? $output_in : $this->getConf('output.in.'.$p['output']);
+  $res = empty($p['output']) ? $output_in : $this->getConf('output.in.'.$p['output'], true);
+	$p['error'] = isset($this->error[$name]) ? $this->getConf('error.const', true) : '';
   $res = $this->tok->removeTags($this->tok->replaceTags($res, $p));	
 	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> res=[$res]");
 	return $res;
@@ -952,11 +974,7 @@ public function tok_fv_in($name, $p) {
 		$p['label'] = $this->tok->replaceTags($conf['label_required'], [ 'label' => $p['label'] ]);
 	}
 
-	$tag_form_group = $this->tok->getTag('form_group');
-	if (mb_strpos($res, $tag_form_group) !== false) {
-		$tag_error = $this->tok->getTag('error');
-		$res = str_replace($tag_form_group, $tag_error.' form-group', $res);
-	}
+	$res = empty($p['output']) ? $this->getConf('output.in', true) : $this->getConf('output.in.'.$p['output'], true);
 
 	$r = $p;
 	$r['input'] = $this->getInput($name, $p);
@@ -964,6 +982,12 @@ public function tok_fv_in($name, $p) {
 	$r['error'] = isset($this->error[$name]) ? $this->getConf('error.const', true) : '';
 	$r['example'] = empty($this->example[$name]) ? '' : 
 		$this->tok->replaceTags($this->getConf('example', true), [ 'example' => $this->example[$name] ]);
+
+	$tag_form_group = $this->tok->getTag('form_group');
+	if (mb_strpos($res, $tag_form_group) !== false) {
+		$tag_error = $this->tok->getTag('error');
+		$res = str_replace($tag_form_group, $tag_error.' form-group', $res);
+	}
 
 	$res = $this->tok->removeTags($this->tok->replaceTags($res, $r));
 	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_in($name, ...)> res=[$res] r: ".print_r($r, true));
@@ -1035,6 +1059,7 @@ public function getConf($key, $engine = '', $required = true) {
  *  - in.name= fselect,
  *  - in.name= set,
  *  - in.name= multi_select,
+ *  - in.name= checkbox_hash|radio_hash, key=value, key2=value2, ...
  *
  * @param string $name
  * @param string $value
@@ -1140,6 +1165,12 @@ protected function parseInName($name, $value, &$p) {
   else if ($type == 'set' || $type == 'multi_select') {
 		// ToDo ...
   }
+	else if ($type == 'checkbox') {
+		$p['output'] = 'cbox_query';
+		$p['type'] = 'checkbox';
+		$p['value'] = 1;
+		$p['checked'] = !empty($_REQUEST[$name]) && $_REQUEST[$name] == 1;
+	}
 	else {
 		throw new Exception("ToDo: name=$name type=$type p: ".join('|', $p));
 	}
