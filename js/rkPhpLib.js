@@ -20,6 +20,19 @@ var me = this;
 var env = [];
 
 
+
+/**
+ * Return request parameter value (or null).
+ *
+ * @param string parameter
+ * @return string
+ */
+this.getRequest = function (parameter) {
+	var match = new RegExp('[\\?&;]' + name + '=([^&#;]*)').exec(window.location.href);
+	return (match && match[1]) ? match[1] : null;
+};
+
+
 /**
  * Hide fselect_list_NAME. Show fselect_input_NAME.
  * 
