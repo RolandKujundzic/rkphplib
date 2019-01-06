@@ -189,6 +189,9 @@ public function __construct() {
 		'default.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="'.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
+		'default.in.check'		=> '<div>'.$options.'</div>',
+		'default.in.check.option' => '<label for="'.$id.'"><input id="'.$id.'" type="'.$type.'" name="'.
+			$name.'" class="'.$class.'" value="'.$value.'" '.$checked.'>'.$label.'</label>',
 
 		'default.error.message'					=> '<span class="error_message">'.$error.'</span>',
 		'default.error.message_concat'	=> ', ',
@@ -276,25 +279,6 @@ public function __construct() {
 		if (isset($_REQUEST[SETTINGS_REQ_DIR])) {
 			$this->conf['default']['hidden.dir'] = $_REQUEST[SETTINGS_REQ_DIR];
 		}
-}
-
-
-/**
- * Return configuration hash.
- *
- * @param string $name
- * @return string
- */
-public function getConfig($name) {
-	$kv = [];
-
-	foreach ($this->conf['default'] as $ckey => $cval) {
-		if (strpos($ckey, '.') === false || strpos($ckey, $name.'.')) {
-			$kv[$ckey] = $cval;
-		}
-	}
-
-	print \rkphplib\lib\kv2conf($kv);
 }
 
 
