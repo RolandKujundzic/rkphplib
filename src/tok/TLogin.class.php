@@ -294,7 +294,7 @@ private function setDBVariable($table) {
  * @tok {login_update:reload}password=PASSWORD({esc:password}){:login_update} -> update password
  * @tok {login_update:}if=|#|name=Mr. T{:login_update} -> do nothing because if is empty
  * @tok {login_update:}type=admin|#|...{:login_update} -> throw exception if previous type != 'admin'
- * @tok {login_update:}@allow_cols= login, password, ...|#|{sql:password}|#|@where= WHERE id={esc:id}{:login_update}
+ * @tok {login_update:}@allow_cols= login, password, ...|#|{sql:password}|#|@where= WHERE id={esc:id}|#|@id={get:id}{:login_update}
  *
  * Overwrite default table with @table=custom_table  
  * 
@@ -317,10 +317,17 @@ public function tok_login_update($do, $p) {
 		unset($p['@table']);
 	}
 
+	if (!empty($p['@where'])) {
+		$kv['@where'] = $p['@where'];
+		unset($p['@where']);
+	}
+
 	if (!empty($p['@type_switch'])) {
 		unset($p['@type_switch']);
 		$sess = [];
 	}
+
+	$has_id = isset($p['@id']) ? !empty($p['@id']) : !empty($p['id']);
 
 	if (isset($p['type']) && isset($sess['type']) && $p['type'] != $sess['type']) {
 		throw new Exception('[login_update:]type='.$p['type'].' != '.$sess['type'].' - session change is forbidden');
@@ -342,7 +349,8 @@ public function tok_login_update($do, $p) {
 		unset($p['@request_keys']);
 	}
 
-	\rkphplib\lib\log_debug("TLogin.tok_login_update: table=$table, kv ".print_r($kv, true)."\np ".print_r($p, true));
+	\rkphplib\lib\log_debug("TLogin.tok_login_update: table=$table, has_id=$has_id, kv ".print_r($kv, true)."\np ".print_r($p, true));
+	$where = empty($kv['@where']) ? '' : $kv['@where'];
 
 	// only add (key,value) to kv where value has changed
 	foreach ($sess as $key => $value) {
@@ -357,6 +365,16 @@ public function tok_login_update($do, $p) {
 		if (substr($key, 0, 1) != '@' && (!isset($kv[$key]) || $kv[$key] != $value)) {
 			$kv[$key] = $value;
 			\rkphplib\lib\log_debug("TLogin.tok_login_update: kv (p) - $key=$value");
+		}
+	}
+
+	$session_cols = [];
+	if (!empty($p['@session_cols'])) {
+		$sess_col_list = \rkphplib\lib\split_str(',', $p['@session_cols']);
+		foreach ($sess_col_list as $col) {
+			if (isset($kv[$col])) {
+				$session_cols[$col] = $kv[$col];
+			}
 		}
 	}
 
@@ -376,36 +394,45 @@ public function tok_login_update($do, $p) {
 	}
 
 	if (!is_null($this->db)) {
-		if (empty($kv['@where'])) {
+		if (!$where) {
 			$id = empty($p['id']) ? '' : $p['id'];
 			if (!$id) {
 				$id = empty($sess['id']) ? '' : $sess['id'];
 			}
 
 			if ($id && is_numeric($id)) {
-				$kv['@where'] = "WHERE id='".intval($id)."'";
+				$where = "WHERE id='".intval($id)."'";
+				\rkphplib\lib\log_debug("TLogin.tok_login_update: id=$id where=$where");
 			}
 		}
 
-		if (empty($kv['@where'])) {
+		if (empty($where)) {
 			throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
 		}
 
-		if (count($kv) > 1 && $do != 'no_db') {
-			$query = empty($p['id']) ? $this->db->buildQuery($table, 'update', $kv) : $this->db->buildQuery($table, 'insert', $kv);
+		\rkphplib\lib\log_debug("TLogin.tok_login_update: do=$do, table=$table, where=$where, kv: ".print_r($kv, true));
+		if (count($kv) > 0 && !empty($table) && $do != 'no_db') {
+			$kv['@where'] = $where;
+			$query = $has_id ? $this->db->buildQuery($table, 'update', $kv) : $this->db->buildQuery($table, 'insert', $kv);
 
+			\rkphplib\lib\log_debug("tok_login_update> query=$query");
 			if (!empty($query)) {
-				// \rkphplib\lib\log_debug("tok_login_update> $table: $query\nkv: ".print_r($kv, true));
 				$this->db->execute($query);
 			}
+
+			unset($kv['@where']);
 		}
 
 		if ($do == 'reload') {
-			$kv = $this->db->selectOne("SELECT * FROM $table ".$kv['@where']);
+			$kv = $this->db->selectOne("SELECT * FROM $table ".$where);
 		}
 	}
 
-	if (count($kv) > 0) {
+	if (count($session_cols) > 0) {
+		// \rkphplib\lib\log_debug("tok_login_update> use session_cols: ".print_r($session_cols, true));
+		$this->sess->setHash($session_cols, true);
+	}
+	else if (count($kv) > 0) {
 		// \rkphplib\lib\log_debug("tok_login_update> #kv=".(count($kv))." update session: ".print_r($kv, true));
 		$this->sess->setHash($kv, true);
 	}
