@@ -50,7 +50,7 @@ form.fv div.multi_checkbox_wrapper {
 
 form.fv div.multi_checkbox {
 	display: inline-block;
-	min-width: 25ch;
+	min-width: 20ch;
 }
 
 form.fv div.multi_checkbox span:nth-child(1) input[type=checkbox] {
@@ -68,6 +68,10 @@ form.fv span.label {
 	display: inline-block;
 	vertical-align: top;
 	min-width: 12ch;
+}
+
+form.fv div.example_error_wrapper {
+	margin: 0.75ch 0 0 10ch;
 }
 
 @supports (-moz-appearance:none) {

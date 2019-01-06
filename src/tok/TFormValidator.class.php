@@ -175,6 +175,10 @@ public function __construct() {
 
 		'option.label_empty'  => '',
 
+		'show_error_message' 	=> 1,
+		'show_error' 					=> 1,
+		'show_example' 				=> 1,
+
 		'default.in.const'    => '<span class="const">'.$value.'</span>',
 		'default.in.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" '.$tags.'>',
 		'default.in.textarea' => '<textarea name="'.$name.'" class="'.$class.'" '.$tags.'>'.$value.'</textarea>',
@@ -195,7 +199,8 @@ public function __construct() {
 
 		'default.output.in.cbox_query' => $input.'<span class="cbox_query '.$error.'">'.$label.'</span><br>',		
 
-		'default.output.in.multi'	=> '<span class="label '.$error.'">'.$label."</span>$input$example$error_message\n",
+		'default.output.in.multi'	=> '<span class="label '.$error.'">'.$label."</span>$input".
+			'<div class="example_error_wrapper">'.$example.$error_message."</div>\n",
 
 		'default.example'	=> '<span class="example">'.$example.'</span>',
 
@@ -230,7 +235,7 @@ public function __construct() {
 
 		'bootstrap.error.const'	=> 'is-invalid',
 
-		'bootstrap.output.in'		=> '<div class="{:=class} '.$form_group.'">'."\n".'<label for="'.$id.'">'.$label.'</label>'.
+		'bootstrap.output.in'		=> '<div class="form-group {:=class} '.$error.'">'."\n".'<label for="'.$id.'">'.$label.'</label>'.
 			"$example$error_message\n$input\n</div>",
 
 		'bootstrap.output.in.multi'		=> '<div class="row">'."\n".'<div class="col-md-3"><label>'.$label.
@@ -905,21 +910,52 @@ private function multiCheckbox($name, $p) {
 		$entry_list .= $this->tok->replaceTags($entry, [ 'input' => $html, 'label' => $p[$var] ]);
 	}
 
-	if (!empty($this->conf['current']['label_required']) && !empty($p['label']) && in_array($name, $this->conf['current']['required'])) {
-		$p['label'] = $this->tok->replaceTags($this->conf['current']['label_required'], [ 'label' => $p['label'] ]);
-	}
-
 	if ($value > 0) {
 		$_REQUEST[$name] = $value;
 	}
 
 	$p['input'] = $this->tok->replaceTags($entries, [ 'input' => $entry_list ]);
-	$output_in = $this->getConf('output.in.multi', true) ? $this->getConf('output.in.multi', true) : $this->getConf('output.in', true);
-  $res = empty($p['output']) ? $output_in : $this->getConf('output.in.'.$p['output'], true);
-	$p['error'] = isset($this->error[$name]) ? $this->getConf('error.const', true) : '';
-  $res = $this->tok->removeTags($this->tok->replaceTags($res, $p));	
-	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> res=[$res]");
-	return $res;
+
+	return $this->_fv_in_html($name, $p, '.multi');
+}
+
+
+/**
+ * Return {fv:in:$name}label=....{:} html.
+ *
+ * @param string $name
+ * @param hash $r
+ * @param string $output_in (default = 0)
+ * @return string
+ */
+private function _fv_in_html($name, $r, $output_in = '') {
+	$conf = $this->conf['current'];
+
+	$output_tpl = $this->getConf('output.in'.$output_in, true) ? $this->getConf('output.in'.$output_in, true) : 
+		$this->getConf('output.in', true);
+
+  $res = empty($r['output']) ? $output_tpl : $this->getConf('output.in.'.$r['output'], true);
+
+	if (!empty($conf['label_required']) && !empty($r['label']) && in_array($name, $conf['required'])) {
+    $r['label'] = $this->tok->replaceTags($conf['label_required'], [ 'label' => $r['label'] ]);
+  }
+
+	if (!empty($conf['show_error_message'])) {
+	  $r['error_message'] = $this->tok_fv_error_message($name);
+	}
+
+	if (!empty($conf['show_error'])) {
+	  $r['error'] = isset($this->error[$name]) ? $this->getConf('error.const', true) : '';
+	}
+
+	if (!empty($conf['show_example'])) {
+	  $r['example'] = empty($this->example[$name]) ? '' :
+  	  $this->tok->replaceTags($this->getConf('example', true), [ 'example' => $this->example[$name] ]);
+	}
+
+  $res = $this->tok->removeTags($this->tok->replaceTags($res, $r));
+  // \rkphplib\lib\log_debug("TFormValidator.tok_fv_in($name, ...)> res=[$res] r: ".print_r($r, true));
+  return $res;
 }
 
 
@@ -941,8 +977,6 @@ public function tok_fv_in($name, $p) {
   $is_action = !empty($_REQUEST[$skey]);
 
 	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_in($name, ...)> key=$skey is_action=$is_action p: ".print_r($p, true));
-	$res = empty($p['output']) ? $this->getConf('output.in', true) : $this->getConf('output.in.'.$p['output']);
-
 	if (!$is_action && (isset($p['value']) || isset($_REQUEST[$name])) && $skey != 'form_action' && !isset($_REQUEST['use_'.$skey])) {
 		$p['value'] = '';
 	}
@@ -973,28 +1007,9 @@ public function tok_fv_in($name, $p) {
 		}
 	}
 
-	if (!empty($conf['label_required']) && !empty($p['label']) && in_array($name, $conf['required'])) {
-		$p['label'] = $this->tok->replaceTags($conf['label_required'], [ 'label' => $p['label'] ]);
-	}
+	$p['input'] = $this->getInput($name, $p);
 
-	$res = empty($p['output']) ? $this->getConf('output.in', true) : $this->getConf('output.in.'.$p['output'], true);
-
-	$r = $p;
-	$r['input'] = $this->getInput($name, $p);
-	$r['error_message'] = $this->tok_fv_error_message($name);
-	$r['error'] = isset($this->error[$name]) ? $this->getConf('error.const', true) : '';
-	$r['example'] = empty($this->example[$name]) ? '' : 
-		$this->tok->replaceTags($this->getConf('example', true), [ 'example' => $this->example[$name] ]);
-
-	$tag_form_group = $this->tok->getTag('form_group');
-	if (mb_strpos($res, $tag_form_group) !== false) {
-		$tag_error = $this->tok->getTag('error');
-		$res = str_replace($tag_form_group, $tag_error.' form-group', $res);
-	}
-
-	$res = $this->tok->removeTags($this->tok->replaceTags($res, $r));
-	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_in($name, ...)> res=[$res] r: ".print_r($r, true));
-	return $res;
+	return $this->_fv_in_html($name, $p);
 }
 
 
