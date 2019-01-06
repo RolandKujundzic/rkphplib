@@ -184,7 +184,7 @@ public function __construct() {
 		'default.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="'.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
-		'default.in.check'		=> '<div>'.$options.'</div>',
+		'default.in.check'		=> '<div class="check_wrapper">'.$options.'</div>',
 		'default.in.check.option' => '<label for="'.$id.'"><input id="'.$id.'" type="'.$type.'" name="'.
 			$name.'" class="'.$class.'" value="'.$value.'" '.$checked.'>'.$label.'</label>',
 
