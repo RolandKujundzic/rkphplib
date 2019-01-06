@@ -159,20 +159,15 @@ public function __construct() {
 	$pl_if_label2_btn = $tok->getPluginTxt([ 'if', '' ], $label2.$d.
 		'<button type="submit" name="form_action" value="2" class="btn">'.$label2.'</button>');
 	$pl_if_yes_fv_check_fadeout = $tok->getPluginTxt([ 'if', 'cmp:yes' ], $tok->getPluginTxt([ 'fv', 'check' ], '').$d.
-		'<h4 style="color:#006600" data-effect="fadeout">'.$fadeout_confirm."</h4>\n<script>\n".
+		'<h4 style="color:#006600" data-effect="fadeout">'.$fadeout_confirm."</h4><script>".
 		'setTimeout(function() { $('."'h4[data-effect=\"fadeout\"]').fadeOut(); }, 2000);</script>");
 	$pl_if_col = $tok->getPluginTxt([ 'if', '' ], '{:=col}'.$d.$col.$d.'col-md-12');
 
-
 	$this->conf['default'] = [
 		'submit' 					=> 'form_action',
-
 		'id_prefix'				=> 'fvin_',
-
 		'label_required'	=> '<div class="label_required">'.$label.'</div>',
-
 		'template.engine' => 'default',
-
 		'option.label_empty'  => '',
 
 		'show_error_message' 	=> 1,
@@ -203,18 +198,18 @@ public function __construct() {
 		'default.output.in.cbox_query' => $input.'<span class="cbox_query '.$error.'">'.$label.'</span><br>',		
 
 		'default.output.in.multi'	=> '<span class="label '.$error.'">'.$label."</span>$input".
-			'<div class="example_error_wrapper">'.$example.$error_message."</div>\n",
+			'<div class="example_error_wrapper">'.$example.$error_message."</div>",
 
 		'default.example'	=> '<span class="example">'.$example.'</span>',
 
 		'default.header'	=> '<form class="fv" action="'.$pl_link.'" method="'.$pl_if_method.'" '.$pl_if_upload.
-			' data-key13="prevent" novalidate>'."\n".$pl_fv_hidden,
+			' data-key13="prevent" novalidate>'.$pl_fv_hidden,
 
 		'default.form'		=> '<form class="fv {:=class}" action="'.$pl_link.'" method="'.$pl_if_method.'" '.$pl_if_upload.
-			' data-key13="prevent" novalidate>'."\n".$pl_fv_hidden,
+			' data-key13="prevent" novalidate>'.$pl_fv_hidden,
 
 		'default.footer'	=> '<button type="submit" class="{:=class}">'.$label.'</button>'.
-			'<div class="label2">'.$pl_if_label2."\n".$pl_if_yes_fv_check_fadeout."\n</div>\n</form>",
+			'<div class="label2">'.$pl_if_label2.$pl_if_yes_fv_check_fadeout."</div></form>",
 
 		'default.submit'	=> '<button type="submit" class="{:=class}">'.$label.'</button>',
 
@@ -238,19 +233,18 @@ public function __construct() {
 
 		'bootstrap.error.const'	=> 'is-invalid',
 
-		'bootstrap.output.in'		=> '<div class="form-group {:=class} '.$error.'">'."\n".'<label for="'.$id.'">'.$label.'</label>'.
-			"$example$error_message\n$input\n</div>",
+		'bootstrap.output.in'		=> '<div class="form-group {:=class} '.$error.'"><label for="'.$id.'">'.$label.'</label>'.
+			"$example$error_message$input</div>",
 
 		'bootstrap.output.in.multi'		=> '<div class="row">'."\n".'<div class="col-md-3"><label>'.$label.
-			"</label>$example$error_message\n</div>\n".'<div class="col-md-9">'."\n".$input."\n</div>\n</div>",
+			"</label>$example$error_message</div>".'<div class="col-md-9">'.$input.'</div></div>',
 
-		'bootstrap.header'	=> '<div class="container {:=class}">'."\n".'<div class="row">'."\n".'<div class="'.$pl_if_col.'">'."\n".
+		'bootstrap.header'	=> '<div class="container {:=class}"><div class="row"><div class="'.$pl_if_col.'">'.
 			'<form class="fv form" method="'.$pl_if_method.'" action="'.$pl_link.'" '.$pl_if_upload.' data-key13="prevent" novalidate>'.
-			"\n".$pl_fv_hidden,
+			$pl_fv_hidden,
 	
-		'bootstrap.footer'	=> '<div class="row">'."\n".'<div class="col-md-4">'."\n".
-			'<button type="submit" class="btn">'.$label.'</button>'."\n".'</div>'."\n".
-			'<div class="col-md-8">'.$pl_if_label2_btn."\n".$pl_if_yes_fv_check_fadeout."\n</div>\n</div>\n</form>\n</div>\n</div>\n</div>",
+		'bootstrap.footer'	=> '<div class="row"><div class="col-md-4"><button type="submit" class="btn">'.$label.'</button></div>'.
+			'<div class="col-md-8">'.$pl_if_label2_btn.$pl_if_yes_fv_check_fadeout."</div></div></form></div></div></div>",
 
 		'bootstrap.submit'	=> '<button type="submit" class="btn">'.$label.'</button>',
 
