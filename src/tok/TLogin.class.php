@@ -294,7 +294,7 @@ private function setDBVariable($table) {
  * @tok {login_update:reload}password=PASSWORD({esc:password}){:login_update} -> update password
  * @tok {login_update:}if=|#|name=Mr. T{:login_update} -> do nothing because if is empty
  * @tok {login_update:}type=admin|#|...{:login_update} -> throw exception if previous type != 'admin'
- * @tok {login_update:}@allow_cols= login, password, ...|#|{sql:password}|#|@where= WHERE id={esc:id}|#|@id={get:id}{:login_update}
+ * @tok {login_update:}@allow_cols= login, password, ...|#|{sql:password}|#|@where= WHERE id={esc:id}{:login_update}
  *
  * Overwrite default table with @table=custom_table  
  * 
@@ -327,8 +327,6 @@ public function tok_login_update($do, $p) {
 		$sess = [];
 	}
 
-	$has_id = isset($p['@id']) ? !empty($p['@id']) : !empty($p['id']);
-
 	if (isset($p['type']) && isset($sess['type']) && $p['type'] != $sess['type']) {
 		throw new Exception('[login_update:]type='.$p['type'].' != '.$sess['type'].' - session change is forbidden');
 	}
@@ -349,7 +347,7 @@ public function tok_login_update($do, $p) {
 		unset($p['@request_keys']);
 	}
 
-	\rkphplib\lib\log_debug("TLogin.tok_login_update: table=$table, has_id=$has_id, kv ".print_r($kv, true)."\np ".print_r($p, true));
+	\rkphplib\lib\log_debug("TLogin.tok_login_update: table=$table, kv ".print_r($kv, true)."\np ".print_r($p, true));
 	$where = empty($kv['@where']) ? '' : $kv['@where'];
 
 	// only add (key,value) to kv where value has changed
@@ -413,7 +411,10 @@ public function tok_login_update($do, $p) {
 		\rkphplib\lib\log_debug("TLogin.tok_login_update: do=$do, table=$table, where=$where, kv: ".print_r($kv, true));
 		if (count($kv) > 0 && !empty($table) && $do != 'no_db') {
 			$kv['@where'] = $where;
-			$query = $has_id ? $this->db->buildQuery($table, 'update', $kv) : $this->db->buildQuery($table, 'insert', $kv);
+
+			$dbres = $this->db->select("SELECT * FROM $table $where");
+
+			$query = (count($dbres) == 1) ? $this->db->buildQuery($table, 'update', $kv) : $this->db->buildQuery($table, 'insert', $kv);
 
 			\rkphplib\lib\log_debug("tok_login_update> query=$query");
 			if (!empty($query)) {
