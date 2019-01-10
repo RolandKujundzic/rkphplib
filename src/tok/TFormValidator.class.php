@@ -735,8 +735,6 @@ public function tok_fv_error_message($name, $tpl = '') {
 		foreach ($this->error as $key => $value) {
 			$res .= $this->tok_fv_error_message($key, $tpl);
 		}
-
-		$res = join(',', array_keys($this->error));
 	}
 	else if (isset($this->error[$name])) {
 		if (empty($tpl)) {
@@ -762,7 +760,7 @@ public function tok_fv_error_message($name, $tpl = '') {
 		$res = $this->tok->replaceTags($tpl, $r);
 	}
 
-	// \rkphplib\lib\log_debug("tok_fv_error_message($name, ...)> name=[$name] res=[$res] - error: ".print_r($this->error, true));
+	\rkphplib\lib\log_debug("tok_fv_error_message($name, ...)> name=[$name] res=[$res] - error: ".print_r($this->error, true));
 	return $res;
 }
 
