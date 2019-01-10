@@ -63,7 +63,7 @@ public function getPlugins($tok) {
 	$plugin['sql:name'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['sql:qkey'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['sql:json'] = TokPlugin::REQUIRE_BODY;
-	$plugin['sql:col'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+	$plugin['sql:col'] = 0;
 	$plugin['sql:options'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['sql:getId'] = TokPlugin::NO_PARAM;
 	$plugin['sql:nextId'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
@@ -451,6 +451,7 @@ public function tok_sql_change($p) {
  *
  * @tok {sql:qkey:test}SELECT * FROM test WHERE id={:=id}{:sql}
  * @tok {sql:query:test}id=31{:sql}
+ * @tok {sql:query:@hash}SELECT id AS name, age AS value FROM test{:sql}
  *
  * @throws
  * @param string
@@ -459,9 +460,21 @@ public function tok_sql_change($p) {
  */
 public function tok_sql_query($qkey, $query) {
 
+	$is_hash = false;
+
+	if ($qkey == '@hash') {
+		$is_hash = true;
+		$qkey = '';
+	}
+
 	if (empty($qkey) && mb_strpos($query, $this->tok->getTag('TAG:PREFIX')) !== false) {
 		$this->db->setQuery('current_query', $query);
 		$query = $this->db->getQuery('current_query', $_REQUEST);
+
+		if ($is_hash) {
+			$this->first_row = $this->db->selectHash($query);
+			return;
+		}
 	}
 
 	if (!empty($qkey)) {
@@ -528,12 +541,18 @@ public function tok_sql_options($p = []) {
  *
  * @tok {sql:col:name} -> NAME
  * @tok {sql:col:*} -> name=NAME|#|id=ID
+ * @tok {sql:col}{:=id}{:sql} -> use {:=id} as name 
  *  
  * @throws
  * @param string $name
+ * @param string $arg
  * @return string
  */
-public function tok_sql_col($name) {
+public function tok_sql_col($name, $arg = '') {
+	if (strlen($name) == 0 && strlen(trim($arg)) > 0) {
+		$name = trim($arg);
+	}
+
 	if (is_null($this->first_row)) {
 		$this->first_row = $this->db->getNextRow();
 
