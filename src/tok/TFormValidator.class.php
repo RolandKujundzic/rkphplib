@@ -609,7 +609,7 @@ public function tok_fv_check() {
 
 		list ($column, $value) = explode(':', $col_val, 2);
 
-		if (mb_strlen($value) == 0) {
+		if (mb_strlen($value) == 0 && in_array($column, $this->conf['current']['required'])) {
 			if (!isset($this->error[$column])) {
 				$this->error[$column] = [];
 			}
@@ -620,6 +620,7 @@ public function tok_fv_check() {
 		if (!empty($this->conf['current']['allow_column'])) {
 			$allow_col = \rkphplib\lib\split_str(',', $this->conf['current']['allow_column']);
 
+			\rkphplib\lib\log_debug("TFormValidator->tok_fv_check> column=$column allow_col: ".print_r($allow_col, true));
 			if (!in_array($column, $allow_col)) {
 				$this->error['parameter'] = [ $column.' is immutable' ];
 			}
