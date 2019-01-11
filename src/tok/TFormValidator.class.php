@@ -350,7 +350,7 @@ public function tok_fv_appendjs($name, $id_list = []) {
 public function tok_fv_preset($arg) {
 	$skey = $this->getConf('submit');
 
-	if (empty($_REQUEST[$skey])) {
+	if (!empty($_REQUEST[$skey])) {
 		return '';
 	}
 
