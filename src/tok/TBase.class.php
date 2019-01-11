@@ -1018,6 +1018,7 @@ public function tok_link($name_list, $p) {
 	// \rkphplib\lib\log_debug([ "TBase.tok_link|enter> ", $name_list, $p ]);
 	$res = 'index.php?'.SETTINGS_REQ_CRYPT.'=';
 	$keep = false;
+	$seo = '';
 
 	foreach ($name_list as $name) {
 		if ($name == '@' || $name == '_') {
@@ -1030,7 +1031,12 @@ public function tok_link($name_list, $p) {
 			$p[$name] = $_REQUEST[$name];
 		}
 	}
-	
+
+	if (!empty($p['seo'])) {
+		$seo = $p['seo'].',';
+		unset($p['seo']);
+	}
+
 	if (isset($p['@']) || isset($p['_'])) {
 		$keep = isset($p['@']);
 		$res = '?';
@@ -1057,7 +1063,6 @@ public function tok_link($name_list, $p) {
 		}
 
 		foreach ($_REQUEST as $key => $value) {
-
 			if (is_array($value) || strlen($value) == 0 || isset($p[$key])) {
 				continue;
 			}
@@ -1102,6 +1107,7 @@ public function tok_link($name_list, $p) {
 
 		if (!empty($rbase) && $res == '?') {
 			$script_dir = dirname($_SERVER['SCRIPT_NAME']);
+			// $res = ($script_dir == '/') ? '/?'.$seo : $script_dir.'/?'.$seo;
 			$res = ($script_dir == '/') ? '/?' : $script_dir.'/?';
 		}
 
@@ -1177,6 +1183,12 @@ public static function encodeHash($p) {
  * @return hash|false
  */
 public static function decodeHash($data, $export_into_req = false) {
+	
+	if (($pos=strpos($data,',')) > 0) {
+
+		$data = substr($data, $pos);
+	}
+
 	$data = rawurldecode($data);
 	$checksum = substr($data, 0, 2);
 	$data = substr($data, 2);
