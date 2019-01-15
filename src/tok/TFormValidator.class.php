@@ -239,7 +239,7 @@ public function __construct() {
 		'bootstrap.output.in.multi'		=> '<div class="row"><div class="col-md-3"><label>'.$label.
 			"</label>$example$error_message</div>".'<div class="col-md-9">'.$input.'</div></div>',
 
-		'bootstrap.header'	=> '<div class="container {:=class}"><div class="row"><div class="'.$pl_if_col.'">'.
+		'bootstrap.header'	=> '<div class="container-fluid ml-0 pl-0 {:=class}"><div class="row"><div class="'.$pl_if_col.'">'.
 			'<form class="fv form" method="'.$pl_if_method.'" action="'.$pl_link.'" '.$pl_if_upload.' data-key13="prevent" novalidate>'.
 			$pl_fv_hidden,
 	
