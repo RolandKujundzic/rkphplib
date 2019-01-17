@@ -16,6 +16,7 @@ div.img_wrapper {
 	height: 302px;
 	border: 1px solid #cacaca;
 	margin-left: 0 8px 8px 0;
+	display: inline-block;
 }
 </style>
 </head>
@@ -30,9 +31,37 @@ preview_dir= data/img|#|
 <img src="img/omega-de-ville_498x750.jpg" title="Original Picture 498x750"><br>
 
 <div class="img_wrapper">
-<img src="{picture:src}name=omega-de-ville_498x750.jpg|#|resize=300x300{picture}"><br>
+<img src="{picture:src}name=omega-de-ville_498x750.jpg|#|resize=300x300{:picture}"><br>
 resize 300x300
 </div>
 
+<div class="img_wrapper">
+<img src="{picture:src}name=omega-de-ville_498x750.jpg|#|resize=300x300^{:picture}"><br>
+resize 300x300^
+</div>
+
+<div class="img_wrapper">
+<img src="{picture:src}name=omega-de-ville_498x750.jpg|#|mode=thumbnail|#|resize=300x300{:picture}"><br>
+thumbnail resize 300x300
+</div>
+
+<br><br><img src="img/CMB_940x465.jpg" title="Original Picture 940x465"><br>
+
+<div class="img_wrapper">
+<img src="{picture:src}name=img/CMB_940x465.jpg|#|resize=300x300{:picture}"><br>
+resize 300x300
+</div>
+
+<div class="img_wrapper">
+<img src="{picture:src}name=img/CMB_940x465.jpg|#|resize=300x300^{:picture}"><br>
+resize 300x300^
+</div>
+
+<div class="img_wrapper">
+<img src="{picture:src}name=omega-de-ville_498x750.jpg|#|mode=thumbnail|#|resize=300x300{:picture}"><br>
+thumbnail resize 300x300
+</div>
+
 </body>
+
 </html>
