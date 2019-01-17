@@ -10,9 +10,9 @@ use rkphplib\Exception;
 
 /**
  * Execute shell command.
- * Command parameter {:=param} are replaced with escaped (\') hash values
- * Append [ 2>&1] to command to catch stderr. Append
- * [> /dev/null 2> /dev/null &] for background job.
+ * Command parameter {:=param} are replaced with escaped (\') hash values.
+ * Use {:=_param} for unescaped replace. Append [ 2>&1] to command to catch stderr. 
+ * Append [> /dev/null 2> /dev/null &] for background job.
  * Append [ && echo $! > /dev/null 2>&1 & ] for background job with pid output (= return value).
  * 
  * @param string $cmd e.g. "rm -f {:=file}"
@@ -28,7 +28,12 @@ function execute($cmd, $parameter = null, $abort = true) {
 
 	if (is_array($parameter)) {
 		foreach ($parameter as $key => $value) {
-			$cmd = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, escapeshellarg($value), $cmd);
+			if (substr($key, 0, 1) == '_') {
+				$cmd = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, $value, $cmd);
+			}
+			else {
+				$cmd = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, escapeshellarg($value), $cmd);
+			}
 		}
 	}
 
