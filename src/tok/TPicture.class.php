@@ -44,6 +44,7 @@ public function getPlugins($tok) {
   $plugin = [];
   $plugin['picture:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['picture:src'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY; 
+	$plugin['picture:list'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
   $plugin['picture'] = 0;
   return $plugin;
 }
@@ -125,13 +126,45 @@ private function checkConf($p) {
 	}
 }
 
+/**
+ * Return picture list as comma separted list.
+ *
+ * @tok {picture:list}names={:=names}{:picture} - apply {picture:src}names={:=names}|#|num=N{:picture}
+ *
+ * @see tok_picture_src
+ * @param hash $p
+ * @return string
+ */
+public function tok_picture_list($p) {
+	if (empty($p['names'])) {
+		throw new Exception('missing parameter names');
+	}
+
+	$picture_list = \rkphplib\lib\split_str(',', $p['names']);
+	unset($p['names']);
+	$res = [];
+
+	for ($i = 0; !empty($picture_list[$i]) && $i < count($picture_list); $i++) {
+		$p['name'] = $picture_list[$i];
+		$picture = $this->tok_picture_src($p);
+
+		if (!empty($picture)) {
+			array_push($res, str_replace(',', '\\,', $picture));
+		}
+	}
+
+	return join(',', $res);
+}
+
 
 /**
  * Return picture source path. Apply conversion if configured. Parameter:
  *
  *  source: auto-compute
  *  target: auto-compute
- *  name: e.g. 01.jpg (set source = picture_dir/name)
+ *  name: e.g. 01.jpg (set source = picture_dir/01.jpg)
+ *  names: e.g. 01.jpg, 02.jpg, 03.jpg (set source = picture_dir/01.jpg - use num=2 for picture_dir/03.jpg)
+ *  num: use with names = pic[0], pic[1], ...
  *  resize: e.g. 250x, 250x100, ... (see convert) 
  *  abs_path:
  *  rel_path:
@@ -190,10 +223,12 @@ private function computeImgSource() {
 		$list = \rkphplib\lib\split_str(',', $this->conf['names']);
 
 		if (empty($list[0]) && count($list) > 1) {
+			// fix ",01.jpg, 02.jpg, ..." into "01.jpg, 02.jpg, ..."
 			array_shift($list);
 		}
 
-		$this->conf['source'] = $this->conf['picture_dir'].'/'.$list[0];
+		$num = empty($this->conf['num']) ? 0 : intval($this->conf['num']);
+		$this->conf['source'] = !empty($list[$num]) ? $this->conf['picture_dir'].'/'.$list[$num] : '';
 	}
 	else if (!empty($this->conf['name'])) {
 		$this->conf['source'] = $this->conf['picture_dir'].'/'.$this->conf['name'];

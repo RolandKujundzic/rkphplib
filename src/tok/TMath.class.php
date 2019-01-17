@@ -26,13 +26,13 @@ public function getPlugins($tok) {
 	$plugin['floatval'] = 0;
 	$plugin['rand'] = TokPlugin::LIST_BODY;
 	$plugin['math'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
-	$plugin['md5'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['md5'] = TokPlugin::NO_PARAM;
 	return $plugin;
 }
 
 
 /**
- * Return md5(trim($arg)).
+ * Return md5(trim($arg)). Empty arg has non-empty result.
  *
  * @param string $arg
  * @return string
