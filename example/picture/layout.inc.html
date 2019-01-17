@@ -26,6 +26,7 @@ div.img_wrapper {
 {picture:init}
 picture_dir= img|#|
 preview_dir= data/img|#|
+ignore_missing= 0|#|
 {:picture}
 
 <img src="img/omega-de-ville_498x750.jpg" title="Original Picture 498x750"><br>
@@ -48,17 +49,17 @@ thumbnail resize 300x300
 <br><br><img src="img/CMB_940x465.jpg" title="Original Picture 940x465"><br>
 
 <div class="img_wrapper">
-<img src="{picture:src}name=img/CMB_940x465.jpg|#|resize=300x300{:picture}"><br>
+<img src="{picture:src}name=CMB_940x465.jpg|#|resize=300x300{:picture}"><br>
 resize 300x300
 </div>
 
 <div class="img_wrapper">
-<img src="{picture:src}name=img/CMB_940x465.jpg|#|resize=300x300^{:picture}"><br>
+<img src="{picture:src}name=CMB_940x465.jpg|#|resize=300x300^{:picture}"><br>
 resize 300x300^
 </div>
 
 <div class="img_wrapper">
-<img src="{picture:src}name=omega-de-ville_498x750.jpg|#|mode=thumbnail|#|resize=300x300{:picture}"><br>
+<img src="{picture:src}name=CMB_940x465.jpg|#|mode=thumbnail|#|resize=300x300{:picture}"><br>
 thumbnail resize 300x300
 </div>
 
