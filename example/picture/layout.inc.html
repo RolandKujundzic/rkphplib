@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<title>TPicture</title>
+<meta charset="utf-8" />
+<meta name="keywords" content="" />
+<meta name="description" content="" />
+<style>
+body {
+	font-family: Arial, Helvetica;
+	font-size: 14px;
+}
+
+div.img_wrapper {
+	width: 302px;
+	height: 302px;
+	border: 1px solid #cacaca;
+	margin-left: 0 8px 8px 0;
+}
+</style>
+</head>
+
+<body>
+
+{picture:init}
+picture_dir= img|#|
+preview_dir= data/img|#|
+{:picture}
+
+<img src="img/omega-de-ville_498x750.jpg" title="Original Picture 498x750"><br>
+
+<div class="img_wrapper">
+<img src="{picture:src}name=omega-de-ville_498x750.jpg|#|resize=300x300{picture}"><br>
+resize 300x300
+</div>
+
+</body>
+</html>
