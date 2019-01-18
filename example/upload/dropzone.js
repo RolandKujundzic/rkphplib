@@ -48,6 +48,20 @@ Dropzone.options.rkDropzone = {
 	init: function() {
 		var dzClosure = this; // Makes sure that 'this' is understood inside the functions below.
 
+		this.options.rkHiddenInput = function(name, value) {
+			let input = document.createElement("input");
+
+			input.setAttribute("type", "hidden");
+			input.setAttribute("id", name);
+			input.setAttribute("name", name);
+			input.setAttribute("value", value);
+
+			console.log('rkHiddenInput', this, dzClosure);
+			dzClosure.element.parentNode.appendChild(input);
+		};
+
+		{upload:formData:hidden}
+ 
 		if (!this.options.autoProcessQueue) {
 			// for Dropzone to process the queue (instead of default form behavior):
 			dzClosure.element.parentNode.querySelector("[type=submit]").addEventListener("click", function(e) {
@@ -60,16 +74,14 @@ Dropzone.options.rkDropzone = {
 
 		// send all the form data along with the files:
 		this.on("sendingmultiple", function(data, xhr, formData) {
-			formData.append("module", document.getElementById('fvin_module').value);
-			formData.append("ajax", "upload");
-			{fv:appendjs:formData}id,dir{:fv} // formData.append("id|dir", document.getElementById("fvin_id|dir").value);
+			// e.g. formData.append("id", document.getElementById("fvin_id").value);
+			{upload:formData:append} 
 		});
 
 		this.on("removedfile", function(file) {
-			if (file.path) {
-				let id = document.getElementById('fvin_id').value;
-				rkphplib.ajax({ url: this.options.url + '&ajax=upload&id=' + id + '&remove_image=' + encodeURIComponent(file.name) });
-			}
+			let f = this.element.parentNode;
+			let ajax_url = this.options.url + '&ajax=' + encodeURIComponent(f.elements['ajax']);
+			rkphplib.ajax({ url: ajax_url + '&remove_image=' + encodeURIComponent(file.name) });
 		});
 
 		this.on("addedfile", function(file) {

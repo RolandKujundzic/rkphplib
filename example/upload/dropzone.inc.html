@@ -14,14 +14,16 @@
 {:tpl_set}
 
 {upload:init:file}
+@@4=":",","|#|
 save_in= data/upload|#|
 thumbnail= 120x120^|#|
 ajax_output= ajax_output_upload|#|
+ajax_parameter= @4 module:dropzone, ajax:upload|#|
 {:upload}
 
 <style>
 #rkDropzone {
-  width:660px;
+  width:95%;
   height:200px;
   padding:15px;
   border-style:dashed;
@@ -34,8 +36,6 @@ ajax_output= ajax_output_upload|#|
 </style>
 
 <form action="index.php" method="post" enctype="multipart/form-data">
-	<input type="hidden" id="fvin_module" name="module" value="dropzone">
-
 	<div class="dropzone" id="rkDropzone"></div>
 	<br><br>
 	<button type="submit"> upload </button>
