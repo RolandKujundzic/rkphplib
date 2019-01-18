@@ -57,8 +57,8 @@ public function getPlugins($tok) {
  * preview_dir: data/picture/preview
  * convert.resize: _input,_sRGB,_geometry,_target
  * convert.center: _input,_sRGB,_geometry,_box,_target
- * convert.box: _input,_sRGB,_strip,_trim,_thumbnail,_box,_bgw,_target
- * convert.box_png: _input,_sRGB,_strip,_trim,_thumbnail,_box,_bga,_target_png
+ * convert.box: _input,_sRGB,_strip,_trim,_thumbnail,_boxw,_target
+ * convert.box_png: _input,_sRGB,_strip,_trim,_thumbnail,_boxt,_target_png
  * convert.cover: _input,_sRGB,_geometry,_crop,_target
  * convert._input: convert {:=source}
  * convert._target: {:=target}
@@ -70,8 +70,8 @@ public function getPlugins($tok) {
  * convert._sRGB: -colorspace sRGB
  * convert._strip: -strip -quality 85
  * convert._trim: -trim +repage
- * convert._bga: -background transparent
- * convert._bgw: -background white -flatten
+ * convert._boxw: -gravity center -background white -extent {:=WxH}
+ * convert._boxt: -gravity center -background transparent -extent {:=WxH}
  * convert._box: -gravity center -extent {:=WxH}
  * convert: convert.resize (or convert.OTHER or "convert ..." - if resize=WxH^ use convert.center)
  * use_cache: 1 | check_time
@@ -99,8 +99,8 @@ public function tok_picture_init($p) {
   	$default['preview_dir'] = 'data/picture/preview';
  		$default['convert.resize'] = '_input,_sRGB,_geometry,_target';
 		$default['convert.center'] = '_input,_sRGB,_geometry,_box,_target';
- 		$default['convert.box'] = '_input,_sRGB,_strip,_trim,_thumbnail,_box,_bgw,_target';
- 		$default['convert.box_png'] = '_input,_sRGB,_strip,_trim,_thumbnail,_box,_bga,_target_png';
+ 		$default['convert.box'] = '_input,_sRGB,_strip,_trim,_thumbnail,_boxw,_target';
+ 		$default['convert.box_png'] = '_input,_sRGB,_strip,_trim,_thumbnail,_boxt,_target_png';
 		$default['convert.cover'] = '_input,_sRGB,_crop,_geometry,_target';
 		$default['convert._input'] = 'convert '.$tok->getTag('source');
 		$default['convert._resize'] = '-resize '.$tok->getTag('resize');
@@ -112,9 +112,9 @@ public function tok_picture_init($p) {
 		$default['convert._crop'] = '-crop '.$tok->getTag('crop');
 		$default['convert._sRGB'] = '-colorspace sRGB';
 		$default['convert._strip'] = '-strip -quality 85';
-		$default['convert._bga'] = '-background transparent'; // force _target_png
-		$default['convert._bgw'] = '-background white -flatten';
 		$default['convert._box'] = '-gravity center -extent '.$tok->getTag('WxH');
+		$default['convert._boxw'] = '-gravity center -background white -extent '.$tok->getTag('WxH');
+		$default['convert._boxt'] = '-gravity center -background transparent -extent '.$tok->getTag('WxH'); // force _target_png
 		$default['convert'] = 'convert.resize'; 
 		$default['default'] = 'default.jpg';
 		$default['ignore_missing'] = 1;
@@ -334,9 +334,8 @@ private function runConvertCmd($p) {
 	$cmd = '';
 
 	$map = [ '_input' => '', '_resize' => '', '_target' => '', '_target_png' => '',
-		'_thumbnail' => '', '_trim' => 1, '_geometry' => '',
-    '_crop' => 2, '_sRGB' => '', '_strip' => 3, '_bga' => 4, '_bgw' => 5,
-    '_box' => 5 ];
+		'_thumbnail' => '', '_trim' => 1, '_geometry' => '', '_crop' => 2, '_sRGB' => '', 
+		'_strip' => 3, '_boxw' => 4, '_boxt' => 5, '_box' => 6 ];
 
 	$is_png = false;
 
