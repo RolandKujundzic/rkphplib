@@ -46,11 +46,11 @@ Dropzone.options.rkDropzone = {
 	rk: { currFiles: 0, newFiles: 0 },
 
 	init: function() {
-		if (!this.options.autoProcessQueue) {
-			dzClosure = this; // Makes sure that 'this' is understood inside the functions below.
+		var dzClosure = this; // Makes sure that 'this' is understood inside the functions below.
 
+		if (!this.options.autoProcessQueue) {
 			// for Dropzone to process the queue (instead of default form behavior):
-			document.getElementById("submit-all").addEventListener("click", function(e) {
+			dzClosure.element.parentNode.querySelector("[type=submit]").addEventListener("click", function(e) {
 				// Make sure that the form isn't actually being sent.
 				e.preventDefault();
 				e.stopPropagation();
@@ -62,7 +62,7 @@ Dropzone.options.rkDropzone = {
 		this.on("sendingmultiple", function(data, xhr, formData) {
 			formData.append("module", document.getElementById('fvin_module').value);
 			formData.append("ajax", "upload");
-			{fv:appendjs:formData}id,dir{:fv}
+			{fv:appendjs:formData}id,dir{:fv} // formData.append("id|dir", document.getElementById("fvin_id|dir").value);
 		});
 
 		this.on("removedfile", function(file) {
@@ -87,8 +87,6 @@ Dropzone.options.rkDropzone = {
 
 		// add existing files
 		var existingFiles = {upload:exists}mode=dropzone{:upload};
-		// var existingFiles = {ignore:}{upload:exists}mode=dropzone|#|images={get:images}|#|thumbnail=120x120^|#|
-    //   save_in=data/shop/img/{login:id}/{get:id}{:upload}{:ignore};
 
 		for (var i = 0; i < existingFiles.length; i++) {
 			this.emit("addedfile", existingFiles[i]);
