@@ -55,11 +55,28 @@ public function getPlugins($tok) {
  *
  * picture_dir: data/picture/upload
  * preview_dir: data/picture/preview
- * convert.resize: convert -colorspace sRGB -geometry {:=resize} {:=source} {:=target}
- * convert.resize^: convert -colorspace sRGB -geometry {:=resize}^ -gravity center -extent {:=resize} {:=source} {:=target}
- * module: convert (=default) | gdlib
- * use_cache: 1 | dimension:300x300
+ * convert.resize: _input,_sRGB,_geometry,_target
+ * convert.center: _input,_sRGB,_geometry,_box,_target
+ * convert.box: _input,_sRGB,_strip,_trim,_thumbnail,_box,_bgw,_target
+ * convert.box_png: _input,_sRGB,_strip,_trim,_thumbnail,_box,_bga,_target_png
+ * convert.cover: _input,_sRGB,_geometry,_crop,_target
+ * convert._input: convert {:=source}
+ * convert._target: {:=target}
+ * convert._target: {:=target_png}
+ * convert._resize: -resize {:=resize}
+ * convert._thumbnail: -thumbnail {:=resize}
+ * convert._geometry: -geometry {:=resize}
+ * convert._crop: -crop {:=crop} -extend {:=WxH}
+ * convert._sRGB: -colorspace sRGB
+ * convert._strip: -strip -quality 85
+ * convert._trim: -trim +repage
+ * convert._bga: -background transparent
+ * convert._bgw: -background white -flatten
+ * convert._box: -gravity center -extent {:=WxH}
+ * convert: convert.resize (or convert.OTHER or "convert ..." - if resize=WxH^ use convert.center)
+ * use_cache: 1 | check_time
  * ignore_missing: 1
+ * transparent_tbn: 1
  * default: default.jpg
  * reset: 1 
  *
@@ -80,16 +97,30 @@ public function tok_picture_init($p) {
 	if (count($this->conf) == 0 || !empty($p['reset'])) {
 	  $default['picture_dir'] = 'data/picture/upload';
   	$default['preview_dir'] = 'data/picture/preview';
- 		$default['convert.resize'] = 'convert -colorspace sRGB -geometry '.
-			$tok->getTag('resize').' '.$tok->getTag('source').' '.$tok->getTag('target');
-		$default['convert.resize^'] = 'convert -colorspace sRGB -geometry '.
-			$tok->getTag('resize').'^ -gravity center -extent '.$tok->getTag('resize').' '.
-			$tok->getTag('source').' '.$tok->getTag('target');
-	  $default['default'] = 'default.jpg';
+ 		$default['convert.resize'] = '_input,_sRGB,_geometry,_target';
+		$default['convert.center'] = '_input,_sRGB,_geometry,_box,_target';
+ 		$default['convert.box'] = '_input,_sRGB,_strip,_trim,_thumbnail,_box,_bgw,_target';
+ 		$default['convert.box_png'] = '_input,_sRGB,_strip,_trim,_thumbnail,_box,_bga,_target_png';
+		$default['convert.cover'] = '_input,_sRGB,_crop,_geometry,_target';
+		$default['convert._input'] = 'convert '.$tok->getTag('source');
+		$default['convert._resize'] = '-resize '.$tok->getTag('resize');
+		$default['convert._target'] = $tok->getTag('target');
+		$default['convert._target_png'] = $tok->getTag('target_png');
+		$default['convert._thumbnail'] = '-thumbnail '.$tok->getTag('resize');
+		$default['convert._trim'] = '-trim +repage';
+		$default['convert._geometry'] = '-geometry '.$tok->getTag('resize');
+		$default['convert._crop'] = '-crop '.$tok->getTag('crop');
+		$default['convert._sRGB'] = '-colorspace sRGB';
+		$default['convert._strip'] = '-strip -quality 85';
+		$default['convert._bga'] = '-background transparent'; // force _target_png
+		$default['convert._bgw'] = '-background white -flatten';
+		$default['convert._box'] = '-gravity center -extent '.$tok->getTag('WxH');
+		$default['convert'] = 'convert.resize'; 
+		$default['default'] = 'default.jpg';
 		$default['ignore_missing'] = 1;
-		$default['module'] = 'convert';
 		$default['use_cache'] = 1;
 		$default['resize'] = '';
+		$default['transparent_tbn'] = 1;
 		$default['reset'] = 1;
 
 		$this->conf = $default;
@@ -179,11 +210,6 @@ public function tok_picture_src($p) {
 	$conf = $this->conf;
 
 	$this->checkConf($p);
-
-	if (!empty($this->conf['target_dir']) && !empty($this->conf['name']) && !empty($this->conf['use_cache'])) {
-		return $this->conf['target_dir'].'/'.$this->conf['name'];
-	}
-
 	$this->computeImgSource();
 
 	// \rkphplib\lib\log_debug('tok_picture_src> this.conf: '.print_r($this->conf, true));
@@ -258,8 +284,141 @@ private function computeImgSource() {
 
 
 /**
- * Resize conf.source to conf.target according to conf.resize. Use trailing ^ for exact resize
- * (center and clip image). 
+ * Cover resize area with picture.
+ * 
+ * @param hash $exec_param
+ * @return hash
+ */
+private function convertCover($exec_param) {
+
+	$tmp = explode('x', $exec_param['WxH']);
+	$w_n = intval($tmp[0]);
+	$h_n = intval($tmp[1]);
+
+	$ii = File::imageInfo($exec_param['source']);
+	$w = $ii['width'];
+	$h = $ii['height'];
+
+	if ($w > 0 && $h > 0 && $w_n > 0 && $h_n > 0) {
+		$f = min($w/$w_n, $h/$h_n);
+		$w_max = intval($w_n * $f);
+		$h_max = intval($h_n * $f);
+		$x_off = intval(($w - $w_max) / 2);
+		$y_off = intval(($h - $h_max) / 2);
+
+		$exec_param['crop'] = $w_max.'x'.$h_max.'+'.$x_off.'+'.$y_off;
+		$exec_param['cmd'] = 'cover';
+	}
+	else {
+		throw new Exception('invalid image', print_r($exec_param, true));
+	}
+
+	return $exec_param;
+}
+
+
+/**
+ * Run convert command $p['cmd'] with parameters from $p inserted.
+ *
+ * @param hash $p
+ */
+private function runConvertCmd($p) {
+
+	if (empty($p['cmd']) || empty($this->conf['convert.'.$p['cmd']])) {
+		throw new Exception('invalid convert command', print_r($p, true));
+	}
+
+	$cmd_parts = explode(',', $this->conf['convert.'.$p['cmd']]);
+	$jlen = strlen($p['resize_dir']);
+	$resize_dir = $p['resize_dir'].'m';
+	$cmd = '';
+
+	$map = [ '_input' => '', '_resize' => '', '_target' => '', '_target_png' => '',
+		'_thumbnail' => '', '_trim' => 1, '_geometry' => '',
+    '_crop' => 2, '_sRGB' => '', '_strip' => 3, '_bga' => 4, '_bgw' => 5,
+    '_box' => 5 ];
+
+	$is_png = false;
+
+	foreach ($cmd_parts as $key) {
+		if (empty($this->conf['convert.'.$key])) {
+			throw new Exception('no such convert command part '.$key, $cmd);
+		}
+
+		if ($key == '_target_png') {
+			$is_png = true;
+		}
+
+		$resize_dir .= $map[$key];
+
+		if (empty($cmd)) {
+			$cmd .= $this->conf['convert.'.$key];
+		}
+		else {
+			$cmd .= ' '.$this->conf['convert.'.$key];
+		}
+	}
+
+	$target_dir = dirname($this->conf['target']).'/'.$resize_dir;
+	$this->conf['target'] = $target_dir.'/'.basename($this->conf['target']);
+	$p['target'] = $this->conf['target'];
+
+	if ($is_png) {
+		$p['target_png'] = $target_dir.'/'.File::basename($p['target'], true).'.png';
+		$this->conf['target'] = $p['target_png'];
+		$p['target'] = $p['target_png'];
+	}
+	
+  Dir::create($target_dir, 0777, true);
+
+	if (File::exists($this->conf['target']) && !empty($this->conf['use_cache'])) {
+		if ($this->conf['use_cache'] == 'check_time') {
+			if (File::lastModified($this->conf['source']) <= File::lastModified($this->conf['target'])) {
+				\rkphplib\lib\log_debug('TPicture.runConvertCmd> check_time - use cache '.$this->conf['target'].': '.print_r($p, true));
+				return $this->conf['target'];
+			}
+		}
+		else {
+			\rkphplib\lib\log_debug('TPicture.runConvertCmd> use cache '.$this->conf['target'].': '.print_r($p, true));
+			return $this->conf['target'];
+		}
+	}
+
+	// \rkphplib\lib\log_debug("TPicture.runConvertCmd> $cmd\n".print_r($p, true));
+	\rkphplib\lib\execute($cmd, $p); 
+
+	if (!FSEntry::isFile($p['target'], false)) {
+		throw new Exception('convert '.$p['source'].' to '.$p['target'].' failed', "cmd: $cmd\np: ".print_r($p, true));
+	}
+
+ 	FSEntry::chmod($this->conf['target'], 0666);
+}
+
+
+/**
+ * Apply multiple resize operations at once (conf.resize_list).
+ * 
+ * @param string $resize_clist
+ */
+public function resize_list($resize_clist) {
+	$list = explode(',', $resize_clist);
+	$resize_cmd = [];
+
+	foreach ($list as $resize) {
+		$target = escapeshellarg('ToDo');
+		$resize = escapeshellarg(trim($resize));
+		$cmd = "\\( +clone -resize '$resize' -write '$target' +delete \\)";
+		array_push($resize_cmd, $cmd);
+	}
+
+	$source = escapeshellarg($this->conf['source']);
+	\rkphplib\lib\execute("convert '$source' ".join(' ', $resize_cmd));
+}
+
+
+/**
+ * Resize conf.source to conf.target according to conf.resize. Use trailing ^ for center mode.
+ * Use trailing > to avoid unecessary resize.
  *
  * @see http://www.imagemagick.org/script/convert.php
  * @see http://www.imagemagick.org/script/command-line-processing.php#geometry
@@ -267,48 +426,32 @@ private function computeImgSource() {
  */
 public function resize() {
 	$resize = $this->conf['resize'];
-  $resize_dir = str_replace([ '>', '<', '!', '^' ], [ 'g', 'l', 'x', '' ], $resize);
 
-	if (basename(dirname($this->conf['target'])) != $resize_dir) {
-		$target_dir = dirname($this->conf['target']).'/'.$resize_dir;
-		$this->conf['target'] = $target_dir.'/'.basename($this->conf['target']);
+	$exec_param = [ 'resize' => $resize, 'source' => $this->conf['source'], 'target' => $this->conf['target' ] ];
+
+	$exec_param['resize_dir'] = str_replace([ '>', '<', '!', '^' ], [ 'g', 'l', 'x', 'z' ], $resize);
+
+	if (preg_match('/^([0-9]+)x([0-9]+).*$/', $resize, $match)) {
+		$exec_param['WxH'] = $match[1].'x'.$match[2];
 	}
 
-	// \rkphplib\lib\log_debug('resize> this.conf: '.print_r($this->conf, true));
-	if (File::exists($this->conf['target']) && !empty($this->conf['use_cache'])) {
-		if (mb_substr($this->conf['use_cache'], 0, 10) == 'dimension:') {
-			$wxh = mb_substr($this->conf['use_cache'], 10);
-			$ii = File::imageInfo($this->conf['target']);
-			if ($ii['width'].'x'.$ii['height'] == $wxh) {
-				return $this->conf['target'];
-			}
-		}
-		else {
-			return $this->conf['target'];
-		}
-  }
-
-  Dir::create(dirname($this->conf['target']), 0777, true);
-
-	if ($this->conf['module'] == 'convert') {
-		if (substr($resize, -1) == '^') {
-			// resize to exact extend, center and clip image
-			$resize = substr($resize, 0, -1);
-			$r = [ 'resize' => $resize, 'source' => $this->conf['source'], 'target' => $this->conf['target'] ];
-			// \rkphplib\lib\log_debug('resize> '.$this->conf['convert.resize^'].' r: '.print_r($r, true));
-			\rkphplib\lib\execute($this->conf['convert.resize^'], $r); 
-		}
-		else {
-			$r = [ 'resize' => $resize, 'source' => $this->conf['source'], 'target' => $this->conf['target'] ];
-			// \rkphplib\lib\log_debug('resize> '.$this->conf['convert.resize'].' r: '.print_r($r, true));
-			\rkphplib\lib\execute($this->conf['convert.resize'], $r);
-		}
+	if (empty($this->conf['convert'])) {
+		$exec_param['cmd'] = (substr($resize, -1) == '^') ? 'center' : 'resize';
 	}
-	else if ($this->conf['module'] == 'gdlib') {
-		throw new Exception('todo');
+	else if ($this->conf['convert'] == 'cover') {
+		$exec_param = $this->convertCover($exec_param);
+	}
+	else if (substr($this->conf['convert'], 0, 8) == 'convert.') {
+		$exec_param['cmd'] = substr($this->conf['convert'], 8);
+	}
+	else if (in_array($this->conf['convert'], [ 'resize', 'box', 'center', 'box_png' ])) {
+		$exec_param['cmd'] = $this->conf['convert'];
+	}
+	else {
+		throw new Exception('ToDo: run custom convert command', $this->conf['convert']);
 	}
 
- 	FSEntry::chmod($this->conf['target'], 0666);
+	$this->runConvertCmd($exec_param);
 
 	return $this->conf['target'];
 }
