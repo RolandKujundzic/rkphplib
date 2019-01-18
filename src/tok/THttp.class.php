@@ -43,6 +43,7 @@ public function getPlugins($tok) {
  * - query: 
  * - url: get(host)[:get(port)]get(script)[?get(query)]
  * - abs_url: get(protocol).get(url)
+ * - abs_path: get(protocol).get(url).get(directory)
  * - http_url: http://get(host)[:get(port)]get(script)
  * - https_url: https://get(host)get(script)
  * 
@@ -68,7 +69,7 @@ public function tok_http_get($name) {
  */
 public static function httpGet($name) {
 	$custom = [ 'ip', 'is_msie', 'host', 'abs_host', 'script', 'query', 'script_query', 
-		'port', 'protocol', 'url', 'abs_url', 'http_url', 'https_url' ];	
+		'port', 'protocol', 'url', 'abs_url', 'abs_path', 'http_url', 'https_url' ];	
   $res = '';
 
 	if ($name == '*') {
@@ -113,6 +114,16 @@ public static function httpGet($name) {
 		}
 		else if ($name == 'abs_host') {
 			$res = $port_host;
+		}
+		else if ($name == 'abs_path') {
+			$path = getenv('REQUEST_URI');
+
+			if (($pos = strpos($path, '/index.php?')) || ($pos = strpos($path, '/?'))) {
+				$res = $port_host.substr($path, 0, $pos);
+			}
+			else {
+				throw new Exception('failed to detect abs_path', "port_host=[$port_host] path=[$path]");
+			}
 		}
 		else if ($name == 'host') {
 			$res = getenv('HTTP_HOST');
