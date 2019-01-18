@@ -11,6 +11,7 @@ require_once(__DIR__.'/../File.class.php');
 require_once(__DIR__.'/../JSON.class.php');
 require_once(__DIR__.'/../lib/split_str.php');
 require_once(__DIR__.'/../lib/log_error.php');
+require_once(__DIR__.'/../lib/conf2kv.php');
 
 use \rkphplib\tok\TPicture;
 use \rkphplib\tok\THttp;
@@ -49,12 +50,62 @@ public function getPlugins($tok) {
 
 	$plugin = [];
   $plugin['upload:init'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY | TokPlugin::REDO;
-  $plugin['upload:get'] = 0;
-  $plugin['upload:file'] = 0;
+  $plugin['upload:formData'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
   $plugin['upload:exists'] = TokPlugin::NO_PARAM |  TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['upload'] = 0;
 
 	return $plugin;
+}
+
+
+/**
+ * Return javascript form data.
+ *
+ * @tok {upload:get:ajax_parameter}@@4=":",","|#|...|#|ajax_parameter= @4 id:#fvin_id, ajax:upload{:upload}
+ * @tok {upload:formData:hidden}
+ * 		let f = this.element.parentNode;
+ *		this.options.rkHiddenInput("ajax", "upload");
+ * @tok {upload:formData}
+ * 		formData.append("id", document.getElementById("fvin_id").value); 
+ *		formData.append("ajax", document.getElementById("ajax").value);
+ *
+ * @param string $param (hidden|append)
+ * @return string
+ */
+public function tok_upload_formData($param) {
+
+	if (!isset($this->conf['ajax_parameter'])) {
+		throw new Exception("ajax_parameter missing", print_r($this->conf, true));
+	}
+
+	if (!is_array($this->conf['ajax_parameter'])) {
+		$this->conf['ajax_parameter'] = \rkphplib\lib\conf2kv($this->conf['ajax_parameter'], ':', ',');
+	}
+
+	if ($param == 'hidden') {
+		$res = "let f = this.element.parentNode;\n";
+		foreach ($this->conf['ajax_parameter'] as $key => $value) {
+			if (substr($value, 0, 1) != '#') {
+				$res .= 'this.options.rkHiddenInput("'.basename($key).'", "'.$value.'");'."\n";
+			}
+		}
+	}
+	else if ($param == 'append') {
+		$res = '';
+		foreach ($this->conf['ajax_parameter'] as $key => $value) {
+			if (substr($value, 0, 1) == '#') {
+				$res .= 'formData.append("'.basename($key).'", document.getElementById("'.basename($value).'").value);'."\n";
+			}
+			else {
+				$res .= 'formData.append("'.basename($key).'", document.getElementById("'.basename($key).'").value);'."\n";
+			}
+		}
+	}
+	else {
+		throw new Exception('no parameter use hidden|append', "param=[$param]");
+	}
+
+	return $res;
 }
 
 
