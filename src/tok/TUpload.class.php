@@ -74,7 +74,7 @@ private function getThumbnail($file, $http_path = false) {
 		]);
 
 	$resize_pic = $tpic->resize();
-	$target = $http_path ? dirname(THttp::httpGet('abs_host')).'/'.$resize_pic : $resize_pic;
+	$target = $http_path ? THttp::httpGet('abs_path').'/'.$resize_pic : $resize_pic;
 
 	// \rkphplib\lib\log_debug("TUpload.getThumbnail> return $target ($resize_pic)");
 	return $target;
@@ -129,7 +129,7 @@ public function tok_upload_exists($p) {
 	}
 	else if ($p['mode']	== 'dropzone') {
 		$entries = Dir::entries($this->conf['save_in']);
-		$url_prefix = dirname(THttp::httpGet('abs_host'));
+		$url_prefix = THttp::httpGet('abs_path');
 		$list = [];
 
 		foreach ($entries as $entry) {
