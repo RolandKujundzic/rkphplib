@@ -197,7 +197,12 @@ public static function log($message, $to) {
 public function setVar($name, $value, $flags = 0) {
 
 	if (empty($name)) {
-		throw new Exception('empty vmap name');
+		if (is_array($value)) {
+			$this->vmap = $value;
+		}
+		else {
+			throw new Exception('empty vmap name');
+		}
 	}
 
 	$path = explode('.', $name);
