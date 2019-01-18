@@ -287,6 +287,11 @@ public function __construct() {
  */
 public function tok_fv_appendjs($name, $id_list = []) {
 	$conf = $this->conf['current'];
+	if (count($conf) == 0) {
+		$this->tok_fv_init('', []);
+		$conf = $this->conf['current'];
+	}
+
 	$id_prefix = $conf['id_prefix'];
 	$list = [];
 
