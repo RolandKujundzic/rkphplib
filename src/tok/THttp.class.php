@@ -118,7 +118,7 @@ public static function httpGet($name) {
 		else if ($name == 'abs_path') {
 			$path = getenv('REQUEST_URI');
 
-			if (($pos = strpos($path, '/index.php?')) || ($pos = strpos($path, '/?'))) {
+			if (($pos = strpos($path, '/index.php?')) !== false || ($pos = strpos($path, '/?')) !== false) {
 				$res = $port_host.substr($path, 0, $pos);
 			}
 			else {
