@@ -29,9 +29,9 @@ public function getPlugins($tok) {
 	$plugin['html:uglify'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html'] = 0;
 
-	$plugin['input:checkbox'] = TokPlugin::REQUIRE_PARAM || TokPlugin::KV_BODY;
-	$plugin['input:radio'] = TokPlugin::REQUIRE_PARAM || TokPlugin::KV_BODY;
-	$plugin['input'] = 0;
+	$plugin['input:checkbox'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
+	$plugin['input:radio'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
+	$plugin['input'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::KV_BODY;
 
   return $plugin;
 }
@@ -58,7 +58,7 @@ public function tok_input_checkbox($name, $attrib) {
     $attrib['value'] = 1;
   }
 
-  foreach ($arrib as $key => $value) {
+  foreach ($attrib as $key => $value) {
     $html .= ' '.$key.'="'.str_replace('"', '\"', $value).'"';
   }
 
@@ -83,6 +83,36 @@ public function tok_input_checkbox($name, $attrib) {
 public function tok_input_radio($name, $attrib) {
 	$attrib['type'] = 'radio';
 	return $this->tok_input_checkbox($name, $attrib);
+}
+
+
+/**
+ * Return inut html.
+ *
+ * @tok {input:button}value=Continue{:input} : <input type="button" value="Continue" />
+ * @tok {input:text:email} + $_REQUEST[email]='joe@nowhere.com' : <input type="text" name="email" value="joe@nowhere.com" />
+ * 
+ * @param vector $type_name (0 = type, 1 = name)
+ * @param hash $attrib
+ * @return string
+ */
+public function tok_input($type_name, $attrib) {
+	$html = '<input type="'.$type_name[0].'"';
+
+	if (!empty($type_name[1])) {
+		$name = $type_name[1];
+		$html .= ' name="'.$name.'"';
+
+		if (isset($_REQUEST[$name])) {
+			$attrib['value'] = $_REQUEST[$name];
+		}
+	}
+
+  foreach ($attrib as $key => $value) {
+    $html .= ' '.$key.'="'.str_replace('"', '\"', $value).'"';
+  }
+
+  return $html.'/>';
 }
 
 
