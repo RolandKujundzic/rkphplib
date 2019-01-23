@@ -54,7 +54,7 @@ public function tok_input_checkbox($name, $attrib) {
     $attrib['type'] = 'checkbox';
   }
 
-  if (empty($attrib['value'])) {
+  if (!isset($attrib['value'])) {
     $attrib['value'] = 1;
   }
 
@@ -103,7 +103,7 @@ public function tok_input($type_name, $attrib) {
 		$name = $type_name[1];
 		$html .= ' name="'.$name.'"';
 
-		if (isset($_REQUEST[$name])) {
+		if (!isset($attrib['value']) && isset($_REQUEST[$name])) {
 			$attrib['value'] = $_REQUEST[$name];
 		}
 	}
