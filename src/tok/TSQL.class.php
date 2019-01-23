@@ -522,14 +522,18 @@ public function tok_sql_options($p = []) {
 		}
 	}
 	else if ($p['mode'] == 'list') {
+		$is_vector = true;
 		$kv = [];
 
 		while (($row = $this->db->getNextRow())) {
 			$key = $row['value'];
 			$kv[$key] = isset($row['label']) ? $row['label'] : $row['value'];
+			if ($is_vector && $key != $kv[$key]) {
+				$is_vector = false;
+			}
 		}
 
-		$res = \rkphplib\lib\kv2conf($kv, '=', ',');
+		$res = $is_vector ? join(',', array_keys($kv)) : \rkphplib\lib\kv2conf($kv, '=', ',');
 	}
 
 	return $res;
