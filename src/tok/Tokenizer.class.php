@@ -1239,7 +1239,7 @@ private function tryPluginMap($name) {
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval' ],
 		'TFileSystem' => [ 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'directory', 'file:size', 'file:copy', 'file:exists', 'file', 'dirname', 'basename' ],
 		'TFormValidator' => [ 'fv', 'fv:init', 'fv:conf', 'fv:get', 'fv:get_conf', 'fv:check', 'fv:in', 'fv:tpl', 'fv:hidden', 'fv:preset', 'fv:error', 'fv:appendjs', 'fv:error_message', 'fv:set_error_message' ],
-		'THtml' => [ 'html:inner', 'html:append', 'html:meta', 'html:tidy', 'html:xml', 'html:uglify', 'html' ],
+		'THtml' => [ 'html:inner', 'html:append', 'html:meta', 'html:tidy', 'html:xml', 'html:uglify', 'html', 'input:checkbox', 'input:radio', 'input' ],
 		'THttp' => [ 'http:get', 'http' ],
 		'TJob' => [ 'job' ],
 		'TLanguage' => [ 'language:init', 'language:get', 'language', 'txt:js', 'txt', 't', 'ptxt' ],
@@ -1249,10 +1249,10 @@ private function tryPluginMap($name) {
 		'TMath' => [ 'nf', 'number_format', 'intval', 'floatval', 'rand', 'math', 'md5' ],
 		'TMenu' => [ 'menu', 'menu:add', 'menu:conf' ],
 		'TOutput' => [ 'output:set', 'output:get', 'output:conf', 'output:init', 'output:loop', 'output:json', 'output:header', 'output:footer', 'output:empty', 'output', 'sort', 'search' ],
-		'TPicture' => [ 'picture:init', 'picture:src', 'picture' ],
+		'TPicture' => [ 'picture:init', 'picture:src', 'picture:list', 'picture' ],
 		'TSQL' => [ 'sql:query', 'sql:change', 'sql:dsn', 'sql:name', 'sql:qkey', 'sql:json', 'sql:col', 'sql:options', 'sql:getId', 'sql:nextId', 'sql:in', 'sql:hasTable', 'sql:password', 'sql:import', 'sql', 'null' ],
 		'TTwig' => [ 'autoescape', 'block', 'do', 'embed', 'extends', 'filter', 'flush', 'for', 'from', 'if', 'import', 'include', 'macro', 'sandbox', 'set', 'spaceless', 'use', 'verbatim', 'v' ],
-		'TUpload' => [ 'upload:init', 'upload:get', 'upload:file', 'upload:exists', 'upload' ]
+		'TUpload' => [ 'upload:init', 'upload:formData', 'upload:exists', 'upload' ]
 	];
 
 	foreach ($map as $cname => $list) {
