@@ -28,7 +28,61 @@ public function getPlugins($tok) {
 	$plugin['html:xml'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:uglify'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html'] = 0;
+
+	$plugin['input:checkbox'] = TokPlugin::REQUIRE_PARAM || TokPlugin::KV_BODY;
+	$plugin['input:radio'] = TokPlugin::REQUIRE_PARAM || TokPlugin::KV_BODY;
+	$plugin['input'] = 0;
+
   return $plugin;
+}
+
+
+/**
+ * Return checkbox input html.
+ *
+ * @tok  {input:checkbox:agb}class=form-control{:checkbox} + $_REQUEST[agb]=1
+ *   <input type="checkbox" name="agb" value="1" class="form-control" checked/>
+ * 
+ * @param string $name
+ * @param hash $attrib
+ * @return string
+ */
+public function tok_input_checkbox($name, $attrib) {
+  $html = '<input name="'.$name.'"';
+
+  if (empty($attrib['type'])) {
+    $attrib['type'] = 'checkbox';
+  }
+
+  if (empty($attrib['value'])) {
+    $attrib['value'] = 1;
+  }
+
+  foreach ($arrib as $key => $value) {
+    $html .= ' '.$key.'="'.str_replace('"', '\"', $value).'"';
+  }
+
+  if (!empty($_REQUEST[$name]) && $_REQUEST[$name] == $attrib['value']) {
+    $html .= ' checked';
+  }
+
+  return $html.'/>';
+}
+
+
+/**
+ * Return checkbox input html.
+ *
+ * @tok  {input:radio:of_age} + $_REQUEST[of_age]=1
+ *   <input type="radio" name="of_age" value="1" checked />
+ * 
+ * @param string $name
+ * @param hash $attrib
+ * @return string
+ */
+public function tok_input_radio($name, $attrib) {
+	$attrib['type'] = 'radio';
+	return $this->tok_input_checkbox($name, $attrib);
 }
 
 
