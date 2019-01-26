@@ -383,7 +383,7 @@ private function runConvertCmd($p) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TPicture.runConvertCmd> $cmd\n".print_r($p, true));
+	\rkphplib\lib\log_debug("TPicture.runConvertCmd> $cmd\n".print_r($p, true));
 	\rkphplib\lib\execute($cmd, $p); 
 
 	if (!FSEntry::isFile($p['target'], false)) {
@@ -434,7 +434,7 @@ public function resize() {
 		$exec_param['WxH'] = $match[1].'x'.$match[2];
 	}
 
-	if (empty($this->conf['convert'])) {
+	if (empty($this->conf['convert']) || substr($resize, -1) == '^') {
 		$exec_param['cmd'] = (substr($resize, -1) == '^') ? 'center' : 'resize';
 	}
 	else if ($this->conf['convert'] == 'cover') {

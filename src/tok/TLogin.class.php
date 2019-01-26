@@ -312,6 +312,10 @@ public function tok_login_update($do, $p) {
 		return '';
 	}
 
+	if (is_string($p) && strlen(trim($p)) == 0) {
+		return '';
+	}
+
 	if (!empty($p['@table'])) {
 		$table = $p['@table'];
 		unset($p['@table']);

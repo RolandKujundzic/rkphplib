@@ -28,7 +28,91 @@ public function getPlugins($tok) {
 	$plugin['html:xml'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:uglify'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html'] = 0;
+
+	$plugin['input:checkbox'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
+	$plugin['input:radio'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
+	$plugin['input'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::KV_BODY;
+
   return $plugin;
+}
+
+
+/**
+ * Return checkbox input html.
+ *
+ * @tok  {input:checkbox:agb}class=form-control{:checkbox} + $_REQUEST[agb]=1
+ *   <input type="checkbox" name="agb" value="1" class="form-control" checked/>
+ * 
+ * @param string $name
+ * @param hash $attrib
+ * @return string
+ */
+public function tok_input_checkbox($name, $attrib) {
+  $html = '<input name="'.$name.'"';
+
+  if (empty($attrib['type'])) {
+    $attrib['type'] = 'checkbox';
+  }
+
+  if (!isset($attrib['value'])) {
+    $attrib['value'] = 1;
+  }
+
+  foreach ($attrib as $key => $value) {
+    $html .= ' '.$key.'="'.str_replace('"', '\"', $value).'"';
+  }
+
+  if (!empty($_REQUEST[$name]) && $_REQUEST[$name] == $attrib['value']) {
+    $html .= ' checked';
+  }
+
+  return $html.'/>';
+}
+
+
+/**
+ * Return checkbox input html.
+ *
+ * @tok  {input:radio:of_age} + $_REQUEST[of_age]=1
+ *   <input type="radio" name="of_age" value="1" checked />
+ * 
+ * @param string $name
+ * @param hash $attrib
+ * @return string
+ */
+public function tok_input_radio($name, $attrib) {
+	$attrib['type'] = 'radio';
+	return $this->tok_input_checkbox($name, $attrib);
+}
+
+
+/**
+ * Return inut html.
+ *
+ * @tok {input:button}value=Continue{:input} : <input type="button" value="Continue" />
+ * @tok {input:text:email} + $_REQUEST[email]='joe@nowhere.com' : <input type="text" name="email" value="joe@nowhere.com" />
+ * 
+ * @param vector $type_name (0 = type, 1 = name)
+ * @param hash $attrib
+ * @return string
+ */
+public function tok_input($type_name, $attrib) {
+	$html = '<input type="'.$type_name[0].'"';
+
+	if (!empty($type_name[1])) {
+		$name = $type_name[1];
+		$html .= ' name="'.$name.'"';
+
+		if (!isset($attrib['value']) && isset($_REQUEST[$name])) {
+			$attrib['value'] = $_REQUEST[$name];
+		}
+	}
+
+  foreach ($attrib as $key => $value) {
+    $html .= ' '.$key.'="'.str_replace('"', '\"', $value).'"';
+  }
+
+  return $html.'/>';
 }
 
 

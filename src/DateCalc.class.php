@@ -539,7 +539,8 @@ public static function sec2hms($sec) {
 /**
  * Compute unix timestamp from now string "now(+/-offset)".
  * 
- * @param string $str e.g. now(), now(+3600) or now(-60)
+ * @throws
+ * @param string $str e.g. now(), now(+3600) or now(-60) or now(+2day|month)
  * @param bool $abort (default = true = abort if error)
  * @return int
  */
@@ -558,19 +559,17 @@ public static function nowstr2time($str, $abort = true) {
 	$res = time();
 
 	if (mb_strlen($str) > 5) {
-		$nc = mb_substr($str, 4, 1);
+		$expr = mb_substr($str, 4, -1);
 
-		if ($nc === '-') {
-			$num = intval(mb_substr($str, 5, -1));
-			$res -= $num;
+		if (preg_match('/^([\+\-]?)([0-9]+)$/', $expr, $match)) {
+			$num = intval($match[2]);
+			$res = ($match[1] == '-') ? $res - $num : $res + $num;
 		}
-		else if ($nc === '+') {
-			$num = intval(mb_substr($str, 5, -1));
-			$res += $num;
+		else if (preg_match('/^([\+\-]?)([0-9]+)(.+)$/', $expr, $match)) {
+			$res = strtotime($match[1].$match[2].' '.$match[3], $res);
 		}
-		else {
-			$num = intval(mb_substr($str, 4, -1));
-			$res += $num;
+		else if ($abort) {
+			throw new Exception('failed to parse now() expression', "expr=[$expr]");
 		}
 	}
 
