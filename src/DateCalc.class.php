@@ -691,7 +691,7 @@ public static function formatDateStr($format_out, $date_str, $format_in = '') {
 		throw new Exception('no output format defined');
 	}
 
-	$format_map = array('de' => 'd.m.Y H:i:s', 'sql' => 'Y-m-d H:i:s');
+	$format_map = array('de' => 'd.m.Y H:i:s', 'sql' => 'Y-m-d H:i:s', 'en' => 'j M Y H:i:s');
 
 	if (!empty($format_map[$format_out])) {
 		$format_out = $format_map[$format_out];
