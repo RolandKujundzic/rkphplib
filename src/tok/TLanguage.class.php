@@ -234,7 +234,7 @@ public function tok_language_script($path) {
 		$res = '<script src="'.dirname($res).'/'.File::basename($res, true).'/'.$lang.'/'.File::suffix($res, true).'"></script>';
 	}
 	else {
-		$res = '{include:static}'.$res.'{:include}';
+		$res = '<script>{include:static}'.$res.'{:include}</script>';
 	}
 
 	return $res;
