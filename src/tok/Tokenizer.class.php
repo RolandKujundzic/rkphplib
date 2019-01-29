@@ -1152,6 +1152,10 @@ public function unescape($txt, $rx = null) {
  * @return string
  */
 public function replaceTags($tpl, $replace, $prefix = '') {
+	if (is_string($replace) && strlen(trim($replace)) == 0) {
+		throw new Exception('replaceTags hash is string', "replace=[$replace] tpl=[$tpl]");
+	}
+		
 	foreach ($replace as $key => $value) {
 		if (!is_array($value)) {
 			$tag = $this->rx[1].$this->rx[2].'='.$prefix.$key.$this->rx[3];
