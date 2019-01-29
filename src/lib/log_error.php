@@ -3,8 +3,13 @@
 namespace rkphplib\lib;
 
 if (!defined('SETTINGS_LOG_ERROR')) {
-  /** @define string SETTINGS_LOG_ERROR = '/tmp/php.fatal' */
-  define('SETTINGS_LOG_ERROR', '/tmp/php.fatal');
+	/** @define string SETTINGS_LOG_ERROR = '[/tmp|DOCROOT/data/log]/php.fatal' */
+	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/log')) {
+		define('SETTINGS_LOG_ERROR', DOCROOT.'/data/log/php.fatal');
+	}
+	else {
+		define('SETTINGS_LOG_ERROR', '/tmp/php.fatal');
+	}
 }
 
 if (!defined('SETTINGS_TIMEZONE')) {
