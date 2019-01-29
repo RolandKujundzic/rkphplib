@@ -6,11 +6,13 @@ require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/../Exception.class.php');
 require_once(__DIR__.'/../Database.class.php');
 require_once(__DIR__.'/../Session.class.php');
+require_once(__DIR__.'/../File.class.php');
 
 use \rkphplib\Exception;
 use \rkphplib\Database;
 use \rkphplib\ADatabase;
 use \rkphplib\Session;
+use \rkphplib\File;
 
 
 
@@ -56,7 +58,7 @@ public function getPlugins($tok) {
 	$plugin = [
 		'language:init' => TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY, 
 		'language:get' => TokPlugin::NO_PARAM | TokPlugin::NO_BODY,
-		'language:path' => TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY,
+		'language:script' => TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO,
 		'language' => 0,
 		'txt:js' => 0,
 		'txt' => 0,
@@ -221,15 +223,18 @@ public function tok_language_get() {
  * @param string $path
  * @return string
  */
-public function tok_language_path($path) {
+public function tok_language_script($path) {
 	$res = trim($path);
 	$lang = $this->tok_language_get();
 
 	if (File::exists("$lang/$res")) {
-		$res = "$lang/$res";
+		$res = '<script src="'.$lang.'/'.$res.'"></script>';
 	}
 	else if (File::exists(dirname($res).'/'.File::basename($res, true).'/'.$lang.'/'.File::suffix($res, true))) {
-		$res = dirname($res).'/'.File::basename($res, true).'/'.$lang.'/'.File::suffix($res, true);
+		$res = '<script src="'.dirname($res).'/'.File::basename($res, true).'/'.$lang.'/'.File::suffix($res, true).'"></script>';
+	}
+	else {
+		$res = '{include:static}'.$res.'{:include}';
 	}
 
 	return $res;
