@@ -56,7 +56,7 @@ public function getPlugins($tok) {
 	$plugin = [
 		'language:init' => TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY, 
 		'language:get' => TokPlugin::NO_PARAM | TokPlugin::NO_BODY,
-		'language:path' => TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+		'language:path' => TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY,
 		'language' => 0,
 		'txt:js' => 0,
 		'txt' => 0,
