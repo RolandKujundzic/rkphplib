@@ -56,6 +56,7 @@ public function getPlugins($tok) {
 	$plugin = [
 		'language:init' => TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY, 
 		'language:get' => TokPlugin::NO_PARAM | TokPlugin::NO_BODY,
+		'language:path' => TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 		'language' => 0,
 		'txt:js' => 0,
 		'txt' => 0,
@@ -210,6 +211,28 @@ public function tok_language_get() {
 	}
 
 	return $this->sess->get('language');
+}
+
+
+/**
+ * Return translated file path (if found). Try
+ * {language:get}/$path and dirname($path)/basename($path).{language:get}.suffix($path).
+ *
+ * @param string $path
+ * @return string
+ */
+public function tok_language_path($path) {
+	$res = trim($path);
+	$lang = $this->tok_language_get();
+
+	if (File::exists("$lang/$res")) {
+		$res = "$lang/$res";
+	}
+	else if (File::exists(dirname($res).'/'.File::basename($res, true).'/'.$lang.'/'.File::suffix($res, true))) {
+		$res = dirname($res).'/'.File::basename($res, true).'/'.$lang.'/'.File::suffix($res, true);
+	}
+
+	return $res;
 }
 
 
