@@ -1323,9 +1323,8 @@ public function tok_if($param, $p) {
 		$res = in_array($param, $set) ? $p[1] : $p[2];
 	}
 	else if ($do === 'le' || $do === 'lt' || $do === 'ge' || $do === 'gt') {
-
 		if (!empty($param)) {
-			array_shift($p, $param);
+			array_unshift($p, $param);
 		}
 
 		if ($p_num % 2 == 1) {
