@@ -351,14 +351,14 @@ public function tok_login_update($do, $p) {
 		unset($p['@request_keys']);
 	}
 
-	\rkphplib\lib\log_debug("TLogin.tok_login_update: table=$table, kv ".print_r($kv, true)."\np ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TLogin.tok_login_update: table=$table, kv ".print_r($kv, true)."\np ".print_r($p, true));
 	$where = empty($kv['@where']) ? '' : $kv['@where'];
 
 	// only add (key,value) to kv where value has changed
 	foreach ($sess as $key => $value) {
 		if (isset($_REQUEST[$key]) && $value != $_REQUEST[$key]) {
 			$kv[$key] = $_REQUEST[$key];
-			\rkphplib\lib\log_debug("TLogin.tok_login_update: kv (sess + request) - $key=".$_REQUEST[$key]);
+			// \rkphplib\lib\log_debug("TLogin.tok_login_update: kv (sess + request) - $key=".$_REQUEST[$key]);
 		}
 	}
 
@@ -366,7 +366,7 @@ public function tok_login_update($do, $p) {
 		// e.g. !isset(kv['password'])
 		if (substr($key, 0, 1) != '@' && (!isset($kv[$key]) || $kv[$key] != $value)) {
 			$kv[$key] = $value;
-			\rkphplib\lib\log_debug("TLogin.tok_login_update: kv (p) - $key=$value");
+			// \rkphplib\lib\log_debug("TLogin.tok_login_update: kv (p) - $key=$value");
 		}
 	}
 
@@ -385,7 +385,7 @@ public function tok_login_update($do, $p) {
 
 		foreach ($has_cols as $col) {
 			if (!in_array($col, $allow_cols)) {
-				\rkphplib\lib\log_debug("TLogin.tok_login_update: unset forbidden column $col");
+				// \rkphplib\lib\log_debug("TLogin.tok_login_update: unset forbidden column $col");
 				unset($kv[$col]);
 			}
 		}
@@ -404,7 +404,7 @@ public function tok_login_update($do, $p) {
 
 			if ($id && is_numeric($id)) {
 				$where = "WHERE id='".intval($id)."'";
-				\rkphplib\lib\log_debug("TLogin.tok_login_update: id=$id where=$where");
+				// \rkphplib\lib\log_debug("TLogin.tok_login_update: id=$id where=$where");
 			}
 		}
 
@@ -412,7 +412,7 @@ public function tok_login_update($do, $p) {
 			throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
 		}
 
-		\rkphplib\lib\log_debug("TLogin.tok_login_update: do=$do, table=$table, where=$where, kv: ".print_r($kv, true));
+		// \rkphplib\lib\log_debug("TLogin.tok_login_update: do=$do, table=$table, where=$where, kv: ".print_r($kv, true));
 		if (count($kv) > 0 && !empty($table) && $do != 'no_db') {
 			$kv['@where'] = $where;
 
@@ -420,7 +420,7 @@ public function tok_login_update($do, $p) {
 
 			$query = (count($dbres) == 1) ? $this->db->buildQuery($table, 'update', $kv) : $this->db->buildQuery($table, 'insert', $kv);
 
-			\rkphplib\lib\log_debug("tok_login_update> query=$query");
+			// \rkphplib\lib\log_debug("tok_login_update> query=$query");
 			if (!empty($query)) {
 				$this->db->execute($query);
 			}

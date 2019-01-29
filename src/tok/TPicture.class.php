@@ -373,17 +373,17 @@ private function runConvertCmd($p) {
 	if (File::exists($this->conf['target']) && !empty($this->conf['use_cache'])) {
 		if ($this->conf['use_cache'] == 'check_time') {
 			if (File::lastModified($this->conf['source']) <= File::lastModified($this->conf['target'])) {
-				\rkphplib\lib\log_debug('TPicture.runConvertCmd> check_time - use cache '.$this->conf['target'].': '.print_r($p, true));
+				// \rkphplib\lib\log_debug('TPicture.runConvertCmd> check_time - use cache '.$this->conf['target'].': '.print_r($p, true));
 				return $this->conf['target'];
 			}
 		}
 		else {
-			\rkphplib\lib\log_debug('TPicture.runConvertCmd> use cache '.$this->conf['target'].': '.print_r($p, true));
+			// \rkphplib\lib\log_debug('TPicture.runConvertCmd> use cache '.$this->conf['target'].': '.print_r($p, true));
 			return $this->conf['target'];
 		}
 	}
 
-	\rkphplib\lib\log_debug("TPicture.runConvertCmd> $cmd\n".print_r($p, true));
+	// \rkphplib\lib\log_debug("TPicture.runConvertCmd> $cmd\n".print_r($p, true));
 	\rkphplib\lib\execute($cmd, $p); 
 
 	if (!FSEntry::isFile($p['target'], false)) {
