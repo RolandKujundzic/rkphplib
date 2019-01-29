@@ -39,7 +39,7 @@ function execute($cmd, $parameter = null, $abort = true) {
 
 	$output_msg = '';
 
-	\rkphplib\lib\log_debug("lib/execute($cmd, ...)> $cmd");
+	// \rkphplib\lib\log_debug("lib/execute($cmd, ...)> $cmd");
 	if ($cmd) {
 		$output = array();
 		$retval = -1;
