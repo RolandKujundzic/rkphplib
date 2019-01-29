@@ -86,7 +86,7 @@ public function setDSN($dsn = SETTINGS_DSN, $opt = [ 'table' => 'language', 'use
 		'delete' => "DELETE FROM $table WHERE id='{:=id}'"
 	];
 
-	\rkphplib\lib\log_debug("Tlanguage.setDSN> table=$table use=$use default=$default select: ".$query_map['select']);
+	// \rkphplib\lib\log_debug("Tlanguage.setDSN> table=$table use=$use default=$default select: ".$query_map['select']);
 	$this->db = Database::getInstance($dsn, $query_map);
 	$this->createTable($opt['table']);
 }
@@ -153,7 +153,7 @@ public function initSession($p) {
 		}
 	}
 
-	\rkphplib\lib\log_debug("TLanguage.initSession> res=[$res] p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TLanguage.initSession> res=[$res] p: ".print_r($p, true));
 	return $res;
 }
 

@@ -625,7 +625,7 @@ public function tok_fv_check() {
 		if (!empty($this->conf['current']['allow_column'])) {
 			$allow_col = \rkphplib\lib\split_str(',', $this->conf['current']['allow_column']);
 
-			\rkphplib\lib\log_debug("TFormValidator->tok_fv_check> column=$column allow_col: ".print_r($allow_col, true));
+			// \rkphplib\lib\log_debug("TFormValidator->tok_fv_check> column=$column allow_col: ".print_r($allow_col, true));
 			if (!in_array($column, $allow_col)) {
 				$this->error['parameter'] = [ $column.' is immutable' ];
 			}
@@ -766,7 +766,7 @@ public function tok_fv_error_message($name, $tpl = '') {
 		$res = $this->tok->replaceTags($tpl, $r);
 	}
 
-	\rkphplib\lib\log_debug("tok_fv_error_message($name, ...)> name=[$name] res=[$res] - error: ".print_r($this->error, true));
+	// \rkphplib\lib\log_debug("tok_fv_error_message($name, ...)> name=[$name] res=[$res] - error: ".print_r($this->error, true));
 	return $res;
 }
 
