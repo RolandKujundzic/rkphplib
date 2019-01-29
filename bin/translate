@@ -82,9 +82,15 @@ public function tok_language_get() {
  *
  * @param string $name
  * @param string $txt_lang (=de)
+ * @return boolean
  */
 public function setTable($name, $txt_lang = 'de') {
 	$this->db = Database::getInstance();
+
+	if (!$this->db->hasTable($name)) {
+		return false;
+	}
+
 	$table_desc = $this->db->getTableDesc($name);
 	$this->languages = [];
 
@@ -105,6 +111,7 @@ public function setTable($name, $txt_lang = 'de') {
 	$this->tok->register($this->t_lang);
 	$this->tok->register($this);
 	$this->t_lang->tok_language_init([ 'table' => $name, 'default' => $txt_lang, 'txt' => $txt_lang ]);
+	return true;
 }
 
 
@@ -142,7 +149,9 @@ private function log($message) {
  *
  */
 public function run($option, $language_table, $default_language) {
-	$this->setTable($language_table, $default_language);
+	if (!$this->setTable($language_table, $default_language)) {
+		return;
+	}
 
 	foreach ($this->languages as $lang) {
 		if (Dir::exists($lang)) {
