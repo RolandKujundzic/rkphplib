@@ -3,8 +3,13 @@
 namespace rkphplib\lib;
 
 if (!defined('SETTINGS_LOG_DEBUG')) {
-  /** @define string SETTINGS_LOG_DEBUG = '/tmp/php.log' */
-	define('SETTINGS_LOG_DEBUG', '/tmp/php.log');
+	/** @define string SETTINGS_LOG_DEBUG = '[/tmp|DOCROOT/data/log]/php.log' */
+	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/log')) {
+		define('SETTINGS_LOG_DEBUG', DOCROOT.'/data/log/php.log');
+	}
+	else {
+		define('SETTINGS_LOG_DEBUG', '/tmp/php.log');
+	}
 }
 
 if (!defined('SETTINGS_TIMEZONE')) {
