@@ -3,7 +3,11 @@
 namespace rkphplib\lib;
 
 /**
- * Configuration file.
+ * Configuration file. Include lib/log_error.php and lib/log_debug.php.
+ * Change PrivateTmp=true into false in 
+ *  
+ * /etc/systemd/system/multi-user.target.wants/apache2.service to use real /tmp directory - otherwise
+ * /tmp/systemd-private-f9...09-apache2.service-eC...Xy/tmp/ will be used.
  *
  * Preset global defines SETTINGS_* with default values:
  *
@@ -23,21 +27,13 @@ namespace rkphplib\lib;
  */
 
 require_once(__DIR__.'/log_debug.php');
+require_once(__DIR__.'/log_error.php');
 
 // E_ERROR | E_WARNING | E_PARSE | E_NOTICE or E_ALL or E_ALL ^ E_NOTICE
 // error_reporting(E_ALL);
 
 // Force UTF-8 encoding
 mb_internal_encoding('UTF-8');
-
-if (!defined('SETTINGS_TIMEZONE')) {
-	/** @define string SETTINGS_TIMEZONE = Auto-Detect */
-	date_default_timezone_set(@date_default_timezone_get());
-	define('SETTINGS_TIMEZONE', date_default_timezone_get());
-}
-else {
-	date_default_timezone_set(SETTINGS_TIMEZONE);
-}
 
 if (!defined('SETTINGS_LANGUAGE')) {
 	/** @define string SETTINGS_LANGUAGE = 'de' */
@@ -60,7 +56,7 @@ function exception_handler($e) {
 
 	if (php_sapi_name() !== 'cli') {
 		$ts = date('d.m.Y H:i:s');
-		error_log("$ts $msg\n$internal\n\n$trace\n\n", 3, '/tmp/php.fatal');
+		error_log("$ts $msg\n$internal\n\n$trace\n\n", 3, SETTINGS_LOG_ERROR);
 
 		if (defined('ABORT_DIR') && class_exists('\rkphplib\tok\Tokenizer') && class_exists('\rkphplib\tok\TBase')) {
 			$tok =& \rkphplib\tok\Tokenizer::$site;
