@@ -97,7 +97,7 @@ public function getPlugins($tok) {
 	$plugin['fv:conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY | TokPlugin::TEXT;
 	$plugin['fv:get'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:get_conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
-	$plugin['fv:check'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY; 
+	$plugin['fv:check'] = TokPlugin::NO_BODY; 
 	$plugin['fv:in'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY | TokPlugin::REDO;
 	$plugin['fv:tpl'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY | TokPlugin::REDO;
 	$plugin['fv:hidden'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
@@ -572,7 +572,7 @@ public function tok_fv_init($do, $p) {
  * @throws
  * @return string (yes|error|)
  */
-public function tok_fv_check() {
+public function tok_fv_check($ajax = '') {
 	$submit = $this->getConf('submit');
 
 	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_check> submit=$submit _REQUEST: ".print_r($_REQUEST, true));
@@ -656,7 +656,37 @@ public function tok_fv_check() {
 		exit(0);
 	}
 
-	return (count($this->error) == 0) ? 'yes' : 'error';
+	$res = (count($this->error) == 0) ? 'yes' : 'error';
+
+	if ($res == 'yes' && $ajax) {
+		$this->ajaxOutput($ajax);
+	}
+
+	return $res;
+}
+
+
+/**
+ * Execute tpl:$ajax and exit.
+ *
+ * @exit
+ * @print json
+ * @param string $ajax
+ */
+private function ajaxOutput($ajax) {
+	try {
+   	$output = $this->tok->callPlugin('tpl', $ajax);
+		\rkphplib\lib\log_debug("TFormValidator.ajaxOutput($ajax)> $output");
+		http_response_code(200);
+		print $output;
+   	exit(0);
+  }
+  catch (\Exception $e) {
+    \rkphplib\lib\log_error($e);
+		http_response_code(400);
+		print "ERROR: catch Exception in TFormValidator.ajaxOutput(): ".$e->getMessage();
+    exit(0);
+  }
 }
 
 
@@ -1231,6 +1261,13 @@ protected function getInput($name, $ri) {
 	}
 
 	$tags = '';
+
+	foreach ($conf as $key => $value) {
+		if (substr($key, 0, 4) == 'add.') {
+			$key = substr($key, 4);
+			$ri[$key] = empty($ri[$key]) ? $value : $ri[$key].'; '.$value;
+		}
+	}
 
 	$attributes = [ 'id', 'size', 'maxlength', 'placeholder', 'pattern', 'rows', 'cols', 'style', 'class', 
 		'accept', 'onchange', 'onblur', 'autocomplete' ];
