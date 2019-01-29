@@ -71,10 +71,10 @@ public function getPlugins($tok) {
  * Prepare database connection.
  * 
  * @param string $dsn (default = SETTINGS_DSN)
- * @param map $opt (default = [ 'table' => 'language', 'language' => SETTINGS_LANGUAGE, 'default' => 'txt' ])
+ * @param map $opt (default = [ 'table' => 'language', 'language' => SETTINGS_LANGUAGE, 'default' =>  SETTINGS_LANGUAGE])
  * @param string $language (default = SETTINGS_LANGUAGE)
  */
-public function setDSN($dsn = SETTINGS_DSN, $opt = [ 'table' => 'language', 'use' => SETTINGS_LANGUAGE, 'default' => 'txt' ]) {
+public function setDSN($dsn = SETTINGS_DSN, $opt = [ 'table' => 'language', 'use' => SETTINGS_LANGUAGE, 'default' => SETTINGS_LANGUAGE ]) {
 	
 	$table = ADatabase::escape($opt['table']);
 	$default = ADatabase::escape($opt['default']);
@@ -86,6 +86,7 @@ public function setDSN($dsn = SETTINGS_DSN, $opt = [ 'table' => 'language', 'use
 		'delete' => "DELETE FROM $table WHERE id='{:=id}'"
 	];
 
+	\rkphplib\lib\log_debug("Tlanguage.setDSN> table=$table use=$use default=$default select: ".$query_map['select']);
 	$this->db = Database::getInstance($dsn, $query_map);
 	$this->createTable($opt['table']);
 }
@@ -135,19 +136,24 @@ public function initSession($p) {
 	$this->sess = new Session();
 	$this->sess->init([ 'name' => $name, 'scope' => 'docroot', 'unlimited' => 1 ]);
 
-	$res = $p['default'];
-
 	if (!empty($p['use'])) {
 		$this->sess->set('language', $p['use']);
 		$res = $p['use'];
 	}
 	else if (!$this->sess->has('language')) {
 		$this->sess->set('language', $p['default']);
+		$res = $p['default'];
 	}
 	else {
 		$res = $this->sess->get('language');
+
+		if (empty($res)) {
+			$this->sess->set('language', $p['default']);
+			$res = $p['default'];
+		}
 	}
 
+	\rkphplib\lib\log_debug("TLanguage.initSession> res=[$res] p: ".print_r($p, true));
 	return $res;
 }
 
@@ -158,7 +164,7 @@ public function initSession($p) {
  *  table: language (default)
  *  dsn: SETTINGS_DSN (default)
  *  txt: language inside txt plugin (default = SETTINGS_LANGUAGE)
- *  default: 'txt' (default)
+ *  default: SETTINGS_LANGUAGE (default)
  *  untranslated: mark untranslaged, e.g. keep (return {txt:$param}$arg{:txt}, 
  *    <font style="background-color:red">{:=txt}</font>) (default = '' = return $arg)
  *  use: switch language e.g. {get:language} - disable with _REQUEST[ignore_language] (default = '' = use p.default)
@@ -169,7 +175,7 @@ public function initSession($p) {
  */
 public function tok_language_init($p) {
 
-	$default = [ 'table' => 'language', 'dsn' => SETTINGS_DSN, 'txt' => SETTINGS_LANGUAGE, 'default' => 'txt', 
+	$default = [ 'table' => 'language', 'dsn' => SETTINGS_DSN, 'txt' => SETTINGS_LANGUAGE, 'default' => SETTINGS_LANGUAGE, 
 		'use' => '', 'untranslated' => '' ];
 
 	$p = array_merge($this->conf, $p);
@@ -177,6 +183,10 @@ public function tok_language_init($p) {
 
 	if (!empty($_REQUEST['ignore_language'])) {
 		$p['use'] = '';
+	}
+
+	if (empty($p['default'])) {
+		$p['default'] = SETTINGS_LANGUAGE;
 	}
 
 	$p['use'] = $this->initSession($p);
