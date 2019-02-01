@@ -178,6 +178,9 @@ public function __construct() {
 		'default.in.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" '.$tags.'>',
 		'default.in.textarea' => '<textarea name="'.$name.'" class="'.$class.'" '.$tags.'>'.$value.'</textarea>',
 		'default.in.select'   => '<select name="'.$name.'" class="'.$class.'" '.$tags.'>'.$options.'</select>',
+		'default.in.file_btn'	=> '<div class="file_btn_wrapper"><button class="file_btn" '.$tags.'>'.$label2.'</button>'.
+															'<input type="file" name="'.$name.'" style="opacity:0;position:absolute;right:0;left:0;top:0;bottom:0;" '.
+															'data-value="'.$value.'"></div>',
 		'default.in.file'			=> '<input type="file" name="'.$name.'" class="'.$class.'" data-value="'.$value.'" '.$tags.'>',
 		'default.in.multi_checkbox'	=> '<div class="multi_checkbox_wrapper">'.$input.'</div>',
 		'default.in.multi_checkbox.entry' => '<div class="multi_checkbox"><span>'.$input.'</span><span>'.$label.'</span></div>',
@@ -1187,7 +1190,7 @@ protected function parseInName($name, $value, &$p) {
 		$options = $this->getCheckOptions($r, $name, $value);
 		$p['tpl_in'] = $this->tok->replaceTags($this->getConf('in.check', true, true), [ 'options' => $options ]);
 	}
-	else if ($type == 'file') {
+	else if ($type == 'file' || $type == 'file_btn') {
 		if (!empty($r[1])) {
 			$p['data-max'] = 8;
 		}
