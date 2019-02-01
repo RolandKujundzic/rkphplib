@@ -954,11 +954,16 @@ function showUploadPreview(evt) {
 				// Render thumbnail.
 				var span = document.createElement('span');
 				span.innerHTML = [
-					'<img style="height: 75px; border: 1px solid #000; margin: 5px" src="', e.target.result, '" title="', 
+					'<img style="height: 125px; border: 1px solid #000; margin: 5px" src="', e.target.result, '" title="', 
 					theFile.name, '"/>' ].join('');
 
 				span.setAttribute('data-preview', input_id);
 				evt.target.parentNode.insertBefore(span, null);
+
+				var btn = evt.target.parentNode.querySelector('button');
+				if (btn && btn.getAttribute('data-hide')) {
+					btn.style.display = 'none';
+				}
 			};
 		})(f);
 
