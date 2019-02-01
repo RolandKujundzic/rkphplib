@@ -121,3 +121,15 @@ form.fv div.check_wrapper label {
   margin:0 4ch 0 1ch;
 }
 
+form.fv .file_btn_wrapper {
+	display:inline-block;
+	position:relative;
+}
+
+form.fv .file_btn {
+	height:125px;
+	width:125px;
+	text-align:center; 
+	padding:8px;
+}
+
