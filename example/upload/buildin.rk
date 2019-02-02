@@ -1,0 +1,23 @@
+{fv:in:images}label={txt:}Bilder{:txt}|#|multiple=multiple|#|accept=.jpg,.jpeg,.png,image/*|#|
+  data-dir=data/shop/img|#|data-remove=img/icon/icon_garbage.png|#|
+  data-replace=img/icon/icon_replace.png{:fv}
+
+{var:=upload_images}
+save_as= image|#|
+keep= {get:images_keep}|#|
+save_dir= data/shop/img|#|
+max=16|#|
+allow_suffix= png, jpg|#|
+type= image|#|
+max_size= 8388608|#|
+min_width= 400|#|
+min_height= 400|#|
+{:var}
+
+{upload:init:images}
+save_in= data/shop/img/{login:id}/{get:id}|#|
+remove_image= {get:remove_image}|#|
+{var:upload_images}
+{:upload}
+
+{get:upload_images_file}
