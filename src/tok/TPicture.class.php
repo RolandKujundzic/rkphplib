@@ -148,7 +148,11 @@ private function checkConf($p) {
 		$this->conf[$key] = $value;
 	}
 
-	$required = [ 'default' ];
+	$required = [];
+
+	if (empty($this->conf['ignore_missing'])) {
+		array_push($required, 'default');
+	}
 
 	foreach ($required as $key) {
 		if (empty($this->conf[$key])) {
