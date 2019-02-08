@@ -24,9 +24,9 @@ Dropzone.options.rkDropzone = {
 	url: 'index.php?dir={get:dir}',
 	autoProcessQueue: false,
 	uploadMultiple: true,
-	// paramName: "images",
+	paramName: 'file',
 	parallelUploads: 5,
-	maxFiles: 16,
+	maxFiles: 4,
 	maxFilesize: 20, // mb
 	acceptedFiles: 'image/*',
 	addRemoveLinks: true,
