@@ -1246,7 +1246,7 @@ private function tryPluginMap($name) {
 		'THtml' => [ 'html:inner', 'html:append', 'html:meta', 'html:tidy', 'html:xml', 'html:uglify', 'html', 'input:checkbox', 'input:radio', 'input' ],
 		'THttp' => [ 'http:get', 'http' ],
 		'TJob' => [ 'job' ],
-		'TLanguage' => [ 'language:init', 'language:get', 'language:path', 'language', 'txt:js', 'txt', 't', 'ptxt' ],
+		'TLanguage' => [ 'language:init', 'language:get', 'language:script', 'language', 'txt:js', 'txt', 't', 'ptxt' ],
 		'TLogin' => [ 'login', 'login_account', 'login_check', 'login_auth', 'login_access', 'login_update', 'login_clear' ],
 		'TLoop' => [ 'loop:var', 'loop:list', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
 		'TMailer' => [ 'mail:init', 'mail:html', 'mail:txt', 'mail:send', 'mail:attach', 'mail' ],
@@ -1256,7 +1256,7 @@ private function tryPluginMap($name) {
 		'TPicture' => [ 'picture:init', 'picture:src', 'picture:list', 'picture' ],
 		'TSQL' => [ 'sql:query', 'sql:change', 'sql:dsn', 'sql:name', 'sql:qkey', 'sql:json', 'sql:col', 'sql:options', 'sql:getId', 'sql:nextId', 'sql:in', 'sql:hasTable', 'sql:password', 'sql:import', 'sql', 'null' ],
 		'TTwig' => [ 'autoescape', 'block', 'do', 'embed', 'extends', 'filter', 'flush', 'for', 'from', 'if', 'import', 'include', 'macro', 'sandbox', 'set', 'spaceless', 'use', 'verbatim', 'v' ],
-		'TUpload' => [ 'upload:init', 'upload:formData', 'upload:exists', 'upload' ]
+		'TUpload' => [ 'upload:init', 'upload:conf', 'upload:formData', 'upload:exists', 'upload:scan', 'upload' ]
 	];
 
 	foreach ($map as $cname => $list) {
