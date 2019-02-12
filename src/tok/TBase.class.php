@@ -924,6 +924,7 @@ public function tok_include($param, $file) {
 		throw new Exception('include file missing', $file);
 	}
 
+	$this->tok_var('=_include.file', $file);
 	return File::load($file);
 }
 
