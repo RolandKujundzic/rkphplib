@@ -99,7 +99,7 @@ public static function pretty_print($json) {
 
 /**
  * Print JSON object and exit. Use for ajax script output.
- * If code >= 400 and $o is string or Exception return { error_message: "..." }.
+ * If code >= 400 and $o is string or Exception return { error: 1, error_message: "..." }.
  *
  * @param Object $o
  * @param int $code
@@ -108,10 +108,10 @@ public static function output($o, $code = 200) {
 	
 	if ($code >= 400) {
 		if ($o instanceof \Exception) {
-			$o = [ 'error_message' => $o->getMessage(), 'error_code' => $o->getCode() ];
+			$o = [ 'error' => 1, 'error_message' => $o->getMessage(), 'error_code' => $o->getCode() ];
 		}
 		else if (is_string($o)) {
-			$o = [ 'error_message' => $o ];
+			$o = [ 'error' => 1, 'error_message' => $o ];
 		}
 	}
 
