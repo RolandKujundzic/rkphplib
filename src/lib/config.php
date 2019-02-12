@@ -58,7 +58,13 @@ function exception_handler($e) {
 		$ts = date('d.m.Y H:i:s');
 		error_log("$ts $msg\n$internal\n\n$trace\n\n", 3, SETTINGS_LOG_ERROR);
 
-		if (defined('ABORT_DIR') && class_exists('\rkphplib\tok\Tokenizer') && class_exists('\rkphplib\tok\TBase')) {
+		if (!empty($_REQUEST['ajax']) || (!empty($_REQUEST[SETTINGS_REQ_DIR]) && strpos($_REQUEST[SETTINGS_REQ_DIR], 'ajax/') !== false)) {
+			http_response_code(400);
+			header('Content-Type: application/json');
+			print '{ "error": "1", "error_message": "'.$e->getMessage().'", "error_code": "'.$e->getCode().'" }';
+			exit(0);
+		}
+		else if (defined('ABORT_DIR') && class_exists('\rkphplib\tok\Tokenizer') && class_exists('\rkphplib\tok\TBase')) {
 			$tok =& \rkphplib\tok\Tokenizer::$site;
 			$localized_error_msg = $tok->getVar('error.'.$e->getMessage());
 			$_REQUEST['error_msg'] = $localized_error_msg ? $localized_error_msg : $e->getMessage();
@@ -68,6 +74,7 @@ function exception_handler($e) {
 			}
 
 			$_REQUEST['dir'] = ABORT_DIR;
+
 			include('index.php');
 			return;
 		}
