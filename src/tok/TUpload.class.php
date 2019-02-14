@@ -395,7 +395,7 @@ public function tok_upload_scan($name = 'upload') {
 	}
 	else if ($upload_type == 'multiple_files') {
 		$max = empty($this->conf['max']) ? 0 : intval($this->conf['max']);
-		$this->saveMultipleFileUpload($fup, $max);			
+		$this->saveMultipleFileUpload($name, $max);			
 	}
 
 /*
@@ -446,19 +446,20 @@ public function tok_upload_scan($name = 'upload') {
 private function scanFiles($name) {
 	$fup = $name;
 
+	\rkphplib\lib\log_debug("TUpload.scanFiles($name)> _FILES: ".print_r($_FILES, true));
 	if (!isset($_FILES[$fup]) && isset($_FILES[$fup.'_'])) {
 		// catch select/upload box
 		$fup .= '_';
 	}
 
 	if (!isset($_FILES[$fup]) || (empty($_FILES[$fup]['name']) && empty($_FILES[$fup]['tmp_name']))) {
-		// \rkphplib\lib\log_debug("TUpload.scanFiles> exit - no single _FILES[$fup] upload");
+		\rkphplib\lib\log_debug("TUpload.scanFiles> exit - no single _FILES[$fup] upload");
 		return '';
 	} 
 
-	if (is_array($_FILES[$fup]['name']) && count($i_FILES[$fup]['name']) == 1 && 
+	if (is_array($_FILES[$fup]['name']) && count($_FILES[$fup]['name']) == 1 && 
 			(empty($_FILES[$fup]['name'][0]) && empty($_FILES[$fup]['tmp_name'][0]))) {
-		// \rkphplib\lib\log_debug("TUpload.scanFiles> exit - no multi _FILES[$fup] upload");
+		\rkphplib\lib\log_debug("TUpload.scanFiles> exit - no multi _FILES[$fup] upload");
 		return '';
 	}
 
@@ -684,7 +685,7 @@ private function saveMultipleFileUpload($fup, $max) {
  * @param string $fup
  */
 private function saveFileUpload($fup) {
-	// \rkphplib\lib\log_debug("TUpload.saveFileUpload> fup=$fup conf: ".print_r($this->conf, true));
+	\rkphplib\lib\log_debug("TUpload.saveFileUpload> fup=$fup conf: ".print_r($this->conf, true));
 	Dir::create($this->conf['save_in'], 0777, true);
 	$target = $this->conf['save_in'].'/'.$this->getSaveAs($_FILES[$fup]['name'], $_FILES[$fup]['tmp_name']);
 
