@@ -1,5 +1,7 @@
 <?php
 
+define('DOCROOT', __DIR__);
+
 require_once('../../src/lib/config.php');
 require_once('../../src/tok/Tokenizer.class.php');
 require_once('../../src/tok/TBase.class.php');
