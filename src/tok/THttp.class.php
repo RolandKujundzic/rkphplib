@@ -117,12 +117,16 @@ public static function httpGet($name) {
 		}
 		else if ($name == 'abs_path') {
 			$path = getenv('REQUEST_URI');
+			$dir = empty($_REQUEST[SETTINGS_REQ_DIR]) ? '' : $_REQUEST[SETTINGS_REQ_DIR];
 
 			if (($pos = strpos($path, '/index.php?')) !== false || ($pos = strpos($path, '/?')) !== false) {
 				$res = $port_host.substr($path, 0, $pos);
 			}
  			else if (substr(getcwd().'/', -1 * strlen($path)) == $path) {
 				$res = $port_host.$path;
+			}
+			else if ($path == '/index.php' && !empty($dir)) {
+				$res = $port_host.'/'.$dir;
 			}
 			else {
 				throw new Exception('failed to detect abs_path', "port_host=[$port_host] path=[$path] getcwd=[".getcwd()."]");
