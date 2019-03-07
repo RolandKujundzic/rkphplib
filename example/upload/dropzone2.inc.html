@@ -20,7 +20,9 @@ ajax_output= ajax_output_upload|#|
 {:upload}
 
 <form action="index.php" method="post" enctype="multipart/form-data" onSubmit="return checkDropzone(this);">
-	<div class="dropzone" id="rkDropzone"></div>
+	<div class="dropzone" id="pictures"></div>
+	<div class="dropzone" id="photo"></div>
+	<div class="dropzone" id="logo"></div>
 
 	<input type="hidden" id="fvin_module" name="module" value="{get:module}">
 	<input type="hidden" id="fvin_id" name="id" value="{rand:8}">
@@ -31,23 +33,6 @@ ajax_output= ajax_output_upload|#|
 </form>
 
 <script>
-// Dropzone.autoDiscover = false;
-var dropzone_done = false;
-
-function checkDropzone(f) {
-	console.log('checkDropzone', f);
-
-	if (dropzone_done) {
-		f.submit();
-	}
-	else {
-		document.getElementById('fvin_submit').setAttribute('readonly', 'readonly');
-		setTimeout(function(f) { checkDropzone(f); }, 500);
-	}
-
-	return false;
-}
-
 Dropzone.options.rkDropzone = {
 	url: 'index.php?dir={get:dir}',
 	autoProcessQueue: true,
