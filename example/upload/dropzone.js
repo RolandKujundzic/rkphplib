@@ -20,15 +20,15 @@ function checkDropzone(f) {
   return false;
 }
 
-Dropzone.options.rkDropzone = {
+Dropzone.options.{var:dz_name} = {
 	url: 'index.php?dir={get:dir}',
-	autoProcessQueue: false,
+	autoProcessQueue: {var:dz_autoProcessQueue},
 	uploadMultiple: true,
-	paramName: 'file',
+	paramName: '{var:dz_paramName}',
 	parallelUploads: 5,
-	maxFiles: 4,
+	maxFiles: {var:dz_maxFiles},
 	maxFilesize: 20, // mb
-	acceptedFiles: 'image/*',
+	acceptedFiles: '{var:dz_acceptedFiles}',
 	addRemoveLinks: true,
 	dictMaxFilesExceeded: "{ptxt:}Sie können nicht mehr als $p1x Dateien hochladen.|#|{{maxFiles}}{:ptxt}",
 	dictRemoveFileConfirmation: "{txt:}Möchsten Sie diese Datei entfernen?{:txt}",
@@ -80,7 +80,7 @@ Dropzone.options.rkDropzone = {
 
 		this.on("removedfile", function(file) {
 			let f = this.element.parentNode;
-			let ajax_url = this.options.url + '&ajax=' + encodeURIComponent(f.elements['ajax']);
+			let ajax_url = this.options.url + '&ajax=' + encodeURIComponent(f.elements['ajax'].value);
 			rkphplib.ajax({ url: ajax_url + '&remove_image=' + encodeURIComponent(file.name) });
 		});
 
