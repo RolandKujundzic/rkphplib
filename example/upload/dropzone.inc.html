@@ -18,6 +18,8 @@
 thumbnail= 120x120^|#|
 ajax_output= ajax_output_upload|#|
 ajax_parameter= @4 module:dropzone, ajax:upload|#|
+dz_autoProcessQueue= false|#|
+dz_acceptedFiles=image/*
 {:upload}
 
 <style>
@@ -46,7 +48,7 @@ ajax_parameter= @4 module:dropzone, ajax:upload|#|
 }
 </style>
 
-<form action="index.php" method="post" enctype="multipart/form-data">
+<form action="index.php" method="post" enctype="multipart/form-data" onSubmit="return checkDropzone(this);">
 	<div class="dropzone" id="images"></div>
 	<br><br>
 	<div class="dropzone" id="logo"></div>
@@ -54,10 +56,8 @@ ajax_parameter= @4 module:dropzone, ajax:upload|#|
 	<button type="submit"> upload </button>
 </form>
 
-{upload:conf:file}save_in= data/upload/images|#|scan=1{:upload}
-{var:=#}dz_name=images|#|dz_maxFiles=4|#|dz_acceptedFiles=image/*|#|dz_paramName=file{:var}
-<script>{include:}dropzone.rk.js{:include}</script>
+{upload:conf:file}save_in= data/upload/images|#|dz_name=images|#|dz_maxFiles=4|#|dz_paramName=file{:upload}
+<script>{include:}dropzone.js{:include}</script>
 
-{upload:conf:logo}save_in= data/upload/logo|#|scan=1{:upload}
-{var:=#}dz_name=logo|#|dz_maxFiles=1|#|dz_acceptedFiles=image/*|#|dz_paramName=logo{:var}
-<script>{include:}dropzone.rk.js{:include}</script>
+{upload:conf:logo}save_in= data/upload/logo|#|dz_name=logo|#|dz_maxFiles=1|#|dz_paramName=logo{:upload}
+<script>{include:}dropzone.js{:include}</script>
