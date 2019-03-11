@@ -243,7 +243,9 @@ public function tok_language_script($path) {
 
 /**
  * Return txt|ptxt id. Translation id is either $param or md5(remove_whitespace($txt)) (unless $txt == '=id').
- * 
+ *
+ * @tok {txt:}=ID{:txt} = ID, {txt:}Something{:txt} -> ID=md5(Something)
+ *  
  * @throws
  * @param string $param
  * @param string $txt
