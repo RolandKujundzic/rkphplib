@@ -397,6 +397,10 @@ protected function getHeaderLabel() {
 /**
  * Show if table is not empty.
  *
+ * @tok {output:init}column_label= id:ID, name:NAME|#|
+ *   template.header_label= <td nowrap align="center"$suffix>$txt_label$sort</td>|#|{:output}
+ * @tok {output:header}{:=header_label}{:output} -> <table>
+ * 
  * @param string $tpl
  * @return string
  */
