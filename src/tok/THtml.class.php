@@ -21,6 +21,7 @@ class THtml implements TokPlugin {
  */
 public function getPlugins($tok) {
   $plugin = [];
+  $plugin['html:tag'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
   $plugin['html:inner'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
   $plugin['html:append'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:meta'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
@@ -130,6 +131,21 @@ public function tok_html_tidy($html) {
 	$dom->loadHTML($html);
 
 	return $dom->saveHTML();
+}
+
+
+/**
+ * Replace name tags with value.
+ *
+ * @tok {html:tag:test}hallo{:html} -> A{:=test}A = AhalloA
+ * 
+ * @param string $name
+ * @param string $value
+ * @param string $html
+ */
+public function tok_html_tag($name, $value, $html) {
+	$html = str_replace('{:='.$name.'}', $value, $html);
+	return $html;
 }
 
 

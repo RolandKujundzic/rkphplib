@@ -1243,7 +1243,7 @@ private function tryPluginMap($name) {
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval' ],
 		'TFileSystem' => [ 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'directory', 'file:size', 'file:copy', 'file:exists', 'file', 'dirname', 'basename' ],
 		'TFormValidator' => [ 'fv', 'fv:init', 'fv:conf', 'fv:get', 'fv:get_conf', 'fv:check', 'fv:in', 'fv:tpl', 'fv:hidden', 'fv:preset', 'fv:error', 'fv:appendjs', 'fv:error_message', 'fv:set_error_message' ],
-		'THtml' => [ 'html:inner', 'html:append', 'html:meta', 'html:tidy', 'html:xml', 'html:uglify', 'html', 'input:checkbox', 'input:radio', 'input' ],
+		'THtml' => [ 'html:tag', 'html:inner', 'html:append', 'html:meta', 'html:tidy', 'html:xml', 'html:uglify', 'html', 'input:checkbox', 'input:radio', 'input' ],
 		'THttp' => [ 'http:get', 'http' ],
 		'TJob' => [ 'job' ],
 		'TLanguage' => [ 'language:init', 'language:get', 'language:script', 'language', 'txt:js', 'txt', 't', 'ptxt' ],
@@ -1255,6 +1255,7 @@ private function tryPluginMap($name) {
 		'TOutput' => [ 'output:set', 'output:get', 'output:conf', 'output:init', 'output:loop', 'output:json', 'output:header', 'output:footer', 'output:empty', 'output', 'sort', 'search' ],
 		'TPicture' => [ 'picture:init', 'picture:src', 'picture:list', 'picture' ],
 		'TSQL' => [ 'sql:query', 'sql:change', 'sql:dsn', 'sql:name', 'sql:qkey', 'sql:json', 'sql:col', 'sql:options', 'sql:getId', 'sql:nextId', 'sql:in', 'sql:hasTable', 'sql:password', 'sql:import', 'sql', 'null' ],
+		'TSetup' => [ 'setup:database', 'setup:table', 'setup:install', 'setup' ],
 		'TTwig' => [ 'autoescape', 'block', 'do', 'embed', 'extends', 'filter', 'flush', 'for', 'from', 'if', 'import', 'include', 'macro', 'sandbox', 'set', 'spaceless', 'use', 'verbatim', 'v' ],
 		'TUpload' => [ 'upload:init', 'upload:conf', 'upload:formData', 'upload:exists', 'upload:scan', 'upload' ]
 	];
