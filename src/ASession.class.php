@@ -390,7 +390,7 @@ abstract public function getHash($map = '');
 
 
 /**
- * True if session (map) key exists.
+ * True if session (map) key exists. If key is null and map != '' return true if map exists.
  * 
  * @param string $key
  * @param string $map = ''
