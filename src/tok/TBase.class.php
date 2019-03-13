@@ -108,7 +108,7 @@ public function __construct() {
  * - load: TEXT, REQUIRE_BODY
  * - link: PARAM_CSLIST, KV_BODY
  * - redo: NO_PARAM, REDO
- * - json:exit: REQUIRE_PARAM, KV_BODY
+ * - json:exit: KV_BODY
  * - toupper: NO_PARAM
  * - tolower: NO_PARAM
  * - hidden: PARAM_CSLIST, CSLIST_BODY
@@ -178,7 +178,7 @@ public function getPlugins($tok) {
 	$plugin['log'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['shorten'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['strlen'] = TokPlugin::NO_PARAM;
-	$plugin['json:exit'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
+	$plugin['json:exit'] = TokPlugin::KV_BODY;
 	$plugin['json'] = 0;
 
 	return $plugin;
@@ -1416,7 +1416,7 @@ public function tok_if($param, $p) {
 			$cmp = true;
 
 			for ($i = 0; $cmp && $i < $p_num - 3; $i = $i + 2) {
-				if ($p[$i] != $p[$i + 1]) {
+				if ($p[$i] != $p[$i + 1] && $p[$i] != '*' && $p[$i + 1] != '*') {
 					$cmp = false;
 				}
 			}
@@ -1425,7 +1425,7 @@ public function tok_if($param, $p) {
 			$cmp = false;
 
 			for ($i = 0; !$cmp && $i < $p_num - 3; $i = $i + 2) {
-				if ($p[$i] == $p[$i + 1]) {
+				if ($p[$i] == $p[$i + 1] || $p[$i] == '*' || $p[$i + 1] == '*') {
 					$cmp = true;
 				}
 			}
@@ -2166,7 +2166,7 @@ public function tok_tf($p, $arg) {
 
 		$tf = true;
 		for ($i = 0; $tf && $i < count($ap); $i = $i + 2) {
-			$tf = ($ap[$i] === $ap[$i + 1]);
+			$tf = ($ap[$i] === $ap[$i + 1]) || $ap[$i] == '*' || $ap[$i + 1] == '*';
 		}
 	}
 	else if ($do == 'set') {
@@ -2256,12 +2256,12 @@ public function tok_tf($p, $arg) {
 
 		if ($do == 'cmp_or') {
 			for ($i = 0, $tf = false; !$tf && $i < $apn - 1; $i = $i + 2) {
-				$tf = ($ap[$i] == $ap[$i + 1]);
+				$tf = ($ap[$i] == $ap[$i + 1]) || $ap[$i] == '*' || $ap[$i + 1] == '*';
 			}
 		}
 		else {
 			for ($i = 0, $tf = true; $tf && $i < $apn - 1; $i = $i + 2) {
-				$tf = ($ap[$i] == $ap[$i + 1]);
+				$tf = ($ap[$i] == $ap[$i + 1]) || $ap[$i] == '*' || $ap[$i + 1] == '*';
 			}
 		}
 	}
