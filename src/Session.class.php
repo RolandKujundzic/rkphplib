@@ -263,7 +263,7 @@ public function get($key, $required = true, $map = '') {
 
 
 /**
- * True if session key exists.
+ * True if session key exists. If key is null and map != '' return true if map exists.
  * 
  * @param string $key
  * @param string $map (default = '')
@@ -271,6 +271,11 @@ public function get($key, $required = true, $map = '') {
  */
 public function has($key, $map = '') {
 	$skey = $this->sessKey($map);
+
+	if (is_null($key) && $map != '') {
+		return count($_SESSION[$skey]) == 0;
+	}
+
 	return array_key_exists($key, $_SESSION[$skey]);
 }
 
