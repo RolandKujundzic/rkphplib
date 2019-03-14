@@ -1351,8 +1351,11 @@ public function tok_if($param, $p) {
 		}
 	}
 	else if ($do === 'and' || $do === 'or') {
-
 		$cnum = intval($param);
+
+		if (!$cnum && $p_num <= 4) {
+			$cnum = 2;
+		}
 
 		if ($cnum + 1 === $p_num) {
 			array_push($p, '');
@@ -1372,7 +1375,7 @@ public function tok_if($param, $p) {
 				}
 			}
 		}
-		else if ($do === 'and')  {
+		else if ($do === 'and') {
 			$cmp = true;
 
 			for ($i = 0; $cmp && $i < $cnum; $i++) {
