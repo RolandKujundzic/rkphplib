@@ -1116,13 +1116,6 @@ protected function getSearch() {
  * @return array [ _WHERE_SEARCH, _AND_SEARCH ]
  */ 
 protected function getSqlSearch($options = []) {
-	$compare = [ 'EQ' => '=', 'LT' => '<', 'GT' => '>', 'LE' => '<=', 'GE' => '>=' ];
-	$like = [ 'LIKE' => '%$%', 'LLIKE' => '$%', 'RLIKE' => '%$' ];
-	$func = [ 'int' => "=FLOOR('\$')", 'in' => " IN ('\$,')", 'or' => "" ];
-
-	$this->set_search = [];
-	$select_search = [];
-	$expr = [];
 
 	if (isset($options['search_cols'])) {
 		$search_cols = $options['search_cols'];
@@ -1134,13 +1127,13 @@ protected function getSqlSearch($options = []) {
 	foreach ($search_cols as $col_method) {
 		list ($col, $method) = explode(':', $col_method, 2);
 
+		$col_prefix = '';
 		if (($pos = strpos($col, '.')) > 0) {
 			$col_prefix = substr($col, 0, $pos + 1);
 			$col = substr($col, $pos + 1);
 		}
 
 		$value = isset($_REQUEST['s_'.$col]) ? $_REQUEST['s_'.$col] : '';
-		$found = false;
 
 		if (!empty($options['value'])) {
 			$value = $options['value'];
@@ -1150,110 +1143,26 @@ protected function getSqlSearch($options = []) {
 			$value = $_REQUEST[$this->conf['req.search']];
 		}
 
-		if (strlen($value) == 0) {
-			continue;
-		}
-
 		$cname = $col_prefix . $col;
+		$expr = [];
 
-		foreach ($compare as $cx => $op) {
-			if ($cx == $method || $op == $method) {
-				$num_val = preg_replace('/[^0-9\-\+\.]/', '', $value);
-
-				if ($op != '=' || $num_val == $value) {
-					array_push($expr, $cname.' '.$op." '".$num_val."'");
-				}
-				else {
-					array_push($expr, $cname.' '.$op." '".ADatabase::escape($value)."'");
-				}
-
-				$found = true;
-			}
+		if (strlen($value) > 0) {
+			$expr = $this->searchColumnValue($cname, $col, $method, $value);
 		}
 
-		if (!$found) {
-			foreach ($like as $cx => $op) {
-				if ($cx == $method || $op == $method) {
-					$value = preg_replace('/ +/', '%', $value);
-					$value = ADatabase::escape(str_replace('$', $value, $op));
-					array_push($expr, $cname." LIKE '$value'");
-					$found = true;
-				}
-			}
+		$this->set_search = [];
+		$this->select_search = [];
+
+		if (preg_match('/^([\[\]]{1})([0-9\-\.\?])*\,?([0-9\-\.\?])*([\[\]]{1})$/', $method, $match)) {
+			$expr = array_merge($expr, $this->searchRange($cname, $col, $method, $value, $match));
 		}
 
-		if (!$found) {
-			foreach ($func as $name => $func_call) {
-				if ($name == $method) {
-					if (strpos($func_call, '$,') !== false) {
-						$list = preg_split('/\s*,\s*/', trim($value));
-				
-						for ($i = 0; $i < count($list); $i++) {
-							$list[$i] = ADatabase::escape($list[$i]);
-						}
-
-						$value = str_replace('$,', join("','", $list), $func_call);
-						array_push($expr, $cname.$value);
-					}
-					else if (strpos($func_call, '$') !== false) {
-						$value = str_replace('$', ADatabase::escape($value), $func_call);
-						array_push($expr, $cname.$value);
-					}
-					else if ($name == 'or') {
-						$list = preg_split('/\s*,\s*/', trim($value));
-				
-						for ($i = 0; $i < count($list); $i++) {
-							$list[$i] = $cname."='".ADatabase::escape($list[$i])."'";
-						}
-
-						array_push($expr, '('.join(' OR ', $list).')');
-					}
-
-					$found = true;
-				}
-			}
-		}
-
-		// \rkphplib\lib\log_debug("getSqlSearch> col=$col method=$method value=$value expr: ".print_r($expr, true));
-		if ($found) {
-			// do nothing ...
-		}
-		else if (preg_match('/^([\[\]]{1})([0-9\-\.\?])*\,?([0-9\-\.\?])*([\[\]]{1})$/', $method, $match)) {
-			$op1 = $match[1];
-			$op2 = $match[4];
-
-			if ($match[2]) {
-				$this->set_search['s_'.$col.'_min'] = $match[2];
-			}
-			else {
-				array_push($select_search, "MIN($col) AS s_".$col."_min");
-			}
-
-			if ($match[3]) {
-				$this->set_search['s_'.$col.'_max'] = $match[3];
-			}
-			else {
-				array_push($select_search, "MAX($col) AS s_".$col."_max");
-			}
-
-			if (!$value && isset($_REQUEST['s_'.$col.'_min']) && isset($_REQUEST['s_'.$col.'_max']) &&
-					(!empty($_REQUEST['s_'.$col.'_min']) || !empty($_REQUEST['s_'.$col.'_max']))) {
-				$value = $_REQUEST['s_'.$col.'_min'].','.$_REQUEST['s_'.$col.'_max'];
-			}
-
+		if ($method == 'OPTION' || $method == '?') {
 			if ($value) {
-				array_push($expr, $this->getRangeExpression($col, $value, $method));
-			}
-		}
-		else if ($method == 'OPTION' || $method == '?') {
-			if ($value) {
-				array_push($expr, $col." = '".ADatabase::escape($value)."'");
+				array_push($expr, $cname." = '".ADatabase::escape($value)."'");
 			}
 
-			array_push($select_search, "GROUP_CONCAT(DISTINCT($col)) AS s_".$col."_options");
-		}
-		else {
-			throw new Exception("search method [$method] not found ($col=$value)");
+			array_push($this->select_search, "GROUP_CONCAT(DISTINCT($cname)) AS s_".$col."_options");
 		}
 	}
 
@@ -1261,8 +1170,8 @@ protected function getSqlSearch($options = []) {
 		return [ '', '' ];
 	}
 
-	if (count($select_search) > 0) {
-		$this->set_search = array_merge($this->selectSearch($select_search), $this->set_search);
+	if (count($this->select_search) > 0) {
+		$this->set_search = array_merge($this->selectSearch($this->select_search), $this->set_search);
 	}
 
 	if (!empty($options['join_or']) || !empty($this->conf['search_or'])) {
@@ -1273,6 +1182,130 @@ protected function getSqlSearch($options = []) {
 	}
 
 	return [ ' WHERE '.$sql_and, ' AND '.$sql_and ];
+}
+
+
+/**
+ * Return array with range search expressions.
+ *
+ * @global hash this.set_search 
+ * @global array this.select_search
+ *
+ * @param string $cname
+ * @param string $col
+ * @param string $method
+ * @param string $value
+ * @param array $match
+ * @return array
+ */
+private function searchRange($cname, $col, $method, $value, $match) {
+	$expr = [];
+
+	$op1 = $match[1];
+	$op2 = $match[4];
+
+	if ($match[2]) {
+		$this->set_search['s_'.$col.'_min'] = $match[2];
+	}
+	else {
+		array_push($this->select_search, "MIN($cname) AS s_".$col."_min");
+	}
+
+	if ($match[3]) {
+		$this->set_search['s_'.$col.'_max'] = $match[3];
+	}
+	else {
+		array_push($this->select_search, "MAX($cname) AS s_".$col."_max");
+	}
+
+	if (!$value && isset($_REQUEST['s_'.$col.'_min']) && isset($_REQUEST['s_'.$col.'_max']) &&
+			(!empty($_REQUEST['s_'.$col.'_min']) || !empty($_REQUEST['s_'.$col.'_max']))) {
+		$value = $_REQUEST['s_'.$col.'_min'].','.$_REQUEST['s_'.$col.'_max'];
+	}
+
+	if ($value) {
+		array_push($expr, $this->getRangeExpression($col, $value, $method));
+	}
+
+	return $expr;
+}
+
+
+/**
+ * Return search expression array.
+ *
+ * @param string $cname e.g. si.age
+ * @param string $col e.g. age
+ * @param string $method e.g. EQ, LIKE, int, ...
+ * @return array
+ */
+private function searchColumnValue($cname, $col, $method, $value) {
+	$compare = [ 'EQ' => '=', 'LT' => '<', 'GT' => '>', 'LE' => '<=', 'GE' => '>=' ];
+	$like = [ 'LIKE' => '%$%', 'LLIKE' => '$%', 'RLIKE' => '%$' ];
+	$func = [ 'int' => "=FLOOR('\$')", 'in' => " IN ('\$,')", 'or' => "" ];
+	$found = false;
+	$expr = [];
+
+	foreach ($compare as $cx => $op) {
+		if ($cx == $method || $op == $method) {
+			$num_val = preg_replace('/[^0-9\-\+\.]/', '', $value);
+
+			if ($op != '=' || $num_val == $value) {
+				array_push($expr, $cname.' '.$op." '".$num_val."'");
+			}
+			else {
+				array_push($expr, $cname.' '.$op." '".ADatabase::escape($value)."'");
+			}
+
+			$found = true;
+		}
+	}
+
+	if (!$found) {
+		foreach ($like as $cx => $op) {
+			if ($cx == $method || $op == $method) {
+				$value = preg_replace('/ +/', '%', $value);
+				$value = ADatabase::escape(str_replace('$', $value, $op));
+				array_push($expr, $cname." LIKE '$value'");
+				$found = true;
+			}
+		}
+	}
+
+	if (!$found) {
+		foreach ($func as $name => $func_call) {
+			if ($name == $method) {
+				if (strpos($func_call, '$,') !== false) {
+					$list = preg_split('/\s*,\s*/', trim($value));
+				
+					for ($i = 0; $i < count($list); $i++) {
+						$list[$i] = ADatabase::escape($list[$i]);
+					}
+
+					$value = str_replace('$,', join("','", $list), $func_call);
+					array_push($expr, $cname.$value);
+				}
+				else if (strpos($func_call, '$') !== false) {
+					$value = str_replace('$', ADatabase::escape($value), $func_call);
+					array_push($expr, $cname.$value);
+				}
+				else if ($name == 'or') {
+					$list = preg_split('/\s*,\s*/', trim($value));
+				
+					for ($i = 0; $i < count($list); $i++) {
+						$list[$i] = $cname."='".ADatabase::escape($list[$i])."'";
+					}
+
+					array_push($expr, '('.join(' OR ', $list).')');
+				}
+
+				$found = true;
+			}
+		}
+	}
+
+	// \rkphplib\lib\log_debug("searchColumnValue> col=$col method=$method value=$value expr: ".print_r($expr, true));
+	return $expr;
 }
 
 
