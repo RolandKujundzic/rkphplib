@@ -1118,7 +1118,7 @@ protected function getSearch() {
 protected function getSqlSearch($options = []) {
 	$compare = [ 'EQ' => '=', 'LT' => '<', 'GT' => '>', 'LE' => '<=', 'GE' => '>=' ];
 	$like = [ 'LIKE' => '%$%', 'LLIKE' => '$%', 'RLIKE' => '%$' ];
-	$func = [ 'int' => "FLOOR('\$')" ];
+	$func = [ 'int' => "=FLOOR('\$')", 'in' => " IN ('\$,')", 'or' => "" ];
 
 	$this->set_search = [];
 	$select_search = [];
@@ -1133,6 +1133,12 @@ protected function getSqlSearch($options = []) {
 
 	foreach ($search_cols as $col_method) {
 		list ($col, $method) = explode(':', $col_method, 2);
+
+		if (($pos = strpos($col, '.')) > 0) {
+			$col_prefix = substr($col, 0, $pos + 1);
+			$col = substr($col, $pos + 1);
+		}
+
 		$value = isset($_REQUEST['s_'.$col]) ? $_REQUEST['s_'.$col] : '';
 		$found = false;
 
@@ -1148,15 +1154,17 @@ protected function getSqlSearch($options = []) {
 			continue;
 		}
 
+		$cname = $col_prefix . $col;
+
 		foreach ($compare as $cx => $op) {
 			if ($cx == $method || $op == $method) {
 				$num_val = preg_replace('/[^0-9\-\+\.]/', '', $value);
 
 				if ($op != '=' || $num_val == $value) {
-					array_push($expr, $col.' '.$op." '".$num_val."'");
+					array_push($expr, $cname.' '.$op." '".$num_val."'");
 				}
 				else {
-					array_push($expr, $col.' '.$op." '".ADatabase::escape($value)."'");
+					array_push($expr, $cname.' '.$op." '".ADatabase::escape($value)."'");
 				}
 
 				$found = true;
@@ -1168,7 +1176,7 @@ protected function getSqlSearch($options = []) {
 				if ($cx == $method || $op == $method) {
 					$value = preg_replace('/ +/', '%', $value);
 					$value = ADatabase::escape(str_replace('$', $value, $op));
-					array_push($expr, $col." LIKE '$value'");
+					array_push($expr, $cname." LIKE '$value'");
 					$found = true;
 				}
 			}
@@ -1177,8 +1185,30 @@ protected function getSqlSearch($options = []) {
 		if (!$found) {
 			foreach ($func as $name => $func_call) {
 				if ($name == $method) {
-					$value = str_replace('$', ADatabase::escape($value), $func_call);
-					array_push($expr, $col.'='.$value);
+					if (strpos($func_call, '$,') !== false) {
+						$list = preg_split('/\s*,\s*/', trim($value));
+				
+						for ($i = 0; $i < count($list); $i++) {
+							$list[$i] = ADatabase::escape($list[$i]);
+						}
+
+						$value = str_replace('$,', join("','", $list), $func_call);
+						array_push($expr, $cname.$value);
+					}
+					else if (strpos($func_call, '$') !== false) {
+						$value = str_replace('$', ADatabase::escape($value), $func_call);
+						array_push($expr, $cname.$value);
+					}
+					else if ($name == 'or') {
+						$list = preg_split('/\s*,\s*/', trim($value));
+				
+						for ($i = 0; $i < count($list); $i++) {
+							$list[$i] = $cname."='".ADatabase::escape($list[$i])."'";
+						}
+
+						array_push($expr, '('.join(' OR ', $list).')');
+					}
+
 					$found = true;
 				}
 			}
