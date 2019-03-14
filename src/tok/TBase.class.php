@@ -112,7 +112,7 @@ public function __construct() {
  * - toupper: NO_PARAM
  * - tolower: NO_PARAM
  * - hidden: PARAM_CSLIST, CSLIST_BODY
- * - join: KV_BODY
+ * - join: LIST_BODY
  * - var: REQUIRE_PARAM
  * - view: REQUIRE_PARAM, KV_BODY, REDO
  * - esc: 0
@@ -169,7 +169,7 @@ public function getPlugins($tok) {
 	$plugin['tolower'] = TokPlugin::NO_PARAM;
 	$plugin['hidden'] = TokPlugin::PARAM_CSLIST | TokPlugin::CSLIST_BODY;
 	$plugin['trim'] = 0;
-	$plugin['join'] = TokPlugin::KV_BODY;
+	$plugin['join'] = TokPlugin::LIST_BODY;
 	$plugin['set_default'] =  0;
 	$plugin['set'] =  0;
 	$plugin['redirect'] =  TokPlugin::NO_PARAM;
