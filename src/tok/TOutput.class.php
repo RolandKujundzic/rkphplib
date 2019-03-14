@@ -1118,6 +1118,7 @@ protected function getSearch() {
 protected function getSqlSearch($options = []) {
 	$compare = [ 'EQ' => '=', 'LT' => '<', 'GT' => '>', 'LE' => '<=', 'GE' => '>=' ];
 	$like = [ 'LIKE' => '%$%', 'LLIKE' => '$%', 'RLIKE' => '%$' ];
+	$func = [ 'int' => "FLOOR('\$')" ];
 
 	$this->set_search = [];
 	$select_search = [];
@@ -1143,17 +1144,19 @@ protected function getSqlSearch($options = []) {
 			$value = $_REQUEST[$this->conf['req.search']];
 		}
 
+		if (strlen($value) == 0) {
+			continue;
+		}
+
 		foreach ($compare as $cx => $op) {
 			if ($cx == $method || $op == $method) {
-				if ($value) {
-					$num_val = preg_replace('/[^0-9\-\+\.]/', '', $value);
+				$num_val = preg_replace('/[^0-9\-\+\.]/', '', $value);
 
-					if ($op != '=' || $num_val == $value) {
-						array_push($expr, $col.' '.$op." '".$num_val."'");
-					}
-					else {
-						array_push($expr, $col.' '.$op." '".ADatabase::escape($value)."'");
-					}
+				if ($op != '=' || $num_val == $value) {
+					array_push($expr, $col.' '.$op." '".$num_val."'");
+				}
+				else {
+					array_push($expr, $col.' '.$op." '".ADatabase::escape($value)."'");
 				}
 
 				$found = true;
@@ -1163,12 +1166,19 @@ protected function getSqlSearch($options = []) {
 		if (!$found) {
 			foreach ($like as $cx => $op) {
 				if ($cx == $method || $op == $method) {
-					if ($value) {
-						$value = preg_replace('/ +/', '%', $value);
-						$value = ADatabase::escape(str_replace('$', $value, $op));
-						array_push($expr, $col." LIKE '$value'");
-					}
+					$value = preg_replace('/ +/', '%', $value);
+					$value = ADatabase::escape(str_replace('$', $value, $op));
+					array_push($expr, $col." LIKE '$value'");
+					$found = true;
+				}
+			}
+		}
 
+		if (!$found) {
+			foreach ($func as $name => $func_call) {
+				if ($name == $method) {
+					$value = str_replace('$', ADatabase::escape($value), $func_call);
+					array_push($expr, $col.'='.$value);
 					$found = true;
 				}
 			}
