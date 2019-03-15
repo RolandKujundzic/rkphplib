@@ -1092,7 +1092,7 @@ protected function getSearch() {
 			$and .= $and2;
 		}
 	}
-	else {
+	else if (!empty($this->conf['search'])) {
 		$options['search_cols'] = \rkphplib\lib\split_str(',', $this->conf['search']);		
 		list ($where, $and) = $this->getSqlSearch($options);
 	}
@@ -1128,7 +1128,7 @@ protected function getSqlSearch($options = []) {
 
 	foreach ($search_cols as $col_method) {
 		list ($env['col'], $env['method']) = explode(':', $col_method, 2);
-		$value = isset($_REQUEST['s_'.$env['col']]) ? $_REQUEST['s_'.$env['col']] : '';
+		$env['value'] = isset($_REQUEST['s_'.$env['col']]) ? $_REQUEST['s_'.$env['col']] : '';
 
 		if (($pos = strpos($env['col'], '.')) > 0) {
 			$env['cname'] = $env['col'];
@@ -1240,7 +1240,7 @@ private function searchColumnValue(&$env) {
 			$num_val = preg_replace('/[^0-9\-\+\.]/', '', $env['value']);
 
 			if ($op != '=' || $num_val == $env['value']) {
-				array_push($env['expr'], $env['cname']." $op '".$env['num_val']."'");
+				array_push($env['expr'], $env['cname']." $op '".$num_val."'");
 			}
 			else {
 				array_push($env['expr'], $env['cname']." $op '".ADatabase::escape($env['value'])."'");
