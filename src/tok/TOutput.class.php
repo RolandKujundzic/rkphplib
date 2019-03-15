@@ -1117,7 +1117,9 @@ protected function getSearch() {
  */ 
 protected function getSqlSearch($options = []) {
 
-	if (isset($options['search_cols'])) {
+  $env = [ 'col' => '', 'cname' => '', 'method' => '', 'value' => '', 'set_search' => [], 'select_search' => [], 'expr' => [] ];
+
+	if (isset($options['search_cols']) && is_array($options['search_cols'])) {
 		$search_cols = $options['search_cols'];
 	}
 	else {
@@ -1125,60 +1127,56 @@ protected function getSqlSearch($options = []) {
 	}
 
 	foreach ($search_cols as $col_method) {
-		list ($col, $method) = explode(':', $col_method, 2);
+		list ($env['col'], $env['method']) = explode(':', $col_method, 2);
+		$value = isset($_REQUEST['s_'.$env['col']]) ? $_REQUEST['s_'.$env['col']] : '';
 
-		$col_prefix = '';
-		if (($pos = strpos($col, '.')) > 0) {
-			$col_prefix = substr($col, 0, $pos + 1);
-			$col = substr($col, $pos + 1);
+		if (($pos = strpos($env['col'], '.')) > 0) {
+			$env['cname'] = $env['col'];
+			$env['col'] = substr($env['col'], $pos + 1);
 		}
-
-		$value = isset($_REQUEST['s_'.$col]) ? $_REQUEST['s_'.$col] : '';
+		else {
+			$env['cname'] = $env['col'];
+		}
 
 		if (!empty($options['value'])) {
-			$value = $options['value'];
+			$env['value'] = $options['value'];
 		}
-		else if (empty($options['no_value']) && !$value && !empty($this->conf['req.search']) && 
+		else if (empty($options['no_value']) && !$env['value'] && !empty($this->conf['req.search']) && 
 							isset($_REQUEST[$this->conf['req.search']])) {
-			$value = $_REQUEST[$this->conf['req.search']];
+			$env['value'] = $_REQUEST[$this->conf['req.search']];
 		}
 
-		$cname = $col_prefix . $col;
-		$expr = [];
+		$found = false;
 
-		if (strlen($value) > 0) {
-			$expr = $this->searchColumnValue($cname, $col, $method, $value);
+		if (strlen($env['value']) > 0) {
+			$found = $this->searchColumnValue($env);
 		}
 
-		$this->set_search = [];
-		$this->select_search = [];
-
-		if (preg_match('/^([\[\]]{1})([0-9\-\.\?])*\,?([0-9\-\.\?])*([\[\]]{1})$/', $method, $match)) {
-			$expr = array_merge($expr, $this->searchRange($cname, $col, $method, $value, $match));
+		if (!$found && preg_match('/^([\[\]]{1})([0-9\-\.\?])*\,?([0-9\-\.\?])*([\[\]]{1})$/', $env['method'], $match)) {
+			$found = $this->searchRange($env, $match);
 		}
-
-		if ($method == 'OPTION' || $method == '?') {
-			if ($value) {
-				array_push($expr, $cname." = '".ADatabase::escape($value)."'");
+		else if ($env['method'] == 'OPTION' || $env['method'] == '?') {
+			if ($env['value']) {
+				array_push($env['expr'], $env['cname']." = '".ADatabase::escape($env['value'])."'");
 			}
 
-			array_push($this->select_search, "GROUP_CONCAT(DISTINCT($cname)) AS s_".$col."_options");
+			array_push($env['select_search'], "GROUP_CONCAT(DISTINCT(".$env['cname'].")) AS s_".$env['col']."_options");
 		}
 	}
 
-	if (count($expr) == 0) {
+	if (count($env['expr']) == 0) {
 		return [ '', '' ];
 	}
 
-	if (count($this->select_search) > 0) {
-		$this->set_search = array_merge($this->selectSearch($this->select_search), $this->set_search);
+	if (count($env['select_search']) > 0) {
+		$env['set_search'] = array_merge($this->selectSearch($env['select_search']), $env['set_search']);
 	}
 
 	if (!empty($options['join_or']) || !empty($this->conf['search_or'])) {
-		$sql_and = '(('.join(') OR (', $expr).'))';
+		$sql_and = '(('.join(') OR (', $env['expr']).'))';
 	}
 	else {
-		$sql_and = join(' AND ', $expr);
+		$sql_and = join(' AND ', $env['expr']);
 	}
 
 	return [ ' WHERE '.$sql_and, ' AND '.$sql_and ];
@@ -1186,126 +1184,114 @@ protected function getSqlSearch($options = []) {
 
 
 /**
- * Return array with range search expressions.
+ * Update $env.
  *
- * @global hash this.set_search 
- * @global array this.select_search
- *
- * @param string $cname
- * @param string $col
- * @param string $method
- * @param string $value
+ * @param hash-ref &$env
  * @param array $match
- * @return array
+ * @return boolean
  */
-private function searchRange($cname, $col, $method, $value, $match) {
-	$expr = [];
+private function searchRange(&$env, $match) {
+	$col = $env['col'];
+	$value = '';
 
-	$op1 = $match[1];
-	$op2 = $match[4];
-
-	if ($match[2]) {
-		$this->set_search['s_'.$col.'_min'] = $match[2];
-	}
-	else {
-		array_push($this->select_search, "MIN($cname) AS s_".$col."_min");
-	}
-
-	if ($match[3]) {
-		$this->set_search['s_'.$col.'_max'] = $match[3];
-	}
-	else {
-		array_push($this->select_search, "MAX($cname) AS s_".$col."_max");
-	}
-
-	if (!$value && isset($_REQUEST['s_'.$col.'_min']) && isset($_REQUEST['s_'.$col.'_max']) &&
+	if (!$env['value'] && isset($_REQUEST['s_'.$col.'_min']) && isset($_REQUEST['s_'.$col.'_max']) &&
 			(!empty($_REQUEST['s_'.$col.'_min']) || !empty($_REQUEST['s_'.$col.'_max']))) {
 		$value = $_REQUEST['s_'.$col.'_min'].','.$_REQUEST['s_'.$col.'_max'];
 	}
 
-	if ($value) {
-		array_push($expr, $this->getRangeExpression($col, $value, $method));
+	if (empty($value)) {
+		return false;
 	}
 
-	return $expr;
+	if ($match[2]) {
+		$env['set_search']['s_'.$col.'_min'] = $match[2];
+	}
+	else {
+		array_push($env['select_search'], "MIN($col) AS s_".$col."_min");
+	}
+
+	if ($match[3]) {
+		$env['set_search']['s_'.$col.'_max'] = $match[3];
+	}
+	else {
+		array_push($env['select_search'], "MAX($col) AS s_".$col."_max");
+	}
+
+	array_push($env['expr'], $this->getRangeExpression($col, $value, $env['method']));
+	return true;
 }
 
 
 /**
- * Return search expression array.
+ * Update env.expr if necessary. Return true if found.
  *
- * @param string $cname e.g. si.age
+ * @param hash-ref &$env
  * @param string $col e.g. age
  * @param string $method e.g. EQ, LIKE, int, ...
- * @return array
+ * @return boolean
  */
-private function searchColumnValue($cname, $col, $method, $value) {
+private function searchColumnValue(&$env) {
 	$compare = [ 'EQ' => '=', 'LT' => '<', 'GT' => '>', 'LE' => '<=', 'GE' => '>=' ];
 	$like = [ 'LIKE' => '%$%', 'LLIKE' => '$%', 'RLIKE' => '%$' ];
 	$func = [ 'int' => "=FLOOR('\$')", 'in' => " IN ('\$,')", 'or' => "" ];
-	$found = false;
-	$expr = [];
 
 	foreach ($compare as $cx => $op) {
-		if ($cx == $method || $op == $method) {
-			$num_val = preg_replace('/[^0-9\-\+\.]/', '', $value);
+		if ($cx == $env['method'] || $op == $env['method']) {
+			$num_val = preg_replace('/[^0-9\-\+\.]/', '', $env['value']);
 
-			if ($op != '=' || $num_val == $value) {
-				array_push($expr, $cname.' '.$op." '".$num_val."'");
+			if ($op != '=' || $num_val == $env['value']) {
+				array_push($env['expr'], $env['cname']." $op '".$env['num_val']."'");
 			}
 			else {
-				array_push($expr, $cname.' '.$op." '".ADatabase::escape($value)."'");
+				array_push($env['expr'], $env['cname']." $op '".ADatabase::escape($env['value'])."'");
 			}
 
-			$found = true;
+			return true;
 		}
 	}
 
-	if (!$found) {
-		foreach ($like as $cx => $op) {
-			if ($cx == $method || $op == $method) {
-				$value = preg_replace('/ +/', '%', $value);
-				$value = ADatabase::escape(str_replace('$', $value, $op));
-				array_push($expr, $cname." LIKE '$value'");
-				$found = true;
-			}
+	foreach ($like as $cx => $op) {
+		if ($cx == $env['method'] || $op == $env['method']) {
+			$env['value'] = preg_replace('/ +/', '%', $env['value']);
+			$env['value'] = ADatabase::escape(str_replace('$', $env['value'], $op));
+			array_push($env['expr'], $env['cname']." LIKE '".$env['value']."'");
+
+			return true;
 		}
 	}
 
-	if (!$found) {
-		foreach ($func as $name => $func_call) {
-			if ($name == $method) {
-				if (strpos($func_call, '$,') !== false) {
-					$list = preg_split('/\s*,\s*/', trim($value));
+	$expr_before = count($env['expr']);
+
+	foreach ($func as $name => $func_call) {
+		if ($name == $env['method']) {
+			if (strpos($func_call, '$,') !== false) {
+				$list = preg_split('/\s*,\s*/', trim($env['value']));
 				
-					for ($i = 0; $i < count($list); $i++) {
-						$list[$i] = ADatabase::escape($list[$i]);
-					}
+				for ($i = 0; $i < count($list); $i++) {
+					$list[$i] = ADatabase::escape($list[$i]);
+				}
 
-					$value = str_replace('$,', join("','", $list), $func_call);
-					array_push($expr, $cname.$value);
-				}
-				else if (strpos($func_call, '$') !== false) {
-					$value = str_replace('$', ADatabase::escape($value), $func_call);
-					array_push($expr, $cname.$value);
-				}
-				else if ($name == 'or') {
-					$list = preg_split('/\s*,\s*/', trim($value));
+				$env['value'] = str_replace('$,', join("','", $list), $func_call);
+				array_push($env['expr'], $env['cname'].$env['value']);
+			}
+			else if (strpos($func_call, '$') !== false) {
+				$env['value'] = str_replace('$', ADatabase::escape($env['value']), $func_call);
+				array_push($env['expr'], $env['cname'].$env['value']);
+			}
+			else if ($name == 'or') {
+				$list = preg_split('/\s*,\s*/', trim($env['value']));
 				
-					for ($i = 0; $i < count($list); $i++) {
-						$list[$i] = $cname."='".ADatabase::escape($list[$i])."'";
-					}
-
-					array_push($expr, '('.join(' OR ', $list).')');
+				for ($i = 0; $i < count($list); $i++) {
+					$list[$i] = $env['cname']."='".ADatabase::escape($list[$i])."'";
 				}
 
-				$found = true;
+				array_push($env['expr'], '('.join(' OR ', $list).')');
 			}
 		}
 	}
 
-	// \rkphplib\lib\log_debug("searchColumnValue> col=$col method=$method value=$value expr: ".print_r($expr, true));
-	return $expr;
+	// \rkphplib\lib\log_debug("searchColumnValue> env: ".print_r($env, true));
+	return $expr_before < count($env['expr']);
 }
 
 
