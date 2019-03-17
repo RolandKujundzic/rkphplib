@@ -634,7 +634,7 @@ private function selectFromAccount($p) {
 		if ($this->account[$i]['login'] == $p['login'] && $this->account[$i]['password'] == $p['password']) {
 			$found = $i;
 			$login_ok = true;
-			$password_ok = false;
+			$password_ok = true;
 		}
 		else if (!$login_ok && $this->account[$i]['login'] == $p['login']) {
 			$login_ok = true;
