@@ -337,6 +337,28 @@ public function tok_upload_conf($name, $p) {
 		$this->tok_upload_init($name, $p);
 	}
 
+	if ($this->conf['ajax_parameter_module'] == 'dropzone') {
+		$this->tok->setVar('dz_name', $name);
+		$this->tok->setVar('dz_paramName', $name);
+
+		if (!empty($this->conf['maxFiles'])) {
+			$this->conf['dz_maxFiles'] = $this->conf['maxFiles'];
+		}
+	
+		if (!empty($this->conf['acceptedFiles'])) {
+			$this->conf['dz_acceptedFiles'] = $this->conf['maxFiles'];
+		}
+		else {
+			throw new Exception('missing required parameter acceptedFiles');
+		}
+
+		foreach ($this->conf as $key => $value) {
+			if (substr($key, 0, 3) == 'dz_') {
+				$this->tok->setVar($key, $value);
+			}
+		}
+	}
+
 	if ($scan) {
 		$this->tok_upload_scan($name);
 	}
