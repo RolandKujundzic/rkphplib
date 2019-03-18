@@ -1287,11 +1287,13 @@ public function tok_switch($set, $p) {
  * @return string
  */
 public function tok_if($param, $p) {
+	$has_empty_param = false;
 	
 	if (!empty($param)) {
 		$tmp = \rkphplib\lib\split_str(':', $param);
 		$do = $tmp[0];
 		$param = isset($tmp[1]) ? $tmp[1] : '';
+		$has_empty_param = (count($tmp) == 2) && ($tmp[1] == '');
 	}
 	else {
 		$do = '';
@@ -1400,7 +1402,7 @@ public function tok_if($param, $p) {
 		}
 	}
 	else if ($do === 'cmp') {
-		if (!empty($param) && $param != 'and' && $param != 'or') {
+		if ((!empty($param) || $has_empty_param) && $param != 'and' && $param != 'or') {
 			array_unshift($p, $param);
 			$param = '';
 			$p_num++;
