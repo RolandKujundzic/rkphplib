@@ -20,6 +20,9 @@ function checkDropzone(f) {
   return false;
 }
 
+// var {var:dz_name} = new Dropzone('div#{var:dz_name}', {
+// Dropzone.options.{var:dz_name} = {
+
 Dropzone.options.{var:dz_name} = {
 	url: 'index.php?dir={get:dir}',
 	autoProcessQueue: {var:dz_autoProcessQueue},
@@ -63,7 +66,6 @@ Dropzone.options.{var:dz_name} = {
 			input.setAttribute("value", value);
 
 			dzClosure.element.parentNode.appendChild(input);
-			console.log('rkHiddenInput: add hidden [' + name + ']=[' + value + ']');
 		};
 
 		{upload:formData:hidden}
