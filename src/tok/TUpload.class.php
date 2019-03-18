@@ -248,7 +248,6 @@ public function tok_upload_init($name, $p) {
 	$_REQUEST['upload_'.$name.'_file'] = '';
 	$_REQUEST['upload_'.$name] = '';
 
-	$upload_type = '';
 	$scan = !empty($p['scan']);
 	unset($p['scan']);
 
@@ -260,11 +259,9 @@ public function tok_upload_init($name, $p) {
 
 	if (!isset($p['remove_image']) && !empty($_REQUEST['remove_image'])) {
 		$p['remove_image'] = $_REQUEST['remove_image'];
-		$scan = 1;
 	}
 	else if (!isset($p['replace_image']) && !empty($_REQUEST['replace_image'])) {
 		$p['replace_image'] = $_REQUEST['replace_image'];
-		$scan = 1;
 	}
 
 	if (!isset($p['jpeg2jpg'])) {
@@ -365,7 +362,7 @@ public function tok_upload_conf($name, $p) {
 
 
 /**
- * Scan upload.
+ * Scan upload. Only do something if name == basename(conf.save_in).
  *
  * @tok {upload:scan:logo}
  *
@@ -373,7 +370,7 @@ public function tok_upload_conf($name, $p) {
  */
 public function tok_upload_scan($name = 'upload') {
 
-	if (isset($this->options['_done_'.$name])) {
+	if ((!empty($_REQUEST['ajax']) && $_REQUEST['ajax'] != $name) || isset($this->options['_done_'.$name])) {
 		return;
 	}
 
@@ -387,8 +384,7 @@ public function tok_upload_scan($name = 'upload') {
 	}
 
 	if (!empty($this->conf['remove_image'])) { 
-		if (defined('SETTINGS_DSN') && !empty($this->conf['table_id']) && 
-				strpos($this->conf['remove_image'], $this->conf['upload']) === 0) {
+		if (defined('SETTINGS_DSN') && !empty($this->conf['table_id']) && strpos($this->conf['remove_image'], $this->conf['upload']) === 0) {
 			$this->removeImage();
 		}
 		else {
@@ -547,8 +543,8 @@ private function removeFSImages() {
 	$remove = [];
 
 	$rm_file = basename($this->conf['remove_image']);
-
-	if (!empty($this->conf['save_in']) && !empty($this->conf['save_as']) && $this->conf['save_as'] == '@name') {
+	
+	if (!empty($this->conf['save_in'])) {
 		array_push($remove, $this->conf['save_in'].'/'.$rm_file);
 
 		if (!empty($this->conf['thumbnail'])) {
