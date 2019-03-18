@@ -345,7 +345,7 @@ public function tok_upload_conf($name, $p) {
 		}
 	
 		if (!empty($this->conf['acceptedFiles'])) {
-			$this->conf['dz_acceptedFiles'] = $this->conf['maxFiles'];
+			$this->conf['dz_acceptedFiles'] = $this->conf['acceptedFiles'];
 		}
 		else {
 			throw new Exception('missing required parameter acceptedFiles');
