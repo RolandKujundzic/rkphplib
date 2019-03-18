@@ -69,16 +69,14 @@ Dropzone.options.{var:dz_name} = {
 		};
 
 		{upload:formData:hidden}
- 
-		if (!this.options.autoProcessQueue) {
-			// for Dropzone to process the queue (instead of default form behavior):
-			dzClosure.element.parentNode.querySelector("[type=submit]").addEventListener("click", function(e) {
-				// Make sure that the form isn't actually being sent.
-				e.preventDefault();
-				e.stopPropagation();
-				dzClosure.processQueue();
-			});
-		}
+
+		{if:}{var:dz_autoProcessQueue}|#||#|// manual queue processing
+		dzClosure.element.parentNode.querySelector("[type=submit]").addEventListener("click", function(e) {
+			// Make sure that the form isn't actually being sent.
+			e.preventDefault();
+			e.stopPropagation();
+			dzClosure.processQueue();
+		});{:if}
 
 		// send all the form data along with the files:
 		this.on("sendingmultiple", function(data, xhr, formData) {

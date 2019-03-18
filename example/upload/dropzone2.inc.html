@@ -18,6 +18,7 @@
 thumbnail= 120x120^|#|
 ajax_output= ajax_output|#|
 ajax_parameter= @4 module:dropzone, ajax: upload|#|
+dz_autoProcessQueue= 1|#|
 acceptedFiles=image/*
 {:upload}
 
@@ -51,8 +52,6 @@ acceptedFiles=image/*
 	<div class="dropzone" id="images"></div>
   <br><br>
   <div class="dropzone" id="logo"></div>
-	<br><br>
-	<button type="submit"> auto-upload </button>
 </form>
 
 {upload:conf:images}save_in= data/upload/images|#|maxFiles=4|#|scan=1{:upload}
