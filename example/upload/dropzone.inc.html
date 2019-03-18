@@ -9,15 +9,15 @@
 <link rel="stylesheet" href="../../css/dropzone.css" />
 {:html}
 
-{tpl_set:ajax_output_upload}
+{tpl_set:ajax_output}
 {get:*}
 {:tpl_set}
 
 {upload:init}
 @@4=":",","|#|
 thumbnail= 120x120^|#|
-ajax_output= ajax_output_upload|#|
-ajax_parameter= @4 module:dropzone, ajax:upload|#|
+ajax_output= ajax_output|#|
+ajax_parameter= @4 module:dropzone|#|
 dz_autoProcessQueue= false|#|
 acceptedFiles=image/*
 {:upload}
@@ -56,8 +56,8 @@ acceptedFiles=image/*
 	<button type="submit"> upload </button>
 </form>
 
-{upload:conf:images}save_in= data/upload/images|#|maxFiles=4{:upload}
+{upload:conf:images}save_in= data/upload/images|#|maxFiles=4|#|scan=1{:upload}
 <script>{include:}dropzone.js{:include}</script>
 
-{upload:conf:logo}save_in= data/upload/logo|#|maxFiles=1{:upload}
+{upload:conf:logo}save_in= data/upload/logo|#|maxFiles=1|#|scan=1{:upload}
 <script>{include:}dropzone.js{:include}</script>
