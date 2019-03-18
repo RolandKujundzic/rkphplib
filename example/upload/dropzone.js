@@ -49,6 +49,12 @@ Dropzone.options.{var:dz_name} = {
 		var dzClosure = this; // Makes sure that 'this' is understood inside the functions below.
 
 		this.options.rkHiddenInput = function(name, value) {
+			let el = document.getElementById(name);
+
+			if (el) {
+				return;
+			}
+
 			let input = document.createElement("input");
 
 			input.setAttribute("type", "hidden");
@@ -56,8 +62,8 @@ Dropzone.options.{var:dz_name} = {
 			input.setAttribute("name", name);
 			input.setAttribute("value", value);
 
-			console.log('rkHiddenInput', this, dzClosure);
 			dzClosure.element.parentNode.appendChild(input);
+			console.log('rkHiddenInput: add hidden [' + name + ']=[' + value + ']');
 		};
 
 		{upload:formData:hidden}
