@@ -19,7 +19,7 @@ thumbnail= 120x120^|#|
 ajax_output= ajax_output_upload|#|
 ajax_parameter= @4 module:dropzone, ajax:upload|#|
 dz_autoProcessQueue= false|#|
-dz_acceptedFiles=image/*
+acceptedFiles=image/*
 {:upload}
 
 <style>
@@ -56,8 +56,8 @@ dz_acceptedFiles=image/*
 	<button type="submit"> upload </button>
 </form>
 
-{upload:conf:file}save_in= data/upload/images|#|dz_name=images|#|dz_maxFiles=4|#|dz_paramName=file{:upload}
+{upload:conf:images}save_in= data/upload/images|#|maxFiles=4{:upload}
 <script>{include:}dropzone.js{:include}</script>
 
-{upload:conf:logo}save_in= data/upload/logo|#|dz_name=logo|#|dz_maxFiles=1|#|dz_paramName=logo{:upload}
+{upload:conf:logo}save_in= data/upload/logo|#|maxFiles=1{:upload}
 <script>{include:}dropzone.js{:include}</script>
