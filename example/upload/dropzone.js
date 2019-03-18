@@ -86,7 +86,7 @@ Dropzone.options.{var:dz_name} = {
 
 		this.on("removedfile", function(file) {
 			let f = this.element.parentNode;
-			let ajax_url = this.options.url + '&ajax=' + encodeURIComponent(f.elements['ajax'].value);
+			let ajax_url = this.options.url + '&ajax=' + encodeURIComponent('{var:name}');
 			rkphplib.ajax({ url: ajax_url + '&remove_image=' + encodeURIComponent(file.name) });
 		});
 
