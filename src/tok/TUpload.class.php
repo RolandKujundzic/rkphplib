@@ -116,7 +116,7 @@ public function tok_upload_formData($param) {
  * Return path to thumbnail of $file.
  */
 private function getThumbnail($file, $http_path = false) {
-	// \rkphplib\lib\log_debug("TUpload.getThumbnail> file=$file http_path=$http_path");
+	\rkphplib\lib\log_debug("TUpload.getThumbnail> file=$file http_path=$http_path");
 	$tpic = new TPicture();
 
 	$tpic->tok_picture_init([ 
@@ -130,7 +130,7 @@ private function getThumbnail($file, $http_path = false) {
 	$resize_pic = $tpic->resize();
 	$target = $http_path ? THttp::httpGet('abs_path').'/'.$resize_pic : $resize_pic;
 
-	// \rkphplib\lib\log_debug("TUpload.getThumbnail> return $target ($resize_pic)");
+	\rkphplib\lib\log_debug("TUpload.getThumbnail> return $target ($resize_pic)");
 	return $target;
 }
 
@@ -158,13 +158,13 @@ public function tok_upload_exists($p) {
 				throw new Exception('parameter save_in is empty', print_r($this->conf, true));
 			}
 
-			// \rkphplib\lib\log_debug("TUpload.tok_upload_exists> return [] - no pictures");
+			\rkphplib\lib\log_debug("TUpload.tok_upload_exists> return [] - no pictures");
 			return '[]';
 		}
 	}
 
 	if (!Dir::exists($this->conf['save_in'])) {
-		// \rkphplib\lib\log_debug("TUpload.tok_upload_exists> return [] - no such directory ".$this->conf['save_in']);
+		\rkphplib\lib\log_debug("TUpload.tok_upload_exists> return [] - no such directory ".$this->conf['save_in']);
 		return '[]';
 	}
 
@@ -177,7 +177,7 @@ public function tok_upload_exists($p) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TUpload.tok_upload_exists> save_in=".$this->conf['save_in']." p: ".print_r($p, true));
+	\rkphplib\lib\log_debug("TUpload.tok_upload_exists> save_in=".$this->conf['save_in']." p: ".print_r($p, true));
 	if (empty($p['mode'])) {
 		throw new Exception('missing mode parameter');
 	}
@@ -192,7 +192,7 @@ public function tok_upload_exists($p) {
 			if (!empty($ii['width'])) {
 				$tbn_url = $this->getThumbnail($entry, true);
 				$url = $url_prefix.'/'.$entry;
-				// \rkphplib\lib\log_debug("entry=$entry tbn=$tbn_url");
+				\rkphplib\lib\log_debug("entry=$entry tbn=$tbn_url");
 				$info = [ 'name' => basename($entry), 'size' => File::size($entry), 'mime' => $ii['mime'], 
 					'path' => $entry, 'url' => $url, 'tbnUrl' => $tbn_url ];
 				array_push($list, $info);
@@ -217,7 +217,7 @@ public function tok_upload_exists($p) {
  * save_in: save directory (auto-create) (default = data/upload/name)
  * save_dir: if set remove from path export
  * save_as: basename (default = [at]name) @see getSaveAs
- * allow_suffix: jpg, png, ...
+ * acceptedFiles: .jpg, .png, ...
  * type: image 
  * table_id: e.g. shop_customer.id:382
  * remove_image: (default = {get:remove_image})
@@ -268,7 +268,7 @@ public function tok_upload_init($name, $p) {
 		$p['jpeg2jpg'] = 1;
 	}
 
-	// \rkphplib\lib\log_debug("TUpload.tok_upload_init($name, ...)> p: ".print_r($p, true));
+	\rkphplib\lib\log_debug("TUpload.tok_upload_init($name, ...)> p: ".print_r($p, true));
 
 	if (!isset($this->options['_default'])) {
 		$this->options['_default'] = $p;
@@ -329,7 +329,7 @@ public function tok_upload_conf($name, $p) {
 	unset($p['scan']);
 
 	if (count($p) > 0) {
-		// \rkphplib\lib\log_debug("TUpload.tok_upload_conf($name, ...)> p: ".print_r($p,true));
+		\rkphplib\lib\log_debug("TUpload.tok_upload_conf($name, ...)> p: ".print_r($p,true));
 		$this->tok_upload_init($name, $p);
 	}
 
@@ -370,7 +370,8 @@ public function tok_upload_conf($name, $p) {
  */
 public function tok_upload_scan($name = 'upload') {
 
-	if ((!empty($_REQUEST['ajax']) && $_REQUEST['ajax'] != $name) || isset($this->options['_done_'.$name])) {
+	if ((!empty($_REQUEST['ajax']) && $_REQUEST['ajax'] != $name && $_REQUEST['ajax'] != 'upload') || isset($this->options['_done_'.$name])) {
+		\rkphplib\lib\log_debug("TUpload.tok_upload_scan($name)> return _req = ".print_r($_REQUEST, true));
 		return;
 	}
 
@@ -450,7 +451,7 @@ public function tok_upload_scan($name = 'upload') {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TUpload.tok_upload_scan> return");
+	\rkphplib\lib\log_debug("TUpload.tok_upload_scan> return");
 }
 
 
@@ -490,7 +491,7 @@ private function scanFiles($name) {
 		$this->error($_FILES[$fup]['error']);
 	}
 
-	// \rkphplib\lib\log_debug("TUpload.scanFiles> _FILES[$fup]: ".print_r($_FILES[$fup], true));
+	\rkphplib\lib\log_debug("TUpload.scanFiles> _FILES[$fup]: ".print_r($_FILES[$fup], true));
 	if (is_array($_FILES[$fup]['tmp_name'])) {
 		return 'multiple_files';
 	}
@@ -519,16 +520,16 @@ private function removeImage() {
 	$r = [ 'name' => $name, 'table' => $table, 'id_col' => $id_col, 'id_val' => $id_val, 'images' => '' ];
 
 	$query = $db->getQuery('select_images', $r);
-	// \rkphplib\lib\log_debug("TUpload.removeImage> name=$name num=$num table=$table $id_col=$id_val - query: $query");
+	\rkphplib\lib\log_debug("TUpload.removeImage> name=$name num=$num table=$table $id_col=$id_val - query: $query");
 	$dbres = $db->selectOne($query);
 	$images = \rkphplib\lib\split_str(',', $dbres[$name]);
 	$remove_img = array_splice($images, $num - 1, 1);
 	$r['images'] = join(',', $images);
-	// \rkphplib\lib\log_debug("TUpload.removeImage> r.images=".$r['images']." remove_img=".$remove_img[0]." images: ".print_r($images, true));
+	\rkphplib\lib\log_debug("TUpload.removeImage> r.images=".$r['images']." remove_img=".$remove_img[0]." images: ".print_r($images, true));
 
 	$path_prefix = empty($this->conf['save_dir']) ? '' : $this->conf['save_dir'].'/';
 	$update_query = $db->getQuery('update_images', $r);
-	// \rkphplib\lib\log_debug("TUpload.removeImage> update_query (remove: ".$path_prefix.$remove_img[0]."): $update_query");
+	\rkphplib\lib\log_debug("TUpload.removeImage> update_query (remove: ".$path_prefix.$remove_img[0]."): $update_query");
 	$db->execute($update_query);
 	File::remove($path_prefix.$remove_img[0]);
 	$this->options['@plugin_action'] = 1;
@@ -561,7 +562,7 @@ private function removeFSImages() {
 	for ($i = 0; $i < count($remove); $i++) {
 		$file = $remove[$i];
 		if (File::exists($file)) {
-			// \rkphplib\lib\log_debug("TUpload.removeFSImages> remove $file");
+			\rkphplib\lib\log_debug("TUpload.removeFSImages> remove $file");
 			$this->options['@plugin_action'] = 1;
 			array_push($removed, $file);
 			File::remove($file);
@@ -590,7 +591,7 @@ private function replaceImage() {
 	$r = [ 'name' => $name, 'table' => $table, 'id_col' => $id_col, 'id_val' => $id_val, 'images' => '' ];
 
 	$query = $db->getQuery('select_images', $r);
-	// \rkphplib\lib\log_debug("TUpload.replaceImage> name=$name num=$num table=$table $id_col=$id_val - query: $query");
+	\rkphplib\lib\log_debug("TUpload.replaceImage> name=$name num=$num table=$table $id_col=$id_val - query: $query");
 	$dbres = $db->selectOne($query);
 	$images = \rkphplib\lib\split_str(',', $dbres[$name]);
 	$r['images'] = $dbres[$name]; // images entry in database does not change
@@ -615,11 +616,11 @@ private function replaceImage() {
 
 	$old_img = $images[$num - 1];
 	$path_prefix = empty($this->conf['save_dir']) ? '' : $this->conf['save_dir'].'/';
-	// \rkphplib\lib\log_debug("TUpload.replaceImage> move $path_prefix$target to $path_prefix$old_img - r.images=".$r['images']);
+	\rkphplib\lib\log_debug("TUpload.replaceImage> move $path_prefix$target to $path_prefix$old_img - r.images=".$r['images']);
 	File::move($path_prefix.$target, $path_prefix.$old_img);
 
 	$update_query = $db->getQuery('update_images', $r);
-	// \rkphplib\lib\log_debug("TUpload.replaceImage> exit - update_query: $update_query");
+	\rkphplib\lib\log_debug("TUpload.replaceImage> exit - update_query: $update_query");
 }
 
 
@@ -652,7 +653,7 @@ private function error($message) {
  * @param int $max
  */
 private function saveMultipleFileUpload($fup, $max) {
-	// \rkphplib\lib\log_debug("TUpload.saveMultipleFileUpload> fup=$fup max=$max conf: ".print_r($this->conf, true));
+	\rkphplib\lib\log_debug("TUpload.saveMultipleFileUpload> fup=$fup max=$max conf: ".print_r($this->conf, true));
 	Dir::create($this->conf['save_in'], 0777, true);
 
 	$name = $this->conf['upload'];
@@ -808,7 +809,7 @@ private function convertImage($source, $target) {
 private function getSaveAs($upload_file, $temp_file, $nc = 0) {
 	$base = File::basename($upload_file, true);
 	$suffix = File::suffix($upload_file, true);
-	$save_as = $this->conf['save_as'];
+	$save_as = isset($this->conf['save_as']) ? $this->conf['save_as'] : null;
 	$fsize = File::size($temp_file);
 	$res = '';
 
@@ -816,7 +817,7 @@ private function getSaveAs($upload_file, $temp_file, $nc = 0) {
 		$suffix = '.jpg';
 	}
 	
-	// \rkphplib\lib\log_debug("TUpload.getSaveAS> upload_file=$upload_file temp_file=$temp_file nc=$nc base=$base suffix=$suffix fsize=$fsize");
+	\rkphplib\lib\log_debug("TUpload.getSaveAS> upload_file=$upload_file temp_file=$temp_file nc=$nc base=$base suffix=$suffix fsize=$fsize");
 
 	if ($fsize == 0) {
 		$this->error('upload is 0 byte');
@@ -864,8 +865,11 @@ private function getSaveAs($upload_file, $temp_file, $nc = 0) {
 	else if ($save_as == '@base_count') {
 		$res = $base.'_'.sprintf("%02d", $nc).$suffix;
 	}
-	else {
-		$res = ($nc > 0) ? basename($save_as).'_'.sprintf("%02d", $nc).$suffix : basename($save_as).$suffix;
+	else if ($this->conf['maxFiles'] > 1 && $nc > 0) {
+		$res = $base.'_'.sprintf("%02d", $nc).$suffix;
+	}
+	else if (is_null($save_as)) {
+		$res = $this->conf['upload'].$suffix;
 	}
 
 /*
@@ -874,16 +878,19 @@ private function getSaveAs($upload_file, $temp_file, $nc = 0) {
 	}
 */
 
-	if (!empty($this->conf['allow_suffix'])) {
-		$allow_suffix = \rkphplib\lib\split_str(',', $this->conf['allow_suffix']);
-		$my_suffix = substr($suffix, 1);
-			
-		if (!in_array($my_suffix, $allow_suffix)) {
-			$this->error('invalid suffix '.$suffix.' use: '.join('|', $allow_suffix));
+	if (!empty($this->conf['acceptedFiles'])) {
+		if ($this->conf['acceptedFiles'] == 'image/*') {
+			$this->conf['acceptedFiles'] = [ '.jpg', '.png', '.gif' ];
+		}
+
+		$allow_suffix = \rkphplib\lib\split_str(',', $this->conf['acceptedFiles']);
+	
+		if (!in_array($suffix, $allow_suffix)) {
+			$this->error('invalid suffix '.$suffix.' use conf.acceptedFiles='.join(',', $allow_suffix));
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TUpload.getSaveAS> return [$res]");
+	\rkphplib\lib\log_debug("TUpload.getSaveAS> return [$res]");
 	return $res;
 }
 
