@@ -248,13 +248,15 @@ public function tok_upload_init($name, $p) {
 	$_REQUEST['upload_'.$name.'_file'] = '';
 	$_REQUEST['upload_'.$name] = '';
 
-	$p['save_in'] = empty($p['save_in']) ? 'data/upload/'.$name : $p['save_in'];
-	$p['save_as'] = empty($p['save_as']) ? '@name' : $p['save_as'];
-	$p['overwrite'] = empty($p['overwrite']) ? 'yes' : $p['overwrite'];
-
 	$upload_type = '';
 	$scan = !empty($p['scan']);
 	unset($p['scan']);
+
+	if ($scan) {
+		$p['save_in'] = empty($p['save_in']) ? 'data/upload/'.$name : $p['save_in'];
+		$p['save_as'] = empty($p['save_as']) ? '@name' : $p['save_as'];
+		$p['overwrite'] = empty($p['overwrite']) ? 'yes' : $p['overwrite'];
+	}
 
 	if (!isset($p['remove_image']) && !empty($_REQUEST['remove_image'])) {
 		$p['remove_image'] = $_REQUEST['remove_image'];
@@ -262,9 +264,6 @@ public function tok_upload_init($name, $p) {
 	}
 	else if (!isset($p['replace_image']) && !empty($_REQUEST['replace_image'])) {
 		$p['replace_image'] = $_REQUEST['replace_image'];
-		$scan = 1;
-	}
-	else if (!empty($p['save_in']) || !empty($p['save_as'])) {
 		$scan = 1;
 	}
 
@@ -337,7 +336,7 @@ public function tok_upload_conf($name, $p) {
 		$this->tok_upload_init($name, $p);
 	}
 
-	if ($this->conf['ajax_parameter_module'] == 'dropzone') {
+	if ($this->conf['ajax_parameter']['module'] == 'dropzone') {
 		$this->tok->setVar('dz_name', $name);
 		$this->tok->setVar('dz_paramName', $name);
 
