@@ -1128,7 +1128,6 @@ protected function getSqlSearch($options = []) {
 
 	foreach ($search_cols as $col_method) {
 		list ($env['col'], $env['method']) = explode(':', $col_method, 2);
-		$env['value'] = isset($_REQUEST['s_'.$env['col']]) ? $_REQUEST['s_'.$env['col']] : '';
 
 		if (($pos = strpos($env['col'], '.')) > 0) {
 			$env['cname'] = $env['col'];
@@ -1138,6 +1137,7 @@ protected function getSqlSearch($options = []) {
 			$env['cname'] = $env['col'];
 		}
 
+		$env['value'] = isset($_REQUEST['s_'.$env['col']]) ? $_REQUEST['s_'.$env['col']] : '';
 		if (!empty($options['value'])) {
 			$env['value'] = $options['value'];
 		}
