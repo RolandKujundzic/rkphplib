@@ -481,6 +481,9 @@ public function tok_sql_query($qkey, $query) {
 		$replace = \rkphplib\lib\conf2kv($query);
 		$query = $this->db->getQuery($qkey, $replace);
 	}
+	else if (empty($query)) {
+		return;
+	}
 
 	$query_prefix = strtolower(substr(trim($query), 0, 20));
 	$use_result = (strpos($query_prefix, 'select ') === 0) || (strpos($query_prefix, 'show ') === 0);
