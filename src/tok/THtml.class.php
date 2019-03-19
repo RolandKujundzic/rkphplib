@@ -30,11 +30,32 @@ public function getPlugins($tok) {
 	$plugin['html:uglify'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html'] = 0;
 
+	$plugin['text2html'] = 0;
+
 	$plugin['input:checkbox'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
 	$plugin['input:radio'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
 	$plugin['input'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::KV_BODY;
 
   return $plugin;
+}
+
+
+/**
+ * Render text with html tags. Replace "\r?\n" with <br>.
+ *
+ * @tok {text2html:}a\nb\nc{:text2html} -> a<br/>b<br/>c
+ *
+ * @param string $param
+ * @param string $text
+ * @return string
+ */
+public function tok_text2html($param, $text) {
+
+	if (empty($param)) {
+		$text = preg_replace("/\r?\n/", "<br/>", $text);
+	}
+
+	return $text;
 }
 
 
