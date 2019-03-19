@@ -3,6 +3,7 @@
 /* global rkphplib */
 
 
+{tf:}{var:dz_autoProcessQueue}{:tf}{false:}
 // Dropzone.autoDiscover = false; Dropzone.autoProcessQueue = true
 var dropzone_done = false;
 
@@ -18,7 +19,7 @@ function checkDropzone(f) {
   }
 
   return false;
-}
+}{:false}
 
 // var {var:dz_name} = new Dropzone('div#{var:dz_name}', {
 // Dropzone.options.{var:dz_name} = {
@@ -111,6 +112,22 @@ Dropzone.options.{var:dz_name} = {
 			this.emit("thumbnail", existingFiles[i], existingFiles[i].tbnUrl);
 			this.emit("complete", existingFiles[i]);
 		}
+
+		{tf:}{var:dz_fixMarkBug}{:tf}{true:}
+		// Bugfix: fix success + error mark visible
+		$(".dz-success-mark").css("display", "none");
+		$(".dz-error-mark").css("display", "none");
+
+		this.on("success", function(file){   
+			$(".dz-success-mark svg").css("background", "green");
+			$(".dz-error-mark").css("display", "none");
+		});
+
+		this.on("error", function(file) {
+			$(".dz-error-mark svg").css("background", "red");
+			$(".dz-success-mark").css("display", "none");
+		});
+		{:true}
 	}
 };
 
