@@ -406,7 +406,7 @@ public function tok_fv_set_error_message($name, $msg) {
 
 
 /**
- * Return hidden input for conf.keep_hidden and conf.hidden.key.
+ * Return hidden input for conf.hidden_keep and conf.hidden.key.
  *
  * @return string
  */
@@ -566,6 +566,7 @@ public function tok_fv_init($do, $p) {
 
 	$submit_name = $this->conf['current']['submit'];
 	$this->conf['current']['hidden.'.$submit_name] = 1;
+	\rkphplib\lib\log_debug("TFormValidator.tok_fv_init($do, ...)> exit, use_conf=(".join(',', $use_conf)."), current: ".print_r($this->conf['current'], true));
 }
 
 
@@ -951,7 +952,7 @@ private function _fv_in_html($name, $r, $output_in = '') {
 	$output_tpl = $this->getConf('output.in'.$output_in, true) ? $this->getConf('output.in'.$output_in, true) : 
 		$this->getConf('output.in', true);
 
-  $res = empty($r['output']) ? $output_tpl : $this->getConf('output.in.'.$r['output'], true);
+	$res = empty($r['output']) ? $output_tpl : $this->getConf('output.in.'.$r['output'], true);
 
 	if (!empty($conf['label_required']) && !empty($r['label']) && in_array($name, $conf['required'])) {
     $r['label'] = $this->tok->replaceTags($conf['label_required'], [ 'label' => $r['label'] ]);
@@ -1069,7 +1070,7 @@ public function getConf($key, $engine = '', $required = true) {
 			}
 		}
 		else if ($required) {
-			$msg = (count($conf) == 0) ? 'empty configuration' : 'no engine';
+			$msg = (count($conf) == 0) ? 'empty configuration' : 'no template.engine';
 			throw new Exception("no such configuration key $ckey", $msg);
 		}
 	}
