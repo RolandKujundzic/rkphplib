@@ -224,7 +224,7 @@ public function __construct() {
 		'bootstrap.in.textarea' => '<textarea name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$value.'</textarea>',
 		'bootstrap.in.select'   => '<select name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$options.'</select>',
 		'bootstrap.in.multi_checkbox' => '<div class="row">'.$input.'</div>',
-		'bootstrap.in.multi_checkbox.entry'	=> '<div class="col-md-4"><label class="form-check-label">'.$input.' '.$label.'</label></div>',
+		'bootstrap.in.multi_checkbox.entry'	=> '<div class='.$col.'><label class="form-check-label">'.$input.' '.$label.'</label></div>',
 		'bootstrap.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="form-control '.$class.'" '.
 			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
 			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
@@ -241,6 +241,9 @@ public function __construct() {
 
 		'bootstrap.output.in.multi'		=> '<div class="row"><div class="col-md-3"><label>'.$label.
 			"</label>$example$error_message</div>".'<div class="col-md-9">'.$input.'</div></div>',
+
+		'bootstrap.output.in.multi.2'	=> '<div class="row"><div class="col-md-6"><label>'.$label.'</label></div>'.
+			'<div class="col-md-6">'.$example.$error_message.'</div></div><div class="row"><div class="col-md-12">'.$input.'</div></div>',
 
 		'bootstrap.header'	=> '<div class="container-fluid ml-0 pl-0 {:=class}"><div class="row"><div class="'.$pl_if_col.'">'.
 			'<form class="fv form" method="'.$pl_if_method.'" action="'.$pl_link.'" '.$pl_if_upload.' data-key13="prevent" novalidate>'.
@@ -868,11 +871,9 @@ private function get2NData($name, $name_def) {
 		if (!empty($_REQUEST[$var]) && $_REQUEST[$var] == $v) {
 			$value += $v;
 		}
-		/*
-		else if (!is_null($value) && !isset($_REQUEST[$var]) && ($value & $v) == $v) {
+		else if (empty($_REQUEST[$var]) && ($value & $v) == $v) {
 			$_REQUEST[$var] = $v;
 		}
-		*/
 
 		$n++;
 	}
@@ -899,7 +900,8 @@ private function get2NData($name, $name_def) {
  */
 private function multiCheckbox($name, $p) {
 	// \rkphplib\lib\log_debug("TFormValidator.multiCheckbox($name, ...)> name=$name p: ".print_r($p, true));
-	$entry = $this->getConf('in.multi_checkbox.entry', true);
+	$col = empty($p['col']) ? 'col-md-4' : $p['col'];
+	$entry = $this->tok->replaceTags($this->getConf('in.multi_checkbox.entry', true), [ 'col' => $col ] );
   $entries = $this->getConf('in.multi_checkbox', true);
 	$entry_list = '';
 
