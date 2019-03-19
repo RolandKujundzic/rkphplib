@@ -240,6 +240,9 @@ public function tok_upload_exists($p) {
  */
 public function tok_upload_init($name, $p) {
 
+	$scan = !empty($name) || !empty($p['scan']) || (empty($p['name']) && !empty($p['upload']));
+	unset($p['scan']);
+
 	$name = $this->getUploadName($name, $p);
 	$p['upload'] = $name;
 
@@ -247,9 +250,6 @@ public function tok_upload_init($name, $p) {
 	$_REQUEST['upload_'.$name.'_saved'] = 'no';
 	$_REQUEST['upload_'.$name.'_file'] = '';
 	$_REQUEST['upload_'.$name] = '';
-
-	$scan = !empty($p['scan']);
-	unset($p['scan']);
 
 	if ($scan) {
 		$p['save_in'] = empty($p['save_in']) ? 'data/upload/'.$name : $p['save_in'];
@@ -333,7 +333,7 @@ public function tok_upload_conf($name, $p) {
 		$this->tok_upload_init($name, $p);
 	}
 
-	if ($this->conf['ajax_parameter']['module'] == 'dropzone') {
+	if (isset($this->conf['ajax_parameter']) && $this->conf['ajax_parameter']['module'] == 'dropzone') {
 		$this->tok->setVar('dz_name', $name);
 		$this->tok->setVar('dz_paramName', $name);
 
