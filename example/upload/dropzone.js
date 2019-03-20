@@ -60,17 +60,16 @@ Dropzone.options.{var:dz_name} = {
 			dzForm = page_forms[0];
 		}
 
-		dzForm.addEventListener("click", function(e) {
-			if (e.target.id == 'fvin_form_action') {
-				e.target.form.submit();
-				return;
-			}
-
-			// Make sure that the form isn't actually being sent.
+		dzForm.addEventListener("submit", function(e) {
 			e.preventDefault();
 			e.stopPropagation();
 			dzClosure.processQueue();
-		});{:if}
+
+			if (dzClosure.getUploadingFiles().length === 0 && dzClosure.getQueuedFiles().length === 0) {
+				e.target.submit();
+			}
+    }, true);
+		{:if}
 
 		// send all the form data along with the files:
 		this.on("sendingmultiple", function(data, xhr, formData) {
