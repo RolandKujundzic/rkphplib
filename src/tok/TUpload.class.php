@@ -247,7 +247,7 @@ public function tok_upload_init($name, $p) {
 	$p['upload'] = $name;
 
 	// reset save upload export
-	$_REQUEST['upload_'.$name.'_saved'] = 'no';
+	$_REQUEST['upload_'.$name.'_saved'] = '';
 	$_REQUEST['upload_'.$name.'_file'] = '';
 	$_REQUEST['upload_'.$name] = '';
 
@@ -626,14 +626,14 @@ private function replaceImage() {
 
 /**
  * Export error message as _REQUEST[upload_NAME_error]. 
- * Set _REQUEST[upload_error], _REQUEST[upload_NAME(_file)] = '' and _REQUEST[upload_NAME_saved] = no.
+ * Set _REQUEST[upload_error], _REQUEST[upload_NAME(_file)] = '' and _REQUEST[upload_NAME_saved] = ''.
  *
  * @throws
  * @param string $message
  */
 private function error($message) {
 	$name = $this->conf['upload'];
-  $_REQUEST['upload_'.$name.'_saved'] = 'no';
+  $_REQUEST['upload_'.$name.'_saved'] = '';
   $_REQUEST['upload_'.$name.'_file'] = '';
   $_REQUEST['upload_'.$name] = '';
   $_REQUEST['upload_'.$name.'_error'] = $message;
