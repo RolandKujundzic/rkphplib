@@ -3,24 +3,6 @@
 /* global rkphplib */
 
 
-{tf:}{var:dz_autoProcessQueue}{:tf}{false:}
-// Dropzone.autoDiscover = false; Dropzone.autoProcessQueue = true
-var dropzone_done = false;
-
-function checkDropzone(f) {
-  console.log('checkDropzone', f);
-
-  if (dropzone_done) {
-    f.submit();
-  }
-  else {
-    document.getElementById('fvin_submit').setAttribute('readonly', 'readonly');
-    setTimeout(function(f) { checkDropzone(f); }, 500);
-  }
-
-  return false;
-}{:false}
-
 // var {var:dz_name} = new Dropzone('div#{var:dz_name}', {
 // Dropzone.options.{var:dz_name} = {
 
@@ -72,7 +54,18 @@ Dropzone.options.{var:dz_name} = {
 		{upload:formData:hidden}
 
 		{if:}{var:dz_autoProcessQueue}|#||#|// manual queue processing
-		dzClosure.element.parentNode.querySelector("[type=submit]").addEventListener("click", function(e) {
+		let page_forms, dzForm = dzClosure.element.parentNode.querySelector("[type=submit]");
+	
+		if (!dzForm && (page_forms = document.getElementsByTagName('FORM')).length == 1) {
+			dzForm = page_forms[0];
+		}
+
+		dzForm.addEventListener("click", function(e) {
+			if (e.target.id == 'fvin_form_action') {
+				e.target.form.submit();
+				return;
+			}
+
 			// Make sure that the form isn't actually being sent.
 			e.preventDefault();
 			e.stopPropagation();
@@ -86,9 +79,13 @@ Dropzone.options.{var:dz_name} = {
 		});
 
 		this.on("removedfile", function(file) {
+			{tf:}{var:on_removedfile}{:tf}
+			{true:}{var:on_removedfile}{:true}
+			{false:}
 			let f = this.element.parentNode;
 			let ajax_url = this.options.url + '&ajax=' + encodeURIComponent('{var:name}');
 			rkphplib.ajax({ url: ajax_url + '&remove_image=' + encodeURIComponent(file.name) });
+			{:false}
 		});
 
 		this.on("addedfile", function(file) {
