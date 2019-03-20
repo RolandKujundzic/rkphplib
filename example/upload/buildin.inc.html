@@ -1,22 +1,29 @@
 {html:meta:keywords}multiple, file, upload{:html}
-{html:meta:description}Upload based on Dropzone.js{:html}
+{html:meta:description}Buildin Upload{:html}
 {html:inner:title}thumbnail, previews, retina enabled, multiple files, synchronous uploads, browser image resizing,
   progress update, support for large files, complete theming{:html}
 
 {html:append:head}
 <script src="../../js/rkPhpLib.js"></script>
-<script src="../../js/dropzone.js"></script>
-<link rel="stylesheet" href="../../css/dropzone.css" />
 {:html}
 
-{tpl_set:ajax_output_upload}
-{get:*}
-{:tpl_set}
+{fv:init}
+required= id|#|
+hidden_keep= module|#|
+in.id= text|#|
+in.images= file, 16|#|
+{:fv}
 
-{upload:init:file}
-save_in= data/upload|#|
+{upload:init:images}
 thumbnail= 120x120^|#|
-ajax_output= ajax_output_upload|#|
+acceptedFiles=image/*|#|
+save_in= data/upload/images|#|
+save_dir= data/upload/images|#|
+save_as= image|#|
+acceptedFiles= png, jpg|#|
+max_size= 8388608|#|
+min_width= 400|#|
+min_height= 400|#|
 {:upload}
 
 <style>
@@ -29,21 +36,39 @@ ajax_output= ajax_output_upload|#|
   border-width:2px;
   background-color:#fdfbfb;
   color:#462a51;
-	overflow: auto;
+	position:relative;
 }
 
 #rkDropzone input[type="file"] {
-	width: 100%;
-	height: 100%;
+	left: 0; right: 0; top: 0; bottom: 0;
+	position:absolute;
 	opacity: 0;
+}
+
+#rkDropzone span.label {
+	text-align:center;
+	font-size:2ch;
 }
 </style>
 
 <form action="index.php" method="post" enctype="multipart/form-data">
-	<input type="hidden" id="method" name="method" value="buildin">
+	{fv:hidden}
 
-	<div id="rkDropzone"><input type="file" name="file"></div>
-	<br><br>
+<div id="rkDropzone">
+{fv:in:images}
+label= {txt:}Hier klicken oder Dateien hereinziehen, um hochzuladen{:txt}|#|
+multiple=multiple|#|
+accept=.jpg,.jpeg,.png,image/*|#|
+data-dir=data/shop/img|#|
+data-remove=img/icon/icon_garbage.png|#|
+data-replace=img/icon/icon_replace.png|#|
+{:fv}
+</div>
+
+	<br>
+	{fv:in:id}placeholder=Pflichtfeld!{:fv}
+	<br>
 	<button type="submit" id="submit-all"> upload </button>
 </form>
 
+<br><pre>id=[{get:id}] images=[{get:images}] fv:check=[{fv:check}]</pre>
