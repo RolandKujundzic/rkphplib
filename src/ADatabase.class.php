@@ -453,7 +453,7 @@ public function getQuery($qkey, $replace = null) {
 		unset($q['bind']);
 	}
 
-	if (!is_array($replace)) {
+	if (count($q) > 0 && !is_array($replace)) {
 		throw new Exception("query replace and parameter mismatch", "qkey=$qkey query=$query\nreplace: ".print_r($replace, $replace)."\nq: ".print_r($q, true));
 	}
 
