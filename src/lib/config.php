@@ -35,6 +35,12 @@ require_once(__DIR__.'/log_error.php');
 // Force UTF-8 encoding
 mb_internal_encoding('UTF-8');
 
+
+if (!defined('SETTINGS_REQ_DIR')) {
+	/** @define string SETTINGS_REQ_DIR = 'dir' */
+	define('SETTINGS_REQ_DIR', 'dir');
+}
+
 if (!defined('SETTINGS_LANGUAGE')) {
 	/** @define string SETTINGS_LANGUAGE = 'de' */
 	define('SETTINGS_LANGUAGE', 'de');
