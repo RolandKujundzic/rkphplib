@@ -11,7 +11,7 @@ namespace rkphplib\lib;
  *
  * @param mixed &$data
  */
-public static function latin1_to_utf8(&$data) {
+function latin1_to_utf8(&$data) {
 
 	if (is_string($data)) {
 		if (mb_detect_encoding($data, 'ISO-8859-1', true)) {
