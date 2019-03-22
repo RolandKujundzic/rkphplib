@@ -1306,6 +1306,7 @@ public function tok_if($param, $p) {
 	}
 	else if ($p_num === 2) {
 		array_push($p, '');
+		$p_num++;
 	}
 
 	if ($do === '') {
@@ -1326,7 +1327,7 @@ public function tok_if($param, $p) {
 		$res = in_array($param, $set) ? $p[1] : $p[2];
 	}
 	else if ($do === 'le' || $do === 'lt' || $do === 'ge' || $do === 'gt') {
-		if (!empty($param)) {
+		if (strlen($param) > 0) {
 			array_unshift($p, $param);
 		}
 
@@ -1402,7 +1403,7 @@ public function tok_if($param, $p) {
 		}
 	}
 	else if ($do === 'cmp') {
-		if ((!empty($param) || $has_empty_param) && $param != 'and' && $param != 'or') {
+		if ((strlen($param) > 0 || $has_empty_param) && $param != 'and' && $param != 'or') {
 			array_unshift($p, $param);
 			$param = '';
 			$p_num++;
