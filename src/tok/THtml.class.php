@@ -25,6 +25,7 @@ public function getPlugins($tok) {
   $plugin['html:inner'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
   $plugin['html:append'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:meta'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
+	$plugin['html:meta_og'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:tidy'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:xml'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:uglify'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
@@ -167,6 +168,34 @@ public function tok_html_tidy($html) {
 public function tok_html_tag($name, $value, $html) {
 	$html = str_replace('{:='.$name.'}', $value, $html);
 	return $html;
+}
+
+
+/**
+ * Replace meta tag value. Parameter: url, type, title, description, image, ... .
+ * 
+ * @tok {html:meta_og:url}https://...{:html} -> <meta property="og:url" content="https://..." />
+ * 
+ * @throws
+ * @param string $property
+ * @param string $content
+ * @param string $html
+ * @return string
+ */
+public function tok_html_meta_og($property, $content, $html) {
+	$search = '<meta property="og:'.$property.'" content="';
+	$start = mb_stripos($html, $search);
+	$search_len = mb_strlen($search);
+	$end = mb_stripos($html, '"', $start + $search_len);
+
+	if ($start > 0 && $end >= $start + $search_len) {
+		$res = mb_substr($html, 0, $start).$search.$content.mb_substr($html, $end);
+	}
+	else {
+		throw new Exception('failed to find meta tag property og:'.$property.' content', "search=[$search] start=$start end=$end");
+	}
+
+  return $res;
 }
 
 
