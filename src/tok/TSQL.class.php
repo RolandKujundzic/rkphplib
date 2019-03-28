@@ -507,6 +507,8 @@ public function tok_sql_query($qkey, $query) {
  *   WHERE language={esc:}{language:get}{:esc} AS label ORDER BY language{:sql}
  * @tok {sql:options}selected=de{:sql}
  * 
+ * @export options_selected_[label|value]
+ *
  * @param hash $p
  * @return string
  */
@@ -520,6 +522,12 @@ public function tok_sql_options($p = []) {
 		while (($row = $this->db->getNextRow())) {
 			$selected = ($row['value'] == $sval) ? ' selected' : '';
 			$label = isset($row['label']) ? $row['label'] : $row['value'];
+	
+			if ($selected) {
+				$_REQUEST['options_selected_label'] = $label;
+				$_REQUEST['options_selected_value'] = $row['value'];
+			}
+
 			$res .= '<option value="'.\rkphplib\lib\htmlescape($row['value']).'"'.$selected.'>'.
 				\rkphplib\lib\htmlescape($label)."</option>\n";
 		}
