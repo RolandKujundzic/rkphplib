@@ -80,7 +80,8 @@ public static function sqlFixUrl($table) {
 		"'Ä', 'Ae'), 'Ö', 'Oe'), 'ä', 'ae'), 'ö', 'oe'), 'ü', 'ue'), 'ß', 'ss')";
 
 	$query = "UPDATE ".ADatabase::escape_name($table)." SET url=".
-		"REGEXP_REPLACE(REGEXP_REPLACE($rx_url, '[^A-Z|a-z|0-9|\-|\_|\.|\%]', '-'), '\-+', '-') ".
+		"REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE($rx_url, ".
+		"'[^A-Z|a-z|0-9|\\-|\\_|\\.|\\%]', '-'), '\\-+', '-'), '\\-\\\.', ''), '^\\-', '') ".
 		"WHERE url IS NOT NULL AND url != ''";
 
 	return $query;
@@ -102,7 +103,7 @@ public function __construct($custom_query_map = []) {
 	if (is_null($this->db)) {
 		$default_query_map = [
 			'update_shop_item_url' => "UPDATE shop_item i, shop_customer c SET i.url=".
-				"CONCAT(IF(i.model, i.model, i.brand), ' in ', c.city, '.', SUBSTRING(i.id, -3), '2.html') ".
+				"CONCAT(brand, ' ', i.model, ' in ', c.city, '.', SUBSTRING(i.id, -3), '2.html') ".
 				"WHERE i.owner=3 AND c.owner=3 AND i.seller=c.id",
 
 			'update_shop_cat_url' => "UPDATE shop_category SET url=".
@@ -151,6 +152,19 @@ public function __construct($custom_query_map = []) {
 
 
 /**
+ * Update url in shop_item or shop_category table.
+ *
+ * @param string $qkey shop_cat_url|shop_item_url
+ */
+public function updateShopUrl($qkey) {
+	if ($this->db->hasQuery('update_'.$qkey_url)) {
+		$this->db->execute($this->db->getQuery('update_'.$qkey_url));
+		$this->db->execute($this->db->getQuery('fix_'.$qkey_url));
+	}
+}
+
+
+/**
  * Create sitemap.xml in DOCROOT. Parameter:
  * 
  * @if= 1 [ignore if empty|otherwise execute only if non-empty]
@@ -171,10 +185,7 @@ public function tok_sitemap($kv) {
 	$qlist = [ 'shop_cat_url' => 'shop_cat_alias_all', 'shop_item_url' => 'shop_item_alias_all' ];
 
 	foreach ($qlist as $qkey_url => $qkey_select) {
-		if ($this->db->hasQuery('update_'.$qkey_url)) {
-			$this->db->execute($this->db->getQuery('update_'.$qkey_url));
-			$this->db->execute($this->db->getQuery('fix_'.$qkey_url));
-		}
+		$this->updateShopUrl($qkey_url);
 
 		if (!$this->db->hasQuery($qkey_select)) {
 			continue;
