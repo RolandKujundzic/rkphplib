@@ -10,6 +10,11 @@ use \rkphplib\File;
 use \rkphplib\Dir;
 
 
+if (!defined('SETTINGS_DSN')) {
+	define('SETTINGS_DSN', 'mysqli://ignore:ignore@tcp+localhost/ignore');
+}
+
+
 
 /**
  *
