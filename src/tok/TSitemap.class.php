@@ -157,9 +157,9 @@ public function __construct($custom_query_map = []) {
  * @param string $qkey shop_cat_url|shop_item_url
  */
 public function updateShopUrl($qkey) {
-	if ($this->db->hasQuery('update_'.$qkey_url)) {
-		$this->db->execute($this->db->getQuery('update_'.$qkey_url));
-		$this->db->execute($this->db->getQuery('fix_'.$qkey_url));
+	if ($this->db->hasQuery('update_'.$qkey)) {
+		$this->db->execute($this->db->getQuery('update_'.$qkey));
+		$this->db->execute($this->db->getQuery('fix_'.$qkey));
 	}
 }
 
