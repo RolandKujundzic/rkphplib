@@ -4,10 +4,14 @@ namespace rkphplib\tok;
 
 $parent_dir = dirname(__DIR__);
 require_once(__DIR__.'/TokPlugin.iface.php');
+require_once($parent_dir.'/ADatabase.class.php');
 require_once($parent_dir.'/Database.class.php');
+require_once($parent_dir.'/File.class.php');
 
 use \rkphplib\Exception;
+use \rkphplib\ADatabase;
 use \rkphplib\Database;
+use \rkphplib\File;
 
 
 
@@ -32,11 +36,54 @@ protected $db = null;
  */
 public function getPlugins($tok) {
 	$this->tok =& $tok;
-  $plugin = [];
 
-  $plugin['sitemap'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY;
+  $plugin = [];
+  $plugin['sitemap'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 
   return $plugin;
+}
+
+
+/**
+ * Convert name to SEO url.
+ * 
+ * @param string $name
+ * @return string
+ */
+public static function name2url($name) {
+
+	$url = str_replace([ 'Ä', 'ä', 'Ü', 'ü', 'Ö', 'ö', 'ß', ' ' ], [ 'Ae', 'ae', 'Ue', 'ue', 'Oe', 'oe', 'ss', '-' ], trim($name));
+	$url = preg_replace('/[^A-Z|a-z|0-9|\-|\_|\%]/', '-', $url);
+	$url = str_replace('--', '-', $url);
+
+	if (substr($url, -1) == '-') {
+		$url = substr($url, 0, -1);
+	}
+
+	if (substr($url, 0, 1) == '-') {
+		$url = substr($url, 1);
+	}
+
+	return $url;
+}
+
+
+/**
+ * Return query to fix url with sql.
+ *
+ * @param string $table
+ * @return string
+ */
+public static function sqlFixUrl($table) {
+
+	$rx_url = "REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(url, 'Ü', 'Ue'), ".
+		"'Ä', 'Ae'), 'Ö', 'Oe'), 'ä', 'ae'), 'ö', 'oe'), 'ü', 'ue'), 'ß', 'ss')";
+
+	$query = "UPDATE ".ADatabase::escape_name($table)." SET url=".
+		"REGEXP_REPLACE(REGEXP_REPLACE($rx_url, '[^A-Z|a-z|0-9|\-|\_|\.|\%]', '-'), '\-+', '-') ".
+		"WHERE url IS NOT NULL AND url != ''";
+
+	return $query;
 }
 
 
@@ -45,42 +92,58 @@ public function getPlugins($tok) {
  *
  * Options +FollowSymlinks
  * RewriteEngine on
- * RewriteRule ^(.*)\.([0-9]+)\.html$ /index.php?alias=$1.$2&%{QUERY_STRING} [nc]
+ * RewriteRule ^(.+)\.([0-9]+)(1|2)\.html$ /index.php?alias=$1.$2$3&atype=$3&%{QUERY_STRING} [nc]
  *
- * SELECT REGEXP_REPLACE(REPLACE(model, ' ', '-'), '[^A-Za-z0-9\-]', '') AS url
+ * @param hash $customer_query_map
+ * @export dir, url, id, name, cat, url_append
  */
-public function __construct() {
+public function __construct($custom_query_map = []) {
 
-	if (empty($_REQUEST['alias'])) {
+	if (is_null($this->db)) {
+		$default_query_map = [
+			'update_shop_item_url' => "UPDATE shop_item i, shop_customer c SET i.url=".
+				"CONCAT(IF(i.model, i.model, i.brand), ' in ', c.city, '.', SUBSTRING(i.id, -3), '2.html') ".
+				"WHERE i.owner=3 AND c.owner=3 AND i.seller=c.id",
+
+			'update_shop_cat_url' => "UPDATE shop_category SET url=".
+				"CONCAT(name, '.', SUBSTRING(id, -3), '1.html') WHERE owner=3",
+
+			'fix_shop_item_url' => self::sqlFixUrl('shop_item'),
+
+			'fix_shop_cat_url' => self::sqlFixUrl('shop_category'),
+
+			'shop_cat_alias' => "SELECT id, name, CONCAT('&s_cat_id=', id) AS url_append, 'watches' AS dir, ".
+				"url, name AS cat, DATE_FORMAT(lchange, '%Y-%m-%d') AS lchange ".
+				"FROM shop_category WHERE url={:=url} AND owner=3 AND (ti > 0 OR tii > 0) AND status='active'",
+
+			'shop_item_alias' => "SELECT id, brand AS cat, IF(model, model, brand) AS name, 'watch' AS dir, url, ".
+				"'' AS url_append, DATE_FORMAT(lchange, '%Y-%m-%d') AS lchange ".
+				"FROM shop_item WHERE url={:=url} AND owner=3 AND status='active'"
+			];
+
+	  $this->db = Database::getInstance(SETTINGS_DSN, array_merge($default_query_map, $custom_query_map));
+
+		$this->db->setQuery('shop_cat_alias_all', str_replace("url='url' AND ", '', 
+			$this->db->getQuery('shop_cat_alias', [ 'url' => 'url' ])));
+
+		$this->db->setQuery('shop_item_alias_all', str_replace("url='url' AND ", '', 
+			$this->db->getQuery('shop_item_alias', [ 'url' => 'url' ])));
+	}
+
+	if (empty($_REQUEST['alias']) || empty($_REQUEST['atype'])) {
 		return;
 	}
 
-	$qmap = [
-		'shop_cat_alias' => "SELECT id, name, CONCAT('&s_cat_id=', id) AS url_append, 'watches' AS dir, name ".
-			"FROM shop_category WHERE name='{:=url}' AND status='active'",
-
-		'shop_item_alias' => "SELECT id, 'watch' AS dir, brand, model ".
-			"FROM shop_item WHERE model='{:=url}' AND status='active'",
-
-		'content_alias' => "SELECT 'ToDo'"
-	];
-
-  $this->db = Database::getInstance(SETTINGS_DSN, $qmap);
-
-	$tmp = explode('.', $_REQUEST['alias']);
-	$url = str_replace(' ', '%20', $tmp[0]);
-	$type = $tmp[1];
-	$extra = (count($tmp) > 2) ? $tmp[2] : '';
+	$url = $_REQUEST['alias'];
+	$type = intval($_REQUEST['atype']);
 
 	switch ($type) {
 		case 1:
-			$dbres = $this->db->selectOne($this->db->getQuery('shop_cat_alias', [ 'url' => $url ]));
+			$dbres = $this->db->selectOne($this->db->getQuery('shop_cat_alias', [ 'url' => $url.'.html' ]));
 			break;
 		case 2:
-			$dbres = $this->db->selectOne($this->db->getQuery('shop_item_alias', [ 'url' => $url ]));
+			$dbres = $this->db->selectOne($this->db->getQuery('shop_item_alias', [ 'url' => $url.'.html' ]));
 			break;
-		case 3:
-			$dbres = $this->db->selectOne($this->db->getQuery('content_alias', [ 'url' => $url ]));
 	}
 
 	foreach ($dbres AS $key => $value) {
@@ -90,35 +153,58 @@ public function __construct() {
 
 
 /**
+ * Create sitemap.xml in DOCROOT. Parameter:
+ * 
+ * @if= 1 [ignore if empty|otherwise execute only if non-empty]
+ * @domain= https://www.domain.tld
  *
+ * @param hash $kv
  */
-public function tok_sitemap($action, $param, $arg) {
-  $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n".
-		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
+public function tok_sitemap($kv) {
+	$xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n".
+		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'."\n".
+		"\t".'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'."\n".
+		"\t".'xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">'."\n";
 
-// | MAAS-RX-40-Kreuzzeiger-SWR--PWR-Meter          | MAAS RX-40 Kreuzzeiger SWR & PWR Meter 
+	File::save(DOCROOT.'/sitemap.xml', $xml);
+	$xml = '';
+	$n = 0;
 
-  if ($action == 'sitemap') {
-		if ($param == 'init') {
-			$this->_init(lib_arg2hash($arg));
+	$qlist = [ 'shop_cat_url' => 'shop_cat_alias_all', 'shop_item_url' => 'shop_item_alias_all' ];
+
+	foreach ($qlist as $qkey_url => $qkey_select) {
+		if ($this->db->hasQuery('update_'.$qkey_url)) {
+			$this->db->execute($this->db->getQuery('update_'.$qkey_url));
+			$this->db->execute($this->db->getQuery('fix_'.$qkey_url));
 		}
-		else if ($param == 'meta') {
-			$res = $this->_meta($arg);
+
+		if (!$this->db->hasQuery($qkey_select)) {
+			continue;
+		}
+
+		$this->db->execute($this->db->getQuery($qkey_select), true);
+
+		while (($row = $this->db->getNextRow())) {
+			$xml .= "<url>\n<loc>".$kv['@domain'].'/'.str_replace([ '&' ], [ '&amp;' ], $row['url'])."</loc>\n";
+			$xml .= "\t<lastmod>".$row['lchange']."</lastmod>\n";
+			$xml .= "\t<changefreq>weekly</changefreq>\n";
+			// $xml .= "\t<priority>0.8</priority>\n";
+			$xml .= "</url>\n";
+			$n++;
+
+			if ($n % 100 == 0) {
+				File::append(DOCROOT.'/sitemap.xml', $xml);
+				$xml = '';
+				$n = 0;	
+			}
 		}
 	}
-	else if ($action == 'tok_replace') {
-		$this->_metatag['found'] = true;
 
-		if (substr($param, 0, 5) == 'meta_') {
-			$meta = substr($param, 5);
-			$this->_metatag[$meta] = trim($arg);
-		}
+	$xml .= '</urlset>';
 
-		if ($this->_metatag['update']) {
-			return '{tok_replace:'.$param.'}'.preg_replace("/[\r\n]+/", '', trim($_REQUEST[$meta])).'{:tok_replace}';
-		}
+	if (!empty($xml)) {
+		File::append(DOCROOT.'/sitemap.xml', $xml);
 	}
 }
-
 
 }
