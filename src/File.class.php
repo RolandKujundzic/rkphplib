@@ -261,6 +261,10 @@ public static function loadCSV($file, $delimiter = ',', $quote = '"', $trim = tr
  * Use pseudo header [return_html_body] = [1|true|y] = NOT_EMPTY
  * to return body content only.
  *
+ * You might need to rawurlencode url. If you do not and download failed with
+ * basename($url) != rawurlencode(basename($url)) the function will automatically 
+ * retry with modified url.
+ *
  * @throws
  * @param string $url
  * @param boolean $required 
@@ -302,7 +306,12 @@ public static function fromURL($url, $required = true, $header = []) {
 	$status = intval($info['http_code']);
 
 	if ($status < 200 || $status >= 300) {
-		throw new Exception('failed to retrieve file', "status=$status url=$url");
+		if (basename($url) != rawurlencode(basename($url)) && mb_strpos(basename($url), '%') === false) {
+			return self::fromURL(dirname($url).'/'.rawurlencode(basename($url)), $required, $header);
+		}
+		else { 
+			throw new Exception('failed to retrieve file', "status=$status url=$url");
+		}
 	}
 
 	curl_close($cu);
