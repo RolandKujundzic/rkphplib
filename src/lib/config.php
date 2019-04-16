@@ -35,6 +35,10 @@ require_once(__DIR__.'/log_error.php');
 // Force UTF-8 encoding
 mb_internal_encoding('UTF-8');
 
+// Force de_DE.UTF-8 locale - otherwise escapeshellarg is broken !!!
+if (setlocale(LC_ALL, 'de_DE.UTF-8') === false) {
+  die("setlocale de_DE.UTF-8 failed");
+}
 
 if (!defined('SETTINGS_REQ_DIR')) {
 	/** @define string SETTINGS_REQ_DIR = 'dir' */
