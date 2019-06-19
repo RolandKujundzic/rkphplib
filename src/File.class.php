@@ -1241,12 +1241,13 @@ public static function basename_collect($list, $options = []) {
  * @throws
  * @param string $source
  * @param string $target
- * @param int $mode default = 0 = FILE_DEFAULT_MODE
+ * @param int $mode default = 0 = source file mode
  */
 public static function copy($source, $target, $mode = 0) {
 
 	if (!$mode) {
-		$mode = FILE_DEFAULT_MODE;
+		$stat = FSEntry::stat($source);
+		$mode = $stat['perms']['octal'];
 	}
 
 	if (!copy($source, $target)) {
@@ -1267,13 +1268,9 @@ public static function copy($source, $target, $mode = 0) {
  * @throws
  * @param string $source
  * @param string $target
- * @param int $mode octal, 0 = FILE_DEFAULT_MODE
+ * @param int $mode octal, 0 = use source file mode
  */
 public static function move($source, $target, $mode = 0) {
-
-	if (!$mode) {
-		$mode = FILE_DEFAULT_MODE;
-	}
 
 	$rp_target = realpath($target);
 
