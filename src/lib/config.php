@@ -127,5 +127,5 @@ function error_handler($errNo, $errStr, $errFile, $errLine) {
 	throw new \ErrorException($errStr, 0, $errNo, $errFile, $errLine);
 }
 
-set_error_handler('\rkphplib\lib\error_handler');
+set_error_handler('\rkphplib\lib\error_handler', error_reporting());
 
