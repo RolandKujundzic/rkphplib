@@ -31,8 +31,8 @@ public static $smtp = null;
 /** @var PHPMailer $_mailer */
 private $_mailer = null;
 
-/** @var array $typ_email count doubles */
-private $typ_email = [ 'recipient' => [] ];
+/** @var array $type_email count doubles. Keys: to|cc|bcc|ReplyTo|from|recipient */
+private $type_email = [ 'recipient' => [] ];
 
 
 
@@ -224,6 +224,11 @@ public function useSMTP($smtp) {
   if (isset($smtp['hostname'])) {
     $this->_mailer->Hostname = $smtp['hostname'];
   }
+	else if (!empty($this->type_email['from']) && empty($this->_mail->Hostname) && empty($_SERVER['SERVER_NAME'])) {
+		// don't use localhost.localdomain
+		list ($email_from_name, $email_from_host) = explode('@', $this->type_email['from'], 2);
+		$this->_mail->Hostname = mb_strtolower($email_from_host);
+	}
 
 	if (isset($smtp['secure']) && in_array($smtp['secure'], [ '', 'ssl', 'tls' ])) {
 		$this->_mailer->SMTPSecure = $smtp['secure'];
@@ -276,6 +281,7 @@ public function setFrom($email, $name = '', $sender = '') {
     $email = self::$always_from;
   }
 
+	$this->type_email['from'] = mb_strtolower($email);
 	$this->_mailer->setFrom($email, $name, empty($sender));
 
 	if (!empty($sender)) {
@@ -421,11 +427,11 @@ private function _email_name($email, $name) {
 /**
  * Add address 
  * 
- * @param string $typ to|cc|bcc|ReplyTo
+ * @param string $type to|cc|bcc|ReplyTo
  * @param string $email
  * @param string $name
  */
-private function _add_address($typ, $email, $name) {
+private function _add_address($type, $email, $name) {
 	$email = trim($email);
 	$name = trim($name);
 
@@ -442,11 +448,11 @@ private function _add_address($typ, $email, $name) {
 		$email_name_list = array($email => $name);
 	}
 	else {
-		throw new Exception("Empty email", "name=[$name] typ=[$typ]");
+		throw new Exception("Empty email", "name=[$name] type=[$type]");
   }
 
-	if (!isset($this->typ_email[$typ])) {
-		$this->typ_email[$typ] = [];
+	if (!isset($this->type_email[$type])) {
+		$this->type_email[$type] = [];
 	}
 
 	foreach ($email_name_list as $ex => $nx) {
@@ -454,42 +460,42 @@ private function _add_address($typ, $email, $name) {
 
 		$lc_email = mb_strtolower($email);
 
-		if (isset($this->typ_email[$typ]) && in_array($lc_email, $this->typ_email[$typ])) {
+		if (isset($this->type_email[$type]) && in_array($lc_email, $this->type_email[$type])) {
 			// don't add same email to same type twice
 			continue;
 		}
 
-		if ($typ != 'ReplyTo') {
-			if (in_array($lc_email, $this->typ_email['recipient'])) {
+		if ($type != 'ReplyTo') {
+			if (in_array($lc_email, $this->type_email['recipient'])) {
 				// don't add same email twice
 				continue;
 			}
 			else {
-				array_push($this->typ_email['recipient'], $lc_email);
+				array_push($this->type_email['recipient'], $lc_email);
 			}
 		}
 
-		if ($typ == 'to') {
+		if ($type == 'to') {
 			$ok = $this->_mailer->AddAddress($email, $name);
 		}
-		else if ($typ == 'cc') {
+		else if ($type == 'cc') {
 			$ok = $this->_mailer->AddCC($email, $name);
 		}
-		else if ($typ == 'bcc') {
+		else if ($type == 'bcc') {
 			$ok = $this->_mailer->AddBCC($email, $name);
 		}
-		else if ($typ == 'ReplyTo') {
+		else if ($type == 'ReplyTo') {
 			$ok = $this->_mailer->AddReplyTo($email, $name);
 		}
 		else {
-			throw new Exception("invalid typ [$typ]");
+			throw new Exception("invalid type [$type]");
 		}
 
 		if (!$ok) {
-			throw new Exception("invalid email [$email]", "typ=[$typ] name=[$name]");
+			throw new Exception("invalid email [$email]", "type=[$type] name=[$name]");
 		}
 
-		array_push($this->typ_email[$typ], $lc_email);
+		array_push($this->type_email[$type], $lc_email);
 	}
 }
 
@@ -517,7 +523,7 @@ private function saveMail($dir) {
  */
 public function send($options = []) {
 
-	if (!isset($this->typ_email['to']) || count($this->typ_email['to']) == 0) {
+	if (!isset($this->type_email['to']) || count($this->type_email['to']) == 0) {
 		throw new Exception('call setTo() first');
 	}
 
