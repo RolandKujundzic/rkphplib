@@ -212,6 +212,12 @@ public function useSMTP($smtp) {
     return;
   }
 
+	if (getHostByName(getHostName())== getHostByName($smtp['host'])) {
+		// smtp.host = localhost: use mail method
+		$this->_mail->IsMail();
+		return;
+	}
+
 	$this->_mailer->isSMTP();
   $this->_mailer->Host = $smtp['host'];
 
