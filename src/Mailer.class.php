@@ -357,12 +357,17 @@ public function setReplyTo($email, $name = '') {
 
 
 /**
- * Set Subject.
+ * Set Subject. UTF-8 characters are allowed.
  * 
  * @param string $txt 
  */
 public function setSubject($txt) {
-	$this->_mailer->Subject = $txt;
+	if ($txt != quoted_printable_encode($txt)) {
+		$this->_mailer->Subject = '=?utf-8?B?'.base64_encode($txt).'?=';
+	}
+	else {
+		$this->_mailer->Subject = $txt;
+	}
 }
 
 
