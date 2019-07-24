@@ -3,7 +3,7 @@
 namespace rkphplib\lib;
 
 /**
- * Configuration file. Include lib/log_error.php and lib/log_debug.php.
+ * Configuration file. Include lib/log_debug.php.
  * Change PrivateTmp=true into false in 
  *  
  * /etc/systemd/system/multi-user.target.wants/apache2.service to use real /tmp directory - otherwise
@@ -27,7 +27,6 @@ namespace rkphplib\lib;
  */
 
 require_once(__DIR__.'/log_debug.php');
-require_once(__DIR__.'/log_error.php');
 
 // E_ERROR | E_WARNING | E_PARSE | E_NOTICE or E_ALL or E_ALL ^ E_NOTICE
 // error_reporting(E_ALL);

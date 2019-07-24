@@ -10,7 +10,6 @@ require_once(__DIR__.'/../Dir.class.php');
 require_once(__DIR__.'/../File.class.php');
 require_once(__DIR__.'/../JSON.class.php');
 require_once(__DIR__.'/../lib/split_str.php');
-require_once(__DIR__.'/../lib/log_error.php');
 require_once(__DIR__.'/../lib/conf2kv.php');
 
 use \rkphplib\tok\TPicture;
@@ -442,12 +441,12 @@ public function tok_upload_scan($name = 'upload') {
 
 	}
 	catch (\Exception $e) {
-		\rkphplib\lib\log_error($e);
-
 		if (!empty($p['ajax_output'])) {
-			http_response_code(400);
-			print '{ "error": 1, "error_message": "Exception in TUpload.tok_upload_init('.$name.')", "exception": "'.$e->getMessage().'" }';
-			exit(0);
+			Exception::httpError(400, '@ajax { "error": 1, "error_message": "Exception in TUpload.tok_upload_init('.
+				$name.')", "exception": "'.$e->getMessage().'" }');
+		}
+		else {
+			Exception::logError($e);
 		}
 	}
 
