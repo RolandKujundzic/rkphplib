@@ -13,6 +13,24 @@ if (!defined('TAG_SUFFIX')) {
   define('TAG_SUFFIX', '}');
 }
 
+if (!defined('SETTINGS_LOG_ERROR')) {
+	/** @define string SETTINGS_LOG_ERROR = '[/tmp|DOCROOT/data/log]/php.fatal' */
+	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/log')) {
+		define('SETTINGS_LOG_ERROR', DOCROOT.'/data/log/php.fatal');
+	}
+	else {
+		define('SETTINGS_LOG_ERROR', '/tmp/php.fatal');
+	}
+}
+
+if (!defined('SETTINGS_TIMEZONE')) {
+  /** @define string SETTINGS_TIMEZONE = Auto-Detect */
+  date_default_timezone_set(@date_default_timezone_get());
+  define('SETTINGS_TIMEZONE', date_default_timezone_get());
+}
+else {
+  date_default_timezone_set(SETTINGS_TIMEZONE);
+}
 
 
 /**
@@ -69,15 +87,6 @@ public function __construct($message, $internal_message = '') {
 private static function logTrace($stack) {
 	require_once(__DIR__.'/File.class.php');
 
-	if (!defined('SETTINGS_TIMEZONE')) {
-		/** @define string SETTINGS_TIMEZONE = Auto-Detect */
-		date_default_timezone_set(@date_default_timezone_get());
-		define('SETTINGS_TIMEZONE', date_default_timezone_get());
-	}
-	else {
-		date_default_timezone_set(SETTINGS_TIMEZONE);
-	}
-
 	$last = isset($stack[1]) ? $stack[1] : $stack[0];
 	list($msec, $ts) = explode(" ", microtime());
 	$last['TIME'] = date('YmdHis', $ts).'.'.(1000 * round((float)$msec, 3));
@@ -97,5 +106,115 @@ private static function logTrace($stack) {
 }
 
 
+/**
+ * Log error message (add timestamp and trace information).
+ *
+ * Disable logging with SETTINGS_LOG_ERROR = 0,
+ * Enable logging to default with SETTINGS_LOG_ERROR = 1 (default).
+ * Enable logging to file with SETTINGS_LOG_ERROR = 'path/error.log'.
+ * Overwrite default define('SETTINGS_LOG_ERROR', '/tmp/php.fatal')
+ * before inclusion of this file.
+ *
+ * @param string $msg
+ */
+public static function logError($msg) {
+
+	if (!defined('SETTINGS_LOG_ERROR') || empty(SETTINGS_LOG_ERROR)) {
+		return;
+	}
+
+	list($msec, $ts) = explode(" ", microtime());
+	$log = '['.date('YmdHis', $ts).'.'.(1000 * round((float)$msec, 3));
+
+	if (!empty($_SERVER['REMOTE_ADDR'])) { 
+		$log .= $_SERVER['REMOTE_ADDR'];
+	}
+
+	$e = null;
+
+	if (method_exists($msg, 'getMessage')) {
+		$e = $msg;
+		$msg = "\n\nABORT: ".$e->getMessage();
+		$trace = $e->getFile()." on line ".$e->getLine()."\n".$e->getTraceAsString();
+		$internal = property_exists($e, 'internal_message') ? "INFO: ".$e->internal_message : '';
+	}
+
+	if (isset($_SERVER['SCRIPT_FILENAME']) && isset($_SERVER['QUERY_STRING'])) {
+		$log .= '] '.$_SERVER['SCRIPT_FILENAME'].$_SERVER['QUERY_STRING']."\n$msg";
+	}
+	else {
+		$log .= "] $msg";
+	}
+
+	if (is_null($e)) {
+		$trace = debug_backtrace();
+		unset($trace[0]); // Remove call to this function from stack trace
+		$i = 1;
+
+		foreach($trace as $t) {
+			if (!empty($t['file'])) {
+				$log .= "\n#$i ".$t['file'] ."(" .$t['line']."): "; 
+			}
+			else {
+				$log .= '???'.print_r($t, true).'???';
+			}
+	
+			if (!empty($t['class'])) {
+				$log .= $t['class'] . "->"; 
+			}
+
+			$log .= $t['function']."()";
+			$i++;
+		}
+	}
+	else {
+		$log .= "\n$internal\n$trace";
+	}
+
+	if (mb_strlen(SETTINGS_LOG_ERROR) > 1) {
+		error_log($log."\n", 3, SETTINGS_LOG_ERROR);
+	}
+	else {
+		error_log($log);
+	}
 }
 
+
+/**
+ * Send "HTTP/1.0 $code $error" header and exit. If message starts with @ajax
+ * log and print error message with prefix "ERROR:" (remove @ajax).
+ *
+ * @exit
+ * @param int $code (=400|401|404|444)
+ * @param string $msg (default = httpError $code)
+ */
+public static function httpError($code = 400, $msg = '') {
+	$error = [ '400' => 'Bad Request', '401' => 'Unauthorized', '404' => 'Not Found', '444' => 'No Response' ];
+
+	if (!isset($error[$code])) {
+		$code = 400;
+	}
+
+	if (php_sapi_name() == 'cli') {
+		print "\nABORT: HTTP/1.1 ".$code.' '.$error[$code]."\n\n";
+	}
+	else {
+		header('HTTP/1.1 '.$code.' '.$error[$code]);
+	}
+	
+	if (empty($msg)) {
+		$msg = 'httpError '.$code
+	}
+
+	if (mb_substr($msg, 0, 6) == '@ajax ') {
+		$msg = mb_substr($msg, 6);
+		print 'ERROR: '.$msg;
+	}
+
+	self::logError($msg);
+
+	exit(1);
+}
+
+
+}

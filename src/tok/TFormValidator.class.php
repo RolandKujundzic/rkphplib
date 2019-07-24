@@ -689,10 +689,7 @@ private function ajaxOutput($ajax) {
    	exit(0);
   }
   catch (\Exception $e) {
-    \rkphplib\lib\log_error($e);
-		http_response_code(400);
-		print "ERROR: catch Exception in TFormValidator.ajaxOutput(): ".$e->getMessage();
-    exit(0);
+		Exception::httpError(400, "@ajax catch Exception in TFormValidator.ajaxOutput(): ".$e->getMessage());
   }
 }
 

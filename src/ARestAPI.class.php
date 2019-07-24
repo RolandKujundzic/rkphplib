@@ -15,7 +15,6 @@ require_once(__DIR__.'/File.class.php');
 require_once(__DIR__.'/Dir.class.php');
 require_once(__DIR__.'/ValueCheck.class.php');
 require_once(__DIR__.'/Database.class.php');
-require_once(__DIR__.'/lib/log_error.php');
 require_once(__DIR__.'/lib/translate.php');
 
 
@@ -807,7 +806,7 @@ protected function prepareApiCall() {
 
 
 /**
- * Overwrite for api logging. This function calls lib\log_error if $code >= 400.
+ * Overwrite for api logging. Call Exception::httpError($code) if $code >= 400.
  *
  * @param int $code
  * @param map $p
@@ -819,7 +818,7 @@ protected function logResult($code, $p, $out) {
 
 	if ($code >= 400) {
 		$info = empty($p['error_info']) ? '' : "\n".$p['error_info'];
-		\rkphplib\lib\log_error("API ERROR ".$p['error_code']."/$code: ".$p['error'].$info);
+		Exception::httpError($code, "API ERROR ".$p['error_code']."/$code: ".$p['error'].$info);
 	}
 }
 
