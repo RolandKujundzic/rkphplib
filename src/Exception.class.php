@@ -203,7 +203,7 @@ public static function httpError($code = 400, $msg = '') {
 	}
 	
 	if (empty($msg)) {
-		$msg = 'httpError '.$code
+		$msg = 'httpError '.$code;
 	}
 
 	if (mb_substr($msg, 0, 6) == '@ajax ') {
