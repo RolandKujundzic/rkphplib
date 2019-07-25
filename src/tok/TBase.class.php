@@ -907,25 +907,8 @@ public function tok_view($name, $p) {
  * @return string
  */
 public function tok_include($param, $file) {
-	
-	if (substr($param, -1) == '?') {
-		$ignore_missing = true;
-		$param = substr($param, 0, -1);
-	}
-	else {
-		$ignore_missing = $param === 'optional';
-	}
-
-	if (!File::exists($file)) {
-		if ($ignore_missing) {
-			return '';
-		}
-
-		throw new Exception('include file missing', $file);
-	}
-
 	$this->tok_var('=_include.file', $file);
-	return File::load($file);
+	return $this->tok_load($param, $file);
 }
 
 
@@ -968,7 +951,8 @@ public function tok_include_if($param, $a) {
 
 
 /**
- * Include raw file content.
+ * Include raw file content. If "$param=missing" or last character of $param is "?" ignore missing.
+ * Preprocess if param is static.
  * 
  * @tok {load:}a.html{:load} = return raw content of a.html (throw error if file does not exist)
  * @tok {load:optional}a.html{:load} = do not throw error if file does not exist (short version is "?" instead of optional)
@@ -980,12 +964,20 @@ public function tok_include_if($param, $a) {
  */
 public function tok_load($param, $file) {
 
+	if (substr($param, -1) == '?') {
+		$ignore_missing = true;
+		$param = substr($param, 0, -1);
+	}
+	else {
+		$ignore_missing = $param === 'optional';
+	}
+
 	if (!File::exists($file)) {
-		if ($param === 'optional' || $param === '?') {
+		if ($ignore_missing) {
 			return '';
 		}
 
-		throw new Exception('load file missing', $file);
+		throw new Exception('file missing', $file);
 	}
 
 	return File::load($file);
