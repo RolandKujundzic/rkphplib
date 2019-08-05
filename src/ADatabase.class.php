@@ -496,7 +496,7 @@ public function hasQueries(array $query_map) : bool {
 		}
 	}
 	else {
-		foreach ($query_map as $i => $qkey) {
+		foreach ($query_map as $qkey) {
 			if (!$this->hasQuery($qkey)) {
 				return false;
 			}
@@ -886,7 +886,7 @@ public function loadDump(string $file, int $flags) : void {
 			$left = array_pop($lines);
 		} 
 
-		foreach ($lines as $k => $line){
+		foreach ($lines as $line){
 			$line .= "\n";
 
 			if (substr($line, 0, 2) == '--' || $line == '') {
@@ -898,7 +898,7 @@ public function loadDump(string $file, int $flags) : void {
 			if (substr(trim($line), -1) == ';') { // every query ends with ";"
 				$this->execute($query);
 				$query = '';
-      }
+			}
 		}
 
 		// we might have super long insert line: INSERT INTO ... VALUES (...),(...), ... (...);
