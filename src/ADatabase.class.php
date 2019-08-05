@@ -78,8 +78,6 @@ protected $_qinfo = [];
 
 /**
  * Return md5 hash based on dsn and $query_map (see setQueryMap).
- * 
- * @throws
  */
 public static function computeId(string $dsn, array $query_map = null) : string {
 	
@@ -109,12 +107,8 @@ public static function computeId(string $dsn, array $query_map = null) : string 
 
 /**
  * Compute md5 of map. Ignore columns in exclude list.
- * 
- * @param map $p
- * @param vector $exclude
- * @return string
  */
-public static function getMapId($p, $exclude = []) {
+public static function getMapId(array $p, array $exclude = []) : string {
 	$id = '';
 
 	foreach ($p as $key => $value) {
@@ -140,7 +134,7 @@ abstract public function getId() : string;
  * mysqli://user:password@tcp+localhost/dbname
  * sqlite://[password]@path/to/file.sqlite
  */
-public function setDSN(string $dsn = '') {
+public function setDSN(string $dsn = '') : void {
 
 	if (empty($dsn) && defined('SETTINGS_DSN')) {
 		$dsn = SETTINGS_DSN;
@@ -160,11 +154,8 @@ public function setDSN(string $dsn = '') {
 
 /**
  * Return database connect string.
- *
- * @throws
- * @return string 
  */
-public function getDSN() {
+public function getDSN() : string {
 
 	if (empty($this->_dsn)) {
 		throw new Exception('call setDSN() first');
@@ -176,10 +167,8 @@ public function getDSN() {
 
 /**
  * Return query map.
- *
- * @return array[string]string
  */
-public function getQueryMap() {
+public function getQueryMap() : array {
 	return $this->_query;
 }
 
@@ -190,12 +179,8 @@ public function getQueryMap() {
  * Example:
  * type://login:password@protocol+host:port/name 
  * type://[password]@./file or type://@/path/to/file 
- *
- * @throws 
- * @param string $dsn
- * @return array[string]string
  */
-public static function splitDSN($dsn) {
+public static function splitDSN(string $dsn) : array {
 
 	$file_db = array('sqlite');
 
@@ -256,12 +241,8 @@ public static function splitDSN($dsn) {
  * - auto_increment: id (name of auto_increment column)
  * - table: name of table
  * - master_query: INSERT INTO table (id, last_modified, login, password) values (0, null, CRC32(RAND()), CRC32(RAND())) 
- *
- * @throws 
- * @param string $qkey
- * @param array[string]string $info
  */
-public function setQueryInfo($qkey, $info) {
+public function setQueryInfo(string $qkey, array $info) : void {
 	if (empty($qkey)) {
 		throw new Exception('empty query key');
 	}
@@ -284,14 +265,8 @@ public function setQueryInfo($qkey, $info) {
 
 /**
  * Return query info map (or value if $ikey is set).
- *
- * @param string $qkey 
- * @param string $ikey
- * @see setQueryInfo()
- * @throws 
- * @return mixed 
  */
-public function getQueryInfo($qkey, $ikey = '') {
+public function getQueryInfo(string $qkey, string $ikey = '') {
 	if (empty($qkey)) {
 		throw new Exception('empty query key');
 	}
@@ -322,13 +297,8 @@ public function getQueryInfo($qkey, $ikey = '') {
  * If tag is {:=x} apply escape($value).
  * If tag is {:=^x} apply escape_name($value).
  * If tag is {:=_x} keep $value.
- *
- * @throws
- * @param string $qkey
- * @param string $query
- * @param array[string]string $info see setQueryInfo()
  */
-public function setQuery($qkey, $query, $info = []) {
+public function setQuery(string $qkey, string $query, array $info = []) : void {
 
 	if (empty($qkey)) {
 		throw new Exception('empty query key');
@@ -395,10 +365,8 @@ public function setQuery($qkey, $query, $info = []) {
 /**
  * If $replace[$qkey] is not empty return getQuery('_custom_'.$qkey, $replace)
  * otherwise return getQuery($qkey, $replace).
- *
- * @see getQuery
  */
-public function getCustomQuery($qkey, $replace) {
+public function getCustomQuery(string $qkey, array $replace) {
 	if (!empty($replace[$qkey])) {
 		$this->setQuery('_custom_'.$qkey, $replace[$qkey]);
 		return $this->getQuery('_custom_'.$qkey, $replace);
@@ -410,15 +378,8 @@ public function getCustomQuery($qkey, $replace) {
 
 /**
  * Return (prepared) query defined via setQuery($qkey, '...').
- *
- * If query is prepared return parameter array (last two entries are query and replace hash). 
- *
- * @throws rkphlib\Exception if error
- * @param string $qkey
- * @param array[string]string $replace
- * @return string|array
  */
-public function getQuery($qkey, $replace = null) {
+public function getQuery(string $qkey, array $replace = null) {
 
 	if (!isset($this->_query[$qkey])) {
 		throw new Exception('call setQuery() first', "qkey=[$qkey]");
@@ -494,12 +455,8 @@ public function getQuery($qkey, $replace = null) {
 
 /**
  * True if query key exists. If query is not empty compare too.
- * 
- * @param string $qkey
- * @param string $query
- * @return boolean
  */
-public function hasQuery($qkey, $query = '') {
+public function hasQuery(string $qkey, string $query = '') : bool {
 
 	if (!isset($this->_query[$qkey])) {
 		return false;
@@ -522,11 +479,8 @@ public function hasQuery($qkey, $query = '') {
 /**
  * True if every query key from query_map exists and if query_map is map (and not vector)
  * all queries must be same.
- * 
- * @param array $query_map
- * @return boolean
  */
-public function hasQueries($query_map) {
+public function hasQueries(array $query_map) : bool {
 	// \rkphplib\lib\log_debug("ADatabase.hasQueries> ".print_r($query_map, true));
 	if (!is_array($query_map)) {
 		return false;
@@ -555,11 +509,8 @@ public function hasQueries($query_map) {
 
 /**
  * Apply setQuery($key, value) for every key value pair in $query_map.
- *
- * @see ADatabase::setQuery()
- * @param array[string]string $query_map
  */
-public function setQueryMap($query_map) {
+public function setQueryMap(array $query_map) : void {
 	foreach ($query_map as $qkey => $query) {
 		$this->setQuery($qkey, $query);
 	}
@@ -570,19 +521,12 @@ public function setQueryMap($query_map) {
  * Apply setQuery() for all hash values where key has [query.] prefix and value is not empty (qkey = key without prefix).
  * Change/remove query prefix with conf_hash[@query_prefix].
  * Use query.escape_name@table=test name to replace {:=@table} with `test name`.
- *
- * @see setQuery(), setQueryMap()
- * @throws
- * @param array[string]string $conf_hash
- * @param array $require_keys
  */
-public function setQueryHash($conf_hash, $require_keys = '') {
+public function setQueryHash(array $conf_hash, array $require_keys = []) : void {
 
-	if (is_array($require_keys)) {
-		foreach ($require_keys as $qkey) {
-			if (empty($conf_hash['query.'.$qkey]) && empty($this->_query[$qkey])) {
-				throw new Exception("no such key [query.$qkey]");
-			}
+	foreach ($require_keys as $qkey) {
+		if (empty($conf_hash['query.'.$qkey]) && empty($this->_query[$qkey])) {
+			throw new Exception("no such key [query.$qkey]");
 		}
 	}
 
@@ -618,15 +562,9 @@ public function setQueryHash($conf_hash, $require_keys = '') {
 
 /**
  * Escape table or column name with `col name`.
- *
  * If abort is true abort if name doesn't match [a-zA-Z0-9_\.]+.
- *
- * @throws rkphplib\Exception if error
- * @param string $name
- * @param bool $abort = false
- * @return string
  */
-public static function escape_name($name, $abort = false) {
+public static function escape_name(string $name, bool $abort = false) : string {
 	$res = $name;
 
 	if (!preg_match("/^[a-zA-Z0-9_\.]+$/", $name)) {
@@ -648,14 +586,14 @@ public static function escape_name($name, $abort = false) {
 /**
  * Write lock tables.
  */
-abstract public function lock(array $tables);
+abstract public function lock(array $tables) : void;
 
 
 /**
  * Unlock locked tables.
  *
  */
-abstract public function unlock();
+abstract public function unlock() : void;
 
 
 /**
@@ -684,36 +622,26 @@ abstract public function hasResultSet() : bool;
 
 /**
  * Return database name vector.
- * 
- * @param boolean $reload_cache
- * @return array
  */
-abstract public function getDatabaseList($reload_cache = false);
+abstract public function getDatabaseList(bool $reload_cache = false) : array;
 
 
 /**
  * Return table name vector.
- * 
- * @param boolean $reload_cache
- * @return array
  */
-abstract public function getTableList($reload_cache = false);
+abstract public function getTableList(bool $reload_cache = false) : array;
 
 
 /**
- * Return last error message.
- *
- * @return array [custom_error, native_error, native_error_code ]
+ * Return last error message. Result is [custom_error, native_error, native_error_code ].
  */
-abstract public function getError();
+abstract public function getError() : array;
 
 
 /**
  * Return number of affected rows of last execute query.
- * 
- * @return int
  */
-abstract public function getAffectedRows();
+abstract public function getAffectedRows() : int;
 
 
 /**
@@ -723,13 +651,8 @@ abstract public function getAffectedRows();
  *  
  * If table has dot assume table.name_id as sequence. In this case use_table = where condition.
  * If use_table is @table_seq.owner assume table has owner and start end columns.
- *
- * @throws
- * @param string $table
- * @param string $use_table = '' = $table.'_seq'
- * @return int
  */
-public function nextId($table, $use_table = '') {
+public function nextId(string $table, string $use_table = '') : int {
 
 	if (empty($table)) {
 		throw new Exception('empty table name');
@@ -813,13 +736,8 @@ public function nextId($table, $use_table = '') {
 
 /**
  * Return unique id for string rid. Auto-create and use table.
- * 
- * @throws
- * @param string $rid
- * @param string $use_table = rid_alias
- * @return int
  */
-public function nextIdAlias($rid, $use_table = 'rid_alias') {
+public function nextIdAlias(string $rid, string $use_table = 'rid_alias') : int {
 	
 	if (empty($rid)) {
 		throw new Exception('empty rid');
@@ -868,19 +786,15 @@ public function nextIdAlias($rid, $use_table = 'rid_alias') {
  * @param string $name
  * @return boolean
  */
-public function hasDatabase($name) {
+public function hasDatabase(string $name) : bool {
 	return in_array($name, $this->getDatabaseList());
 }
 
 
 /**
  * True if table exists.
- * 
- * @throws if empty table name
- * @param string $name
- * @return boolean
  */
-public function hasTable($name) {
+public function hasTable(string $name) : bool {
 	if (empty($name)) {
 		throw new Exception('empty table name');
 	}
@@ -892,27 +806,24 @@ public function hasTable($name) {
 /**
  * Return auto_increment column value if last 
  * query was insert and table has auto_increment column.
- *
- * @throws
- * @return int 
  */
-abstract public function getInsertId();
+abstract public function getInsertId() : int;
 
 
 /**
  * Create database and account (drop if exists).
  */
-abstract public function createDatabase(string $dsn = '', string $opt = 'utf8');
+abstract public function createDatabase(string $dsn = '', string $opt = 'utf8') : void;
 
 
 /**
  * Drop database and account (if exists).
  */
-abstract public function dropDatabase(string $dsn = '');
+abstract public function dropDatabase(string $dsn = '') : void;
 
 
 /**
- * Export database dump into file. Parameter $opt parameter:
+ * Export database dump into file. Parameter $opt keys:
  *
  * - save_dir: getcwd() if empty
  * - tables: table1, table2, ...
@@ -920,7 +831,7 @@ abstract public function dropDatabase(string $dsn = '');
  * - delete_entries: 1|0
  * - table.*: optional - see saveTableDump
  */
-abstract public function saveDump(array $opt);
+abstract public function saveDump(array $opt) : void;
 
 
 /**
@@ -937,19 +848,15 @@ abstract public function saveDump(array $opt);
  * @throws
  * @param hash $opt
  */
-abstract public function saveTableDump($opt);
+abstract public function saveTableDump(array $opt) : void;
 
  
 /**
- * Import database dump. Basename $file (without .sql suffix) must be tablename. Flags are 
+ * Import database dump. Basename $file (without .sql suffix) must be tablename. Flags are 2^n: 
  *
  * self::LOAD_DUMP_USE_SHELL | self::LOAD_DUMP_ADD_DROP_TABLE | self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS
- *
- * @throws
- * @param string $file
- * @param int $flags
  */
-public function loadDump($file, $flags) {
+public function loadDump(string $file, int $flags) : void {
 
 	if ($flags & self::LOAD_DUMP_USE_SHELL) {
 		throw new Exception('implement loadDump() for LOAD_DUMP_USE_SHELL');
@@ -1023,13 +930,8 @@ public function loadDump($file, $flags) {
  *			"colA:colB" => 4" = "UNIQUE ('colA', 'colB')"
  *			"colA:colB:colC" => 208" = "FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE"
  *			EXTRA example: NOT_NULL|INDEX, NOT_NULL|UNIQUE, INDEX, ...
- *
- * @throws
- * @see parseCreateTableConf
- * @param array[string]string $conf
- * @return string
  */
-public static function createTableQuery($conf) {
+public static function createTableQuery(array $conf) : string {
 
 	$tname = $conf['@table'];
 
@@ -1145,13 +1047,9 @@ public static function createTableQuery($conf) {
 
 /**
  * Return true if table was created. Create only if table does not exists or drop_existing = true.
- *
- * @see createTableQuery
- * @param array[string]string $conf
- * @param bool $drop_existing
- * @return 0|1|2 (0=error, 1=create table ok, 2=multi query ok = create table + insert ok)
+ * Return value 0=error, 1=create table ok, 2=multi query ok = create table + insert ok.
  */
-public function createTable($conf, $drop_existing = false) {
+public function createTable(array $conf, bool $drop_existing = false) : int {
 
 	if (empty($conf['@table'])) {
     throw new Exception('missing tablename', 'empty @table');
@@ -1192,13 +1090,8 @@ public function createTable($conf, $drop_existing = false) {
  * "@status": 1=[status, tinyint:::9]
  * "@timestamp": 1=[since, datetime::NOW():1], 2=[lchange, datetime::NOW():1], 
  *   3=[since, datetime::NOW():1, lchange, datetime::NOW():1]
- *
- * @throws
- * @see createTable
- * @param array[string]string $conf
- * @return array[string]string
  */
-public static function parseCreateTableConf($conf) {
+public static function parseCreateTableConf(array $conf) : array {
 
 	if (empty($conf['@table'])) {
     throw new Exception('missing tablename', 'empty @table');
@@ -1265,71 +1158,50 @@ public static function parseCreateTableConf($conf) {
 
 /**
  * Drop table (if exists).
- *
- * @param string $table
  */
-abstract public function dropTable($table);
+abstract public function dropTable(string $table) : void;
 
 
 /**
  * Apply database specific escape function (fallback is self::escape).
- *
- * @see self::escape
- * @param string $value
- * @return string
  */
-abstract public function esc($value);
+abstract public function esc(string $value) : string;
 
 
 /**
- * Execute query (string or prepared statement).
- *
- * @param string|array $query
- * @param bool $use_result
+ * Execute query (string or prepared statement). Parameter $query is string or array.
  */
-abstract public function execute($query, $use_result = false);
+abstract public function execute(string $query, bool $use_result = false) : void;
 
 
 /**
  * Adjust result pointer to first row for getNextRow().
- *
- * @param int $offset 0 ... #rows-1
  */
-abstract public function setFirstRow($offset);
+abstract public function setFirstRow(int $offset) : void;
+
 
 /**
  * Return next row (or NULL).
- * 
- * @throws if no resultset
- * @return array[string]string
  */
-abstract public function getNextRow();
+abstract public function getNextRow() : array;
 
 
 /**
  * Free result of execute(QUERY, true).
- *
  */
-abstract public function freeResult();
+abstract public function freeResult() : void;
 
 
 /**
  * Return number of rows in resultset.
- * 
- * @throws if no resultset
- * @return int
  */
-abstract public function getRowNumber();
+abstract public function getRowNumber() : int;
 
 
 /**
  * Return column values.
- *
- * @param string|array $query
- * @param string $colname
- * @return array
  */
-abstract public function selectColumn($query, $colname = 'col');
+abstract public function selectColumn($query, string $colname = 'col') : array;
 
 
 /**
@@ -1337,23 +1209,16 @@ abstract public function selectColumn($query, $colname = 'col');
  *
  * Result hash keys are column names, values are arrays with column info
  * (e.g. mysql: { type: 'double', is_null: true|false, key: '', default: '', extra: '' }).
- *
- * @param string $table
- * @return array[string]string
  */
-abstract public function getTableDesc($table);
+abstract public function getTableDesc(string $table) : array;
 
 
 /**
  * Return table (table, colum) with foreign key references to $table.$column.
  * Result is { table1: [ col1, ... ], ... }. If column = '*' return
  * { table.col: ftable.fcol, ... }.
- *
- * @param string $table
- * @param string $column
- * @return array 
  */
-abstract public function getReferences($table, $column = 'id');
+abstract public function getReferences(string $table, string $column = 'id') : array;
 
 
 /**
@@ -1361,24 +1226,15 @@ abstract public function getReferences($table, $column = 'id');
  * "id AS name, val AS value" in setQuery to make key_col and value_col match.
  * Use $value_col = '*' to get ($id, $row[$id]) hash (if $ignore_double = true 
  * then doublette is ($id, [ $row[N1], .... ])).
- *
- * @param string|array $query
- * @param string $key_col
- * @param string $value_col
- * @param bool $ignore_double
- * @return array[string]string
- */
-abstract public function selectHash($query, $key_col = 'name', $value_col = 'value', $ignore_double = false);
+*/
+abstract public function selectHash(string $query, string $key_col = 'name', 
+	string $value_col = 'value', bool $ignore_double = false) : array;
 
 
 /**
  * Return query result row $rnum.
- *
- * @param string|array $query
- * @param int $rnum (default = 0)
- * @return array[string]string
  */
-abstract public function selectRow($query, $rnum = 0);
+abstract public function selectRow($query, int $rnum = 0) : array;
 
 
 /**
@@ -1386,22 +1242,14 @@ abstract public function selectRow($query, $rnum = 0);
  * throw "no result" error message. 
  *
  * If $res_count > 0 throw error if column count doesn't match.
- *
- * @param string|array $query
- * @param int $res_count (default = 0)
- * @return array
  */
-abstract public function select($query, $res_count = 0);
+abstract public function select($query, int $res_count = 0) : array;
 
 
 /**
  * Return table data checksum.
- *
- * @param string $table
- * @param bool $native
- * @return string
  */
-abstract public function getTableChecksum($table, $native = false);
+abstract public function getTableChecksum(string $table, bool $native = false) : string;
 
 
 /**
@@ -1410,20 +1258,14 @@ abstract public function getTableChecksum($table, $native = false);
  *  - rows: number of rows
  *  - auto_increment: name of auto increment column
  *  - create_time: sql-timestamp
- * 
- * @param string $table 
- * @throws
- * @return array[string]string
  */
-abstract public function getTableStatus($table);
+abstract public function getTableStatus(string $table) : array;
 
 
 /**
  * Set offset for following select* function.
- *
- * @param int $offset
  */
-public function seek($offset) {
+public function seek(int $offset) : void {
 	$this->_seek = $offset;
 }
 
@@ -1432,13 +1274,8 @@ public function seek($offset) {
  * Return query hash (single row). Throw exception if result has more than one row. 
  * Use column alias "split_cs_list" to split comma separated value (if query was 
  * "SELECT GROUP_CONCAT(name) AS split_cs_list ...").
- * 
- * @throws
- * @param string|array $query
- * @param string $col
- * @return array|string
  */
-public function selectOne($query, $col = '') {
+public function selectOne($query, string $col = '') : array {
 	$dbres = $this->select($query, 1);
 
 	if (empty($col)) {
@@ -1466,12 +1303,8 @@ public function selectOne($query, $col = '') {
  * Does not work in prepared statement mode (this.use_prepared = true).
  * Return vector of result hashes. If vector has only one result hash
  * return result hash.
- *
- * @param string $query
- * @throws
- * @return array
  */
-abstract public function multiQuery($query);
+abstract public function multiQuery(string $query) : array;
 
 
 /**
@@ -1487,14 +1320,8 @@ abstract public function multiQuery($query);
  *  - name:hash = $this->selectHash($this->getQuery($name, $replace), 
  *      $opt[0], $opt[1], false) ($opt == '' == [name, value ])
  *  - name:row = $this->selectRow($this->getQuery($name, $replace), intval($opt)) 
- *
- * @throws
- * @param string $name query key
- * @param array[string]string $replace
- * @param int|string $opt
- * @return mixed
  */
-public function query($name, $replace = null, $opt = '') {
+public function query(string $name, array $replace = null, $opt = '') {
 
 	if (($pos = mb_strpos($name, ':')) > 0) {
 		// selectDo ...
@@ -1550,14 +1377,9 @@ public function query($name, $replace = null, $opt = '') {
 
 
 /**
- * Escape ' with ''. 
- * 
- * Append \ to trailing uneven number of \. 
- * 
- * @param string $txt
- * @return string
+ * Escape ' with ''. Append \ to trailing uneven number of \. 
  */
-public static function escape($txt) {
+public static function escape(string $txt) : string {
 
 	if (mb_substr($txt, -1) === '\\') {
 		// trailing [\'] is a problem because \ is mysql escape char
@@ -1583,12 +1405,8 @@ public static function escape($txt) {
 /**
  * Return comma separted list of columns. Example:
  * self::columnList(['a', 'b', 'c'], 'l') = 'l.a AS l_a, l.b AS l_b, l.c AS l_c'. 
- * 
- * @param array $cols
- * @param string $prefix
- * @return string
  */
-public static function columnList($cols, $prefix = '') {
+public static function columnList(array $cols, string $prefix = '') : string {
 	$cnames = [];
 
 	if (!is_array($cols)) {
@@ -1613,13 +1431,8 @@ public static function columnList($cols, $prefix = '') {
 /**
  * Return insert|update query string. If type=update key '@where' = 'WHERE ...' is required in $kv.
  * Use kv[@add_default] add default columns.
- *
- * @param string $table
- * @param string $type insert|update
- * @param array[string]string $kv
- * @return ""|string
  */
-public function buildQuery($table, $type, $kv = []) {
+public function buildQuery(string $table, string $type, array $kv = []) : string {
 
 	$p = $this->getTableDesc($table);
 	$key_list = [];
@@ -1705,11 +1518,8 @@ public function buildQuery($table, $type, $kv = []) {
  * @example
  * // create cms_conf.sql, ... in setup/sql/cms/insert
  * $db->backup([ 'prefix' => 'cms_', 'directory' => 'setup/sql/cms/insert', 'backup' => 'cms.cms_conf' ]);
- *
- * @throws
- * @param hash-ref &$options 
  */
-public function backup(&$options) {
+public function backup(array &$options) : void {
 	$this->addAppTables($options);
 
 	if (empty($options['backup'])) {
@@ -1739,11 +1549,8 @@ public function backup(&$options) {
 
 /**
  * Backup table content to file sql_dump.
- * 
- * @param string $table
- * @param string $sql_dump
  */
-public function backupTable($table, $sql_dump) {
+public function backupTable(string $table, string $sql_dump) : void {
 
 	$fh = File::open($sql_dump, 'wb');
 	$tname = self::escape_name($table);
@@ -1784,12 +1591,8 @@ public function backupTable($table, $sql_dump) {
 /**
  * Add application tables to $options.
  * Change app_tables into map with table => [ size => null, last_modified => null ].
- *
- * @see this.backup 
- * @throws if table directory does not exist
- * @param map-ref &$options
  */
-private function addAppTables(&$options) {
+private function addAppTables(array &$options) : void {
 
 	if (empty($options['directory'])) {
 		throw new Exception('missing directory parameter');
