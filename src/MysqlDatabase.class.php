@@ -24,9 +24,53 @@ private $_dbres = null;
 
 
 /**
+ * Load mysql host, user and password from $path (my.cnf) and export as DB_HOST|USER|PASS.
+ */
+public function loadMyCnf(string $path) {
+  $mysql_conf = File::load($path);
+
+	$get_value = function ($key, $define_key) use ($mysql_conf, $path) {
+		if (preg_match('/\s+'.$key.'\s*=(.+?)\s/s', $mysql_conf, $match)) {
+			define($define_key, trim($match[1]));
+		}
+		else {
+			throw new Exception("no $key= in $path");
+		}
+	};
+
+	$get_value('host', 'DB_HOST');
+	$get_value('password', 'DB_PASS');
+	$get_value('user', 'DB_USER');
+}
+
+
+/**
+ * Load mysql configuration file (my.cnf) from $dsn if dsn starts with "/" or "mysqli:///".
+ * If dsn is empty try SETTINGS_DSN.
+ */
+public function setDSN(string $dsn = '') {
+
+  if (empty($dsn) && defined('SETTINGS_DSN')) {
+		$dsn = SETTINGS_DSN;
+	}
+
+	if (substr($dsn, 0, 10) == 'mysqli:///') {
+		$dsn = substr($dsn, 9);
+	}
+
+	if (substr($dsn, 0, 1) == '/') {
+		$this->loadMyCnf($dsn);
+  	$dsn = 'mysqli://'.DB_NAME.':'.DB_PASS.'@tcp+'.DB_HOST.'/'.DB_NAME;
+	}
+
+	parent::setDSN($dsn);
+}
+
+
+/**
  *
  */
-public function getId() {
+public function getId() : string {
 	$dsn_query_id = self::computeId($this->_dsn, $this->_query);
 	$db_id = is_null($this->_db) ? 0 : md5(spl_object_hash($this->_db));
 	$tmp = [ md5(spl_object_hash($this)), $db_id, $dsn_query_id ];
@@ -44,11 +88,9 @@ public function getId() {
 
 
 /**
- * Return true if result set exists.
- * 
- * @return bool
+ *
  */
-public function hasResultSet() {
+public function hasResultSet() : bool {
 	return !is_null($this->_dbres);
 }
 
@@ -56,7 +98,7 @@ public function hasResultSet() {
 /**
  *
  */
-public function lock($tables) {
+public function lock(array $tables) {
 	throw new Exception('ToDo');
 }
 
@@ -72,7 +114,7 @@ public function unlock() {
 /**
  *
  */
-public function getLock($name) {
+public function getLock(string $name) : int {
 	$r = $this->selectOne("SELECT GET_LOCK('lck_$name', 10) AS r", 'r');
 	return intval($r);
 }
@@ -81,7 +123,7 @@ public function getLock($name) {
 /**
  *
  */
-public function hasLock($name) {
+public function hasLock(string $name) : bool {
 	$r = $this->selectOne("SELECT IS_FREE_LOCK('lck_$name', 10) AS r", 'r');
 	return !inval($r);
 }
@@ -90,14 +132,14 @@ public function hasLock($name) {
 /**
  *
  */
-public function releaseLock($name) {
+public function releaseLock(string $name) : int {
 	$r = $this->selectOne("SELECT RELEASE_LOCK('lck_$name') AS r", 'r');
 	return intval($r);
 }
 
 
 /**
- * Connect to mysql database.
+ *
  */
 private function _connect() {
 
@@ -177,7 +219,7 @@ public function close() {
 /**
  * 
  */
-public function createDatabase($dsn = '', $opt = 'utf8') {
+public function createDatabase(string $dsn = '', string $opt = 'utf8') {
 	$db = empty($dsn) ? self::splitDSN($this->_dsn) : self::splitDSN($dsn);
 	$name = self::escape_name($db['name']);
 	$login = self::escape_name($db['login']);
@@ -199,7 +241,7 @@ public function createDatabase($dsn = '', $opt = 'utf8') {
 /**
  * 
  */
-public function dropDatabase($dsn = '') {
+public function dropDatabase(string $dsn = '') {
 	$db = empty($dsn) ? self::splitDSN($this->_dsn) : self::splitDSN($dsn);
 	$name = self::escape_name($db['name']);
 	$login = self::escape_name($db['login']);
@@ -226,7 +268,7 @@ public function dropDatabase($dsn = '') {
 /**
  *
  */
-public function saveDump($opt) {
+public function saveDump(array $opt) {
 
 	if (empty($opt['save_dir'])) {
 		$opt['save_dir'] = getcwd();
@@ -322,14 +364,13 @@ public function saveTableDump($opt) {
 
 
 /**
- * Allow to load via mysqldump shell command.
- * Do nothing if file is empty.
+ * Allow to load via mysqldump shell command. Do nothing if file is empty.
+ * Flags are 2^n: LOAD_DUMP_USE_SHELL, LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS,
+ * LOAD_DUMP_ADD_DROP_TABLE, 
  *
  * @tok_log log.sql_import
- * @param string $file 
- * @param bool $with_usr_bin_mysql
  */
-public function loadDump($file, $flags = 0) {
+public function loadDump(string $file, int $flags = 0) {
 
 	if (!File::size($file)) {
 		return;
@@ -382,18 +423,15 @@ public function loadDump($file, $flags = 0) {
 /**
  * 
  */
-public function dropTable($table) {
+public function dropTable(string $table) {
 	$this->execute("DROP TABLE IF EXISTS $table");
 }
 
 
 /**
- * Execute database query.
  *
- * @param string $query
- * @param bool $use_result (default = false)
  */
-public function execute($query, $use_result = false) {
+public function execute(string $query, bool $use_result = false) {
 	// \rkphplib\lib\log_debug("MysqlDatabase.execute|".$this->getId()."> query=[$query] use_result=[$use_result]");
 	if (is_array($query)) {
 		if ($use_result) {
