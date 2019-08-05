@@ -1,3 +1,12 @@
+Auto-create doc:
+----------------
+@throws, @exit, @use_define, @define and @param + @return from type hints (auto-detect if array is hash)
+No doc in abstract implementation.
+
+Parser:
+-------
+Create PHP 5.x compatible lib:
+
 Check namespace:
 ----------------
 for a in src/*.php; do echo -n "$a: "; head -3 $a | tail -1 | grep 'namespace rkphplib'; done
