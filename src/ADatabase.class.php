@@ -633,9 +633,9 @@ abstract public function getTableList(bool $reload_cache = false) : array;
 
 
 /**
- * Return last error message. Result is [custom_error, native_error, native_error_code ].
+ * Return last error message. Result is null or [custom_error, native_error, native_error_code ].
  */
-abstract public function getError() : array;
+abstract public function getError() : ?array;
 
 
 /**
@@ -1181,9 +1181,9 @@ abstract public function setFirstRow(int $offset) : void;
 
 
 /**
- * Return next row (or NULL).
+ * Return next row or null.
  */
-abstract public function getNextRow() : array;
+abstract public function getNextRow() : ?array;
 
 
 /**
@@ -1199,7 +1199,7 @@ abstract public function getRowNumber() : int;
 
 
 /**
- * Return column values.
+ * Return column values as vector.
  */
 abstract public function selectColumn($query, string $colname = 'col') : array;
 
@@ -1238,9 +1238,7 @@ abstract public function selectRow($query, int $rnum = 0) : array;
 
 
 /**
- * Return query result table. If res_count > 0 and result is empty
- * throw "no result" error message. 
- *
+ * Return query result table. If res_count > 0 and result is empty throw "no result" error message.
  * If $res_count > 0 throw error if column count doesn't match.
  */
 abstract public function select($query, int $res_count = 0) : array;
