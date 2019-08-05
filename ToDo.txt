@@ -1,3 +1,7 @@
+Check namespace:
+----------------
+for a in src/*.php; do echo -n "$a: "; head -3 $a | tail -1 | grep 'namespace rkphplib'; done
+
 Unique Session:
 ---------------
 https://stackoverflow.com/questions/2950355/set-session-in-database-in-php
