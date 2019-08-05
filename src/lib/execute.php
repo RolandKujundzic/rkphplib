@@ -15,12 +15,20 @@ use rkphplib\Exception;
  * Append [> /dev/null 2> /dev/null &] for background job.
  * Append [ && echo $! > /dev/null 2>&1 & ] for background job with pid output (= return value).
  * 
+ * Flag is either 2^n, true|false or "test ..." string. Flag Options:
+ *
+ *  - true: same as 2^0
+ *  - false: same as 0
+ *  - 2^0: throw exception if error
+ *  - 2^1: change command to "($cmd) 2>&1"
+ *  - test -f 'some/file': change command to "if test -f 'some/file'; then ($cmd) 2>&1; fi"
+ *
  * @param string $cmd e.g. "rm -f {:=file}"
  * @param hash|empty $parameter optional parameter hash (default = null)
- * @param boolean $abort if true throw exception if error (default = true)
- * @return string|false (false if not $abort and error)
+ * @param int|bool|string $flag (default=1)
+ * @return string|false (last line of output or true, false if not [flag & 2^0] and error)
  */
-function execute($cmd, $parameter = null, $abort = true) {
+function execute($cmd, $parameter = null, $flag = 1) {
 
 	if (empty($cmd) || !is_string($cmd)) {
 		throw new Exception('invalid command', print_r($cmd, true));
@@ -37,6 +45,27 @@ function execute($cmd, $parameter = null, $abort = true) {
 		}
 	}
 
+	if (is_bool($flag)) {
+		if ($flag) {
+			$flag = 1;
+		}
+		else {
+			$flag = 0;
+		}
+	}
+	else if (is_string($flag)) {
+		if (substr($flag, 0, 5) == 'test ') {
+			$cmd = 'if '.$flag.'; then '.$cmd.' 2>&1; fi';
+		}
+
+		$flag = 1;
+	}
+  else if (is_integer($flag)) {
+		if (($flag & 2) == 2) {
+			$cmd = "($cmd) 2>&1";
+		}
+	}
+
 	$output_msg = '';
 
 	// \rkphplib\lib\log_debug("lib/execute($cmd, ...)> $cmd");
@@ -49,7 +78,7 @@ function execute($cmd, $parameter = null, $abort = true) {
 	}
 
 	if ($retval) {
-		if ($abort) {
+		if (($flag & 1) == 1) {
 			throw new Exception('external execution failed', "Command:\r\n".$cmd."\r\nOutput:\r\n".$output_msg);
 		}
 		else {
@@ -57,10 +86,14 @@ function execute($cmd, $parameter = null, $abort = true) {
 		}
 	}
 	else {
-		$res = $output_msg;
+		if (($flag & 1) != 1 && strlen($output_msg) == 0) {
+			$res = true;
+		}
+		else {
+			$res = $output_msg;
+		}
 	}
 
 	return $res;
 }
-
 
