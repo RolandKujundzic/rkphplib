@@ -80,11 +80,8 @@ protected $_qinfo = [];
  * Return md5 hash based on dsn and $query_map (see setQueryMap).
  * 
  * @throws
- * @param string $dsn
- * @param array[string]string $query_map
- * @return string 
  */
-public static function computeId($dsn, $query_map = null) {
+public static function computeId(string $dsn, array $query_map = null) : string {
 	
 	if (empty($dsn)) {
 		throw new Exception('empty database source name');
@@ -132,11 +129,8 @@ public static function getMapId($p, $exclude = []) {
 
 /**
  * Return md5 identifier. Same as self::computeId(getDSN(), getQueryMap()).
- *
- * @throws
- * @return string
  */
-abstract public function getId();
+abstract public function getId() : string;
 
 
 /**
@@ -145,11 +139,8 @@ abstract public function getId();
  * Examples:
  * mysqli://user:password@tcp+localhost/dbname
  * sqlite://[password]@path/to/file.sqlite
- * 
- * @throws
- * @param string $dsn 
  */
-public function setDSN($dsn = '') {
+public function setDSN(string $dsn = '') {
 
 	if (empty($dsn) && defined('SETTINGS_DSN')) {
 		$dsn = SETTINGS_DSN;
@@ -656,10 +647,8 @@ public static function escape_name($name, $abort = false) {
 
 /**
  * Write lock tables.
- *
- * @param array $tables 
  */
-abstract public function lock($tables);
+abstract public function lock(array $tables);
 
 
 /**
@@ -671,34 +660,26 @@ abstract public function unlock();
 
 /**
  * Get named lock. Use releaseLock($name) to free.
- *
- * @throws
- * @param string $name
  */
-abstract public function getLock($name);
+abstract public function getLock(string $name) : int;
 
 
 /**
  * True if named lock exists.
- * @param string $name
- * @return int 0|1
  */
-abstract public function hasLock($name);
+abstract public function hasLock(string $name) : bool;
 
 
 /**
  * Release lock $name.
- * @param string $name
  */
-abstract public function releaseLock($name);
+abstract public function releaseLock(string $name) : int;
 
 
 /**
  * Return true if result set exists.
- * 
- * @return bool
  */
-abstract public function hasResultSet();
+abstract public function hasResultSet() : bool;
 
 
 /**
@@ -920,33 +901,26 @@ abstract public function getInsertId();
 
 /**
  * Create database and account (drop if exists).
- *
- * @param string $dsn
- * @param string $opt
  */
-abstract public function createDatabase($dsn = '', $opt = 'utf8');
+abstract public function createDatabase(string $dsn = '', string $opt = 'utf8');
 
 
 /**
  * Drop database and account (if exists).
- *
- * @param string $dsn
  */
-abstract public function dropDatabase($dsn = '');
+abstract public function dropDatabase(string $dsn = '');
 
 
 /**
- * Export database dump into file. Opt parameter:
+ * Export database dump into file. Parameter $opt parameter:
  *
  * - save_dir: getcwd() if empty
  * - tables: table1, table2, ...
  * - ignore_foreign_keys: 1|0
  * - delete_entries: 1|0
  * - table.*: optional - see saveTableDump
- *
- * @param hash $opt
  */
-abstract public function saveDump($opt);
+abstract public function saveDump(array $opt);
 
 
 /**
