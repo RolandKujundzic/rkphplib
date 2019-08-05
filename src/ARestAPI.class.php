@@ -1,13 +1,12 @@
 <?php
 
+namespace rkphplib;
+
 // ToDo: Accept-Language: de_DE + OpenID Connect | OAUTH2
 // http://de.slideshare.net/jcleblanc/securing-restful-apis-using-oauth-2-and-openid-connect
 // https://github.com/jcleblanc/oauth
 // https://github.com/thephpleague/oauth2-server
 // https://github.com/bshaffer/oauth2-server-php + https://github.com/bshaffer/oauth2-demo-php
-
-
-namespace rkphplib;
 
 require_once(__DIR__.'/XML.class.php');
 require_once(__DIR__.'/JSON.class.php');
