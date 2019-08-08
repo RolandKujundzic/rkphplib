@@ -27,15 +27,9 @@ public static $CHMOD_ABORT = true;
 
 
 /**
- * Create symlink. If is ok if target does not exist.
- * Link directory must exist. 
- *
- * @throws
- * @param string $target
- * @param string $link
- * @param boolean $target_basename
+ * Create symlink. If is ok if target does not exist. Link directory must exist. 
  */
-public static function link($target, $link, $target_basename = false) {
+public static function link(string $target, string $link, bool $target_basename = false) : void {
 
 	if (is_link($link) && $target == readlink($link)) {
 		// already exists
@@ -65,11 +59,8 @@ public static function link($target, $link, $target_basename = false) {
 
 /**
  * Remove link.
- *
- * @throws
- * @param string $link
  */
-public static function unlink($link) {
+public static function unlink(string $link) : void {
 
 	if (!is_link($link)) {
 		throw new Exception('no such link', "link=[$link]");
@@ -80,27 +71,20 @@ public static function unlink($link) {
 
 
 /**
- * Return path info.
- *
- * @see pathinfo()
- * @param string $path
- * @param string $opt PATHINFO_DIRNAME, PATHINFO_BASENAME, PATHINFO_EXTENSION, PATHINFO_FILENAME
- * @return string|array (if opt != '' otherwise array)
+ * Return path info. Wrapper to pathinfo(). Optional options is
+ * PATHINFO_DIRNAME | PATHINFO_BASENAME | PATHINFO_EXTENSION | PATHINFO_FILENAME.
+ * If $opt = '' (default) return hash otherwise string.
  */
-public static function path($path, $opt = '') {
+public static function path(string $path, int $opt = '') {
 	return pathinfo($path, $opt);
 }
 
 
 /**
- * Change $path mode.
- *
- * @throws
- * @param string $path
- * @param int $mode octal
- * @return bool
+ * Change $path mode. Privileges $mode are octal. Return true if change was successfull or 
+ * change is not possible but privileges are already sufficient.
  */
-public static function chmod($path, $mode) {
+public static function chmod(string $path, int $mode) : bool {
 
 	if (mb_strlen(trim($path)) == 0) {
 		throw new Exception('empty path');
@@ -151,14 +135,9 @@ public static function chmod($path, $mode) {
 
 
 /**
- * True if $path is link.
- *
- * @throws
- * @param string $path
- * @param bool $abort
- * @return bool
+ * True if $path is link. Default is to throw exception if path is not link. 
  */
-public static function isLink($path, $abort = true) {
+public static function isLink(string $path, bool $abort = true) : bool {
 
 	if (empty($path)) {
 		if ($abort) {
@@ -180,16 +159,9 @@ public static function isLink($path, $abort = true) {
 
 
 /**
- * Check if file exists. 
- * If abort is true throw error (default) otherwise return false.
- *
- * @throws
- * @param string $path
- * @param bool $abort 
- * @param bool $is_readable
- * @return bool
+ * Return true if file exists. If $abort is true throw exception (default) otherwise return false.
  */
-public static function isFile($path, $abort = true, $is_readable = true) {
+public static function isFile(string $path, bool $abort = true, bool $is_readable = true) : bool {
 
 	if (empty($path)) {
 		if ($abort) {
@@ -212,16 +184,9 @@ public static function isFile($path, $abort = true, $is_readable = true) {
 
 
 /**
- * Check if directory exists. 
- * If abort is true throw error (default) otherwise return false.
- *
- * @throws
- * @param string $path
- * @param bool $abort
- * @param bool $is_readable
- * @return bool
+ * Return true if directory exists. If $abort is true throw exception (default) otherwise return false.
  */
-public static function isDir($path, $abort = true, $is_readable = true) {
+public static function isDir(string $path, bool $abort = true, bool $is_readable = true) : bool {
 
 	if (empty($path)) {
 		if ($abort) {
@@ -245,14 +210,14 @@ public static function isDir($path, $abort = true, $is_readable = true) {
 
 
 /**
- * Return file or directory stats.
- *
- * @throws
- * @param string $path
- * @param bool $clearcache
- * @return array[string]string|false
+ * Return file or directory stats. Return stat hash keys:
+ * perms.[umask|human|octal|octal1|octal2|decimal|fileperms|mode1|mode2],
+ * owner.[fileowner|filegroup|owner|group], file.[filename|realpath|dirname|basename],
+ * filetype.[type|type_octal|is_file|is_dir|is_link|is_readable|is_writable],
+ * device.[device|device_number|inode|link_count|link_to], size.[size|blocks|block_size],
+ * time.[stime|mtime|atime|ctime|since|accessed|modified|created].
  */
-public static function stat($path, $clearcache = false) {
+public static function stat(string $path, bool $clearcache = false) : array {
 
 	if ($clearcache) {
 		clearstatcache();
