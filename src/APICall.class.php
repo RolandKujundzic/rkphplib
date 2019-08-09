@@ -69,10 +69,8 @@ public $dump = '';
 
 /**
  * See set() for allowed option parameter.
- *
- * @param map $opt (default = [])
  */
-public function __construct($opt = []) {
+public function __construct(array $opt = []) {
 	foreach ($opt as $key => $value) {
 		$this->set($key, $value);
 	}
@@ -92,11 +90,8 @@ public function __construct($opt = []) {
  *  - header: e.g. [ 'Content-Type' => 'application/json', ... ]
  *  - save_as: Save result here
  *  - decode: decode JSON/XML result (default = true)
- *
- * @param string $name
- * @param string $value
  */
-public function set($name, $value) {
+public function set(string $name, string $value) : void {
 
 	if (!is_string($name)) {
 		throw new Exception('name is not string', print_r($name, true));
@@ -164,13 +159,9 @@ public function set($name, $value) {
 
 
 /**
- * Return set value. 
- *
- * @throws
- * @param string $name
- * @return any
+ * Return set value (any). 
  */
-public function get($name) {
+public function get(string $name) {
 
 	if ($name == 'path') {
 		$name = 'uri';
@@ -194,13 +185,8 @@ public function get($name) {
 
 /**
  * Short for set('method', $method); set('uri', $uri); exec($data).
- *
- * @param string $method see set('method', ...)
- * @param string $uri see set('uri', ...)
- * @param map|string $data
- * @return bool (status=200 true, otherwise false)
  */
-public function call($method, $uri, $data = null) {
+public function call(string $method, string $uri, ?array $data = null) : bool {
 	$this->set('method', strtoupper($method));
 	$this->set('uri', $uri);
 	return $this->exec($data);
@@ -214,11 +200,8 @@ public function call($method, $uri, $data = null) {
  * Use set('accept', 'application/xml') and set('content', 'application/xml') to send and receive xml.
  * If data is map it will be auto-converted to content. If data is string use xml if content=application/xml or 
  * json_encode(...) for default content (application/json). If accept is application/json auto-convert result to map.
- *
- * @param map|string $data 
- * @return bool (status=200 true, otherwise false)
  */
-public function exec($data = null) {
+public function exec(?array $data = null) : bool {
 
 	$required = [ 'method', 'uri', 'url' ];
 	foreach ($required as $key) {
@@ -272,11 +255,6 @@ public function exec($data = null) {
 		}
 		else {
 			$options['POSTFIELDS'] = $this->curlOtherData($data, $options);
-
-			if (is_string($data)) {
-				// binary length
-				$header['Content-Length'] = strlen($data);
-			}
 		}
 	}
 
@@ -334,13 +312,9 @@ public function exec($data = null) {
 
 
 /**
- * Return url encoded query string
- *
- * @param string $url
- * @param map $data
- * @return string 
+ * Return url encoded query string.
  */
-private function curlGetData($url, $data) {
+private function curlGetData(string $url, ?array $data) : string {
 	$append = '';
 
 	if (is_array($data) && count($data) > 0) {
@@ -357,13 +331,9 @@ private function curlGetData($url, $data) {
 
 
 /**
- * Return encoded data. Options are modified if content is multipart/form-data.
- * 
- * @param map $data
- * @param map-ref &$options
- * @return string|map
+ * Return encoded data (string|hash). Options are modified if content is multipart/form-data.
  */
-private function curlOtherData($data, &$options) {
+private function curlOtherData(array $data, array &$options) {
 
 	if (!isset($this->opt['header']['CONTENT-TYPE'])) {
 		throw new Exception('Content-Type is not set');
@@ -413,10 +383,8 @@ private function curlOtherData($data, &$options) {
  * - test_num: default = 0
  * - input_json: required, input file (get|post|put|delete).input.json
  * - input_map: map - replace :TAG: with value (e.g. "header": { "Authorization": "Bearer !OAUTH2_TOKEN!" }
- *
- * @param map $config (default = [])
  */
-public function test($config = []) {
+public function test(array $config = []) {
 
 	if (empty($config['url'])) {
 		throw new Exception('url missing');
@@ -493,12 +461,8 @@ public function test($config = []) {
 
 /**
  * Export tag map.
- * 
- * @param map $data
- * @param map $tag_list
- * @return map
  */
-private function exportTags($data, $tag_list) {
+private function exportTags(array $data, array $tag_list) : array {
 	$tags = [];
 
 	foreach ($tag_list as $key => $tl_value) {
@@ -529,14 +493,8 @@ private function exportTags($data, $tag_list) {
 /**
  * Compare $curr with $ok. Ignore keys set in $opt['dont_compare'].
  * Return ignore message list. 
- *
- * @throws
- * @param map $curr
- * @param map $ok
- * @param map $opt
- * @return vector
  */
-private function compare_result($curr, $ok, $opt) {
+private function compare_result(array $curr, array $ok, array $opt) : array {
 
 	if (!isset($opt['key'])) {
     $opt['key'] = [];
@@ -585,13 +543,8 @@ private function compare_result($curr, $ok, $opt) {
 
 /**
  * Return data (json[0]) and options (json[last]). Apply replace (!TAG!).
- * 
- * @param string file
- * @param int $pos = 0
- * @param map replace = []
- * @return vector<map:map>
  */
-private function loadDataOptions($file, $pos = 0, $replace = []) {
+private function loadDataOptions(string $file, int $pos = 0, array $replace = []) : array {
 	$json_str = File::load($file);
 	$json_orig = JSON::decode($json_str);
 	$rtags = [];
