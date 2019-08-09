@@ -1,5 +1,6 @@
 # rkphplib
-PHP library with template engine and wrapper classes to filesystem, mysql and other.
+PHP library with template engine and wrapper classes to filesystem, mysql and other. 
+Object oriented, namespace and strict function types so php >= 7.2 is required.
 
 ## Install
 
