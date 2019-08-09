@@ -75,7 +75,7 @@ public static function unlink(string $link) : void {
  * PATHINFO_DIRNAME | PATHINFO_BASENAME | PATHINFO_EXTENSION | PATHINFO_FILENAME.
  * If $opt = '' (default) return hash otherwise string.
  */
-public static function path(string $path, int $opt = '') {
+public static function path(string $path, int $opt = 0) {
 	return pathinfo($path, $opt);
 }
 
@@ -123,7 +123,7 @@ public static function chmod(string $path, int $mode) : bool {
 
 		if (!$res) {
 			if (!self::$CHMOD_ABORT) {
-				return;
+				return false;
 			}
 
 			throw new Exception('chmod failed', "$entry to $mode");
