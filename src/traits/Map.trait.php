@@ -27,14 +27,8 @@ trait Map {
  * Return value of path_str. Example: If $path_str = a.b.c 
  * return $map['a']['b']['c'] (throw Exception if not set and $abort
  * - if not abort return false).
- *
- * @throws
- * @param map $map
- * @param string $path_str
- * @param boolean $abort (= true)
- * @return any|false
  */
-private static function getMapPathValue($map, $path_str, $abort = true) {
+private static function getMapPathValue(array $map, string $path_str, bool $abort = true) {
 
 	if (!is_array($map)) {
 		throw new Exception('invalid map', "path_str=$path_str map: ".print_r($map, true));
@@ -66,15 +60,9 @@ private static function getMapPathValue($map, $path_str, $abort = true) {
 	
 
 /**
- * Set value of path_str. Example: If $path_str = a.b.c 
- * set $map['a']['b']['c'] = $value.
- *
- * @throws
- * @param map-reference &$map
- * @param string $path_str
- * @param any $value
+ * Set value of path_str. Example: If $path_str = a.b.c set $map['a']['b']['c'] = $value.
  */
-private static function setMapPathValue(&$map, $path_str, $value) {
+private static function setMapPathValue(array &$map, string $path_str, $value) : void {
 
 	if (!is_array($map)) {
 		throw new Exception('invalid map', "path_str=$path_str map: ".print_r($map, true));
