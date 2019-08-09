@@ -36,13 +36,8 @@ public $internal_message = '';
 
 /**
  * Class constructor.
- *
- * @param string $message error message
- * @param int $error_no
- * @param int $http_error = 400
- * @param string $internal_message error message detail (default = '')
  */
-public function __construct($message, $error_no, $http_error = 400, $internal_message = '') {
+public function __construct(string $message, int $error_no, int $http_error = 400, string $internal_message = '') {
   parent::__construct($message, $error_no);
 	$this->http_error = $http_error;
   $this->internal_message = $internal_message;
@@ -103,10 +98,8 @@ protected $config = [];
  * php -S localhost:10080 www/api/routing.php
  *
  * Enable https://localhost:10443/ with stunnel (e.g. stunnel3 -d 10443 -r 10080)
- *
- * @return string
  */
-public static function phpAPIServer() {
+public static function phpAPIServer() : string {
 
 	$index_php = $_SERVER['argv'][0];
 
@@ -123,11 +116,8 @@ public static function phpAPIServer() {
  *
  * Allow GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS from anywhere.
  * Redirect everything to index.php. Unsupported: CONNECT, TRACE. 
- *
- * @param string $api_script = /api/index.php
- * @return string
  */
-public static function apacheHtaccess($api_script = '/api/index.php') {
+public static function apacheHtaccess(string $api_script = '/api/index.php') : string {
 	$res = <<<END
 Header add Access-Control-Allow-Origin "*"
 Header add Access-Control-Allow-Headers "origin, x-requested-with, content-type"
@@ -144,11 +134,8 @@ END;
 
 /**
  * Return nginx location configuration.
- *
- * @param string $api_script = /api/index.php
- * @return string
  */
-public static function nginxLocation($api_script = '/api/index.php') {
+public static function nginxLocation(string $api_script = '/api/index.php') : string {
 	$dir = dirname($api_script);
 	$res = <<<END
 location {$dir} {
@@ -169,10 +156,8 @@ END;
  * Access-Control-Allow-Headers: *
  * Access-Control-Allow-Methods: GET,POST,PUT,DELETE (if parameter $methods is empty/not-used)
  * Access-Control-Max-Age: 600
- *
- * @param string $methods
  */
-public static function CorsAllowAll($methods = 'GET,POST,PUT,DELETE') {
+public static function CorsAllowAll(string $methods = 'GET,POST,PUT,DELETE') : void {
 	header('Access-Control-Allow-Origin: *');
 	header('Access-Control-Allow-Headers: *');
 	header('Access-Control-Allow-Methods: '.$methods);
@@ -185,11 +170,8 @@ public static function CorsAllowAll($methods = 'GET,POST,PUT,DELETE') {
  *
  * input: data, xml, json, urlencoded or multipart
  * mime_type: application/xml|json|octet-stream|x-www-form-urlencoded, [image|text|video|audio/]*
- *
- * @throws if content-type header is empty or unknown
- * @param array-reference &$request
  */
-public static function parseHeader(&$request) {
+public static function parseHeader(array &$request) : void {
 	$method = empty($_SERVER['REQUEST_METHOD']) ? 'get' : $_SERVER['REQUEST_METHOD'];
 
 	if (!empty($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
@@ -260,17 +242,10 @@ public static function parseHeader(&$request) {
 
 
 /**
- * Catch all php errors. Activated in constructor:
- *
- * set_error_handler([$this, 'errorHandler']);
- *
- * @exit 500:ERR_PHP 
- * @param int $errNo
- * @param string $errStr
- * @param string $errFile
- * @param int $errLine
+ * Catch all php errors. Activated in constructor: set_error_handler([$this, 'errorHandler']);
+ * Exit with 500:ERR_PHP.
  */
-public function errorHandler($errNo, $errStr, $errFile, $errLine) {
+public function errorHandler(int $errNo, string $errStr, string $errFile, int $errLine) : void {
 
   if (error_reporting() == 0) {
     // @ suppression used, ignore it
@@ -288,13 +263,9 @@ public function errorHandler($errNo, $errStr, $errFile, $errLine) {
 
 
 /**
- * Catch all Exceptions. Activated in constructor:
- *
- * set_exception_handler([$this, 'errorHandler']);
- * 
- * @param Exception $e
+ * Catch all Exceptions. Activated in constructor: set_exception_handler([$this, 'errorHandler']);
  */
-public function exceptionHandler($e) {
+public function exceptionHandler(\Exception $e) : void {
   $msg = $e->getMessage();
 	$error_code = $e->getCode();
 	$http_code = (property_exists($e, 'http_code') && $e->http_code >= 400) ? $e->http_code : 400; 
@@ -325,10 +296,8 @@ public function exceptionHandler($e) {
  * - base64_dir = '' (if set decode and save values with "data:image/([a-z0-9+]);base64,..." prefix)
  * - auth_query = optional, e.g. SELECT id, token, config FROM api_user WHERE token='{:=token}' AND valid > NOW() AND status=1
  * - internal_error = false
- *
- * @param map $options = []
  */
-public function __construct($options = []) {
+public function __construct(array $options = []) {
 	$this->options = [];
 
 	$this->options['accept'] = [ 'application/x-www-form-urlencoded', 'multipart/form-data',
@@ -372,7 +341,7 @@ public function __construct($options = []) {
  * 
  * @exit If no credentials are passed basic_auth is allowed and required exit with "401 - basic auth required"
  */
-private function checkApiToken() {
+private function checkApiToken() : void {
 	$res = [ '', '' ];
 
 	$allow_basic_auth = in_array('basic_auth', $this->options['allow_auth']);
@@ -393,7 +362,7 @@ private function checkApiToken() {
 		header('WWW-Authenticate: Basic realm="REST API"');
 		header('HTTP/1.0 401 Unauthorized');
 		print \rkphplib\lib\translate('Please enter REST API basic authentication credentials');
-		$this->logRequest(401);
+		$this->logRequest((string)401);
 		exit;
 	}
 
@@ -411,14 +380,9 @@ private function checkApiToken() {
  * Request_Method: GET = use $_GET
  * Request_Method: POST(, PUT, DELETE, PATCH, HEAD, OPTIONS) = use $_POST
  *
- * Set this.request keys:
- *
- * ip, data, map, content-type and input-type
- *
- * @throws if request['input-type'] or request['content-type'] is empty.
- * @param array-reference &$request
+ * Set this.request keys: ip, data, map, content-type and input-type
  */
-public static function parse(&$request) {
+public static function parse(array &$request) : void {
 
 	$request['timestamp'] = date('Y-m-d H:i:s').':'.substr(microtime(), 2, 3);
 	$request['port'] = empty($_SERVER['REMOTE_PORT']) ? '' : $_SERVER['REMOTE_PORT'];
@@ -489,12 +453,8 @@ public static function parse(&$request) {
  * (e.g. getXaYbZc if URL=xa/yb/zc and getXyYbZc() exists) 
  * and request.api_call_parameter 
  * (e.g. [ $id1, id2 ] if URL=/do/:id1/:id2 and getDo() exists).
- * 
- * @throws if route does not exists and $must_exist is true
- * @param bool $must_exist = true
- * @return bool return true if route exists
  */
-public function route($must_exist = true) {
+public function route(bool $must_exist = true) : bool {
 
 	$method = $this->request['method'];
 	$url = $_SERVER['REQUEST_URI'];
@@ -545,19 +505,15 @@ public function route($must_exist = true) {
 
 
 /**
- * Return api call result. 
+ * Return api call result (exit and print JSON|JSONP|XML).
  *
  * Default result format is JSON (change with HTTP_ACCEPT: application/xml to XML).
  * Overwrite for custom modification. If request.status is set and $code == 200 use 
  * request.status instead of $code. 
  *
  * If error occured return error (localized error message), error_code and error_info and send http code >= 400.
- * 
- * @param map $o
- * @param int $code (default = 200, use 400 if error)
- * @exit print JSON|JSONP|XML
  */
-public function out($o, $code = 200) {
+public function out(array $o, int $code = 200) : void {
 
 	if ($code == 200 && !empty($this->request['status'])) {
 		$code = $this->request['status'];
@@ -595,10 +551,8 @@ public function out($o, $code = 200) {
 /**
  * Save request and data from $_SERVER, $_GET, $_POST, php://input to options.log_dir.
  * If options.log_dir is empty do nothing.
- *
- * @param string $stage e.g. in, 401, 200, ...
  */
-protected function logRequest($stage) {
+protected function logRequest(string $stage) : void {
 
 	if (empty($this->options['log_dir'])) {
 		return;
@@ -634,10 +588,8 @@ protected function logRequest($stage) {
 /**
  * Set request.method (as lowerstring), request.content-type and request.input-type.
  * Overwrite method with header "X-HTTP-METHOD[-OVERRIDE]".
- *
- * @throws if invalid
  */
-private function checkMethodContent() {
+private function checkMethodContent() : void {
 
 	self::parseHeader($this->request); 
 
@@ -657,7 +609,7 @@ private function checkMethodContent() {
  * Read api request. Use options.log_dir to save parsed input.
  * Use this.request to retrieve input (information). 
  */
-public function readInput() {
+public function readInput() : void {
 	$this->checkMethodContent();
 	$this->checkApiToken(); 
 	self::parse($this->result);
@@ -683,11 +635,8 @@ public function readInput() {
 
 /**
  * Decode and save base64 data. Change value into file path.
- *
- * @param array $map
- * @param string $save_dir
  */
-public static function saveBase64(&$map, $save_dir) {
+public static function saveBase64(array &$map, string $save_dir) : void {
 	Dir::create($save_dir, 0, true);
 
 	foreach ($map as $key => $value) {
@@ -703,9 +652,8 @@ public static function saveBase64(&$map, $save_dir) {
 
 /**
  * Define this.config[default] and this.config[token].
- *
  */
-abstract protected function setConfig();
+abstract protected function setConfig() : void;
 
 
 /**
@@ -715,10 +663,8 @@ abstract protected function setConfig();
  * call this.getUser(3832)  (up to three parameter otherwise use array as first parameter)
  * 
  * Call self::parse() and $this->route().
- *
- * @throws 
  */
-public function run() {
+public function run() : void {
 	$this->setConfig();
 	$this->readInput();
 
@@ -773,20 +719,17 @@ public function run() {
 
 /**
  * Called if method has no result. Subclass if necessary.
- * 
- * @return this.request
  */
-protected function apiCallNotImplemented() {
+protected function apiCallNotImplemented() : array {
 	return $this->request;
 }
 
 
 /**
- * Prepare api call. Apply this.user.config.preset and this.user.config.set 
- * to this.request.map.
+ * Prepare api call. Apply this.user.config.preset and this.user.config.set to this.request.map.
  * 
  */
-protected function prepareApiCall() {
+protected function prepareApiCall() : void {
 
 	if (isset($this->user['config']['preset']) && is_array($this->user['config']['preset'])) {
 		foreach ($this->user['config']['preset'] as $key => $value) {
@@ -806,14 +749,10 @@ protected function prepareApiCall() {
 
 /**
  * Overwrite for api logging. Call Exception::httpError($code) if $code >= 400.
- *
- * @param int $code
- * @param map $p
- * @param string $out
  */
-protected function logResult($code, $p, $out) {
+protected function logResult(int $code, array $p, string $out) : void {
 
-	$this->logRequest($code);
+	$this->logRequest((string)$code);
 
 	if ($code >= 400) {
 		$info = empty($p['error_info']) ? '' : "\n".$p['error_info'];
@@ -824,21 +763,16 @@ protected function logResult($code, $p, $out) {
 
 /**
  * Return this.request.map.key value.
- *
- * @param string $key
- * @return string
  */
-public function get($key) {
+public function get(string $key) : string {
 	return isset($this->request['map'][$key]) ? $this->request['map'][$key] : '';
 }
 
 
 /**
  * Apply required and check to api parameter.
- *
- * @throws if parameter is invalid
  */
-protected function checkRequest() {
+protected function checkRequest() : void {
 
 	if (isset($this->user['config']['required']) && is_array($this->user['config']['required'])) {
 		foreach ($this->user['config']['required'] as $key) {
@@ -861,10 +795,8 @@ protected function checkRequest() {
 /**
  * Set this.user (this.user.config.allow). Check if request.token if valid. Check if api_call is allowed. 
  * If token or options.auth_query is empty user has only token and config keys. 
- * 
- * @throws
  */
-protected function setUser() {
+protected function setUser() : void {
 
 	if (!isset($this->config['default']) || !is_array($this->config['default']) || !is_array($this->config['default']['allow'])) {
 		throw new RestServerException('config.default missing or invalid', self::ERR_CODE, 501);
@@ -919,10 +851,8 @@ protected function setUser() {
  * - call_before = if set call $this->$call_before() before request.api_call 
  * - call_after = if set call $this->$call_after($output) after request.api_call
  * - output = { "col": "alias", ... } or [ "col", ... ]
- *
- * @throws
  */
-protected function setUserConfig() {
+protected function setUserConfig() : void {
 
 	$token = $this->request['token'];
 	$api_call = $this->request['api_call'];
