@@ -19,12 +19,9 @@ protected $conf = [];
 
 
 /**
- * Set default configuration. 
- *
- * @sess init()
- * @param array $options
+ * Set (default) options.
  */
-public function __construct($options = []) {
+public function __construct(array $options = []) {
 	$this->conf = $options;
 }
 
@@ -33,13 +30,8 @@ public function __construct($options = []) {
  * Return javascript code (window.setInterval(...), JQuery required).
  * Implement function php_session_refresh(data) { ... } (data = OK or EXPIRED)
  * and set $on_success = 'php_session_refresh' if you want to track refresh success.
- *
- * @param string $url (urlescaped ajax url)
- * @param string $on_success (default = '')
- * @param int $minutes (default = 10)
- * @return string
  */
-public function getJSRefresh($url, $on_success = '', $minutes = 10) {
+public function getJSRefresh(string $url, string $on_success = '', int $minutes = 10) : string {
 
 	$millisec = 60000 * $minutes;
 	$success = '';
@@ -71,9 +63,8 @@ END;
  *  host: $_SERVER['HTTP_HOST']
  *  start: time()
  *  last: time()
- *
  */
-public function initMeta() {
+public function initMeta() : void {
 
 	if (!empty($this->conf['init_meta'])) {
 		// \rkphplib\lib\log_debug('ASession::initMeta> use existing'); 
@@ -98,11 +89,8 @@ public function initMeta() {
 
 /**
  * Get configuration value. Parameter: name, scope, inactive, ttl.
- * 
- * @param string $key
- * @return int|string
  */
-public function getConf($key) {
+public function getConf(string $key) : string {
 
 	if (count($this->conf) === 0) {
 		throw new Exception('call setConf first');
@@ -131,14 +119,11 @@ public function getConf($key) {
  *  required: '' (list of session parameter - if one is empty redirect to login page)
  * 
  *  Check inactive and ttl with hasExpired().
- *
- * @throws rkphplib\Exception if check fails
- * @param map $conf
  */
-protected function setConf($conf) {
+protected function setConf(array $conf) : void {
 	// \rkphplib\lib\log_debug('setConf> enter - conf: '.print_r($conf, true));
 
-	$default = [ 'name' => '', 'table' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => 0, 
+	$default = [ 'name' => '', 'table' => '', 'scope' => 'docroot', 'inactive' => '7200', 'ttl' => '172800', 'init_meta' => '0', 
 		'redirect_login' => 'index.php?dir=login',  'redirect_logout' => 'index.php?dir=login/exit',
 		'redirect_forbidden' => 'index.php?dir=login/access_denied', 
 		'required' => '', 'allow_dir' => 'login' ];
@@ -192,11 +177,8 @@ protected function setConf($conf) {
 
 /**
  * Return true if scope is valid.
- *
- * @throws if setConf or initMeta was not called
- * @return bool
  */
-public function validScope() {
+public function validScope() : bool {
 
 	if (empty($this->conf['scope'])) {
 		throw new Exception('call setConf first');
@@ -243,11 +225,8 @@ public function validScope() {
 
 /**
  * If conf.redirect_forbidden is set redirect otherwise throw exception. 
- *
- * @throws if conf.redirect_forbidden is empty
- * @exit redirect to conf.redirect_forbidden 
  */
-public function redirectForbidden() {
+public function redirectForbidden() : void {
 
 	if (!empty($this->conf['redirect_forbidden'])) {
 		\rkphplib\lib\redirect($this->conf['redirect_forbidden']);
@@ -260,13 +239,8 @@ public function redirectForbidden() {
 
 /**
  * If conf.redirect_login is set redirect otherwise throw exception.
- *
- * @throws if conf.redirect_login is empty
- * @exit redirect to conf.redirect_login
- * @param string $reason
- * @param map $p = []
  */
-public function redirectLogin($reason, $p = []) {
+public function redirectLogin(string $reason, array $p = []) : void {
 	// \rkphplib\lib\log_debug('ASession::redirectLogin> reason='.$reason.' - conf: '.print_r($this->conf, true)."\np: ".print_r($p, true));
 	$this->destroy();
 
@@ -280,12 +254,9 @@ public function redirectLogin($reason, $p = []) {
 
 
 /**
- * Return expiration reason if session has become invalid. Update lchange.
- * 
- * @throws if initMeta was not called
- * @return string ttl|inactive|empty = session is valid
+ * Return expiration reason (ttl|inactive|) if session has become invalid. Update lchange.
  */
-public function hasExpired() {
+public function hasExpired() : string {
 	$now = time();
 	$expire_reason = '';
 
@@ -305,12 +276,8 @@ public function hasExpired() {
 
 /**
  * Return (meta) session key. Key is md5(conf.name:conf.scope)[_meta].
- *
- * @throws if setConf was not called
- * @param string $map (default = '')
- * @return string
  */
-public function getSessionKey($map = '') {
+public function getSessionKey(string $map = '') : string {
 
 	if (empty($this->conf['name'])) {
 		throw new Exception('call setConf first');
@@ -327,100 +294,65 @@ public function getSessionKey($map = '') {
 
 
 /**
- * Initialize session.
- *
- * @param map $conf (default = array())
- * @throws rkphplib\Exception if error
- * @see setConf
- * @return map
+ * Initialize session (see setConf). Parameter: name, scope(=docroot), ttl(=172800), inactive(=7200), redirect_[forbidden|login](='').
+ * If required session parameter does not exist redirect to redirect_login or throw exception.
+ * New parameter "save_path" (overwrite with define('SESSION_SAVE_PATH', '...')).
  */
-abstract public function init($conf);
+abstract public function init(array $conf) : void;
 
 
 /**
- * Set session (map) value.
- *
- * @param string $key
- * @param any $value
- * @param string $map = ''
+ * Set session value. Use $map=meta for metadata.
  */
-abstract public function set($key, $value, $map = '');
+abstract public function set(string $key, $value, string $map = '') : void;
 
 
 /**
- * Push value into session (map) key. If value is pair assume
- * key is map otherwise assume key is vector (auto-create if missing).
- *
- * @param string $key
- * @param any $value
- * @param string $map = ''
+ * Push value into session key. If value is pair assume session hash (otherwise vector).
+ * Use map=meta for metadata.
  */
-abstract public function push($key, $value, $map = '');
+abstract public function push(string $key, $value, string $map = '') : void;
 
 
 /**
- * Set session (map) map. Overwrite existing unless merge = true.
- *
- * @param map<string:any> $p
- * @param bool $merge = false
- * @param string $map = ''
+ * Set session hash. Overwrite existing unless merge = true.
  */
-abstract public function setHash($p, $merge = false, $map = '');
+abstract public function setHash(array $p, bool $merge = false, string $map = '') : void;
 
 
 /**
- * Get session (map) value.
- * 
- * @throws if key is not set and required
- * @param string $key
- * @param bool $required = true
- * @param string $map = ''
- * @return any
+ * Get session key value. Use suffix '?' on key to prevent exception if key is not found.
  */
-abstract public function get($key, $required = true, $map = '');
+abstract public function get(string $key, bool $required = true, string $map = '');
 
 
 /**
- * Get session (map) hash.
- * 
- * @param string $map = ''
- * @return map<string:any>
+ * Get session hash.
  */
-abstract public function getHash($map = '');
+abstract public function getHash(string $map = '') : array;
 
 
 /**
- * True if session (map) key exists. If key is null and map != '' return true if map exists.
- * 
- * @param string $key
- * @param string $map = ''
- * @return bool
+ * True if session key exists. If key is null return true if session hash is empty.
  */
-abstract public function has($key, $map = '');
+abstract public function has(string $key, string $map = '') : bool;
 
 
 /**
- * Remove session (map) key.
- * 
- * @param string $key
- * @param string $map = ''
+ * Remove session key.
  */
-abstract public function remove($key, $map = '');
+abstract public function remove(string $key, string $map = '') : void;
 
 
 /**
- * Return count of session (map) keys.
- * 
- * @param string $key
- * @param string $map = ''
- * @return int
+ * Return number of session keys.
  */
-abstract public function count($key, $map = '');
+abstract public function count(string $key, string $map = '') : int;
 
 
 /**
  * Destroy session data.
  */
-abstract public function destroy();
+abstract public function destroy() : void;
 
 }

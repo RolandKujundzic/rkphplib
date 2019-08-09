@@ -26,11 +26,9 @@ class Session extends ASession {
 
 
 /**
- * Return session file. 
- *
- * @throws if ini_get("session.serialize_handler") != 'php'
+ * Return session file. Throw exception if ini_get("session.serialize_handler") != 'php'.
  */
-public static function readPHPSessionFile($file) {
+public static function readPHPSessionFile(string $file) : array {
 	require_once(__DIR__.'/File.class.php');
 
 	if (ini_get('session.serialize_handler') != 'php') {
@@ -60,15 +58,9 @@ public static function readPHPSessionFile($file) {
 
 
 /**
- * Initialize session. Parameter: name, scope(=docroot), ttl(=172800), inactive(=7200), redirect_[forbidden|login](='').
- * If required session parameter does not exist redirect to redirect_login or throw exception.
- * New parameter "save_path" (overwrite with define('SESSION_SAVE_PATH', '...')).
- * 
- * @see ASession::setConf 
- * @throws
- * @param map $conf
+ *
  */
-public function init($conf) {
+public function init(array $conf) : void {
 	$this->setConf($conf);
 
 	$sess_ttl = ini_get('session.gc_maxlifetime');
@@ -142,13 +134,9 @@ public function init($conf) {
 
 
 /**
- * Return (map) session key. Use map = meta for meta data. 
- *
- * @throws 
- * @param string $map (default = '')
- * @return string
+ * Return session key. Use map = meta for meta data. 
  */
-private function sessKey($map = '') {
+private function sessKey(string $map = '') : string {
 	$skey = $this->getSessionKey($map);
 
 	if (!isset($_SESSION[$skey])) {
@@ -171,9 +159,9 @@ private function sessKey($map = '') {
 
 
 /**
- * Destroy dession data.
+ *
  */
-public function destroy() {
+public function destroy() : void {
 	$skey = $this->sessKey();
 	$skey_meta = $this->sessKey('meta');
 
@@ -189,30 +177,19 @@ public function destroy() {
 }
 
 
-/*
- * Set session value. Use map=meta for metadata.
+/**
  *
- * @throws 
- * @param string $key
- * @param any $value
- * @param string $map (default = '' = no session map)
  */
-public function set($key, $value, $map = '') {
+public function set(string $key, $value, string $map = '') : void {
 	$skey = $this->sessKey($map);
 	$_SESSION[$skey][$key] = $value;
 }
 
 
-/*
- * Push value to session vector|map $key. If value is pair assume session map. 
- * Auto create vector|map if missing. Use map=meta for metadata.
+/**
  *
- * @throws 
- * @param string $key
- * @param any|pair $value
- * @param string $map (default = '' = no session map)
  */
-public function push($key, $value, $map = '') {
+public function push(string $key, $value, string $map = '') : void {
 	$skey = $this->sessKey($map);
 	
 	if (!isset($_SESSION[$skey][$key])) {
@@ -233,16 +210,9 @@ public function push($key, $value, $map = '') {
 
 
 /**
- * Get session value. Use suffix '?' on key to 
- * prevent exception if key is not found.
  * 
- * @throws if key is not set and required
- * @param string $key
- * @param bool $required (default = true)
- * @param string $map (default = '')
- * @return any|null (if not found)
  */
-public function get($key, $required = true, $map = '') {
+public function get(string $key, bool $required = true, string $map = '') {
 	$skey = $this->sessKey($map);
 	$res = null;
 
@@ -263,13 +233,9 @@ public function get($key, $required = true, $map = '') {
 
 
 /**
- * True if session key exists. If key is null and map != '' return true if map exists.
  * 
- * @param string $key
- * @param string $map (default = '')
- * @return bool
  */
-public function has($key, $map = '') {
+public function has(string $key, string $map = '') : bool {
 	$skey = $this->sessKey($map);
 
 	if (is_null($key) && $map != '') {
@@ -281,28 +247,18 @@ public function has($key, $map = '') {
 
 
 /**
- * Remove session key.
  * 
- * @throws
- * @param string $key
- * @param string $map (default = '')
- * @return bool
  */
-public function count($key, $map = '') {
+public function count(string $key, string $map = '') : int {
 	$skey = $this->sessKey($map);
 	return count($_SESSION[$skey]);
 }
 
 
 /**
- * Remove session key.
  * 
- * @throws
- * @param string $key
- * @param string $map (default = '')
- * @return bool
  */
-public function remove($key, $map = '') {
+public function remove(string $key, string $map = '') : void {
 	$skey = $this->sessKey($map);
 
 	if (!isset($_SESSION[$skey][$key])) {
@@ -314,26 +270,18 @@ public function remove($key, $map = '') {
 
 
 /**
- * Get session hash.
  * 
- * @param map (default = '')
- * @return map<string:any>
  */
-public function getHash($map = '') {
+public function getHash(string $map = '') : array {
 	$skey = $this->sessKey($map);
 	return $_SESSION[$skey];
 }
 
 
 /**
- * Set session map. Overwrite existing unless merge = true.
  *
- * @param map<string:any> $key
- * @param bool $merge (default = false)
- * @param string $map (default = '')
- * @param any $value
  */
-public function setHash($p, $merge = false, $map = '') {
+public function setHash(array $p, bool $merge = false, string $map = '') : void {
 	$skey = $this->sessKey($map);
 
 	if (!is_array($p)) {
