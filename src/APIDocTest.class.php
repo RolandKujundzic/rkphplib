@@ -46,7 +46,7 @@ private $parser = [ 'line' => '', 'custom' => '', 'json' => '', 'name' => '' ];
  * - swagger_file: default = File::basename($_SERVER[0]).'.swagger.json'
  * - swagger_bin: default = ./vendor/bin/swagger
  */
-public function __construct(array $opt = []) : void {
+public function __construct(array $opt = []) {
 	$base = File::basename($_SERVER['argv'][0], true);
 	$dir = dirname($_SERVER['argv'][0]);
 
