@@ -39,16 +39,14 @@ private $parser = [ 'line' => '', 'custom' => '', 'json' => '', 'name' => '' ];
 
 
 /**
- * Constructor. Option parameter:
+ * Constructor. Option $opt parameter:
  * 
  * - php_file: default = $_SERVER[0]
  * - config_file: default = File::basename($_SERVER[0]).'.config.json'
  * - swagger_file: default = File::basename($_SERVER[0]).'.swagger.json'
  * - swagger_bin: default = ./vendor/bin/swagger
- *
- * @param map $opt = [] 
  */
-public function __construct($opt = []) {
+public function __construct(array $opt = []) : void {
 	$base = File::basename($_SERVER['argv'][0], true);
 	$dir = dirname($_SERVER['argv'][0]);
 
@@ -73,14 +71,8 @@ public function __construct($opt = []) {
  * If not required and not found return empty string. Example:
  *
  * key="value" or key={"v1", "v2", ...} 
- *
- * @throws 
- * @param string $txt
- * @param string $key
- * @param bool $required = true
- * @return string|vector|empty-string
  */
-private function get_value($key, $text, $required = true) {
+private function get_value(string $key, string $text, bool $required = true) {
 
 	if (preg_match('/^[ \*]*'.$key.'\=(.+),?$/', $text, $match)) {
 		$res = $this->get_vector($match[1]);
@@ -100,12 +92,9 @@ private function get_value($key, $text, $required = true) {
 
 
 /**
- * If $txt != {.*} return $txt. Otherwise parse vector.
- *
- * @param string $txt
- * @return string|vector
+ * If $txt != {.*} return $txt. Otherwise parse vector. Return string|vector.
  */
-private function get_vector($txt) {
+private function get_vector(string $txt) {
 
 	$txt = trim($txt);
 	if (mb_substr($txt, -1) == ',') {
@@ -151,12 +140,8 @@ private function get_vector($txt) {
 
 /**
  * Scan $line for "$name(... KEY="VALUE" ...). Return false or map of key value pairs.
- * 
- * @param string $line
- * @param string $name
- * @return map|false $value
  */
-private function get_map($line, $name) {
+private function get_map(string $line, string $name) {
   $map = false;
 
 	if (($pos = mb_strpos($line, '@SWG\\'.$name.'(')) === false) {
@@ -198,7 +183,7 @@ private function get_map($line, $name) {
 /**
  * If "=@SWGCustom:".parser[custom] is found, set config[parser.name][parser.custom] = parser.json. 
  */
-private function _scan_custom() {
+private function _scan_custom() : void {
 	$line = $this->parser['line'];
 
 	// remove leading *
@@ -221,10 +206,8 @@ private function _scan_custom() {
 
 /**
  * Set parser block name.
- *
- * @param string $name
  */
-private function _parser_set_name($name) {
+private function _parser_set_name(string $name) : void {
 	$this->parser['name']	= $name;
 	
 	if (!isset($this->config[$name])) {
@@ -243,10 +226,8 @@ private function _parser_set_name($name) {
 
 /**
  * Set global swagger paramter.
- * 
- * @param map $p
  */
-private function _set_swagger($p) {
+private function _set_swagger(array $p) : void {
 	$required = [ 'host', 'schemes', 'consumes', 'produces' ];
 	foreach ($required as $key) {
 		if (empty($p[$key])) {
@@ -265,11 +246,9 @@ private function _set_swagger($p) {
 
 
 /**
- * Scan for body, header and path paraemter.
- *
- * @param string $line
+ * Scan for body, header and path parameter.
  */
-private function _scan_swg($line) {
+private function _scan_swg(string $line) : void {
 
 	$name = $this->parser['name'];
 
@@ -299,7 +278,7 @@ private function _scan_swg($line) {
 /**
  * Update options.config_file. Extract configuration parameters from config.php_file documentation.
  */
-public function updateConfigFile() {
+public function updateConfigFile() : void {
 
 	$this->config = File::exists($this->options['config_file']) ? JSON::decode(File::load($this->options['config_file'])) : [];
 
@@ -335,11 +314,8 @@ public function updateConfigFile() {
 
 /**
  * Check this.config and this.config[$name].
- *
- * @throws
- * @param string $name
  */
-private function _check_config($name) {
+private function _check_config(string $name) : void {
 
 	if (empty($name)) {
 		throw new Exception('empty configuration name');
@@ -374,14 +350,9 @@ private function _check_config($name) {
 
 
 /**
- * Return header map {$hname: value}. If $name[example] header is not set
- * use $name[@api] header.
- *
- * @param string $name
- * @param string $hname
- * @return map ($name, $value)
+ * Return header map {$hname: value}. If $name[example] header is not set use $name[@api] header.
  */
-private function _get_header($name, $hname) {
+private function _get_header(string $name, string $hname) : array {
 	$value = '';
 
 	if (!empty($this->config[$name]['example']['header'][$hname])) {
@@ -411,13 +382,9 @@ private function _get_header($name, $hname) {
  * - data: config[$name][example]
  *
  * If example number is set add config[$name]['example'.$example] to data.
- *  
- * @throws
- * @param string $name
- * @param int $example = 0
- * @return map|string
+ * Return string|hash.
  */
-public function call($name, $example = 0) {
+public function call(string $name, int $example = 0) {
 
 	$this->_check_config($name);
 	$cx = $this->config[$name];
@@ -482,13 +449,9 @@ public function call($name, $example = 0) {
 
 
 /**
- * Check output $out according to $check. Return error message.
- *
- * @param map|string $out
- * @param map $check
- * @return string 
+ * Check output $out (string|hash) according to $check. Return error message.
  */
-private function _check_output($out, $check) {
+private function _check_output($out, array $check) : string {
 
 	if (isset($check['required']) && count($check['required']) > 0) {
 		foreach ($check['required'] as $n => $key) {
@@ -516,7 +479,7 @@ private function _check_output($out, $check) {
 /**
  * Update swagger_file.
  */
-public function updateSwaggerFile() {
+public function updateSwaggerFile() : void {
 	print "\nrecreate ".$this->options['swagger_file']."\n\n";
 
 	if (File::exists($this->options['swagger_bin'])) {
