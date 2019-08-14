@@ -1269,11 +1269,11 @@ public function seek(int $offset) : void {
 
 
 /**
- * Return query hash (single row). Throw exception if result has more than one row. 
+ * Return hash (single row) or string (hash[$col]). Throw exception if result has more than one row. 
  * Use column alias "split_cs_list" to split comma separated value (if query was 
  * "SELECT GROUP_CONCAT(name) AS split_cs_list ...").
  */
-public function selectOne($query, string $col = '') : array {
+public function selectOne($query, string $col = '') {
 	$dbres = $this->select($query, 1);
 
 	if (empty($col)) {
