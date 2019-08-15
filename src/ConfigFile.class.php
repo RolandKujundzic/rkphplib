@@ -28,11 +28,9 @@ public $file = '';
 
 
 /**
- * Load configuration from file.
- *
- * @return map
+ * Load configuration from $file.
  */
-public function __construct($file) {
+public function __construct(string $file) {
 	$this->conf = \rkphplib\lib\conf2kv(File::load($file));
 	$this->file = $file;
 }
@@ -40,13 +38,8 @@ public function __construct($file) {
 
 /**
  * Return value. If required is true throw exception if value is empty.
- * 
- * @param string $key
- * @param bool $required (default = true)
- * @return string
- *
  */
-public function get($key, $required = true) {
+public function get(string $key, bool $required = true) : string {
 
 	if ($this->abort_if_missing && !isset($this->conf[$key]) && !array_key_exists($key, $this->conf)) {
 		throw new Exception('missing configuration key', "key=$key in ".$this->file);
@@ -65,23 +58,17 @@ public function get($key, $required = true) {
 
 
 /**
- * Add key, value. 
- * 
- * @param string $key
- * @param string $value 
+ * Add $key=$value. 
  */
-public function set($key, $value) {
+public function set(string $key, string $value) : void {
 	$this->conf[$key] = $value;
 }
 
 
 /**
  * Return true if value of $key is 1, true, "1", "true" or "y[es]".
- * 
- * @param string $key
- * @param string $value 
  */
-public function isTrue($key) {
+public function isTrue(string $key) : bool {
 
 	if (empty($this->conf[$key]) || !array_key_exists($key, $this->conf)) {
 		return false;
@@ -98,13 +85,9 @@ public function isTrue($key) {
 
 /**
  * Return and remove value. If required is true throw exception if value is empty.
- *
- * @param string $key
- * @param boolean $required (default = true)
- * @param boolean $rm (default = true = unset)
- * @return string|false (false = no such key - if not required)
+ * Return string|false (false = no such key - if not required).
  */
-public function rm($key, $required = true) {
+public function rm(string $key, bool $required = true) {
 
 	if ($this->abort_if_missing && !isset($this->conf[$key]) && !array_key_exists($key, $this->conf)) {
 		throw new Exception('missing configuration key', "key=$key in ".$this->file);
