@@ -187,8 +187,9 @@ public static function logError($msg) {
  * @exit
  * @param int $code (=400|401|404|444)
  * @param string $msg (default = httpError $code)
+ * @param int $flag (2^n: 0=default, 1="ERROR: $msg")
  */
-public static function httpError($code = 400, $msg = '') {
+public static function httpError($code = 400, $msg = '', $flag = 0) {
 	$error = [ '400' => 'Bad Request', '401' => 'Unauthorized', '404' => 'Not Found', '444' => 'No Response' ];
 
 	if (!isset($error[$code])) {
@@ -208,6 +209,10 @@ public static function httpError($code = 400, $msg = '') {
 
 	if (mb_substr($msg, 0, 6) == '@ajax ') {
 		$msg = mb_substr($msg, 6);
+		print 'ERROR: '.$msg;
+	}
+
+	if ($flag & 1) {
 		print 'ERROR: '.$msg;
 	}
 
