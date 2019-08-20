@@ -2,6 +2,10 @@
 
 namespace rkphplib\lib;
 
+if (!defined('DOCROOT') && !empty($_SERVER['CONTEXT_DOCUMENT_ROOT']) && is_dir($_SERVER['CONTEXT_DOCUMENT_ROOT'].'/data/.log')) {
+	define('DOCROOT', $_SERVER['CONTEXT_DOCUMENT_ROOT']);
+}
+
 if (!defined('SETTINGS_LOG_DEBUG')) {
 	/** @define string SETTINGS_LOG_DEBUG = '[DOCROOT/data/.log|/tmp]/php.log' */
 	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/.log')) {
@@ -20,6 +24,7 @@ if (!defined('SETTINGS_TIMEZONE')) {
 else {
   date_default_timezone_set(SETTINGS_TIMEZONE);
 }
+
 
 
 /**
