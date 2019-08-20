@@ -62,7 +62,7 @@ public function __construct($message, $internal_message = '') {
 		return;
 	}
 
-	$default_log_dir = DOCROOT.'/data/log/exception';
+	$default_log_dir = DOCROOT.'/data/.log/exception';
 
 	if (defined('SETTINGS_LOG_EXCEPTION')) {
 		if (!empty(SETTINGS_LOG_EXCEPTION)) {
