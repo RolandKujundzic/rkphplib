@@ -14,9 +14,9 @@ if (!defined('TAG_SUFFIX')) {
 }
 
 if (!defined('SETTINGS_LOG_ERROR')) {
-	/** @define string SETTINGS_LOG_ERROR = '[/tmp|DOCROOT/data/log]/php.fatal' */
-	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/log')) {
-		define('SETTINGS_LOG_ERROR', DOCROOT.'/data/log/php.fatal');
+	/** @define string SETTINGS_LOG_ERROR = '[DOCROOT/data/.log|/tmp]/php.fatal' */
+	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/.log')) {
+		define('SETTINGS_LOG_ERROR', DOCROOT.'/data/.log/php.fatal');
 	}
 	else {
 		define('SETTINGS_LOG_ERROR', '/tmp/php.fatal');
@@ -110,14 +110,12 @@ private static function logTrace($stack) {
  * Log error message (add timestamp and trace information).
  *
  * Disable logging with SETTINGS_LOG_ERROR = 0,
- * Enable logging to default with SETTINGS_LOG_ERROR = 1 (default).
+ * Enable logging to default error_log with SETTINGS_LOG_ERROR = 1.
  * Enable logging to file with SETTINGS_LOG_ERROR = 'path/error.log'.
- * Overwrite default define('SETTINGS_LOG_ERROR', '/tmp/php.fatal')
- * before inclusion of this file.
- *
- * @param string $msg
+ * If SETTINGS_LOG_ERROR is undefined use 'data/.log/php.fatal' 
+ * if (data/.log exists) or /tmp/php.fatal.
  */
-public static function logError($msg) {
+public static function logError(string $msg) : void {
 
 	if (!defined('SETTINGS_LOG_ERROR') || empty(SETTINGS_LOG_ERROR)) {
 		return;
