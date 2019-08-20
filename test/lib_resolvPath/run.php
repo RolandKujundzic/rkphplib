@@ -9,9 +9,9 @@ if (!isset($th)) {
 
 $th->load('src/lib/resolvPath.php');
 
-$path = 'data/log/ajax/$date(Ym)/$date(dH)/$map(rechnung,email)_$date(is)';
+$path = 'data/.log/ajax/$date(Ym)/$date(dH)/$map(rechnung,email)_$date(is)';
 $map = [ 'rechnung' => [ 'email' => 'test@domain.tld' ] ];
-$ok = 'data/log/ajax/'.date('Ym').'/'.date('dH').'/'.$map['rechnung']['email'].'_'.date('is');
+$ok = 'data/.log/ajax/'.date('Ym').'/'.date('dH').'/'.$map['rechnung']['email'].'_'.date('is');
 
 $out = rkphplib\lib\resolvPath($path, $map);
 
