@@ -8,7 +8,7 @@ in.name= text|#|
 in.fuel= multi_radio, Gasoline, Diesel|#|
 in.brand= fselect, =choose ..., Audi, BMW, Volkswagen, _=add ...|#|
 in.interior= multi_checkbox, Klima, AHK, Radio|#|
-in.upload= file_btn|#|
+{ignore:} in.upload= file_btn|#| {:ignore}
 in.agb= checkbox|#|
 {:fv}
 
@@ -24,7 +24,7 @@ Form-Submit: check=[{fv:check}] _REQUEST: <pre>{get:*}</pre>
 {fv:in:brand}label=Brand{:fv}
 {fv:in:fuel}label=Fuel{:fv}<br>
 {fv:in:interior}label=Interior{:fv}<br>
-{fv:in:upload}label=Foto|#|label2= Foto auswählen|#|data-hide=1{:fv}<br>
+{ignore:} {fv:in:upload}label=Foto|#|label2= Foto auswählen|#|data-hide=1{:fv}<br> {:ignore}
 {fv:in:agb}label=Do you accept our Terms and Conditions?{:fv}
 {fv:tpl:footer}label=absenden|#|label2={:fv}
 
