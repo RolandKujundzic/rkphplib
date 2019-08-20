@@ -133,3 +133,8 @@ form.fv .file_btn {
 	padding:8px;
 }
 
+form.fv2 br { display: none; }
+form.fv2 div.label_required { display: inline; margin-right: 2ch; }
+form.fv2 input { margin-right: 4ch; }
+form.fv2 span.error_message { margin-left: -2ch; margin-right: 4ch; }
+
