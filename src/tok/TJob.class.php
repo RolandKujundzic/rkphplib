@@ -50,7 +50,7 @@ public function getPlugins($tok) {
 /**
  * Job action. Parameter:
  *
- * lockfile= path/to/lock.json (required, e.g. DOCROOT/data/log/job.json)
+ * lockfile= path/to/lock.json (required, e.g. DOCROOT/data/.log/job.json)
  * do.remove= lock=remove (use _REQUEST[lock] = "remove" to remove lock file)
  * do.run = run=yes (use _REQUEST[run] = "yes" to start job)
  * execute= bin/import.php
@@ -60,7 +60,7 @@ public function getPlugins($tok) {
  *
  * Example:
  *
- * {job:}flag_path=data/log/job_{login:id}{:job}
+ * {job:}flag_path=data/.log/job_{login:id}{:job}
  *
  * Run execute, zip_dir or include. Lockfile (*.json) Parameter:
  *
