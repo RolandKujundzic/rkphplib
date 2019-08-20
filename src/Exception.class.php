@@ -35,8 +35,8 @@ else {
 
 /**
  * Custom exception with two parameter constructor. Log debug_backtrace if save path
- * SETTINGS_LOG_EXCEPTION is set. If directory data/log/exception exist and 
- * SETTINGS_LOG_EXCEPTION is not set use SETTINGS_LOG_EXCEPTION=data/log/exception.
+ * SETTINGS_LOG_EXCEPTION is set. If directory data/.log/exception exist and 
+ * SETTINGS_LOG_EXCEPTION is not set use SETTINGS_LOG_EXCEPTION=data/.log/exception.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @copyright 2016 Roland Kujundzic
