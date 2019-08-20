@@ -566,7 +566,7 @@ public function tok_fv_init($do, $p) {
 
 	$submit_name = $this->conf['current']['submit'];
 	$this->conf['current']['hidden.'.$submit_name] = 1;
-	\rkphplib\lib\log_debug("TFormValidator.tok_fv_init($do, ...)> exit, use_conf=(".join(',', $use_conf)."), current: ".print_r($this->conf['current'], true));
+	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_init($do, ...)> exit, use_conf=(".join(',', $use_conf)."), current: ".print_r($this->conf['current'], true));
 }
 
 
@@ -683,7 +683,7 @@ public function tok_fv_check($ajax = '') {
 private function ajaxOutput($ajax) {
 	try {
    	$output = $this->tok->callPlugin('tpl', $ajax);
-		\rkphplib\lib\log_debug("TFormValidator.ajaxOutput($ajax)> $output");
+		// \rkphplib\lib\log_debug("TFormValidator.ajaxOutput($ajax)> $output");
 		http_response_code(200);
 		print $output;
    	exit(0);
