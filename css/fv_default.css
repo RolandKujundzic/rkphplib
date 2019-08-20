@@ -1,3 +1,7 @@
+form {
+  font-family: Helvetica, Arial, sans-serif;
+}
+
 form.fv br {
 	display: block;
 	margin-top:1.4ch;
