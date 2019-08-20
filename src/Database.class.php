@@ -23,17 +23,12 @@ private static $pool = [];
 
 
 /**
- * Factory method. Return ADatabase object with dsn set. Example:
+ * Factory method. Return ADatabase object with dsn set (use SETTINGS_DSN if $dsn is empty). Example:
  *
  * $mysqli = Database::create('mysqli://user:password@tcp+localhost/dbname');
  * $sqlite = Database::create('sqlite://[password]@path/to/file.sqlite');
- * 
- * @throws rkphplib\Exception
- * @param string $dsn (default = '' = use SETTINGS_DSN)
- * @param map $query_map
- * @return ADatabase
  */
-public static function create($dsn = '', $query_map = []) {
+public static function create(string $dsn = '', array $query_map = []) : object {
 	$db = null;
 
 	if (empty($dsn) && defined('SETTINGS_DSN')) {
@@ -68,14 +63,9 @@ public static function create($dsn = '', $query_map = []) {
 
 /**
  * Singelton method. Return unused ADatabase object instance with dsn from pool.
- * Use query_map with no prefix. 
- *
- * @throws 
- * @param string $dsn (default = '' = use SETTINGS_DSN) 
- * @param null|map|vector $query_map (default = null)
- * @return ADatabase
+ * Use query_map with no prefix. Use SETTINGS_DSN if $dsn is empty (=default). 
  */
-public static function getInstance($dsn = '', $query_map = []) {
+public static function getInstance(string $dsn = '', array $query_map = []) : object {
 
 	if (empty($dsn) && defined('SETTINGS_DSN')) {
 		$dsn = SETTINGS_DSN;
@@ -125,19 +115,17 @@ public static function getInstance($dsn = '', $query_map = []) {
 
 /**
  * Return pool size.
- *
- * @return int
  */
-public static function getPoolSize() {
+public static function getPoolSize() : int {
 	return count(self::$pool);
 }
 
 
 /**
- * Return database pool info.
+ * Return database pool info ([ { id:, hasResultSet: }, ... ]).
  * @return vector
  */
-public static function getInfo() {
+public static function getInfo() : array {
 	$res = [];
 
 	for ($i = 0; $i < count(self::$pool); $i++) {
