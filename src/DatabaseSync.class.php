@@ -36,7 +36,7 @@ private $cache = [];
  * - local_dsn: 
  *
  */
-public function __construct($options) {
+public function __construct(array $options) {
 	$required = [ 'local_dsn', 'remote_dsn' ];
 
 	foreach ($required as $key) {
@@ -52,14 +52,10 @@ public function __construct($options) {
 
 /**
  * Set configuration value (trim). Keys: table, id.
- * Return value.
- *
- * @param string $key
- * @param string $value
- * @return string 
- * @throws
+ * Return value. If value is empty and key exists, return
+ * current value.
  */
-public function set($key, $value) {
+public function set(string $key, string $value) : string {
 
 	if (!isset($this->config[$key])) {
 		throw new Exception('no such configuration key '.$key);
@@ -82,9 +78,9 @@ public function set($key, $value) {
 
 
 /**
- * Get configuration value.
+ * Get configuration value. Throw exception if value is empty.
  */
-public function get($key) {
+public function get(string $key) : string {
 
 	if (!isset($this->config[$key])) {
 		throw new Exception('no such configuration key '.$key);
