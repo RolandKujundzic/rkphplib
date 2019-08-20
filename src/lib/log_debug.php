@@ -3,9 +3,9 @@
 namespace rkphplib\lib;
 
 if (!defined('SETTINGS_LOG_DEBUG')) {
-	/** @define string SETTINGS_LOG_DEBUG = '[/tmp|DOCROOT/data/log]/php.log' */
-	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/log')) {
-		define('SETTINGS_LOG_DEBUG', DOCROOT.'/data/log/php.log');
+	/** @define string SETTINGS_LOG_DEBUG = '[DOCROOT/data/.log|/tmp]/php.log' */
+	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/.log')) {
+		define('SETTINGS_LOG_DEBUG', DOCROOT.'/data/.log/php.log');
 	}
 	else {
 		define('SETTINGS_LOG_DEBUG', '/tmp/php.log');
@@ -23,19 +23,18 @@ else {
 
 
 /**
- * Log debug message.
+ * Log debug message (string or vector). If $prepend_info = true (default = false)
+ * prepend timestamp and trace information.
  *
  * Disable debug log with SETTINGS_LOG_DEBUG = 0,
- * Enable logging to default with SETTINGS_LOG_DEBUG = 1 (default).
+ * Enable logging to default error_log with SETTINGS_LOG_DEBUG = 1.
  * Enable logging to file with SETTINGS_LOG_DEBUG = 'path/debug.log'.
- * Overwrite default define('SETTINGS_LOG_DEBUG', '/tmp/php.warn')
- * before inclusion of this file.
+ * If 'SETTINGS_LOG_DEBUG' is undefined use 'data/.log/php.log' (if data/.log exists)
+ * or '/tmp/php.log'.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @param string|vector $msg
- * @param bool $prepend_info (default = false, prepend timestamp and trace information)
  */
-function log_debug($msg, $prepend_info = false) {
+function log_debug($msg, bool $prepend_info = false) : void {
 
 	if (!defined('SETTINGS_LOG_DEBUG') || empty(SETTINGS_LOG_DEBUG)) {
 		return;
