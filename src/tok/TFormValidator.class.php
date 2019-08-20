@@ -807,18 +807,21 @@ public function tok_fv_error_message($name, $tpl = '') {
 
 /**
  * Return conf.template.$name. Replace and remove tags.
+ * If template contains [<form class="] add submit key to class.
  *
  * @tok {fv:tpl:header}method=post|#|upload=1{:fv}
  * @tok {fv:tpl:footer}label=absenden{:fv}
- * 
- * @throws
- * @param string $name
- * @param array $p
- * @return string
  */
-public function tok_fv_tpl($name, $p) {
-	$res = $this->tok->replaceTags($this->getConf($name, true), $p);
-	return $this->tok->removeTags($res);
+public function tok_fv_tpl(string $name, array $replace) : string {
+	$res = $this->getConf($name, true);
+
+	if (stripos($res, '<form class="') !== false) {
+		$res = str_replace('<form class="', '<form class="'.$this->getConf('submit', '', true).' ', $res);
+	}
+
+	$res = $this->tok->removeTags($this->tok->replaceTags($res, $replace));
+	// \rkphplib\lib\log_debug("tok_fv_tpl($name, ...)> $res");
+	return $res;
 }
 
 
