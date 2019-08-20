@@ -39,8 +39,8 @@ private $conf = [];
  *		If set, run command in docker container e.g. [bash -c "shell command"]
  * - user: optional user id (if set used in logfile name)
  * - action: optional action (if set used in logfile name)
- * - logfile: optional (default: data/log/job/yyyymmdd/NAME[.USER][.ACTION].log)
- * - lockfile: auto - data/log/job/yyyymmdd/NAME[.USER][.ACTION].lock)
+ * - logfile: optional (default: data/.log/job/yyyymmdd/NAME[.USER][.ACTION].log)
+ * - lockfile: auto - data/.log/job/yyyymmdd/NAME[.USER][.ACTION].lock)
  * - file_mode: 0 (e.g. 0666)
  * - dir_mode: 0 (e.g. 0777)
  * - pid: 0 (set after run - always run as background job)
@@ -73,7 +73,7 @@ public function __construct($options) {
 
 	$this->conf = array_merge($default, $options);
 
-	$file_prefix = 'data/log/job/'.date('Ymd');
+	$file_prefix = 'data/.log/job/'.date('Ymd');
 	$file_suffix = '';
 
 	if (!empty($this->conf['pid'])) {
