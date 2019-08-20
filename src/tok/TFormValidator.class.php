@@ -501,13 +501,15 @@ public function tok_fv_get_conf($engine) {
 
 /**
  * Set named configuration. Load configuration with use=name or use
- * name=default to overwrite default configuration.
+ * name=default to overwrite default configuration. Use submit=NEW_KEY
+ * to reset form.
  * 
  * @param string $name
  * @param hash $p
  * @return ''
  */
 public function tok_fv_conf($name, $p) {
+	\rkphplib\lib\log_debug("TFormValidator.tok_fv_conf()> $name: ".print_r($p, true));
 	$this->conf[$name] = $p;
 	return '';
 }
@@ -517,18 +519,14 @@ public function tok_fv_conf($name, $p) {
  * Initialize form validator. Keys:
  *
  * - use: default (list of names configurations)
- * - submit: form_action
+ * - submit: form_action (use NEW_KEY to reset form)
  * - option.label_empty: ...
  * 
  * @param string $do add|
  * @param array $p
  * @return ''
  */
-public function tok_fv_init($do, $p) {
-
-	if (!is_array($p)) {
-		$p = [];
-	}
+public function tok_fv_init(string $do, array $p) : void {
 
 	if (empty($p['use'])) {
 		$p['use'] = 'default';
@@ -542,7 +540,10 @@ public function tok_fv_init($do, $p) {
 		// do nothing ...
 	}
 	else {
+		\rkphplib\lib\log_debug("TFormValidator.tok_fv_init()> reset, do=$do p: ".print_r($p, true));
 		$this->conf['current'] = [];
+		$this->error = [];
+		$this->example = [];
 	}
 
 	$conf = $this->conf['current'];
@@ -816,6 +817,11 @@ public function tok_fv_tpl(string $name, array $replace) : string {
 	$res = $this->getConf($name, true);
 
 	if (stripos($res, '<form class="') !== false) {
+		if (!empty($replace['class'])) {
+			$res = str_replace('class="fv"', 'class="'.$replace['class'].'"', $res);
+			unset($replace['class']);
+		}
+
 		$res = str_replace('<form class="', '<form class="'.$this->getConf('submit', '', true).' ', $res);
 	}
 
