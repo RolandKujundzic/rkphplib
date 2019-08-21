@@ -1243,7 +1243,7 @@ private function tryPluginMap($name) {
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval' ],
 		'TFileSystem' => [ 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'directory', 'file:size', 'file:copy', 'file:exists', 'file', 'dirname', 'basename' ],
 		'TFormValidator' => [ 'fv', 'fv:init', 'fv:conf', 'fv:get', 'fv:get_conf', 'fv:check', 'fv:in', 'fv:tpl', 'fv:hidden', 'fv:preset', 'fv:error', 'fv:appendjs', 'fv:error_message', 'fv:set_error_message' ],
-		'THtml' => [ 'html:tag', 'html:inner', 'html:append', 'html:meta', 'html:meta_og', 'html:tidy', 'html:xml', 'html:uglify', 'html', 'text2html', 'input:checkbox', 'input:radio', 'input' ],
+		'THtml' => [ 'html:tag', 'html:inner', 'html:append', 'html:meta', 'html:meta_og', 'html:tidy', 'html:xml', 'html:uglify', 'html', 'text2html', 'input:checkbox', 'input:radio', 'input', 'user_agent' ],
 		'THttp' => [ 'http:get', 'http' ],
 		'TJob' => [ 'job' ],
 		'TLanguage' => [ 'language:init', 'language:get', 'language:script', 'language', 'txt:js', 'txt', 't', 'ptxt' ],
