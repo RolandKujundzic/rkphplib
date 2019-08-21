@@ -37,7 +37,41 @@ public function getPlugins($tok) {
 	$plugin['input:radio'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
 	$plugin['input'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::KV_BODY;
 
+	$plugin['user_agent'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST;
+
   return $plugin;
+}
+
+
+/**
+ * Return 1 if visitors browser matches entry from $user_agent_list.
+ * 
+ * @tok {user_agent:Android} -> 1 if true
+ * @tok {user_agent:iPad|iPhone|iPod} = {user_agent:iOS} -> 1 if true
+ * @tok {user_agent:Handheld} = {user_agent:iPad|iPhone|iPod|Android} -> 1 if true
+ */
+public static function tok_user_agent(array $user_agent_list) : string {
+  $ua = $_SERVER['HTTP_USER_AGENT'];
+  $res = '';
+
+	if (count($user_agent_list) == 1) {
+		$ua_name = $user_agent_list[0];
+
+		if ($ua_name == 'iOS') {
+			$user_agent_list = [ 'iPad', 'iPhone', 'iPod' ];
+		}
+		else if ($ua_name == 'Handheld') {
+			$user_agent_list = [ 'iPad', 'iPhone', 'iPod', 'Android' ];
+		}
+	}
+	
+	for ($i = 0; empty($res) && $i < count($user_agent_list); $i++) {
+		if (strstr($ua, $user_agent_list[$i])) {
+      $res = '1';
+    }
+  }
+
+  return $res;
 }
 
 
