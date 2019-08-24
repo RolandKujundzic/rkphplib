@@ -127,7 +127,9 @@ public function tok_mail_init($conf) {
 		}
 	}
 
-	$this->mail->useSMTP($conf['smtp.host']);
+	if (!empty($conf['smtp.host'])) {
+		$this->mail->useSMTP($conf['smtp.host']);
+	}
 
 	/*
 	$smtp = $this->getMapKeys('smtp', $conf);
