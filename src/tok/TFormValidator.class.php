@@ -644,7 +644,17 @@ public function tok_fv_check($ajax = '') {
 			$name = $path[1];
 			$req_value = isset($_REQUEST[$name]) ? $_REQUEST[$name] : '';
 
-			if (!ValueCheck::run($name, $req_value, $check)) {
+			$is_ok = ValueCheck::run($name, $req_value, $check);
+
+			if (!$is_ok && !empty($req_value) && $req_value != trim($_REQUEST[$name])) {
+				if (ValueCheck::run($name, trim($req_value), $check)) {
+					// \rkphplib\lib\log_debug("TFormValidator->tok_fv_check> auto-trim $name value [$req_value]");
+					$_REQUEST[$name] = trim($_REQUEST[$name]);
+					$is_ok = true;
+				}
+			}
+
+			if (!$is_ok) {
 				if (!isset($this->error[$name])) {
 					$this->error[$name] = [];
 				}
