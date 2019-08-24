@@ -47,12 +47,9 @@ protected $set_search = [];
 
 
 /**
- * Register output plugin {output:set|get|conf|init|loop|header|footer|empty} and {sort:}.
- *
- * @param Tokenizer $tok
- * @return map<string:int>
+ * Return {output:set|get|conf|init|loop|json|header|footer|empty}, {sort:} and {search:}.
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [];

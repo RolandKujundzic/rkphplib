@@ -43,9 +43,9 @@ protected $options = [ '@plugin_action' => 0 ];
 
 
 /**
- * 
+ * Return {upload:init|conf|formData|exits|scan}.
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [];

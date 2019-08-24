@@ -76,9 +76,9 @@ public function __construct($options = []) {
 
 
 /**
- *
+ * Return {conf:[id|var|get|get_path|set|set_path|set_default|append}
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
   $plugin = [];
 	$plugin['conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REDO;
 	$plugin['conf:id'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;

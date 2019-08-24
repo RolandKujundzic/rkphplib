@@ -32,9 +32,9 @@ protected $db = null;
 
 
 /**
- * 
+ * Return sitemap plugin. 
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
 	$this->tok =& $tok;
 
   $plugin = [];

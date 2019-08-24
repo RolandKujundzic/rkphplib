@@ -31,14 +31,9 @@ protected $conf = [];
 
 
 /**
- * Return Tokenizer plugin list:
- *
- *  picture
- *
- * @param Tokenizer $tok
- * @return map<string:int>
+ * Return {picture:src|init|list}
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
 	$this->tok = $tok;
 
   $plugin = [];

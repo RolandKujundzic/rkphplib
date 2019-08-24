@@ -16,9 +16,9 @@ use \rkphplib\Exception;
 class TMath implements TokPlugin {
 
 /**
- *
+ * Return {nf:}, {number_format:}, {intval:}, {floatval:}, {rand:}, {math:} and {md5:}
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
 	$plugin = [];
 	$plugin['nf'] = 0;
 	$plugin['number_format'] = 0;

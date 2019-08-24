@@ -35,9 +35,9 @@ private $conf = [];
 
 	
 /**
- *
+ * Return job plugin.
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [];

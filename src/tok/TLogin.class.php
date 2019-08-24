@@ -46,14 +46,9 @@ var $account = [];
 
 
 /**
- * Return Tokenizer plugin list:
- *
- *  login, login_init
- *
- * @param Tokenizer $tok
- * @return map<string:int>
+ * Return {login:}, {login_account:}, {login_check:}, {login_access:}, {login_update:} and {login_clear:}
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [];

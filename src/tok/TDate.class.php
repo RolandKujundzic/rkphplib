@@ -23,9 +23,9 @@ private $env = [ 'format_in' => null, 'format_out' => null, 'format_cut' => '' ]
 
 
 /**
- *
+ * Return date plugin
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
   $plugin = [];
   $plugin['date'] = TokPlugin::PARAM_CSLIST | TokPlugin::LIST_BODY;
   return $plugin;

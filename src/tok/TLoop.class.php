@@ -25,12 +25,9 @@ protected $tok = null;
 
 
 /**
- * Register output plugin {output:conf|init|loop}.
- *
- * @param Tokenizer $tok
- * @return map<string:int>
+ * Return {loop:var|list|hash|show|join|count}
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
 	$this->tok = $tok;
 
   $plugin = [];

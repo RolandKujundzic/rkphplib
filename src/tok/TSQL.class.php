@@ -40,7 +40,7 @@ protected $first_row = null;
 
 
 /**
- * Register output plugins. Examples:
+ * Return {sql:query|change|dsn|name|qkey|json|col|options|getId|nextId|in|hasTable|password|import} and {null:} plugins.
  *
  * @tok {sql:query}SELECT * FROM test WHERE name LIKE '{:=name}%' OR id={esc:name}{:sql}
  * @tok {sql:query}UPDATE test SET name={:=name} WHERE id={:=id}{:sql}
@@ -49,11 +49,8 @@ protected $first_row = null;
  * @tok {sql:query:test}name=something{:sql}
  *
  * @tok {sql:dsn}mysqli://user:pass@tcp+localhost/dbname{:sql} (use SETTINGS_DSN by default)
- *
- * @param Tokenizer $tok
- * @return map<string:int>
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [];

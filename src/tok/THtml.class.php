@@ -17,9 +17,9 @@ class THtml implements TokPlugin {
 
 
 /**
- * 
+ * Return {html:tag|inner|append|meta|meta_og|tidy|xml|uglify}, {text2html:}, {input:checkbox|radio} and {user_agent:} 
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
   $plugin = [];
   $plugin['html:tag'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
   $plugin['html:inner'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;

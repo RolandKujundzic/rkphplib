@@ -17,9 +17,9 @@ class TEval implements TokPlugin {
 
 
 /**
- *
+ * Return {eval:math|logic}
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
   $plugin = [];
   $plugin['eval:math'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
   $plugin['eval:logic'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;

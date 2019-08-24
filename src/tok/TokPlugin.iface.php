@@ -79,14 +79,11 @@ const IS_STATIC = 131072;
 
 
 /**
- * Return Plugin list. Example:
+ * Return Plugin list. Save Tokenizer object if necessary. Example:
  * 
  * { abc: TokPlugin::PARAM_LIST, xyz: TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO }
- *  
- * @param Tokenizer $tok
- * @return map<name:int>
  */
-public function getPlugins($tok);
+public function getPlugins(object $tok) : array;
 
 
 }

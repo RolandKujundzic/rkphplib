@@ -79,16 +79,13 @@ protected $example = [];
 
 
 /**
- * Register plugins. 
+ * Register plugins. Return {fv:init|conf|get|get_conf|check|in|tpl|hidden|preset|error|appendjs|error_message|set_error_message} 
  *
  * @tok {fv:init:[|add]}required=...|#|...{:fv}
  * @tok {fv:in:name}label=...|#|...{:fv}
  * @tok {fv:check}
- *
- * @param Tokenizer $tok
- * @return map<string:int>
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [];

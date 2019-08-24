@@ -121,11 +121,8 @@ public function __construct() {
  * - tpl: REQUIRE_PARAM, PARAM_LIST, LIST_BODY, IS_STATIC
  * - shorten: REQUIRE_PARAM
  * - strlen: NO_PARAM 
- *
- * @param Tokenizer $tok
- * @return map<string:int>
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
 	$this->_tok = $tok;
 
 	$plugin = [];

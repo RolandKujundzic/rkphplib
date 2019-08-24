@@ -34,14 +34,9 @@ private  $ignore_level = 0;
 
 
 /**
- * Return Tokenizer plugin list:
- *
- *  menu, menu:add, menu:conf
- *
- * @param Tokenizer $tok
- * @return map<string:int>
+ * Return Tokenizer plugin list: menu, menu:add, menu:conf
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [];

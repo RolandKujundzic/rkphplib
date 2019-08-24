@@ -34,9 +34,9 @@ protected $conf = null;
 
 
 /**
- *
+ * Return {mail:init|html|txt|send|attach}
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
 	$this->tok = $tok;
 
   $plugin = [];

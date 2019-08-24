@@ -45,14 +45,9 @@ private $tok = null;
 
 
 /**
- * Return Tokenizer plugin list:
- * 
- *  language:init|get, txt, ptxt, dtxt
- * 
- * @param Tokenizer $tok
- * @return map <string:int>
+ * Return {language:init|get|script}, {txt:js}, {t:} and {ptxt:}
  */
-public function getPlugins($tok) {
+public function getPlugins(object $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [
