@@ -98,11 +98,8 @@ public function get(string $key) : string {
 
 /**
  * Return true if local table is superset of remote table.
- *
- * @param string $table (optional)
- * @return bool
  */
-public function compareTable($table = '') {
+public function compareTable(string $table = '') : bool {
 	$remote_desc = $this->remote_db->getTableDesc($table);
 	$local_desc = $this->remote_db->getTableDesc($table);
 	$table = $this->set('table', $table);
@@ -127,13 +124,8 @@ public function compareTable($table = '') {
  * Sync entry from remote to local database. If custom_data is set
  * overwrite remote data with custom data. If $id value column is
  * not id use table.column_name as $table.
- *
- * @param string $table
- * @param int $id
- * @param array $custom_data
- * @throws
  */
-public function syncEntry($table = '', $id = '', $custom_data = []) {
+public function syncEntry(string $table, int $id, array $custom_data = []) : void {
 
 	$id_col = 'id';
 	if (($pos = strpos($table, '.')) > 0) {
@@ -176,12 +168,8 @@ public function syncEntry($table = '', $id = '', $custom_data = []) {
 
 /**
  * Recursive loop syncEntry - syncForeignKeyReferences.
- *
- * @param string $table
- * @param string $id_col
- * @param string $id
  */
-private function syncForeignKeyReferences($table, $id_col, $id) {
+private function syncForeignKeyReferences(string $table, string $id_col, string $id) : void {
 
 	$references = $this->local_db->getReferences($table, $id_col);
 
@@ -214,12 +202,8 @@ private function syncForeignKeyReferences($table, $id_col, $id) {
 
 /**
  * Return true if values in $a are the same in $b.
- *
- * @param array $a
- * @param array $b
- * @return bool
  */
-private function compareRows($a, $b) {
+private function compareRows(array $a, array $b) : bool {
 	foreach ($a as $key => $value) {
 		if (!array_key_exists($key, $b) || $b[$key] != $value) {
 			return false;
@@ -232,10 +216,8 @@ private function compareRows($a, $b) {
 
 /**
  * Print message.
- *
- * @param string $message
  */
-protected function log($message) {
+protected function log(string $message) : void {
 	print $message."\n";
 }
 
