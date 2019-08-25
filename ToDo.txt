@@ -1,3 +1,6 @@
+replace [|#|] with Math "Parallel to" Symbol: [&#x2225;] = [∥] (VIM: STRG+v u2225) escape with [&#x2225;]
+other alternatives: 220e∎a 22c6⋆a 2223∣a (see https://www.w3schools.com/charsets/ref_utf_math.asp) 
+
 Auto-create doc:
 ----------------
 @throws, @exit, @use_define, @define and @param + @return from type hints (auto-detect if array is hash)
