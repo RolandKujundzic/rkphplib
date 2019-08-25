@@ -523,6 +523,8 @@ public function tok_login_auth($p) {
 		$this->sess->set('table', $p['table'], 'meta');
 	}
 
+	// \rkphplib\lib\log_debug("TLogin.tok_login_auth(p)> p: ".print_r($p, true));
+
 	if (!is_null($this->db)) {
 		if (!empty($p['multi_table'])) {
 			if (!is_null($this->db) && !empty($p['login']) && !empty($p['password'])) {
@@ -745,8 +747,9 @@ private function selectFromDatabase($p) {
 	}
 
 	if ($dbres[0]['status'] == 'registered') {
-		// auto-activate
-		$this->db->execute($this->db->getCustomQuery('registered2active', $dbres[0]));
+		$query = $this->db->getCustomQuery('registered2active', $dbres[0]);
+		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase> auto-activate user: ".$query);
+		$this->db->execute($query);
 	}
 
 	// login + password ok ... update login session
