@@ -176,6 +176,7 @@ public static function sqlQuery($value, $parameter, $query) {
  *
  * self::run(login, 'Joe', '{login:@table}:login:{get:login}:id:{login:id}')
  * check.email = isUnique:shop_customer@3:email:{get:email}:id: ({get:id} missing because unknown)
+ * check.name = isUnique:dyndns_dns:name:{get:name}:and domain=1 and typ in ('A', 'AAAA')
  *
  * Array p: 
  *  0: Table name or TableName@N (N: where owner=N)
@@ -204,9 +205,14 @@ public static function isUnique($value, $p) {
 	$query .= \rkphplib\ADatabase::escape_name($p[1]).' = {:=u_val}';
 	$id_val = '';
 
-	if (!empty($p[4])) {
-		$query .= ' AND '.\rkphplib\ADatabase::escape_name($p[3]).' != {:=id_val}';
-		$id_val = $p[4];
+	if (!empty($p[3])) {
+		if (stripos($p[3], 'and ') === 0) {
+			$query .= substr($p[3], 4);
+		}
+		else if (!empty($p[4])) {
+			$query .= ' AND '.\rkphplib\ADatabase::escape_name($p[3]).' != {:=id_val}';
+			$id_val = $p[4];
+		}
 	}
 
 	$db = \rkphplib\Database::getInstance('', [ 'select_unique' => $query ]);
