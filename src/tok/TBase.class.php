@@ -464,7 +464,9 @@ public function tok_tpl($p, $arg) {
  * Retrieve (or set) Tokenizer.vmap value. Examples:
  *
  * @tok set a=17: {var:=a}17{:var}
- * @tok set hash: {var:=#b}x=5|#|y=12|#|...{:var}
+ * @tok set default: {var:=a?}5{:var} - set a=5 if unset
+ * @tok set hash: {var:=#b}x=5|#|y=12|#|...{:var} (error if hash b exists)
+ * @tok overwrite hash keys:  {var:=#b!}x=5|#|y=12|#|...{:var} (overwrite existing keys)
  * @tok set vector: {var:+=b}x{:var}, {var:+=b},y{:var} - {var:b} = x,y
  * @tok get optional a: {var:a} or {var:}a{:var}
  * @tok get required a: {var:a!} (abort if not found)
@@ -476,37 +478,89 @@ public function tok_tpl($p, $arg) {
  * @param string $value
  */
 public function tok_var($name, $value) {
+
+	if (substr($name, 0, 1) == '=' && substr($name, -1) == '?') {
+		$name = substr($name, 0, -1); // name is now =abc or =#abc
+		$key = (substr($name, 0, 1) == '#') ? substr($name, 2) : substr($name, 1);
+
+		if ($this->_tok->getVar($key) !== false) {
+			return;
+		}
+	}
+
 	if (substr($name, 0, 2) == '+=') {
-		$name = substr($name, 2);
-		$this->_tok->setVar($name, $value, Tokenizer::VAR_APPEND);
+		$this->setVar(substr($name, 2), $value, Tokenizer::VAR_APPEND);
 	}
 	else if (substr($name, 0, 1) == '=') {
 		$name = substr($name, 1);
 
 		if (substr($name, 0, 1) == '#') {
-			$name = substr($name, 1);
-			$this->_tok->setVar($name, \rkphplib\lib\conf2kv($value), Tokenizer::VAR_MUST_NOT_EXIST);
+			$this->setVarHash(substr($name, 1), \rkphplib\lib\conf2kv($value));
 		}
 		else {
-			$this->_tok->setVar($name, $value);
+			$this->setVar($name, $value);
 		}
 	}
 	else {
-		if (empty($name)) {
-			if (!empty($value)) {
-				$name = trim($value);
-			}
-			else {
-				throw new Exception("invalid plugin ".$this->_tok->getPluginTxt("loop:", $value));
-			}
-		}
-		else if (substr($name, -1) == '.' && !empty($value)) {
-			$name .= trim($value);
-		}
-
-		$res = (string) $this->_tok->getVar($name);
-		return $res;
+		return (string) $this->getVar($name, trim($value));
 	}
+}
+
+
+/**
+ * Set variable $name = $value. If $flag = Tokenizer::VAR_APPEND append to existing value.
+ */
+public function setVar(string $name, string $value, int $flag = 0) : void {
+	$this->_tok->setVar($name, $value, $flag);
+}
+
+
+/**
+ * Return variable $name (use $name2 if empty) value (string|array). 
+ * If suffix of $name is ! throw exception if not found. 
+ * If suffix of $name is [.] use $name.$name2. 
+ * Name may contain [.] (a.b = getVar(a)[b], a.b.c = getVar(a)[b][c], ...).
+ */
+public function getVar(string $name, string $name2 = '') {
+	if (empty($name)) {
+		if (!empty($name2)) {
+			$name = $name2;
+		}
+		else {
+			throw new Exception("invalid plugin ".$this->_tok->getPluginTxt("var:", $value));
+		}
+	}
+
+	if (substr($name, -1) == '.' && !empty($name2)) {
+		$name .= $name2;
+	}
+
+	return $this->_tok->getVar($name);
+}
+
+
+/**
+ * Set has $name. Abort if hash already exists. Use NAME! to merge existing 
+ * key NAME with hash $p.
+ */
+public function setVarHash(string $name, array $p) : void {
+	if (substr($name, -1) != '!') {
+		$this->_tok->setVar($name, $p, Tokenizer::VAR_MUST_NOT_EXIST);
+		return;
+	}
+
+	// merge old and new hash
+	$name = substr($name, 0, -1);
+	$old_p = $this->_tok->getVar($name);
+
+	if ($old_p === false) {
+		$old_p = [];
+	}
+	else if (is_string($old_p)) {
+		$old_p = [ $old_p ];
+	}
+
+	$this->_tok->setVar($name, array_merge($old_p, $p));
 }
 
 
