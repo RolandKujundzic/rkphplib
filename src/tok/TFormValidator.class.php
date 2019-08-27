@@ -1268,6 +1268,7 @@ protected function getInput($name, $ri) {
 
 	$tpl_in = $conf['template.engine'].'.in';
 
+	// \rkphplib\lib\log_debug("TFormValidator.getInput($name, ...)> tpl_in=[$tpl_in] ri: ".print_r($ri, true));
 	if (empty($ri['type'])) {
 		$use = join(', ', array_keys($this->getMapKeys($tpl_in, $conf)));
 		throw new Exception("missing form validator type for $name (use $use)", print_r($ri, true));
