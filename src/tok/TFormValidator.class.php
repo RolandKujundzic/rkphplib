@@ -506,7 +506,7 @@ public function tok_fv_get_conf($engine) {
  * @return ''
  */
 public function tok_fv_conf($name, $p) {
-	\rkphplib\lib\log_debug("TFormValidator.tok_fv_conf()> $name: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_conf()> $name: ".print_r($p, true));
 	$this->conf[$name] = $p;
 	return '';
 }
@@ -537,7 +537,7 @@ public function tok_fv_init(string $do, array $p) : void {
 		// do nothing ...
 	}
 	else {
-		\rkphplib\lib\log_debug("TFormValidator.tok_fv_init()> reset, do=$do p: ".print_r($p, true));
+		// \rkphplib\lib\log_debug("TFormValidator.tok_fv_init()> reset, do=$do p: ".print_r($p, true));
 		$this->conf['current'] = [];
 		$this->error = [];
 		$this->example = [];
@@ -1015,6 +1015,9 @@ public function tok_fv_in($name, $p) {
 	if (!empty($conf['in.'.$name])) {
 		$this->parseInName($name, $conf['in.'.$name], $p);
 	}
+	else if (!empty($p['in'])) {
+		$this->parseInName($name, $p['in'], $p);
+	}
 
 	if (!empty($p['multi'])) {
 		return $this->multiCheckbox($name, $p);
@@ -1102,6 +1105,8 @@ public function getConf($key, $engine = '', $required = true) {
  *  - in.name= radio,
  *  - in.name= area(=textarea),ROWS,COLS,WRAP
  *  - in.name= text(=input),SIZE|WIDTHcc,MAXLENGTH
+ *      instead of text you can use: date, email, datetime-local, url, color, 
+ *      with date, datetime-local, number you can use min, max too
  *  - in.name= pass(=input),
  *  - in.name= file,
  *  - in.name= select,
@@ -1140,9 +1145,10 @@ protected function parseInName($name, $value, &$p) {
 	}
 
 	// \rkphplib\lib\log_debug("TFormValidator.parseInName($name, $value, ...)> r: ".print_r($r, true)."\np: ".print_r($p, true));
+	$html5_input = [ 'text', 'password', 'email', 'date', 'datetime-local', 'color', 'number', 'month', 'range', 'tel', 'time', 'url', 'week' ];
 	$type = $p['type'];
 
-	if (in_array($type, [ 'text', 'pass', 'input', 'password' ])) {
+	if (in_array($type, $html5_input) || $type == 'pass' || $type == 'input') {
 		if (!empty($r[1])) {
 			if (mb_substr($r[1], -2) == 'ch') {
 				$p['width'] = $r[1];
