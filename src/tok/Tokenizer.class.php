@@ -98,7 +98,7 @@ public function __construct($config = 16) {
 
 /**
  * Return this.vmap[$name]. If $name is "a.b.c" return this.vmap[a][b][c].
- * If variable does not exist return ''. If variable ends with ! throw 
+ * If variable does not exist return false. If variable ends with ! throw 
  * exception if it does not exist.
  *
  * @throws
@@ -135,7 +135,7 @@ public function getVar($name) {
 		}
 		else {
 			if (!$required) {
-				return '';
+				return false;
 			}
 			
 			throw new Exception('missing vmap.'.join('.', $done)." (vmap.$name)");
