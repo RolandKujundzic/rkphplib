@@ -14,6 +14,7 @@ use \rkphplib\Dir;
 /**
  * Add or remove comment "//" (mode = on|off) before "\rkphplib\lib\log_debug(", "rkphplib\lib\log_debug(",
  * "lib\log_debug(" and "log_debug(". Apply change if found at beginning of and not already on|off.
+ * Use [// @keep] to disable processing.
  *  
  * @param string $file
  * @param bool $on
@@ -31,22 +32,23 @@ function toggle_lib_debug($file, $on) {
 	}
 
 	foreach ($lines as $line) {
+		$new_line = '';
 
 		if (!$on && preg_match('/^(\s*)\\\?rkphplib\\\lib\\\log_debug\(/', $line, $match)) {
-			if (substr(trim($line), -1) != ';') {
-				throw new Exception('missing ";" at end of line: '."\n$line");
-			}
-
 			$ml = mb_strlen($match[1]);
-			$line = $match[1].'// '.mb_substr($line, $ml);
+			$new_line = $match[1].'// '.mb_substr($line, $ml);
 		}
 		else if ($on && preg_match('/^(\s*)\/\/ \\\?rkphplib\\\lib\\\log_debug\(/', $line, $match)) {
+			$ml = mb_strlen($match[1]);
+			$new_line = $match[1].mb_substr($line, $ml + 3); 
+		}
+
+		if ($new_line && strpos($line, '// @keep') === false) {
 			if (substr(trim($line), -1) != ';') {
 				throw new Exception('missing ";" at end of line: '."\n$line");
 			}
 
-			$ml = mb_strlen($match[1]);
-			$line = $match[1].mb_substr($line, $ml + 3); 
+			$line = $new_line;
 		}
 
 		$code .= $line;
