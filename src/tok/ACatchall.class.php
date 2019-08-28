@@ -74,7 +74,7 @@ public function setLayoutInclude($source_dir, $layout, $include) {
 /**
  * Register catchall plugin.
  */
-public function getPlugins(object $tok) : array {
+public function getPlugins(Tokenizer $tok) : array {
   $plugin = [];
   $plugin['catchall'] = 0;
   return $plugin;

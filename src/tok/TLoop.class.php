@@ -27,7 +27,7 @@ protected $tok = null;
 /**
  * Return {loop:var|list|hash|show|join|count}
  */
-public function getPlugins(object $tok) : array {
+public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;
 
   $plugin = [];

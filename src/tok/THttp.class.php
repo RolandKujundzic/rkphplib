@@ -22,7 +22,7 @@ class THttp implements TokPlugin {
 /**
  * Return http plugin.
  */
-public function getPlugins(object $tok) : array {
+public function getPlugins(Tokenizer $tok) : array {
   $plugin = [];
   $plugin['http:get'] = TokPlugin::ONE_PARAM;
   $plugin['http'] = 0;

@@ -34,7 +34,7 @@ protected $db = null;
 /**
  * Return sitemap plugin. 
  */
-public function getPlugins(object $tok) : array {
+public function getPlugins(Tokenizer $tok) : array {
 	$this->tok =& $tok;
 
   $plugin = [];

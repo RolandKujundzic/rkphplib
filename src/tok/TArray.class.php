@@ -31,7 +31,7 @@ protected $vector = [];
 /**
  * Return {array:set|get|shift|unshift|pop|push|join|length}
  */
-public function getPlugins(object $tok) : array {
+public function getPlugins(Tokenizer $tok) : array {
   $plugin = [];
 	$plugin['array'] = 0;
   $plugin['array:set'] = TokPlugin::REQUIRE_PARAM;

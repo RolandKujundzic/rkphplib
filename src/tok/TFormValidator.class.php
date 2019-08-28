@@ -85,7 +85,7 @@ protected $example = [];
  * @tok {fv:in:name}label=...|#|...{:fv}
  * @tok {fv:check}
  */
-public function getPlugins(object $tok) : array {
+public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [];

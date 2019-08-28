@@ -49,7 +49,7 @@ protected $set_search = [];
 /**
  * Return {output:set|get|conf|init|loop|json|header|footer|empty}, {sort:} and {search:}.
  */
-public function getPlugins(object $tok) : array {
+public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [];

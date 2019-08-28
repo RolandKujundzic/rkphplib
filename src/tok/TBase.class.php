@@ -122,7 +122,7 @@ public function __construct() {
  * - shorten: REQUIRE_PARAM
  * - strlen: NO_PARAM 
  */
-public function getPlugins(object $tok) : array {
+public function getPlugins(Tokenizer $tok) : array {
 	$this->_tok = $tok;
 
 	$plugin = [];

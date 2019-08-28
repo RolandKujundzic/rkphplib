@@ -48,7 +48,7 @@ var $account = [];
 /**
  * Return {login:}, {login_account:}, {login_check:}, {login_access:}, {login_update:} and {login_clear:}
  */
-public function getPlugins(object $tok) : array {
+public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [];

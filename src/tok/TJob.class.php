@@ -37,7 +37,7 @@ private $conf = [];
 /**
  * Return job plugin.
  */
-public function getPlugins(object $tok) : array {
+public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [];

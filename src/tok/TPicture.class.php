@@ -33,7 +33,7 @@ protected $conf = [];
 /**
  * Return {picture:src|init|list}
  */
-public function getPlugins(object $tok) : array {
+public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;
 
   $plugin = [];

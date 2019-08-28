@@ -47,7 +47,7 @@ private $tok = null;
 /**
  * Return {language:init|get|script}, {txt:js}, {t:} and {ptxt:}
  */
-public function getPlugins(object $tok) : array {
+public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [
