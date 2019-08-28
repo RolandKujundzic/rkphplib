@@ -21,7 +21,7 @@ private $_seek = -1;
 /**
  *
  */
-public function getId() {
+public function getId() : string {
 	throw new Exception('ToDo');
 }
 
