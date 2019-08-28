@@ -54,9 +54,8 @@ public $json_format = null;
 
 /**
  * Return original filename when (string) cast occurs.
- * @return string
  */
-public function __toString() {
+public function __toString() : string {
 	return $this->path;
 }
 
@@ -73,11 +72,8 @@ public function __toString() {
  * - json_format: is set retrieve only file information via remote_bin and save in $path.json.
  *     Use m=md5, i=width+height, s=size and l=last_modified, e.g. "misl" or "msl".
  * - md5_old: if set avoid unnecessary downloads
- *
- * @param string $path (default = '')
- * @param string $cwd (default = '' = use current working directory)
  */
-public function __construct($path = '', $opt = []) {
+public function __construct(string $path = '', array $opt = []) {
 
 	if (empty($path)) {
 		return;
@@ -123,10 +119,8 @@ public function __construct($path = '', $opt = []) {
 
 /**
  * Initialize object with hash values.
- *
- * @param map $map
  */
-public function fromHash($map) {
+public function fromHash(array $map) : void {
 	foreach ($map as $key => $value) {
 		if (property_exists($this, $key)) {
 			$this->$key = $value;
@@ -138,10 +132,8 @@ public function fromHash($map) {
 /**
  * Scan either $json or decode $this->path_absolute.'.json'.
  * Set all properties with same name as json key.
- *
- * @param JSON $json (default = null)
  */
-protected function scanJSON($json = null) {
+protected function scanJSON(object $json = null) : void {
 
 	if (is_null($json)) {
 		$json = JSON::decode(File::load($this->path_absolute.'.json'));
@@ -159,7 +151,7 @@ protected function scanJSON($json = null) {
  * Scan $this->path_absolute and set md5, size and last_modified properties.
  * If with and height property exists retrieve image dimensions.
  */
-protected function scanFile() {
+protected function scanFile() : void {
 	$this->md5 = File::md5($this->path_absolute);
 	$this->size = File::size($this->path_absolute);
 	$this->last_modified = File::lastModified($this->path_absolute);
@@ -178,11 +170,8 @@ protected function scanFile() {
  * Remote path is $opt[remote_server]|self::$sync[server].'/'.$opt[remote_path]|self::$sync[cwd].'/'.$opt[remote_file]|$this->path
  * Auto create local file directory if necessary. Retrieve remote md5 with remote_server.'/'.self::$sync[bin]?path=remote_file. 
  * If $this->json_format is set save file information to local_file.json. Use md5_old to avoid unnecessary downloads.
- *
- * @param map $opt see constructor
- * 
  */
-public function synchronize($opt) {
+public function synchronize(array $opt) : void {
 
 	if (is_null($this->path) || mb_strlen($this->path) == 0) {
 		throw new Exception('empty path');
