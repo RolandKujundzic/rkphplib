@@ -31,9 +31,8 @@ protected $info = [];
  * Initialize image. Options:
  *
  * @see updateOptions 
- * @param hash $options (default = [])
  */
-public function __construct($options = []) {
+public function __construct(array $options = []) {
 	$this->updateOptions($options);
 
 	if (!empty($this->url) && !empty($this->path) && !File::exists($this->path)) {
@@ -46,9 +45,8 @@ public function __construct($options = []) {
  * Download image. 
  * 
  * @see updateOptions
- * @param hash $options (default = [])
  */
-public function download($options = []) {
+public function download(array $options = []) : void {
 	$this->updateOptions($options);
 }
 
@@ -60,10 +58,8 @@ public function download($options = []) {
  * path: /path/to/image
  * 
  * If path does not exist create parent directory.
- * 
- * @param hash $options
  */
-private function updateOptions($options) {
+private function updateOptions(array $options) : void {
 
 	if (!empty($options['url'])) {
 		$this->url = $options['url'];
