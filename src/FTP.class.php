@@ -27,13 +27,22 @@ private $cache = [];
 
 
 /**
- * Constructor. 
+ * Constructor. If $opt is not set use default options:
+ * 
+ * - host=
+ * - login=
+ * - password=
+ * - use_cache=
+ * - log= null
+ * - passive= true
+ * - ssl= true
+ * - port= 21
+ * - timeout= 30
  *
  * @throws
  * @see setConf
- * @param map $opt (default = [] = use default options)
  */
-public function __construct($opt = []) {
+public function __construct(array $opt = []) {
 
 	$this->conf = [
 		'host' => '',
@@ -58,14 +67,8 @@ public function __construct($opt = []) {
 
 /**
  * Connect to FTP Server. Use ssl + passive mode by default.
- *
- * @throws 
- * @see __construct
- * @param string $host
- * @param string $user
- * @param string $pass
  */
-public function open($host, $user, $pass) {
+public function open(string $host, string $user, string $pass) : void {
 
 	$this->setConf(['host' => $host, 'login' => $user, 'password' => $pass]);
 
@@ -103,11 +106,8 @@ public function open($host, $user, $pass) {
 
 /**
  * Change remote directory to path.
- *
- * @throws
- * @param string $path
  */
-public function chdir($path) {
+public function chdir(string $path) : void {
 	if (!@ftp_chdir($this->ftp, $path)) {
 		throw new Exception('FTP chdir failed', $path);
 	}
@@ -116,11 +116,8 @@ public function chdir($path) {
 
 /**
  * Return current directory.
- * 
- * @throws
- * @return string
  */
-public function pwd() {
+public function pwd() : string {
 	if (($res = @ftp_pwd($this->ftp)) === false) {
 		throw new Exception('pwd failed');
 	}
@@ -133,11 +130,8 @@ public function pwd() {
  * Create directory path in ftp root directory.
  * Preserve current working directory. 
  * Path starts with / and must not end with /.
- * 
- * @throws
- * @param string $path
  */
-public function mkdir($path) {
+public function mkdir(string $path) : void {
 
 	$curr = $this->pwd();
 	$path = trim($path);
@@ -171,12 +165,8 @@ public function mkdir($path) {
 
 /**
  * Return true if remote file exists. If md5 of local file is not empty check md5 value.
- * 
- * @param $file
- * @param $md5 (default = '')
- * @return bool
  */
-public function hasCache($file, $md5 = '') {
+public function hasCache(string $file, string $md5 = '') : bool {
 
 	if (empty($this->conf['use_cache']) || !isset($this->cache[$file])) {
 		return false;
@@ -189,12 +179,8 @@ public function hasCache($file, $md5 = '') {
 /**
  * Upload local file. Create remote directory path if necessary.
  * Remote file path must start with root directory. 
- * 
- * @throws
- * @param string $local_file
- * @param string $remote_file
  */
-public function put($local_file, $remote_file) {
+public function put(string $local_file, string $remote_file) : void {
 	
 	if ($this->hasCache($remote_file, File::md5($local_file))) {
 		$this->_log($remote_file.' exists');
@@ -226,11 +212,8 @@ public function put($local_file, $remote_file) {
 
 /**
  * Upload directory.
- * 
- * @param string $local_dir
- * @param string $remote_dir
  */
-public function putDir($local_dir, $remote_dir) {
+public function putDir(string $local_dir, string $remote_dir) : void {
 	$entries = Dir::entries($local_dir);
 
 	$this->_log("recursive directory upload $local_dir to $remote_dir\n");	
@@ -248,13 +231,8 @@ public function putDir($local_dir, $remote_dir) {
 
 /**
  * Download $remote_path directory recursive as $local_path.
- * 
- * @throws
- * @param string $remote_path
- * @param string $local_path
- * @return vector<string>
  */
-public function getDir($remote_path, $local_path) {
+public function getDir(string $remote_path, string $local_path) : array {
 
 	$entries = $this->ls($remote_path);
 
@@ -281,12 +259,8 @@ public function getDir($remote_path, $local_path) {
 
 /**
  * Download remote file to local file.
- *
- * @throws
- * @param string $remote_file
- * @param string $local_file
  */
-public function get($remote_file, $local_file) {
+public function get(string $remote_file, string $local_file) : void {
 
 	$lfile = File::exists($local_file);
 
@@ -315,11 +289,8 @@ public function get($remote_file, $local_file) {
 /**
  * Enable cache. If $cache is file:/path/cache/file.ser load
  * serialized cache file ( { file_path1 = [md5, size, since], ... }).
- *
- * @throws 
- * @param string $cache
  */
-public function useCache($cache) {
+public function useCache(string $cache) : void {
 
 	if (count($this->cache) > 0) {
 		throw new Exception('cache was already loaded');
@@ -354,10 +325,8 @@ public function useCache($cache) {
  * - use_cache: default = '' (file:abc.ser = use serialized cache file)
  * - port: default = 21
  * - timeout: default = 30 (connection timeout)
- *
- * @param map $conf
  */
-public function setConf($conf) {
+public function setConf(array $conf) : void {
 
 	foreach ($conf as $key => $value) {
 		if (array_key_exists($key, $this->conf)) {
@@ -376,14 +345,9 @@ public function setConf($conf) {
 
 
 /**
- * Return configuration map (key = null) or value.
- *
- * @throws
- * @see setConf
- * @param string $key (default = null)
- * @return any|map (if key is null)
+ * Return configuration hash (key = null) or value.
  */
-public function getConf($key = null) {
+public function getConf(?string $key = null) {
 
 	if (is_null($key)) {
 		return $this->conf;
@@ -399,10 +363,8 @@ public function getConf($key = null) {
 
 /**
  * Print message if conf.log is null null.
- *
- * @param string $msg
  */
-private function _log($msg) {
+private function _log(string $msg) : void {
 	if (is_null($this->conf['log'])) {
 		return;
 	}
@@ -421,10 +383,8 @@ public function __destruct() {
 
 /**
  * Update serialized cache file if last cache save > 10 sec or force = true.
- *
- * @param bool $force (default = false)
  */
-private function updateCache($force = false) {
+private function updateCache(bool $force = false) : void {
 
 	if (empty($this->conf['use_cache']) || count($this->cache) === 0) {
 		return;
@@ -444,7 +404,7 @@ private function updateCache($force = false) {
 /**
  * Close FTP connection. 
  */
-public function close() {
+public function close() : void {
 
 	if (is_null($this->ftp)) {
 		return;
@@ -466,25 +426,18 @@ public function close() {
 
 /**
  * Return escaped path. Put backslash before whitespace.
- * 
- * @param string $path
- * @return string
  */
-public static function escapePath($path) {
+public static function escapePath(string $path) : string {
 	$res = str_replace(' ', '\\ ', $path);
 	return $res;
 }
 
 
 /**
- * Return directory listing. If recursive is true return tree.
- * Return empty map if directory is empty.
- * 
- * @throws
- * @param string $directory - use "/" for document root
- * @return map<string:map<string:string>>
+ * Return directory listing (use / for document root). If recursive is true return tree.
+ * Return empty hash if directory is empty.
  */
-public function ls($directory) {
+public function ls(string $directory) : array {
 
 	if (empty($directory)) {
 		throw new Exception('empty directory', 'use [.] or [/]');
@@ -556,22 +509,16 @@ public function ls($directory) {
 
 /**
  * Return true if remote file exists.
- * 
- * @param string $path
- * @return bool
  */
-public function hasFile($path) {
+public function hasFile(string $path) : bool {
 	return !empty($path) && @ftp_mdtm($this->ftp, $path) > 0;
 }
 
 
 /**
  * Return true if remote directory exists.
- *
- * @param string $path
- * @return bool
  */
-public function hasDirectory($path) {
+public function hasDirectory(string $path) : bool {
 	$tmp = @ftp_rawlist($this->ftp, '-a '.$path);
 
 	if ($tmp === false) {
@@ -585,11 +532,8 @@ public function hasDirectory($path) {
 
 /**
  * Delete remote file.
- *
- * @throws
- * @param string $file
  */
-public function removeFile($file) {
+public function removeFile(string $file) : void {
 	if ($this->hasFile($file)) {
 		if (!@ftp_delete($this->ftp, $file)) {
 			throw new Exception('delete file failed', $file);
@@ -603,11 +547,8 @@ public function removeFile($file) {
 
 /**
  * Remove remote directory (including all subdirectories).
- *
- * @throws
- * @param string $path
  */
-public function removeDirectory($path) {
+public function removeDirectory(string $path) : void {
 
 	if (empty($path)) {
 		throw new Exception('empty path', $path);
