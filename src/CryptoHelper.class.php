@@ -131,7 +131,7 @@ public static function unwrap_urlenc_base64(string $str) : string {
 /**
  * Return mcrypted text.
  */
-public static function enc_mcrypt_r256(string $text, string $secret) : string { 
+public static function enc_mcrypt_r256(string $text, string $secret) : string {
 	$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB);
 	$iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
 	return mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $secret, $text, MCRYPT_MODE_ECB, $iv);
