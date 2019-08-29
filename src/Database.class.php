@@ -140,18 +140,22 @@ public static function getInfo() : array {
 /**
  * Prevent creating a new instance of the *Singleton* via the `new` operator.
  */
-protected function __construct() { }
+protected function __construct() {
+}
 
 
 /**
  * Prevent cloning of the instance of the *Singleton* instance.
  */
-private function __clone() { }
+private function __clone() {
+}
 
 
 /**
  * Prevent unserializing of the *Singleton* instance.
  */
-private function __wakeup() { }
+private function __wakeup() {
+}
+
 
 }
