@@ -1,7 +1,7 @@
 #!/usr/bin/php
 <?php
 
-require_once('src/lib/scan_directory.php');
+require_once(__DIR__.'/../src/lib/scan_directory.php');
 
 
 
