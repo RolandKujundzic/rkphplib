@@ -1,0 +1,195 @@
+#!/usr/bin/php
+<?php
+
+require_once('src/lib/scan_directory.php');
+
+
+
+/**
+ * Add or remove comment "//" (mode = on|off) before "\rkphplib\lib\log_debug(", "rkphplib\lib\log_debug(",
+ * "lib\log_debug(" and "log_debug(". Apply change if found at beginning of and not already on|off.
+ * Use [// @keep] to disable processing.
+ *  
+ * @param string $file
+ * @param bool $on
+ */
+function toggle_lib_debug($file, $on) {
+	$lines = file($file);
+	$code_before = join('', $lines);
+	$code = '';
+	$k = 0;
+
+	if ($on) {
+		print "enable log_debug in $file\n";
+	}
+	else {
+		print "disable log_debug in $file\n";
+	}
+
+	foreach ($lines as $line) {
+		$new_line = '';
+		$k++;
+
+		if (!$on && preg_match('/^(\s*)\\\?rkphplib\\\lib\\\log_debug\(/', $line, $match)) {
+			$ml = mb_strlen($match[1]);
+			$new_line = $match[1].'// '.mb_substr($line, $ml);
+		}
+		else if ($on && preg_match('/^(\s*)\/\/ \\\?rkphplib\\\lib\\\log_debug\(/', $line, $match)) {
+			$ml = mb_strlen($match[1]);
+			$new_line = $match[1].mb_substr($line, $ml + 3); 
+		}
+
+		if ($new_line && strpos($line, '// @keep') === false) {
+			if (substr(trim($line), -1) != ';') {
+				exit("\nERROR: missing ';' at end of line $k in $file:\n$line\n\n");
+			}
+
+			$line = $new_line;
+		}
+
+		$code .= $line;
+	}
+
+	if ($code_before != $code) {
+		print "overwrite file with modified version\n";
+		file_put_contents($file, $code);
+	}
+	else {
+		print "no change - keep file\n";
+	}
+}
+
+
+/**
+ * Remove types from $lines[$k] (and $k+1, ... if multiline function declaration).
+ * Increase $lnum if multiline.
+ * 
+ * @param array $lines
+ * @param int $lnum
+ * @return string|false
+ */
+function removeTypes($lines, &$lnum) {
+	$line = $lines[$lnum];
+	$first_line = $lnum;
+
+	// e.g. public static function loadTable(string $uri, array $options = []) : array {
+	$rx_func = '/^\s*(abstract )?(public |protected |private )?(static )?function [a-zA-Z0-9_]+';
+	$rx_param = '(\??[\\\a-zA-Z0-9_]* ?&?\$[a-zA-Z0-9_]+ ?=?.*,? ?)*';
+
+	while (preg_match($rx_func.'\(.+,\s$/', $lines[$lnum]) && ($lnum + 1) < count($lines)) {
+		$lnum++;
+		$line .= $lines[$lnum];
+	}
+
+	if ($first_line < $lnum) {
+		print "found multiline function (".($lnum - $first_line + 1)." lines) in line ".($first_line + 1).":\n$line";
+	}
+
+	$new_line = $line;
+
+	if (preg_match($rx_func.'\('.$rx_param.'\)(.*)[\{;]\s$/', $line, $match)) {
+		$new_line = preg_replace('/[a-zA-Z0-9_]+ (\$[a-zA-Z0-9_]+)/', '$1', $line);
+    
+		$last = count($match) - 1;
+		if (substr($match[$last], 0, 3) == ' : ') {
+			$new_line = str_replace($match[$last], ' ', $new_line);
+		}
+	}
+	else if (preg_match($rx_func.'(.+)$/', $line, $match)) {
+		$new_line = false;
+	}
+
+	return $new_line;
+}
+
+
+/**
+ * Add or remove strict function types.
+ *  
+ * @param string $file
+ * @param bool $on
+ */
+function toggle_strict_types($file, $on) {
+	$lines = file($file);
+	$code_before = join('', $lines);
+	$code = '';
+
+	if ($on) {
+		print "enable strict_types in $file\n";
+	}
+	else {
+		print "disable strict_types in $file\n";
+	}
+
+	$is_debug = false;
+	for ($k = 0; $k < count($lines); $k++) {
+		$line = $lines[$k];
+		$new_line = '';
+
+		if (preg_match('/\s*(\/\*|\/\/)/', $line)) {
+			$is_debug = true;
+		}
+		else if ($is_debug && preg_match('/\s*\*+\//', $line)) {
+			$is_debug = false;
+		}
+
+		if ($is_debug) {
+			$new_line = $line;
+		}
+		else if (!$on) {
+			$new_line = removeTypes($lines, $k);
+			if ($new_line === false) {
+  			exit("\nERROR: Invalid line ".($k + 1)." in $file:\n$line\n");
+			}
+		}
+		else if ($on) {
+			exit("\nERROR: ToDo ...\n\n");
+		}
+
+		$code .= $new_line;
+	}
+
+	if ($code_before != $code) {
+		print "overwrite file with modified version\n";
+		file_put_contents($file, $code);
+	}
+	else {
+		print "no change - keep file\n";
+	}
+}
+
+
+
+/**
+ * M A I N 
+ */
+
+/* Test: 
+$line = 'abstract public function get(string $key, bool $required = true, string $map = \'\');'."\n";
+$new_line = removeTypes($line);
+exit("\nNew Line:\n$new_line\n");
+*/
+
+if (empty($_SERVER['argv'][1]) || empty($_SERVER['argv'][2]) || empty($_SERVER['argv'][3]) ||
+		!in_array($_SERVER['argv'][2], ['log_debug', 'strict_types']) || !in_array($_SERVER['argv'][3], ['on', 'off'])) {
+	print "\nSYNTAX: php ".$_SERVER['argv'][0]." PHP_FILE|PATH_TO_DIR lib_debug|strict_types on|off\n\n";
+	exit(1);
+}
+
+$path = $_SERVER['argv'][1];
+$toggle_func = 'toggle_'.$_SERVER['argv'][2];
+$on = $_SERVER['argv'][3] == 'on';
+
+if (is_dir($path)) {
+	$php_files = rkphplib\lib\scan_directory($path, [ '.php' ]);
+
+	foreach ($php_files as $file) {
+		$toggle_func($file, $on);
+	}
+}
+else if (is_file($path)) {
+	$toggle_func($path, $on);
+}
+else {
+	exit("\nSYNTAX: php ".$_SERVER['argv'][0]." PHP_FILE|PATH_TO_DIR lib_debug|strict_types on|off\n\n");
+}
