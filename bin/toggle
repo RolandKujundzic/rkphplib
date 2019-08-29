@@ -74,28 +74,39 @@ function removeTypes($lines, &$lnum) {
 
 	// e.g. public static function loadTable(string $uri, array $options = []) : array {
 	$rx_func = '/^\s*(abstract )?(public |protected |private )?(static )?function [a-zA-Z0-9_]+';
-	$rx_param = '(\??[\\\a-zA-Z0-9_]* ?&?\$[a-zA-Z0-9_]+ ?=?.*,? ?)*';
+	$rx_param = '(\s*\??[\\\a-zA-Z0-9_]* ?&?\$[a-zA-Z0-9_]+ ?=?.*,?\s?)*';
 
 	while (preg_match($rx_func.'\(.+,\s$/', $lines[$lnum]) && ($lnum + 1) < count($lines)) {
 		$lnum++;
 		$line .= $lines[$lnum];
 	}
 
-	if ($first_line < $lnum) {
-		print "found multiline function (".($lnum - $first_line + 1)." lines) in line ".($first_line + 1).":\n$line";
-	}
-
 	$new_line = $line;
+	$error_prefix = 'line '.($first_line + 1);
 
 	if (preg_match($rx_func.'\('.$rx_param.'\)(.*)[\{;]\s$/', $line, $match)) {
 		$new_line = preg_replace('/[a-zA-Z0-9_]+ (\$[a-zA-Z0-9_]+)/', '$1', $line);
     
 		$last = count($match) - 1;
 		if (substr($match[$last], 0, 3) == ' : ') {
-			$new_line = str_replace($match[$last], ' ', $new_line);
+			if (substr($new_line, -3) == " {\n") {
+				$new_line = str_replace($match[$last], ' ', $new_line);
+			}
+			else if (substr($new_line, -2) == ";\n") {
+				$new_line = str_replace($match[$last], '', $new_line);
+			}
+			else {
+				print "$error_prefix has either trailing whitespace, ^M or { ... }:\n[$new_line]\n"; 
+				$new_line = false;
+			}
 		}
 	}
 	else if (preg_match($rx_func.'(.+)$/', $line, $match)) {
+		print "$error_prefix is match [$line]\n";
+		$new_line = false;
+	}
+	else if ($first_line < $lnum) {
+		print "$error_prefix is multiline [$line]\n";
 		$new_line = false;
 	}
 
