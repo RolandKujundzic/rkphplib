@@ -347,7 +347,7 @@ public function getStructure() : object {
  * @param string $head
  * @return hash
  */
-public function parseHeaders(string $head) : array { 
+public function parseHeaders(string $head) : array {
 	$h = imap_rfc822_parse_headers($head);
 	$p = array();
 	
