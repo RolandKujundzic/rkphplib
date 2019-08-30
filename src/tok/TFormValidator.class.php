@@ -102,6 +102,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['fv:error'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:appendjs'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::CSLIST_BODY;
 	$plugin['fv:error_message'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['fv:emsg'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:set_error_message'] = TokPlugin::REQUIRE_PARAM;
 
   return $plugin;
@@ -190,12 +191,12 @@ public function __construct() {
 
 		'default.error.message'					=> '<span class="error_message">'.$error.'</span>',
 		'default.error.message_concat'	=> ', ',
-		'default.error.message_multi'		=> "<i>$name</i>: <tt>$error</tt><br>",
+		'default.error.message_multi'		=> "<i>$name</i>: <tt>$error</tt><br class=\"fv\" />",
 		'default.error.const'						=> 'error',
 
-		'default.output.in'				=> '<span class="label '.$error.'">'.$label.'</span>'.$input.$example.$error_message.'<br>',
+		'default.output.in'				=> '<span class="label '.$error.'">'.$label.'</span>'.$input.$example.$error_message.'<br class="fv" />',
 
-		'default.output.in.cbox_query' => $input.'<span class="cbox_query '.$error.'">'.$label.'</span><br>',		
+		'default.output.in.cbox_query' => $input.'<span class="cbox_query '.$error.'">'.$label.'</span><br class="fv" />',		
 
 		'default.output.in.multi'	=> '<span class="label '.$error.'">'.$label."</span>$input".
 			'<div class="example_error_wrapper">'.$example.$error_message."</div>",
@@ -764,15 +765,20 @@ public function tok_fv_error($name, $tpl) {
 
 
 /**
+ * Alias for {fv:error_message}.
+ * @see tok_fv_error_message
+ */
+public function tok_fv_emsg(string $name, string $tpl) : string {
+	return $this->tok_fv_error_message($name, $tpl);
+}
+
+
+/**
  * Return error message. Replace {:=name} and {:=error} in ENGINE.error.message[_multi] (overwrite with $tpl). If there are
  * multiple errors concatenate ENGINE.error.message with ENGINE.error.message_concat.
- *
  * Use name=* to return all error messages (concatenate ENGINE.error.message_multi).
- *
- * @throws
- * @return string 
  */
-public function tok_fv_error_message($name, $tpl = '') {
+public function tok_fv_error_message(string $name, string $tpl) : string {
 	$res = '';
 
 	if ($name == '*') {
