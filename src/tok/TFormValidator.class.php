@@ -978,7 +978,7 @@ private function _fv_in_html($name, $r, $output_in = '') {
   }
 
 	if (!empty($conf['show_error_message'])) {
-	  $r['error_message'] = $this->tok_fv_error_message($name);
+	  $r['error_message'] = $this->tok_fv_error_message($name, '');
 	}
 
 	if (!empty($conf['show_error'])) {
