@@ -1,13 +1,14 @@
 #!/usr/bin/php
 <?php
 
+require_once('src/tok/Tokenizer.class.php');
 require_once('src/lib/config.php');
 require_once('src/File.class.php');
 require_once('src/Dir.class.php');
 
-use \rkphplib\Exception;
-use \rkphplib\File;
-use \rkphplib\Dir;
+use rkphplib\Exception;
+use rkphplib\File;
+use rkphplib\Dir;
 
 
 if (!defined('SETTINGS_DSN')) {
@@ -64,8 +65,9 @@ public function scan($dir = 'src/tok') {
  * @param string $cname
  */
 public function register($handler, $cname) {
+	$dummy = new rkphplib\tok\Tokenizer();
 
-  $plugins = $handler->getPlugins($this);
+  $plugins = $handler->getPlugins($dummy);
 	$this->_plugin[$cname] = [];
 
   foreach ($plugins as $name => $opt) {

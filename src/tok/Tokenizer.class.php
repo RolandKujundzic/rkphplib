@@ -1242,7 +1242,7 @@ private function tryPluginMap($name) {
 		'TDate' => [ 'date' ],
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval' ],
 		'TFileSystem' => [ 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'directory', 'file:size', 'file:copy', 'file:exists', 'file', 'dirname', 'basename' ],
-		'TFormValidator' => [ 'fv', 'fv:init', 'fv:conf', 'fv:get', 'fv:get_conf', 'fv:check', 'fv:in', 'fv:tpl', 'fv:hidden', 'fv:preset', 'fv:error', 'fv:appendjs', 'fv:error_message', 'fv:set_error_message' ],
+		'TFormValidator' => [ 'fv', 'fv:init', 'fv:conf', 'fv:get', 'fv:get_conf', 'fv:check', 'fv:in', 'fv:tpl', 'fv:hidden', 'fv:preset', 'fv:error', 'fv:appendjs', 'fv:error_message', 'fv:emsg', 'fv:set_error_message' ],
 		'THtml' => [ 'html:tag', 'html:inner', 'html:append', 'html:meta', 'html:meta_og', 'html:tidy', 'html:xml', 'html:uglify', 'html', 'text2html', 'input:checkbox', 'input:radio', 'input', 'user_agent' ],
 		'THttp' => [ 'http:get', 'http' ],
 		'TJob' => [ 'job' ],
@@ -1255,6 +1255,7 @@ private function tryPluginMap($name) {
 		'TOutput' => [ 'output:set', 'output:get', 'output:conf', 'output:init', 'output:loop', 'output:json', 'output:header', 'output:footer', 'output:empty', 'output', 'sort', 'search' ],
 		'TPicture' => [ 'picture:init', 'picture:src', 'picture:list', 'picture' ],
 		'TSQL' => [ 'sql:query', 'sql:change', 'sql:dsn', 'sql:name', 'sql:qkey', 'sql:json', 'sql:col', 'sql:options', 'sql:getId', 'sql:nextId', 'sql:in', 'sql:hasTable', 'sql:password', 'sql:import', 'sql', 'null' ],
+		'TSetup' => [ 'setup:database', 'setup:table', 'setup:install', 'setup' ],
 		'TSitemap' => [ 'sitemap' ],
 		'TTwig' => [ 'autoescape', 'block', 'do', 'embed', 'extends', 'filter', 'flush', 'for', 'from', 'if', 'import', 'include', 'macro', 'sandbox', 'set', 'spaceless', 'use', 'verbatim', 'v' ],
 		'TUpload' => [ 'upload:init', 'upload:conf', 'upload:formData', 'upload:exists', 'upload:scan', 'upload' ]
