@@ -777,7 +777,7 @@ public function tok_fv_emsg(string $name, string $tpl) : string {
  * Return error message. Replace {:=name} and {:=error} in ENGINE.error.message[_multi] (overwrite with $tpl). If there are
  * multiple errors concatenate ENGINE.error.message with ENGINE.error.message_concat.
  * Use name=* to return all error messages (concatenate ENGINE.error.message_multi).
- * Define default.error.message_none (with {:=msg} tag) to show no-errors. 
+ * Define default.error.message_none (with {:=msg} tag) to show no-errors and use $tpl as error message if error. 
  */
 public function tok_fv_error_message(string $name, string $tpl) : string {
 	$res = '';
@@ -790,13 +790,25 @@ public function tok_fv_error_message(string $name, string $tpl) : string {
 		foreach ($this->error as $key => $value) {
 			$res .= $this->tok_fv_error_message($key, $tpl);
 		}
+
+		return $res;
 	}
-	else if (isset($this->error[$name])) {
-		if (empty($tpl)) {
+
+	// no error mode - only if $tpl is not empty
+	$no_error_tpl = empty($tpl) ? '' : $this->getConf('error.message_none', true, false);
+
+	if (isset($this->error[$name])) {
+		if (!empty($no_error_tpl)) {
+			$error_list = [ $tpl ];
 			$tpl = $this->getConf('error.message', true);
 		}
+		else {
+			if (empty($tpl)) {
+				$tpl = $this->getConf('error.message', true);
+			}
 
-		$error_list = $this->error[$name];
+			$error_list = $this->error[$name];
+		}
 
 		if (!is_array($error_list)) {
 			throw new Exception('invalid error list', print_r($error_list, true));
@@ -814,13 +826,8 @@ public function tok_fv_error_message(string $name, string $tpl) : string {
 
 		$res = $this->tok->replaceTags($tpl, $r);
 	}
-	else {
-		// no error
-		$html = $this->getConf('error.message_none', true, false);
-
-		if (!empty($tpl)) {
-			$res = $this->tok->replaceTags($html, [ 'msg' => $tpl, 'name' => $name ]);
-		}
+	else if (!empty($no_error_tpl)) {
+		$res = $this->tok->replaceTags($no_error_tpl, [ 'msg' => $tpl, 'name' => $name ]);
 	}
 
 	// \rkphplib\lib\log_debug("tok_fv_error_message($name, ...)> name=[$name] res=[$res] - error: ".print_r($this->error, true));
