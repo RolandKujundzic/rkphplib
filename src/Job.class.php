@@ -52,11 +52,8 @@ private $conf = [];
  *
  * If old lockfile exists status must be done (move lockfile to lockfile.done) or 
  * continue (move lockfile to lockfile.old) otherwise throw exception.
- *
- * @throws
- * @param hash $options
  */
-public function __construct($options) {
+public function __construct(array $options) {
 	$required = [ 'name' ];
 
 	foreach ($required as $key) {
@@ -106,11 +103,8 @@ public function __construct($options) {
 
 /**
  * Return configuration key. Access old keys with old.NAME.
- * 
- * @param string $name
- * @return 
  */
-public function get($name) {
+public function get(string $name) : string {
 	if (!isset($this->conf[$name])) {
 		throw new Exception('no suche conf key '.$name);
 	}
@@ -121,10 +115,8 @@ public function get($name) {
 
 /**
  * Start job in background according to conf. Update lock file.
- * 
- * @throws
  */
-public function run() {
+public function run() : void {
 	$cmd = empty($this->conf['docker']) ? $this->conf['execute'] : 'docker run -rm '.$this->conf['docker'].' '.$this->conf['execute'];
 
 	$cmd .= ' && echo $! > "'.$this->conf['logfile'].'" 2>&1 &';
@@ -181,12 +173,8 @@ public function run() {
  * cmd: 
  * start: 
  * pid: 
- *
- * @throws
- * @param hash $p
  */
-public function updateLock($p, $allow_status = []) {
-
+public function updateLock(array $p, array $allow_status = []) : void {
 	$current = $this->loadLock($allow_status);
 	$current['date'] = microtime();
 
@@ -200,12 +188,8 @@ public function updateLock($p, $allow_status = []) {
 
 /**
  * Load lockfile. If allow_status is set and current status is not allowed throw exception.
- *
- * @throws
- * @param vector $allow_status (default = [])
- * @return hash
  */
-public function loadLock($allow_status = []) {
+public function loadLock(array $allow_status = []) : array {
 	$conf = [ 'status' => '' ];
 
 	if (File::exists($this->conf['lockfile'])) {
