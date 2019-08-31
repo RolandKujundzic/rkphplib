@@ -4,7 +4,7 @@ namespace rkphplib\tok;
 
 require_once(__DIR__.'/TokPlugin.iface.php');
 
-use \rkphplib\Exception;
+use rkphplib\Exception;
 
 
 /**

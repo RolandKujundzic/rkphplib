@@ -9,9 +9,9 @@ require_once(__DIR__.'/lib/ps.php');
 require_once(__DIR__.'/lib/execute.php');
 require_once(__DIR__.'/lib/kv2conf.php');
 
-use \rkphplib\JSON;
-use \rkphplib\File;
-use \rkphplib\Dir;
+use rkphplib\JSON;
+use rkphplib\File;
+use rkphplib\Dir;
 
 
 

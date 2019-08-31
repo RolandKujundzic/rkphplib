@@ -12,7 +12,7 @@ if (!defined('SETTINGS_REQ_DIR')) {
 }
 
 
-use \rkphplib\Dir;
+use rkphplib\Dir;
 
 
 /**

@@ -9,9 +9,9 @@ require_once($parent_dir.'/lib/conf2kv.php');
 require_once($parent_dir.'/lib/kv2conf.php');
 require_once($parent_dir.'/traits/Map.trait.php');
 
-use \rkphplib\Exception;
-use \rkphplib\ADatabase;
-use \rkphplib\Database;
+use rkphplib\Exception;
+use rkphplib\ADatabase;
+use rkphplib\Database;
 
 
 
@@ -24,7 +24,7 @@ use \rkphplib\Database;
  *
  */
 class TConf implements TokPlugin {
-use \rkphplib\traits\Map;
+use rkphplib\traits\Map;
 
 /** @param map system configuration */
 public $sconf = [];

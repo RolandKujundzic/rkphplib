@@ -12,14 +12,14 @@ require_once(__DIR__.'/../JSON.class.php');
 require_once(__DIR__.'/../lib/split_str.php');
 require_once(__DIR__.'/../lib/conf2kv.php');
 
-use \rkphplib\tok\TPicture;
-use \rkphplib\tok\THttp;
-use \rkphplib\Exception;
-use \rkphplib\Database;
-use \rkphplib\FSEntry;
-use \rkphplib\JSON;
-use \rkphplib\File;
-use \rkphplib\Dir;
+use rkphplib\tok\TPicture;
+use rkphplib\tok\THttp;
+use rkphplib\Exception;
+use rkphplib\Database;
+use rkphplib\FSEntry;
+use rkphplib\JSON;
+use rkphplib\File;
+use rkphplib\Dir;
 
 
 

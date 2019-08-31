@@ -5,7 +5,7 @@ namespace rkphplib\lib;
 require_once(__DIR__.'/../Exception.class.php');
 require_once(__DIR__.'/split_str.php');
 
-use \rkphplib\Exception;
+use rkphplib\Exception;
 
 
 /**

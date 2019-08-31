@@ -9,12 +9,12 @@ require_once(__DIR__.'/TBase.class.php');
 require_once($parent_dir.'/File.class.php');
 require_once($parent_dir.'/Dir.class.php');
 
-use \rkphplib\Exception;
-use \rkphplib\tok\Tokenizer;
-use \rkphplib\tok\TBase;
-use \rkphplib\FSEntry;
-use \rkphplib\File;
-use \rkphplib\Dir;
+use rkphplib\Exception;
+use rkphplib\tok\Tokenizer;
+use rkphplib\tok\TBase;
+use rkphplib\FSEntry;
+use rkphplib\File;
+use rkphplib\Dir;
 
 
 /**

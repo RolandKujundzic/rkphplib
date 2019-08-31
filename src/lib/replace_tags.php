@@ -9,24 +9,19 @@ use rkphplib\Exception;
 
 
 /**
- * Replace {:=key} in $text with $map.key value.
- * Replace {:=key.subkey} with $map.key.subkey value.
- * Use "(array)$obj" for objects. Use 'prefix' as 
- * shortcut for ['{:=', '}', 'prefix' ] ({:=prefix.tag} replace).
- *
+ * Replace {:=key} in $text with $hash.key value. Replace {:=key.subkey} with $hash.key.subkey value.
+ * Use "(array)$obj" to convert object into $hash. Use 'prefix' as shortcut for ['{:=', '}', 'prefix' ] ({:=prefix.tag} replace).
+ * Default $conf = [ '{:=', '}', '' ].
+
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @param string $text
- * @param map $map use "(array)$obj" for objects
- * @param array $conf (default = [ '{:=', '}', '' ])
- * @return string
  */
-function replace_tags($text, $map, $conf = array(TAG_PREFIX, TAG_SUFFIX, '')) {
+function replace_tags(string $text, array $hash, array $conf = [ TAG_PREFIX, TAG_SUFFIX, '' ]) : string {
 
 	if (is_string($conf)) {
 		$conf = [ TAG_PREFIX, TAG_SUFFIX, $conf ];
 	}
 
-	foreach ($map as $key => $value) {
+	foreach ($hash as $key => $value) {
     if (is_array($value)) {
 			$sub_conf = $conf;
 			$sub_conf[2] = empty($conf[2]) ? $key : $conf[2].'.'.$key;

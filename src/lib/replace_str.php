@@ -5,15 +5,10 @@ namespace rkphplib\lib;
 
 /**
  * Prefix/Suffix free replace of $a in $txt with $b. Replace is only executed 
- * previous/next character is start|end or in $split.
- * 
- * @param string $a search
- * @param string $b replace
- * @param string $txt text
- * @param string $split ' .,;-:!?§$€)(][}{><|"/\\&#`´+-*=~^%'."'\r\n\t"
- * @return string
+ * if previous/next character is start|end or in [ .,;-:!?§$€)(][}{><|"/\\&#`´+-*=~^%\'\r\n\t].
+ * Use $a as search, $b as replace and $txt as text string.
  */
-function replace_str($a, $b, $txt) {
+function replace_str(string $a, string $b, string $txt) : string {
 	$len_txt = mb_strlen($txt);
 	$len_a = mb_strlen($a);
 	$len_b = mb_strlen($b);

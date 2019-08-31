@@ -14,11 +14,11 @@ require_once($parent_dir.'/lib/conf2kv.php');
 require_once($parent_dir.'/lib/kv2conf.php');
 require_once($parent_dir.'/lib/is_map.php');
 
-use \rkphplib\Exception;
-use \rkphplib\ADatabase;
-use \rkphplib\Database;
-use \rkphplib\JSON;
-use \rkphplib\File;
+use rkphplib\Exception;
+use rkphplib\ADatabase;
+use rkphplib\Database;
+use rkphplib\JSON;
+use rkphplib\File;
 
 
 

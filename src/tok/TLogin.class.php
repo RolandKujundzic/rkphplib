@@ -12,10 +12,10 @@ require_once($parent_dir.'/lib/kv2conf.php');
 require_once($parent_dir.'/lib/redirect.php');
 require_once($parent_dir.'/lib/split_str.php');
 
-use \rkphplib\Exception;
-use \rkphplib\Session;
-use \rkphplib\ADatabase;
-use \rkphplib\Database;
+use rkphplib\Exception;
+use rkphplib\Session;
+use rkphplib\ADatabase;
+use rkphplib\Database;
 
 
 

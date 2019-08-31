@@ -4,7 +4,7 @@ namespace rkphplib\tok;
 
 require_once(dirname(__DIR__).'/Exception.class.php');
 
-use \rkphplib\Exception;
+use rkphplib\Exception;
 
 
 /**

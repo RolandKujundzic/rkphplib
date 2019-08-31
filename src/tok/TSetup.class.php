@@ -6,8 +6,8 @@ require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/../Database.class.php');
 require_once(__DIR__.'/../File.class.php');
 
-use \rkphplib\Exception;
-use \rkphplib\File;
+use rkphplib\Exception;
+use rkphplib\File;
 
 
 /**

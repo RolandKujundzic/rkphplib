@@ -8,10 +8,10 @@ require_once($parent_dir.'/ADatabase.class.php');
 require_once($parent_dir.'/Database.class.php');
 require_once($parent_dir.'/File.class.php');
 
-use \rkphplib\Exception;
-use \rkphplib\ADatabase;
-use \rkphplib\Database;
-use \rkphplib\File;
+use rkphplib\Exception;
+use rkphplib\ADatabase;
+use rkphplib\Database;
+use rkphplib\File;
 
 
 

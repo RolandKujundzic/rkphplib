@@ -12,11 +12,11 @@ require_once($parent_dir.'/lib/conf2kv.php');
 require_once($parent_dir.'/lib/kv2conf.php');
 require_once($parent_dir.'/lib/split_str.php');
 
-use \rkphplib\Exception;
-use \rkphplib\Database;
-use \rkphplib\ADatabase;
-use \rkphplib\File;
-use \rkphplib\Dir;
+use rkphplib\Exception;
+use rkphplib\Database;
+use rkphplib\ADatabase;
+use rkphplib\File;
+use rkphplib\Dir;
 
 
 

@@ -8,10 +8,10 @@ require_once(__DIR__.'/TokHelper.trait.php');
 require_once($parent_dir.'/File.class.php');
 require_once($parent_dir.'/Dir.class.php');
 
-use \rkphplib\Exception;
-use \rkphplib\File;
-use \rkphplib\Dir;
-use \rkphplib\FSEntry;
+use rkphplib\Exception;
+use rkphplib\File;
+use rkphplib\Dir;
+use rkphplib\FSEntry;
 
 
 

@@ -14,9 +14,9 @@ require_once($parent_dir.'/lib/conf2kv.php');
 require_once($parent_dir.'/lib/kv2conf.php');
 require_once($parent_dir.'/lib/is_map.php');
 
-use \rkphplib\Exception;
-use \rkphplib\tok\Tokenizer;
-use \rkphplib\ValueCheck;
+use rkphplib\Exception;
+use rkphplib\tok\Tokenizer;
+use rkphplib\ValueCheck;
 
 
 /**

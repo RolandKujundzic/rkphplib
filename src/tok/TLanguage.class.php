@@ -8,11 +8,11 @@ require_once(__DIR__.'/../Database.class.php');
 require_once(__DIR__.'/../Session.class.php');
 require_once(__DIR__.'/../File.class.php');
 
-use \rkphplib\Exception;
-use \rkphplib\Database;
-use \rkphplib\ADatabase;
-use \rkphplib\Session;
-use \rkphplib\File;
+use rkphplib\Exception;
+use rkphplib\Database;
+use rkphplib\ADatabase;
+use rkphplib\Session;
+use rkphplib\File;
 
 
 

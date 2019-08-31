@@ -12,10 +12,10 @@ require_once($parent_dir.'/lib/ps.php');
 require_once($parent_dir.'/lib/execute.php');
 require_once($parent_dir.'/lib/kv2conf.php');
 
-use \rkphplib\Exception;
-use \rkphplib\JSON;
-use \rkphplib\File;
-use \rkphplib\Dir;
+use rkphplib\Exception;
+use rkphplib\JSON;
+use rkphplib\File;
+use rkphplib\Dir;
 
 
 

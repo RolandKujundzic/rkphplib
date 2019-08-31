@@ -7,8 +7,8 @@ require_once(__DIR__.'/TokPlugin.iface.php');
 require_once(__DIR__.'/TokHelper.trait.php');
 require_once($parent_dir.'/Mailer.class.php');
 
-use \rkphplib\Exception;
-use \rkphplib\Mailer;
+use rkphplib\Exception;
+use rkphplib\Mailer;
 
 
 
