@@ -121,7 +121,7 @@ $api->run();
 
 ## Requirements
 
-- PHP 5.5
+- PHP 7.2
 
 
 ## Documentation
