@@ -14,11 +14,8 @@ namespace rkphplib\lib;
  * \rkphplib\lib\translate("variable p1x < p2x", [ 'age', 18 ]) -> return "Variable age < 18".
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @param string $text
- * @param array $param_replace
- * @return string
  */
-function translate($msg, $plist = array()) {
+function translate(string $msg, array $plist = []) : string {
 
 	if (!defined('SETTINGS_LANGUAGE')) {
 		define('SETTINGS_LANGUAGE', 'de');

@@ -12,14 +12,8 @@ use rkphplib\Exception;
  * Split table string at delimiter. Ignore empty rows. Trim all cells. 
  * If $split_cell is set split into key value. Escape delimiter with 
  * leading backslash. Default delimiter: col = "|",  row = "\n"
- *
- * @param string $table_str
- * @param string $col_delimiter
- * @param string $row_delimiter
- * @param string $split_cell
- * @return array
  */
-function split_table($table_str, $col_delimiter = '|', $row_delimiter = "\n", $split_cell = '') {
+function split_table(string $table_str, string $col_delimiter = '|', string $row_delimiter = "\n", string $split_cell = '') : array {
   $table = [];
 	$table_str = trim($table_str);
 

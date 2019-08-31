@@ -20,13 +20,8 @@ use rkphplib\Exception;
  * Append _SCRIPT and _FILE to map (if not set):
  * $map(_SCRIPT) = basename($_SERVER['PHP_SELF'], '.php').
  * $map(_FILE) = date('is').sprintf("%08x", abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME_FLOAT']))); 
- *
- * @throws
- * @param string $path
- * @param array $map
- * @return string
  */
-function resolvPath($path, $map = []) {
+function resolvPath(string $path, array $map = []) : string {
 
 	if (!isset($map['_SCRIPT'])) {
 		$map['_SCRIPT'] = basename($_SERVER['PHP_SELF'], '.php');
