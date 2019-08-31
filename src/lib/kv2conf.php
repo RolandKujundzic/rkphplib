@@ -15,20 +15,15 @@ if (!defined('HASH_DELIMITER')) {
 
 
 /**
- * Convert map to string. 
+ * Convert hash to string. 
  *
  * Reverse version of conf2kv(). Use '' for null values. Escape entity($d2).
+ * If $ikv is true (default = false) prepend [@@1="",","|#|@@2="$d1","$d2"|#|].
+ * Level is internal variable for recursion level detection.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @see conf2kv
- * @param map $kv
- * @param string $d1 (default is "=")
- * @param string $d2 (default is "|#|")
- * @param bool $ikv (default = false, if true prepend [@@1="",","|#|@@2="$d1","$d2"|#|])
- * @param int $level (recursive call level - default = 1) 
- * @return string
  */
-function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1) {
+function kv2conf(array $kv, string $d1 = '=', string $d2 = HASH_DELIMITER, bool $ikv = false, int $level = 1) : string {
 
 	$d3 = '|:|';
 	$conf = $ikv ? '@@1="",","'.$d2."\n".'@@2="'.$d1.'","'.$d2.'"'.$d2."\n".'@@3="'.$d1.'","'.$d3.'"'.$d2."\n" : '';

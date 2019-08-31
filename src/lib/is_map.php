@@ -9,13 +9,9 @@ namespace rkphplib\lib;
  *  - 1 = return true if empty
  *  - 2 = instead of range 0-1 check ... check if n,n+1, ... n+k (k > 0)
  *
- * @throws
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @param array $arr
- * @param int $flags 1 | 2 
- * @return bool
  */
-function is_map(array $arr, $flags = 0) {
+function is_map(array $arr, int $flags = 0) : bool {
   $n = is_array($arr) ? count($arr) : 0;
 
 	if ($n == 0 && ($flags & 1)) {
