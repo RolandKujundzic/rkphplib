@@ -10,7 +10,7 @@ use rkphplib\Exception;
 
 
 /**
- * Persistant Map. 
+ * Persistant Hash. 
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @copyright 2017 Roland Kujundzic
@@ -32,11 +32,8 @@ private $option = null;
  * - file: path/to/map_file (suffix is either .json or .ser)
  * - file_suffix: auto set (.ser|.json)
  * - expire: max duration of map value in seconds (default = 3 h, empty = no expiration)
- * 
- * @throws
- * @param array $option
  */
-public function __construct($option) {
+public function __construct(array $option) {
 
 	if (!isset($option['expire'])) {
 	  $option['expire'] = time() - 60 * 60 * 3;  // expire after 3h
@@ -66,12 +63,9 @@ public function __construct($option) {
 
 
 /**
- * Set key value.
- * 
- * @param string $key
- * @param any $value
+ * Set key value (any).
  */
-public function set($key, $value) {
+public function set(string $key, $value) {
 	if (empty($key)) {
 		throw new Exception('empty key');
 	}
@@ -90,13 +84,9 @@ public function set($key, $value) {
 
 
 /**
- * Return key value.
- *
- * @throws
- * @param string $key
- * @return any
+ * Return key value (any).
  */
-public function get($key) {
+public function get(string $key) {
 	if (empty($key)) {
 		throw new Exception('empty key');
 	}
@@ -117,7 +107,7 @@ public function get($key) {
 /**
  * Save this.map to option.file.
  */
-private function saveFile() {
+private function saveFile() : void {
 	if ($this->option['file.suffix'] == 'ser') {
 		File::serialize($this->option['file'], $this->map);
 	}
@@ -130,7 +120,7 @@ private function saveFile() {
 /**
  * Load map from option.file.
  */
-private function loadFile() {
+private function loadFile() : void {
 
 	if ($this->option['file.suffix'] == 'ser') {
 		$this->map = File::unserialize($this->option['file']);
