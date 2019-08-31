@@ -27,7 +27,7 @@ function translate($msg, $plist = array()) {
 	$map_file = __DIR__.'/translation.'.SETTINGS_LANGUAGE.'php';
 
 	if (file_exists($map_file)) {
-		include_once($map_file);
+		include_once $map_file;
 
 		if (is_array($translation_map) && is_array($translation_map['@']) && is_array($translation_map[$msg])) {
 			$lpos = array_search(SETTINGS_LANGUAGE, $translation_map['@']);

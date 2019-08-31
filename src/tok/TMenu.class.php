@@ -2,8 +2,8 @@
 
 namespace rkphplib\tok;
 
-require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/AMenu.class.php');
+require_once __DIR__.'/TokPlugin.iface.php';
+require_once __DIR__.'/AMenu.class.php';
 
 use rkphplib\Exception;
 

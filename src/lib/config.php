@@ -26,7 +26,7 @@ namespace rkphplib\lib;
  *
  */
 
-require_once(__DIR__.'/log_debug.php');
+require_once __DIR__.'/log_debug.php';
 
 // E_ERROR | E_WARNING | E_PARSE | E_NOTICE or E_ALL or E_ALL ^ E_NOTICE
 // error_reporting(E_ALL);
@@ -84,7 +84,7 @@ function exception_handler($e) {
 
 			$_REQUEST['dir'] = ABORT_DIR;
 
-			include('index.php');
+			include 'index.php';
 			return;
 		}
 		else {

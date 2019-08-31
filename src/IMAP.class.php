@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/Exception.class.php');
+require_once __DIR__.'/Exception.class.php';
 
 
 /**
@@ -498,7 +498,7 @@ public function saveAll(string $dir) : void {
  * attachments.
  */
 public function save(string $dir, int $msg_num) : void {
-	require_once(__DIR__.'/File.class.php');
+	require_once __DIR__.'/File.class.php';
 
 	$this->selectMsg($msg_num);
 	$h = $this->getHeader();

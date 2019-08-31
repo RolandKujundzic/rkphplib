@@ -2,9 +2,9 @@
 
 namespace rkphplib\lib;
 
-require_once(dirname(__DIR__).'/Exception.class.php');
-require_once(__DIR__.'/entity.php');
-require_once(__DIR__.'/is_map.php');
+require_once dirname(__DIR__).'/Exception.class.php';
+require_once __DIR__.'/entity.php';
+require_once __DIR__.'/is_map.php';
 
 use rkphplib\Exception;
 

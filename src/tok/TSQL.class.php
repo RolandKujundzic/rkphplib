@@ -3,14 +3,14 @@
 namespace rkphplib\tok;
 
 $parent_dir = dirname(__DIR__);
-require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/TokHelper.trait.php');
-require_once($parent_dir.'/Database.class.php');
-require_once($parent_dir.'/File.class.php');
-require_once($parent_dir.'/Dir.class.php');
-require_once($parent_dir.'/lib/conf2kv.php');
-require_once($parent_dir.'/lib/kv2conf.php');
-require_once($parent_dir.'/lib/split_str.php');
+require_once __DIR__.'/TokPlugin.iface.php';
+require_once __DIR__.'/TokHelper.trait.php';
+require_once $parent_dir.'/Database.class.php';
+require_once $parent_dir.'/File.class.php';
+require_once $parent_dir.'/Dir.class.php';
+require_once $parent_dir.'/lib/conf2kv.php';
+require_once $parent_dir.'/lib/kv2conf.php';
+require_once $parent_dir.'/lib/split_str.php';
 
 use rkphplib\Exception;
 use rkphplib\Database;
@@ -599,7 +599,7 @@ public function tok_sql_col($name, $arg = '') {
  * @return table|hash
  */
 public function tok_sql_json($mode, $query) {
-	require_once(__DIR__.'/../JSON.class.php');
+	require_once __DIR__.'/../JSON.class.php';
 
 	if ($mode == 'hash') {
 		$dbres = $this->db->selectHash($query);

@@ -2,9 +2,9 @@
 
 namespace rkphplib\tok;
 
-require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/../Exception.class.php');
-require_once(__DIR__.'/../File.class.php');
+require_once __DIR__.'/TokPlugin.iface.php';
+require_once __DIR__.'/../Exception.class.php';
+require_once __DIR__.'/../File.class.php';
 
 use rkphplib\Exception;
 use rkphplib\File;
@@ -958,26 +958,26 @@ private function _call_plugin($name, $param, $arg = null) {
 	$src_dir = dirname(__DIR__);
 
 	if (($pconf & TokPlugin::PARAM_LIST) || ($pconf & TokPlugin::PARAM_CSLIST)) {
-		require_once($src_dir.'/lib/split_str.php');
+		require_once $src_dir.'/lib/split_str.php';
 		$delim = ($pconf & TokPlugin::PARAM_LIST) ? ':' : ',';
 		$param = \rkphplib\lib\split_str($delim, $param);
 	}
 
 	if ($pconf & TokPlugin::KV_BODY) {
-		require_once($src_dir.'/lib/conf2kv.php');
+		require_once $src_dir.'/lib/conf2kv.php';
 		$arg = \rkphplib\lib\conf2kv($arg);
 	}
 	else if ($pconf & TokPlugin::JSON_BODY) {
-		require_once($src_dir.'/JSON.class.php');
+		require_once $src_dir.'/JSON.class.php';
 		$arg = \rkphplib\JSON::decode($arg);
 	}
 	else if (($pconf & TokPlugin::CSLIST_BODY) || ($pconf & TokPlugin::LIST_BODY)) {
-		require_once($src_dir.'/lib/split_str.php');
+		require_once $src_dir.'/lib/split_str.php';
 		$delim = ($pconf & TokPlugin::CSLIST_BODY) ? ',' : HASH_DELIMITER;
 		$arg = \rkphplib\lib\split_str($delim, $arg);
 	}
 	else if ($pconf & TokPlugin::XML_BODY) {
-		require_once($src_dir.'/XML.class.php');	
+		require_once $src_dir.'/XML.class.php';	
 		$arg = \rkphplib\XML::toMap($arg);
 	}
 
@@ -1263,7 +1263,7 @@ private function tryPluginMap($name) {
 
 	foreach ($map as $cname => $list) {
 		if (in_array($name, $list)) {
-			require_once(__DIR__.'/'.$cname.'.class.php');
+			require_once __DIR__.'/'.$cname.'.class.php';
 			$cname = '\\rkphplib\\tok\\'.$cname;
 			$obj = new $cname();
 			$this->register($obj);

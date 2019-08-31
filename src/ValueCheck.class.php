@@ -2,8 +2,8 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/DateCalc.class.php');
-require_once(__DIR__.'/lib/split_str.php');
+require_once __DIR__.'/DateCalc.class.php';
+require_once __DIR__.'/lib/split_str.php';
 
 
 /**
@@ -154,7 +154,7 @@ public static function getMatch($name) {
  * @return boolean
  */
 public static function sqlQuery($value, $parameter, $query) {
-  require_once(__DIR__.'/Database.class.php');
+  require_once __DIR__.'/Database.class.php';
 
   $db = \rkphplib\Database::getInstance();
 
@@ -190,7 +190,7 @@ public static function sqlQuery($value, $parameter, $query) {
  * @return boolean
  */
 public static function isUnique($value, $p) {
-	require_once(__DIR__.'/Database.class.php');
+	require_once __DIR__.'/Database.class.php';
 
 	$query = 'SELECT count(*) AS anz FROM ';
 

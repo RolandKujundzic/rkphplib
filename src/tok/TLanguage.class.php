@@ -2,11 +2,11 @@
 
 namespace rkphplib\tok;
 
-require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/../Exception.class.php');
-require_once(__DIR__.'/../Database.class.php');
-require_once(__DIR__.'/../Session.class.php');
-require_once(__DIR__.'/../File.class.php');
+require_once __DIR__.'/TokPlugin.iface.php';
+require_once __DIR__.'/../Exception.class.php';
+require_once __DIR__.'/../Database.class.php';
+require_once __DIR__.'/../Session.class.php';
+require_once __DIR__.'/../File.class.php';
 
 use rkphplib\Exception;
 use rkphplib\Database;

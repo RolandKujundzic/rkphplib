@@ -2,8 +2,8 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/FSEntry.class.php');
-require_once(__DIR__.'/File.class.php');
+require_once __DIR__.'/FSEntry.class.php';
+require_once __DIR__.'/File.class.php';
 
 
 /** @const int DIR_DEFAULT_MODE octal, default directory creation mode, 0777 (uid < 1000) or 0755 */

@@ -2,10 +2,10 @@
 
 namespace rkphplib\tok;
 
-require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/../Exception.class.php');
-require_once(__DIR__.'/../lib/split_str.php');
-require_once(__DIR__.'/../lib/redirect.php');
+require_once __DIR__.'/TokPlugin.iface.php';
+require_once __DIR__.'/../Exception.class.php';
+require_once __DIR__.'/../lib/split_str.php';
+require_once __DIR__.'/../lib/redirect.php';
 
 use rkphplib\Exception;
 
@@ -264,7 +264,7 @@ public function addNodeHi() {
  * @return boolean
  */
 private function hasTables($tables) {
-	require_once(__DIR__.'/../Database.class.php');
+	require_once __DIR__.'/../Database.class.php';
 	$db = \rkphplib\Database::getInstance();
 
 	$table_list = \rkphplib\lib\split_str(',', $tables);

@@ -2,10 +2,10 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/Exception.class.php');
-require_once(__DIR__.'/ADatabase.class.php');
-require_once(__DIR__.'/lib/split_str.php');
-require_once(__DIR__.'/lib/is_map.php');
+require_once __DIR__.'/Exception.class.php';
+require_once __DIR__.'/ADatabase.class.php';
+require_once __DIR__.'/lib/split_str.php';
+require_once __DIR__.'/lib/is_map.php';
 
 use rkphplib\Exception;
 
@@ -40,11 +40,11 @@ public static function create(string $dsn = '', array $query_map = []) : object 
 	}
 
 	if (mb_substr($dsn, 0, 9) == 'mysqli://') {
-		require_once(__DIR__.'/MysqlDatabase.class.php');
+		require_once __DIR__.'/MysqlDatabase.class.php';
 		$db = new MysqlDatabase();
 	}
 	else if (mb_substr($dsn, 0, 9) == 'sqlite://') {
-		require_once(__DIR__.'/SQLiteDatabase.class.php');
+		require_once __DIR__.'/SQLiteDatabase.class.php';
 		$db = new SQLiteDatabase();
 	}
 	else {

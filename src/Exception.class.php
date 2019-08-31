@@ -79,7 +79,7 @@ public function __construct(string $message, string $internal_message = '') {
  * Log debug_backtrace to SETTINGS_LOG_EXCEPTION/NAME.json.
  */
 private static function logTrace(array $stack) : void {
-	require_once(__DIR__.'/File.class.php');
+	require_once __DIR__.'/File.class.php';
 
 	$last = isset($stack[1]) ? $stack[1] : $stack[0];
 	list($msec, $ts) = explode(" ", microtime());

@@ -6,11 +6,11 @@ if (!defined('PATH_RKPHPLIB')) {
 	define('PATH_RKPHPLIB', __DIR__.'/');
 }
 
-require_once(__DIR__.'/lib/config.php');
-require_once(__DIR__.'/lib/log_debug.php');
-require_once(__DIR__.'/FSEntry.class.php');
-require_once(__DIR__.'/File.class.php');
-require_once(__DIR__.'/JSON.class.php');
+require_once __DIR__.'/lib/config.php';
+require_once __DIR__.'/lib/log_debug.php';
+require_once __DIR__.'/FSEntry.class.php';
+require_once __DIR__.'/File.class.php';
+require_once __DIR__.'/JSON.class.php';
 
 
 
@@ -142,7 +142,7 @@ public function load($file) {
 	}
 
 	FSEntry::isFile($php_file);
-	require_once($php_file);
+	require_once $php_file;
 }
 
 
@@ -180,7 +180,7 @@ public function runTest($run_php) {
 	$this->_log('START: '.$script_dir.' Tests', 15);
 
 	// execute tests ...
-	include($run_php);
+	include $run_php;
 
 	$result = '';
 	$this->_tc['t_num'] += $this->_tc['num'];
@@ -214,7 +214,7 @@ public function runFuncTest($path) {
 	// execute test
 	$php_file = empty($this->_tc['path']) ? $path.'.fc.php' : $this->_tc['path'].'/'.$path.'.fc.php';
 	$this->_log('runFuncTest: loading '.$php_file.' ... ', 2);
-	require_once($php_file);
+	require_once $php_file;
 
 	if (!isset($func)) {
 		throw new Exception('$func is undefined in '.$php_file); 

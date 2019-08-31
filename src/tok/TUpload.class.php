@@ -2,15 +2,15 @@
 
 namespace rkphplib\tok;
 
-require_once(__DIR__.'/TPicture.class.php');
-require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/THttp.class.php');
-require_once(__DIR__.'/../Database.class.php');
-require_once(__DIR__.'/../Dir.class.php');
-require_once(__DIR__.'/../File.class.php');
-require_once(__DIR__.'/../JSON.class.php');
-require_once(__DIR__.'/../lib/split_str.php');
-require_once(__DIR__.'/../lib/conf2kv.php');
+require_once __DIR__.'/TPicture.class.php';
+require_once __DIR__.'/TokPlugin.iface.php';
+require_once __DIR__.'/THttp.class.php';
+require_once __DIR__.'/../Database.class.php';
+require_once __DIR__.'/../Dir.class.php';
+require_once __DIR__.'/../File.class.php';
+require_once __DIR__.'/../JSON.class.php';
+require_once __DIR__.'/../lib/split_str.php';
+require_once __DIR__.'/../lib/conf2kv.php';
 
 use rkphplib\tok\TPicture;
 use rkphplib\tok\THttp;

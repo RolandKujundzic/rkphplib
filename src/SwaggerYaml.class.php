@@ -2,11 +2,11 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/File.class.php');
-require_once(__DIR__.'/Dir.class.php');
-require_once(__DIR__.'/YAML.class.php');
-require_once(__DIR__.'/JSON.class.php');
-require_once(__DIR__.'/lib/split_str.php');
+require_once __DIR__.'/File.class.php';
+require_once __DIR__.'/Dir.class.php';
+require_once __DIR__.'/YAML.class.php';
+require_once __DIR__.'/JSON.class.php';
+require_once __DIR__.'/lib/split_str.php';
 
 
 /**

@@ -2,12 +2,12 @@
 
 namespace rkphplib;
 
-require_once(dirname(__DIR__).'/other/PHPMailer/Exception.php');
-require_once(dirname(__DIR__).'/other/PHPMailer/PHPMailer.php');
+require_once dirname(__DIR__).'/other/PHPMailer/Exception.php';
+require_once dirname(__DIR__).'/other/PHPMailer/PHPMailer.php';
 
-require_once(__DIR__.'/lib/resolvPath.php');
+require_once __DIR__.'/lib/resolvPath.php';
 
-require_once(__DIR__.'/Dir.class.php');
+require_once __DIR__.'/Dir.class.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -202,7 +202,7 @@ public function setHeader($key, $value) {
  * @param array|string smtp (convert string to [ 'host' => smtp ])
  */
 public function useSMTP($smtp) {
-	require_once(dirname(__DIR__).'/other/PHPMailer/SMTP.php');
+	require_once dirname(__DIR__).'/other/PHPMailer/SMTP.php';
 
 	if (is_string($smtp) && !empty($smtp)) {
 		$smtp = [ 'host' => $smtp ];

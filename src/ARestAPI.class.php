@@ -8,13 +8,13 @@ namespace rkphplib;
 // https://github.com/thephpleague/oauth2-server
 // https://github.com/bshaffer/oauth2-server-php + https://github.com/bshaffer/oauth2-demo-php
 
-require_once(__DIR__.'/XML.class.php');
-require_once(__DIR__.'/JSON.class.php');
-require_once(__DIR__.'/File.class.php');
-require_once(__DIR__.'/Dir.class.php');
-require_once(__DIR__.'/ValueCheck.class.php');
-require_once(__DIR__.'/Database.class.php');
-require_once(__DIR__.'/lib/translate.php');
+require_once __DIR__.'/XML.class.php';
+require_once __DIR__.'/JSON.class.php';
+require_once __DIR__.'/File.class.php';
+require_once __DIR__.'/Dir.class.php';
+require_once __DIR__.'/ValueCheck.class.php';
+require_once __DIR__.'/Database.class.php';
+require_once __DIR__.'/lib/translate.php';
 
 
 

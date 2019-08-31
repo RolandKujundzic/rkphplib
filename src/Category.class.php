@@ -2,8 +2,8 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/ADatabase.class.php');
-require_once(__DIR__.'/Exception.class.php');
+require_once __DIR__.'/ADatabase.class.php';
+require_once __DIR__.'/Exception.class.php';
 
 
 

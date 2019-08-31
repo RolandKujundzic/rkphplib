@@ -2,8 +2,8 @@
 
 namespace rkphplib;
 
-require_once(PATH_RKPHPLIB.'Database.class.php');
-require_once(PATH_RKPHPLIB.'Exception.class.php');
+require_once PATH_RKPHPLIB.'Database.class.php';
+require_once PATH_RKPHPLIB.'Exception.class.php';
 
 
 

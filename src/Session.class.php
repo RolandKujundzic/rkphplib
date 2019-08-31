@@ -2,8 +2,8 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/ASession.class.php');
-require_once(__DIR__.'/Dir.class.php');
+require_once __DIR__.'/ASession.class.php';
+require_once __DIR__.'/Dir.class.php';
 
 
 if (!defined('SETTINGS_REQ_DIR')) {
@@ -29,7 +29,7 @@ class Session extends ASession {
  * Return session file. Throw exception if ini_get("session.serialize_handler") != 'php'.
  */
 public static function readPHPSessionFile(string $file) : array {
-	require_once(__DIR__.'/File.class.php');
+	require_once __DIR__.'/File.class.php';
 
 	if (ini_get('session.serialize_handler') != 'php') {
 		throw new Exception('set session.serialize_handler = php');

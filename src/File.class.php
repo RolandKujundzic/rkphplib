@@ -2,9 +2,9 @@
 
 namespace rkphplib;
 
-require_once(__DIR__.'/FSEntry.class.php');
-require_once(__DIR__.'/JSON.class.php');
-require_once(__DIR__.'/lib/execute.php');
+require_once __DIR__.'/FSEntry.class.php';
+require_once __DIR__.'/JSON.class.php';
+require_once __DIR__.'/lib/execute.php';
 
 
 /** @const FILE_DEFAULT_MODE = 0666 (UID < 1000) or 0644 (UID >= 1000) */
@@ -85,7 +85,7 @@ public static function loadTable(string $uri, array $options = []) : array {
 		$table = JSON::decode($data);
 	}
 	else if ($type == 'split') {
-		require_once(__DIR__.'/lib/split_table.php');
+		require_once __DIR__.'/lib/split_table.php';
 
 		if (empty($options[0])) {
 			$options[0] = '|&|';

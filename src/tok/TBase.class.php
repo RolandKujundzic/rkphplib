@@ -3,16 +3,16 @@
 namespace rkphplib\tok;
 
 $parent_dir = dirname(__DIR__);
-require_once(__DIR__.'/TokPlugin.iface.php');
-require_once($parent_dir.'/Exception.class.php');
-require_once($parent_dir.'/File.class.php');
-require_once($parent_dir.'/JSON.class.php');
-require_once($parent_dir.'/lib/htmlescape.php');
-require_once($parent_dir.'/lib/split_str.php');
-require_once($parent_dir.'/lib/redirect.php');
-require_once($parent_dir.'/lib/conf2kv.php');
-require_once($parent_dir.'/lib/kv2conf.php');
-require_once($parent_dir.'/lib/entity.php');
+require_once __DIR__.'/TokPlugin.iface.php';
+require_once $parent_dir.'/Exception.class.php';
+require_once $parent_dir.'/File.class.php';
+require_once $parent_dir.'/JSON.class.php';
+require_once $parent_dir.'/lib/htmlescape.php';
+require_once $parent_dir.'/lib/split_str.php';
+require_once $parent_dir.'/lib/redirect.php';
+require_once $parent_dir.'/lib/conf2kv.php';
+require_once $parent_dir.'/lib/kv2conf.php';
+require_once $parent_dir.'/lib/entity.php';
 
 use rkphplib\Exception;
 use rkphplib\File;
@@ -1591,7 +1591,7 @@ private function applyFilter($tag, $value) {
 			$value = str_replace(HASH_DELIMITER, \rkphplib\lib\entity(HASH_DELIMITER), $value);
 		}
 		else if ($filter == 'escape_db') {
-			require_once(PATH_RKPHPLIB.'ADatabase.class.php');
+			require_once PATH_RKPHPLIB.'ADatabase.class.php';
 			$value = "'".\rkphplib\ADatabase::escape($value)."'";
 		}	
 		else {
@@ -1997,7 +1997,7 @@ public function tok_plugin($p) {
 	foreach ($p as $plugin) {
 
 		if (mb_strpos($plugin, ':') === false) {
-			require_once(PATH_RKPHPLIB.'tok/'.$plugin.'.class.php');
+			require_once PATH_RKPHPLIB.'tok/'.$plugin.'.class.php';
 			$obj = '\\rkphplib\\tok\\'.$plugin;
 			// \rkphplib\lib\log_debug("tok_plugin> require_once('".PATH_RKPHPLIB.'tok/'.$plugin.".class.php'); new $obj();");
 		}
@@ -2007,7 +2007,7 @@ public function tok_plugin($p) {
 			if (basename($path) === $path && defined("PATH_$path")) {
 				$incl_path = constant("PATH_$path").'tok/'.$obj.'.class.php';
 				// \rkphplib\lib\log_debug("tok_plugin> path=$path incl_path=$incl_path");
-				require_once($incl_path);
+				require_once $incl_path;
 				$obj = '\\'.strtolower($path).'\\tok\\'.$obj;
 				// \rkphplib\lib\log_debug("tok_plugin> require_once('$incl_path'); new $obj();");
 			}

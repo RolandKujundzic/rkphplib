@@ -2,7 +2,7 @@
 
 namespace rkphplib\lib;
 
-require_once(dirname(__DIR__).'/Exception.class.php');
+require_once dirname(__DIR__).'/Exception.class.php';
 
 use rkphplib\Exception;
 
@@ -33,7 +33,7 @@ function redirect(string $url, array $p = []) : void {
 	}
 
 	if (!empty($p['@link'])) {
-		require_once(dirname(__DIR__).'/tok/Tokenizer.class.php');
+		require_once dirname(__DIR__).'/tok/Tokenizer.class.php';
 
 		unset($p['@link']);
 		$p['@'] = $url;

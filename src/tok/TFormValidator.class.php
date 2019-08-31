@@ -4,15 +4,15 @@ namespace rkphplib\tok;
 
 $parent_dir = dirname(__DIR__);
 
-require_once(__DIR__.'/TokPlugin.iface.php');
-require_once(__DIR__.'/TokHelper.trait.php');
-require_once(__DIR__.'/Tokenizer.class.php');
-require_once($parent_dir.'/ValueCheck.class.php');
-require_once($parent_dir.'/lib/htmlescape.php');
-require_once($parent_dir.'/lib/split_str.php');
-require_once($parent_dir.'/lib/conf2kv.php');
-require_once($parent_dir.'/lib/kv2conf.php');
-require_once($parent_dir.'/lib/is_map.php');
+require_once __DIR__.'/TokPlugin.iface.php';
+require_once __DIR__.'/TokHelper.trait.php';
+require_once __DIR__.'/Tokenizer.class.php';
+require_once $parent_dir.'/ValueCheck.class.php';
+require_once $parent_dir.'/lib/htmlescape.php';
+require_once $parent_dir.'/lib/split_str.php';
+require_once $parent_dir.'/lib/conf2kv.php';
+require_once $parent_dir.'/lib/kv2conf.php';
+require_once $parent_dir.'/lib/is_map.php';
 
 use rkphplib\Exception;
 use rkphplib\tok\Tokenizer;

@@ -3,14 +3,14 @@
 namespace rkphplib\tok;
 
 $parent_dir = dirname(__DIR__);
-require_once(__DIR__.'/TokPlugin.iface.php');
-require_once($parent_dir.'/Exception.class.php');
-require_once($parent_dir.'/JSON.class.php');
-require_once($parent_dir.'/File.class.php');
-require_once($parent_dir.'/Dir.class.php');
-require_once($parent_dir.'/lib/ps.php');
-require_once($parent_dir.'/lib/execute.php');
-require_once($parent_dir.'/lib/kv2conf.php');
+require_once __DIR__.'/TokPlugin.iface.php';
+require_once $parent_dir.'/Exception.class.php';
+require_once $parent_dir.'/JSON.class.php';
+require_once $parent_dir.'/File.class.php';
+require_once $parent_dir.'/Dir.class.php';
+require_once $parent_dir.'/lib/ps.php';
+require_once $parent_dir.'/lib/execute.php';
+require_once $parent_dir.'/lib/kv2conf.php';
 
 use rkphplib\Exception;
 use rkphplib\JSON;
@@ -200,7 +200,7 @@ private function run() {
 	}
 	else if (!empty($this->conf['include'])) {
 		$this->lock([ 'start' => microtime(), 'status' => 'start' ]);
-		include($this->conf['include']);
+		include $this->conf['include'];
 		$this->lock([ 'status' => 'done', 'end' => microtime() ]);
 		return;
 	}
