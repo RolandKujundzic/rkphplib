@@ -26,17 +26,12 @@ if (!defined('HASH_DELIMITER')) {
  * If text is empty return empty array. Unescape entity($d2).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @param string $text
- * @param string $d1 (default is "=")
- * @param string $d2 (default is "|#|")
- * @param map ikv (config hash - default [ ])
- * @return string|array|hash
  */
-function conf2kv($text, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = array()) {
+function conf2kv(string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, array $ikv = []) : array {
 	$ld1 = mb_strlen($d1);
 
 	if (empty($text)) {
-		return array();
+		return [];
 	}
 
 	$e_d2 = entity($d2);

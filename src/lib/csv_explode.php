@@ -12,15 +12,9 @@ define('CSV_FIX_DQUOTE', 8);
  * Explode csv string into array. 
  *
  * Escape delim with quote enclosure. Escape quote with double quote.
- *
- * @author Roland Kujundzic <roland@kujundzic.de>
- * @param string $text
- * @param string $delim (default = ",")
- * @param string $quote (default = '"')
- * @param int $mode (default = 0 - 1=CSV_IGNORE_EMPTY, 2=CSV_PRESERVE_QUOTE, 4=CSV_TRIM_LINES, 8=CSV_FIX_DQUOTE)
- * @return array
+ * Flag $mode is default = 0 or 1=CSV_IGNORE_EMPTY, 2=CSV_PRESERVE_QUOTE, 4=CSV_TRIM_LINES, 8=CSV_FIX_DQUOTE.
  */
-function csv_explode($text, $delim=',', $quote = '"', $mode = 0) {
+function csv_explode(string $text, string $delim=',', string $quote = '"', int $mode = 0) : array {
 	$res = array();
 	$n = 0;
 

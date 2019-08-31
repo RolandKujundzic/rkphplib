@@ -9,7 +9,7 @@ use rkphplib\Exception;
 
 
 /**
- * Execute shell command.
+ * Execute shell command (e.g. rm -f {:=file}). Optional parameter $flag is int|bool|string.
  * Command parameter {:=param} are replaced with escaped (\') hash values.
  * Use {:=_param} for unescaped replace. Append [ 2>&1] to command to catch stderr. 
  * Append [> /dev/null 2> /dev/null &] for background job.
@@ -23,12 +23,9 @@ use rkphplib\Exception;
  *  - 2^1: change command to "($cmd) 2>&1"
  *  - test -f 'some/file': change command to "if test -f 'some/file'; then ($cmd) 2>&1; fi"
  *
- * @param string $cmd e.g. "rm -f {:=file}"
- * @param hash|empty $parameter optional parameter hash (default = null)
- * @param int|bool|string $flag (default=1)
- * @return string|false (last line of output or true, false if not [flag & 2^0] and error)
+ * Return (string|false) last line of output or true, false if not [flag & 2^0] and error.
  */
-function execute($cmd, $parameter = null, $flag = 1) {
+function execute(string $cmd, ?array $parameter = null, $flag = 1) {
 
 	if (empty($cmd) || !is_string($cmd)) {
 		throw new Exception('invalid command', print_r($cmd, true));

@@ -8,10 +8,8 @@ namespace rkphplib\lib;
  * Example: entity('|#|') = '&#124;&#35;&#124;'
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @param string $txt
- * @return string
  */
-function entity($txt) {
+function entity(string $txt) : string {
   $res = '';
 
   for ($i = 0; $i < strlen($txt); $i++) {
