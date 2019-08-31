@@ -17,11 +17,8 @@ class JSON {
 
 /**
  * Return last error message for encode/decode.
- *
- * @param int $err_no
- * @return string
  */
-private static function _error_msg($err_no) {
+private static function _error_msg(int $err_no) : string {
 	static $errors = array(
 		JSON_ERROR_NONE => 'No error',
 		JSON_ERROR_DEPTH => 'Maximum stack depth exceeded',
@@ -45,18 +42,10 @@ private static function _error_msg($err_no) {
 
 
 /**
- * Return json encoded $obj. 
- *
- * Throw error if failed. Wrapper of json_encode().
- *
- * @throws
- * @param object $obj
- * @param int $options default is 448 = JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT)
- * @param int $depth
- * @return string
+ * Return json encoded $any. Wrapper of json_encode() default options 448 = JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT.
  */
-public static function encode($obj, $options = 448, $depth = 512) {
-	$res = json_encode($obj, $options, $depth);
+public static function encode($any, int $options = 448, int $depth = 512) : string {
+	$res = json_encode($any, $options, $depth);
 
 	if (($err_no = json_last_error())) {
 		throw new Exception("JSON.encode failed", self::_error_msg($err_no));
@@ -67,14 +56,9 @@ public static function encode($obj, $options = 448, $depth = 512) {
 
 
 /**
- * Return json decoded $txt as map.
- *
- * @throws 
- * @param string $txt
- * @param bool $assoc
- * @return array[string]string|object
+ * Return json decoded $txt as hash ($assoc = true) or object ($assoc = false).
  */
-public static function decode($txt, $assoc = true) {
+public static function decode(string $txt, bool $assoc = true) {
 	$res = json_decode($txt, $assoc);
 
 	if (($err_no = json_last_error())) {
@@ -88,23 +72,17 @@ public static function decode($txt, $assoc = true) {
 
 /**
  * Return pretty printed json.
- *
- * @param string $json
- * @return string
  */
-public static function pretty_print($json) {
+public static function pretty_print(string $json) : string {
     return json_encode(json_decode($json), 320|JSON_PRETTY_PRINT);
 }
 
 
 /**
- * Print JSON object and exit. Use for ajax script output.
+ * Print JSON encoded $o and exit. Use for ajax script output.
  * If code >= 400 and $o is string or Exception return { error: 1, error_message: "..." }.
- *
- * @param Object $o
- * @param int $code
  */
-public static function output($o, $code = 200) {
+public static function output($o, int $code = 200) : void {
 	
 	if ($code >= 400) {
 		if ($o instanceof \Exception) {
