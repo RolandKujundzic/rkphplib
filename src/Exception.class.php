@@ -49,12 +49,9 @@ public $internal_message = '';
 
 
 /**
- * Class constructor.
- *
- * @param string $message error message
- * @param string $internal_message error message detail
+ * Class constructor. Allow optional error details besides the error message.
  */
-public function __construct($message, $internal_message = '') {
+public function __construct(string $message, string $internal_message = '') {
 	parent::__construct($message);
 	$this->internal_message = $internal_message;
 
@@ -79,12 +76,9 @@ public function __construct($message, $internal_message = '') {
 
 
 /**
- * Log debug_backtrace to SETTINGS_LOG_EXCEPTION/NAME.json (or *.dump|.ser is json encode fails).
- * Abort was in stack[1].
- *
- * @param array $stack
+ * Log debug_backtrace to SETTINGS_LOG_EXCEPTION/NAME.json.
  */
-private static function logTrace($stack) {
+private static function logTrace(array $stack) : void {
 	require_once(__DIR__.'/File.class.php');
 
 	$last = isset($stack[1]) ? $stack[1] : $stack[0];
@@ -179,15 +173,10 @@ public static function logError(string $msg) : void {
 
 
 /**
- * Send "HTTP/1.0 $code $error" header and exit. If message starts with @ajax
- * log and print error message with prefix "ERROR:" (remove @ajax).
- *
- * @exit
- * @param int $code (=400|401|404|444)
- * @param string $msg (default = httpError $code)
- * @param int $flag (2^n: 0=default, 1="ERROR: $msg")
+ * Send "HTTP/1.1 $code Error" header ($code = 400|401|404|444) and exit. 
+ * If message starts with @ajax or ($flag & 2^0) log and print error message with prefix "ERROR:".
  */
-public static function httpError($code = 400, $msg = '', $flag = 0) {
+public static function httpError(int $code = 400, string $msg = '', int $flag = 0) : void {
 	$error = [ '400' => 'Bad Request', '401' => 'Unauthorized', '404' => 'Not Found', '444' => 'No Response' ];
 
 	if (!isset($error[$code])) {
