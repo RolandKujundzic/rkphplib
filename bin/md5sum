@@ -1,8 +1,8 @@
 #!/usr/bin/php
 <?php
 
-require_once(dirname(__DIR__).'/src/File.class.php');
-require_once(dirname(__DIR__).'/src/JSON.class.php');
+require_once dirname(__DIR__).'/src/File.class.php';
+require_once dirname(__DIR__).'/src/JSON.class.php';
 
 
 /**

@@ -2,24 +2,24 @@
 <?php
 
 // assume: APP/php/rkphplib/bin/
-require_once(dirname(dirname(dirname(__DIR__))).'/settings.php');
+require_once dirname(dirname(dirname(__DIR__))).'/settings.php';
 
-require_once(PATH_RKPHPLIB.'Database.class.php');
-require_once(PATH_RKPHPLIB.'tok/TokPlugin.iface.php');
-require_once(PATH_RKPHPLIB.'tok/TLanguage.class.php');
-require_once(PATH_RKPHPLIB.'tok/Tokenizer.class.php');
-require_once(PATH_RKPHPLIB.'FSEntry.class.php');
-require_once(PATH_RKPHPLIB.'File.class.php');
-require_once(PATH_RKPHPLIB.'Dir.class.php');
+require_once PATH_RKPHPLIB.'Database.class.php';
+require_once PATH_RKPHPLIB.'tok/TokPlugin.iface.php';
+require_once PATH_RKPHPLIB.'tok/TLanguage.class.php';
+require_once PATH_RKPHPLIB.'tok/Tokenizer.class.php';
+require_once PATH_RKPHPLIB.'FSEntry.class.php';
+require_once PATH_RKPHPLIB.'File.class.php';
+require_once PATH_RKPHPLIB.'Dir.class.php';
 
-use \rkphplib\Exception;
-use \rkphplib\Database;
-use \rkphplib\tok\TokPlugin;
-use \rkphplib\tok\TLanguage;
-use \rkphplib\tok\Tokenizer;
-use \rkphplib\FSEntry;
-use \rkphplib\File;
-use \rkphplib\Dir;
+use rkphplib\Exception;
+use rkphplib\Database;
+use rkphplib\tok\TokPlugin;
+use rkphplib\tok\TLanguage;
+use rkphplib\tok\Tokenizer;
+use rkphplib\FSEntry;
+use rkphplib\File;
+use rkphplib\Dir;
 
 
 /**

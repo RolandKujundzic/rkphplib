@@ -3,8 +3,8 @@
 
 define('PATH_RKPHPLIB', __DIR__.'/../src/');
 
-require_once(PATH_RKPHPLIB.'SwaggerYaml.class.php');
-require_once('vendor/autoload.php');
+require_once PATH_RKPHPLIB.'SwaggerYaml.class.php';
+require_once 'vendor/autoload.php';
 
 
 if (empty($_SERVER['argv'][1])) {
