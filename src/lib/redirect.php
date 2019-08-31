@@ -10,12 +10,10 @@ use rkphplib\Exception;
 /**
  * Send redirect header and exit. If $p['@link'] use {link:}@=$url{:link}. 
  * If $p['@back']=1 append parameter back=parent/dir. If url matches
- * /^[a-z0-9_\-\/]+$/i assume {link:}_=$url{:link}.
- * 
- * @param string $url
- * @param map<string:string> $p (extra parameter, default = [])
+ * /^[a-z0-9_\-\/]+$/i assume {link:}_=$url{:link}. Append extra parameter $p to 
+ * redirect url.
  */
-function redirect($url, $p = []) {
+function redirect(string $url, array $p = []) : void {
 	// \rkphplib\lib\log_debug('redirect("'.$url.'", ...): _ld?'.!empty($_REQUEST['_ld']).' p: '.print_r($p, true));
 
 	if (preg_match('/^[a-z0-9_\-\/]+$/i', $url)) {

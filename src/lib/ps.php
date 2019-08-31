@@ -9,13 +9,11 @@ use rkphplib\Exception;
 
 
 /**
- * Retrieve "ps aux -q PID" information as hash.
+ * Retrieve "ps aux -q PID" information as hash. Return false or hash.
  * 
- * @trigger_error E_USER_WARNING - PID $pid doesn't exists
- * @param int $pid
- * @return false|hash
+ * @trigger_error E_USER_WARNING if PID $pid doesn't exists
  */
-function ps($pid) {
+function ps(int $pid) {
 	$ps = shell_exec("ps aux -q '".intval($pid)."'");
 	$ps = explode("\n", $ps);
  
