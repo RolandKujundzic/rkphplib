@@ -52,11 +52,9 @@ public function __construct() {
  *  - Priority: null (=default) | 1 (= High) | 3 (= Normal) | 5 (= low)
  *  - Encoding: 8bit (= default) | 7bit | binary | base64 | quoted-printable
  *  - Hostname: empty = default = auto-detect (= try: $_SERVER['SERVER_NAME'], gethostname(), php_uname('n') or 'localhost.localdomain')
- *
- * @param string $key
  * @param string $value
  */
-public function setMailer($key, $value) {
+public function setMailer(string $key, string $value) : void {
 	$allow = [ 'CharSet', 'Priority', 'Encoding', 'Hostname' ];
 
 	if (!in_array($key, $allow)) {
@@ -69,12 +67,8 @@ public function setMailer($key, $value) {
 
 /**
  * Return PHPMailer parameter. 
- *
- * @see setMailer
- * @param string
- * @return string
  */
-public function getMailer($key) {
+public function getMailer(string $key) : string {
 	$allow = [ 'CharSet', 'Priority', 'Encoding', 'Hostname' ];
 	if (!in_array($key, $allow)) {
 		throw new Exception("Invalid Mailer parameter [$key]");
@@ -86,42 +80,32 @@ public function getMailer($key) {
 
 /**
  * Return array of attachments.
- *
- * @return array
  */
-public function getAttachments() {
+public function getAttachments() : array {
 	return $this->_mailer->getAttachments();
 }
 
 
 /**
  * Return last message id.
- *
- * @return string
  */
-public function getLastMessageID() {
+public function getLastMessageID() : string {
 	return $this->_mailer->getLastMessageID();
 }
 
 
 /**
  * Return encoded string. Encoding is base64, 7bit, 8bit, binary or 'quoted-printable.
- *
- * @param string $str
- * @param string encoding $encoding
  */
-public function encodeString($str, $encoding = 'base64') {
+public function encodeString(string $str, string $encoding = 'base64') : void {
 	return $this->_mailer->encodeString($str, $encoding);
 }
 
 
 /**
  * Return true if email is valid (or throw error).
- * @param string $email
- * @param boolean $throw_error (default = false)
- * @return boolean
  */
-public static function isValidEmail($email, $throw_error = false) {
+public static function isValidEmail(string $email, bool $throw_error = false) : bool {
 	$res = true;
 
 	if (empty($email) || mb_strpos($email, '@') == false) {
@@ -141,13 +125,8 @@ public static function isValidEmail($email, $throw_error = false) {
 
 /**
  * Embed Image.
- *  
- * @throws
- * @param string $file
- * @param string $mime (application/octet-stream)
- * @param string $encoding (base64)
  */
-public function embedImage($file, $mime = 'application/octet-stream', $encoding = 'base64') {
+public function embedImage(string $file, string $mime = 'application/octet-stream', string $encoding = 'base64') : void {
 	if (!$this->_mailer->addEmbeddedImage($file, md5($file), basename($file), $encoding, $mime, 'inline')) {
 		throw new Exception('failed to add embedded image '.$file);
 	}
@@ -155,12 +134,9 @@ public function embedImage($file, $mime = 'application/octet-stream', $encoding 
 
 
 /**
- * Add attachment to mail (base64 encoding).
- * 
- * @param string $file 
- * @param string $mime (default = application/octet-stream, empty = auto_detect)
+ * Add attachment to mail (base64 encoding). Default mime type is application/octet-stream, empty means auto_detect.
  */
-public function attach($file, $mime = 'application/octet-stream') {
+public function attach(string $file, string $mime = 'application/octet-stream') : void {
 	if (empty($mime)) {
 		$mime = File::mime($file);
 	}
@@ -177,17 +153,15 @@ public function attach($file, $mime = 'application/octet-stream') {
 
 /**
  * Add Custom Header (key:value).
- *
- * @param string $key 
- * @param string $value 
  */
-public function setHeader($key, $value) {
+public function setHeader(string $key, string $value) : void {
   $this->_mailer->AddCustomHeader($key.':'.$value);
 }
 
 
 /**
- * Send mail via SMTP. Convert string to [ 'host' => parameter ]. SMTP Parameter are:
+ * Send mail via SMTP. Convert string to [ 'host' => parameter ]. 
+ * Parameter is string (=host) or hash. SMTP Parameter are:
  * 
  * host= required
  * port= 25 (optional) 
@@ -198,10 +172,8 @@ public function setHeader($key, $value) {
  * pass= (optional)
  * persist= false (optional) 
  * hostname=
- *
- * @param array|string smtp (convert string to [ 'host' => smtp ])
  */
-public function useSMTP($smtp) {
+public function useSMTP($smtp) : void {
 	require_once dirname(__DIR__).'/other/PHPMailer/SMTP.php';
 
 	if (is_string($smtp) && !empty($smtp)) {
@@ -267,13 +239,8 @@ public function useSMTP($smtp) {
 
 /**
  * Set sender (required). Use Mailer::$always_from for global from change.
- *
- * @throws
- * @param string $email (From Property)
- * @param string $name (FromName Property default = '')
- * @param string $sender (Sender email / Return-Path - default = '' = From) 
  */
-public function setFrom($email, $name = '', $sender = '') {
+public function setFrom(string $email, string $name = '', string $sender = '') : void {
   list ($email, $name) = $this->_email_name($email, $name);
 
   if (!empty(self::$always_from)) {
@@ -292,13 +259,9 @@ public function setFrom($email, $name = '', $sender = '') {
 
 
 /**
- * Set Recipient Adress (required). Use Mailer::$always_to = xxx for global 
- * recipient redirection.
- * 
- * @param string 
- * @param string 
+ * Set Recipient Adress (required). Use Mailer::$always_to = ... for global recipient redirection.
  */
-public function setTo($email, $name = '') {
+public function setTo(string $email, string $name = '') : void {
 
   if (!empty(self::$always_to)) {
 		self::isValidEmail(self::$always_to, true);
@@ -311,12 +274,8 @@ public function setTo($email, $name = '') {
 
 /**
  * Set Cc Adress. If called multiple times address list will be used.
- * 
- * @param string $email
- * @param string $name
- * 
  */
-public function setCc($email, $name = '') {
+public function setCc(string $email, string $name = '') : void {
 
 	if (!empty(self::$always_to)) {
 		return;
@@ -328,12 +287,8 @@ public function setCc($email, $name = '') {
 
 /**
  * Set Bcc Adress. If called multiple times address list will be used.
- * 
- * @param string $email
- * @param string $name
- * 
  */
-public function setBcc($email, $name = '') {
+public function setBcc(string $email, string $name = '') : void {
 
 	if (!empty(self::$always_to)) {
 		return;
@@ -347,21 +302,16 @@ public function setBcc($email, $name = '') {
  * Set ReplyTo Adress. If called multiple times address list will be used.
  * From is added automatically as ReplyTo - an error will occure if you add it manually.
  * Default is Sender Adress.
- * 
- * @param string $email
- * @param string $name 
  */
-public function setReplyTo($email, $name = '') {
+public function setReplyTo(string $email, string $name = '') : void {
 	$this->_add_address('ReplyTo', $email, $name);
 }
 
 
 /**
  * Set Subject. UTF-8 characters are allowed.
- * 
- * @param string $txt 
  */
-public function setSubject($txt) {
+public function setSubject(string $txt) : void {
 	if ($txt != quoted_printable_encode($txt)) {
 		$this->_mailer->Subject = '=?utf-8?B?'.base64_encode($txt).'?=';
 	}
@@ -373,10 +323,8 @@ public function setSubject($txt) {
 
 /**
  * Set Text Body if $txt is not empty.
- *
- * @param string $txt  
  */
-public function setTxtBody($txt) {
+public function setTxtBody(string $txt) : void {
   if (!empty($txt)) {
     $this->_mailer->IsHTML(false);
     $this->_mailer->Body = $txt;
@@ -389,11 +337,8 @@ public function setTxtBody($txt) {
  * Relative image URLs and backgrounds will be converted into inline images.
  * If basedir is set path for images will be relative to basedir. 
  * Alt Text Body is automatically created. 
- * 
- * @param string $html 
- * @param string $basedir 
  */
-public function setHtmlBody($html, $basedir = '') {
+public function setHtmlBody(string $html, string $basedir = '') : void {
   if (!empty($html)) {
     $this->_mailer->MsgHTML($html, $basedir);
   }
@@ -401,14 +346,9 @@ public function setHtmlBody($html, $basedir = '') {
 
 
 /**
- * Check email and name. Split "Username" <user@example.com> into email and name.
- *
- * @throws 
- * @param string $email
- * @param string $name
- * @return array (email, name)
+ * Check email and name. Split "Username" <user@example.com> into email and name. Return (email, name).
  */
-private function _email_name($email, $name) {
+private function _email_name(string $email, string $name) : array {
 
   if (!empty($name)) {
     if (mb_strpos($name, ',') !== false || mb_strpos($name, '"') !== false) {
@@ -430,13 +370,9 @@ private function _email_name($email, $name) {
 
 
 /**
- * Add address 
- * 
- * @param string $type to|cc|bcc|ReplyTo
- * @param string $email
- * @param string $name
+ * Add address. Use $type in to|cc|bcc|ReplyTo.
  */
-private function _add_address($type, $email, $name) {
+private function _add_address(string $type, string $email, string $name) : void {
 	$email = trim($email);
 	$name = trim($name);
 
@@ -507,13 +443,9 @@ private function _add_address($type, $email, $name) {
 
 /**
  * Save mail in dir.
- * 
- * @param string $dir 
  */
-private function saveMail($dir) {
+private function saveMail(string $dir) : void {
 	Dir::create($dir, 0, true);
-	throw new Exception('ToDo ...');
-}
 
 
 /**
@@ -522,11 +454,8 @@ private function saveMail($dir) {
  * - send: true
  * - save: false
  * - save_dir: data/mail/$date(Ym)/$date(dH)/$map(id)
- *
- * @throws
- * @param string options 
  */
-public function send($options = []) {
+public function send(array $options = []) : void {
 
 	if (!isset($this->type_email['to']) || count($this->type_email['to']) == 0) {
 		throw new Exception('call setTo() first');
