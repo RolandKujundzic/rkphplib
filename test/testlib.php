@@ -1,6 +1,6 @@
 <?php
 
-require_once(dirname(__DIR__).'/src/lib/config.php');
+require_once dirname(__DIR__).'/src/lib/config.php';
 
 
 $test_count = ['path' => '', 'num' => 0, 'ok' => 0, 'error' => 0, 't_ok' => 0, 't_error' => 0, 't_num' => 0, 't_pass' => 0, 't_fail' => 0,
@@ -286,8 +286,8 @@ function run_tokenizer($num, $plugin_list) {
 		$tdir .= '/'.$test_count['path'];
 	}
 
-	include_once($src_dir.'/Tokenizer.class.php');
-	include_once($src_dir.'/File.class.php');
+	include_once $src_dir.'/Tokenizer.class.php';
+	include_once $src_dir.'/File.class.php';
 
 	$tok = new rkphplib\Tokenizer(rkphplib\Tokenizer::TOK_DEBUG);
 

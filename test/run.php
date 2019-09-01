@@ -1,6 +1,6 @@
 <?php
 
-require_once(dirname(__DIR__).'/src/TestHelper.class.php');
+require_once dirname(__DIR__).'/src/TestHelper.class.php';
 
 $th = new rkphplib\TestHelper();
 
