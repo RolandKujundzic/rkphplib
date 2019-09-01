@@ -13,7 +13,7 @@ if (!defined('HASH_DELIMITER')) {
 
 
 /**
- * Split text into key value hash. 
+ * Split text into key value hash or string. 
  * 
  * Keys must not start with "@@", "@N" or "@_". 
  * Split text at $d2 (|#|) into lines. Split lines at first $d1 (=) into key value.
@@ -27,7 +27,7 @@ if (!defined('HASH_DELIMITER')) {
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-function conf2kv(string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, array $ikv = []) : array {
+function conf2kv(string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, array $ikv = []) {
 	$ld1 = mb_strlen($d1);
 
 	if (empty($text)) {
@@ -53,6 +53,7 @@ function conf2kv(string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, ar
 			}
 		}
 
+		log_debug("conf2kv: text=[$text] d1=[$d1] d2=[$d2] res: ".print_r($res, true));
 		return $res;
 	}
 
