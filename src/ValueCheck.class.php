@@ -290,7 +290,7 @@ public static function isUnique($value, $p) {
 
 	if (!empty($p[3])) {
 		if (stripos($p[3], 'and ') === 0) {
-			$query .= substr($p[3], 4);
+			$query .= $p[3];
 		}
 		else if (!empty($p[4])) {
 			$query .= ' AND '.\rkphplib\ADatabase::escape_name($p[3]).' != {:=id_val}';
