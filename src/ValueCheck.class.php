@@ -16,14 +16,11 @@ class ValueCheck {
 
 
 /**
- * Run check if value is not empty.
- *
- * @param string $key
- * @param string|callable $value
- * @param string $check
- * @return bool
+ * Run check if string $value is not empty. If $value is callable replace $value with $value() result.
+ * Split $value at [:] into self::method and parameter list (e.g. value = isRange:5:8). If self::method
+ * doesn't exist assume isMatch and self::method = name of regular expression (see isMatch).
  */
-public static function run($key, $value, $check) {
+public static function run(string $key, $value, string $check) : bool {
 	// \rkphplib\lib\log_debug("ValueCheck::run> key=$key value=$value check=$check");
 	$condition = '';
 
@@ -171,16 +168,16 @@ public static function sqlQuery($value, $parameter, $query) {
 /**
  * @alias isDomain($domain)
  */
-public static function isURL(string $domain) : bool {
-	return self::isDomain($domain);
+public static function isURL(string $domain, int $min_level = 2, int $max_level = 9) : bool {
+	return self::isDomain($domain, $min_level, $max_level);
 }
 
 
 /**
  * @alias isDomain("$domain.tld")
  */
-public static function isURLPrefix(string $domain) : bool {
-	return self::isDomain($domain.'.tld');
+public static function isURLPrefix(string $domain, $min_level = 1, $max_level = 8) : bool {
+	return self::isDomain($domain.'.tld', $min_level + 1, $max_level + 1);
 }
 
 
@@ -197,8 +194,8 @@ public static function isURLPath(string $value) : bool {
 /**
  * @alias isDomain("$domain.tld")
  */
-public static function isSubDomain(string $domain) : bool {
-	return self::isDomain($domain.'.tld');
+public static function isSubDomain(string $domain, $min_level = 1, $max_level = 8) : bool {
+	return self::isDomain($domain.'.tld', $min_level + 1, $max_level + 1);
 }
 
 
