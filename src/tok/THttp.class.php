@@ -38,7 +38,7 @@ public function getPlugins(Tokenizer $tok) : array {
  * If domain name is invalid return empty string.
  */
 public function tok_domain_idn(string $domain) : string {
-	$idn = idn_to_ascii($name);
+	$idn = idn_to_ascii($domain);
 
 	if ($idn === false) {
 		\rkphplib\lib\log_warn("invalid domain name [$domain]");
@@ -53,7 +53,7 @@ public function tok_domain_idn(string $domain) : string {
  * Return utf8 domain name.
  */
 public function tok_domain_uf8(string $domain) : string {
-	$idn = idn_to_utf8($name);
+	$idn = idn_to_utf8($domain);
 
 	if ($idn === false) {
 		\rkphplib\lib\log_warn("invalid domain name [$domain]");
