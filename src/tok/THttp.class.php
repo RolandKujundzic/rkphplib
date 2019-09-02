@@ -52,7 +52,7 @@ public function tok_domain_idn(string $domain) : string {
 /**
  * Return utf8 domain name.
  */
-public function tok_domain_uf8(string $domain) : string {
+public function tok_domain_utf8(string $domain) : string {
 	$idn = idn_to_utf8($domain);
 
 	if ($idn === false) {
