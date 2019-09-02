@@ -26,8 +26,8 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin = [];
 	$plugin['http:get'] = TokPlugin::ONE_PARAM;
 	$plugin['http'] = 0;
-	$plugin['domain:idn'] =  TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
-	$plugin['domain:utf8'] =  TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['domain:idn'] =  TokPlugin::NO_PARAM;
+	$plugin['domain:utf8'] =  TokPlugin::NO_PARAM;
 	$plugin['domain'] = 0;
   return $plugin;
 }
@@ -35,14 +35,15 @@ public function getPlugins(Tokenizer $tok) : array {
 
 /**
  * Return internationalized domain name (IDN). Domain part with utf8 characters is converted into xn--NNN code.
- * If domain name is invalid return empty string.
  */
 public function tok_domain_idn(string $domain) : string {
-	$idn = idn_to_ascii($domain);
+	if (empty($domain)) {
+		return '';
+	}
 
+	$idn = idn_to_ascii($domain);
 	if ($idn === false) {
-		\rkphplib\lib\log_warn("invalid domain name [$domain]");
-		$idn = '';
+		throw new Exception('invalid domain '.$domain);
 	}
 
 	return $idn;
@@ -53,11 +54,13 @@ public function tok_domain_idn(string $domain) : string {
  * Return utf8 domain name.
  */
 public function tok_domain_utf8(string $domain) : string {
-	$idn = idn_to_utf8($domain);
+	if (empty($domain)) {
+		return '';
+	}
 
+	$idn = idn_to_utf8($domain);
 	if ($idn === false) {
-		\rkphplib\lib\log_warn("invalid domain name [$domain]");
-		$idn = '';
+		throw new Exception('invalid domain '.$domain);
 	}
 
 	return $idn;
