@@ -97,7 +97,7 @@ public function getLastMessageID() : string {
 /**
  * Return encoded string. Encoding is base64, 7bit, 8bit, binary or 'quoted-printable.
  */
-public function encodeString(string $str, string $encoding = 'base64') : void {
+public function encodeString(string $str, string $encoding = 'base64') : string {
 	return $this->_mailer->encodeString($str, $encoding);
 }
 
