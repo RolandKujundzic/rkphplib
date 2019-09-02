@@ -67,21 +67,26 @@ public function startXDTrace($trace_file = '/tmp/php5-xdebug.trace') {
 public static function trace($num = -6, $mode = 7) {
 
 	$trace = debug_backtrace();
+	$tnum = count($trace);
 	$start = 1;
 
-	if ($num == 0) {
-		$end = count($trace);
+	if ($tnum == 1) {
+		$start = 0;
+		$end = 1;
+	}
+	else if ($num == 0) {
+		$end = $tnum;
 	}
 	else if ($num < 0) {
-		$end = min(count($trace), $num * -1 + 1);
+		$end = min($tnum, $num * -1 + 1);
 	}
 	else if ($num > 0) {
 		$start = $num;
 		$end = $num + 1;
 	}
 
-	if ($end > count($trace)) {
-		throw new Exception('only '.count($trace).' debug traces available', "num=$num start=$start end=$end");
+	if ($end > $tnum) {
+		throw new Exception('only '.$tnum.' debug traces available', "num=$num start=$start end=$end");
 	}
 
 	$tlist = array();
