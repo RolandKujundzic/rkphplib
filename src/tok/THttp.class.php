@@ -23,10 +23,44 @@ class THttp implements TokPlugin {
  * Return http plugin.
  */
 public function getPlugins(Tokenizer $tok) : array {
-  $plugin = [];
-  $plugin['http:get'] = TokPlugin::ONE_PARAM;
-  $plugin['http'] = 0;
+	$plugin = [];
+	$plugin['http:get'] = TokPlugin::ONE_PARAM;
+	$plugin['http'] = 0;
+	$plugin['domain:idn'] =  TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['domain:utf8'] =  TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['domain'] = 0;
   return $plugin;
+}
+
+
+/**
+ * Return internationalized domain name (IDN). Domain part with utf8 characters is converted into xn--NNN code.
+ * If domain name is invalid return empty string.
+ */
+public function tok_domain_idn(string $domain) : string {
+	$idn = idn_to_ascii($name);
+
+	if ($idn === false) {
+		\rkphplib\lib\log_warn("invalid domain name [$domain]");
+		$idn = '';
+	}
+
+	return $idn;
+}
+
+
+/**
+ * Return utf8 domain name.
+ */
+public function tok_domain_uf8(string $domain) : string {
+	$idn = idn_to_utf8($name);
+
+	if ($idn === false) {
+		\rkphplib\lib\log_warn("invalid domain name [$domain]");
+		$idn = '';
+	}
+
+	return $idn;
 }
 
 
