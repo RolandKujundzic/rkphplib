@@ -24,7 +24,7 @@ use rkphplib\Database;
  *
  */
 class TConf implements TokPlugin {
-use rkphplib\traits\Map;
+use \rkphplib\traits\Map;
 
 /** @param map system configuration */
 public $sconf = [];

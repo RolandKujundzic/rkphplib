@@ -22,7 +22,7 @@ require_once __DIR__.'/traits/Map.trait.php';
  *
  */
 class APICall {
-use rkphplib\traits\Map;
+use \rkphplib\traits\Map;
 
 
 /** 
