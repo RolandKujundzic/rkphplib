@@ -105,7 +105,7 @@ public static function run($key, $value, $check) {
 /**
  * Return match pattern. Names:
  *
- * Required, Int, UInt, Integer (=UInt), Real, UReal, Email, EmailPrefix, URL, URLPrefix, URLPath, HTTP, HTTPS, 
+ * Required, Int, UInt, Integer (=UInt), Real, UReal, Email, EmailPrefix, HTTP, HTTPS, 
  * Phone, PhoneNumber (=Phone), Variable, PLZ
  * 
  * @throws if no match
@@ -124,9 +124,6 @@ public static function getMatch($name) {
 		'UReal' => '/^([0-9]+|[0-9]+\.[0-9]+)$/',
 		'Email' => '/^[a-z0-9_\.\-]+@[a-z0-9\.\-]+$/i',
 		'EmailPrefix' => '/^[a-z0-9_\.\-]+$/i',
-		'URL' => '/^[a-z0-9\-]+\.[a-z0-9\.\-]+$/i',
-		'URLPrefix' => '/^[a-z0-9\-\.]+$/i',
-		'URLPath' => '/^[a-z0-9\-\.\%\+\_\,\/]+$/i',
 		'HTTP' => '/^http\:\/\//i',
 		'HTTPS' => '/^https\:\/\//i',
 		'Phone' => '/^[\+0-9\(\)\/ \.\-]+$/i',
@@ -168,6 +165,95 @@ public static function sqlQuery($value, $parameter, $query) {
   // \rkphplib\lib\log_debug("ValueCheck::sqlQuery($value, ...)> parameter=[$parameter] query: $query");
   $dbres = $db->select($query);
   return count($dbres) > 0;
+}
+
+
+/**
+ * @alias isDomain($domain)
+ */
+public static function isURL(string $domain) : bool {
+	return self::isDomain($domain);
+}
+
+
+/**
+ * @alias isDomain("$domain.tld")
+ */
+public static function isURLPrefix(string $domain) : bool {
+	return self::isDomain($domain.'.tld');
+}
+
+
+/**
+ * True if $value is url path. Split $value at first [/] and check if prefix isDomain and suffix
+ * matches /^[a-z0-9\-\.\%\+\_\,\/]+$/i
+ */
+public static function isURLPath(string $value) : bool {
+	list ($domain, $path) = explode('/', $value, 2);
+	return preg_match('/^[a-z0-9\-\.\%\+\_\,\/]+$/i', $path) && self::isDomain($domain);
+}
+
+
+/**
+ * @alias isDomain("$domain.tld")
+ */
+public static function isSubDomain(string $domain) : bool {
+	return self::isDomain($domain.'.tld');
+}
+
+
+/**
+ * Return true if $domain is valid domain name. Max level allowed is 9 (a.b.c.d.e.f.g.h.tld).
+ * If min_level=0 set min_level=2. If max_level=0 set max_level=9.
+ * Export $_REQUEST[xn--$domain] if domain is valid utf8.
+ */
+public static function isDomain(string $domain, int $min_level = 2, int $max_level = 9) : bool {
+	$_REQUEST['xn--'.$domain] = '';
+
+	$domain_parts = explode('.', $domain);
+	$level = count($domain_parts);
+
+	if ($level > 9) {
+		throw new Exception("$domain level is $level", 'only [sub]domains up to level 6 are supported (e.g. a.b.c.d.e.f.g.h.tld)');
+	}
+
+	if (0 == $min_level) {
+		$min_level = 2;
+	}
+
+	if (0 == $max_level) {
+		$max_level = 9;
+	}
+
+	if ($min_level > $level || $level > $max_level) {
+		return false;
+	}
+
+	if (!preg_match('/^[a-z0-9-\.]+$/i', $domain)) {
+		// try convert to IDNA ASCII form
+		$xn = idn_to_ascii($domain);
+		if (false === $xn) {
+			return false;
+		}
+
+		$_REQUEST['xn--'.$domain] = $xn;
+		$domain = $xn;
+	}
+
+	$res = false;
+	$rx_sub = '([a-z0-9]{1,63}\.|[a-z0-9]+[a-z0-9-]{0,61}[a-z0-9]{1}\.)';
+	$rx_top = '([a-z]{2,20}|xn--[a-z0-9\-]{1,40})$';
+	if (preg_match('/^'.$rx_sub.$rx_top.'/i', $domain, $match) || preg_match('/^'.$rx_sub.$rx_sub.$rx_top.'/i', $domain, $match) ||
+			preg_match('/^'.$rx_sub.$rx_sub.$rx_sub.$rx_top.'/i', $domain, $match) ||
+			preg_match('/^'.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_top.'/i', $domain, $match) ||
+			preg_match('/^'.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_top.'/i', $domain, $match) ||
+			preg_match('/^'.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_top.'/i', $domain, $match) ||
+			preg_match('/^'.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_top.'/i', $domain, $match) ||
+			preg_match('/^'.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_top.'/i', $domain, $match)) {
+		return true;
+	}
+
+	return $res;
 }
 
 
