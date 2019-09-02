@@ -446,6 +446,8 @@ private function _add_address(string $type, string $email, string $name) : void 
  */
 private function saveMail(string $dir) : void {
 	Dir::create($dir, 0, true);
+	throw new Exception('ToDo ...');
+}
 
 
 /**
