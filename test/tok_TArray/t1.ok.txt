@@ -1,0 +1,8 @@
+{array:a4}{array:get}
+{array:}b{:array}{array:get}
+{array:vx}a|#|b|#|c{:array}{array:get}
+{array:s}Hello{:array}{array:get}{array:set:0}x1{:array}{array:set:1}x2{:array}
+{array:#h}{array:set:a} ABC {:array}{array:set:b}B{:array}{array:get}{array:#h}[]{:array}{array:get}
+{array:#hx}a=x|#|b=y{:array}{array:get}{array:set}a=5|#|c=z{:array}{array:get}
+{array:split:\:}a:b:c{:array}{array:get:0}{array:get:1}{array:get:2}
+{array:split:,}a, b\,c{:array}{array:get:0}{array:get:1}
