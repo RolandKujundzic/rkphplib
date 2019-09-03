@@ -51,12 +51,13 @@ public function getPlugins(Tokenizer $tok) : array {
   $plugin['array:push'] = TokPlugin::NO_PARAM;
 	$plugin['array:join'] = TokPlugin::NO_PARAM;
 	$plugin['array:length'] = TokPlugin::NO_PARAM;
+	$plugin['array:split'] = TokPlugin::REQUIRE_BODY;
   return $plugin;
 }
 
 
 /**
- * Return array[name]. Abort array is not activated or if $type is set (hash|vector) and mismatch. 
+ * Return array[name]. Abort if array is not activated or if $type (hash|vector) mismatch. 
  */
 private function getArray(string $name = '', string $type = '') : array {
 
@@ -75,7 +76,8 @@ private function getArray(string $name = '', string $type = '') : array {
 	}
 
 	if ($this->env['name'] != $name || !array_key_exists($name, $this->array)) {
-		throw new Exception('no such array ['.$name.'] - call [array:#NAME] or [array:]NAME[:array] first');
+		$prefix = $this->env['isHash'] ? '#' : '';
+		throw new Exception("no such array '$prefix$name' - call [array:$prefix$name] or [array:]$prefix$name".'[:array] first');
 	}
 
 	if ($type == '') {
@@ -85,10 +87,10 @@ private function getArray(string $name = '', string $type = '') : array {
 	if ($type != 'hash' && $type != 'vector') {
 		throw new Exception('invalid array type '.$type);
 	}
-	else if ($type == 'hash' && !$this->env['isHash'])
+	else if ($type == 'hash' && !$this->env['isHash']) {
 		throw new Exception('array is not hash');
 	}
-	else if ($type == 'vector' && !$this->env['isVector'])
+	else if ($type == 'vector' && !$this->env['isVector']) {
 		throw new Exception('array is not vector');
 	}
 
@@ -132,14 +134,14 @@ public function tok_array(string $name, string $arg) : void {
 	}
 
 	$fix_name = preg_replace('/[a-zA-Z0-9_]/', '', $name);
-	if ($fix_name != $name) {
-		throw new Exception("no special chars allowed use [$fix_name] instead of [$name]");
+	if ($fix_name != '') {
+		throw new Exception("no special chars allowed use [a-zA-Z0-9_] instead of '$name'");
 	}
 
 	$type = 'isVector';
 	if (substr($name, 0, 1) == '#') {
-		$type = 'isHash';
 		$name = substr($name, 1);
+		$type = 'isHash';
 	}
 
 	$this->env['name'] = $name;
@@ -171,31 +173,21 @@ public function tok_array_split(string $delimiter, string $arg) : void {
 /**
  * Set array[$key] = value.
  *
- * @tok {array:set:0}abc{:array} = set array[0] = 'abc'
- * @tok {array:set:label}Hello{:array} = set array['label'] = 'Hello'
+ * @tok {array:set:0}abc{:array} - array[0] = 'abc'
+ * @tok {array:set:label}Hello{:array} - array['label'] = 'Hello'
+ * @tok {array:set}a=x1|#|b=x2{:array} - array = array_merge(array, [ 'a' => 'x1', 'b' => 'x2' ])
  */
 public function tok_array_set(string $key, string $value) : void {
 	$pos = intval($key);
 	$type = ("$pos" == $key) ? 'vector' : 'hash';
 
 	$a =& $this->getArray('', $type);
-	$a[$key] = $value;
 
-	if ("$ipos" != $pos) {
-		if (strlen($pos) == 0) {
-			$a = conf2kv($value);
-		}
-		else {
-			// pos is delimiter - split value
-			$a = split_str($pos, $value);
-		}
+	if ($key == '') {
+		$a = array_merge($a, conf2kv($value));
 	}
 	else {
-		if ($ipos < 0 || $ipos >= count($a)) {
-			throw new Exception("[$ipos] is not in [0, ".count($a)."[");
-		}
-	
-		$a[$ipos] = $value;
+		$a[$key] = $value;
 	}
 }
 
@@ -204,15 +196,15 @@ public function tok_array_set(string $key, string $value) : void {
  * Return array[$key]. Paramter $key is either string, int (return a[(int) $key]) or empty (return kv2conf(array)).
  * Throw exception if array key is not set.
  * 
- * @tok {array:get} = "a|#|b|#|c" if array is [a, b, c]
- * @tok {array:get} = "a=x|#|b=y" if array is [ 'a' => 'x', 'b' => 'y' ]
- * @tok {array:get:0} = array[0]
- * @tok {array:get:abc} = array['abc']
+ * @tok {array:get} - "a|#|b|#|c" if array is [a, b, c]
+ * @tok {array:get} - "a=x|#|b=y" if array is [ 'a' => 'x', 'b' => 'y' ]
+ * @tok {array:get:0} - array[0]
+ * @tok {array:get:abc} - array['abc']
  */
 public function tok_array_get(string $key) : string {
-	$a =& $this->getVector();
+	$a =& $this->getArray();
 
-	if (strlen($key) == 0) {
+	if ($key == '') {
 		return kv2conf($a);
 	}
 
