@@ -89,7 +89,7 @@ private function &getArray(string $name = '', string $type = '') : array {
 		$type = 'hash';
 	}
 
-	\rkphplib\lib\log_debug("TArray.getArray:77> name=[$name] type=[$type] env.name=[".$this->env['name']."]");
+	// \rkphplib\lib\log_debug("TArray.&getArray:92> name=[$name] type=[$type] env.name=[".$this->env['name']."]");
 	if ($this->env['name'] != $name || !array_key_exists($name, $this->array)) {
 		$prefix = $this->env['isHash'] ? '#' : '';
 		throw new Exception("no such array '$prefix$name' - call [array:$prefix$name] or [array:]$prefix$name".'[:array] first');
@@ -151,15 +151,15 @@ public function tok_array(string $name, ?string $arg) : void {
 	$this->env[$type] = true;
 
 	if (!is_null($data)) {
-		\rkphplib\lib\log_debug("TArray.tok_array:153> create new array $name ($type) = ".print_r($data, true));
+		// \rkphplib\lib\log_debug("TArray.tok_array:154> create new array $name ($type) = ".print_r($data, true));
 		$this->array[$name] = $data;
 	}
 	else if (!isset($this->array[$name])) {
-		\rkphplib\lib\log_debug("TArray.tok_array:157> create new empty array $name ($type)");
+		// \rkphplib\lib\log_debug("TArray.tok_array:158> create new empty array $name ($type)");
 		$this->array[$name] = [];
 	}
 	else {
-		\rkphplib\lib\log_debug("TArray.tok_array:161> use array $name ($type)");
+		// \rkphplib\lib\log_debug("TArray.tok_array:162> use array $name ($type)");
 	}
 }
 
@@ -171,10 +171,10 @@ public function tok_array(string $name, ?string $arg) : void {
  * @tok {array:split:,}a, b\,c{:array} = ['a', 'b,c']
  */
 public function tok_array_split(string $delimiter, string $arg) : void {
-	\rkphplib\lib\log_debug("TArray.tok_array_split:179> delimiter=[$delimiter] arg=[$arg]");
+	// \rkphplib\lib\log_debug("TArray.tok_array_split:174> delimiter=[$delimiter] arg=[$arg]");
 	$a = &$this->getArray('', 'vector');
 	$a = split_str($delimiter, $arg);
-	\rkphplib\lib\log_debug('TArray.tok_array_split:182> '.$this->env['name'].': '.print_r($this->array[$this->env['name']], true));
+	// \rkphplib\lib\log_debug('TArray.tok_array_split:177> '.$this->env['name'].': '.print_r($this->array[$this->env['name']], true));
 }
 
 
@@ -189,16 +189,16 @@ public function tok_array_set(string $key, string $value) : void {
 	$pos = intval($key);
 	$type = ("$pos" == $key) ? 'vector' : 'hash';
 
-	\rkphplib\lib\log_debug('TArray.tok_array_set:192> '.$this->env['name']." ($type) - set [$key]=[$value]");
+	// \rkphplib\lib\log_debug('TArray.tok_array_set:192> '.$this->env['name']." ($type) - set [$key]=[$value]");
 	$a = &$this->getArray('', $type);
 
 	if ('' == $key) {
 		$a = array_merge($a, conf2kv($value));
-		\rkphplib\lib\log_debug('TArray.tok_array_set:200> merge: '.print_r($this->array[$this->env['name']], true));
+		// \rkphplib\lib\log_debug('TArray.tok_array_set:197> merge: '.print_r($this->array[$this->env['name']], true));
 	}
 	else {
 		$a[$key] = $value;
-		\rkphplib\lib\log_debug('TArray.tok_array_set:200> set key: '.print_r($this->array[$this->env['name']], true));
+		// \rkphplib\lib\log_debug('TArray.tok_array_set:201> set key: '.print_r($this->array[$this->env['name']], true));
 	}
 }
 
