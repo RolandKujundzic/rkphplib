@@ -79,7 +79,7 @@ public function __construct($command, $parameter = []) {
  */
 private function readStream($num) {
 	$res = stream_get_contents($this->pipe[$num]);
-	// \rkphplib\lib\log_debug("PipeExecute.readStream> exit - num=[$num] res=[$res]");
+	// \rkphplib\lib\log_debug("PipeExecute.readStream:82> exit - num=[$num] res=[$res]");
 	return $res;
 }
 
@@ -106,7 +106,7 @@ public function write($txt) {
  */
 public function load($file) {
 	$fh = File::open($file, 'rb');
-	// \rkphplib\lib\log_debug("PipeExecute.load> open file=[$file] fh=[$fh]\n");
+	// \rkphplib\lib\log_debug("PipeExecute.load:109> open file=[$file] fh=[$fh]\n");
 	while (!feof($fh)) { 
 		if (($buffer = fread($fh, 4096)) === false) {
 			throw new Exception('fread file failed', "file=$file buffer=$buffer");
@@ -146,7 +146,7 @@ public function close($abort = false) {
 	}
 
 	$retval = proc_close($this->process);
-	// \rkphplib\lib\log_debug("PipeExecute.close> retval=[$retval] output=[$output] error=[$error]");
+	// \rkphplib\lib\log_debug("PipeExecute.close:149> retval=[$retval] output=[$output] error=[$error]");
 
 	if ($retval === -1) {
 		if ($abort) {
