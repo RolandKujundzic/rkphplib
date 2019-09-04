@@ -778,7 +778,7 @@ public static function write(resource $fh, string $data) : void {
 			$data_len = $data_len - $byte;
 			$byte = fwrite($fh, substr($data, $byte));
 			$msg = ($data_len > 80) ? substr($data, 0, 40).' ... '.substr($data, -40) : $data;
-			// \rkphplib\lib\log_debug("retry write: n=[$n] prev_len=[$prev_len] data_len=[$data_len] byte=[$byte] data=[$msg]");
+			// \rkphplib\lib\log_debug("File::write:781> retry write: n=[$n] prev_len=[$prev_len] data_len=[$data_len] byte=[$byte] data=[$msg]");
 
 			if ($byte === false) {
 				throw new Exception('could not write data', "retry=[$n] fh=[$fh] byte=[$byte] len=[$data_len] prev_len=[$prev_len]");
