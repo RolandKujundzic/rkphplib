@@ -8,4 +8,4 @@ if (!isset($th)) {
 	$th = new rkphplib\TestHelper();
 }
 
-$th->runTokenizer(3, array('TArray'));
+$th->runTokenizer(2, array('TArray'));
