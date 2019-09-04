@@ -67,7 +67,7 @@ END;
 public function initMeta() : void {
 
 	if (!empty($this->conf['init_meta'])) {
-		// \rkphplib\lib\log_debug('ASession::initMeta> use existing'); 
+		// \rkphplib\lib\log_debug('ASession.initMeta:70> use existing'); 
 		return;
 	}
 
@@ -121,7 +121,7 @@ public function getConf(string $key) : string {
  *  Check inactive and ttl with hasExpired().
  */
 protected function setConf(array $conf) : void {
-	// \rkphplib\lib\log_debug('setConf> enter - conf: '.print_r($conf, true));
+	// \rkphplib\lib\log_debug('ASession.setConf:124> enter - conf: '.print_r($conf, true));
 
 	$default = [ 'name' => '', 'table' => '', 'scope' => 'docroot', 'inactive' => '7200', 'ttl' => '172800', 'init_meta' => '0', 
 		'redirect_login' => 'index.php?dir=login',  'redirect_logout' => 'index.php?dir=login/exit',
@@ -171,7 +171,7 @@ protected function setConf(array $conf) : void {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('setConf> exit - this.conf: '.print_r($this->conf, true));
+	// \rkphplib\lib\log_debug('ASession.setConf:174> exit - this.conf: '.print_r($this->conf, true));
 }
 
 
@@ -241,7 +241,7 @@ public function redirectForbidden() : void {
  * If conf.redirect_login is set redirect otherwise throw exception.
  */
 public function redirectLogin(string $reason, array $p = []) : void {
-	// \rkphplib\lib\log_debug('ASession::redirectLogin> reason='.$reason.' - conf: '.print_r($this->conf, true)."\np: ".print_r($p, true));
+	// \rkphplib\lib\log_debug('ASession.redirectLogin:244> reason='.$reason.' - conf: '.print_r($this->conf, true)."\np: ".print_r($p, true));
 	$this->destroy();
 
 	if (!empty($this->conf['redirect_login'])) {
