@@ -65,7 +65,7 @@ function execute(string $cmd, ?array $parameter = null, $flag = 1) {
 
 	$output_msg = '';
 
-	// \rkphplib\lib\log_debug("lib/execute($cmd, ...)> $cmd");
+	// \rkphplib\lib\log_debug("execute:68> cmd: $cmd");
 	if ($cmd) {
 		$output = array();
 		$retval = -1;
