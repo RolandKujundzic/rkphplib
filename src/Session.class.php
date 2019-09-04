@@ -81,21 +81,21 @@ public function init(array $conf) : void {
 
 	if (!session_id() && empty($_SERVER['SSH_TTY'])) {
 		session_start();
-		// \rkphplib\lib\log_debug('Session::init> start session');
+		// \rkphplib\lib\log_debug('Session.init:84> start session');
 	}
 	
 	$skey = $this->getSessionKey();
 	$skey_meta =$this->getSessionKey('meta'); 
 
-	// \rkphplib\lib\log_debug('Session::init> session_id='.session_id()." in ".ini_get('session.save_path')." - skey=$skey meta=$skey_meta");
+	// \rkphplib\lib\log_debug('Session.init:90> session_id='.session_id()." in ".ini_get('session.save_path')." - skey=$skey meta=$skey_meta");
 
 	if (!isset($_SESSION[$skey]) || !is_array($_SESSION[$skey])) {
-		// \rkphplib\lib\log_debug('Session::init> create skey map');
+		// \rkphplib\lib\log_debug('Session.init:93> create skey map');
     $_SESSION[$skey] = [];
   }
 
 	if (!isset($_SESSION[$skey_meta]) || !is_array($_SESSION[$skey_meta])) {
-		// \rkphplib\lib\log_debug('Session::init> create skey_meta map');
+		// \rkphplib\lib\log_debug('Session.init:98> create skey_meta map');
     $_SESSION[$skey_meta] = [];
   }
 
@@ -103,7 +103,7 @@ public function init(array $conf) : void {
 
 	if (!empty($_REQUEST[SETTINGS_REQ_DIR])) {
 		$dir = $_REQUEST[SETTINGS_REQ_DIR];
-		// \rkphplib\lib\log_debug('Session::init> check if '.$dir.' is in allowed: '.print_r($this->conf['allow_dir'], true));
+		// \rkphplib\lib\log_debug('Session.init:106> check if '.$dir.' is in allowed: '.print_r($this->conf['allow_dir'], true));
 		foreach ($this->conf['allow_dir'] as $allow_dir) {
 			if (!empty($allow_dir) && mb_strpos($dir, $allow_dir) === 0) {
 				// we are in login-free directory - return without checks
@@ -113,21 +113,21 @@ public function init(array $conf) : void {
 	}
 
 	if (!$this->validScope()) {
-		// \rkphplib\lib\log_debug('Session::init> invalid scope - redirectForbidden');
+		// \rkphplib\lib\log_debug('Session.init:116> invalid scope - redirectForbidden');
 		$this->redirectForbidden();
 	}
 
 	if (count($this->conf['required']) > 0) {
 		foreach ($this->conf['required'] as $name) {
     	if (empty($_SESSION[$skey][$name])) {
-				// \rkphplib\lib\log_debug('Session::init> required parameter '.$skey.'.'.$name.' empty - redirectLogin');
+				// \rkphplib\lib\log_debug('Session.init:123> required parameter '.$skey.'.'.$name.' empty - redirectLogin');
 				$this->redirectLogin('no_login');
 			}
 		}
 	}
 
 	if (($expired = $this->hasExpired())) {
-		// \rkphplib\lib\log_debug('Session::init> exipred - redirectLogin');
+		// \rkphplib\lib\log_debug('Session.init:130> exipred - redirectLogin');
 		$this->redirectLogin('expired', [ 'expired' => $expired ]);
 	}
 }
