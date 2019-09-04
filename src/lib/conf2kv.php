@@ -53,7 +53,7 @@ function conf2kv(string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, ar
 			}
 		}
 
-		log_debug("conf2kv: text=[$text] d1=[$d1] d2=[$d2] res: ".print_r($res, true));
+		// \rkphplib\lib\log_debug("conf2kv:56> text=[$text] d1=[$d1] d2=[$d2] res: ".print_r($res, true));
 		return $res;
 	}
 
