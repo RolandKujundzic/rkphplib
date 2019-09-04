@@ -121,9 +121,9 @@ public function tok_menu_add($level, $node) {
 
 	$label = isset($node['label']) ? $node['label'] : (isset($node['dir']) ? $node['dir'] : $level); 
 
-	// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> level=$level ignore_level=".$this->ignore_level);
+	// \rkphplib\lib\log_debug("label=$label level=$level ignore_level=".$this->ignore_level);
 	if ($this->ignore_level > 0 && $level >= $this->ignore_level) {
-		// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> level=$level > ignore_level=".$this->ignore_level.' - return');
+		// \rkphplib\lib\log_debug("call skipNode and return - label=$label level=$level ignore_level=".$this->ignore_level);
 		$this->skipNode($node);
 		return;
 	}
@@ -135,7 +135,7 @@ public function tok_menu_add($level, $node) {
 	$node['id'] = $nc + 1;
 	$node['parent'] = 0;
 
-	// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> nc=$nc id=".($nc + 1)." parent=0 prev=node.".($nc - 1));
+	// \rkphplib\lib\log_debug("nc=$nc id=".($nc + 1)." parent=0 prev=node.".($nc - 1));
 	if ($prev) {
 		if ($level === $prev['level'] + 1) {
 			$node['parent'] = $prev['id'];
@@ -161,14 +161,14 @@ public function tok_menu_add($level, $node) {
 
 	if (isset($node['if']) && empty($node['if'])) {
 		$this->ignore_level = $level + 1;
-		// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> return - if = false");
+		// \rkphplib\lib\log_debug("skipNode and return - if = false");
 		$this->skipNode($node);
 		return;
 	}
 
 	if (!empty($node['if_table']) && !$this->hasTables($node['if_table'])) {
 		$this->ignore_level = $level + 1;
-		// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> return - no such table ".$node['if_table']);
+		// \rkphplib\lib\log_debug("skipNode and return - no such table ".$node['if_table']);
 		$this->skipNode($node);
 		return;
 	}
@@ -192,7 +192,7 @@ public function tok_menu_add($level, $node) {
 		$node['dir'] = mb_substr($node['dir'], 0, -1);
 	}
 
-	// \rkphplib\lib\log_debug("AMenu.tok_menu_add($label)> add node: ".print_r($node, true));
+	// \rkphplib\lib\log_debug("add node: ".print_r($node, true));
 	array_push($this->node, $node);
 }
 
@@ -210,7 +210,7 @@ private function skipNode($node) {
 	}
 
 	if (isset($node['if_priv']) && !$this->tok->callPlugin('login', 'hasPrivileges', [ $node['if_priv'] ])) {
-		// \rkphplib\lib\log_debug("AMenu.skipNode> current dir is forbidden - node: ".join('|', $node));
+		// \rkphplib\lib\log_debug("current dir is forbidden - node: ".join('|', $node));
 		$redir_url = empty($this->conf['redirect_access_denied']) ? 'login/access_denied' : $this->conf['redirect_access_denied'];
 		\rkphplib\lib\redirect($redir_url, [ '@link' => 1, '@back' => 1 ]);
 	}
@@ -244,7 +244,7 @@ public function addNodeHi() {
 			}
 
 			if ($node['dir'] == $curr_path) {
-				// \rkphplib\lib\log_debug("AMenu.addNodeHi> ($i, $j): curr_path=$curr_path node.dir=".$node['dir']);
+				// \rkphplib\lib\log_debug("($i, $j): curr_path=$curr_path node.dir=".$node['dir']);
 				$this->node[$j]['hi'] = 1;
 				$found = true;
 
@@ -270,7 +270,7 @@ private function hasTables($tables) {
 	$table_list = \rkphplib\lib\split_str(',', $tables);
 	foreach ($table_list as $table) {
 		if (!$db->hasTable($table)) {
-			// \rkphplib\lib\log_debug("AMenu.hsaTables> if_table = false - missing $table");
+			// \rkphplib\lib\log_debug("if_table = false - missing $table");
 			return false;
 		}
 	}
