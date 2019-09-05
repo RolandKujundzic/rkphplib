@@ -6,6 +6,10 @@ require_once __DIR__.'/DateCalc.class.php';
 require_once __DIR__.'/lib/split_str.php';
 
 
+use function rkphplib\lib\split_str;
+
+
+
 /**
  * All checks are static methods and return true|false.
  *
@@ -59,7 +63,7 @@ public static function run(string $key, $value, string $check) : bool {
 	}
 
 	if (!is_array($check)) {
-		$check = \rkphplib\lib\split_str(':', $check);
+		$check = split_str(':', $check);
 	}
 
 	$method = array_shift($check);
@@ -152,7 +156,7 @@ public static function sqlQuery($value, $parameter, $query) {
 
   $db = \rkphplib\Database::getInstance();
 
-  $columns = \rkphplib\lib\split_str(',', $parameter);
+  $columns = split_str(',', $parameter);
   foreach ($columns as $column) {
 		if (isset($_REQUEST[$column])) {
 			$query .= ' AND '.$db->escape_name($column)."='".$db->esc($_REQUEST[$column])."'";
