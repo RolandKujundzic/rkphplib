@@ -21,6 +21,9 @@ use rkphplib\JSON;
 use rkphplib\File;
 use rkphplib\Dir;
 
+use function rkphplib\lib\split_str;
+use function rkphplib\lib\conf2kv;
+
 
 
 /**
@@ -81,7 +84,7 @@ public function tok_upload_formData($param) {
 	}
 
 	if (!is_array($this->conf['ajax_parameter'])) {
-		$this->conf['ajax_parameter'] = \rkphplib\lib\conf2kv($this->conf['ajax_parameter'], ':', ',');
+		$this->conf['ajax_parameter'] = conf2kv($this->conf['ajax_parameter'], ':', ',');
 	}
 
 	if ($param == 'hidden') {
@@ -521,7 +524,7 @@ private function removeImage() {
 	$query = $db->getQuery('select_images', $r);
 	// \rkphplib\lib\log_debug("TUpload.removeImage:522> name=$name num=$num table=$table $id_col=$id_val - query: $query");
 	$dbres = $db->selectOne($query);
-	$images = \rkphplib\lib\split_str(',', $dbres[$name]);
+	$images = split_str(',', $dbres[$name]);
 	$remove_img = array_splice($images, $num - 1, 1);
 	$r['images'] = join(',', $images);
 	// \rkphplib\lib\log_debug("TUpload.removeImage:527> r.images=".$r['images']." remove_img=".$remove_img[0]." images: ".print_r($images, true));
@@ -592,7 +595,7 @@ private function replaceImage() {
 	$query = $db->getQuery('select_images', $r);
 	// \rkphplib\lib\log_debug("TUpload.replaceImage:593> name=$name num=$num table=$table $id_col=$id_val - query: $query");
 	$dbres = $db->selectOne($query);
-	$images = \rkphplib\lib\split_str(',', $dbres[$name]);
+	$images = split_str(',', $dbres[$name]);
 	$r['images'] = $dbres[$name]; // images entry in database does not change
 
 	// recursion: upload image ...
@@ -882,7 +885,7 @@ private function getSaveAs($upload_file, $temp_file, $nc = 0) {
 			$this->conf['acceptedFiles'] = [ '.jpg', '.png', '.gif' ];
 		}
 
-		$allow_suffix = \rkphplib\lib\split_str(',', $this->conf['acceptedFiles']);
+		$allow_suffix = split_str(',', $this->conf['acceptedFiles']);
 	
 		if (!in_array($suffix, $allow_suffix)) {
 			$this->error('invalid suffix '.$suffix.' use conf.acceptedFiles='.join(',', $allow_suffix));
