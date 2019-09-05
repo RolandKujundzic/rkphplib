@@ -5,13 +5,16 @@ namespace rkphplib\tok;
 $parent_dir = dirname(__DIR__);
 require_once __DIR__.'/TokPlugin.iface.php';
 require_once $parent_dir.'/Database.class.php';
+require_once $parent_dir.'/traits/Map.trait.php';
 require_once $parent_dir.'/lib/conf2kv.php';
 require_once $parent_dir.'/lib/kv2conf.php';
-require_once $parent_dir.'/traits/Map.trait.php';
 
 use rkphplib\Exception;
 use rkphplib\ADatabase;
 use rkphplib\Database;
+
+use function rkphplib\lib\conf2kv;
+use function rkphplib\lib\kv2conf;
 
 
 
@@ -187,9 +190,9 @@ public function tok_conf_set_path($name, $p) {
 	$path = array_shift($p);
 	$value = join(HASH_DELIMITER, $p);
 
-	$map = \rkphplib\lib\conf2kv($this->get($this->lid, $name));
+	$map = conf2kv($this->get($this->lid, $name));
 	self::setMapPathValue($map, $path, $value);
-	$this->set($this->lid, $name, \rkphplib\lib\kv2conf($map));
+	$this->set($this->lid, $name, kv2conf($map));
 	return '';
 }
 
@@ -289,8 +292,8 @@ public function tok_conf_get_path($name, $p) {
 		throw new Exception('invalid parameter list', "name=$name path=$path p: ".print_r($p, true));
 	}
 
-	$map = \rkphplib\lib\conf2kv($this->get($this->lid, $name));
-	$res = \rkphplib\lib\kv2conf(self::getMapPathValue($map, $path));
+	$map = conf2kv($this->get($this->lid, $name));
+	$res = kv2conf(self::getMapPathValue($map, $path));
 	return $res;
 }
 
