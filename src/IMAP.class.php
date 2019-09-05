@@ -458,9 +458,7 @@ public function getMsg() : array {
 
 
 /**
- * Save all messages in directory. 
- *
- * @see save() 
+ * Save all messages in directory. Return number of saved messages. 
  */
 public function saveAll(string $dir) : void {
 	$this->_check_con();

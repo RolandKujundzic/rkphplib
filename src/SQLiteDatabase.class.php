@@ -69,12 +69,9 @@ public function close() {
 
 
 /**
- * Execute query.
  *
- * @param string $query
- * @param bool $use_result (default = false)
  */
-public function execute($query, $use_result = false) {
+public function execute(string $query, bool $use_result = false) : void {
 
 	if (is_array($query)) {
 		$stmt = $this->_exec_stmt($query);
@@ -91,28 +88,9 @@ public function execute($query, $use_result = false) {
 
 
 /**
- * Return table data checksum.
  *
- * @param string $table
- * @return string
  */
-public function getTableChecksum($table, $native = false) {
-	throw new Exception('ToDo');
-}
-
-
-/**
- * Return table status. Result keys (there can be more keys):
- * 
- *  - rows: number of rows
- *  - auto_increment: name of auto increment column
- *  - create_time: sql-timestamp
- * 
- * @param string $table 
- * @throws
- * @return map<string:string>
- */
-public function getTableStatus($table) {
+public function getTableChecksum(string $table, bool $native = false) : string {
 	throw new Exception('ToDo');
 }
 
@@ -120,18 +98,7 @@ public function getTableStatus($table) {
 /**
  *
  */
-public function setFirstRow($offset) {
-	throw new Exception('ToDo');
-}
-
-
-/**
- * Return next row (or NULL).
- * 
- * @throws if no resultset
- * @return map<string:string>|null
- */
-public function getNextRow() {
+public function getTableStatus(string $table) : array {
 	throw new Exception('ToDo');
 }
 
@@ -139,30 +106,39 @@ public function getNextRow() {
 /**
  *
  */
-public function freeResult() {
+public function setFirstRow(int $offset) : void {
 	throw new Exception('ToDo');
 }
 
 
 /**
- * Return number of rows in resultset.
- * 
- * @throws if no resultset
- * @return int
+ *
  */
-public function getRowNumber() {
+public function getNextRow() : ?array {
 	throw new Exception('ToDo');
 }
 
 
 /**
- * Execute $query and return result column $col vector.
- * 
- * @param string $query
- * @param string $colname
- * @return vector
+ *
  */
-public function selectColumn($query, $colname = 'col') {
+public function freeResult() : void {
+	throw new Exception('ToDo');
+}
+
+
+/**
+ * 
+ */
+public function getRowNumber() : int {
+	throw new Exception('ToDo');
+}
+
+
+/**
+ *
+ */
+public function selectColumn($query, string $colname = 'col') : array {
 	
 	if (is_array($query)) {
 		$res = $this->_fetch_stmt($this->_exec_stmt($query), array($colname)); 
@@ -176,14 +152,9 @@ public function selectColumn($query, $colname = 'col') {
 
 
 /**
- * Execute $query and return result map $key_cols = $value_col.
- * 
- * @param string $query
- * @param string $key_col
- * @param string $value_col
- * @param bool $ignore_double
+ *
  */
-public function selectHash($query, $key_col = 'name', $value_col = 'value', $ignore_double = false) {
+public function selectHash(string $query, string $key_col = 'name', string $value_col = 'value', bool $ignore_double = false) : array {
 
 	throw new Exception('ToDo ... ignore_double');
 
@@ -199,15 +170,9 @@ public function selectHash($query, $key_col = 'name', $value_col = 'value', $ign
 
 
 /**
- * Execute table and return result. If res_count > 0 and result is empty
- * throw "no result" error message.
  *
- * @throws
- * @param string $query
- * @param int $res_count
- * @return table
  */
-public function select($query, $res_count = 0) {
+public function select($query, int $res_count = 0) : array {
 
 	if (is_array($query)) {
 		$res = $this->_fetch_stmt($this->_exec_stmt($query), null, $res_count); 
@@ -299,7 +264,7 @@ private function _fetch($query, $rbind = null, $rcount = 0) {
 /**
  *
  */
-public function selectRow($query, $rnum = 0) {
+public function selectRow($query, int $rnum = 0) : array {
 
 	$rnum = -1 * $rnum - 1;
 
@@ -464,12 +429,9 @@ private function _fetch_stmt($stmt, $rbind = null, $rcount = 0) {
 
 
 /**
- * Escape value $txt.
- * 
- * @param string $txt
- * @return string
+ *
  */
-public function esc($txt) {
+public function esc(string $txt) : string {
 
 	if (!$this->_db) {
 		return self::escape($txt);
@@ -480,12 +442,9 @@ public function esc($txt) {
 
 
 /**
- * Return table description.
  *
- * @param string $table
- * @return map 
  */
-public function getTableDesc($table) {
+public function getTableDesc(string $table) : array {
 
 	if (isset($this->_cache['DESC:'.$table])) {
     return $this->_cache['DESC:'.$table];
@@ -505,24 +464,11 @@ public function getTableDesc($table) {
   return $res;
 }
 
-/**
- * Return vector with database names.
- *
- * @param boolean $reload_cache
- * @return vector
- */
-public function getDatabaseList($reload_cache = false) {
-	throw new Exception('ToDo ...');	
-}
-
 
 /**
- * Return vector with table names.
  *
- * @param boolean $reload_cache
- * @return vector
  */
-public function getTableList($reload_cache = false) {
+public function getDatabaseList(bool $reload_cache = false) : array {
 	throw new Exception('ToDo ...');	
 }
 
@@ -530,29 +476,31 @@ public function getTableList($reload_cache = false) {
 /**
  *
  */
-public function getReferences($table, $column = 'id') {
-	throw new Exception('ToDo ...');
+public function getTableList(bool $reload_cache = false) : array {
+	throw new Exception('ToDo ...');	
 }
 
 
 /**
- * Return last error info. Custom error values:
  *
- * - no_such_table 
- *
- * @return null|vector [custom_error, native_error, native_error_code ]
  */
-public function getError() {
+public function getReferences(string $table, string $column = 'id') : array {
 	throw new Exception('ToDo ...');
 }
 
 
 /**
- * Return number of affected rows of last execute query.
+ *
+ */
+public function getError() : ?array {
+	throw new Exception('ToDo ...');
+}
+
+
+/**
  * 
- * @return int
  */
-public function getAffectedRows() {
+public function getAffectedRows() : int {
 	throw new Exception('ToDo ...');
 }
 
@@ -560,7 +508,7 @@ public function getAffectedRows() {
 /**
  *
  */
-public function createDatabase($dsn = '', $opt = 'utf8') {
+public function createDatabase(string $dsn = '', string $opt = 'utf8') : void {
 	throw new Exception('ToDo ...');
 }
 
@@ -568,7 +516,7 @@ public function createDatabase($dsn = '', $opt = 'utf8') {
 /**
  *
  */
-public function dropDatabase($dsn = '') {
+public function dropDatabase(string $dsn = '') : void {
 	throw new Exception('ToDo ...');
 }
 
@@ -576,7 +524,7 @@ public function dropDatabase($dsn = '') {
 /**
  *
  */
-public function saveDump($opt) {
+public function saveDump(array $opt) : void {
 	throw new Exception('ToDo ...');
 }
 
@@ -584,7 +532,7 @@ public function saveDump($opt) {
 /**
  *
  */
-public function saveTableDump($opt) {
+public function saveTableDump(array $opt) : void {
 	throw new Exception('ToDo ...');
 }
 
@@ -592,7 +540,7 @@ public function saveTableDump($opt) {
 /**
  *
  */
-public function loadDump($file) {
+public function loadDump(string $file, int $flags) : void {
 	throw new Exception('ToDo ...');
 }
 
@@ -600,7 +548,7 @@ public function loadDump($file) {
 /**
  *
  */
-public static function createTableQuery($conf) {
+public static function createTableQuery(array $conf) : string {
 	throw new Exception('ToDo ...');
 }
 
@@ -608,7 +556,7 @@ public static function createTableQuery($conf) {
 /**
  *
  */
-public function dropTable($table) {
+public function dropTable(string $table) : void {
 	throw new Exception('ToDo ...');
 }
 
@@ -616,7 +564,7 @@ public function dropTable($table) {
 /**
  *
  */
-public function hasResultSet() {
+public function hasResultSet() : bool {
 	throw new Exception('ToDo ...');
 }
 
@@ -624,7 +572,7 @@ public function hasResultSet() {
 /**
  *
  */
-public function getInsertId() {
+public function getInsertId() : int {
 	throw new Exception('ToDo ...');
 }
 
@@ -632,7 +580,7 @@ public function getInsertId() {
 /**
  *
  */
-public function lock($tables) {
+public function lock(array $tables) : void {
   throw new Exception('@ToDo ... ');
 }
 
@@ -640,7 +588,7 @@ public function lock($tables) {
 /**
  *
  */
-public function unlock() {
+public function unlock() : void {
   throw new Exception('@ToDo ... ');
 }
 
@@ -648,7 +596,7 @@ public function unlock() {
 /**
  *
  */
-public function getLock($name) {
+public function getLock(string $name) : int {
   throw new Exception('@ToDo ... ');
 }
 
@@ -656,7 +604,7 @@ public function getLock($name) {
 /**
  *
  */
-public function hasLock($name) {
+public function hasLock(string $name) : bool {
   throw new Exception('@ToDo ... ');
 }
 
@@ -664,7 +612,7 @@ public function hasLock($name) {
 /**
  *
  */
-public function releaseLock($name) {
+public function releaseLock(string $name) : int {
   throw new Exception('@ToDo ... ');
 }
 
@@ -672,7 +620,7 @@ public function releaseLock($name) {
 /**
  *
  */
-public function multiQuery($query) {
+public function multiQuery(string $query) : array {
   throw new Exception('@ToDo ... ');
 }
 
