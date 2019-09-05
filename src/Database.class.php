@@ -4,10 +4,11 @@ namespace rkphplib;
 
 require_once __DIR__.'/Exception.class.php';
 require_once __DIR__.'/ADatabase.class.php';
-require_once __DIR__.'/lib/split_str.php';
 require_once __DIR__.'/lib/is_map.php';
 
 use rkphplib\Exception;
+
+use function rkphplib\lib\is_map;
 
 
 
@@ -88,7 +89,7 @@ public static function getInstance(string $dsn = '', array $query_map = []) : ob
 		}
 	}
 
-	if (\rkphplib\lib\is_map($query_map, true)) {
+	if (is_map($query_map, true)) {
 		array_push(self::$pool, self::create($dsn, $query_map));
 		// \rkphplib\lib\log_debug("Database::getInstance:93> create and use new instance $i = ".self::$pool[$i]->getId());
 		return self::$pool[$i];
