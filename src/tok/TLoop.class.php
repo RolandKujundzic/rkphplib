@@ -8,6 +8,9 @@ require_once __DIR__.'/../lib/split_str.php';
 
 use rkphplib\Exception;
 
+use function rkphplib\lib\split_str;
+
+
 
 /**
  * Format loop data.
@@ -83,7 +86,7 @@ public function tok_loop_list($p, $txt) {
 		$delimiter = $p[0];
 	}
 
-	$this->loop = \rkphplib\lib\split_str($delimiter, $txt, true);
+	$this->loop = split_str($delimiter, $txt, true);
 }
 
 
