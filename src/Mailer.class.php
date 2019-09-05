@@ -5,11 +5,13 @@ namespace rkphplib;
 require_once dirname(__DIR__).'/other/PHPMailer/Exception.php';
 require_once dirname(__DIR__).'/other/PHPMailer/PHPMailer.php';
 
+require_once __DIR__.'/Dir.class.php';
 require_once __DIR__.'/lib/resolvPath.php';
 
-require_once __DIR__.'/Dir.class.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
+
+use function rkphplib\lib\resolvPath;
 
 
 /**
@@ -475,7 +477,7 @@ public function send(array $options = []) : void {
 	}
 
 	if ($options['save']) {
-		$options['save_dir'] = \rkphplib\lib\resolvPath($options['save_dir'], [ 'id' => $this->_mailer->getLastMessageId() ]);
+		$options['save_dir'] = resolvPath($options['save_dir'], [ 'id' => $this->_mailer->getLastMessageId() ]);
 		$this->saveMail($options['save_dir']);
 	}
 
