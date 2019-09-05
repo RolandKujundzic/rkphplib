@@ -9,6 +9,9 @@ require_once $parent_dir.'/lib/kv2conf.php';
 
 use rkphplib\Exception;
 
+use function rkphplib\lib\kv2conf;
+
+
 
 /**
  * Access http environment.
@@ -110,7 +113,7 @@ public static function httpGet($name) {
   $res = '';
 
 	if ($name == '*') {
-		$res = \rkphplib\lib\kv2conf($_SERVER);
+		$res = kv2conf($_SERVER);
 	}
 	else if ($name == 'custom') {
 		$res = [];
@@ -119,7 +122,7 @@ public static function httpGet($name) {
 			$res[$key] = $this->tok_http_get($key);
 		}
 
-		$res = \rkphplib\lib\kv2conf($res);
+		$res = kv2conf($res);
 	}
 	else if ($name == strtoupper($name)) {
 		if (!isset($_SERVER[$name])) {
