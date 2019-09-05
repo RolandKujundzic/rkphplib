@@ -9,6 +9,9 @@ require_once __DIR__.'/../lib/redirect.php';
 
 use rkphplib\Exception;
 
+use function rkphplib\lib\split_str;
+use function rkphplib\lib\redirect;
+
 
 
 /**
@@ -212,7 +215,7 @@ private function skipNode($node) {
 	if (isset($node['if_priv']) && !$this->tok->callPlugin('login', 'hasPrivileges', [ $node['if_priv'] ])) {
 		// \rkphplib\lib\log_debug("AMenu.skipNode:213> current dir is forbidden - node: ".join('|', $node));
 		$redir_url = empty($this->conf['redirect_access_denied']) ? 'login/access_denied' : $this->conf['redirect_access_denied'];
-		\rkphplib\lib\redirect($redir_url, [ '@link' => 1, '@back' => 1 ]);
+		redirect($redir_url, [ '@link' => 1, '@back' => 1 ]);
 	}
 }
 
@@ -267,7 +270,7 @@ private function hasTables($tables) {
 	require_once __DIR__.'/../Database.class.php';
 	$db = \rkphplib\Database::getInstance();
 
-	$table_list = \rkphplib\lib\split_str(',', $tables);
+	$table_list = split_str(',', $tables);
 	foreach ($table_list as $table) {
 		if (!$db->hasTable($table)) {
 			// \rkphplib\lib\log_debug("AMenu.hasTables:273> if_table = false - missing $table");
