@@ -8,6 +8,9 @@ require_once __DIR__.'/YAML.class.php';
 require_once __DIR__.'/JSON.class.php';
 require_once __DIR__.'/lib/split_str.php';
 
+use function rkphplib\lib\split_str;
+
+
 
 /**
  * Create swagger yaml documentation. Every route needs "@api" Annotation. 
@@ -328,7 +331,7 @@ private function apiInfo($api, $path) {
 				$this->addParametersFromInput($info, $pval, $path);
 			}
 			else {
-				$this->addNewParameter($info, \rkphplib\lib\split_str(',', $pval));
+				$this->addNewParameter($info, split_str(',', $pval));
 			}
 		}
 	}
@@ -472,10 +475,10 @@ private static function param2map($pinfo) {
 	if (count($pinfo) > 6) {
 		for ($i = 6; $i < count($pinfo); $i++) {
 			if (($pos = strpos($pinfo[$i], 'default:')) === 0 || ($pos = strpos($pinfo[$i], 'example:')) === 0) {
-				$tmp = \rkphplib\lib\split_str(':', $pinfo[$i], false, 2);
+				$tmp = split_str(':', $pinfo[$i], false, 2);
 			}
 			else {
-				$tmp = \rkphplib\lib\split_str(':', $pinfo[$i]);
+				$tmp = split_str(':', $pinfo[$i]);
 			}
 
 			$key = array_shift($tmp);
@@ -695,7 +698,7 @@ private function scan($file) {
 		}
 		else if ((!$is_comment && preg_match('/^\/\/\s*@api\s+(.+)$/', $line, $match)) ||
 						($is_comment && $rx_check && preg_match('/^\s*\*\s*@api\s+(.+)$/', $line, $match))) {
-			$api = lib\split_str(',', trim($match[1]));
+			$api = split_str(',', trim($match[1]));
 			$set_api = true;
 		}
 		else if ((!$is_comment && count($api) > 0 && preg_match('/^\/\/\s*@api_(.+?)\s+(.+)$/', $line, $match)) ||
