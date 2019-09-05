@@ -5,10 +5,14 @@ require_once 'src/tok/Tokenizer.class.php';
 require_once 'src/lib/config.php';
 require_once 'src/File.class.php';
 require_once 'src/Dir.class.php';
+require_once 'src/lib/syntax.php';
 
 use rkphplib\Exception;
 use rkphplib\File;
 use rkphplib\Dir;
+
+use function rkphplib\lib\syntax;
+
 
 
 if (!defined('SETTINGS_DSN')) {
@@ -16,9 +20,8 @@ if (!defined('SETTINGS_DSN')) {
 }
 
 
-
 /**
- *
+ * @author Roland Kujundzic
  */
 class Collector {
 
@@ -117,9 +120,12 @@ public function createMap() {
 
 
 
-/**
+/*
  * M A I N 
  */
+
+define('APP_DESC', "scan src/tok directory and update Tokenizer.tryPluginMap if necessary");
+syntax();
 
 $collector = new Collector();
 $collector->scan();
