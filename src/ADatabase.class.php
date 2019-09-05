@@ -8,6 +8,9 @@ require_once __DIR__.'/Dir.class.php';
 require_once __DIR__.'/lib/split_str.php';
 require_once __DIR__.'/lib/is_map.php';
 
+use function rkphplib\lib\split_str;
+use function rkphplib\lib\is_map;
+
 
 /**
  * Abstract database access wrapper class.
@@ -488,7 +491,7 @@ public function hasQueries(array $query_map) : bool {
 	else if (count($query_map) == 0) {
 		return true;
 	}
-	else if (\rkphplib\lib\is_map($query_map)) {
+	else if (is_map($query_map)) {
 		foreach ($query_map as $qkey => $query) {
 			if (!$this->hasQuery($qkey, $query)) {
 				return false;
@@ -1114,8 +1117,8 @@ public static function parseCreateTableConf(array $conf) : array {
 
 	// resolve multilanguage
 	if (!empty($conf['@language']) && !empty($conf['@multilang'])) {
-		$lang_suffix = \rkphplib\lib\split_str(',', $conf['@language']);
-		$lang_cols = \rkphplib\lib\split_str(',', $conf['@multilang']);
+		$lang_suffix = split_str(',', $conf['@language']);
+		$lang_cols = split_str(',', $conf['@multilang']);
 		unset($conf['@language']);
 		unset($conf['@multilang']);
 
@@ -1282,7 +1285,7 @@ public function selectOne($query, string $col = '') {
 				throw new Exception('increase group_concat_max_len');
 			}
 
-			$res = \rkphplib\lib\split_str(',', $dbres[0]['split_cs_list']);
+			$res = split_str(',', $dbres[0]['split_cs_list']);
 		}
 		else {
 			$res = $dbres[0];
@@ -1602,7 +1605,7 @@ private function addAppTables(array &$options) : void {
 		throw new Exception('missing application parameter');
 	}
 
-	$options['application'] = \rkphplib\lib\split_str(',', $options['application']);
+	$options['application'] = split_str(',', $options['application']);
 	$table_list = $this->getTableList();
 
 	foreach ($options['application'] as $app) {
@@ -1617,7 +1620,7 @@ private function addAppTables(array &$options) : void {
 			}
 		}
 		else if (!empty($options[$app.'_tables'])) {
-			$app_tables = \rkphplib\lib\split_str(',', $options[$app.'_tables']);
+			$app_tables = split_str(',', $options[$app.'_tables']);
 			foreach ($app_tables as $table) {
 				if (in_array($table, $table_list)) {
 					array_push($tables, $table);
