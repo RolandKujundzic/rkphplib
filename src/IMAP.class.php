@@ -460,7 +460,7 @@ public function getMsg() : array {
 /**
  * Save all messages in directory. Return number of saved messages. 
  */
-public function saveAll(string $dir) : void {
+public function saveAll(string $dir) : int {
 	$this->_check_con();
 
 	$mbox = $this->getMailbox();
