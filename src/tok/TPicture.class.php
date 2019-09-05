@@ -13,6 +13,10 @@ use rkphplib\FSEntry;
 use rkphplib\File;
 use rkphplib\Dir;
 
+use function rkphplib\lib\execute;
+use function rkphplib\lib\split_str;
+
+
 
 /**
  * Server side picture handling plugin.
@@ -170,7 +174,7 @@ public function tok_picture_list($p) {
 		throw new Exception('missing parameter names');
 	}
 
-	$picture_list = \rkphplib\lib\split_str(',', $p['names']);
+	$picture_list = split_str(',', $p['names']);
 	unset($p['names']);
 	$res = [];
 
@@ -245,7 +249,7 @@ public function tok_picture_src($p) {
 private function computeImgSource() {
 
 	if (!empty($this->conf['names'])) {
-		$list = \rkphplib\lib\split_str(',', $this->conf['names']);
+		$list = split_str(',', $this->conf['names']);
 
 		if (empty($list[0]) && count($list) > 1) {
 			// fix ",01.jpg, 02.jpg, ..." into "01.jpg, 02.jpg, ..."
@@ -260,7 +264,7 @@ private function computeImgSource() {
 	}
 
 	if (empty($this->conf['source']) && !empty($this->conf['examples'])) {
-		$list = \rkphplib\lib\split_str(',', $this->conf['examples']);
+		$list = split_str(',', $this->conf['examples']);
 		$n = rand(0, count($list) - 1);
 		$this->conf['source'] = $this->conf['picture_dir'].'/'.$list[$n];
 	}
@@ -383,7 +387,7 @@ private function runConvertCmd($p) {
 	}
 
 	// \rkphplib\lib\log_debug("TPicture.runConvertCmd:385> $cmd\n".print_r($p, true));
-	\rkphplib\lib\execute($cmd, $p); 
+	execute($cmd, $p); 
 
 	if (!FSEntry::isFile($p['target'], false)) {
 		throw new Exception('convert '.$p['source'].' to '.$p['target'].' failed', "cmd: $cmd\np: ".print_r($p, true));
@@ -410,7 +414,7 @@ public function resize_list($resize_clist) {
 	}
 
 	$source = escapeshellarg($this->conf['source']);
-	\rkphplib\lib\execute("convert '$source' ".join(' ', $resize_cmd));
+	execute("convert '$source' ".join(' ', $resize_cmd));
 }
 
 
