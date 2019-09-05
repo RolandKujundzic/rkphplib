@@ -6,6 +6,9 @@ require_once __DIR__.'/FSEntry.class.php';
 require_once __DIR__.'/JSON.class.php';
 require_once __DIR__.'/lib/execute.php';
 
+use function rkphplib\lib\execute;
+
+
 
 /** @const FILE_DEFAULT_MODE = 0666 (UID < 1000) or 0644 (UID >= 1000) */
 if (!defined('FILE_DEFAULT_MODE')) {
@@ -396,12 +399,12 @@ public static function resizeImage(string $wxh, string $source, string $target =
 			throw new Exception('already resizing or resize failed', $temp);
 		}
 
-		\rkphplib\lib\execute("convert $resize '$wxh' '$source' '$temp'");
+		execute("convert $resize '$wxh' '$source' '$temp'");
 		File::move($temp, $source);
 		$target = $source;
 	}
 	else {
-		\rkphplib\lib\execute("convert $resize '$wxh' '$source' '$target'");
+		execute("convert $resize '$wxh' '$source' '$target'");
 	}
 
 	File::exists($target, true);
