@@ -16,6 +16,8 @@ require_once __DIR__.'/ValueCheck.class.php';
 require_once __DIR__.'/Database.class.php';
 require_once __DIR__.'/lib/translate.php';
 
+use function rkphplib\lib\translate;
+
 
 
 /**
@@ -361,7 +363,7 @@ private function checkApiToken() : void {
 	else if ($this->options['force_basic_auth'] && $allow_basic_auth) {
 		header('WWW-Authenticate: Basic realm="REST API"');
 		header('HTTP/1.0 401 Unauthorized');
-		print \rkphplib\lib\translate('Please enter REST API basic authentication credentials');
+		print translate('Please enter REST API basic authentication credentials');
 		$this->logRequest((string)401);
 		exit;
 	}
