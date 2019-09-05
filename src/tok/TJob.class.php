@@ -10,12 +10,14 @@ require_once $parent_dir.'/File.class.php';
 require_once $parent_dir.'/Dir.class.php';
 require_once $parent_dir.'/lib/ps.php';
 require_once $parent_dir.'/lib/execute.php';
-require_once $parent_dir.'/lib/kv2conf.php';
 
 use rkphplib\Exception;
 use rkphplib\JSON;
 use rkphplib\File;
 use rkphplib\Dir;
+
+use function rkphplib\lib\ps;
+use function rkphplib\lib\execute;
 
 
 
@@ -175,8 +177,8 @@ private function run() {
 	if (!empty($this->conf['execute'])) {
 		$cmd = $this->conf['execute'].$bg_pid;
 		$this->lock([ 'execute' => $cmd, 'start' => microtime(), 'status' => 'start' ]);
-		$pid = \rkphplib\lib\execute($cmd);
-		$ps = \rkphplib\lib\ps($pid);
+		$pid = execute($cmd);
+		$ps = ps($pid);
 		if (isset($ps['PID']) && $ps['PID'] == $pid) {
 			$this->lock([ 'pid' => $pid, 'status' => 'running' ]);
 		}
@@ -192,8 +194,8 @@ private function run() {
 		$cmd = "cd '".dirname($this->conf['zip_dir'])."' && zip -r '".$this->conf['zip_file']."' '".
 			basename($this->conf['zip_dir']).$bg_pid; 
 		$this->lock([ 'execute' => $cmd, 'start' => microtime(), 'status' => 'start' ]);
-		$pid = \rkphplib\lib\execute($cmd);
-		$ps = \rkphplib\lib\ps($pid);
+		$pid = execute($cmd);
+		$ps = ps($pid);
 		if (isset($ps['PID']) && $ps['PID'] == $pid) {
 			$this->lock([ 'pid' => $pid, 'status' => 'running' ]);
 		}
