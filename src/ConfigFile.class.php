@@ -6,6 +6,8 @@ require_once __DIR__.'/Exception.class.php';
 require_once __DIR__.'/File.class.php';
 require_once __DIR__.'/lib/conf2kv.php';
 
+use function rkphplib\lib\conf2kv;
+
 
 
 /**
@@ -31,7 +33,7 @@ public $file = '';
  * Load configuration from $file.
  */
 public function __construct(string $file) {
-	$this->conf = \rkphplib\lib\conf2kv(File::load($file));
+	$this->conf = conf2kv(File::load($file));
 	$this->file = $file;
 }
 
