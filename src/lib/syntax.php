@@ -79,7 +79,7 @@ function syntax(array $argv_example = []) : void {
 		print "\nSYNTAX: $app ".join(' ', $argv_example)."\n$app_desc\n\n";
 		exit(0);
 	}
-	else if ($is_error || $arg_num != count($_SERVER['argv'])) {
+	else if ($is_error || ($arg_num > 0 && $arg_num != count($_SERVER['argv']))) {
 		print "\nSYNTAX: $app ".join(' ', $argv_example)."\n$app_desc\n$error_msg\n";
 		exit(1);
 	}
