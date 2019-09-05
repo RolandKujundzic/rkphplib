@@ -8,6 +8,9 @@ require_once __DIR__.'/APICall.class.php';
 require_once __DIR__.'/JSON.class.php';
 require_once __DIR__.'/lib/execute.php';
 
+use function rkphplib\lib\execute;
+
+
 
 /**
  * Use APIDocTest class to create swagger documentation and test.json file from source code.
@@ -483,7 +486,7 @@ public function updateSwaggerFile() : void {
 	print "\nrecreate ".$this->options['swagger_file']."\n\n";
 
 	if (File::exists($this->options['swagger_bin'])) {
-		\rkphplib\lib\execute($this->options['swagger_bin']." '".$this->options['php_file']."' --output '".$this->options['swagger_file']."'");
+		execute($this->options['swagger_bin']." '".$this->options['php_file']."' --output '".$this->options['swagger_file']."'");
 	}
 	else {
 		throw new Exception('swagger not found', 'missing '.$this->options['swagger_bin']);
