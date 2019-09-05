@@ -12,11 +12,16 @@ require_once $parent_dir.'/lib/htmlescape.php';
 require_once $parent_dir.'/lib/split_str.php';
 require_once $parent_dir.'/lib/conf2kv.php';
 require_once $parent_dir.'/lib/kv2conf.php';
-require_once $parent_dir.'/lib/is_map.php';
 
 use rkphplib\Exception;
 use rkphplib\tok\Tokenizer;
 use rkphplib\ValueCheck;
+
+use function rkphplib\lib\htmlescape;
+use function rkphplib\lib\split_str;
+use function rkphplib\lib\conf2kv;
+use function rkphplib\lib\kv2conf;
+
 
 
 /**
@@ -330,7 +335,7 @@ public function tok_fv_appendjs($name, $id_list = []) {
 	}
 
 	if (!empty($conf['hidden_keep'])) {
-		$hidden_keys = \rkphplib\lib\split_str(',', $conf['hidden_keep']);
+		$hidden_keys = split_str(',', $conf['hidden_keep']);
 		foreach ($hidden_keys as $key) {
 			array_push($list, $name.'.append("'.$key.'", document.getElementById("'.$id_prefix.$key.'").value);');
 		}
@@ -414,10 +419,10 @@ public function tok_fv_hidden() {
 	$id_prefix = $this->getConf('id_prefix', '', true);
 
 	if (!empty($hidden_keep = $this->getConf('hidden_keep', '', false))) {
-		$list = \rkphplib\lib\split_str(',', $hidden_keep);
+		$list = split_str(',', $hidden_keep);
 		foreach ($list as $key) {
 			if (isset($_REQUEST[$key])) {
-				$res .= '<input type="hidden" id="'.$id_prefix.$key.'" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($_REQUEST[$key]).'">'."\n";
+				$res .= '<input type="hidden" id="'.$id_prefix.$key.'" name="'.$key.'" value="'.htmlescape($_REQUEST[$key]).'">'."\n";
 			}
 		}
 	}
@@ -425,7 +430,7 @@ public function tok_fv_hidden() {
 	foreach ($this->conf['current'] as $key => $value) {
 		if (mb_substr($key, 0, 7) == 'hidden.') {
 			$key = mb_substr($key, 7);
-			$res .= '<input type="hidden" id="'.$id_prefix.$key.'" name="'.$key.'" value="'.\rkphplib\lib\htmlescape($value).'">'."\n";
+			$res .= '<input type="hidden" id="'.$id_prefix.$key.'" name="'.$key.'" value="'.htmlescape($value).'">'."\n";
 		}
 	}
 
@@ -493,7 +498,7 @@ public function tok_fv_get_conf($engine) {
 		$res[$engine.'.'.$key] = $value;
 	}
 
-	return \rkphplib\lib\kv2conf($res);
+	return kv2conf($res);
 }
 
 
@@ -732,7 +737,7 @@ protected function getInput($name, $ri) {
 
 	foreach ($ri as $key => $value) {
 		if (!in_array($key, [ 'options', 'label' ])) {
-			$ri[$key] = \rkphplib\lib\htmlescape($value);
+			$ri[$key] = htmlescape($value);
 		}
 	}
 
@@ -740,7 +745,7 @@ protected function getInput($name, $ri) {
 	$input = $this->tok->replaceTags($input, [ 'tags' => $tags ]);
 
 	if (!empty($ri['options']) && strpos($ri['options'], '</option>') === false) {
-		$tmp = \rkphplib\lib\conf2kv($ri['options'], '=', ',');
+		$tmp = conf2kv($ri['options'], '=', ',');
 		$ri['options'] = $this->getOptions($tmp, $ri['value'], $ri['options']);
 	}
 
