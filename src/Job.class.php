@@ -7,11 +7,13 @@ require_once __DIR__.'/File.class.php';
 require_once __DIR__.'/Dir.class.php';
 require_once __DIR__.'/lib/ps.php';
 require_once __DIR__.'/lib/execute.php';
-require_once __DIR__.'/lib/kv2conf.php';
 
 use rkphplib\JSON;
 use rkphplib\File;
 use rkphplib\Dir;
+
+use function rkphplib\lib\ps;
+use function rkphplib\lib\execute;
 
 
 
@@ -133,9 +135,9 @@ public function run() : void {
 	$lock['status'] = 'start';
 
 	try {
-		$lock['pid'] = \rkphplib\lib\execute($cmd);
+		$lock['pid'] = execute($cmd);
 
-		$ps = \rkphplib\lib\ps($lock['pid']);
+		$ps = ps($lock['pid']);
 		if (!isset($ps['PID']) || $ps['PID'] != $lock['pid']) {
 			throw new Exception('could not determine pid', "ps: ".print_r($ps, true)."\nlock: ".print_r($lock, true));
 		}
