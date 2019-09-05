@@ -6,6 +6,10 @@ require_once __DIR__.'/Exception.class.php';
 require_once __DIR__.'/lib/split_str.php';
 require_once __DIR__.'/lib/redirect.php';
 
+use function rkphplib\lib\split_str;
+use function rkphplib\lib\redirect;
+
+
 
 /**
  * Abstract Session wrapper class.
@@ -151,8 +155,8 @@ protected function setConf(array $conf) : void {
 		throw new Exception('no such scope', $this->conf['scope']);
 	}
 
-	$this->conf['required'] = \rkphplib\lib\split_str(',', $this->conf['required'], true);
-	$this->conf['allow_dir'] = \rkphplib\lib\split_str(',', $this->conf['allow_dir'], true);
+	$this->conf['required'] = split_str(',', $this->conf['required'], true);
+	$this->conf['allow_dir'] = split_str(',', $this->conf['allow_dir'], true);
 
 	$time_keys = [ 'inactive' => [1, 21600], 'ttl' => [1, 345600] ];
 
@@ -229,7 +233,7 @@ public function validScope() : bool {
 public function redirectForbidden() : void {
 
 	if (!empty($this->conf['redirect_forbidden'])) {
-		\rkphplib\lib\redirect($this->conf['redirect_forbidden']);
+		redirect($this->conf['redirect_forbidden']);
 	}
 	else {
 		throw new Exception('forbidden');
@@ -245,7 +249,7 @@ public function redirectLogin(string $reason, array $p = []) : void {
 	$this->destroy();
 
 	if (!empty($this->conf['redirect_login'])) {
-		\rkphplib\lib\redirect($this->conf['redirect_login'], $p);
+		redirect($this->conf['redirect_login'], $p);
 	}
 	else {
 		throw new Exception($reason);
