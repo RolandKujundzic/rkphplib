@@ -7,6 +7,8 @@ require_once 'src/File.class.php';
 require_once 'src/Dir.class.php';
 require_once 'src/lib/syntax.php';
 
+use rkphplib\tok\TokPlugin;
+use rkphplib\tok\Tokenizer;
 use rkphplib\Exception;
 use rkphplib\File;
 use rkphplib\Dir;
@@ -61,12 +63,9 @@ public function scan(string $dir = 'src/tok') : void {
 
 /**
  * Register plugins
- *
- * @param Object $handler
- * @param string $cname
  */
-public function register(Tokenizer $handler, string $cname) : array {
-	$dummy = new rkphplib\tok\Tokenizer();
+public function register(TokPlugin $handler, string $cname) : void {
+	$dummy = new Tokenizer;
 
   $plugins = $handler->getPlugins($dummy);
 	$this->_plugin[$cname] = [];
@@ -79,7 +78,6 @@ public function register(Tokenizer $handler, string $cname) : array {
 
 /**
  * Create plugin map. Add to Tokenizer class.
- *
  */
 public function createMap() {
 	$tokenizer = mb_substr(trim(File::load('src/tok/Tokenizer.class.php')), 0, -1);
@@ -133,6 +131,6 @@ public function createMap() {
 define('APP_DESC', "scan src/tok directory and update Tokenizer.tryPluginMap if necessary");
 syntax();
 
-$collector = new Collector();
+$collector = new Collector;
 $collector->scan();
 $collector->createMap();
