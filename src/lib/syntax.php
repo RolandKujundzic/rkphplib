@@ -7,14 +7,21 @@ namespace rkphplib\lib;
  * Abort with syntax error if count($argv_example) != count($_SERVER['argv'] or if 
  * argv_example check failed. Exit with syntax message if $_SERVER['argv'][1] == '?' or 'help'.
  * Show APP_DESC if defined. Use APP instead of $_SERVER['argv'][0] if defined. 
- * Use @file:path/to/file to enable file exists check for parameter.
- * Use @dir:path/to/directory to enable directory exists check for parameter.
- * Use @or:on|off to ensure parameter is either 'on' or 'off'.
+ * Use '@file:path/to/file' to enable file exists check for parameter.
+ * Use '@dir:path/to/directory' to enable directory exists check for parameter.
+ * Use '@or:on|off' to ensure parameter is either 'on' or 'off'.
+ * Use '@docroot' for getcwd == DOCROOT check.
  * Use --name=value for optional parameter name - define(PARAMETER_NAME, value).
+ * Export APP_DESC if $desc is not empty (and APP_DESC undefined).
+ * Define APP_HELP to show help syntax and return false (use APP_HELP=quiet to disable output).
  */
-function syntax(array $argv_example = []) : void { 
+function syntax(array $argv_example = [], string $desc = '') : bool { 
 
-	if (empty($_SERVER['argv'][0]) || php_sapi_name() !== 'cli') {
+	if (!empty($desc) && !defined('APP_DESC')) {
+		define('APP_DESC', $desc);
+	}
+
+	if (!defined('APP_HELP') && (empty($_SERVER['argv'][0]) || php_sapi_name() !== 'cli')) {
 		print "\nERROR: run as cli\n\n\n";
 		exit(1);
 	}
@@ -60,6 +67,18 @@ function syntax(array $argv_example = []) : void {
 
 			$pos = 4;
 		}
+		else if ($param == '@docroot') {
+			if (!defined('DOCROOT')) {
+				$error_msg = "DOCROOT is undefined";
+				$is_error = true;
+			}
+			else if (getcwd() != DOCROOT) {
+				$error_msg = 'run in '.DOCROOT;
+				$is_error = true;
+			}
+
+			$arg_num--;
+		}
 		else if (substr($param, 0, 2) == '--' && ($pos = strpos($param, '=')) > 2) {
 			list ($key, $value) = explode('=', substr($param, 2), 2);
 			define('PARAMETER_'.$key, $value);
@@ -75,7 +94,16 @@ function syntax(array $argv_example = []) : void {
 		}
 	}
 
-	if (!empty($_SERVER['argv'][1]) && ('?' == $_SERVER['argv'][1] || 'help' == $_SERVER['argv'][1])) {
+	$res = true;
+
+	if (defined('APP_HELP')) {
+		if (APP_HELP != 'quiet') {
+			print "\nSYNTAX: $app ".join(' ', $argv_example)."\n$app_desc\n\n";
+		}
+
+		$res = false;
+	}
+	else if (!empty($_SERVER['argv'][1]) && ('?' == $_SERVER['argv'][1] || 'help' == $_SERVER['argv'][1])) {
 		print "\nSYNTAX: $app ".join(' ', $argv_example)."\n$app_desc\n\n";
 		exit(0);
 	}
@@ -83,5 +111,7 @@ function syntax(array $argv_example = []) : void {
 		print "\nSYNTAX: $app ".join(' ', $argv_example)."\n$app_desc\n$error_msg\n";
 		exit(1);
 	}
+
+	return $res;
 }
 
