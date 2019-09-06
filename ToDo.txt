@@ -3,7 +3,7 @@ other alternatives: 220e∎a 22c6⋆a 2223∣a (see https://www.w3schools.com/ch
 
 Auto-create doc:
 ----------------
-@throws, @exit, @use_define, @define and @param + @return from type hints (auto-detect if array is hash)
+@throws, @exit, @redirect, @use_define, @define and @param + @return from type hints (auto-detect if array is hash)
 No doc in abstract implementation.
 
 Parser:
