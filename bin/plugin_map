@@ -30,10 +30,8 @@ private $_plugins = [];
 
 /**
  * Scan src/tok for *.class.php. Execute register for every class.
- *
- * @param string $dir
  */
-public function scan($dir = 'src/tok') {
+public function scan(string $dir = 'src/tok') : void {
 	Dir::exists($dir);
 	$php_files = Dir::scanTree($dir, [ '.class.php' ]);
 	$ignore = [ 'AMenu.class.php', 'Tokenizer.class.php' ];
@@ -67,7 +65,7 @@ public function scan($dir = 'src/tok') {
  * @param Object $handler
  * @param string $cname
  */
-public function register($handler, $cname) {
+public function register(Tokenizer $handler, string $cname) : array {
 	$dummy = new rkphplib\tok\Tokenizer();
 
   $plugins = $handler->getPlugins($dummy);
@@ -85,6 +83,7 @@ public function register($handler, $cname) {
  */
 public function createMap() {
 	$tokenizer = mb_substr(trim(File::load('src/tok/Tokenizer.class.php')), 0, -1);
+	$md5 = File::md5('src/tok/Tokenizer.class.php');
 
 	if (($pos = mb_strpos($tokenizer, '/** AUTO CREATED BY bin/plugin_map')) < 1) {
 		throw new Exception('append point not found');
@@ -94,7 +93,7 @@ public function createMap() {
 
 	ksort($this->_plugin);
 
-	$code = "/** AUTO CREATED BY bin/plugin_map */\n".'private function tryPluginMap($name) {'."\n\t".
+	$code = "/** AUTO CREATED BY bin/plugin_map */\n".'private function tryPluginMap(string $name) : void {'."\n\t".
 		'static $map = ['."\n\t\t";
 
 	foreach ($this->_plugin as $cname => $list) {
@@ -111,8 +110,15 @@ public function createMap() {
 		'$this->register($obj);'."\n\t\t\t".
 		'return;'."\n\t\t"."}\n\t}\n}\n\n}\n";
 
-	File::save('src/tok/Tokenizer.class.php', $tokenizer.$code);
-	print "src/tok/Tokenizer.class.php: tryPluginMap() has been updated\n";
+	$new_code = $tokenizer.$code;
+
+	if (md5($new_code) != $md5) {
+		File::save('src/tok/Tokenizer.class.php', $tokenizer.$code);
+		print "src/tok/Tokenizer.class.php: tryPluginMap() has been updated\n";
+	}
+	else {
+		print "src/tok/Tokenizer.class.php: no change\n";
+	}
 }
 
 
