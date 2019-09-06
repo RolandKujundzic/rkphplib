@@ -12,7 +12,7 @@
 	},
 	"autoload": {
 		"classmap": ["src/"],
-		"files": ["src/lib/config.php"]
+		"files": []
 	},
 	"license": "GPL-3",
 	"require-dev": {
