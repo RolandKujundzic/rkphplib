@@ -3,7 +3,13 @@
 APP=$0
 APP_DESC=
 
+export APP_PID="$APP_PID $$"
+
+
 case $1 in
+build)
+	_build
+	;;
 composer)
 	_composer $2
 	;;
@@ -27,6 +33,6 @@ opensource)
 	_opensource $2
 	;;
 *)
-	_syntax "[opensource|composer|docs|test|mb_check|ubuntu|docker_osx]"
+	_syntax "[build|opensource|composer|docs|test|mb_check|ubuntu|docker_osx]"
 esac
 

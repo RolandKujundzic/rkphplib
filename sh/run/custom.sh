@@ -1,5 +1,22 @@
 #!/bin/bash
 
+
+#------------------------------------------------------------------------------
+function _build {
+	PATH_RKPHPLIB="src/"
+
+	_syntax_check_php "src" "syntax_check_src.php"
+	php syntax_check_src.php || _abort "php syntax_check_src.php"
+	_rm syntax_check_src.php
+
+	_syntax_check_php "bin" "syntax_check_bin.php"
+	php syntax_check_bin.php || _abort "php syntax_check_bin.php"
+	_rm syntax_check_bin.php
+
+  git status
+}
+
+
 #------------------------------------------------------------------------------
 function _ubuntu {
 	test -f /usr/bin/apt-get || _abort "apt-get not found"
