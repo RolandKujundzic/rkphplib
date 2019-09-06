@@ -17,11 +17,6 @@ use function rkphplib\lib\syntax;
 
 
 
-if (!defined('SETTINGS_DSN')) {
-	define('SETTINGS_DSN', 'mysqli://ignore:ignore@tcp+localhost/ignore');
-}
-
-
 /**
  * @author Roland Kujundzic
  */
@@ -65,7 +60,7 @@ public function scan(string $dir = 'src/tok') : void {
  * Register plugins
  */
 public function register(TokPlugin $handler, string $cname) : void {
-	$dummy = new Tokenizer;
+	$dummy = new Tokenizer();
 
   $plugins = $handler->getPlugins($dummy);
 	$this->_plugin[$cname] = [];
@@ -128,9 +123,14 @@ public function createMap() {
  * M A I N 
  */
 
-define('APP_DESC', "scan src/tok directory and update Tokenizer.tryPluginMap if necessary");
-syntax();
+if (!defined('SETTINGS_DSN')) {
+	define('SETTINGS_DSN', 'mysqli://ignore:ignore@tcp+localhost/ignore');
+}
 
-$collector = new Collector;
+if (!syntax([], "scan src/tok directory and update Tokenizer.tryPluginMap if necessary")) {
+	return;
+}
+
+$collector = new Collector();
 $collector->scan();
 $collector->createMap();

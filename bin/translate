@@ -1,8 +1,13 @@
 #!/usr/bin/php
 <?php
 
-// assume: APP/php/rkphplib/bin/
-require_once dirname(dirname(dirname(__DIR__))).'/settings.php';
+if (!defined('PATH_RKPHPLIB')) {
+	// assume: APP/php/rkphplib/bin/
+	require_once dirname(dirname(dirname(__DIR__))).'/settings.php';
+}
+else if (!defined('DOCROOT')) {
+	define('DOCROOT', dirname(dirname(PATH_RKPHPLIB)));
+}
 
 require_once PATH_RKPHPLIB.'Database.class.php';
 require_once PATH_RKPHPLIB.'tok/TokPlugin.iface.php';
@@ -11,6 +16,7 @@ require_once PATH_RKPHPLIB.'tok/Tokenizer.class.php';
 require_once PATH_RKPHPLIB.'FSEntry.class.php';
 require_once PATH_RKPHPLIB.'File.class.php';
 require_once PATH_RKPHPLIB.'Dir.class.php';
+require_once PATH_RKPHPLIB.'lib/syntax.php';
 
 use rkphplib\Exception;
 use rkphplib\Database;
@@ -20,6 +26,9 @@ use rkphplib\tok\Tokenizer;
 use rkphplib\FSEntry;
 use rkphplib\File;
 use rkphplib\Dir;
+
+use function rkphplib\lib\syntax;
+
 
 
 /**
@@ -46,7 +55,7 @@ private $languages = [];
 /**
  * Catch {language:[init|get]} plugin and return plugin text.
  */
-public function getPlugins($tok) {
+public function getPlugins(Tokenizer $tok) : array {
   $plugin = [
     'language:init' => TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY,
     'language:get' => TokPlugin::NO_PARAM | TokPlugin::NO_BODY,
@@ -59,32 +68,24 @@ public function getPlugins($tok) {
 
 /**
  * Catch {language:init}. Return plugin text.
- *
- * @param string $arg
- * @return string
  */
-public function tok_language_init($arg) {
+public function tok_language_init(string $arg) : string {
 	return '{language:init}'.$arg.'{:language}';
 }
 
 
 /**
  * Catch {language:get}. Return plugin text.
- * @return string
  */
-public function tok_language_get() {
+public function tok_language_get() : string {
 	return '{language:get}';
 }
 
 
 /**
  * Set language table.
- *
- * @param string $name
- * @param string $txt_lang (=de)
- * @return boolean
  */
-public function setTable($name, $txt_lang = 'de') {
+public function setTable(string $name, string $txt_lang = 'de') : bool {
 	$this->db = Database::getInstance();
 
 	if (!$this->db->hasTable($name)) {
@@ -117,11 +118,8 @@ public function setTable($name, $txt_lang = 'de') {
 
 /**
  * Load $file and return parsed content.
- *
- * @param string $file
- * @return string
  */
-public function file($file) {
+public function file(string $file) : string {
 	$this->tok->load($file);
 	return $this->tok->toString();
 }
@@ -130,25 +128,20 @@ public function file($file) {
 /**
  * Print log message.
  */
-private function log($message) {
+private function log(string $message) : void {
 	print $message."\n";
 }
 
 
 /**
  * Translate all *.inc.html, *.conf and *.js files. Save translation to /LANG.
- * If first parameter is string assume root_dir. Default options are:
+ * If first parameter is string assume root_dir. Default $options (string|array) are:
  * 
  * root_dir = '.'
  * suffix_list = [ 'inc.html', 'conf', 'js', 'css' ]
  * exclude_dir = [ 'cms', 'data', 'php', 'setup' ]
- *
- * @param string|hash $root_dir
- * @param string $language_table
- * @param string $default_language
- *
  */
-public function run($option, $language_table, $default_language) {
+public function run($option, string $language_table, string $default_language) : void {
 	if (!$this->setTable($language_table, $default_language)) {
 		return;
 	}
@@ -196,7 +189,7 @@ public function run($option, $language_table, $default_language) {
 /**
  * Link all files not in LANG/ directory to parent directory.
  */
-public function link() {
+public function link() : void {
 	$entries = Dir::entries('.');
 	$found = [];
 
@@ -229,10 +222,8 @@ public function link() {
  * M A I N
  */
 
-if (getcwd() != DOCROOT) {
-	print "\nSYNTAX: ".$_SERVER['argv'][0]."\n";
-	print "run in ".DOCROOT."\n\n";
-	exit(1);
+if (!syntax([ '@docroot' ])) {
+	return;
 }
 
 if (!empty($_SERVER['argv'][1])) {

@@ -1,23 +1,25 @@
 #!/usr/bin/php
 <?php
 
-define('PATH_RKPHPLIB', dirname(__DIR__).'/src/');
+if (!defined('PATH_RKPHPLIB')) {
+	define('PATH_RKPHPLIB', dirname(__DIR__).'/src/');
+}
 
 require_once PATH_RKPHPLIB.'lib/config.php';
 require_once PATH_RKPHPLIB.'PhpDoc/PDParser.class.php';
-
-// define('APP_DESC', 'description comming soon');
 require_once PATH_RKPHPLIB.'lib/syntax.php';
-\rkphplib\lib\syntax([ '@file:path/to/code.php' ]);
 
-require_once dirname(__DIR__).'/vendor/autoload.php';
+require_once dirname(PATH_RKPHPLIB).'/vendor/autoload.php';
 require_once PATH_RKPHPLIB.'YAML.class.php';
-
 
 
 /*
  * M A I N
  */
+
+if (!\rkphplib\lib\syntax([ '@file:path/to/code.php' ], 'description comming soon')) {
+	return;
+}
 
 $parser = new \rkphplib\PhpDoc\PDParser();
 print \rkphplib\YAML::save('php://STDOUT', $parser->parse($_SERVER['argv'][1]));
