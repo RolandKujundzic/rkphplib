@@ -2,6 +2,18 @@
 
 
 #------------------------------------------------------------------------------
+function _lib5 {
+	if test -z "$PATH_PHPLIB"; then
+		_abort "export PATH_PHPLIB"
+	fi
+
+	_mkdir lib5
+	rsync -a --delete src bin test lib5
+	$PATH_PHPLIB/toggle lib5 strict_types off
+}
+
+
+#------------------------------------------------------------------------------
 function _build {
 	PATH_RKPHPLIB="src/"
 
@@ -12,6 +24,14 @@ function _build {
 	_syntax_check_php "bin" "syntax_check_bin.php"
 	php syntax_check_bin.php || _abort "php syntax_check_bin.php"
 	_rm syntax_check_bin.php
+
+	if ! test -z "$PATH_PHPLIB"; then
+		$PATH_PHPLIB/toggle log_debug on
+		$PATH_PHPLIB/toggle log_debug off
+		_lib5
+	fi
+
+	bin/plugin_map
 
   git status
 }
