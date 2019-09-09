@@ -44,9 +44,8 @@ public function __construct() {
 
 /**
  * Start xdebug trace. Needs xdebug module (apt-get install php5-xdebug).
- * @param string $trace_file (default = '/tmp/php5-xdebug'[.xt])
  */
-public function startXDTrace($trace_file = '/tmp/php5-xdebug.trace') {
+public function startXDTrace(string $trace_file = '/tmp/php5-xdebug.trace') : void {
 	xdebug_start_trace($trace_file); 
 
 	if (!$this->_xdebug_on) {
@@ -56,15 +55,12 @@ public function startXDTrace($trace_file = '/tmp/php5-xdebug.trace') {
 
 
 /**
- * Return $max steps of debug_backtrace().
- * Use $num > 0 for specific trace. Use $num < 0 for max trace array length.
- * Return hash (file, line, call, args) or array of hash.
- *
- * @param int $num (default = -6)
- * @param int $mode (xor: 1 = file, 2 = line, 4 = call, 8 = args, default = false)
- * @return array|hash
+ * Return parsed debug_backtrace() output [ (file, line, call, args), ... ]. 
+ * Use $num > 0 for specific trace. Use $num < 0 for max = ($num * -1) trace array length.
+ * Return hash (file, line, call, args) or array of hash. Flag $mode is 2^0=1=file, 2^1=2=line, 
+ * 4=call, 8=args (default=file|line|call=7).
  */
-public static function trace($num = -6, $mode = 7) {
+public static function trace(int $num = -6, int $mode = 7) : array {
 
 	$trace = debug_backtrace();
 	$tnum = count($trace);
@@ -143,15 +139,10 @@ public static function trace($num = -6, $mode = 7) {
 
 
 /**
- * Return mixed variable as string
- * 
- * Return boolean as true|false, cut string to 80 characters, 
- * return object as $Classname, array as array(key => value, ...) 
- * 
- * @param mixed
- * @return string
+ * Return mixed $var as string. Return boolean as 'true'|'false' string. 
+ * Cut string to 80 characters, return object as $Classname, array as array(key => value, ...) 
  */
-public static function print_var($var) {
+public static function print_var($var) : string {
   $res = '';
 
   if (is_string($var)) {
@@ -192,12 +183,9 @@ public static function print_var($var) {
 
 
 /**
- * Add log message (time, memory, message, call, file_line) to _log.
- * Use Profile::traceLast() for $bt.
- *
- * @param string $msg (default = '')
+ * Add log message (time, memory, message, call, file_line) to _log. Use Profile::traceLast() for $bt.
  */
-public function log($msg = '') {
+public function log(string $msg = '') : void {
 	$ts = microtime(true);
 	$mem = memory_get_usage();
 
@@ -229,11 +217,9 @@ public function log($msg = '') {
 
 
 /**
- * Return last backtrace information (call, file_line).
- * Call is either function or class::method.
- * @return array (function, file.line)
+ * Return last backtrace information (call, file.line). Call is either function or class::method.
  */
-public static function traceLast() {
+public static function traceLast() : array {
 	$bt = debug_backtrace();
 	$res = array('', '');
 
@@ -250,9 +236,8 @@ public static function traceLast() {
 
 /**
  * Write (print) log.
- * @param string $file (default = STDOUT)
  */
-public function writeLog($file = 'php://STDOUT') {
+public function writeLog(string $file = 'php://STDOUT') : void {
 	$fd = fopen($file, 'a');
 	$elapsed_time = 0;
 
@@ -276,9 +261,8 @@ public function writeLog($file = 'php://STDOUT') {
 
 /**
  * Stop xdebug trace. Call startXDTrace() first.
- * @param string $file (default = STDOUT)
  */
-public function stopXDTrace($file = 'php://STDOUT') {
+public function stopXDTrace(string $file = 'php://STDOUT') : void {
 	$trace_file = xdebug_get_tracefile_name();
 	xdebug_stop_trace();
 

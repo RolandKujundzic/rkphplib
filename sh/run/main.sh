@@ -5,10 +5,18 @@ APP_DESC=
 
 export APP_PID="$APP_PID $$"
 
+if test -s ../phplib/bin/toggle; then
+	PATH_PHPLIB=`realpath ../phplib`
+elif test -s ../../bin/toggle; then
+	PATH_PHPLIB=`realpath ../..`
+fi
 
 case $1 in
 build)
 	_build
+	;;
+lib5)
+	_lib5
 	;;
 composer)
 	_composer $2
@@ -33,6 +41,6 @@ opensource)
 	_opensource $2
 	;;
 *)
-	_syntax "[build|opensource|composer|docs|test|mb_check|ubuntu|docker_osx]"
+	_syntax "[build|opensource|composer|docs|lib5|test|mb_check|ubuntu|docker_osx]"
 esac
 
