@@ -440,7 +440,7 @@ private function _join_tok(int $start, int $end) : string {
 		throw new Exception('invalid status - call setText() first');
 	}
 
-	// \rkphplib\lib\log_debug("Tokenizer._join_tok:487> start=$start end=$end\ntok: ".print_r($this->_tok, true)."\nendpos: ".print_r($this->_endpos, true));
+	// \rkphplib\lib\log_debug("Tokenizer._join_tok:443> start=$start end=$end\ntok: ".print_r($this->_tok, true)."\nendpos: ".print_r($this->_endpos, true));
 	$tok_out = array();
 
 	for ($i = $start; $i < $end; $i++) {
@@ -475,7 +475,7 @@ private function _join_tok(int $start, int $end) : string {
 	$res = join('', $tok_out);
 	array_pop($this->_callstack);
 
-	// \rkphplib\lib\log_debug("Tokenizer._join_tok:522> i=[$i] return:\n[$res]\n");
+	// \rkphplib\lib\log_debug("Tokenizer._join_tok:478> i=[$i] return:\n[$res]\n");
 	return $res;
 }
 
@@ -498,7 +498,7 @@ public function getCurrentPlugin() : string {
 private function _join_tok_plugin(int &$i) : string {
 	$tok = $this->_tok[$i];
 
-	// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:551> i=$i, tok=".mb_substr($tok, 0, 60));
+	// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:501> i=$i, tok=".mb_substr($tok, 0, 60));
 
 	// call plugin if registered ...
 	$d  = $this->rx[2];
@@ -596,9 +596,9 @@ private function _join_tok_plugin(int &$i) : string {
 	}
 	else {
 		if ($ep == -1) {
-			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:649> no arg: name=$name param=[$param] i=$i ep=$ep");
+			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:599> no arg: name=$name param=[$param] i=$i ep=$ep");
 			$out = $this->_call_plugin($name, $param);
-			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:651> out:\n[$out]\n");
+			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:601> out:\n[$out]\n");
 		}
 		else if ($ep > $i) {
 			if ($tp & TokPlugin::TEXT) {
@@ -607,13 +607,13 @@ private function _join_tok_plugin(int &$i) : string {
 			}
 			else {
 				// parse argument with recursive _join_tok call ...
-				// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:660> compute arg of $name with recursion: start=$i+1 end=$ep\n");
+				// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:610> compute arg of $name with recursion: start=$i+1 end=$ep\n");
 				$arg = $this->_join_tok($i + 1, $ep);
 			}
  
-			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:664> arg: name=$name param=[$param] arg=[$arg] i=$i ep=$ep");
+			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:614> arg: name=$name param=[$param] arg=[$arg] i=$i ep=$ep");
 			$out = $this->_call_plugin($name, $param, $arg);
- 			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:666> set i=$ep - out:\n[$out]\n");
+ 			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:616> set i=$ep - out:\n[$out]\n");
 
 			$i = $ep; // modify loop position
 		}
@@ -777,7 +777,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 			$func = '';
 		}
 
-		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:858> return this._call_plugin($name, $func, $args)");
+		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:780> return this._call_plugin($name, $func, $args)");
 		return $this->_call_plugin($name, $func, $args);
 	}
 
@@ -785,7 +785,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 		throw new Exception("no such plugin method $name.".$func);
 	}
 
-	// \rkphplib\lib\log_debug("Tokenizer.callPlugin:866> name=$name, funct=$func, args: ".print_r($args, true));
+	// \rkphplib\lib\log_debug("Tokenizer.callPlugin:788> name=$name, funct=$func, args: ".print_r($args, true));
 	if (count($args) == 0) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func));
 	}
@@ -913,7 +913,7 @@ private function _call_plugin(string $name, string $param, ?string $arg = null) 
     $old_tok = $this->_tok;
     $old_endpos = $this->_endpos;
 
-    // \rkphplib\lib\log_debug("Tokenizer._call_plugin:1000> REDO:\n---\n$res\n---\n");
+    // \rkphplib\lib\log_debug("Tokenizer._call_plugin:916> REDO:\n---\n$res\n---\n");
     $this->setText($res);
     $res = $this->_join_tok(0, count($this->_tok));
 
