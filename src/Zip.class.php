@@ -7,7 +7,6 @@ require_once __DIR__.'/Dir.class.php';
 require_once __DIR__.'/lib/execute.php';
 
 
-use function rkphplib\lib\execute;
 
 
 
@@ -125,7 +124,7 @@ public function close() {
 
 		$curr = getcwd();
 		chdir($this->zip_dir);
-		execute("zip -r {:=zip_file} *", array('zip_file' => $zip_file));
+		\rkphplib\lib\execute("zip -r {:=zip_file} *", array('zip_file' => $zip_file));
 		chdir($curr);
 
 		File::move($this->zip_dir.'/'.$zip_file, $this->save_as);
@@ -204,7 +203,7 @@ public static function unzip($file, $target_dir = '') {
   $tmp_dir = DOCROOT.'/data/tmp/unzip_'.md5($file.mt_rand(0, 65535));
 	Dir::create($tmp_dir, 0, true);
 
-	execute('unzip -d {:=tmp_dir} {:=zip_file}', array('tmp_dir' => $tmp_dir, 'zip_file' => $file));
+	\rkphplib\lib\execute('unzip -d {:=tmp_dir} {:=zip_file}', array('tmp_dir' => $tmp_dir, 'zip_file' => $file));
 
 	Dir::move($tmp_dir, $target_dir);
 }

@@ -13,7 +13,7 @@ use rkphplib\Exception;
  * If $split_cell is set split into key value. Escape delimiter with 
  * leading backslash. Default delimiter: col = "|",  row = "\n"
  */
-function split_table(string $table_str, string $col_delimiter = '|', string $row_delimiter = "\n", string $split_cell = '') : array {
+function split_table($table_str, $col_delimiter = '|', $row_delimiter = "\n", $split_cell = '') {
   $table = [];
 	$table_str = trim($table_str);
 

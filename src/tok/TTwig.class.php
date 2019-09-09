@@ -20,7 +20,7 @@ class TTwig implements TokPlugin {
  * Return Plugin list: autoescape, block, do, embed, extends, filter, flush, for, from, if, import, include, macro, sandbox, set, 
  * spaceless, use, verbatim, v.
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 
 	$plugin = [
 		'autoescape' => TokPlugin::TOKCALL,

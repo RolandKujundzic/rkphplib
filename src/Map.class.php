@@ -33,7 +33,7 @@ private $option = null;
  * - file_suffix: auto set (.ser|.json)
  * - expire: max duration of map value in seconds (default = 3 h, empty = no expiration)
  */
-public function __construct(array $option) {
+public function __construct($option) {
 
 	if (!isset($option['expire'])) {
 	  $option['expire'] = time() - 60 * 60 * 3;  // expire after 3h
@@ -65,7 +65,7 @@ public function __construct(array $option) {
 /**
  * Set key value (any).
  */
-public function set(string $key, $value) {
+public function set($key, $value) {
 	if (empty($key)) {
 		throw new Exception('empty key');
 	}
@@ -86,7 +86,7 @@ public function set(string $key, $value) {
 /**
  * Return key value (any).
  */
-public function get(string $key) {
+public function get($key) {
 	if (empty($key)) {
 		throw new Exception('empty key');
 	}
@@ -107,7 +107,7 @@ public function get(string $key) {
 /**
  * Save this.map to option.file.
  */
-private function saveFile() : void {
+private function saveFile() {
 	if ($this->option['file.suffix'] == 'ser') {
 		File::serialize($this->option['file'], $this->map);
 	}
@@ -120,7 +120,7 @@ private function saveFile() : void {
 /**
  * Load map from option.file.
  */
-private function loadFile() : void {
+private function loadFile() {
 
 	if ($this->option['file.suffix'] == 'ser') {
 		$this->map = File::unserialize($this->option['file']);

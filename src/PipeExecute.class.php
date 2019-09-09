@@ -31,7 +31,7 @@ protected $command = null;
 /**
  * Execute command via pipe.
  */
-public function __construct(string $command, array $parameter = []) {
+public function __construct($command, $parameter = []) {
 	$this->descriptor = [
 		0 => [ 'pipe', 'r' ],
 		1 => [ 'pipe', 'rw' ],
@@ -70,7 +70,7 @@ public function __construct(string $command, array $parameter = []) {
 /**
  * Return stream contents of pipe[num].
  */
-private function readStream(int $num) : ?string {
+private function readStream($num) {
 	$res = stream_get_contents($this->pipe[$num]);
 	// \rkphplib\lib\log_debug("PipeExecute.readStream:82> exit - num=[$num] res=[$res]");
 	return $res;
@@ -80,7 +80,7 @@ private function readStream(int $num) : ?string {
 /**
  * Write to pipe. Close is necessary.
  */
-public function write(string $txt) : void {
+public function write($txt) {
 	if (fwrite($this->pipe[0], $txt) === false) {
 		$log_txt = (strlen($txt) > 180) ? substr($txt, 0, 20).' ... '.substr($txt, -20) : $txt;
 		throw new Exception('write failed', "cmd=[".$this->command."] txt=[$log_txt]");
@@ -91,7 +91,7 @@ public function write(string $txt) : void {
 /**
  * Pipe in $file. Close is necessary.
  */
-public function load(string $file) : void {
+public function load($file) {
 	$fh = File::open($file, 'rb');
 	// \rkphplib\lib\log_debug("PipeExecute.load:109> open file=[$file] fh=[$fh]\n");
 	while (!feof($fh)) { 
@@ -109,7 +109,7 @@ public function load(string $file) : void {
  * When finished write/load you must call close() to retrieve
  * [ retval, error, output ].
  */
-public function close(bool $abort = false) : array {
+public function close($abort = false) {
 
 	if (!is_resource($this->process)) {
 		throw new Exception('invalid process - close() already called?');

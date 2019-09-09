@@ -30,7 +30,7 @@ private $_opt = array('secret' => '', 'enc' => 'xor', 'wrap' => 'urlenc_base64',
  *  wrap: urlenc_base64 (default) | safe64 | no 
  *  xor_secret: obfuscate with xor first if set
  */
-public function __construct(array $opt = array()) {
+public function __construct($opt = array()) {
 
 	foreach ($opt as $key => $value) {
 		$this->_opt[$key] = $value;
@@ -55,7 +55,7 @@ public function __construct(array $opt = array()) {
  * Return encrypted (@see $this->_opt[enc] and $this->_opt[secret]) and wrapped (@see $this->_opt[wrap]) data.
  * If $data (string|map) is map and keys is vector use map2str($data, $keys).
  */
-public function encode($data, ?array $keys = null) : string {
+public function encode($data, $keys = null) {
 
 	if (is_array($data) && count($keys) > 1) {
 		$data = $this->map2str($data, $keys);
@@ -75,7 +75,7 @@ public function encode($data, ?array $keys = null) : string {
 /**
  * Return rawurlencode(base64_encode($str)).
  */
-public static function wrap_urlenc_base64(string $str) : string {
+public static function wrap_urlenc_base64($str) {
 	return rawurlencode(base64_encode($str));
 }
 
@@ -83,7 +83,7 @@ public static function wrap_urlenc_base64(string $str) : string {
 /**
  * Return url safe base64 encoding.
  */
-public static function wrap_safe64(string $str) : string {
+public static function wrap_safe64($str) {
 	$str = base64_encode($str);
 	$str = str_replace(array('+','/','='), array('-','_',''), $str);
 	return trim($str);
@@ -93,7 +93,7 @@ public static function wrap_safe64(string $str) : string {
 /**
  * Return unmodified string.
  */
-public static function wrap_no(string $str) : string {
+public static function wrap_no($str) {
 	return $str;
 }
 
@@ -101,7 +101,7 @@ public static function wrap_no(string $str) : string {
 /**
  * Return decoded safe64.
  */
-public static function unwrap_safe64(string $str) : string {
+public static function unwrap_safe64($str) {
 	$str = str_replace(array('-','_'), array('+','/'), $str);
 	$mod4 = strlen($str) % 4;
 	if ($mod4) {
@@ -115,7 +115,7 @@ public static function unwrap_safe64(string $str) : string {
 /**
  * Return unmodified string.
  */
-public static function unwrap_no(string $str) : string {
+public static function unwrap_no($str) {
 	return $str;
 }
 
@@ -123,7 +123,7 @@ public static function unwrap_no(string $str) : string {
 /**
  * Return base64_decode(rawurldecode($str)).
  */
-public static function unwrap_urlenc_base64(string $str) : string {
+public static function unwrap_urlenc_base64($str) {
 	return base64_decode(rawurldecode($str));
 }
 
@@ -131,7 +131,7 @@ public static function unwrap_urlenc_base64(string $str) : string {
 /**
  * Return mcrypted text.
  */
-public static function enc_mcrypt_r256(string $text, string $secret) : string {
+public static function enc_mcrypt_r256($text, $secret) {
 	$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB);
 	$iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
 	return mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $secret, $text, MCRYPT_MODE_ECB, $iv);
@@ -141,7 +141,7 @@ public static function enc_mcrypt_r256(string $text, string $secret) : string {
 /**
  * Return simple xor de/encoded string.
  */
-public static function enc_sxor(string $text, string $secret) : string {
+public static function enc_sxor($text, $secret) {
 	$tlen = strlen($text);
 	$slen = strlen($secret);
 
@@ -160,7 +160,7 @@ public static function enc_sxor(string $text, string $secret) : string {
 /**
  * Return multiple xor encoded string.
  */
-public static function enc_xor(string $text, string $secret) : string {
+public static function enc_xor($text, $secret) {
 	$slen = strlen($secret);
 
 	for ($i = 0; $i < strlen($text); $i++) {
@@ -176,7 +176,7 @@ public static function enc_xor(string $text, string $secret) : string {
 /**
  * Return ord(char) + ord(secret) encoded string.
  */
-public static function enc_ord(string $text, string $secret) : string {
+public static function enc_ord($text, $secret) {
 	$result = '';
 	$sl = strlen($secret);
 
@@ -193,7 +193,7 @@ public static function enc_ord(string $text, string $secret) : string {
 /**
  * Return (string|hash) decoded data.
  */
-public function decode(string $data, ?array $keys = null) {
+public function decode($data, $keys = null) {
 	$method = 'dec_'.$this->_opt['enc'];
 	$unwrap = 'unwrap_'.$this->_opt['wrap'];
 
@@ -214,7 +214,7 @@ public function decode(string $data, ?array $keys = null) {
 /**
  * Decode self::enc_mcrypt_r256 text.
  */
-public static function dec_mcrypt_r256(string $text, string $secret) : string {
+public static function dec_mcrypt_r256($text, $secret) {
 	$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB);
 	$iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
 	return trim(mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $secret, $text, MCRYPT_MODE_ECB, $iv));
@@ -224,7 +224,7 @@ public static function dec_mcrypt_r256(string $text, string $secret) : string {
 /**
  * Decode self::enc_xor text.
  */
-public static function dec_xor(string $text, string $secret) : string {
+public static function dec_xor($text, $secret) {
 	$slen = strlen($secret);
 	for ($i = 0; $i < strlen($text); $i++) {
 		for ($j = 0; $j < $slen; $j++) {
@@ -239,7 +239,7 @@ public static function dec_xor(string $text, string $secret) : string {
 /**
  * Decode self::enc_ord string.
  */
-public static function dec_ord(string $text, string $secret) : string {
+public static function dec_ord($text, $secret) {
 	$sl = strlen($secret);
 	$result = '';
 
@@ -259,7 +259,7 @@ public static function dec_ord(string $text, string $secret) : string {
  *
  * Example: "hash[keys[0]]|hash[keys[0]]|..."
  */
-public static function map2str(array $hash, array $keys) : string {
+public static function map2str($hash, $keys) {
 	$tmp = array();	
 
 	foreach($keys as $key) {
@@ -274,7 +274,7 @@ public static function map2str(array $hash, array $keys) : string {
 /**
  * Split self::map2str text back to map.
  */
-public static function str2map(string $text, array $keys) : array {
+public static function str2map($text, $keys) {
 	$tmp = explode('|', $text);
 	$result = array();
 	$n = 0;
@@ -292,7 +292,7 @@ public static function str2map(string $text, array $keys) : array {
  * Split secret master key into encryption and authentication keys.
  * Return vector[2] enc+auth keys.
  */
-public static function splitSecret(string $secret) : array {
+public static function splitSecret($secret) {
 	return [
 		hash_hmac('sha256', 'encryption', $secret, true),
 		hash_hmac('sha256', 'authentication', $secret, true)
@@ -303,7 +303,7 @@ public static function splitSecret(string $secret) : array {
 /**
  * Encrypt with Openssl AES (aes-256-cbc).
  */
-public static function enc_aes256cbc(string $text, string $secret) : string {
+public static function enc_aes256cbc($text, $secret) {
 	list($encKey, $authKey) = self::splitSecret($secret);
 
 	$ivsize = openssl_cipher_iv_length('aes-256-cbc');
@@ -318,7 +318,7 @@ public static function enc_aes256cbc(string $text, string $secret) : string {
 /**
  * Decrypt self::enc_aes256cbc.
  */
-public static function dec_aes256cbc(string $text, string $secret) : string {
+public static function dec_aes256cbc($text, $secret) {
 	list($encKey, $authKey) = self::splitSecret($secret);
 
 	$ivsize = openssl_cipher_iv_length('aes-256-cbc');

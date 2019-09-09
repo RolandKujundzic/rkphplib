@@ -19,7 +19,7 @@ class THtml implements TokPlugin {
 /**
  * Return {html:tag|inner|append|meta|meta_og|tidy|xml|uglify}, {text2html:}, {input:checkbox|radio} and {user_agent:} 
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
   $plugin = [];
   $plugin['html:tag'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
   $plugin['html:inner'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
@@ -50,7 +50,7 @@ public function getPlugins(Tokenizer $tok) : array {
  * @tok {user_agent:iPad|iPhone|iPod} = {user_agent:iOS} -> 1 if true
  * @tok {user_agent:Handheld} = {user_agent:iPad|iPhone|iPod|Android} -> 1 if true
  */
-public static function tok_user_agent(array $user_agent_list) : string {
+public static function tok_user_agent($user_agent_list) {
   $ua = $_SERVER['HTTP_USER_AGENT'];
   $res = '';
 

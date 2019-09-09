@@ -24,7 +24,7 @@ protected $db = null;
 /**
  * Set database connection string. Change table name and add extra cols if necessary.
  */
-public function setDSN(string $dsn, string $table = 'category', array $extra_cols = []) : void {
+public function setDSN($dsn, $table = 'category', $extra_cols = []) {
 	$db = new Database();
 	$db->setDSN($dsn);
 
@@ -62,7 +62,7 @@ END;
  *
  * Don't change "@id" and "pid" in conf. For multilanguage use "@language" => 'de, en, ...' and "@multilang" => 'name'.
  */
-public function createTable(string $table = 'category', array $custom_cols = []) : void {
+public function createTable($table = 'category', $custom_cols = []) {
 
 	$conf = [ '@table' => $table, '@id' => 1, 'pid' => 'int:::32', 'name' => 'varchar:255::1' ];
 
@@ -77,7 +77,7 @@ public function createTable(string $table = 'category', array $custom_cols = [])
 /**
  * @ToDo
  */
-public function add(string $name, int $pid = NULL) : void {
+public function add($name, $pid = NULL) {
 
   $check_category_query = "select * from category WHERE cat_name='$add_categoryname' AND parent_id='$cat_pid'";
   $result = mysqli_query($db_conn, $check_category_query);

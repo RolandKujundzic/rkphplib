@@ -17,9 +17,6 @@ use rkphplib\Session;
 use rkphplib\ADatabase;
 use rkphplib\Database;
 
-use function rkphplib\lib\kv2conf;
-use function rkphplib\lib\redirect;
-use function rkphplib\lib\split_str;
 
 
 
@@ -52,7 +49,7 @@ var $account = [];
 /**
  * Return {login:}, {login_account:}, {login_check:}, {login_access:}, {login_update:} and {login_clear:}
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$this->tok = $tok;
 
 	$plugin = [];
@@ -84,13 +81,13 @@ public function tok_login_access($p) {
 	$res = '';
 
 	if (!empty($p['allow']) && !$this->hasPrivileges($p['allow'])) {
-		redirect($redir_url, [ '@link' => 1, '@back' => 1 ]);
+		\rkphplib\lib\redirect($redir_url, [ '@link' => 1, '@back' => 1 ]);
 	}
 	else if (!empty($p['privilege'])) {
 		$res = $this->hasPrivileges($p['privilege']);
 	}
 	else if (!empty($p['type']) && $this->tok_login('type?') != $p['type']) {
-		redirect($redir_url, [ '@link' => 1, '@back' => 1 ]);
+		\rkphplib\lib\redirect($redir_url, [ '@link' => 1, '@back' => 1 ]);
 	}
 
 	return $res;
@@ -179,7 +176,7 @@ public function tok_login_clear($p) {
 	}
 
 	if (!empty($p['redirect'])) {
-		redirect($p['redirect']);
+		\rkphplib\lib\redirect($p['redirect']);
 	}
 
 	return '';
@@ -336,12 +333,12 @@ public function tok_login_update($do, $p) {
 
 	$allow_cols = [];
 	if (!empty($p['@allow_cols'])) {
-		$allow_cols = split_str(',', $p['@allow_cols']);
+		$allow_cols = \rkphplib\lib\split_str(',', $p['@allow_cols']);
 		unset($p['@allow_cols']);	
 	}
 
 	if (!empty($p['@request_keys'])) {
-		$request_keys = split_str(',', $p['@request_keys']);
+		$request_keys = \rkphplib\lib\split_str(',', $p['@request_keys']);
 
 		foreach ($request_keys as $key) {
 			$p[$key] = isset($_REQUEST[$key]) ? $_REQUEST[$key] : '';
@@ -371,7 +368,7 @@ public function tok_login_update($do, $p) {
 
 	$session_cols = [];
 	if (!empty($p['@session_cols'])) {
-		$sess_col_list = split_str(',', $p['@session_cols']);
+		$sess_col_list = \rkphplib\lib\split_str(',', $p['@session_cols']);
 		foreach ($sess_col_list as $col) {
 			if (isset($kv[$col])) {
 				$session_cols[$col] = $kv[$col];
@@ -488,12 +485,12 @@ public function tok_login_auth($p) {
 	if ($this->sess->has('id')) {
 		if (($type = $this->sess->has('type'))) {
 			if (!empty($p['redirect_'.$type])) {
-				redirect($p['redirect_'.$type]);
+				\rkphplib\lib\redirect($p['redirect_'.$type]);
 			}
 		}
 		
 		if (!empty($p['redirect'])) {
-			redirect($p['redirect']);
+			\rkphplib\lib\redirect($p['redirect']);
 		}
 	}
 
@@ -532,7 +529,7 @@ public function tok_login_auth($p) {
 	if (!is_null($this->db)) {
 		if (!empty($p['multi_table'])) {
 			if (!is_null($this->db) && !empty($p['login']) && !empty($p['password'])) {
-				$list = split_str(',', $p['multi_table']);
+				$list = \rkphplib\lib\split_str(',', $p['multi_table']);
 				$user = null;
 
 				for ($i = 0; is_null($user) && $i < count($list); $i++) {
@@ -551,7 +548,7 @@ public function tok_login_auth($p) {
 		}
 
 		if (!is_null($user) && !empty($p['select_list'])) {
-			$list = split_str(',', $p['select_list']);
+			$list = \rkphplib\lib\split_str(',', $p['select_list']);
 			$r = $user;
 
 			foreach ($list as $prefix) {
@@ -570,7 +567,7 @@ public function tok_login_auth($p) {
 	$this->sess->setHash($user);
 
 	if (!empty($p['callback'])) {
-		$tmp = split_str(',', $p['callback']);
+		$tmp = \rkphplib\lib\split_str(',', $p['callback']);
 		$plugin = array_shift($tmp);
 		$method = array_shift($tmp);
 		$this->tok->callPlugin($plugin, $method, $tmp);
@@ -582,14 +579,14 @@ public function tok_login_auth($p) {
 
 	if (!empty($user['redirect'])) {
 		$redirect_to = $this->tok->replaceTags($user['redirect'], $user);
-		redirect($redirect_to);
+		\rkphplib\lib\redirect($redirect_to);
 	}
 	else if (!empty($user['type']) && !empty($p['redirect_'.$user['type']])) {
-		redirect($p['redirect_'.$user['type']]);
+		\rkphplib\lib\redirect($p['redirect_'.$user['type']]);
 	}
 	else if (!empty($p['redirect'])) {
 		$redirect_to = $this->tok->replaceTags($p['redirect'], $user);
-		redirect($redirect_to);
+		\rkphplib\lib\redirect($redirect_to);
 	}
 }
 
@@ -848,7 +845,7 @@ public function tok_login($key, $alt_key = '') {
 	}
 
 	if (is_array($res)) {
-		$res = kv2conf($res);
+		$res = \rkphplib\lib\kv2conf($res);
 	}
 
 	return $res;

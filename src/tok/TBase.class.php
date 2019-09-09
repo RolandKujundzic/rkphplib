@@ -18,12 +18,6 @@ use rkphplib\Exception;
 use rkphplib\File;
 use rkphplib\JSON;
 
-use function rkphplib\lib\htmlescape;
-use function rkphplib\lib\split_str;
-use function rkphplib\lib\redirect;
-use function rkphplib\lib\conf2kv;
-use function rkphplib\lib\kv2conf;
-use function rkphplib\lib\entity;
 
 
 
@@ -129,7 +123,7 @@ public function __construct() {
  * - shorten: REQUIRE_PARAM
  * - strlen: NO_PARAM 
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$this->_tok = $tok;
 
 	$plugin = [];
@@ -217,7 +211,7 @@ public function tok_shorten($maxlen, $txt) {
 	$len = mb_strlen($txt);
 
 	if ($len < $maxlen) {
-		return htmlescape($txt);
+		return \rkphplib\lib\htmlescape($txt);
 	}
 
 	if ($maxlen < 20) {
@@ -450,7 +444,7 @@ public function tok_tpl($p, $arg) {
 	}
 
 	if ($anum > 0) {
-		$list = split_str(HASH_DELIMITER, $arg);
+		$list = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
 
 		for ($i = 0; $i < $anum; $i++) {
 			$value = isset($list[$i]) ? $list[$i] : '';
@@ -459,7 +453,7 @@ public function tok_tpl($p, $arg) {
 	}
 
 	if ($tnum > 0) {
-		$tpl = $this->_tok->replaceTags($tpl, conf2kv($arg));
+		$tpl = $this->_tok->replaceTags($tpl, \rkphplib\lib\conf2kv($arg));
 	}
 
 	// \rkphplib\lib\log_debug("TBase.tok_tpl:465> return $tpl"); 
@@ -502,7 +496,7 @@ public function tok_var($name, $value) {
 		$name = substr($name, 1);
 
 		if (substr($name, 0, 1) == '#') {
-			$this->setVarHash(substr($name, 1), conf2kv($value));
+			$this->setVarHash(substr($name, 1), \rkphplib\lib\conf2kv($value));
 		}
 		else {
 			$this->setVar($name, $value);
@@ -517,7 +511,7 @@ public function tok_var($name, $value) {
 /**
  * Set variable $name = $value. If $flag = Tokenizer::VAR_APPEND append to existing value.
  */
-public function setVar(string $name, string $value, int $flag = 0) : void {
+public function setVar($name, $value, $flag = 0) {
 	$this->_tok->setVar($name, $value, $flag);
 }
 
@@ -528,7 +522,7 @@ public function setVar(string $name, string $value, int $flag = 0) : void {
  * If suffix of $name is [.] use $name.$name2. 
  * Name may contain [.] (a.b = getVar(a)[b], a.b.c = getVar(a)[b][c], ...).
  */
-public function getVar(string $name, string $name2 = '') {
+public function getVar($name, $name2 = '') {
 	if (empty($name)) {
 		if (!empty($name2)) {
 			$name = $name2;
@@ -550,7 +544,7 @@ public function getVar(string $name, string $name2 = '') {
  * Set has $name. Abort if hash already exists. Use NAME! to merge existing 
  * key NAME with hash $p.
  */
-public function setVarHash(string $name, array $p) : void {
+public function setVarHash($name, $p) {
 	if (substr($name, -1) != '!') {
 		$this->_tok->setVar($name, $p, Tokenizer::VAR_MUST_NOT_EXIST);
 		return;
@@ -812,7 +806,7 @@ public function tok_redirect($url) {
 		exit("<h1>401 Unauthorized</h1>\nThe page that you have requested can not accessed.");
   }
 	else if ($url) {
-		redirect($url);
+		\rkphplib\lib\redirect($url);
   }
 }
 
@@ -1340,7 +1334,7 @@ public function tok_if($param, $p) {
 	$has_empty_param = false;
 	
 	if (!empty($param)) {
-		$tmp = split_str(':', $param);
+		$tmp = \rkphplib\lib\split_str(':', $param);
 		$do = $tmp[0];
 		$param = isset($tmp[1]) ? $tmp[1] : '';
 		$has_empty_param = (count($tmp) == 2) && ($tmp[1] == '');
@@ -1369,11 +1363,11 @@ public function tok_if($param, $p) {
 		$res = ($param === $p[0]) ? $p[2] : $p[1];
 	}
 	else if ($do === 'in') {
-		$set = split_str(',', $param);
+		$set = \rkphplib\lib\split_str(',', $param);
 		$res = in_array($p[0], $set) ? $p[1] : $p[2];
 	}
 	else if ($do === 'if_in_set') {
-		$set = split_str(',', $param);
+		$set = \rkphplib\lib\split_str(',', $param);
 		$res = in_array($param, $set) ? $p[1] : $p[2];
 	}
 	else if ($do === 'le' || $do === 'lt' || $do === 'ge' || $do === 'gt') {
@@ -1595,7 +1589,7 @@ private function applyFilter($tag, $value) {
 			$value = str_replace([ '&', '<', '>', '"', "'" ], [ '&amp;', '&lt;', '&gt;', '&quot;', '&#39;' ], $value);
 		}
 		else if ($filter == 'escape_arg') {
-			$value = str_replace(HASH_DELIMITER, entity(HASH_DELIMITER), $value);
+			$value = str_replace(HASH_DELIMITER, \rkphplib\lib\entity(HASH_DELIMITER), $value);
 		}
 		else if ($filter == 'escape_db') {
 			require_once PATH_RKPHPLIB.'ADatabase.class.php';
@@ -1686,7 +1680,7 @@ public function tok_set_default($name, $value) {
 	}
 
   if (empty($name)) {
-		$kv = conf2kv($value);
+		$kv = \rkphplib\lib\conf2kv($value);
 		foreach ($kv as $key => $value) {
 			if (!isset($_REQUEST[$key])) {
 				$_REQUEST[$key] = $value;
@@ -1714,7 +1708,7 @@ public function tok_set_default($name, $value) {
 public function tok_set($name, $value) {
 
   if (empty($name)) {
-		$kv = conf2kv($value);
+		$kv = \rkphplib\lib\conf2kv($value);
 		foreach ($kv as $key => $value) {
 			$_REQUEST[$key] = $value;
 		}
@@ -1809,7 +1803,7 @@ public function tok_get($param, $arg) {
 			}
 		}
 
-		$res = kv2conf($found);
+		$res = \rkphplib\lib\kv2conf($found);
 	}
 
   if (!isset($this->_conf['filter.esc'])) {
@@ -1824,7 +1818,7 @@ public function tok_get($param, $arg) {
 			$res[$key] = $this->applyFilter('get', $value);
 		}
 
-		$res = kv2conf($res);
+		$res = \rkphplib\lib\kv2conf($res);
 	}
 
 	return $res;
@@ -1876,10 +1870,10 @@ public function tok_escape($param, $txt) {
 	}
 	else if ($param == 'entity') {
 		list ($entity, $txt) = explode(HASH_DELIMITER, $txt, 2);
-		$res = str_replace($entity, entity($entity), $txt);
+		$res = str_replace($entity, \rkphplib\lib\entity($entity), $txt);
 	}
 	else if ($param == 'arg') {
-		$res = str_replace(HASH_DELIMITER, entity(HASH_DELIMITER), $txt);
+		$res = str_replace(HASH_DELIMITER, \rkphplib\lib\entity(HASH_DELIMITER), $txt);
 	}
 	else if ($param == 'js') {
 		$res = str_replace([ '"', "'", '\\', '(', ')', '{', '}', '=' ], [ '&#34;', '&#39;', '&#92;', '&#40;', '&#41;', '&#123;', '&#125;', '&#61;' ], $txt);
@@ -1928,11 +1922,11 @@ public function tok_unescape($param, $txt) {
 		$res = rawurldecode($txt);
 	}
 	else if ($param == 'arg') {
-    $res = str_replace(entity(HASH_DELIMITER), HASH_DELIMITER, $txt);
+    $res = str_replace(\rkphplib\lib\entity(HASH_DELIMITER), HASH_DELIMITER, $txt);
 	}
 	else if ($param == 'entity') {
 		list ($entity, $txt) = explode(HASH_DELIMITER, $txt, 2);
-		$res = str_replace(entity($entity), $entity, $txt);
+		$res = str_replace(\rkphplib\lib\entity($entity), $entity, $txt);
 	}
 	else if ($param == 'js') {
 		$res = str_replace([ '&#34;', '&#39;', '&#92;', '&#40;', '&#41;', '&#123;', '&#125;', '&#61;' ], [ '"', "'", '\\', '(', ')', '{', '}', '=' ], $txt);
@@ -2192,16 +2186,16 @@ public function tok_tf($p, $arg) {
 			$tf = empty($ta) ? false : 'switch:'.$ta;
 		}
 		else if ($p[0] === 'set') {
-			$tf = split_str(HASH_DELIMITER, $arg);
+			$tf = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
 		}
 		else if (!empty($p[0])) {
 			if (in_array($p[0], [ 'cmp', 'set', 'in_arr', 'in', 'in_set', 'and', 'or', 'cmp_and', 'cmp_or' ])) {
 				$do = $p[0];
-				$ap = split_str(HASH_DELIMITER, $arg);
+				$ap = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
 			}
 			else if (in_array($p[0], [ 'eq', 'ne', 'lt', 'gt', 'le', 'ge' ])) {
 				$do = $p[0];
-				$tmp = split_str(HASH_DELIMITER, $arg);
+				$tmp = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
 				$ap = [];
 
 				foreach ($tmp as $value) {
@@ -2220,7 +2214,7 @@ public function tok_tf($p, $arg) {
 	else if (count($p) > 1) {
 		$do = array_shift($p);
 		// even if arg is empty we need [] as ap - e.g. {tf:cmp:}{:tf} = true
-		$ap = array_merge($p, split_str(HASH_DELIMITER, $arg));
+		$ap = array_merge($p, \rkphplib\lib\split_str(HASH_DELIMITER, $arg));
 	}
 
 	if (empty($do)) {
@@ -2294,11 +2288,11 @@ public function tok_tf($p, $arg) {
 		}
 
 		if ($do == 'in') {
-			$set = split_str(',', $ap[0]);
+			$set = \rkphplib\lib\split_str(',', $ap[0]);
 			$tf = in_array($ap[1], $set);
 		}
 		else {
-			$set = split_str(',', $ap[1]);
+			$set = \rkphplib\lib\split_str(',', $ap[1]);
 			$tf = in_array($ap[0], $set);
 		}
 	}
@@ -2361,10 +2355,10 @@ public function tok_true($val, $out) {
 
 	if (is_string($tf) && strpos($tf, 'switch:') === 0) {
 		if (substr($val, 0, 4) == 'var:') {
-			$val = split_str(',', $this->_tok->getVar(substr($val, 4)));
+			$val = \rkphplib\lib\split_str(',', $this->_tok->getVar(substr($val, 4)));
 		}
 		else {
-			$val = split_str(',', $val);
+			$val = \rkphplib\lib\split_str(',', $val);
 		}
 
 		$tf = substr($tf, 7);

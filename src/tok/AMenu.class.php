@@ -9,8 +9,6 @@ require_once __DIR__.'/../lib/redirect.php';
 
 use rkphplib\Exception;
 
-use function rkphplib\lib\split_str;
-use function rkphplib\lib\redirect;
 
 
 
@@ -39,7 +37,7 @@ private  $ignore_level = 0;
 /**
  * Return Tokenizer plugin list: menu, menu:add, menu:conf
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$this->tok = $tok;
 
 	$plugin = [];
@@ -215,7 +213,7 @@ private function skipNode($node) {
 	if (isset($node['if_priv']) && !$this->tok->callPlugin('login', 'hasPrivileges', [ $node['if_priv'] ])) {
 		// \rkphplib\lib\log_debug("AMenu.skipNode:216> current dir is forbidden - node: ".join('|', $node));
 		$redir_url = empty($this->conf['redirect_access_denied']) ? 'login/access_denied' : $this->conf['redirect_access_denied'];
-		redirect($redir_url, [ '@link' => 1, '@back' => 1 ]);
+		\rkphplib\lib\redirect($redir_url, [ '@link' => 1, '@back' => 1 ]);
 	}
 }
 
@@ -270,7 +268,7 @@ private function hasTables($tables) {
 	require_once __DIR__.'/../Database.class.php';
 	$db = \rkphplib\Database::getInstance();
 
-	$table_list = split_str(',', $tables);
+	$table_list = \rkphplib\lib\split_str(',', $tables);
 	foreach ($table_list as $table) {
 		if (!$db->hasTable($table)) {
 			// \rkphplib\lib\log_debug("AMenu.hasTables:276> if_table = false - missing $table");

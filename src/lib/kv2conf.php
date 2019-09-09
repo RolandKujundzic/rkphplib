@@ -23,7 +23,7 @@ if (!defined('HASH_DELIMITER')) {
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-function kv2conf(array $kv, string $d1 = '=', string $d2 = HASH_DELIMITER, bool $ikv = false, int $level = 1) : string {
+function kv2conf($kv, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = false, $level = 1) {
 
 	$d3 = '|:|';
 	$conf = $ikv ? '@@1="",","'.$d2."\n".'@@2="'.$d1.'","'.$d2.'"'.$d2."\n".'@@3="'.$d1.'","'.$d3.'"'.$d2."\n" : '';

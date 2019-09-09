@@ -6,7 +6,6 @@ require_once __DIR__.'/DateCalc.class.php';
 require_once __DIR__.'/lib/split_str.php';
 
 
-use function rkphplib\lib\split_str;
 
 
 
@@ -24,7 +23,7 @@ class ValueCheck {
  * Split $value at [:] into self::method and parameter list (e.g. value = isRange:5:8). If self::method
  * doesn't exist assume isMatch and self::method = name of regular expression (see isMatch).
  */
-public static function run(string $key, $value, string $check) : bool {
+public static function run($key, $value, $check) {
 	// \rkphplib\lib\log_debug("ValueCheck::run:28> key=$key value=$value check=$check");
 	$condition = '';
 
@@ -63,7 +62,7 @@ public static function run(string $key, $value, string $check) : bool {
 	}
 
 	if (!is_array($check)) {
-		$check = split_str(':', $check);
+		$check = \rkphplib\lib\split_str(':', $check);
 	}
 
 	$method = array_shift($check);
@@ -156,7 +155,7 @@ public static function sqlQuery($value, $parameter, $query) {
 
   $db = \rkphplib\Database::getInstance();
 
-  $columns = split_str(',', $parameter);
+  $columns = \rkphplib\lib\split_str(',', $parameter);
   foreach ($columns as $column) {
 		if (isset($_REQUEST[$column])) {
 			$query .= ' AND '.$db->escape_name($column)."='".$db->esc($_REQUEST[$column])."'";
@@ -172,7 +171,7 @@ public static function sqlQuery($value, $parameter, $query) {
 /**
  * @alias isDomain($domain)
  */
-public static function isURL(string $domain, int $min_level = 2, int $max_level = 9) : bool {
+public static function isURL($domain, $min_level = 2, $max_level = 9) {
 	return self::isDomain($domain, $min_level, $max_level);
 }
 
@@ -180,7 +179,7 @@ public static function isURL(string $domain, int $min_level = 2, int $max_level 
 /**
  * @alias isDomain("$domain.tld")
  */
-public static function isURLPrefix(string $domain, $min_level = 1, $max_level = 8) : bool {
+public static function isURLPrefix($domain, $min_level = 1, $max_level = 8) {
 	return self::isDomain($domain.'.tld', $min_level + 1, $max_level + 1);
 }
 
@@ -189,7 +188,7 @@ public static function isURLPrefix(string $domain, $min_level = 1, $max_level = 
  * True if $value is url path. Split $value at first [/] and check if prefix isDomain and suffix
  * matches /^[a-z0-9\-\.\%\+\_\,\/]+$/i
  */
-public static function isURLPath(string $value) : bool {
+public static function isURLPath($value) {
 	list ($domain, $path) = explode('/', $value, 2);
 	return preg_match('/^[a-z0-9\-\.\%\+\_\,\/]+$/i', $path) && self::isDomain($domain);
 }
@@ -198,7 +197,7 @@ public static function isURLPath(string $value) : bool {
 /**
  * @alias isDomain("$domain.tld")
  */
-public static function isSubDomain(string $domain, $min_level = 1, $max_level = 8) : bool {
+public static function isSubDomain($domain, $min_level = 1, $max_level = 8) {
 	return self::isDomain($domain.'.tld', $min_level + 1, $max_level + 1);
 }
 
@@ -208,7 +207,7 @@ public static function isSubDomain(string $domain, $min_level = 1, $max_level = 
  * If min_level=0 set min_level=2. If max_level=0 set max_level=9.
  * Export $_REQUEST[xn--$domain] if domain is valid utf8.
  */
-public static function isDomain(string $domain, int $min_level = 2, int $max_level = 9) : bool {
+public static function isDomain($domain, $min_level = 2, $max_level = 9) {
 	$_REQUEST['xn--'.$domain] = '';
 
 	$domain_parts = explode('.', $domain);

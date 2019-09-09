@@ -18,9 +18,6 @@ use rkphplib\ADatabase;
 use rkphplib\File;
 use rkphplib\Dir;
 
-use function rkphplib\lib\conf2kv;
-use function rkphplib\lib\kv2conf;
-use function rkphplib\lib\split_str;
 
 
 
@@ -54,7 +51,7 @@ protected $first_row = null;
  *
  * @tok {sql:dsn}mysqli://user:pass@tcp+localhost/dbname{:sql} (use SETTINGS_DSN by default)
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$this->tok = $tok;
 
 	$plugin = [];
@@ -101,7 +98,7 @@ public function __construct() {
  */
 public function tok_sql_hasTable($param, $arg) {
 	$list = empty($param) ? $arg : $param;
-	$tables = split_str(',', $list);
+	$tables = \rkphplib\lib\split_str(',', $list);
 	$res = true;
 
 	for ($i = 0; $res && $i < count($tables); $i++) {
@@ -165,13 +162,13 @@ public function tok_sql_import($p) {
 	}
 
 	if (!empty($p['tables'])) {
-		$files = split_str(',', $p['tables']);
+		$files = \rkphplib\lib\split_str(',', $p['tables']);
 	}
 	else if (File::exists($p['directory'].'/tables.txt')) {
-		$files = split_str("\n", File::load($p['directory'].'/tables.txt'), true);
+		$files = \rkphplib\lib\split_str("\n", File::load($p['directory'].'/tables.txt'), true);
 	}
 	else if (File::exists($cms_setup.'/tables.txt')) {
-		$files = split_str("\n", File::load($cms_setup.'/tables.txt'), true);
+		$files = \rkphplib\lib\split_str("\n", File::load($cms_setup.'/tables.txt'), true);
 	}
 	else {
 		$files = Dir::scanDir($p['directory'], [ '.sql' ]);
@@ -376,7 +373,7 @@ public function tok_sql_qkey($qkey, $query) {
 public function tok_sql_change($p) {
 	$this->checkMap($this->tok->getPluginTxt('sql:change'), $p, [ 'table!', 'id_col!' ]);
 
-	$tmp = split_str(',', $p['id_col']);
+	$tmp = \rkphplib\lib\split_str(',', $p['id_col']);
 	$id = $tmp[0];
 	$id_mode = empty($tmp[1]) ? '' : $tmp[1];
 
@@ -385,14 +382,14 @@ public function tok_sql_change($p) {
 	}
 
 	if (!empty($p['col_value'])) {
-		$p['col_value'] = conf2kv($p['col_value'], '=', ',');
+		$p['col_value'] = \rkphplib\lib\conf2kv($p['col_value'], '=', ',');
 	}
 	else {
 		$p['col_value'] = [];
 	}
 
 	if (!empty($p['add_col_value'])) {
-		$p['add_col_value'] = conf2kv($p['add_col_value'], '=', ',');
+		$p['add_col_value'] = \rkphplib\lib\conf2kv($p['add_col_value'], '=', ',');
 	}
 	else {
 		$p['add_col_value'] = [];
@@ -411,7 +408,7 @@ public function tok_sql_change($p) {
 	}
 
 	if (!empty($p['de2sql'])) {
-		$de2sql = split_str(',', $p['de2sql']);
+		$de2sql = \rkphplib\lib\split_str(',', $p['de2sql']);
 		foreach ($de2sql as $key) {
 			list ($dmy, $his) = (strlen($r[$key]) > 8) ? explode(' ', $r[$key], 2) : [ $r[$key], null ];
 			list ($d, $m, $y) = explode('.', $dmy);
@@ -479,7 +476,7 @@ public function tok_sql_query($qkey, $query) {
 	}
 
 	if (!empty($qkey)) {
-		$replace = conf2kv($query);
+		$replace = \rkphplib\lib\conf2kv($query);
 		$query = $this->db->getQuery($qkey, $replace);
 	}
 	else if (empty($query)) {
@@ -545,7 +542,7 @@ public function tok_sql_options($p = []) {
 			}
 		}
 
-		$res = $is_vector ? join(',', array_keys($kv)) : kv2conf($kv, '=', ',');
+		$res = $is_vector ? join(',', array_keys($kv)) : \rkphplib\lib\kv2conf($kv, '=', ',');
 	}
 
 	return $res;
@@ -578,7 +575,7 @@ public function tok_sql_col($name, $arg = '') {
 	}
 
 	if ($name == '*') {
-		return kv2conf($this->first_row);
+		return \rkphplib\lib\kv2conf($this->first_row);
 	}
 
 	return (isset($this->first_row[$name]) || array_key_exists($name, $this->first_row)) ? $this->first_row[$name] : '';
@@ -665,7 +662,7 @@ private function spreadSheetJS($table) {
 	$split_str = [ 'readonly', 'columns', 'required' ];
 	foreach ($split_str as $name) {
 		if (!empty($config[$name])) {
-			$config[$name] = split_str(',', $config[$name]);
+			$config[$name] = \rkphplib\lib\split_str(',', $config[$name]);
 		}
 	}
 

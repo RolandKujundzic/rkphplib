@@ -28,7 +28,7 @@ use TokHelper;
 /**
  * Return {directory:copy|move|create|exists|entries|is}, {file:size|copy|exists}, {dirname:} and {basename:}
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
   $plugin = [];
   $plugin['directory:copy'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
   $plugin['directory:move'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;

@@ -24,7 +24,7 @@ if (!defined('SETTINGS_LOG_WARN')) {
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-function log_warn(string $msg) : void {
+function log_warn($msg) {
 
 	if (!defined('SETTINGS_LOG_WARN') || empty(SETTINGS_LOG_WARN)) {
 		return;

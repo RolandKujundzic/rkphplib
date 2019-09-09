@@ -70,7 +70,7 @@ public $dump = '';
 /**
  * See set() for allowed option parameter.
  */
-public function __construct(array $opt = []) {
+public function __construct($opt = []) {
 	foreach ($opt as $key => $value) {
 		$this->set($key, $value);
 	}
@@ -91,7 +91,7 @@ public function __construct(array $opt = []) {
  *  - save_as: Save result here
  *  - decode: decode JSON/XML result (default = true)
  */
-public function set(string $name, string $value) : void {
+public function set($name, $value) {
 
 	if (!is_string($name)) {
 		throw new Exception('name is not string', print_r($name, true));
@@ -161,7 +161,7 @@ public function set(string $name, string $value) : void {
 /**
  * Return set value (any). 
  */
-public function get(string $name) {
+public function get($name) {
 
 	if ($name == 'path') {
 		$name = 'uri';
@@ -186,7 +186,7 @@ public function get(string $name) {
 /**
  * Short for set('method', $method); set('uri', $uri); exec($data).
  */
-public function call(string $method, string $uri, ?array $data = null) : bool {
+public function call($method, $uri, $data = null) {
 	$this->set('method', strtoupper($method));
 	$this->set('uri', $uri);
 	return $this->exec($data);
@@ -201,7 +201,7 @@ public function call(string $method, string $uri, ?array $data = null) : bool {
  * If data is map it will be auto-converted to content. If data is string use xml if content=application/xml or 
  * json_encode(...) for default content (application/json). If accept is application/json auto-convert result to map.
  */
-public function exec(?array $data = null) : bool {
+public function exec($data = null) {
 
 	$required = [ 'method', 'uri', 'url' ];
 	foreach ($required as $key) {
@@ -314,7 +314,7 @@ public function exec(?array $data = null) : bool {
 /**
  * Return url encoded query string.
  */
-private function curlGetData(string $url, ?array $data) : string {
+private function curlGetData($url, $data) {
 	$append = '';
 
 	if (is_array($data) && count($data) > 0) {
@@ -333,7 +333,7 @@ private function curlGetData(string $url, ?array $data) : string {
 /**
  * Return encoded data (string|hash). Options are modified if content is multipart/form-data.
  */
-private function curlOtherData(array $data, array &$options) {
+private function curlOtherData($data, &$options) {
 
 	if (!isset($this->opt['header']['CONTENT-TYPE'])) {
 		throw new Exception('Content-Type is not set');
@@ -384,7 +384,7 @@ private function curlOtherData(array $data, array &$options) {
  * - input_json: required, input file (get|post|put|delete).input.json
  * - input_map: map - replace :TAG: with value (e.g. "header": { "Authorization": "Bearer !OAUTH2_TOKEN!" }
  */
-public function test(array $config = []) {
+public function test($config = []) {
 
 	if (empty($config['url'])) {
 		throw new Exception('url missing');
@@ -462,7 +462,7 @@ public function test(array $config = []) {
 /**
  * Export tag map.
  */
-private function exportTags(array $data, array $tag_list) : array {
+private function exportTags($data, $tag_list) {
 	$tags = [];
 
 	foreach ($tag_list as $key => $tl_value) {
@@ -494,7 +494,7 @@ private function exportTags(array $data, array $tag_list) : array {
  * Compare $curr with $ok. Ignore keys set in $opt['dont_compare'].
  * Return ignore message list. 
  */
-private function compare_result(array $curr, array $ok, array $opt) : array {
+private function compare_result($curr, $ok, $opt) {
 
 	if (!isset($opt['key'])) {
     $opt['key'] = [];
@@ -544,7 +544,7 @@ private function compare_result(array $curr, array $ok, array $opt) : array {
 /**
  * Return data (json[0]) and options (json[last]). Apply replace (!TAG!).
  */
-private function loadDataOptions(string $file, int $pos = 0, array $replace = []) : array {
+private function loadDataOptions($file, $pos = 0, $replace = []) {
 	$json_str = File::load($file);
 	$json_orig = JSON::decode($json_str);
 	$rtags = [];

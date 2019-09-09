@@ -8,7 +8,7 @@ namespace rkphplib\lib;
  * if previous/next character is start|end or in [ .,;-:!?§$€)(][}{><|"/\\&#`´+-*=~^%\'\r\n\t].
  * Use $a as search, $b as replace and $txt as text string.
  */
-function replace_str(string $a, string $b, string $txt) : string {
+function replace_str($a, $b, $txt) {
 	$len_txt = mb_strlen($txt);
 	$len_a = mb_strlen($a);
 	$len_b = mb_strlen($b);

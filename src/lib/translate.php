@@ -15,7 +15,7 @@ namespace rkphplib\lib;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-function translate(string $msg, array $plist = []) : string {
+function translate($msg, $plist = []) {
 
 	if (!defined('SETTINGS_LANGUAGE')) {
 		define('SETTINGS_LANGUAGE', 'de');
