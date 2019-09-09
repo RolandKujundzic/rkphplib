@@ -720,7 +720,7 @@ private function _merge_txt(int $n, int $m) : string {
 /**
  * Return result of buildin $action (ignore|keep|debug). If action is ignore return empty. 
  */
-private function _buildin(string $action, string $name, string $param, ?string $arg = null) : string {	
+private function _buildin(string $action, string $name, string $param, ?string $arg = null) : string {
 	$res = '';
 
 	if ($action == 'ignore') {
@@ -813,7 +813,7 @@ public function callPlugin(string $name, string $func, $args = []) {
  * Convert param into vector and arg into map if plugin $name is configured with
  * TokPlugin::KV_BODY | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::REQUIRE_PARAM 
  */
-private function _call_plugin(string $name, string $param, ?string $arg = null) : string {	
+private function _call_plugin(string $name, string $param, ?string $arg = null) : string {
 
 	$csl = count($this->_callstack);
 	array_push($this->_callstack[$csl - 1], [ $name, null ]);
