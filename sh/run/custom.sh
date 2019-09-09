@@ -12,11 +12,23 @@ function _php5 {
 	_mkdir lib5
 
 	rsync -a --delete src bin test lib5
-	"$PATH_PHPLIB/bin/toggle" lib5 strict_types off
+
+	"$PATH_PHPLIB/bin/toggle" lib5/src strict_types off
+	"$PATH_PHPLIB/bin/toggle" lib5/test strict_types off
+
+	for a in lib5/bin/*; do
+		"$PATH_PHPLIB/bin/toggle" $a strict_types off
+	done
 
 	git stash
 	git checkout -b php5
 	git pull
+
+	diff -u src lib5/src > diff_src.txt 
+	diff -u src lib5/bin > diff_bin.txt 
+	diff -u src lib5/test > diff_test.txt 
+
+	echo "Check diff_[src|bin|test].txt"
 }
 
 
