@@ -2,14 +2,21 @@
 
 
 #------------------------------------------------------------------------------
-function _lib5 {
+function _php5 {
 	if test -z "$PATH_PHPLIB"; then
 		_abort "export PATH_PHPLIB"
 	fi
 
+	# copy to lib5 and remove strict
+	_rm lib5
 	_mkdir lib5
+
 	rsync -a --delete src bin test lib5
 	"$PATH_PHPLIB/bin/toggle" lib5 strict_types off
+
+	git stash
+	git checkout -b php5
+	git pull
 }
 
 
@@ -28,7 +35,6 @@ function _build {
 	if ! test -z "$PATH_PHPLIB"; then
 		"$PATH_PHPLIB/bin/toggle" log_debug on
 		"$PATH_PHPLIB/bin/toggle" log_debug off
-		_lib5
 	fi
 
 	bin/plugin_map

@@ -346,14 +346,21 @@ function _confirm {
 
 
 #------------------------------------------------------------------------------
-function _lib5 {
+function _php5 {
 	if test -z "$PATH_PHPLIB"; then
 		_abort "export PATH_PHPLIB"
 	fi
 
+	# copy to lib5 and remove strict
+	_rm lib5
 	_mkdir lib5
+
 	rsync -a --delete src bin test lib5
 	"$PATH_PHPLIB/bin/toggle" lib5 strict_types off
+
+	git stash
+	git checkout -b php5
+	git pull
 }
 
 
@@ -372,7 +379,6 @@ function _build {
 	if ! test -z "$PATH_PHPLIB"; then
 		"$PATH_PHPLIB/bin/toggle" log_debug on
 		"$PATH_PHPLIB/bin/toggle" log_debug off
-		_lib5
 	fi
 
 	bin/plugin_map
@@ -791,8 +797,8 @@ case $1 in
 build)
 	_build
 	;;
-lib5)
-	_lib5
+php5)
+	_php5
 	;;
 composer)
 	_composer $2
@@ -817,6 +823,6 @@ opensource)
 	_opensource $2
 	;;
 *)
-	_syntax "[build|opensource|composer|docs|lib5|test|mb_check|ubuntu|docker_osx]"
+	_syntax "[build|opensource|composer|docs|php5|test|mb_check|ubuntu|docker_osx]"
 esac
 

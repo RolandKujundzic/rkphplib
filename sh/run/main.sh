@@ -15,8 +15,8 @@ case $1 in
 build)
 	_build
 	;;
-lib5)
-	_lib5
+php5)
+	_php5
 	;;
 composer)
 	_composer $2
@@ -41,6 +41,6 @@ opensource)
 	_opensource $2
 	;;
 *)
-	_syntax "[build|opensource|composer|docs|lib5|test|mb_check|ubuntu|docker_osx]"
+	_syntax "[build|opensource|composer|docs|php5|test|mb_check|ubuntu|docker_osx]"
 esac
 
