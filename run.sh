@@ -376,7 +376,7 @@ function _build {
 	fi
 
 	bin/plugin_map
-
+	composer validate --no-check-all --strict
   git status
 }
 
