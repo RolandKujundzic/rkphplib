@@ -83,6 +83,6 @@ const IS_STATIC = 131072;
  * 
  * { abc: TokPlugin::PARAM_LIST, xyz: TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO }
  */
-public function getPlugins(Tokenizer $tok) : array;
+public function getPlugins($tok);
 
 }

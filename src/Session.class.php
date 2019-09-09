@@ -28,7 +28,7 @@ class Session extends ASession {
 /**
  * Return session file. Throw exception if ini_get("session.serialize_handler") != 'php'.
  */
-public static function readPHPSessionFile(string $file) : array {
+public static function readPHPSessionFile($file) {
 	require_once __DIR__.'/File.class.php';
 
 	if (ini_get('session.serialize_handler') != 'php') {
@@ -60,7 +60,7 @@ public static function readPHPSessionFile(string $file) : array {
 /**
  *
  */
-public function init(array $conf) : void {
+public function init($conf) {
 	$this->setConf($conf);
 
 	$sess_ttl = ini_get('session.gc_maxlifetime');
@@ -136,7 +136,7 @@ public function init(array $conf) : void {
 /**
  * Return session key. Use map = meta for meta data. 
  */
-private function sessKey(string $map = '') : string {
+private function sessKey($map = '') {
 	$skey = $this->getSessionKey($map);
 
 	if (!isset($_SESSION[$skey])) {
@@ -161,7 +161,7 @@ private function sessKey(string $map = '') : string {
 /**
  *
  */
-public function destroy() : void {
+public function destroy() {
 	$skey = $this->sessKey();
 	$skey_meta = $this->sessKey('meta');
 
@@ -180,7 +180,7 @@ public function destroy() : void {
 /**
  *
  */
-public function set(string $key, $value, string $map = '') : void {
+public function set($key, $value, $map = '') {
 	$skey = $this->sessKey($map);
 	$_SESSION[$skey][$key] = $value;
 }
@@ -189,7 +189,7 @@ public function set(string $key, $value, string $map = '') : void {
 /**
  *
  */
-public function push(string $key, $value, string $map = '') : void {
+public function push($key, $value, $map = '') {
 	$skey = $this->sessKey($map);
 	
 	if (!isset($_SESSION[$skey][$key])) {
@@ -212,7 +212,7 @@ public function push(string $key, $value, string $map = '') : void {
 /**
  * 
  */
-public function get(string $key, bool $required = true, string $map = '') {
+public function get($key, $required = true, $map = '') {
 	$skey = $this->sessKey($map);
 	$res = null;
 
@@ -235,7 +235,7 @@ public function get(string $key, bool $required = true, string $map = '') {
 /**
  * 
  */
-public function has(string $key, string $map = '') : bool {
+public function has($key, $map = '') {
 	$skey = $this->sessKey($map);
 
 	if (is_null($key) && $map != '') {
@@ -249,7 +249,7 @@ public function has(string $key, string $map = '') : bool {
 /**
  * 
  */
-public function count(string $key, string $map = '') : int {
+public function count($key, $map = '') {
 	$skey = $this->sessKey($map);
 	return count($_SESSION[$skey]);
 }
@@ -258,7 +258,7 @@ public function count(string $key, string $map = '') : int {
 /**
  * 
  */
-public function remove(string $key, string $map = '') : void {
+public function remove($key, $map = '') {
 	$skey = $this->sessKey($map);
 
 	if (!isset($_SESSION[$skey][$key])) {
@@ -272,7 +272,7 @@ public function remove(string $key, string $map = '') : void {
 /**
  * 
  */
-public function getHash(string $map = '') : array {
+public function getHash($map = '') {
 	$skey = $this->sessKey($map);
 	return $_SESSION[$skey];
 }
@@ -281,7 +281,7 @@ public function getHash(string $map = '') : array {
 /**
  *
  */
-public function setHash(array $p, bool $merge = false, string $map = '') : void {
+public function setHash($p, $merge = false, $map = '') {
 	$skey = $this->sessKey($map);
 
 	if (!is_array($p)) {

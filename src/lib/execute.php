@@ -25,7 +25,7 @@ use rkphplib\Exception;
  *
  * Return (string|false) last line of output or true, false if not [flag & 2^0] and error.
  */
-function execute(string $cmd, ?array $parameter = null, $flag = 1) {
+function execute($cmd, $parameter = null, $flag = 1) {
 
 	if (empty($cmd) || !is_string($cmd)) {
 		throw new Exception('invalid command', print_r($cmd, true));

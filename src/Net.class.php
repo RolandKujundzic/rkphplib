@@ -18,7 +18,7 @@ class Net {
 /**
  * Check if remote file exists.
  */
-public static function fileExists(string $path) : bool {
+public static function fileExists($path) {
 	return @fopen($path, 'r') == true;
 }
 

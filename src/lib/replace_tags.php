@@ -15,7 +15,7 @@ use rkphplib\Exception;
 
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-function replace_tags(string $text, array $hash, array $conf = [ TAG_PREFIX, TAG_SUFFIX, '' ]) : string {
+function replace_tags($text, $hash, $conf = [ TAG_PREFIX, TAG_SUFFIX, '' ]) {
 
 	if (is_string($conf)) {
 		$conf = [ TAG_PREFIX, TAG_SUFFIX, $conf ];

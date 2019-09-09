@@ -51,7 +51,7 @@ public $internal_message = '';
 /**
  * Class constructor. Allow optional error details besides the error message.
  */
-public function __construct(string $message, string $internal_message = '') {
+public function __construct($message, $internal_message = '') {
 	parent::__construct($message);
 	$this->internal_message = $internal_message;
 
@@ -78,7 +78,7 @@ public function __construct(string $message, string $internal_message = '') {
 /**
  * Log debug_backtrace to SETTINGS_LOG_EXCEPTION/NAME.json.
  */
-private static function logTrace(array $stack) : void {
+private static function logTrace($stack) {
 	require_once __DIR__.'/File.class.php';
 
 	$last = isset($stack[1]) ? $stack[1] : $stack[0];
@@ -109,7 +109,7 @@ private static function logTrace(array $stack) : void {
  * If SETTINGS_LOG_ERROR is undefined use 'data/.log/php.fatal' 
  * if (data/.log exists) or /tmp/php.fatal.
  */
-public static function logError(string $msg) : void {
+public static function logError($msg) {
 
 	if (!defined('SETTINGS_LOG_ERROR') || empty(SETTINGS_LOG_ERROR)) {
 		return;
@@ -176,7 +176,7 @@ public static function logError(string $msg) : void {
  * Send "HTTP/1.1 $code Error" header ($code = 400|401|404|444) and exit. 
  * If message starts with @ajax or ($flag & 2^0) log and print error message with prefix "ERROR:".
  */
-public static function httpError(int $code = 400, string $msg = '', int $flag = 0) : void {
+public static function httpError($code = 400, $msg = '', $flag = 0) {
 	$error = [ '400' => 'Bad Request', '401' => 'Unauthorized', '404' => 'Not Found', '444' => 'No Response' ];
 
 	if (!isset($error[$code])) {

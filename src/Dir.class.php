@@ -41,7 +41,7 @@ public static $SKIP_UNREADABLE = false;
 /**
  * Return true if directory exists.
  */
-public static function exists(string $path, bool $required = false) : bool {
+public static function exists($path, $required = false) {
 	$error = '';
 	$pl = mb_strlen($path);
 
@@ -74,7 +74,7 @@ public static function exists(string $path, bool $required = false) : bool {
 /**
  * Return last modified (int or string). Return Y-m-d H:i:s instead of unix timestamp if $sql_ts is true.
  */
-public static function lastModified(string $path, bool $sql_ts = false) {
+public static function lastModified($path, $sql_ts = false) {
 
 	FSEntry::isDir($path);
 
@@ -93,7 +93,7 @@ public static function lastModified(string $path, bool $sql_ts = false) {
 /**
  * Remove directory.
  */
-public static function remove(string $path, bool $must_exist = true) : void {
+public static function remove($path, $must_exist = true) {
 
 	if ($path != trim($path)) {
 		throw new Exception('no leading or trailing whitespace allowed in path', $path);
@@ -134,7 +134,7 @@ public static function remove(string $path, bool $must_exist = true) : void {
  * Use $recursive = true to create parent directories. Priviles variable $mode is octal, 
  * default value is DIR_DEFAULT_MODE.
  */
-public static function create(string $path, int $mode = 0, bool $recursive = false) : bool {
+public static function create($path, $mode = 0, $recursive = false) {
 
 	if (!$mode) {
 		$mode = DIR_DEFAULT_MODE;
@@ -185,7 +185,7 @@ public static function create(string $path, int $mode = 0, bool $recursive = fal
 /**
  * Move directory. Options flag is 2^n, e.g. Dir::CREATE_TARGET_PATH|Dir::REMOVE_EXISTING.
  */
-public static function move(string $old_dir, string $new_dir, int $opt = 0) : void {
+public static function move($old_dir, $new_dir, $opt = 0) {
 	FSEntry::isDir($old_dir);
 
 	if (realpath($old_dir) == realpath($new_dir)) {
@@ -213,7 +213,7 @@ public static function move(string $old_dir, string $new_dir, int $opt = 0) : vo
 /**
  * Copy directory. Skip unreadable entries.
  */
-public static function copy(string $source_dir, string $target_dir, string $link_root = '') : void {
+public static function copy($source_dir, $target_dir, $link_root = '') {
 
 	if (empty($source_dir)) {
 		throw new Exception("Source directory is empty");
@@ -269,7 +269,7 @@ public static function copy(string $source_dir, string $target_dir, string $link
 /**
  * Return directory entries (with full path). Parameter $type is 0=any (default), 1=files, 2=directories.
  */
-public static function entries(string $path, int $type = 0) : array {
+public static function entries($path, $type = 0) {
 
 	if (mb_substr($path, -1) == '/') {
 		$path = mb_substr($path, 0, -1);
@@ -314,7 +314,7 @@ public static function entries(string $path, int $type = 0) : array {
  * Return directory entries (relative filepath). Parameter $sort is 2^n, e.g.
  * SCANDIR_SORT_ASCENDING=default|SCANDIR_SORT_DESCENDING|SCANDIR_SORT_NONE.
  */
-public static function scan(string $path, int $sort = SCANDIR_SORT_ASCENDING) : array {
+public static function scan($path, $sort = SCANDIR_SORT_ASCENDING) {
 	return scandir($path, $sort);
 }
 
@@ -322,7 +322,7 @@ public static function scan(string $path, int $sort = SCANDIR_SORT_ASCENDING) : 
 /**
  * Remove leading dot [.] from suffix list entries and change to lower. Variable $suffix_list is changed.
  */
-public static function fixSuffixList(array &$suffix_list) : void {
+public static function fixSuffixList(&$suffix_list) {
   for ($i = 0; $i < count($suffix_list); $i++) {
 		$s = $suffix_list[$i];
 
@@ -339,7 +339,7 @@ public static function fixSuffixList(array &$suffix_list) : void {
  * True if $file suffix is in suffix list. True if $suffix_list is empty.
  * Suffix comparsion is context insensitive.
  */
-private static function _has_suffix(string $file, array $suffix_list) : bool {
+private static function _has_suffix($file, $suffix_list) {
 
 	if (count($suffix_list) == 0) {
 		return true;
@@ -364,7 +364,7 @@ private static function _has_suffix(string $file, array $suffix_list) : bool {
  * Return files in directory with suffix in suffix_list (e.g [jpg, png] or [.jpg, .png]). 
  * If $rel_dir is set remove $rel_dir in every entry.
  */
-public static function scanDir(string $path, array $suffix_list = array(), string $rel_dir = '') : array {
+public static function scanDir($path, $suffix_list = array(), $rel_dir = '') {
 
 	self::fixSuffixList($suffix_list);
 
@@ -390,7 +390,7 @@ public static function scanDir(string $path, array $suffix_list = array(), strin
  * Return files from directory tree with suffix in suffix_list ([jpg, png] or [.jpg, .png]). 
  * Exclude directories found in exclude_dir list (use relative path).
  */
-public static function scanTree(string $path, array $suffix_list = array(), array $exclude_dir = array(), bool $_recursion = false) : array {
+public static function scanTree($path, $suffix_list = array(), $exclude_dir = array(), $_recursion = false) {
 
 	if (!$_recursion) {
 		self::fixSuffixList($suffix_list);
@@ -432,7 +432,7 @@ public static function scanTree(string $path, array $suffix_list = array(), arra
 /**
  * Return directory size (= sum of all filesizes in directory tree).
  */
-public static function size(string $path) : int {
+public static function size($path) {
 
 	$entries = Dir::entries($path);
 	$size = 0;
@@ -453,7 +453,7 @@ public static function size(string $path) : int {
 /**
  * Return true if all directory entries are $action (readable|writable).
  */
-public static function check(string $path, string $action) : int {
+public static function check($path, $action) {
 
 	if ($action != 'readable' && $action != 'writeable') {
 		throw new Exception("invalid action [$action] use check(PATH, readable|writeable)", "path=[$path]");

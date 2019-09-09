@@ -13,8 +13,6 @@ use rkphplib\Exception;
 use rkphplib\ADatabase;
 use rkphplib\Database;
 
-use function rkphplib\lib\conf2kv;
-use function rkphplib\lib\kv2conf;
 
 
 
@@ -81,7 +79,7 @@ public function __construct($options = []) {
 /**
  * Return {conf:[id|var|get|get_path|set|set_path|set_default|append}
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
   $plugin = [];
 	$plugin['conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REDO;
 	$plugin['conf:id'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
@@ -190,9 +188,9 @@ public function tok_conf_set_path($name, $p) {
 	$path = array_shift($p);
 	$value = join(HASH_DELIMITER, $p);
 
-	$map = conf2kv($this->get($this->lid, $name));
+	$map = \rkphplib\lib\conf2kv($this->get($this->lid, $name));
 	self::setMapPathValue($map, $path, $value);
-	$this->set($this->lid, $name, kv2conf($map));
+	$this->set($this->lid, $name, \rkphplib\lib\kv2conf($map));
 	return '';
 }
 
@@ -292,8 +290,8 @@ public function tok_conf_get_path($name, $p) {
 		throw new Exception('invalid parameter list', "name=$name path=$path p: ".print_r($p, true));
 	}
 
-	$map = conf2kv($this->get($this->lid, $name));
-	$res = kv2conf(self::getMapPathValue($map, $path));
+	$map = \rkphplib\lib\conf2kv($this->get($this->lid, $name));
+	$res = \rkphplib\lib\kv2conf(self::getMapPathValue($map, $path));
 	return $res;
 }
 

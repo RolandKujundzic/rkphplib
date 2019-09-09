@@ -55,7 +55,7 @@ public $json_format = null;
 /**
  * Return original filename when (string) cast occurs.
  */
-public function __toString() : string {
+public function __toString() {
 	return $this->path;
 }
 
@@ -73,7 +73,7 @@ public function __toString() : string {
  *     Use m=md5, i=width+height, s=size and l=last_modified, e.g. "misl" or "msl".
  * - md5_old: if set avoid unnecessary downloads
  */
-public function __construct(string $path = '', array $opt = []) {
+public function __construct($path = '', $opt = []) {
 
 	if (empty($path)) {
 		return;
@@ -120,7 +120,7 @@ public function __construct(string $path = '', array $opt = []) {
 /**
  * Initialize object with hash values.
  */
-public function fromHash(array $map) : void {
+public function fromHash($map) {
 	foreach ($map as $key => $value) {
 		if (property_exists($this, $key)) {
 			$this->$key = $value;
@@ -133,7 +133,7 @@ public function fromHash(array $map) : void {
  * Scan either $json or decode $this->path_absolute.'.json'.
  * Set all properties with same name as json key.
  */
-protected function scanJSON(object $json = null) : void {
+protected function scanJSON($json = null) {
 
 	if (is_null($json)) {
 		$json = JSON::decode(File::load($this->path_absolute.'.json'));
@@ -151,7 +151,7 @@ protected function scanJSON(object $json = null) : void {
  * Scan $this->path_absolute and set md5, size and last_modified properties.
  * If with and height property exists retrieve image dimensions.
  */
-protected function scanFile() : void {
+protected function scanFile() {
 	$this->md5 = File::md5($this->path_absolute);
 	$this->size = File::size($this->path_absolute);
 	$this->last_modified = File::lastModified($this->path_absolute);
@@ -171,7 +171,7 @@ protected function scanFile() : void {
  * Auto create local file directory if necessary. Retrieve remote md5 with remote_server.'/'.self::$sync[bin]?path=remote_file. 
  * If $this->json_format is set save file information to local_file.json. Use md5_old to avoid unnecessary downloads.
  */
-public function synchronize(array $opt) : void {
+public function synchronize($opt) {
 
 	if (is_null($this->path) || mb_strlen($this->path) == 0) {
 		throw new Exception('empty path');

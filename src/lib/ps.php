@@ -13,7 +13,7 @@ use rkphplib\Exception;
  * 
  * @trigger_error E_USER_WARNING if PID $pid doesn't exists
  */
-function ps(int $pid) {
+function ps($pid) {
 	$ps = shell_exec("ps aux -q '".intval($pid)."'");
 	$ps = explode("\n", $ps);
  

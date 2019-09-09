@@ -8,7 +8,6 @@ require_once __DIR__.'/APICall.class.php';
 require_once __DIR__.'/JSON.class.php';
 require_once __DIR__.'/lib/execute.php';
 
-use function rkphplib\lib\execute;
 
 
 
@@ -49,7 +48,7 @@ private $parser = [ 'line' => '', 'custom' => '', 'json' => '', 'name' => '' ];
  * - swagger_file: default = File::basename($_SERVER[0]).'.swagger.json'
  * - swagger_bin: default = ./vendor/bin/swagger
  */
-public function __construct(array $opt = []) {
+public function __construct($opt = []) {
 	$base = File::basename($_SERVER['argv'][0], true);
 	$dir = dirname($_SERVER['argv'][0]);
 
@@ -75,7 +74,7 @@ public function __construct(array $opt = []) {
  *
  * key="value" or key={"v1", "v2", ...} 
  */
-private function get_value(string $key, string $text, bool $required = true) {
+private function get_value($key, $text, $required = true) {
 
 	if (preg_match('/^[ \*]*'.$key.'\=(.+),?$/', $text, $match)) {
 		$res = $this->get_vector($match[1]);
@@ -97,7 +96,7 @@ private function get_value(string $key, string $text, bool $required = true) {
 /**
  * If $txt != {.*} return $txt. Otherwise parse vector. Return string|vector.
  */
-private function get_vector(string $txt) {
+private function get_vector($txt) {
 
 	$txt = trim($txt);
 	if (mb_substr($txt, -1) == ',') {
@@ -144,7 +143,7 @@ private function get_vector(string $txt) {
 /**
  * Scan $line for "$name(... KEY="VALUE" ...). Return false or map of key value pairs.
  */
-private function get_map(string $line, string $name) {
+private function get_map($line, $name) {
   $map = false;
 
 	if (($pos = mb_strpos($line, '@SWG\\'.$name.'(')) === false) {
@@ -186,7 +185,7 @@ private function get_map(string $line, string $name) {
 /**
  * If "=@SWGCustom:".parser[custom] is found, set config[parser.name][parser.custom] = parser.json. 
  */
-private function _scan_custom() : void {
+private function _scan_custom() {
 	$line = $this->parser['line'];
 
 	// remove leading *
@@ -210,7 +209,7 @@ private function _scan_custom() : void {
 /**
  * Set parser block name.
  */
-private function _parser_set_name(string $name) : void {
+private function _parser_set_name($name) {
 	$this->parser['name']	= $name;
 	
 	if (!isset($this->config[$name])) {
@@ -230,7 +229,7 @@ private function _parser_set_name(string $name) : void {
 /**
  * Set global swagger paramter.
  */
-private function _set_swagger(array $p) : void {
+private function _set_swagger($p) {
 	$required = [ 'host', 'schemes', 'consumes', 'produces' ];
 	foreach ($required as $key) {
 		if (empty($p[$key])) {
@@ -251,7 +250,7 @@ private function _set_swagger(array $p) : void {
 /**
  * Scan for body, header and path parameter.
  */
-private function _scan_swg(string $line) : void {
+private function _scan_swg($line) {
 
 	$name = $this->parser['name'];
 
@@ -281,7 +280,7 @@ private function _scan_swg(string $line) : void {
 /**
  * Update options.config_file. Extract configuration parameters from config.php_file documentation.
  */
-public function updateConfigFile() : void {
+public function updateConfigFile() {
 
 	$this->config = File::exists($this->options['config_file']) ? JSON::decode(File::load($this->options['config_file'])) : [];
 
@@ -318,7 +317,7 @@ public function updateConfigFile() : void {
 /**
  * Check this.config and this.config[$name].
  */
-private function _check_config(string $name) : void {
+private function _check_config($name) {
 
 	if (empty($name)) {
 		throw new Exception('empty configuration name');
@@ -355,7 +354,7 @@ private function _check_config(string $name) : void {
 /**
  * Return header map {$hname: value}. If $name[example] header is not set use $name[@api] header.
  */
-private function _get_header(string $name, string $hname) : array {
+private function _get_header($name, $hname) {
 	$value = '';
 
 	if (!empty($this->config[$name]['example']['header'][$hname])) {
@@ -387,7 +386,7 @@ private function _get_header(string $name, string $hname) : array {
  * If example number is set add config[$name]['example'.$example] to data.
  * Return string|hash.
  */
-public function call(string $name, int $example = 0) {
+public function call($name, $example = 0) {
 
 	$this->_check_config($name);
 	$cx = $this->config[$name];
@@ -454,7 +453,7 @@ public function call(string $name, int $example = 0) {
 /**
  * Check output $out (string|hash) according to $check. Return error message.
  */
-private function _check_output($out, array $check) : string {
+private function _check_output($out, $check) {
 
 	if (isset($check['required']) && count($check['required']) > 0) {
 		foreach ($check['required'] as $n => $key) {
@@ -482,11 +481,11 @@ private function _check_output($out, array $check) : string {
 /**
  * Update swagger_file.
  */
-public function updateSwaggerFile() : void {
+public function updateSwaggerFile() {
 	print "\nrecreate ".$this->options['swagger_file']."\n\n";
 
 	if (File::exists($this->options['swagger_bin'])) {
-		execute($this->options['swagger_bin']." '".$this->options['php_file']."' --output '".$this->options['swagger_file']."'");
+		\rkphplib\lib\execute($this->options['swagger_bin']." '".$this->options['php_file']."' --output '".$this->options['swagger_file']."'");
 	}
 	else {
 		throw new Exception('swagger not found', 'missing '.$this->options['swagger_bin']);

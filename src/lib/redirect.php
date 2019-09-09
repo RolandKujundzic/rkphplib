@@ -13,7 +13,7 @@ use rkphplib\Exception;
  * /^[a-z0-9_\-\/]+$/i assume {link:}_=$url{:link}. Append extra parameter $p to 
  * redirect url.
  */
-function redirect(string $url, array $p = []) : void {
+function redirect($url, $p = []) {
 	// \rkphplib\lib\log_debug("redirect:17> url=[$url] _ld?'.!empty($_REQUEST['_ld']).' p: '.print_r($p, true));
 
 	if (preg_match('/^[a-z0-9_\-\/]+$/i', $url)) {

@@ -9,7 +9,7 @@ namespace rkphplib\lib;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-function entity(string $txt) : string {
+function entity($txt) {
   $res = '';
 
   for ($i = 0; $i < strlen($txt); $i++) {

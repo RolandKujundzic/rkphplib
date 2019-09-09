@@ -18,7 +18,7 @@ class PDODatabase extends ADatabase {
 /**
  *
  */
-public function getId() : string {
+public function getId() {
 	throw new Exception('ToDo');
 }
 
@@ -34,7 +34,7 @@ public function close() {
 /**
  *
  */
-public function execute(string $query, bool $use_result = false) : void {
+public function execute($query, $use_result = false) {
 	throw new Exception('ToDo');
 }
 
@@ -42,7 +42,7 @@ public function execute(string $query, bool $use_result = false) : void {
 /**
  *
  */
-public function getTableChecksum(string $table, bool $native = false) : string {
+public function getTableChecksum($table, $native = false) {
 	throw new Exception('ToDo');
 }
 
@@ -50,7 +50,7 @@ public function getTableChecksum(string $table, bool $native = false) : string {
 /**
  *
  */
-public function getTableStatus(string $table) : array {
+public function getTableStatus($table) {
 	throw new Exception('ToDo');
 }
 
@@ -58,7 +58,7 @@ public function getTableStatus(string $table) : array {
 /**
  *
  */
-public function setFirstRow(int $offset) : void {
+public function setFirstRow($offset) {
 	throw new Exception('ToDo');
 }
 
@@ -66,7 +66,7 @@ public function setFirstRow(int $offset) : void {
 /**
  *
  */
-public function getNextRow() : ?array {
+public function getNextRow() {
 	throw new Exception('ToDo');
 }
 
@@ -74,7 +74,7 @@ public function getNextRow() : ?array {
 /**
  *
  */
-public function freeResult() : void {
+public function freeResult() {
 	throw new Exception('ToDo');
 }
 
@@ -82,7 +82,7 @@ public function freeResult() : void {
 /**
  * 
  */
-public function getRowNumber() : int {
+public function getRowNumber() {
 	throw new Exception('ToDo');
 }
 
@@ -90,7 +90,7 @@ public function getRowNumber() : int {
 /**
  *
  */
-public function selectColumn($query, string $colname = 'col') : array {
+public function selectColumn($query, $colname = 'col') {
 	throw new Exception('ToDo');
 }
 
@@ -98,7 +98,7 @@ public function selectColumn($query, string $colname = 'col') : array {
 /**
  *
  */
-public function selectHash(string $query, string $key_col = 'name', string $value_col = 'value', bool $ignore_double = false) : array {
+public function selectHash($query, $key_col = 'name', $value_col = 'value', $ignore_double = false) {
 	throw new Exception('ToDo');
 }
 
@@ -106,7 +106,7 @@ public function selectHash(string $query, string $key_col = 'name', string $valu
 /**
  *
  */
-public function select($query, int $res_count = 0) : array {
+public function select($query, $res_count = 0) {
 	throw new Exception('ToDo');
 }
 
@@ -114,7 +114,7 @@ public function select($query, int $res_count = 0) : array {
 /**
  *
  */
-public function selectRow($query, int $rnum = 0) : array {
+public function selectRow($query, $rnum = 0) {
 	throw new Exception('ToDo');
 }
 
@@ -122,7 +122,7 @@ public function selectRow($query, int $rnum = 0) : array {
 /**
  *
  */
-public function esc(string $txt) : string {
+public function esc($txt) {
 	throw new Exception('ToDo');
 }
 
@@ -130,7 +130,7 @@ public function esc(string $txt) : string {
 /**
  *
  */
-public function getTableDesc(string $table) : array {
+public function getTableDesc($table) {
 	throw new Exception('ToDo');
 }
 
@@ -138,7 +138,7 @@ public function getTableDesc(string $table) : array {
 /**
  *
  */
-public function getDatabaseList(bool $reload_cache = false) : array {
+public function getDatabaseList($reload_cache = false) {
 	throw new Exception('ToDo ...');	
 }
 
@@ -146,7 +146,7 @@ public function getDatabaseList(bool $reload_cache = false) : array {
 /**
  *
  */
-public function getTableList(bool $reload_cache = false) : array {
+public function getTableList($reload_cache = false) {
 	throw new Exception('ToDo ...');	
 }
 
@@ -154,7 +154,7 @@ public function getTableList(bool $reload_cache = false) : array {
 /**
  *
  */
-public function getReferences(string $table, string $column = 'id') : array {
+public function getReferences($table, $column = 'id') {
 	throw new Exception('ToDo ...');
 }
 
@@ -162,7 +162,7 @@ public function getReferences(string $table, string $column = 'id') : array {
 /**
  *
  */
-public function getError() : ?array {
+public function getError() {
 	throw new Exception('ToDo ...');
 }
 
@@ -170,7 +170,7 @@ public function getError() : ?array {
 /**
  * 
  */
-public function getAffectedRows() : int {
+public function getAffectedRows() {
 	throw new Exception('ToDo ...');
 }
 
@@ -178,7 +178,7 @@ public function getAffectedRows() : int {
 /**
  *
  */
-public function createDatabase(string $dsn = '', string $opt = 'utf8') : void {
+public function createDatabase($dsn = '', $opt = 'utf8') {
 	throw new Exception('ToDo ...');
 }
 
@@ -186,7 +186,7 @@ public function createDatabase(string $dsn = '', string $opt = 'utf8') : void {
 /**
  *
  */
-public function dropDatabase(string $dsn = '') : void {
+public function dropDatabase($dsn = '') {
 	throw new Exception('ToDo ...');
 }
 
@@ -194,7 +194,7 @@ public function dropDatabase(string $dsn = '') : void {
 /**
  *
  */
-public function saveDump(array $opt) : void {
+public function saveDump($opt) {
 	throw new Exception('ToDo ...');
 }
 
@@ -202,7 +202,7 @@ public function saveDump(array $opt) : void {
 /**
  *
  */
-public function saveTableDump(array $opt) : void {
+public function saveTableDump($opt) {
 	throw new Exception('ToDo ...');
 }
 
@@ -210,7 +210,7 @@ public function saveTableDump(array $opt) : void {
 /**
  *
  */
-public function loadDump(string $file, int $flags) : void {
+public function loadDump($file, $flags) {
 	throw new Exception('ToDo ...');
 }
 
@@ -218,7 +218,7 @@ public function loadDump(string $file, int $flags) : void {
 /**
  *
  */
-public static function createTableQuery(array $conf) : string {
+public static function createTableQuery($conf) {
 	throw new Exception('ToDo ...');
 }
 
@@ -226,7 +226,7 @@ public static function createTableQuery(array $conf) : string {
 /**
  *
  */
-public function dropTable(string $table) : void {
+public function dropTable($table) {
 	throw new Exception('ToDo ...');
 }
 
@@ -234,7 +234,7 @@ public function dropTable(string $table) : void {
 /**
  *
  */
-public function hasResultSet() : bool {
+public function hasResultSet() {
 	throw new Exception('ToDo ...');
 }
 
@@ -242,7 +242,7 @@ public function hasResultSet() : bool {
 /**
  *
  */
-public function getInsertId() : int {
+public function getInsertId() {
 	throw new Exception('ToDo ...');
 }
 
@@ -250,7 +250,7 @@ public function getInsertId() : int {
 /**
  *
  */
-public function lock(array $tables) : void {
+public function lock($tables) {
   throw new Exception('@ToDo ... ');
 }
 
@@ -258,7 +258,7 @@ public function lock(array $tables) : void {
 /**
  *
  */
-public function unlock() : void {
+public function unlock() {
   throw new Exception('@ToDo ... ');
 }
 
@@ -266,7 +266,7 @@ public function unlock() : void {
 /**
  *
  */
-public function getLock(string $name) : int {
+public function getLock($name) {
   throw new Exception('@ToDo ... ');
 }
 
@@ -274,7 +274,7 @@ public function getLock(string $name) : int {
 /**
  *
  */
-public function hasLock(string $name) : bool {
+public function hasLock($name) {
   throw new Exception('@ToDo ... ');
 }
 
@@ -282,7 +282,7 @@ public function hasLock(string $name) : bool {
 /**
  *
  */
-public function releaseLock(string $name) : int {
+public function releaseLock($name) {
   throw new Exception('@ToDo ... ');
 }
 
@@ -290,7 +290,7 @@ public function releaseLock(string $name) : int {
 /**
  *
  */
-public function multiQuery(string $query) : array {
+public function multiQuery($query) {
   throw new Exception('@ToDo ... ');
 }
 

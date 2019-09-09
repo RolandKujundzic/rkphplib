@@ -11,7 +11,6 @@ require_once __DIR__.'/lib/resolvPath.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 
-use function rkphplib\lib\resolvPath;
 
 
 /**
@@ -56,7 +55,7 @@ public function __construct() {
  *  - Hostname: empty = default = auto-detect (= try: $_SERVER['SERVER_NAME'], gethostname(), php_uname('n') or 'localhost.localdomain')
  * @param string $value
  */
-public function setMailer(string $key, string $value) : void {
+public function setMailer($key, $value) {
 	$allow = [ 'CharSet', 'Priority', 'Encoding', 'Hostname' ];
 
 	if (!in_array($key, $allow)) {
@@ -70,7 +69,7 @@ public function setMailer(string $key, string $value) : void {
 /**
  * Return PHPMailer parameter. 
  */
-public function getMailer(string $key) : string {
+public function getMailer($key) {
 	$allow = [ 'CharSet', 'Priority', 'Encoding', 'Hostname' ];
 	if (!in_array($key, $allow)) {
 		throw new Exception("Invalid Mailer parameter [$key]");
@@ -83,7 +82,7 @@ public function getMailer(string $key) : string {
 /**
  * Return array of attachments.
  */
-public function getAttachments() : array {
+public function getAttachments() {
 	return $this->_mailer->getAttachments();
 }
 
@@ -91,7 +90,7 @@ public function getAttachments() : array {
 /**
  * Return last message id.
  */
-public function getLastMessageID() : string {
+public function getLastMessageID() {
 	return $this->_mailer->getLastMessageID();
 }
 
@@ -99,7 +98,7 @@ public function getLastMessageID() : string {
 /**
  * Return encoded string. Encoding is base64, 7bit, 8bit, binary or 'quoted-printable.
  */
-public function encodeString(string $str, string $encoding = 'base64') : string {
+public function encodeString($str, $encoding = 'base64') {
 	return $this->_mailer->encodeString($str, $encoding);
 }
 
@@ -107,7 +106,7 @@ public function encodeString(string $str, string $encoding = 'base64') : string 
 /**
  * Return true if email is valid (or throw error).
  */
-public static function isValidEmail(string $email, bool $throw_error = false) : bool {
+public static function isValidEmail($email, $throw_error = false) {
 	$res = true;
 
 	if (empty($email) || mb_strpos($email, '@') == false) {
@@ -128,7 +127,7 @@ public static function isValidEmail(string $email, bool $throw_error = false) : 
 /**
  * Embed Image.
  */
-public function embedImage(string $file, string $mime = 'application/octet-stream', string $encoding = 'base64') : void {
+public function embedImage($file, $mime = 'application/octet-stream', $encoding = 'base64') {
 	if (!$this->_mailer->addEmbeddedImage($file, md5($file), basename($file), $encoding, $mime, 'inline')) {
 		throw new Exception('failed to add embedded image '.$file);
 	}
@@ -138,7 +137,7 @@ public function embedImage(string $file, string $mime = 'application/octet-strea
 /**
  * Add attachment to mail (base64 encoding). Default mime type is application/octet-stream, empty means auto_detect.
  */
-public function attach(string $file, string $mime = 'application/octet-stream') : void {
+public function attach($file, $mime = 'application/octet-stream') {
 	if (empty($mime)) {
 		$mime = File::mime($file);
 	}
@@ -156,7 +155,7 @@ public function attach(string $file, string $mime = 'application/octet-stream') 
 /**
  * Add Custom Header (key:value).
  */
-public function setHeader(string $key, string $value) : void {
+public function setHeader($key, $value) {
   $this->_mailer->AddCustomHeader($key.':'.$value);
 }
 
@@ -175,7 +174,7 @@ public function setHeader(string $key, string $value) : void {
  * persist= false (optional) 
  * hostname=
  */
-public function useSMTP($smtp) : void {
+public function useSMTP($smtp) {
 	require_once dirname(__DIR__).'/other/PHPMailer/SMTP.php';
 
 	if (is_string($smtp) && !empty($smtp)) {
@@ -242,7 +241,7 @@ public function useSMTP($smtp) : void {
 /**
  * Set sender (required). Use Mailer::$always_from for global from change.
  */
-public function setFrom(string $email, string $name = '', string $sender = '') : void {
+public function setFrom($email, $name = '', $sender = '') {
   list ($email, $name) = $this->_email_name($email, $name);
 
   if (!empty(self::$always_from)) {
@@ -263,7 +262,7 @@ public function setFrom(string $email, string $name = '', string $sender = '') :
 /**
  * Set Recipient Adress (required). Use Mailer::$always_to = ... for global recipient redirection.
  */
-public function setTo(string $email, string $name = '') : void {
+public function setTo($email, $name = '') {
 
   if (!empty(self::$always_to)) {
 		self::isValidEmail(self::$always_to, true);
@@ -277,7 +276,7 @@ public function setTo(string $email, string $name = '') : void {
 /**
  * Set Cc Adress. If called multiple times address list will be used.
  */
-public function setCc(string $email, string $name = '') : void {
+public function setCc($email, $name = '') {
 
 	if (!empty(self::$always_to)) {
 		return;
@@ -290,7 +289,7 @@ public function setCc(string $email, string $name = '') : void {
 /**
  * Set Bcc Adress. If called multiple times address list will be used.
  */
-public function setBcc(string $email, string $name = '') : void {
+public function setBcc($email, $name = '') {
 
 	if (!empty(self::$always_to)) {
 		return;
@@ -305,7 +304,7 @@ public function setBcc(string $email, string $name = '') : void {
  * From is added automatically as ReplyTo - an error will occure if you add it manually.
  * Default is Sender Adress.
  */
-public function setReplyTo(string $email, string $name = '') : void {
+public function setReplyTo($email, $name = '') {
 	$this->_add_address('ReplyTo', $email, $name);
 }
 
@@ -313,7 +312,7 @@ public function setReplyTo(string $email, string $name = '') : void {
 /**
  * Set Subject. UTF-8 characters are allowed.
  */
-public function setSubject(string $txt) : void {
+public function setSubject($txt) {
 	if ($txt != quoted_printable_encode($txt)) {
 		$this->_mailer->Subject = '=?utf-8?B?'.base64_encode($txt).'?=';
 	}
@@ -326,7 +325,7 @@ public function setSubject(string $txt) : void {
 /**
  * Set Text Body if $txt is not empty.
  */
-public function setTxtBody(string $txt) : void {
+public function setTxtBody($txt) {
   if (!empty($txt)) {
     $this->_mailer->IsHTML(false);
     $this->_mailer->Body = $txt;
@@ -340,7 +339,7 @@ public function setTxtBody(string $txt) : void {
  * If basedir is set path for images will be relative to basedir. 
  * Alt Text Body is automatically created. 
  */
-public function setHtmlBody(string $html, string $basedir = '') : void {
+public function setHtmlBody($html, $basedir = '') {
   if (!empty($html)) {
     $this->_mailer->MsgHTML($html, $basedir);
   }
@@ -350,7 +349,7 @@ public function setHtmlBody(string $html, string $basedir = '') : void {
 /**
  * Check email and name. Split "Username" <user@example.com> into email and name. Return (email, name).
  */
-private function _email_name(string $email, string $name) : array {
+private function _email_name($email, $name) {
 
   if (!empty($name)) {
     if (mb_strpos($name, ',') !== false || mb_strpos($name, '"') !== false) {
@@ -374,7 +373,7 @@ private function _email_name(string $email, string $name) : array {
 /**
  * Add address. Use $type in to|cc|bcc|ReplyTo.
  */
-private function _add_address(string $type, string $email, string $name) : void {
+private function _add_address($type, $email, $name) {
 	$email = trim($email);
 	$name = trim($name);
 
@@ -446,7 +445,7 @@ private function _add_address(string $type, string $email, string $name) : void 
 /**
  * Save mail in dir.
  */
-private function saveMail(string $dir) : void {
+private function saveMail($dir) {
 	Dir::create($dir, 0, true);
 	throw new Exception('ToDo ...');
 }
@@ -459,7 +458,7 @@ private function saveMail(string $dir) : void {
  * - save: false
  * - save_dir: data/mail/$date(Ym)/$date(dH)/$map(id)
  */
-public function send(array $options = []) : void {
+public function send($options = []) {
 
 	if (!isset($this->type_email['to']) || count($this->type_email['to']) == 0) {
 		throw new Exception('call setTo() first');
@@ -477,7 +476,7 @@ public function send(array $options = []) : void {
 	}
 
 	if ($options['save']) {
-		$options['save_dir'] = resolvPath($options['save_dir'], [ 'id' => $this->_mailer->getLastMessageId() ]);
+		$options['save_dir'] = \rkphplib\lib\resolvPath($options['save_dir'], [ 'id' => $this->_mailer->getLastMessageId() ]);
 		$this->saveMail($options['save_dir']);
 	}
 

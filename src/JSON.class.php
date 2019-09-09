@@ -18,7 +18,7 @@ class JSON {
 /**
  * Return last error message for encode/decode.
  */
-private static function _error_msg(int $err_no) : string {
+private static function _error_msg($err_no) {
 	static $errors = array(
 		JSON_ERROR_NONE => 'No error',
 		JSON_ERROR_DEPTH => 'Maximum stack depth exceeded',
@@ -44,7 +44,7 @@ private static function _error_msg(int $err_no) : string {
 /**
  * Return json encoded $any. Wrapper of json_encode() default options 448 = JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT.
  */
-public static function encode($any, int $options = 448, int $depth = 512) : string {
+public static function encode($any, $options = 448, $depth = 512) {
 	$res = json_encode($any, $options, $depth);
 
 	if (($err_no = json_last_error())) {
@@ -58,7 +58,7 @@ public static function encode($any, int $options = 448, int $depth = 512) : stri
 /**
  * Return json decoded $txt as hash ($assoc = true) or object ($assoc = false).
  */
-public static function decode(string $txt, bool $assoc = true) {
+public static function decode($txt, $assoc = true) {
 	$res = json_decode($txt, $assoc);
 
 	if (($err_no = json_last_error())) {
@@ -73,7 +73,7 @@ public static function decode(string $txt, bool $assoc = true) {
 /**
  * Return pretty printed json.
  */
-public static function pretty_print(string $json) : string {
+public static function pretty_print($json) {
     return json_encode(json_decode($json), 320|JSON_PRETTY_PRINT);
 }
 
@@ -82,7 +82,7 @@ public static function pretty_print(string $json) : string {
  * Print JSON encoded $o and exit. Use for ajax script output.
  * If code >= 400 and $o is string or Exception return { error: 1, error_message: "..." }.
  */
-public static function output($o, int $code = 200) : void {
+public static function output($o, $code = 200) {
 	
 	if ($code >= 400) {
 		if ($o instanceof \Exception) {

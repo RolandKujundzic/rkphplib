@@ -9,7 +9,6 @@ require_once $parent_dir.'/lib/kv2conf.php';
 
 use rkphplib\Exception;
 
-use function rkphplib\lib\kv2conf;
 
 
 
@@ -25,7 +24,7 @@ class THttp implements TokPlugin {
 /**
  * Return http plugin.
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$plugin = [];
 	$plugin['http:get'] = TokPlugin::ONE_PARAM;
 	$plugin['http'] = 0;
@@ -39,7 +38,7 @@ public function getPlugins(Tokenizer $tok) : array {
 /**
  * Return internationalized domain name (IDN). Domain part with utf8 characters is converted into xn--NNN code.
  */
-public function tok_domain_idn(string $domain) : string {
+public function tok_domain_idn($domain) {
 	if (empty($domain)) {
 		return '';
 	}
@@ -56,7 +55,7 @@ public function tok_domain_idn(string $domain) : string {
 /**
  * Return utf8 domain name.
  */
-public function tok_domain_utf8(string $domain) : string {
+public function tok_domain_utf8($domain) {
 	if (empty($domain)) {
 		return '';
 	}
@@ -113,7 +112,7 @@ public static function httpGet($name) {
   $res = '';
 
 	if ($name == '*') {
-		$res = kv2conf($_SERVER);
+		$res = \rkphplib\lib\kv2conf($_SERVER);
 	}
 	else if ($name == 'custom') {
 		$res = [];
@@ -122,7 +121,7 @@ public static function httpGet($name) {
 			$res[$key] = $this->tok_http_get($key);
 		}
 
-		$res = kv2conf($res);
+		$res = \rkphplib\lib\kv2conf($res);
 	}
 	else if ($name == strtoupper($name)) {
 		if (!isset($_SERVER[$name])) {

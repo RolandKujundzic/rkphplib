@@ -16,8 +16,6 @@ use rkphplib\JSON;
 use rkphplib\File;
 use rkphplib\Dir;
 
-use function rkphplib\lib\ps;
-use function rkphplib\lib\execute;
 
 
 
@@ -39,7 +37,7 @@ private $conf = [];
 /**
  * Return job plugin.
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$this->tok = $tok;
 
 	$plugin = [];
@@ -177,8 +175,8 @@ private function run() {
 	if (!empty($this->conf['execute'])) {
 		$cmd = $this->conf['execute'].$bg_pid;
 		$this->lock([ 'execute' => $cmd, 'start' => microtime(), 'status' => 'start' ]);
-		$pid = execute($cmd);
-		$ps = ps($pid);
+		$pid = \rkphplib\lib\execute($cmd);
+		$ps = \rkphplib\lib\ps($pid);
 		if (isset($ps['PID']) && $ps['PID'] == $pid) {
 			$this->lock([ 'pid' => $pid, 'status' => 'running' ]);
 		}
@@ -194,8 +192,8 @@ private function run() {
 		$cmd = "cd '".dirname($this->conf['zip_dir'])."' && zip -r '".$this->conf['zip_file']."' '".
 			basename($this->conf['zip_dir']).$bg_pid; 
 		$this->lock([ 'execute' => $cmd, 'start' => microtime(), 'status' => 'start' ]);
-		$pid = execute($cmd);
-		$ps = ps($pid);
+		$pid = \rkphplib\lib\execute($cmd);
+		$ps = \rkphplib\lib\ps($pid);
 		if (isset($ps['PID']) && $ps['PID'] == $pid) {
 			$this->lock([ 'pid' => $pid, 'status' => 'running' ]);
 		}

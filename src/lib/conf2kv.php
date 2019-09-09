@@ -27,7 +27,7 @@ if (!defined('HASH_DELIMITER')) {
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-function conf2kv(string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, array $ikv = []) {
+function conf2kv($text, $d1 = '=', $d2 = HASH_DELIMITER, $ikv = []) {
 	$ld1 = mb_strlen($d1);
 
 	if (empty($text)) {

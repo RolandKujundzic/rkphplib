@@ -20,11 +20,6 @@ use rkphplib\Database;
 use rkphplib\JSON;
 use rkphplib\File;
 
-use function rkphplib\lib\htmlescape;
-use function rkphplib\lib\split_str;
-use function rkphplib\lib\conf2kv;
-use function rkphplib\lib\kv2conf;
-use function rkphplib\lib\is_map;
 
 
 
@@ -55,7 +50,7 @@ protected $set_search = [];
 /**
  * Return {output:set|get|conf|init|loop|json|header|footer|empty}, {sort:} and {search:}.
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$this->tok = $tok;
 
 	$plugin = [];
@@ -103,7 +98,7 @@ public function tok_search($col, $p) {
 		}
 	}
 
-	$s_value = isset($_REQUEST['s_'.$col]) ? htmlescape($_REQUEST['s_'.$col]) : '';
+	$s_value = isset($_REQUEST['s_'.$col]) ? \rkphplib\lib\htmlescape($_REQUEST['s_'.$col]) : '';
 
 	// \rkphplib\lib\log_debug("TOutput.tok_search:108> col=[$col] type=[".$p['type']."] s_value=[$s_value]");
 	if ($p['type'] == 'select') {
@@ -117,10 +112,10 @@ public function tok_search($col, $p) {
 
 		if ($options == 'auto') {
 			if (isset($this->set_search['s_'.$col.'_options'])) {
-				$options = split_str(',', $this->set_search['s_'.$col.'_options']);
+				$options = \rkphplib\lib\split_str(',', $this->set_search['s_'.$col.'_options']);
 				foreach ($options as $opt_value) {
 					$selected = ($opt_value == $s_value) ? ' selected' : '';
-					$opt_value = htmlescape($opt_value);
+					$opt_value = \rkphplib\lib\htmlescape($opt_value);
 					$label = $opt_value ? $this->tok->getPluginTxt('txt:', $opt_value) : $this->tok->getPluginTxt('txt:any');
 					$res .= '<option value="'.$opt_value.'"'.$selected.'>'.$label."</option>\n";
 				}
@@ -254,7 +249,7 @@ public function tok_output_get($name) {
 		$name = mb_substr($name, 5);
 
 		if ($name == '*') {
-			return kv2conf($this->conf);
+			return \rkphplib\lib\kv2conf($this->conf);
 		}
 
 		if (!isset($this->conf[$name])) {
@@ -267,7 +262,7 @@ public function tok_output_get($name) {
 	$res = '';
 
 	if ($name == '*') {
-		$res = kv2conf($this->env);
+		$res = \rkphplib\lib\kv2conf($this->env);
 	}
 	else if (isset($this->env[$name])) {
 		$res = $this->env[$name];
@@ -503,7 +498,7 @@ protected function getOutputLoopTemplate($tpl) {
 	$action = [];
 
 	if (!empty($this->conf['action'])) {
-		$action = split_str(',', $this->conf['action'], 2);
+		$action = \rkphplib\lib\split_str(',', $this->conf['action'], 2);
 	}
 
 	foreach ($this->conf['column_label'] as $column => $label) {
@@ -652,7 +647,7 @@ protected function getImageTags($row) {
 		return [];
 	}
 
-	$images = split_str(',', $row[$this->conf['images']]);
+	$images = \rkphplib\lib\split_str(',', $row[$this->conf['images']]);
 	$id = $row['id'];
 
 	$img_dir = empty($row['_image_dir']) ? '' : $row['_image_dir'].'/';
@@ -873,8 +868,8 @@ private function computeEnv() {
 		}
 	}
 	else if (count($this->env['tags']) == 0) {
-		$this->env['tags'] = split_str(',', $this->conf['table.columns']);
-		$this->env['is_map'] = is_map($this->table[$start]);
+		$this->env['tags'] = \rkphplib\lib\split_str(',', $this->conf['table.columns']);
+		$this->env['is_map'] = \rkphplib\lib\is_map($this->table[$start]);
 	}
 
 	if (count($this->env['tags']) == 0 || strlen($this->env['tags'][0]) == 0) {
@@ -1029,7 +1024,7 @@ private function _scroll_link($key, $last) {
  * Export link keep map {v:=#link_keep}dir={get:dir}|#|last={get:last}|#|...
  */
 private function exportLinkKeep() {
-	$keep_param = split_str(',', $this->conf['keep']);
+	$keep_param = \rkphplib\lib\split_str(',', $this->conf['keep']);
 	$kv = [];
 
 	$last = $this->conf['req.last'];
@@ -1083,12 +1078,12 @@ protected function getSearch() {
 
 		$options['join_or'] = 1;
 		$options['value'] = $s_val;
-		$options['search_cols'] = split_str(',', $s_list);
+		$options['search_cols'] = \rkphplib\lib\split_str(',', $s_list);
 		list ($where, $and) = $this->getSqlSearch($options);
 
 		if (!empty($this->conf['search.'.$s_key]) && !empty($this->conf['search'])) {
 			$options = [ 'no_value' => 1 ];
-			$options['search_cols'] = split_str(',', $this->conf['search']);
+			$options['search_cols'] = \rkphplib\lib\split_str(',', $this->conf['search']);
 			list ($ignore, $and2) = $this->getSqlSearch($options);
 
 			$where .= $and2;
@@ -1096,7 +1091,7 @@ protected function getSearch() {
 		}
 	}
 	else if (!empty($this->conf['search'])) {
-		$options['search_cols'] = split_str(',', $this->conf['search']);
+		$options['search_cols'] = \rkphplib\lib\split_str(',', $this->conf['search']);
 		list ($where, $and) = $this->getSqlSearch($options);
 	}
 
@@ -1126,7 +1121,7 @@ protected function getSqlSearch($options = []) {
 		$search_cols = $options['search_cols'];
 	}
 	else {
-		$search_cols = split_str(',', $this->conf['search']);
+		$search_cols = \rkphplib\lib\split_str(',', $this->conf['search']);
 	}
 
 	foreach ($search_cols as $col_method) {
@@ -1473,7 +1468,7 @@ protected function fillTable() {
 		throw new Exception('empty table.type');
 	}
 
-	$table_type = split_str(',', $this->conf['table.type']);
+	$table_type = \rkphplib\lib\split_str(',', $this->conf['table.type']);
 	$uri = array_shift($table_type).':'.$uri;
 
 	$this->table = File::loadTable($uri, $table_type);

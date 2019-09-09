@@ -17,10 +17,6 @@ use rkphplib\Exception;
 use rkphplib\tok\Tokenizer;
 use rkphplib\ValueCheck;
 
-use function rkphplib\lib\htmlescape;
-use function rkphplib\lib\split_str;
-use function rkphplib\lib\conf2kv;
-use function rkphplib\lib\kv2conf;
 
 
 
@@ -90,7 +86,7 @@ protected $example = [];
  * @tok {fv:in:name}label=...|#|...{:fv}
  * @tok {fv:check}
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$this->tok = $tok;
 
 	$plugin = [];
@@ -335,7 +331,7 @@ public function tok_fv_appendjs($name, $id_list = []) {
 	}
 
 	if (!empty($conf['hidden_keep'])) {
-		$hidden_keys = split_str(',', $conf['hidden_keep']);
+		$hidden_keys = \rkphplib\lib\split_str(',', $conf['hidden_keep']);
 		foreach ($hidden_keys as $key) {
 			array_push($list, $name.'.append("'.$key.'", document.getElementById("'.$id_prefix.$key.'").value);');
 		}
@@ -419,7 +415,7 @@ public function tok_fv_hidden() {
 	$id_prefix = $this->getConf('id_prefix', '', true);
 
 	if (!empty($hidden_keep = $this->getConf('hidden_keep', '', false))) {
-		$list = split_str(',', $hidden_keep);
+		$list = \rkphplib\lib\split_str(',', $hidden_keep);
 		foreach ($list as $key) {
 			if (isset($_REQUEST[$key])) {
 				$res .= '<input type="hidden" id="'.$id_prefix.$key.'" name="'.$key.'" value="'.htmlescape($_REQUEST[$key]).'">'."\n";
@@ -498,7 +494,7 @@ public function tok_fv_get_conf($engine) {
 		$res[$engine.'.'.$key] = $value;
 	}
 
-	return kv2conf($res);
+	return \rkphplib\lib\kv2conf($res);
 }
 
 
@@ -507,7 +503,7 @@ public function tok_fv_get_conf($engine) {
  * name=default to overwrite default configuration. Use submit=NEW_KEY
  * to reset form.
  */
-public function tok_fv_conf(string $name, array $p) : void {
+public function tok_fv_conf($name, $p) {
 	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_conf:511> this.conf[$name] = ".print_r($p, true));
 	$this->conf[$name] = $p;
 }
@@ -524,7 +520,7 @@ public function tok_fv_conf(string $name, array $p) : void {
  * @param array $p
  * @return ''
  */
-public function tok_fv_init(string $do, array $p) : void {
+public function tok_fv_init($do, $p) {
 
 	if (empty($p['use'])) {
 		$p['use'] = 'default';
@@ -737,7 +733,7 @@ protected function getInput($name, $ri) {
 
 	foreach ($ri as $key => $value) {
 		if (!in_array($key, [ 'options', 'label' ])) {
-			$ri[$key] = htmlescape($value);
+			$ri[$key] = \rkphplib\lib\htmlescape($value);
 		}
 	}
 
@@ -745,7 +741,7 @@ protected function getInput($name, $ri) {
 	$input = $this->tok->replaceTags($input, [ 'tags' => $tags ]);
 
 	if (!empty($ri['options']) && strpos($ri['options'], '</option>') === false) {
-		$tmp = conf2kv($ri['options'], '=', ',');
+		$tmp = \rkphplib\lib\conf2kv($ri['options'], '=', ',');
 		$ri['options'] = $this->getOptions($tmp, $ri['value'], $ri['options']);
 	}
 

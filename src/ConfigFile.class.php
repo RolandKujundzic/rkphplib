@@ -6,7 +6,6 @@ require_once __DIR__.'/Exception.class.php';
 require_once __DIR__.'/File.class.php';
 require_once __DIR__.'/lib/conf2kv.php';
 
-use function rkphplib\lib\conf2kv;
 
 
 
@@ -32,8 +31,8 @@ public $file = '';
 /**
  * Load configuration from $file.
  */
-public function __construct(string $file) {
-	$this->conf = conf2kv(File::load($file));
+public function __construct($file) {
+	$this->conf = \rkphplib\lib\conf2kv(File::load($file));
 	$this->file = $file;
 }
 
@@ -41,7 +40,7 @@ public function __construct(string $file) {
 /**
  * Return value. If required is true throw exception if value is empty.
  */
-public function get(string $key, bool $required = true) : string {
+public function get($key, $required = true) {
 
 	if ($this->abort_if_missing && !isset($this->conf[$key]) && !array_key_exists($key, $this->conf)) {
 		throw new Exception('missing configuration key', "key=$key in ".$this->file);
@@ -62,7 +61,7 @@ public function get(string $key, bool $required = true) : string {
 /**
  * Add $key=$value. 
  */
-public function set(string $key, string $value) : void {
+public function set($key, $value) {
 	$this->conf[$key] = $value;
 }
 
@@ -70,7 +69,7 @@ public function set(string $key, string $value) : void {
 /**
  * Return true if value of $key is 1, true, "1", "true" or "y[es]".
  */
-public function isTrue(string $key) : bool {
+public function isTrue($key) {
 
 	if (empty($this->conf[$key]) || !array_key_exists($key, $this->conf)) {
 		return false;
@@ -89,7 +88,7 @@ public function isTrue(string $key) : bool {
  * Return and remove value. If required is true throw exception if value is empty.
  * Return string|false (false = no such key - if not required).
  */
-public function rm(string $key, bool $required = true) {
+public function rm($key, $required = true) {
 
 	if ($this->abort_if_missing && !isset($this->conf[$key]) && !array_key_exists($key, $this->conf)) {
 		throw new Exception('missing configuration key', "key=$key in ".$this->file);

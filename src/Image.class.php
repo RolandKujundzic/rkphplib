@@ -32,7 +32,7 @@ protected $info = [];
  *
  * @see updateOptions 
  */
-public function __construct(array $options = []) {
+public function __construct($options = []) {
 	$this->updateOptions($options);
 
 	if (!empty($this->url) && !empty($this->path) && !File::exists($this->path)) {
@@ -46,7 +46,7 @@ public function __construct(array $options = []) {
  * 
  * @see updateOptions
  */
-public function download(array $options = []) : void {
+public function download($options = []) {
 	$this->updateOptions($options);
 }
 
@@ -59,7 +59,7 @@ public function download(array $options = []) : void {
  * 
  * If path does not exist create parent directory.
  */
-private function updateOptions(array $options) : void {
+private function updateOptions($options) {
 
 	if (!empty($options['url'])) {
 		$this->url = $options['url'];
