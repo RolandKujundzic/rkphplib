@@ -305,23 +305,23 @@ public function tok_fv_appendjs($name, $id_list = []) {
 	$list = [];
 
 	if (count($id_list) > 0) {
-		// \rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs:303> name=$name id_list: ".print_r($id_list, true));
+		// \rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs:308> name=$name id_list: ".print_r($id_list, true));
 		foreach ($id_list as $ignore => $param) {
 			array_push($list, $name.'.append("'.$param.'", document.getElementById("'.$id_prefix.$param.'").value);');
 		}
 	
 		$res = join("\n", $list);
-		// \rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs:309> return ".$res);
+		// \rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs:314> return ".$res);
 		return $res;
 	}
 
 	// use all parameter
-	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs:314> name=$name conf: ".print_r($conf, true));
+	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs:319> name=$name conf: ".print_r($conf, true));
 
 	foreach ($conf as $key => $ignore) {
 		$param = '';
 
-		// \rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs:319> $name: $key");
+		// \rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs:324> $name: $key");
 		if (substr($key, 0, 3) == 'in.') {
 			$param = substr($key, 3);
 		}
@@ -342,7 +342,7 @@ public function tok_fv_appendjs($name, $id_list = []) {
 	}
 
 	$res = join("\n", $list);
-	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs:340> return ".$res);
+	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_appendjs:345> return ".$res);
 	return $res;
 }
 
@@ -508,7 +508,7 @@ public function tok_fv_get_conf($engine) {
  * to reset form.
  */
 public function tok_fv_conf(string $name, array $p) : void {
-	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_conf:506> this.conf[$name] = ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_conf:511> this.conf[$name] = ".print_r($p, true));
 	$this->conf[$name] = $p;
 }
 
@@ -551,11 +551,11 @@ public function tok_fv_init(string $do, array $p) : void {
 
 	if (!empty($r['multi'])) {
 		$p = array_merge($p, $r);
-		// \rkphplib\lib\log_debug("TFormValidator.tok_fv_init:549> name=$name, value=$value, multi p: ".print_r($p, true));
+		// \rkphplib\lib\log_debug("TFormValidator.tok_fv_init:554> name=$name, value=$value, multi p: ".print_r($p, true));
 		return;
 	}
 
-	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_init:553> name=$name, value=$value, r: ".print_r($r, true)."\np: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_init:558> name=$name, value=$value, r: ".print_r($r, true)."\np: ".print_r($p, true));
 	$html5_input = [ 'text', 'password', 'email', 'date', 'datetime-local', 'color', 'number', 'month', 'range', 'tel', 'time', 'url', 'week' ];
 	$type = $p['type'];
 
@@ -645,7 +645,7 @@ public function tok_fv_init(string $do, array $p) : void {
 		$p[$key] = $value;
 	}
 
-	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_init:643> name=$name, value=$value, p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_init:648> name=$name, value=$value, p: ".print_r($p, true));
 }
 
 
@@ -679,7 +679,7 @@ protected function getInput($name, $ri) {
 
 	$tpl_in = $conf['template.engine'].'.in';
 
-	// \rkphplib\lib\log_debug("TFormValidator.getInput:677> name=$name, tpl_in=[$tpl_in] ri: ".print_r($ri, true));
+	// \rkphplib\lib\log_debug("TFormValidator.getInput:682> name=$name, tpl_in=[$tpl_in] ri: ".print_r($ri, true));
 	if (empty($ri['type'])) {
 		$use = join(', ', array_keys($this->getMapKeys($tpl_in, $conf)));
 		throw new Exception("missing form validator type for $name (use $use)", print_r($ri, true));
@@ -687,7 +687,7 @@ protected function getInput($name, $ri) {
 
 	if (!empty($ri['tpl_in'])) {
 		$input = $ri['tpl_in'];
-		// \rkphplib\lib\log_debug("TFormValidator.getInput:685> name=$name, tpl_in=$tpl_in: $input");
+		// \rkphplib\lib\log_debug("TFormValidator.getInput:690> name=$name, tpl_in=$tpl_in: $input");
 		unset($ri['tpl_in']);
 	}
 	else if (!empty($conf[$tpl_in.'.'.$ri['type']])) {
@@ -761,7 +761,7 @@ protected function getInput($name, $ri) {
 
 	$input = $this->tok->replaceTags($input, $ri);
 
-	// \rkphplib\lib\log_debug("TFormValidator.getInput:759> name=$name, input=[$input] ri: ".print_r($ri, true));
+	// \rkphplib\lib\log_debug("TFormValidator.getInput:764> name=$name, input=[$input] ri: ".print_r($ri, true));
 	return $input;
 }
 
@@ -783,7 +783,7 @@ private function getCheckOptions(&$p, $name, $str_options) {
 
 	$tpl = $this->getConf('in.check.option', true, true);
 
-	// \rkphplib\lib\log_debug("TFormValidator.getCheckOptions:781> name=[$name] str_options=[$str_options] tpl=[$tpl] p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TFormValidator.getCheckOptions:786> name=[$name] str_options=[$str_options] tpl=[$tpl] p: ".print_r($p, true));
 	foreach ($p as $value => $label) {
 		unset($p[$value]);
 		$r = [ 'name' => $name, 'type' => $type ];
@@ -801,7 +801,7 @@ private function getCheckOptions(&$p, $name, $str_options) {
 	$p['class'] = 'check_group';
 	$p['id'] = $conf['id_prefix'].$name;
 
-	// \rkphplib\lib\log_debug("TFormValidator.getCheckOptions:799> return $html");
+	// \rkphplib\lib\log_debug("TFormValidator.getCheckOptions:804> return $html");
 	return $html;
 }
 
@@ -820,7 +820,7 @@ private function getOptions(&$p, $opt_value, $str_options) {
 	$html = '';
 	$empty_label = null;
 
-	// \rkphplib\lib\log_debug("TFormValidator.getOptions:818> opt_value=[$opt_value] str_options=[$str_options] p: ".print_r($p, true)); 
+	// \rkphplib\lib\log_debug("TFormValidator.getOptions:823> opt_value=[$opt_value] str_options=[$str_options] p: ".print_r($p, true)); 
 	if (!empty($p['@_1']) && substr($p['@_1'], 0, 1) == '=') {
 		$empty_label = substr($p['@_1'], 1);
 		unset($p['@_1']);
@@ -868,7 +868,7 @@ private function getOptions(&$p, $opt_value, $str_options) {
 
 	$html = preg_replace('/value\=\"@_[0-9]+\"/', '', $html);
 
-	// \rkphplib\lib\log_debug("TFormValidator.getOptions:866> return $html");
+	// \rkphplib\lib\log_debug("TFormValidator.getOptions:871> return $html");
 	return $html;
 }
 
