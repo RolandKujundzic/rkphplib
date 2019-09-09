@@ -353,7 +353,7 @@ function _lib5 {
 
 	_mkdir lib5
 	rsync -a --delete src bin test lib5
-	$PATH_PHPLIB/toggle lib5 strict_types off
+	"$PATH_PHPLIB/bin/toggle" lib5 strict_types off
 }
 
 
@@ -370,8 +370,8 @@ function _build {
 	_rm syntax_check_bin.php
 
 	if ! test -z "$PATH_PHPLIB"; then
-		$PATH_PHPLIB/toggle log_debug on
-		$PATH_PHPLIB/toggle log_debug off
+		"$PATH_PHPLIB/bin/toggle" log_debug on
+		"$PATH_PHPLIB/bin/toggle" log_debug off
 		_lib5
 	fi
 
@@ -782,9 +782,9 @@ APP_DESC=
 export APP_PID="$APP_PID $$"
 
 if test -s ../phplib/bin/toggle; then
-	PATH_PHPLIB=`realpath ../phplib/bin/toggle`
+	PATH_PHPLIB=`realpath ../phplib`
 elif test -s ../../bin/toggle; then
-	PATH_PHPLIB=`realpath ../../bin/toggle`
+	PATH_PHPLIB=`realpath ../..`
 fi
 
 case $1 in

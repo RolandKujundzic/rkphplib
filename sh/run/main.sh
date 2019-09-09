@@ -6,9 +6,9 @@ APP_DESC=
 export APP_PID="$APP_PID $$"
 
 if test -s ../phplib/bin/toggle; then
-	PATH_PHPLIB=`realpath ../phplib/bin/toggle`
+	PATH_PHPLIB=`realpath ../phplib`
 elif test -s ../../bin/toggle; then
-	PATH_PHPLIB=`realpath ../../bin/toggle`
+	PATH_PHPLIB=`realpath ../..`
 fi
 
 case $1 in
