@@ -27,7 +27,7 @@
 		"classmap": ["src/"],
 		"files": []
 	},
-	"license": "GPL-3",
+	"license": "GPL-3.0-or-later",
 	"require-dev": {
 		"apigen/apigen": "^4.1",
 		"symfony/yaml": "^2.8"
