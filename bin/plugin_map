@@ -13,7 +13,6 @@ use rkphplib\Exception;
 use rkphplib\File;
 use rkphplib\Dir;
 
-use function rkphplib\lib\syntax;
 
 
 
@@ -28,7 +27,7 @@ private $_plugins = [];
 /**
  * Scan src/tok for *.class.php. Execute register for every class.
  */
-public function scan(string $dir = 'src/tok') : void {
+public function scan($dir = 'src/tok') {
 	Dir::exists($dir);
 	$php_files = Dir::scanTree($dir, [ '.class.php' ]);
 	$ignore = [ 'AMenu.class.php', 'Tokenizer.class.php' ];
@@ -59,7 +58,7 @@ public function scan(string $dir = 'src/tok') : void {
 /**
  * Register plugins
  */
-public function register(TokPlugin $handler, string $cname) : void {
+public function register($handler, $cname) {
 	$dummy = new Tokenizer();
 
   $plugins = $handler->getPlugins($dummy);
