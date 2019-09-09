@@ -49,7 +49,10 @@ function _build {
 	fi
 
 	bin/plugin_map
+
+	_require_program composer
 	composer validate --no-check-all --strict
+
   git status
 }
 
