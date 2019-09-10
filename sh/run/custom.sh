@@ -44,8 +44,8 @@ function _build {
 	_rm syntax_check_bin.php
 
 	if ! test -z "$PATH_PHPLIB"; then
-		"$PATH_PHPLIB/bin/toggle" log_debug on
-		"$PATH_PHPLIB/bin/toggle" log_debug off
+		"$PATH_PHPLIB/bin/toggle" src log_debug on
+		"$PATH_PHPLIB/bin/toggle" src log_debug off
 	fi
 
 	bin/plugin_map
