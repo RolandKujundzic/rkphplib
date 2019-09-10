@@ -72,7 +72,7 @@ public function __construct(string $command, array $parameter = []) {
  */
 private function readStream(int $num) : ?string {
 	$res = stream_get_contents($this->pipe[$num]);
-	// \rkphplib\lib\log_debug("PipeExecute.readStream:82> exit - num=[$num] res=[$res]");
+	// \rkphplib\lib\log_debug("PipeExecute.readStream:75> exit - num=[$num] res=[$res]");
 	return $res;
 }
 
@@ -93,7 +93,7 @@ public function write(string $txt) : void {
  */
 public function load(string $file) : void {
 	$fh = File::open($file, 'rb');
-	// \rkphplib\lib\log_debug("PipeExecute.load:109> open file=[$file] fh=[$fh]\n");
+	// \rkphplib\lib\log_debug("PipeExecute.load:96> open file=[$file] fh=[$fh]\n");
 	while (!feof($fh)) { 
 		if (($buffer = fread($fh, 4096)) === false) {
 			throw new Exception('fread file failed', "file=$file buffer=$buffer");
@@ -129,7 +129,7 @@ public function close(bool $abort = false) : array {
 	}
 
 	$retval = proc_close($this->process);
-	// \rkphplib\lib\log_debug("PipeExecute.close:149> retval=[$retval] output=[$output] error=[$error]");
+	// \rkphplib\lib\log_debug("PipeExecute.close:132> retval=[$retval] output=[$output] error=[$error]");
 
 	if ($retval === -1) {
 		if ($abort) {
