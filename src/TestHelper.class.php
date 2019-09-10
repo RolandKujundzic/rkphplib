@@ -49,12 +49,8 @@ public function __construct() {
 
 /**
  * Print error message.
- *
- * @param string $msg
- * @param string|array $out
- * @param string|array $ok
  */
-private function _error_cmp($msg, $out, $ok) {
+private function _error_cmp(string $msg, $out, $ok) : void {
 	$m_out = '';
 	$m_ok = '';
 
@@ -91,11 +87,8 @@ private function _error_cmp($msg, $out, $ok) {
  * 4: print delimiter line before $msg
  * 8: print delimiter line after $msg
  * 16: add linebreak to output
- *
- * @param string $msg
- * @param int $cn
  */
-private function _log($msg, $cn = 1) {
+private function _log(string $msg, int $cn = 1) : void {
 
 	if ($cn & 2) {
 		print "\n";
@@ -118,11 +111,9 @@ private function _log($msg, $cn = 1) {
 
 
 /**
- * Load php file from rkphplib/ directory.
- * 
- * @param string $file (relative path to rkphplib/ directory) 
+ * Include (once) php file $file (relative path to rkphplib/ directory) from rkphplib/ directory.
  */
-public function load($file) {
+public function load(string $file) : void {
 	$rkphplib = '';
 
 	if (!empty($_SERVER['PWD']) && ($pos = mb_strpos($_SERVER['PWD'], '/rkphplib/')) !== false) {
@@ -149,7 +140,7 @@ public function load($file) {
 /**
  * Print overall result.
  */
-public function result() {
+public function result() : void {
 
 	if (count($this->_tc['overview']) == 0) {
 		return;
@@ -164,10 +155,8 @@ public function result() {
 
 /**
  * Run test script.
- *
- * @param string $run_php
  */
-public function runTest($run_php) {
+public function runTest(string $run_php) : void {
 
 	FSEntry::isFile($run_php);
 	$script_dir = dirname($run_php);
@@ -204,12 +193,9 @@ public function runTest($run_php) {
 
 
 /**
- * Call function and compare result. Load $test (list of function calls - parameterlist + result) and 
- * $func (function name) from $path.fc.php.
- *
- * @param string $path
+ * Call function and compare result. Load $test (list of function calls - parameterlist + result) and $func (function name) from $path.fc.php.
  */
-public function runFuncTest($path) {
+public function runFuncTest(string $path) : void {
 
 	// execute test
 	$php_file = empty($this->_tc['path']) ? $path.'.fc.php' : $this->_tc['path'].'/'.$path.'.fc.php';
@@ -280,12 +266,9 @@ public function runFuncTest($path) {
 
 
 /**
- * Call test function $func($arg).
- * @param string $func
- * @param any $arg
- * @param array $result ( NAME, 1, 1, 0, 1, ... ) - 1 = OK, 0 = ERR
+ * Call test function $func($arg). Return vector [ NAME, 1, 1, 0, 1, ... ] with 1 = OK and 0 = ERR.
  */
-public function callTest($func, $arg, $result) {
+public function callTest(string $func, $arg, array $result) : void {
   $this->_tc['num']++;
 
   $this->_log(array_shift($result).": ", 0);
@@ -318,13 +301,9 @@ public function callTest($func, $arg, $result) {
 
 
 /**
- * Compare output with expected result. Result vector may contain less keys than output (e.g. ignore date values).
- *
- * @param string $msg
- * @param vector<any> $out_list
- * @param vector<any> $ok_list ("@file[.json|.ser|.txt]" entry = load file)
+ * Compare output $out_list with expected result $ok_list. Result vector may contain less keys than output (e.g. ignore date values).
  */
-public function compare($msg, $out_list, $ok_list) {
+public function compare(string $msg, array $out_list, array $ok_list) : void {
 	$this->_log($msg.": ", 0);
 	$this->_tc['num']++;
 
@@ -382,12 +361,8 @@ public function compare($msg, $out_list, $ok_list) {
 
 /**
  * Compare hash output with expected result. Result hash may contain lass keys than output (e.g. ignore date values).
- *
- * @param string $msg
- * @param map<string:any> $out
- * @param map<string:any> $ok
  */
-public function compareHash($msg, $out, $ok) {
+public function compareHash(string $msg, array $out, array $ok) : void {
 	$this->_log($msg.": ", 0);
 	$this->_tc['num']++;
 	$err = 0;
@@ -426,11 +401,7 @@ public function compareHash($msg, $out, $ok) {
 
 
 /**
- * If value is string with "@" prefix and [.json|.ser|.txt] suffix
- * return file content. Otherwise return value.
- *
- * @param any
- * @return any
+ * If $value (any) is string with "@" prefix and [.json|.ser|.txt] suffix return file content. Otherwise return value.
  */
 private function getResult($value) {
 
@@ -459,12 +430,8 @@ private function getResult($value) {
 
 /**
  * Return _fc_function|_fc_static_method call.
- *
- * @param string $call
- * @param any $x
- * @return string
  */
-private function _fc_log($call, $x) {
+private function _fc_log(string $call, $x) : string {
 	$y = array();
 	$prefix = '';
 	$suffix = '';
@@ -496,13 +463,9 @@ private function _fc_log($call, $x) {
 
 
 /**
- * Return result of $func($x[0], $x[1], ...) callback.
- *
- * @string $func
- * @array $x
- * @return any
+ * Return result (any) of $func($x[0], $x[1], ...) callback.
  */
-private function _fc_function($func, $x) {
+private function _fc_function(string $func, array $x) {
 
 	$this->_log($this->_fc_log("$func", $x), 0);
 	$pnum = count($x);
@@ -525,14 +488,9 @@ private function _fc_function($func, $x) {
 
 
 /**
- * Return result of $class::$method($x[0], $x[1], ...) callback.
- *
- * @string $class
- * @string $method
- * @array $x
- * @return any
+ * Return result (any) of $class::$method($x[0], $x[1], ...) callback.
  */
-private function _fc_static_method($class, $method, $x) {
+private function _fc_static_method(string $class, string $method, array $x) {
 
 	$this->_log($this->_fc_log("$class::$method", $x), 0);
 	$pnum = count($x);
@@ -555,12 +513,9 @@ private function _fc_static_method($class, $method, $x) {
 
 
 /**
- * Convert function result to string.
- *
- * @param any $res
- * @return string
+ * Convert $res (any) to string.
  */
-public static function res2str($res) {
+public static function res2str($res) : string {
 	if (is_float($res) || is_int($res) || is_bool($res)) {
 		return $res;
 	}
@@ -575,11 +530,9 @@ public static function res2str($res) {
 
 
 /**
- * Return test dir.
- *
- * @return array (abs-path, rel-path)
+ * Return test dir ([abs-path, rel-path]).
  */
-private function _test_dir() {
+private function _test_dir() : array {
 	$cwd = getcwd();
 	$tdir = '';
 
@@ -601,13 +554,10 @@ private function _test_dir() {
 
 
 /**
- * Run tokenizer tests t1.txt ... t$num.txt.
- * Requires t1.ok.txt ... t$num.ok.txt
- *
- * @param any $num (5 = run t1.txt ... t5.txt, 'a.txt' run only this test)
- * @param vector $plugin_list
+ * Run tokenizer tests t1.txt ... t$num.txt if $num is int (requires t1.ok.txt ... t$num.ok.txt).
+ * If $num is 'a.txt' run only this test.
  */
-public function runTokenizer($num, $plugin_list) {
+public function runTokenizer($num, array $plugin_list) : void {
 
 	list ($tdir, $rel_tdir) = $this->_test_dir();
 
