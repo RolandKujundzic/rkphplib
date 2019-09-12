@@ -495,7 +495,7 @@ public function getCurrentPlugin() : string {
 /**
  * Compute plugin output. Loop position $i will change.
  */
-private function _join_tok_plugin(int &$i) : string {
+private function _join_tok_plugin(int &$i) : ?string {
 	$tok = $this->_tok[$i];
 
 	// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:501> i=$i, tok=".mb_substr($tok, 0, 60));
@@ -813,7 +813,7 @@ public function callPlugin(string $name, string $func, $args = []) {
  * Convert param into vector and arg into map if plugin $name is configured with
  * TokPlugin::KV_BODY | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::REQUIRE_PARAM 
  */
-private function _call_plugin(string $name, string $param, ?string $arg = null) : string {
+private function _call_plugin(string $name, string $param, ?string $arg = null) : ?string {
 
 	$csl = count($this->_callstack);
 	array_push($this->_callstack[$csl - 1], [ $name, null ]);
