@@ -480,9 +480,11 @@ public static function imageInfo(string $file, bool $abort = true) : array {
 
 /**
  * Open and lock file (or pipe if $file = STDOUT|STDIN).
- * Return file handle. Use either LOCK_EX or LOCK_SH as $lock_mode.
+ * Return file handle (resource). Use either LOCK_EX or LOCK_SH as $lock_mode.
+ * 
+ * @return resource
  */
-private static function _open_lock(string $file, int $lock_mode, string $open_mode) : resource {
+private static function _open_lock(string $file, int $lock_mode, string $open_mode) {
 
 	$map = array('STDIN' => 'php://stdin', 'STDOUT' => 'php://stdout');
 	if (!empty($map[$file])) {
@@ -675,11 +677,12 @@ public static function append(string $file, string $data) : void {
 
 
 /**
- * Open File for reading. 
- *
- * Use mode = rb|ab|wb|ru|wu. Always use ru for reading and wu for writing UTF-8 text files.
+ * Open File for reading. Return file handle (resource). Use mode = rb|ab|wb|ru|wu. 
+ * Always use ru for reading and wu for writing UTF-8 text files.
+ * 
+ * @return resource
  */
-public static function open(string $file, string $mode = 'rb') : resource {
+public static function open(string $file, string $mode = 'rb') {
 
 	$write_utf8_bom = false;
 	$read_utf8_bom = false;
@@ -737,9 +740,11 @@ public static function loadLines(string $file, int $flags = 0) : array {
 
 
 /**
- * Write CSV line to file.
+ * Write CSV line to file. 
+ *
+ * @param resource $fh
  */
-public static function writeCSV(resource $fh, array $data, string $delimiter = ',', string $enclosure = '"', string $escape = '\\') : void {
+public static function writeCSV($fh, array $data, string $delimiter = ',', string $enclosure = '"', string $escape = '\\') : void {
 
 	if (!$fh) {
 		throw new Exception('invalid file handle');
@@ -753,8 +758,10 @@ public static function writeCSV(resource $fh, array $data, string $delimiter = '
 
 /**
  * Write to data file.
+ *
+ * @param resource $fh
  */
-public static function write(resource $fh, string $data) : void {
+public static function write($fh, string $data) : void {
 	$data_len = strlen($data);
 
 	if ($data_len == 0) {
@@ -802,9 +809,12 @@ public static function write(resource $fh, string $data) : void {
 
 
 /**
- * Read up to length bytes from file. Return string|false.
+ * Read up to length bytes from file.
+ *
+ * @param resource $fh
+ * @return mixed string|false
  */
-public static function read(resource $fh, int $length = 8192) {
+public static function read($fh, int $length = 8192) {
 
 	if (!$fh) {
 		throw new Exception('invalid file handle');
@@ -824,16 +834,21 @@ public static function read(resource $fh, int $length = 8192) {
 
 /**
  * Return true if filehandle is at eof.
+ *
+ * @param resource $fh
  */
-public static function end(resource $fh) : bool {
+public static function end($fh) : bool {
 	return feof($fh);
 }
 
 
 /**
- * Read line from filehandle (until \n or EOF is reached). Return string|bool.
+ * Read line from filehandle (until \n or EOF is reached).
+ *
+ * @param resource $fh
+ * @return mixed string|bool
  */
-public static function readLine(resource $fh) {
+public static function readLine($fh) {
 
 	if (!$fh) {
 		throw new Exception('invalid file handle');
@@ -900,8 +915,10 @@ public static function unserialize(string $file) {
 
 /**
  * Read CSV line from filehandle.
+ *
+ * @param resource $fh
  */
-public static function readCSV(resource $fh, string $delimiter = ',', string $enclosure = '"', string $escape = '\\') : ?array {
+public static function readCSV($fh, string $delimiter = ',', string $enclosure = '"', string $escape = '\\') : ?array {
 
 	if (!$fh) {
 		throw new Exception('invalid file handle');
@@ -926,8 +943,10 @@ public static function readCSV(resource $fh, string $delimiter = ',', string $en
 
 /**
  * Close file.
+ * 
+ * @param resource &$fh
  */
-public static function close(resource &$fh) : void {
+public static function close(&$fh) : void {
 
 	if (!$fh) {
 		throw new Exception('invalid file handle');
