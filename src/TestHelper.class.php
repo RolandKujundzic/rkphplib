@@ -555,7 +555,10 @@ private function _test_dir() : array {
 
 /**
  * Run tokenizer tests t1.txt ... t$num.txt if $num is int (requires t1.ok.txt ... t$num.ok.txt).
- * If $num is 'a.txt' run only this test.
+ * If $num is string 'a.txt' run only this test. If $num is array [ 'a.inc.html', 'b.inc.html' ]
+ * run a.inc.html (compare with a.inc.html.ok) and b.inc.html (compare with b.inc.html.ok).
+ *
+ * @param $num mixed int|string|array
  */
 public function runTokenizer($num, array $plugin_list) : void {
 
@@ -576,6 +579,11 @@ public function runTokenizer($num, array $plugin_list) : void {
 		$this->_log("runTokenizer: $rel_tdir/$num", 11);
 		array_push($test_files, $tdir.'/'.$num);
 	}
+	else if (is_array($num)) {
+		foreach ($num as $file) {
+			array_push($test_files, $tdir.'/'.$file);
+		}
+	}
 	else {
 		if ($num > 1) {
 			$this->_log("runTokenizer: $rel_tdir/t1.txt ... $rel_tdir/t$num.txt", 11);
@@ -591,8 +599,8 @@ public function runTokenizer($num, array $plugin_list) : void {
 
 	$i = 0;
 	foreach ($test_files as $f_txt) {
-		$f_out = str_replace('.txt', '.out.txt', $f_txt);
-		$f_ok = str_replace('.txt', '.ok.txt', $f_txt);
+		$f_out = str_replace([ '.txt', '.inc.html' ], [ '.out.txt', '.out.html' ], $f_txt);
+		$f_ok = str_replace([ '.txt', '.inc.html' ], [ '.ok.txt', '.ok.html' ], $f_txt);
 		$i++;
 
 		$tok->setText(File::load($f_txt));
