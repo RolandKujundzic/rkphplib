@@ -513,9 +513,12 @@ private function _fc_static_method(string $class, string $method, array $x) {
 
 
 /**
- * Convert $res (any) to string.
+ * Convert $res (any) to string if object or array (json_encode).
+ * 
+ * @param mixed $res
+ * @return mixed
  */
-public static function res2str($res) : string {
+public static function res2str($res) {
 	if (is_float($res) || is_int($res) || is_bool($res)) {
 		return $res;
 	}
