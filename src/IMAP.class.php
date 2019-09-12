@@ -183,8 +183,10 @@ public function count() : int {
 
 /**
  * Return connection resource. For use with e.g. imap_xxx() functions.
+ *
+ * @return resource
  */
-public function getConnection() : resource {
+public function getConnection() {
 	$this->_check_con(false);
 	return $this->con;
 }
