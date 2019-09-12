@@ -1064,7 +1064,7 @@ public function getConf(string $key, string $engine = '', bool $required = true)
  *  - in.name= multi_select,
  *  - in.name= checkbox_hash|radio_hash, key=value, key2=value2, ...
  */
-protected function parseInName(string $name, string $value, array &$p) : array {
+protected function parseInName(string $name, string $value, array &$p) : void {
 	$r = \rkphplib\lib\conf2kv($value, '=', ',');
 
 	if (is_string($r)) {
