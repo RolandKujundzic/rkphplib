@@ -93,8 +93,10 @@ public function initMeta() : void {
 
 /**
  * Get configuration value. Parameter: name, scope, inactive, ttl.
+ *
+ * @return mixed
  */
-public function getConf(string $key) : string {
+public function getConf(string $key) {
 
 	if (count($this->conf) === 0) {
 		throw new Exception('call setConf first');
@@ -127,7 +129,7 @@ public function getConf(string $key) : string {
 protected function setConf(array $conf) : void {
 	// \rkphplib\lib\log_debug('ASession.setConf:128> enter - conf: '.print_r($conf, true));
 
-	$default = [ 'name' => '', 'table' => '', 'scope' => 'docroot', 'inactive' => '7200', 'ttl' => '172800', 'init_meta' => '0', 
+	$default = [ 'name' => '', 'table' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => '0', 
 		'redirect_login' => 'index.php?dir=login',  'redirect_logout' => 'index.php?dir=login/exit',
 		'redirect_forbidden' => 'index.php?dir=login/access_denied', 
 		'required' => '', 'allow_dir' => 'login' ];
