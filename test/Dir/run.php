@@ -30,5 +30,5 @@ function test_exists($path_list) {
 
 
 $th->load('src/Dir.class.php');
-$th->callTest('test_exists', array('/etc', '/etc/apache2', '/var/lib/mysql'), array('Dir::exits()', 1, 1, 1));
+$th->callTest('test_exists', array('/etc', '/etc/apache2', '/var/lib/mysqlA'), array('Dir::exits()', 1, 1, 0));
 
