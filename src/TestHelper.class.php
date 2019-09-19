@@ -49,6 +49,9 @@ public function __construct() {
 
 /**
  * Print error message.
+ * 
+ * @param mixed $out
+ * @param mixed $ok
  */
 private function _error_cmp(string $msg, $out, $ok) : void {
 	$m_out = '';
@@ -267,8 +270,10 @@ public function runFuncTest(string $path) : void {
 
 /**
  * Call test function $func($arg). Return vector [ NAME, 1, 1, 0, 1, ... ] with 1 = OK and 0 = ERR.
+ * 
+ * @param mixed $arg
  */
-public function callTest(string $func, $arg, array $result) : void {
+public function callTest(callable $func, $arg, array $result) : void {
   $this->_tc['num']++;
 
   $this->_log(array_shift($result).": ", 0);
@@ -402,6 +407,8 @@ public function compareHash(string $msg, array $out, array $ok) : void {
 
 /**
  * If $value (any) is string with "@" prefix and [.json|.ser|.txt] suffix return file content. Otherwise return value.
+ * 
+ * @param mixed $value
  */
 private function getResult($value) {
 
@@ -430,6 +437,8 @@ private function getResult($value) {
 
 /**
  * Return _fc_function|_fc_static_method call.
+ *
+ * @param mixed $x
  */
 private function _fc_log(string $call, $x) : string {
 	$y = array();
@@ -464,6 +473,8 @@ private function _fc_log(string $call, $x) : string {
 
 /**
  * Return result (any) of $func($x[0], $x[1], ...) callback.
+ *
+ * @return mixed
  */
 private function _fc_function(string $func, array $x) {
 
@@ -489,6 +500,8 @@ private function _fc_function(string $func, array $x) {
 
 /**
  * Return result (any) of $class::$method($x[0], $x[1], ...) callback.
+ * 
+ * @return mixed
  */
 private function _fc_static_method(string $class, string $method, array $x) {
 
@@ -561,7 +574,7 @@ private function _test_dir() : array {
  * If $num is string 'a.txt' run only this test. If $num is array [ 'a.inc.html', 'b.inc.html' ]
  * run a.inc.html (compare with a.inc.html.ok) and b.inc.html (compare with b.inc.html.ok).
  *
- * @param $num mixed int|string|array
+ * @param int|string|array $num
  */
 public function runTokenizer($num, array $plugin_list) : void {
 
