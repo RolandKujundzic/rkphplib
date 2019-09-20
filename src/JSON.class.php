@@ -59,6 +59,8 @@ public static function encode($any, int $options = 448, int $depth = 512) : stri
  * Return json decoded $txt as hash ($assoc = true) or object ($assoc = false).
  */
 public static function decode(string $txt, bool $assoc = true) {
+	// $txt = trim(mb_convert_encoding($txt, 'UTF-8', 'HTML-ENTITIES'));
+	$txt = trim(html_entity_decode($txt));
 	$res = json_decode($txt, $assoc);
 
 	if (($err_no = json_last_error())) {
