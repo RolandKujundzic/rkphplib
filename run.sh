@@ -1,5 +1,5 @@
 #!/bin/bash
-MERGE2RUN="abort apigen_doc cd chmod composer composer_phar confirm custom git_checkout ln log mb_check mkdir require_global require_program rm sudo syntax syntax_check_php  main"
+MERGE2RUN="abort apigen_doc cd chmod composer composer_json confirm custom git_checkout license ln log mb_check mkdir phpdocumentor require_dir require_global require_owner require_priv require_program rm sudo syntax syntax_check_php wget  main"
 
 
 #------------------------------------------------------------------------------
@@ -38,20 +38,37 @@ function _abort {
 
 
 #------------------------------------------------------------------------------
-# Create apigen documentation for php project.
+# Create apigen documentation for php project in docs/apigen.
 #
 # @param source directory (optional, default = src)
-# @param doc directory (optional, default = docs/api)
-# @require _composer _abort _confirm _rm
+# @param doc directory (optional, default = docs/apigen)
+# @require _abort _require_program _require_dir _mkdir _cd _composer_json _confirm _rm
 #------------------------------------------------------------------------------
 function _apigen_doc {
+  local DOC_DIR=./docs/apigen
+	local PRJ="docs/.apigen"
+	local BIN="$PRJ/vendor/apigen/apigen/bin/apigen"
+	local SRC_DIR=./src
 
-	if ! test -d vender/apigen/apigen; then
-		_composer init
+	_mkdir "$DOC_DIR"
+	_mkdir "$PRJ"
+	_require_program composer
+
+	local CURR="$PWD"
+
+	if ! test -f "$PRJ/composer.json"; then
+		_cd "$PRJ"
+		_composer_json "rklib/rkphplib_doc_apigen"
+		composer require "apigen/apigen:dev-master"
+		composer require "roave/better-reflection:dev-master#c87d856"
+		_cd "$CURR"
 	fi
 
-	local SRC_DIR=./src
-	local DOC_DIR=./docs/api
+	if ! test -s "$BIN"; then
+		_cd "$PRJ"
+		composer update
+		_cd "$CURR"
+	fi
 
 	if ! test -z "$1"; then
 		SRC_DIR="$1"
@@ -61,18 +78,18 @@ function _apigen_doc {
 		DOC_DIR="$2"
 	fi
 
-	if ! test -d "$SRC_DIR"; then
-		_abort "no such directory [$SRC_DIR]"
-	fi
+	_require_dir "$SRC_DIR"
 
 	if test -d "$DOC_DIR"; then
-		_confirm "Remove existing documentation directory [$DOC_DIR] ?"
+		_confirm "Remove existing documentation directory [$DOC_DIR] ?" 1
 		if test "$CONFIRM" = "y"; then
 			_rm "$DOC_DIR"
 		fi
 	fi
 
-	vendor/apigen/apigen/bin/apigen generate -s "$SRC_DIR" -d "$DOC_DIR"
+	echo "Create apigen documentation"
+	echo "$BIN generate '$SRC_DIR' --destination '$DOC_DIR'"
+	$BIN generate "$SRC_DIR" --destination "$DOC_DIR"
 }
 
 
@@ -247,37 +264,54 @@ function _composer {
 
 
 #------------------------------------------------------------------------------
-# Install composer.phar in current directory
+# Create composer.json
 #
-# @param install_as (default = './composer.phar')
-# @require _abort _rm
+# @param package name e.g. rklib/test
+# @require _abort _rm _confirm _license
 #------------------------------------------------------------------------------
-function _composer_phar {
-  local EXPECTED_SIGNATURE="$(wget -q -O - https://composer.github.io/installer.sig)"
-  php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-  local ACTUAL_SIGNATURE="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
-
-  if [ "$EXPECTED_SIGNATURE" != "$ACTUAL_SIGNATURE" ]; then
-    _rm composer-setup.php
-    _abort 'Invalid installer signature'
-  fi
-
-	local INSTALL_AS="$1"
-	local SUDO=sudo
-
-	if test -z "$INSTALL_AS"; then
-		INSTALL_AS="./composer.phar"
-		SUDO=
+function _composer_json {
+	if test -z "$1"; then
+		_abort "empty project name use e.g. rklib/NAME"
 	fi
 
-  $SUDO php composer-setup.php --quiet --install-dir=`dirname "$INSTALL_AS"` --filename=`basename "$INSTALL_AS"`
-  local RESULT=$?
-
-	if ! test "$RESULT" = "0" || ! test -s "$INSTALL_AS"; then
-		_abort "composer installation failed"
+	if test -f "composer.json"; then
+		_confirm "Overwrite existing composer.json"
+		if test "$CONFIRM" = "y"; then
+			_rm "composer.json"
+		else
+			return
+    fi
 	fi
 
-	_rm composer-setup.php
+	_license "gpl-3.0"
+
+	local CLASSMAP=
+	if test -d "src"; then
+		CLASSMAP='"src/"'
+	fi
+
+	echo "create composer.json ($1, $LICENSE)"
+	1>"composer.json" cat <<EOL
+{
+	"name": "$1",
+	"type": "",
+	"description": "",
+	"authors": [
+		{ "name": "Roland Kujundzic", "email": "roland@kujundzic.de" }
+	],
+	"minimum-stability" : "dev",
+	"prefer-stable" : true,
+	"require": {
+		"php": ">=7.2.0",
+		"ext-mbstring": "*"
+	},
+	"autoload": {
+		"classmap": [$CLASSMAP],
+		"files": []
+	},
+	"license": "GPL-3.0-or-later"
+}
+EOL
 }
 
 
@@ -343,6 +377,12 @@ function _confirm {
   fi
 }
 
+
+#------------------------------------------------------------------------------
+function _docs {
+	_apigen_doc
+	_phpdocumentor
+}
 
 
 #------------------------------------------------------------------------------
@@ -467,6 +507,7 @@ function _opensource {
 
 #------------------------------------------------------------------------------
 # Update/Create git project. Use subdir (js/, php/, ...) for other git projects.
+# For git parameter (e.g. [-b master --single-branch]) use global variable GIT_PARAMETER.
 #
 # Example: git_checkout rk@git.tld:/path/to/repo test
 # - if test/ exists: cd test; git pull; cd ..
@@ -476,7 +517,7 @@ function _opensource {
 # @param git url
 # @param local directory
 # @param after_checkout (e.g. "./run.sh build")
-# @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist)
+# @global CONFIRM_CHECKOUT (if =1 use positive confirm if does not exist) GIT_PARAMETER
 # @require _abort _confirm _cd _ln
 #------------------------------------------------------------------------------
 function _git_checkout {
@@ -504,8 +545,8 @@ function _git_checkout {
 		_ln "../../$2" "$2"
 		_git_checkout "$1" "$2"
 	else
-		echo -e "git clone $2\nEnter password if necessary"
-		git clone "$1" "$2"
+		echo -e "git clone $GIT_PARAMETER '$1' '$2'\nEnter password if necessary"
+		git clone $GIT_PARAMETER "$1" "$2"
 
 		if ! test -d "$2/.git"; then
 			_abort "git clone failed - no $2/.git directory"
@@ -525,15 +566,55 @@ function _git_checkout {
 			_cd ..
 		fi
 	fi
+
+	GIT_PARAMETER=
 }
 
 
 #------------------------------------------------------------------------------
-# Link $2 to $1
+# Create LICENCSE file for "gpl-3.0" (keep existing).
+#
+# @see https://help.github.com/en/articles/licensing-a-repository 
+# @param license name (default "gpl-3.0")
+# @export LICENSE
+# @require _abort _wget _confirm
+#------------------------------------------------------------------------------
+function _license {
+	if ! test -z "$1" && test "$1" != "gpl-3.0"; then
+		_abort "unknown license [$1] use [gpl-3.0]"
+	fi
+
+	LICENSE=$1
+	if test -z "$LICENSE"; then
+		LICENSE="gpl-3.0"
+	fi
+
+	local LFILE="./LICENSE"
+
+	if test -s "$LFILE"; then
+		local IS_GPL3=`head -n 2 "$LFILE" | tr '\n' ' ' | sed -E 's/\s+/ /g' | grep 'GNU GENERAL PUBLIC LICENSE Version 3'`
+
+		if ! test -z "$IS_GPL3"; then
+			echo "keep existing gpl-3.0 LICENSE ($LFILE)"
+			return
+		fi
+
+		_confirm "overwrite existing $LFILE file with $LICENSE"
+		if test "$CONFIRM" != "y"; then
+			echo "keep existing $LFILE file"
+			return
+		fi
+	fi
+
+	_wget "http://www.gnu.org/licenses/gpl-3.0.txt" "$LFILE"
+}
+
+#------------------------------------------------------------------------------
+# Link $2 to $1.
 #
 # @param source path
 # @param link path
-# @require _abort _rm _mkdir _require_program
+# @require _abort _rm _mkdir _require_program _cd
 #------------------------------------------------------------------------------
 function _ln {
 	_require_program realpath
@@ -556,10 +637,22 @@ function _ln {
 	fi
 
 	local link_dir=`dirname "$2"`
-	_mkdir "$link_dir"
+	link_dir=`realpath "$link_dir"`
+	local target_dir=`dirname "$target"`
 
-	echo "Link $2 to $target"
-	ln -s "$target" "$2"
+	if test "$target_dir" = "$link_dir"; then
+		local cwd="$PWD"
+		_cd "$target_dir"
+		local tname=`basename "$1"`
+		local lname=`basename "$2"`
+		echo "ln -s '$tname' '$lname' # in $PWD"
+		ln -s "$tname" "$lname" || _abort "ln -s '$tname' '$lname' # in $PWD"
+		_cd "$cwd"
+	else
+		_mkdir "$link_dir"
+		echo "Link $2 to $target"
+		ln -s "$target" "$2"
+	fi
 
 	if ! test -L "$2"; then
 		_abort "ln -s '$target' '$2'"
@@ -656,6 +749,81 @@ function _mkdir {
 
 
 #------------------------------------------------------------------------------
+# Create phpdocumentor documentation for php project in docs/phpdocumentor.
+#
+# @param source directory (optional, default = src)
+# @param doc directory (optional, default = docs/phpdocumentor)
+# @require _abort _require_program _require_dir _mkdir _cd _composer_json _confirm _rm
+#------------------------------------------------------------------------------
+function _phpdocumentor {
+  local DOC_DIR=./docs/phpdocumentor
+	local PRJ="docs/.phpdocumentor"
+	local BIN="$PRJ/vendor/phpdocumentor/phpdocumentor/bin/phpdoc"
+	local SRC_DIR=./src
+
+	_mkdir "$DOC_DIR"
+	_mkdir "$PRJ"
+	_require_program composer
+
+	local CURR="$PWD"
+
+	if ! test -f "$PRJ/composer.json"; then
+		_cd "$PRJ"
+		_composer_json "rklib/rkphplib_doc_phpdocumentor"
+		composer require "phpdocumentor/phpdocumentor:dev-master"
+		_cd "$CURR"
+	fi
+
+	if ! test -s "$BIN"; then
+		_cd "$PRJ"
+		composer update
+		_cd "$CURR"
+	fi
+
+	if ! test -z "$1"; then
+		SRC_DIR="$1"
+	fi
+
+	if ! test -z "$2"; then
+		DOC_DIR="$2"
+	fi
+
+	_require_dir "$SRC_DIR"
+
+	if test -d "$DOC_DIR"; then
+		_confirm "Remove existing documentation directory [$DOC_DIR] ?" 1
+		if test "$CONFIRM" = "y"; then
+			_rm "$DOC_DIR"
+		fi
+	fi
+
+	echo "Create phpdocumentor documentation"
+	echo "$BIN run -d '$SRC_DIR' -t '$DOC_DIR'"
+	$BIN run -d "$SRC_DIR" -t "$DOC_DIR"
+}
+
+#------------------------------------------------------------------------------
+# Abort if directory does not exists or owner or privileges don't match.
+#
+# @param path
+# @param owner[:group] (optional)
+# @param privileges (optional, e.g. 600)
+# @require _abort _require_priv _require_owner
+#------------------------------------------------------------------------------
+function _require_dir {
+	test -d "$1" || _abort "no such directory '$1'"
+
+	if ! test -z "$2"; then
+		_require_owner "$1" "$2"
+	fi
+
+	if ! test -z "$3"; then
+		_require_priv "$1" "$3"
+	fi
+}
+
+
+#------------------------------------------------------------------------------
 # Abort if global variable is empty.
 #
 # @param variable name (e.g. "GLOBAL" or "GLOB1 GLOB2 ...")
@@ -668,6 +836,52 @@ function _require_global {
 		fi
 	done
 }
+
+#------------------------------------------------------------------------------
+# Abort if file or directory owner:group don't match.
+#
+# @param path
+# @param owner[:group]
+# @require _abort
+#------------------------------------------------------------------------------
+function _require_owner {
+	if ! test -f "$1" && ! test -d "$1"; then
+		_abort "no such file or directory '$1'"
+	fi
+
+	local arr=( ${2//:/ } )
+	local owner=`stat -c '%U' "$1"`
+	local group=`stat -c '%G' "$1"`
+
+	if ! test -z "${arr[0]}" && ! test "${arr[0]}" = "$owner"; then
+		_abort "invalid owner - chown ${arr[0]} '$1'"
+	fi
+
+	if ! test -z "${arr[1]}" && ! test "${arr[1]}" = "$group"; then
+		_abort "invalid group - chgrp ${arr[1]} '$1'"
+	fi
+}
+
+
+#------------------------------------------------------------------------------
+# Abort if file or directory privileges don't match.
+#
+# @param path
+# @param privileges (e.g. 600)
+# @require _abort
+#------------------------------------------------------------------------------
+function _require_priv {
+	if test -z "$2"; then
+		_abort "empty privileges"
+	fi
+
+	local priv=`stat -c '%a' "$1" || _abort "no such filesystem entry '$1'"`
+
+	if ! test "$2" = "$priv"; then
+		_abort "invalid privileges - chmod $1 '$2'"
+	fi
+}
+
 
 #------------------------------------------------------------------------------
 # Print md5sum of file.
@@ -796,6 +1010,53 @@ function _syntax_check_php {
 }
 
 
+#------------------------------------------------------------------------------
+# Download URL with wget. 
+#
+# @param url
+# @param save as default = autodect, use "-" for stdout
+# @require _abort _require_program _confirm
+#------------------------------------------------------------------------------
+function _wget {
+	if test -z "$1"; then
+		_abort "empty url"
+	fi
+
+	_require_program wget
+
+	if ! test -z "$2" && test "$2" != "-" && test -f "$2"; then
+		_confirm "Overwrite $2" 1
+		if test "$CONFIRM" != "y"; then
+			echo "keep $2 - skip wget '$1'"
+			return
+		fi
+	fi
+
+	if test -z "$2"; then
+		echo "download $1"
+		wget -q "$1"
+	elif test "$2" = "-"; then
+		wget -q -O "$2" "$1"
+	else
+		echo "download $1 as $2"
+		wget -q -O "$2" "$1"
+	fi
+
+  if test "$2" != "-"; then
+		if test -z "$2"; then
+			local SAVE_AS=`basename "$1"`
+			local NEW_FILES=`find . -amin 1 -type f`
+
+			if ! test -s "$SAVE_AS" && test -z "$NEW_FILES"; then
+				_abort "Download from $1 failed"
+			fi
+		elif ! test -s "$2"; then
+			_abort "Download of $2 from $1 failed"
+		fi
+  fi
+}
+
+
 APP=$0
 APP_DESC=
 
@@ -822,7 +1083,7 @@ test)
 	php test/run.php
 	;;
 docs)
-	_apigen_doc
+	_docs
 	;;
 mb_check)
 	_mb_check
