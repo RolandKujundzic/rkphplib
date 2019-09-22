@@ -311,11 +311,11 @@ public static function entries(string $path, int $type = 0) : array {
 
 
 /**
- * Return directory entries (relative filepath). Parameter $sort is 2^n, e.g.
+ * Return directory entries (relative filepath, non-recursive). Parameter $sort is 2^n, e.g.
  * SCANDIR_SORT_ASCENDING=default|SCANDIR_SORT_DESCENDING|SCANDIR_SORT_NONE.
  */
 public static function scan(string $path, int $sort = SCANDIR_SORT_ASCENDING) : array {
-	return scandir($path, $sort);
+	return array_diff(scandir($path, $sort), [ '.', '..' ]);
 }
 
 
