@@ -108,12 +108,8 @@ public static function run(string $key, $value, string $check) : bool {
  *
  * Required, Int, UInt, Integer (=UInt), Real, UReal, Email, EmailPrefix, HTTP, HTTPS, 
  * Phone, PhoneNumber (=Phone), Variable, PLZ
- * 
- * @throws if no match
- * @param string
- * @return string (empty if not found)
  */
-public static function getMatch($name) {
+public static function getMatch(string $name) : string {
 	$rx = array(
 		'Required' => '/^.+$/',
 		'Bool' => '/^(1|0|)$/',
@@ -142,28 +138,24 @@ public static function getMatch($name) {
 
 
 /**
- * Execute database query to check if columnn values exist.
+ * Execute database query to check if columnn values exist. Parameter $colnames is comma separated string.
+ * If $colnames=col1, col2, ... is set append col1=$_REQUEST[col1] and col2=$_REQUEST[col2] ... to query.
  *
- * check.postcode= sqlQuery:email,postcode:SELECT 1 AS ok FROM shop_customer WHERE type='consumer' AND status='active'
- *
- * @param string $name
- * @param string $parameter
- * @param string $query
- * @return boolean
+ * @example check.postcode= sqlQuery:email,postcode:SELECT 1 AS ok FROM shop_customer WHERE type='consumer' AND status='active'
  */
-public static function sqlQuery($value, $parameter, $query) {
+public static function sqlQuery(string $ignore, string $colnames, string $query) : bool {
   require_once __DIR__.'/Database.class.php';
 
   $db = \rkphplib\Database::getInstance();
 
-  $columns = split_str(',', $parameter);
+  $columns = split_str(',', $colnames);
   foreach ($columns as $column) {
 		if (isset($_REQUEST[$column])) {
 			$query .= ' AND '.$db->escape_name($column)."='".$db->esc($_REQUEST[$column])."'";
 		}
   }
 
-  // \rkphplib\lib\log_debug("ValueCheck::sqlQuery:166> value=[$value] parameter=[$parameter] query: $query");
+  // \rkphplib\lib\log_debug("ValueCheck::sqlQuery:166> ignore=[$ignore] colnames=[$colnames] query: $query");
   $dbres = $db->select($query);
   return count($dbres) > 0;
 }
@@ -180,7 +172,7 @@ public static function isURL(string $domain, int $min_level = 2, int $max_level 
 /**
  * @alias isDomain("$domain.tld")
  */
-public static function isURLPrefix(string $domain, $min_level = 1, $max_level = 8) : bool {
+public static function isURLPrefix(string $domain, int $min_level = 1, int $max_level = 8) : bool {
 	return self::isDomain($domain.'.tld', $min_level + 1, $max_level + 1);
 }
 
@@ -198,7 +190,7 @@ public static function isURLPath(string $value) : bool {
 /**
  * @alias isDomain("$domain.tld")
  */
-public static function isSubDomain(string $domain, $min_level = 1, $max_level = 8) : bool {
+public static function isSubDomain(string $domain, int $min_level = 1, int $max_level = 8) : bool {
 	return self::isDomain($domain.'.tld', $min_level + 1, $max_level + 1);
 }
 
@@ -271,12 +263,8 @@ public static function isDomain(string $domain, int $min_level = 2, int $max_lev
  *  2: Column value
  *  3: 1 or column name - if 1 return true if result.anz == 1
  *  4: If not empty and 3 not empty add to where: AND p[3] != p[4]
- *
- * @param string $value
- * @param array $p
- * @return boolean
  */
-public static function isUnique($value, $p) {
+public static function isUnique(string $value, array $p) : bool {
 	require_once __DIR__.'/Database.class.php';
 
 	$query = 'SELECT count(*) AS anz FROM ';
@@ -315,13 +303,8 @@ public static function isUnique($value, $p) {
 /**
  * True if value matches regular expression (e.g. /[0-9]/).
  * Slash at start and end of regular expression are optional.
- *
- * @throws if rx is empty
- * @param string $value
- * @param string $rx
- * @return boolean
  */
-public static function isMatch($value, $rx) {
+public static function isMatch(string $value, string $rx) : bool {
 	// \rkphplib\lib\log_debug("ValueCheck::isMatch:325> value=[$value] rx=[$rx]");
 	if (empty($rx)) {
 		throw new Exception('empty regular expression', "value=[$value]");
@@ -342,10 +325,8 @@ public static function isMatch($value, $rx) {
 
 /**
  * True if CasNr is valid.
- * @param string $value
- * @return boolean
  */
-public static function isCasNr($value) {
+public static function isCasNr(string $value) : bool {
 
   if (!preg_match('/^([0-9]+)\-([0-9][0-9])\-([0-9])$/', $value, $match)) {
 		return false;
@@ -365,13 +346,10 @@ public static function isCasNr($value) {
 
 
 /**
- * True if UStIdNr is valid.
+ * True if UStIdNr is valid. Parameter $cc is iso2 country code, e.g. "de".
  * @ToDo http://www.pruefziffernberechnung.de/U/USt-IdNr.shtml (nur de hat momentan pruefziffer check)
- * @param string $value
- * @param string $cc (country code iso2, e.g. de)
- * @return boolean
  */
-public static function isUStIdNr($value, $cc) {
+public static function isUStIdNr(string $value, string $cc) : bool {
 	$cc = mb_strtolower(mb_substr($cc, 0, 2));
 
 	$rx = array();
@@ -444,13 +422,8 @@ public static function isUStIdNr($value, $cc) {
 
 /**
  * Return parameter array.
- * 
- * @param string $p1
- * @param string $p1
- * @param string $p1
- * @return array
  */
-public static function getParameterArray($p1 = null, $p2 = null, $p3 = null) {
+public static function getParameterArray(?string $p1 = null, ?string $p2 = null, ?string $p3 = null) : array {
 	$arr = [];
 
 	if (is_array($p1)) {
@@ -471,15 +444,11 @@ public static function getParameterArray($p1 = null, $p2 = null, $p3 = null) {
 
 
 /**
- * True if value is in self::getParameterArray(p1, p2, p3).
+ * True if value is in self::getParameterArray(p1, p2, p3) or in array $p1.
  *
- * @param string $value
- * @param string $p1
- * @param string $p2
- * @param string $p3
- * @return boolean
+ * @param string|array|null $p1
  */
-public static function isEnum($value, $p1 = null, $p2 = null, $p3 = null) {
+public static function isEnum(string $value, $p1 = null, ?string $p2 = null, ?string $p3 = null) : bool {
 	if (is_array($p1)) {
 		return in_array($value, $p1);
 	}
@@ -490,12 +459,8 @@ public static function isEnum($value, $p1 = null, $p2 = null, $p3 = null) {
 
 /**
  * True if value is yyyy-mm-dd.
- * @param string $value
- * @param int $min_year (default = 1900)
- * @param int $max_year (default = 2150)
- * @return boolean
  */
-public static function isSQLDate($value, $min_year = 1900, $max_year = 2150) {
+public static function isSQLDate(string $value, int $min_year = 1900, int $max_year = 2150) : bool {
 	$res = true;
 
 	if (!preg_match("/^([0-9]{4})\-([0-9]{2})\-([0-9]{2})$/", $value, $date) ||
@@ -510,12 +475,8 @@ public static function isSQLDate($value, $min_year = 1900, $max_year = 2150) {
 
 /**
  * True if value is dd.mm.yyyy.
- * @param string $value
- * @param int $min_year (default = 1900)
- * @param int $max_year (default = 2150)
- * @return boolean
  */
-public static function isDate($value, $min_year = 1900, $max_year = 2150) {
+public static function isDate(string $value, int $min_year = 1900, int $max_year = 2150) : bool {
 	$res = true;
 
 	if (!preg_match("/^([0-9]{2})\.([0-9]{2})\.([0-9]{4})$/", $value, $date) ||
@@ -530,12 +491,8 @@ public static function isDate($value, $min_year = 1900, $max_year = 2150) {
 
 /**
  * True if value is dd.mm.yyyy[ hh:mm[:ss]].
- * @param string $value
- * @param int $min_year (default = 1900)
- * @param int $max_year (default = 2150)
- * @return boolean
  */
-public static function isDateTime($value, $min_year = 1900, $max_year = 2150) {
+public static function isDateTime(string $value, int $min_year = 1900, int $max_year = 2150) : bool {
 	$time = mb_substr($value, 11);
 	return self::isDate(mb_substr($value, 0, 10), $min_year, $max_year) && (!$time || self::isTime($time));
 }
@@ -543,33 +500,24 @@ public static function isDateTime($value, $min_year = 1900, $max_year = 2150) {
 
 /**
  * True if value is between min and max.
- * @param string $value
- * @param float $min
- * @param float $max
  */
-public static function isRange($value, $min, $max) {
+public static function isRange(string $value, float $min, float $max) : bool {
 	return $value >= $min && $value <= $max;
 }
 
 
 /**
  * True if length($value) == $len.
- * @param string $value
- * @param int $len
- * @return boolean
  */
-public static function isLength($value, $len) {
+public static function isLength(string $value, int $len) : bool {
 	return $len > 0 && mb_strlen($value) == $len;
 }
 
 
 /**
  * True if number of lines == $lnum
- * @param string $value
- * @param int $lnum
- * @return boolean
  */
-public static function maxLines($value, $lnum) {
+public static function maxLines(string $value, int $lnum) : bool {
 	$lines = preg_split("/\r?\n/", trim($value));
 	return $lnum > 0 && count($lines) <= $lnum;
 }
@@ -577,33 +525,24 @@ public static function maxLines($value, $lnum) {
 
 /**
  * True if length($value) <= $len.
- * @param string $value
- * @param int $len
- * @return boolean
  */
-public static function maxLength($value, $len) {
+public static function maxLength(string $value, int $len) : bool {
 	return $len > 0 && mb_strlen($value) <= $len; 
 }
 
 
 /**
  * True if length($value) >= $len.
- * @param string $value
- * @param int $len
- * @return boolean
  */
-public static function minLength($value, $len) {
+public static function minLength(string $value, int $len) : bool {
 	return $len > 0 && mb_strlen($value) >= $len; 
 }
 
 
 /**
- * True if value > now() - days.
- * @param date-string $value 
- * @param int $days
- * @return boolean
+ * True if $value (date string) > now() - days.
  */
-public static function maxDaysOld($value, $days) {
+public static function maxDaysOld(string $value, int $days) : bool {
 	$res = true;
 
 	try {
@@ -624,14 +563,10 @@ public static function maxDaysOld($value, $days) {
 
 
 /**
- * Return error message if value < max_date (date comparison).
- *
- * @param date-string $value
- * @param string $max_date
- * @param boolean $hms_compare
- * @return boolean
+ * Return error message if $value (date string) < $max_date (date string). Compare dates.
+ * If parameter $hms_compare is true (default = false) compare H:M:S too.
  */
-public static function date_greater($value, $max_date, $hms_compare = false) {
+public static function date_greater(string $value, string $max_date, bool $hms_compare = false) : bool {
 	$res = true;
 
 	try {
