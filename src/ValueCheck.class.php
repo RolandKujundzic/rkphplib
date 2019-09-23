@@ -155,7 +155,7 @@ public static function sqlQuery(string $ignore, string $colnames, string $query)
 		}
   }
 
-  // \rkphplib\lib\log_debug("ValueCheck::sqlQuery:166> ignore=[$ignore] colnames=[$colnames] query: $query");
+  // \rkphplib\lib\log_debug("ValueCheck::sqlQuery:158> ignore=[$ignore] colnames=[$colnames] query: $query");
   $dbres = $db->select($query);
   return count($dbres) > 0;
 }
@@ -292,10 +292,10 @@ public static function isUnique(string $value, array $p) : bool {
 
 	$db = \rkphplib\Database::getInstance('', [ 'select_unique' => $query ]);
 	$query = $db->getQuery('select_unique', [ 'id_val' => $id_val, 'u_val' => $p[2] ]);
-	// \rkphplib\lib\log_debug("ValueCheck::isUnique:307> value=[$value] p=".print_r($p, true)."\n$query");
+	// \rkphplib\lib\log_debug("ValueCheck::isUnique:295> value=[$value] p=".print_r($p, true)."\n$query");
 	$dbres = $db->select($query);
 	$anz = intval($dbres[0]['anz']);
-	// \rkphplib\lib\log_debug("ValueCheck::isUnique:310> anz=$anz");
+	// \rkphplib\lib\log_debug("ValueCheck::isUnique:298> anz=$anz");
 	return (!empty($p[3]) && $p[3] == '1') ? $anz == 1 : $anz == 0;
 }
 
@@ -305,7 +305,7 @@ public static function isUnique(string $value, array $p) : bool {
  * Slash at start and end of regular expression are optional.
  */
 public static function isMatch(string $value, string $rx) : bool {
-	// \rkphplib\lib\log_debug("ValueCheck::isMatch:325> value=[$value] rx=[$rx]");
+	// \rkphplib\lib\log_debug("ValueCheck::isMatch:308> value=[$value] rx=[$rx]");
 	if (empty($rx)) {
 		throw new Exception('empty regular expression', "value=[$value]");
 	}
@@ -318,7 +318,7 @@ public static function isMatch(string $value, string $rx) : bool {
 	}
 
   $res = preg_match($rx, $value);
-	// \rkphplib\lib\log_debug("ValueCheck::isMatch:338> value=[$value], rx=[$rx] return res=[".intval($res)."]");
+	// \rkphplib\lib\log_debug("ValueCheck::isMatch:321> value=[$value], rx=[$rx] return res=[".intval($res)."]");
   return $res;
 }
 
