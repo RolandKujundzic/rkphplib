@@ -9,6 +9,8 @@ namespace rkphplib\lib;
  * Show APP_DESC if defined. Use APP instead of $_SERVER['argv'][0] if defined. 
  * Use '@file:path/to/file' to enable file exists check for parameter.
  * Use '@dir:path/to/directory' to enable directory exists check for parameter.
+ * Use '@?:optional' for optional parameter
+ * Use '@example:...' for example of previous parameter
  * Use '@or:on|off' to ensure parameter is either 'on' or 'off'.
  * Use '@docroot' for getcwd == DOCROOT check.
  * Use --name=value for optional parameter name - define(PARAMETER_NAME, value).
@@ -39,6 +41,7 @@ function syntax(array $argv_example = [], string $desc = '') : bool {
 	$arg_num = (count($argv_example) > 0) ? count($argv_example) + 1 : 0;
 	$is_error = false;
 	$error_msg = '';
+	$example = [];
 
 	for ($i = 0; !$is_error && $i < count($argv_example); $i++) {
 		$param = $argv_example[$i];
@@ -66,6 +69,14 @@ function syntax(array $argv_example = [], string $desc = '') : bool {
 			}
 
 			$pos = 4;
+		}
+		else if (substr($param, 0, 3) == '@?:') {
+			// optional parameter
+			$argv_example[$i] = '['.substr($param, 3).']';
+			$arg_num--;
+		}
+		else if (substr($param, 0, 9) == '@example:') {
+			array_push($example, $i);
 		}
 		else if ($param == '@docroot') {
 			if (!defined('DOCROOT')) {
@@ -95,6 +106,22 @@ function syntax(array $argv_example = [], string $desc = '') : bool {
 	}
 
 	$res = true;
+
+	if (count($example) > 0) {
+		$app_desc .= "\n$app";
+
+		for ($j = 0; $j < count($example); $j++) {
+			$pos = $example[$j];
+			$app_desc .= " '".str_replace("'", "\\'", substr($argv_example[$pos], 9))."'";
+			$arg_num--;
+		}
+
+		for ($j = count($example) - 1; $j >= 0; $j--) {
+			array_splice($argv_example, $example[$j], 1);
+		}
+
+		$app_desc .= "\n\n"; 
+	}
 
 	if (defined('APP_HELP')) {
 		if (APP_HELP != 'quiet') {
