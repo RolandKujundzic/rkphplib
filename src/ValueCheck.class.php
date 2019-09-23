@@ -582,16 +582,10 @@ public static function date_greater(string $value, string $max_date, bool $hms_c
 
 
 /**
- * Return value op compare_with. Operator is:
- *  
- * ge (greater_equal), le (lower_equal), lower, greater, equal
- * 
- * @param float $value
- * @param string $op 
- * @param float $compare_with
- * @return boolean
+ * Return comparision result "$value $op $compare_with". Operator $op is:
+ * ge (greater_equal), le (lower_equal), lower (lt), greater (gt), equal (eq).
  */
-public static function compare($value, $op, $compare_with) {
+public static function compare(float $value, string $op, float $compare_with) : bool {
 	$res = false;
 
 	if ($op == 'le' || $op == 'lower_equal') {
@@ -600,13 +594,13 @@ public static function compare($value, $op, $compare_with) {
 	else if ($op == 'ge' || $op == 'greater_equal') {
 		$res = $value >= $compare_with;
 	}
-	else if ($op == 'lower') {
+	else if ($op == 'lt' || $op == 'lower') {
 		$res = $value < $compare_with;
 	}
-	else if ($op == 'greater') {
+	else if ($op == 'gt' || $op == 'greater') {
 		$res = $value > $compare_with;
 	}
-	else if ($op == 'equal') {
+	else if ($op == 'eq' || $op == 'equal') {
 		$res = $value == $compare_with;
 	}
 
@@ -615,42 +609,36 @@ public static function compare($value, $op, $compare_with) {
 
 
 /**
- * True if !empty(value)
+ * True if !empty(value).
+ *
+ * @param mixed $value
  */
-public static function not_empty($value) {
+public static function not_empty($value) : bool {
 	return !empty($value);
 }
 
 
 /**
  * True if there is no html tag within value ( < ... > ).
- * @param string $value
- * @return boolean
  */
-public static function noHTML($value) {
+public static function noHTML(string $value) : bool {
 	$has_html_tag = ($pos = mb_strpos($value, '<')) !== false && mb_strpos($value, '>', $pos + 1) !== false;
 	return !$has_html_tag;
 }
 
 
 /**
- * True if value has suffix.
- * @param string $value
- * @param string $suffix
- * @return boolean
+ * True if $value contains suffix $suffix.
  */
-public static function hasSuffix($value, $suffix) {
+public static function hasSuffix(string $value, string $suffix) : bool {
 	return mb_substr($value, -1 * mb_strlen($suffix)) == $suffix;
 }
 
 
 /**
- * True if value has prefix.
- * @param string $value
- * @param string $prefix
- * @return boolean
+ * True if $value contains prefix $prefix.
  */
-public static function hasPrefix($value, $prefix) {
+public static function hasPrefix(string $value, string $prefix) : bool {
 	return mb_substr($value, 0, mb_strlen($prefix)) == $prefix;
 }
 
