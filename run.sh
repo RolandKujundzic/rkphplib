@@ -322,7 +322,7 @@ EOL
 # question 1 and reject question 2. Set CONFIRM_COUNT= before _confirm if necessary.
 #
 # @param string message
-# @param bool switch y and n (y = default, wait 3 sec)
+# @param 2^N flag 1=switch y and n (y = default, wait 3 sec) | 2=auto-confirm (y)
 # @export CONFIRM CONFIRM_TEXT
 #------------------------------------------------------------------------------
 function _confirm {
@@ -332,6 +332,18 @@ function _confirm {
 		CONFIRM_COUNT=1
 	else
 		CONFIRM_COUNT=$((CONFIRM_COUNT + 1))
+	fi
+
+	local FLAG=$(($2 + 0))
+
+	if test $((FLAG & 2)) = 2; then
+		if test $((FLAG & 1)) = 1; then
+			CONFIRM=n
+		else
+			CONFIRM=y
+		fi
+
+		return
 	fi
 
 	while read -d $'\0' 
@@ -354,7 +366,7 @@ function _confirm {
 
 	local DEFAULT=
 
-	if test -z "$2"; then
+	if test $((FLAG & 1)) -ne 1; then
 		DEFAULT=n
 		echo -n "$1  y [n]  "
 		read -n1 -t 10 CONFIRM
@@ -386,32 +398,60 @@ function _docs {
 
 
 #------------------------------------------------------------------------------
+function _strict_types_off {
+  local LOG=`echo "$1.log" | sed -E 's/\//:/g'`
+
+  echo -e "remove strict types from $1 (see .rkscript/$LOG)"
+  "$PATH_PHPLIB/bin/toggle" "$1" strict_types off >".rkscript/$LOG" 2>&1
+
+  local HAS_ERROR=`tail -10 ".rkscript/$LOG" | grep 'ERROR in '`
+  local PHP_ERROR=`tail -2 ".rkscript/$LOG" | grep 'PHP Parse error'`
+
+  if ! test -z "$HAS_ERROR" || ! test -z "$PHP_ERROR"; then
+    _abort "$HAS_ERROR"
+  fi
+}
+
+
+#------------------------------------------------------------------------------
 function _php5 {
+  local BRANCH=`git branch | grep '* ' | sed 's/* //'`
+  local PROJECT=`realpath .`
+
+  if ! test -s "$PROJECT/.git/config"; then
+    _abort "project is not git repository"
+  fi
+
+  local IS_RKPHPLIB=`cat .git/config | grep '/rkphplib.git'`
+
+  if test -z "$IS_RKPHPLIB"; then
+    _abort "change into rkphplib directory"
+  fi
+
+  if test "$BRANCH" != "php5"; then
+    git checkout -b php5
+  else
+    git pull
+  fi
+
 	if test -z "$PATH_PHPLIB"; then
-		_abort "export PATH_PHPLIB"
+		if test -s "../phplib/bin/toggle"; then
+			PATH_PHPLIB=`realpath ../phplib`
+		else
+			_abort "export PATH_PHPLIB"
+		fi
 	fi
 
-	# copy to lib5 and remove strict
-	_rm lib5
-	_mkdir lib5
+	_strict_types_off src
+	_strict_types_off test
 
-	rsync -a --delete src bin test lib5
-	"$PATH_PHPLIB/bin/toggle" lib5/src strict_types off
-	"$PATH_PHPLIB/bin/toggle" lib5/test strict_types off
-
-	for a in lib5/bin/*; do
-		"$PATH_PHPLIB/bin/toggle" $a strict_types off
+	for a in bin/*; do
+		_strict_types_off $a
 	done
 
 	git stash
 	git checkout -b php5
 	git pull
-
-	diff -u src lib5/src > diff_lib5_src.txt
-	diff -u src lib5/test > diff_lib5_test.txt
-	diff -u src lib5/bin > diff_lib5_bin.txt
-
-	echo "check diff_lib5_[src|test|bin].txt"
 }
 
 
@@ -674,10 +714,10 @@ LOG_NO_ECHO=
 # @export LOG_NO_ECHO LOG_COUNT[$2] LOG_FILE[$2] LOG_CMD[$2]
 #------------------------------------------------------------------------------
 function _log {
-	test -z "$LOG_NO_ECHO" || echo -n "$1"
+	test -z "$LOG_NO_ECHO" && echo -n "$1"
 	
 	if test -z "$2"; then
-		test -z "$LOG_NO_ECHO" || echo
+		test -z "$LOG_NO_ECHO" && echo
 		return
 	fi
 
@@ -691,7 +731,7 @@ function _log {
 	local NOW=`date +'%d.%m.%Y %H:%M:%S'`
 	echo -e "# _$2: $NOW\n# $PWD\n# $1 ${LOG_CMD[$2]}\n" > "${LOG_FILE[$2]}"
 
-	test -z "$LOG_NO_ECHO" || echo " LOG_CMD[$2]"
+	test -z "$LOG_NO_ECHO" && echo " ${LOG_CMD[$2]}"
 }
 
 
@@ -824,15 +864,24 @@ function _require_dir {
 
 
 #------------------------------------------------------------------------------
-# Abort if global variable is empty.
+# Abort if global variable is empty. With bash version >= 4.4 check works even
+# for arrays.
 #
 # @param variable name (e.g. "GLOBAL" or "GLOB1 GLOB2 ...")
 # @require _abort
 #------------------------------------------------------------------------------
 function _require_global {
+	local BASH_VERSION=`bash --version | grep -E '.+bash.+Version [0-9\.]+' | sed -E 's/^.+Version ([0-9]+)\.([0-9]+)\..+$/\1.\2/'`
+
 	local a=; for a in $1; do
-		if test -z "${!a}"; then
-			_abort "No such global variable $a"
+		if (( $(echo "$BASH_VERSION >= 4.4" | bc -l) )); then
+			typeset -n ARR=$a
+
+			if test -z "$ARR" && test -z "${ARR[@]:1:1}"; then
+				echo "no such global variable $a"
+			fi
+		elif test -z "${!a}"; then
+			echo "no such global variable $a"
 		fi
 	done
 }
@@ -994,7 +1043,7 @@ function _syntax {
 #------------------------------------------------------------------------------
 function _syntax_check_php {
 	local PHP_FILES=`find "$1" -type f -name '*.php'`
-	local PHP_BIN=`grep -R '#\!/usr/bin/php' "bin" | sed -E 's/\:#\!.+//'`
+	local PHP_BIN=`grep -R -E '^#\!/usr/bin/php' "bin" | grep -v 'php -c skip_syntax_check' | sed -E 's/\:\#\!.+//'`
 
 	_require_global PATH_RKPHPLIB
 
@@ -1005,7 +1054,11 @@ function _syntax_check_php {
 
 	for a in $PHP_FILES $PHP_BIN
 	do
-		echo "_syntax_test('$a');" >> "$2"
+		local SKIP=`head -1 "$a" | grep 'php -c skip_syntax_check'`
+	
+		if test -z "$SKIP"; then
+			echo "_syntax_test('$a');" >> "$2"
+		fi
 	done
 }
 
