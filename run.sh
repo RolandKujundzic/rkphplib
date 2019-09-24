@@ -415,24 +415,8 @@ function _strict_types_off {
 
 #------------------------------------------------------------------------------
 function _php5 {
-  local BRANCH=`git branch | grep '* ' | sed 's/* //'`
-  local PROJECT=`realpath .`
-
-  if ! test -s "$PROJECT/.git/config"; then
-    _abort "project is not git repository"
-  fi
-
-  local IS_RKPHPLIB=`cat .git/config | grep '/rkphplib.git'`
-
-  if test -z "$IS_RKPHPLIB"; then
-    _abort "change into rkphplib directory"
-  fi
-
-  if test "$BRANCH" != "php5"; then
-    git checkout -b php5
-  else
-    git pull
-  fi
+	git checkout php5
+	rks-gitify branch sync
 
 	if test -z "$PATH_PHPLIB"; then
 		if test -s "../phplib/bin/toggle"; then
@@ -448,16 +432,6 @@ function _php5 {
 	for a in bin/*; do
 		_strict_types_off $a
 	done
-
-	git stash
-	git checkout -b php5
-	git pull
-
-	diff -u src lib5/src > diff_src.txt 
-	diff -u src lib5/bin > diff_bin.txt 
-	diff -u src lib5/test > diff_test.txt 
-
-	echo "Check diff_[src|bin|test].txt"
 }
 
 
