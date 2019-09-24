@@ -69,7 +69,7 @@ END;
 public function initMeta() {
 
 	if (!empty($this->conf['init_meta'])) {
-		// \rkphplib\lib\log_debug('ASession.initMeta:74> use existing'); 
+		// \rkphplib\lib\log_debug('ASession.initMeta:72> use existing'); 
 		return;
 	}
 
@@ -125,7 +125,7 @@ public function getConf($key) {
  *  Check inactive and ttl with hasExpired().
  */
 protected function setConf($conf) {
-	// \rkphplib\lib\log_debug('ASession.setConf:130> enter - conf: '.print_r($conf, true));
+	// \rkphplib\lib\log_debug('ASession.setConf:128> enter - conf: '.print_r($conf, true));
 
 	$default = [ 'name' => '', 'table' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => '0', 
 		'redirect_login' => 'index.php?dir=login',  'redirect_logout' => 'index.php?dir=login/exit',
@@ -175,7 +175,7 @@ protected function setConf($conf) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('ASession.setConf:180> exit - this.conf: '.print_r($this->conf, true));
+	// \rkphplib\lib\log_debug('ASession.setConf:178> exit - this.conf: '.print_r($this->conf, true));
 }
 
 

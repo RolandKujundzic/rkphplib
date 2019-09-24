@@ -24,6 +24,23 @@ function _strict_types_off {
 
 
 #------------------------------------------------------------------------------
+function _log_debug_off {
+  local LOG=`echo "$1.log" | sed -E 's/\//:/g'`
+
+  echo -e "update log debug line numbers in $1 (see .rkscript/$LOG)"
+  "$PATH_PHPLIB/bin/toggle" "$1" log_debug on >".rkscript/$LOG" 2>&1
+  "$PATH_PHPLIB/bin/toggle" "$1" log_debug off >>".rkscript/$LOG" 2>>&1
+
+  local HAS_ERROR=`tail -10 ".rkscript/$LOG" | grep 'ERROR in '`
+  local PHP_ERROR=`tail -2 ".rkscript/$LOG" | grep 'PHP Parse error'`
+
+  if ! test -z "$HAS_ERROR" || ! test -z "$PHP_ERROR"; then
+    _abort "$HAS_ERROR"
+  fi
+}
+
+
+#------------------------------------------------------------------------------
 function _php5 {
 	git checkout php5
 	rks-gitify branch sync
@@ -38,6 +55,8 @@ function _php5 {
 
 	_strict_types_off src
 	_strict_types_off test
+	_log_debug_off src
+	_log_debug_off test
 
 	for a in bin/*; do
 		_strict_types_off $a

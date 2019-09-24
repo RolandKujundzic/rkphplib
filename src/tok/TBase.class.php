@@ -456,7 +456,7 @@ public function tok_tpl($p, $arg) {
 		$tpl = $this->_tok->replaceTags($tpl, \rkphplib\lib\conf2kv($arg));
 	}
 
-	// \rkphplib\lib\log_debug("TBase.tok_tpl:465> return $tpl"); 
+	// \rkphplib\lib\log_debug("TBase.tok_tpl:459> return $tpl"); 
 	return $tpl;
 }
 
@@ -675,7 +675,7 @@ private function tableRow($cols, $p) {
 		$res .= "</table>\n";
 	}
 
-	// \rkphplib\lib\log_debug("TBase.tableRow:684> return $res");
+	// \rkphplib\lib\log_debug("TBase.tableRow:678> return $res");
 	return $res;
 }
 
@@ -903,7 +903,7 @@ public function tok_clear($txt) {
  * @return string
  */
 public function tok_keep($txt) {
-	// \rkphplib\lib\log_debug("TBase.tok_keep:912> return $txt");
+	// \rkphplib\lib\log_debug("TBase.tok_keep:906> return $txt");
 	return $txt;
 }
 
@@ -1060,7 +1060,7 @@ public function tok_load($param, $file) {
  * @return string
  */
 public function tok_link($name_list, $p) {
-	// \rkphplib\lib\log_debug("TBase.tok_link:1069> name_list: ".print_r($name_list, true)."\np: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TBase.tok_link:1063> name_list: ".print_r($name_list, true)."\np: ".print_r($p, true));
 	$res = 'index.php?'.SETTINGS_REQ_CRYPT.'=';
 	$keep = false;
 	$seo = '';
@@ -1159,7 +1159,7 @@ public function tok_link($name_list, $p) {
 		$res .= self::encodeHash($p);
 	}
 
-	// \rkphplib\lib\log_debug("TBase.tok_link:1168> return $res");
+	// \rkphplib\lib\log_debug("TBase.tok_link:1162> return $res");
 	return $res;
 }
 
@@ -1260,7 +1260,7 @@ public static function decodeHash($data, $export_into_req = false) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TBase::decodeHash:1269> return ".print_r($res, true));
+	// \rkphplib\lib\log_debug("TBase::decodeHash:1263> return ".print_r($res, true));
 	return $res;
 }
 
@@ -1571,7 +1571,7 @@ public function tok_filter($tag, $filter_list) {
  * @return string
  */
 private function applyFilter($tag, $value) {
-	// \rkphplib\lib\log_debug("TBase.applyFilter:1580> tag=$tag value=[$value]");
+	// \rkphplib\lib\log_debug("TBase.applyFilter:1574> tag=$tag value=[$value]");
 
 	if (!isset($this->_conf['filter.'.$tag])) {
 		throw new Exception('no filter', "tag=$tag value=[$value] _conf: ".print_r($this->_conf, true));
@@ -1599,7 +1599,7 @@ private function applyFilter($tag, $value) {
 			throw new Exception('invalid filter', "tag=$tag filter=$filter value=[$value]");
 		}
 
-		// \rkphplib\lib\log_debug("TBase.applyFilter:1608> filter=$filter value=[$value]");
+		// \rkphplib\lib\log_debug("TBase.applyFilter:1602> filter=$filter value=[$value]");
 	}
 
 	return $value;
@@ -1639,7 +1639,7 @@ public function tok_esc($param, $arg) {
 	}
 
 	if (is_null($arg) || $arg === 'null' || $arg === 'NULL') {
-		// \rkphplib\lib\log_debug("TBase.tok_esc:1648> return NULL");
+		// \rkphplib\lib\log_debug("TBase.tok_esc:1642> return NULL");
 		return 'NULL';
 	}
 
@@ -1649,7 +1649,7 @@ public function tok_esc($param, $arg) {
 
 	$arg = $this->applyFilter('esc', $arg);
 
-	// \rkphplib\lib\log_debug("TBase.tok_esc:1658> return [$arg]");
+	// \rkphplib\lib\log_debug("TBase.tok_esc:1652> return [$arg]");
 	return $arg;
 }
 
@@ -2013,17 +2013,17 @@ public function tok_plugin($p) {
 		if (mb_strpos($plugin, ':') === false) {
 			require_once PATH_RKPHPLIB.'tok/'.$plugin.'.class.php';
 			$obj = '\\rkphplib\\tok\\'.$plugin;
-			// \rkphplib\lib\log_debug("TBase.tok_plugin:2022> require_once('".PATH_RKPHPLIB.'tok/'.$plugin.".class.php'); new $obj();");
+			// \rkphplib\lib\log_debug("TBase.tok_plugin:2016> require_once('".PATH_RKPHPLIB.'tok/'.$plugin.".class.php'); new $obj();");
 		}
 		else {
 			list ($path, $obj) = explode(':', $plugin);
 
 			if (basename($path) === $path && defined("PATH_$path")) {
 				$incl_path = constant("PATH_$path").'tok/'.$obj.'.class.php';
-				// \rkphplib\lib\log_debug("TBase.tok_plugin:2029> path=$path incl_path=$incl_path");
+				// \rkphplib\lib\log_debug("TBase.tok_plugin:2023> path=$path incl_path=$incl_path");
 				require_once $incl_path;
 				$obj = '\\'.strtolower($path).'\\tok\\'.$obj;
-				// \rkphplib\lib\log_debug("TBase.tok_plugin:2032> require_once('$incl_path'); new $obj();");
+				// \rkphplib\lib\log_debug("TBase.tok_plugin:2026> require_once('$incl_path'); new $obj();");
 			}
 			else {
 				throw new Exception("invalid path=[$path] or undefined PATH_$path");
@@ -2368,7 +2368,7 @@ public function tok_true($val, $out) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('TBase.tok_true:2377> val='.print_r($val, true).' tf='.print_r($tf, true));
+	// \rkphplib\lib\log_debug('TBase.tok_true:2371> val='.print_r($val, true).' tf='.print_r($tf, true));
 	return ((is_bool($tf) && $tf) || (is_array($val) && in_array($tf, $val)) || (is_string($tf) && $tf === $val) || 
 		(is_array($tf) && !empty($val) && in_array($val, $tf))) ? $out : '';
 }

@@ -79,7 +79,7 @@ public function getPlugins($tok) {
  */
 public function tok_job($conf) {
 	$default = [ 'do.run' => 'run=yes', 'do.remove' => 'lock=remove' ];
-	// \rkphplib\lib\log_debug("TJob.tok_job:84> default: ".print_r($default, true)." conf: ".print_r($conf, true));
+	// \rkphplib\lib\log_debug("TJob.tok_job:82> default: ".print_r($default, true)." conf: ".print_r($conf, true));
 	$this->conf = array_merge($default, $conf);  
 
 	if (isset($this->conf['if']) && empty($this->conf['if'])) {
@@ -119,7 +119,7 @@ public function tok_job($conf) {
  * @return boolean
  */
 private function running() {
-	// \rkphplib\lib\log_debug("TJob.running:124> lockfile=".$this->conf['lockfile']);
+	// \rkphplib\lib\log_debug("TJob.running:122> lockfile=".$this->conf['lockfile']);
 
 	if (!File::exists($this->conf['lockfile'])) {	
 		$_REQUEST['job_status'] = 'prepare';

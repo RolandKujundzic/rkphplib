@@ -3,7 +3,7 @@
 require_once(dirname(dirname(__DIR__)).'/src/lib/log_debug.php');
 
 function a() {
-	\rkphplib\lib\log_debug('debug 1');
+	// \rkphplib\lib\log_debug('a:6> debug 1');
 }
 
 class B {
@@ -12,7 +12,7 @@ class B {
 	}
 
 	private function _x() {
-		\rkphplib\lib\log_debug('debug 2');
+		// \rkphplib\lib\log_debug('B._x:15> debug 2');
 	}
 }
 

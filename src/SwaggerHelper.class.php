@@ -34,7 +34,7 @@ public $last_schema = '';
 /**
  * Load yaml file.
  */
-public function loadYaml(string $yaml_file) : array {
+public function loadYaml($yaml_file) {
 	$this->sobj = YAML::load($yaml_file);
 	return $this->sobj;
 }
@@ -43,7 +43,7 @@ public function loadYaml(string $yaml_file) : array {
 /**
  * Define 'info' or 'swagger'.
  */
-public function setSWG(string $name, string $value) : void {
+public function setSWG($name, $value) {
 	$allow = [ 'info', 'swagger' ];
 
 	if (!in_array($name, $allow)) {
@@ -61,7 +61,7 @@ public function setSWG(string $name, string $value) : void {
  * - save_as: file path (don't return annotations)
  * - code_header: prepend to php files created in save_as if set
  */
-public function getAnnotations(array $options = []) : array {
+public function getAnnotations($options = []) {
 
 	if (count($this->sobj) == 0) {
 		throw new Exception('no swagger object - call loadYaml first');
@@ -111,7 +111,7 @@ public function getAnnotations(array $options = []) : array {
  * Return swg blocks. If name is empty merge all blocks.
  * Prepend [ * ] before every line. Add header and footer comment.
  */
-private function getSWG(string $name = '') : string {
+private function getSWG($name = '') {
 	$res = '';
 		
 	if ($name) {
@@ -136,7 +136,7 @@ private function getSWG(string $name = '') : string {
 /**
  * Return [$name={"value1", ... , "valueN"}] (if $p[$name] is array) or [$name="$value"].
  */
-private function getKeyValue(array $p, string $name) : string {
+private function getKeyValue($p, $name) {
 	$res = '';
 
 	if (!isset($p[$name])) {
@@ -179,7 +179,7 @@ private function getKeyValue(array $p, string $name) : string {
 /**
  * Return [schema_name, schema_swg].
  */
-private function getSchema(string $ref) : array {
+private function getSchema($ref) {
 	$name = '';
 	$swg = '';
 
@@ -198,7 +198,7 @@ private function getSchema(string $ref) : array {
 /**
  * Return parameter annotation vector. Last element of vector is [ required, schema ].
  */
-private function parseParameters(array $param_list) : array {
+private function parseParameters($param_list) {
 	$this->log(" parameters");
 
 	$required = [];
@@ -237,7 +237,7 @@ private function parseParameters(array $param_list) : array {
 /**
  * Return vector with SWG\Response annotations. Last vector element is schema list.
  */
-private function parseResponses(array $p) : array {
+private function parseResponses($p) {
 	$this->log(" responses");
 
 	$schema_list = [];
@@ -268,7 +268,7 @@ private function parseResponses(array $p) : array {
 /**
  * Parse path data. Return annotation for method+path.
  */
-private function parsePath(string $method, string $path, array $p) : string {
+private function parsePath($method, $path, $p) {
 
 	$this->log("$method:$path ...");
 	$this->last_schema = '';
@@ -326,7 +326,7 @@ private function parsePath(string $method, string $path, array $p) : string {
 /**
  * Print log message.
  */
-private function log(string $msg) : void {
+private function log($msg) {
 	print "$msg";
 }
 
@@ -334,7 +334,7 @@ private function log(string $msg) : void {
 /**
  * Return SWG\Definition annotations.
  */
-private function parseDefinitions(string $name) : string {
+private function parseDefinitions($name) {
 	$this->log(" definition:$name");
 
 	if (!isset($this->sobj['definitions'][$name])) {

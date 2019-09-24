@@ -107,7 +107,7 @@ public function tok_sql_hasTable($param, $arg) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TSQL.tok_sql_hasTable:113> list=[$list] res=[$res]");
+	// \rkphplib\lib\log_debug("TSQL.tok_sql_hasTable:110> list=[$list] res=[$res]");
 	return $res ? 1 : '';
 }
 
@@ -252,7 +252,7 @@ public function tok_sql_nextId($table) {
 		throw new Exception('[sql:nextId] failed', "table=$table use_table=$use_table res=$res"); 
 	}
 
-	// \rkphplib\lib\log_debug("TSQL.tok_sql_nextId:258> table=[$table] res=[$res]");
+	// \rkphplib\lib\log_debug("TSQL.tok_sql_nextId:255> table=[$table] res=[$res]");
 	return $res;
 }
 
@@ -281,7 +281,7 @@ public function tok_sql_password($param, $password) {
 		$mysql_pass = '*'.strtoupper(sha1(sha1($password, true)));
 	}
 
-	// \rkphplib\lib\log_debug("TSQL.tok_sql_password:287> param=[$param] password=[$password] mysql_pass=[$mysql_pass]");
+	// \rkphplib\lib\log_debug("TSQL.tok_sql_password:284> param=[$param] password=[$password] mysql_pass=[$mysql_pass]");
 	return $mysql_pass;
 }
 
@@ -433,7 +433,7 @@ public function tok_sql_change($p) {
 	}
 
 	$query = $this->db->buildQuery($p['table'], $do, $r);
-	// \rkphplib\lib\log_debug("TSQL.tok_sql_change:439> do=[$do] query=[$query]");
+	// \rkphplib\lib\log_debug("TSQL.tok_sql_change:436> do=[$do] query=[$query]");
 	$this->db->execute($query);
 
 	if ($do == 'insert' && $id_mode == 'auto_increment') {
