@@ -26,7 +26,7 @@ test)
 	php test/run.php
 	;;
 docs)
-	_apigen_doc
+	_docs
 	;;
 mb_check)
 	_mb_check

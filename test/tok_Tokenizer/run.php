@@ -16,7 +16,7 @@ use \rkphplib\tok\Tokenizer;
 /**
  *
  */
-class TOutput {
+class TOutput implements TokPlugin {
 
 private $mode;
 
@@ -24,7 +24,7 @@ public function __construct($mode = 'A') {
 	$this->mode = $mode;
 }
 
-public function getPlugins($tok) {
+public function getPlugins(Tokenizer $tok) : array {
 	$plugin = [];
 
 	if ($this->mode == 'A') {

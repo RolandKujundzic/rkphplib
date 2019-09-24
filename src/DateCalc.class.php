@@ -67,7 +67,8 @@ public static function monthName($month) {
 /**
  * Convert sql date(time) "yyyy-mm-dd[ hh:ii:ss]" to number "yyyymmdd[.hhiiss]".
  * Use day > 0 to force day instead of dd. Use day = -1 to cut off hh:ii:ss.
- * Return int|float.
+ *
+ * @return mixed int|float
  */
 public static function sql2num($sql_date, $day = 0) {
 	$res = null;

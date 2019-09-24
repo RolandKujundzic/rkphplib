@@ -1,23 +1,62 @@
 #!/bin/bash
 
+#------------------------------------------------------------------------------
+function _docs {
+	_apigen_doc
+	_phpdocumentor
+}
+
+
+#------------------------------------------------------------------------------
+function _strict_types_off {
+  local LOG=`echo "$1.log" | sed -E 's/\//:/g'`
+
+  echo -e "remove strict types from $1 (see .rkscript/$LOG)"
+  "$PATH_PHPLIB/bin/toggle" "$1" strict_types off >".rkscript/$LOG" 2>&1
+
+  local HAS_ERROR=`tail -10 ".rkscript/$LOG" | grep 'ERROR in '`
+  local PHP_ERROR=`tail -2 ".rkscript/$LOG" | grep 'PHP Parse error'`
+
+  if ! test -z "$HAS_ERROR" || ! test -z "$PHP_ERROR"; then
+    _abort "$HAS_ERROR"
+  fi
+}
+
 
 #------------------------------------------------------------------------------
 function _php5 {
+  local BRANCH=`git branch | grep '* ' | sed 's/* //'`
+  local PROJECT=`realpath .`
+
+  if ! test -s "$PROJECT/.git/config"; then
+    _abort "project is not git repository"
+  fi
+
+  local IS_RKPHPLIB=`cat .git/config | grep '/rkphplib.git'`
+
+  if test -z "$IS_RKPHPLIB"; then
+    _abort "change into rkphplib directory"
+  fi
+
+  if test "$BRANCH" != "php5"; then
+    git checkout -b php5
+  else
+    git pull
+  fi
+
 	if test -z "$PATH_PHPLIB"; then
-		_abort "export PATH_PHPLIB"
+		if test -s "../phplib/bin/toggle"; then
+			PATH_PHPLIB=`realpath ../phplib`
+		else
+			_abort "export PATH_PHPLIB"
+		fi
 	fi
 
-	# copy to lib5 and remove strict
-	_rm lib5
-	_mkdir lib5
+	_strict_types_off src
+	_strict_types_off test
 
-	rsync -a --delete src bin test lib5
-
-	"$PATH_PHPLIB/bin/toggle" lib5/src strict_types off
-	"$PATH_PHPLIB/bin/toggle" lib5/test strict_types off
-
-	for a in lib5/bin/*; do
-		"$PATH_PHPLIB/bin/toggle" $a strict_types off
+	for a in bin/*; do
+		_strict_types_off $a
 	done
 
 	git stash
@@ -45,12 +84,15 @@ function _build {
 	_rm syntax_check_bin.php
 
 	if ! test -z "$PATH_PHPLIB"; then
-		"$PATH_PHPLIB/bin/toggle" log_debug on
-		"$PATH_PHPLIB/bin/toggle" log_debug off
+		"$PATH_PHPLIB/bin/toggle" src log_debug on
+		"$PATH_PHPLIB/bin/toggle" src log_debug off
 	fi
 
 	bin/plugin_map
+
+	_require_program composer
 	composer validate --no-check-all --strict
+
   git status
 }
 

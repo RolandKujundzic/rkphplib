@@ -17,11 +17,12 @@ $th->runTest('lib_split_str/run.php');
 $th->runTest('lib_csv_explode/run.php');
 $th->runTest('lib_replace_tags/run.php');
 $th->runTest('DateTime/run.php');
-$th->runTest('Tokenizer/run.php');
 $th->runTest('Dir/run.php');
-$th->runTest('TBase/run.php');
+$th->runTest('tok_Tokenizer/run.php');
+$th->runTest('tok_TBase/run.php');
 $th->result();
 
 // ToDo ...
 // run_test('MysqlDatabase/run.php');
+// run_test('tok_TOutput/run.php');
 

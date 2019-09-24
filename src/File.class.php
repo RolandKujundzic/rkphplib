@@ -479,7 +479,9 @@ public static function imageInfo($file, $abort = true) {
 
 /**
  * Open and lock file (or pipe if $file = STDOUT|STDIN).
- * Return file handle. Use either LOCK_EX or LOCK_SH as $lock_mode.
+ * Return file handle (resource). Use either LOCK_EX or LOCK_SH as $lock_mode.
+ * 
+ * @return resource
  */
 private static function _open_lock($file, $lock_mode, $open_mode) {
 
@@ -674,9 +676,10 @@ public static function append($file, $data) {
 
 
 /**
- * Open File for reading. 
- *
- * Use mode = rb|ab|wb|ru|wu. Always use ru for reading and wu for writing UTF-8 text files.
+ * Open File for reading. Return file handle (resource). Use mode = rb|ab|wb|ru|wu. 
+ * Always use ru for reading and wu for writing UTF-8 text files.
+ * 
+ * @return resource
  */
 public static function open($file, $mode = 'rb') {
 
@@ -736,7 +739,9 @@ public static function loadLines($file, $flags = 0) {
 
 
 /**
- * Write CSV line to file.
+ * Write CSV line to file. 
+ *
+ * @param resource $fh
  */
 public static function writeCSV($fh, $data, $delimiter = ',', $enclosure = '"', $escape = '\\') {
 
@@ -752,6 +757,8 @@ public static function writeCSV($fh, $data, $delimiter = ',', $enclosure = '"', 
 
 /**
  * Write to data file.
+ *
+ * @param resource $fh
  */
 public static function write($fh, $data) {
 	$data_len = strlen($data);
@@ -780,7 +787,7 @@ public static function write($fh, $data) {
 			$data_len = $data_len - $byte;
 			$byte = fwrite($fh, substr($data, $byte));
 			$msg = ($data_len > 80) ? substr($data, 0, 40).' ... '.substr($data, -40) : $data;
-			// \rkphplib\lib\log_debug("File::write:784> retry write: n=[$n] prev_len=[$prev_len] data_len=[$data_len] byte=[$byte] data=[$msg]");
+			// \rkphplib\lib\log_debug("File::write:791> retry write: n=[$n] prev_len=[$prev_len] data_len=[$data_len] byte=[$byte] data=[$msg]");
 
 			if ($byte === false) {
 				throw new Exception('could not write data', "retry=[$n] fh=[$fh] byte=[$byte] len=[$data_len] prev_len=[$prev_len]");
@@ -801,7 +808,10 @@ public static function write($fh, $data) {
 
 
 /**
- * Read up to length bytes from file. Return string|false.
+ * Read up to length bytes from file.
+ *
+ * @param resource $fh
+ * @return mixed string|false
  */
 public static function read($fh, $length = 8192) {
 
@@ -823,6 +833,8 @@ public static function read($fh, $length = 8192) {
 
 /**
  * Return true if filehandle is at eof.
+ *
+ * @param resource $fh
  */
 public static function end($fh) {
 	return feof($fh);
@@ -830,7 +842,10 @@ public static function end($fh) {
 
 
 /**
- * Read line from filehandle (until \n or EOF is reached). Return string|bool.
+ * Read line from filehandle (until \n or EOF is reached).
+ *
+ * @param resource $fh
+ * @return mixed string|bool
  */
 public static function readLine($fh) {
 
@@ -899,6 +914,8 @@ public static function unserialize($file) {
 
 /**
  * Read CSV line from filehandle.
+ *
+ * @param resource $fh
  */
 public static function readCSV($fh, $delimiter = ',', $enclosure = '"', $escape = '\\') {
 
@@ -925,6 +942,8 @@ public static function readCSV($fh, $delimiter = ',', $enclosure = '"', $escape 
 
 /**
  * Close file.
+ * 
+ * @param resource &$fh
  */
 public static function close(&$fh) {
 

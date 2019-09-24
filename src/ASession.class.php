@@ -91,6 +91,8 @@ public function initMeta() {
 
 /**
  * Get configuration value. Parameter: name, scope, inactive, ttl.
+ *
+ * @return mixed
  */
 public function getConf($key) {
 
@@ -123,9 +125,9 @@ public function getConf($key) {
  *  Check inactive and ttl with hasExpired().
  */
 protected function setConf($conf) {
-	// \rkphplib\lib\log_debug('ASession.setConf:128> enter - conf: '.print_r($conf, true));
+	// \rkphplib\lib\log_debug('ASession.setConf:130> enter - conf: '.print_r($conf, true));
 
-	$default = [ 'name' => '', 'table' => '', 'scope' => 'docroot', 'inactive' => '7200', 'ttl' => '172800', 'init_meta' => '0', 
+	$default = [ 'name' => '', 'table' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => '0', 
 		'redirect_login' => 'index.php?dir=login',  'redirect_logout' => 'index.php?dir=login/exit',
 		'redirect_forbidden' => 'index.php?dir=login/access_denied', 
 		'required' => '', 'allow_dir' => 'login' ];
@@ -173,7 +175,7 @@ protected function setConf($conf) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('ASession.setConf:178> exit - this.conf: '.print_r($this->conf, true));
+	// \rkphplib\lib\log_debug('ASession.setConf:180> exit - this.conf: '.print_r($this->conf, true));
 }
 
 
