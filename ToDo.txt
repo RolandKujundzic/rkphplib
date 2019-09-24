@@ -32,3 +32,21 @@ Create auto-growning Text input
 http://www.brianchu.com/blog/2013/11/02/creating-an-auto-growing-text-input/
 http://jsfiddle.net/2UDdh/43/?utm_source=website&utm_medium=embed&utm_campaign=2UDdh
 
+
+Rebase:
+-------
+Since a feature branch is only controlled (hopefully) by 1 developer, I find it more effective to rebase instead. 
+This ensures some things: Developer is aware of the deltas between his branch and master. The feature branch will 
+be almost a "fresh copy".
+
+# so instead of git merge in run.sh:_php5
+
+git checkout php5
+git fetch origin
+git rebase origin/master
+# fix w/e needs fixing
+
+Furthermore, you can do more cool stuff with rebase --interactive, like pluck, merge, rename and much more to your commits.
+
+git rebase origin/master -i
+
