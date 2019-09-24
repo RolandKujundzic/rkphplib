@@ -126,7 +126,7 @@ if (!defined('SETTINGS_DSN')) {
 	define('SETTINGS_DSN', 'mysqli://ignore:ignore@tcp+localhost/ignore');
 }
 
-if (!syntax([], "scan src/tok directory and update Tokenizer.tryPluginMap if necessary")) {
+if (!\rkphplib\lib\syntax([], "scan src/tok directory and update Tokenizer.tryPluginMap if necessary")) {
 	return;
 }
 

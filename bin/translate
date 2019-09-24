@@ -221,7 +221,7 @@ public function link() {
  * M A I N
  */
 
-if (!syntax([ '@docroot' ])) {
+if (!\rkphplib\lib\syntax([ '@docroot' ])) {
 	return;
 }
 
