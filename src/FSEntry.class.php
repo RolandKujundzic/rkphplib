@@ -27,11 +27,13 @@ public static $CHMOD_ABORT = true;
 
 
 /**
- * Create symlink. If is ok if target does not exist. Link directory must exist. 
+ * Create symlink. It is ok if target does not exist. Link directory must exist. 
+ * If $flag is 2^0: symlink to basename($target)
+ * If $flag is 2^1: cd dirname($link); ln -s relpath($target) basename($link); cd back 
  */
-public static function link(string $target, string $link, bool $target_basename = false) : void {
+public static function link(string $target, string $link, int $flag = 0) : void {
 
-	if (is_link($link) && $target == readlink($link)) {
+	if (is_link($link) && realpath($target) == realpath(readlink($link))) {
 		// already exists
 		return;
 	}
@@ -44,10 +46,31 @@ public static function link(string $target, string $link, bool $target_basename 
 		throw new Exception('remove existing directory', "link=$link target=$target");
 	}
 
-	if ($target_basename) {
+	if (!FSEntry::isDir(dirname($link))) {
+		throw new Exception('link directory does not exist', "link=$link target=$target");
+	}
+
+	if (1 == ($flag & 1)) {
 		if (!@symlink(basename($target), $link)) {
 			throw new Exception('Could not create symlink', "link=$link target=".basename($target));
 		}
+	}
+	elseif (2 == ($flag & 2) && basename($link) != $link) {
+		$rp_link = realpath(dirname($link));
+		$rp_target = realpath($target);
+
+		$curr_dir = getcwd();
+		chdir(dirname($rp_link));
+
+		if (mb_strpos($rp_target, $rp_link.'/') === 0) {
+			$target = mb_substr($rp_target, mb_strlen($rp_link) + 1);
+		}
+
+		if (!@symlink($target, $link)) {
+			throw new Exception('Could not create symlink', "link=$link target=$target");
+		}
+
+		chdir($curr_dir);
 	}
 	else {
 		if (!@symlink($target, $link)) {
