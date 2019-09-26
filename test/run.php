@@ -16,6 +16,7 @@ $th->runTest('lib_kv2conf/run.php');
 $th->runTest('lib_split_str/run.php');
 $th->runTest('lib_csv_explode/run.php');
 $th->runTest('lib_replace_tags/run.php');
+$th->runTest('ArrayHelper/run.php');
 $th->runTest('DateTime/run.php');
 $th->runTest('Dir/run.php');
 $th->runTest('tok_Tokenizer/run.php');
