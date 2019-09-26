@@ -33,7 +33,8 @@ public static $CHMOD_ABORT = true;
  */
 public static function link(string $target, string $link, int $flag = 0) : void {
 
-	if (is_link($link) && realpath($target) == realpath(readlink($link))) {
+	$rp_target = realpath($target);
+	if (is_link($link) && ($rp_target == realpath($link) || $rp_target == realpath(readlink($link)))) {
 		// already exists
 		return;
 	}
