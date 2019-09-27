@@ -1146,6 +1146,7 @@ private function tryPluginMap(string $name) : void {
 		'TSQL' => [ 'sql:query', 'sql:change', 'sql:dsn', 'sql:name', 'sql:qkey', 'sql:json', 'sql:col', 'sql:options', 'sql:getId', 'sql:nextId', 'sql:in', 'sql:hasTable', 'sql:password', 'sql:import', 'sql', 'null' ],
 		'TSetup' => [ 'setup:database', 'setup:table', 'setup:install', 'setup' ],
 		'TSitemap' => [ 'sitemap' ],
+		'TString' => [ 'string2url' ],
 		'TTwig' => [ 'autoescape', 'block', 'do', 'embed', 'extends', 'filter', 'flush', 'for', 'from', 'if', 'import', 'include', 'macro', 'sandbox', 'set', 'spaceless', 'use', 'verbatim', 'v' ],
 		'TUpload' => [ 'upload:init', 'upload:conf', 'upload:formData', 'upload:exists', 'upload:scan', 'upload' ]
 	];
