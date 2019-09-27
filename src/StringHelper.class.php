@@ -47,10 +47,22 @@ public static function removeHtmlTags(string $html, string $allow = '') : string
  * @param string|array $url
  */
 public static function url($url) : string {
-	$res = is_array($url) ? join('-', $url) : $url;
-  $res = str_replace([ 'ö', 'ä', 'ü', 'ß', 'Ä', 'Ö', 'Ü', '/' ], [ 'oe', 'ae', 'ue', 'ss', 'Ae', 'Oe', 'Ue', '-' ], join('-', $url));
-  $res = preg_replace('/[^a-zA-Z0-9_,\.\-]/', '', $res);
-  return strtolower($res);
+	if (is_array($url)) {
+		for ($i = 0; $i < count($url); $i++) {
+			$url[$i] = trim($url[$i]);
+		}
+
+		$res = join('-', $url);
+	}
+	else {
+		$res = trim($url);
+	} 
+	
+	$res = str_replace([ " ", "\t", "\r", "\n" ], '-', $res);
+	$res = str_replace([ 'ö', 'ä', 'ü', 'ß', 'Ä', 'Ö', 'Ü', '/' ], [ 'oe', 'ae', 'ue', 'ss', 'Ae', 'Oe', 'Ue', '-' ], $res);
+	$res = preg_replace('/[^a-zA-Z0-9_,\.\-]/', '', $res);
+	$res = preg_replace('/\-+/', '-', $res);
+	return strtolower($res);
 }
 
 
