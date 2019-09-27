@@ -74,6 +74,10 @@ public function tok_loop_var($name) {
  *  {loop:list}a,b,c{:loop}
  *  {loop:list:;}a;b;c{:loop}
  *  {loop:list:|#|}a|#|b|#|c{:loop}
+ *  {loop:list:\n}a
+ *  b
+ *  ...
+ *  {:loop}
  *
  * @param array $p
  * @param string $txt
@@ -83,7 +87,7 @@ public function tok_loop_list($p, $txt) {
 	$delimiter = ',';
 
 	if (count($p) > 0 && strlen($p[0]) > 0) {
-		$delimiter = $p[0];
+		$delimiter = str_replace([ '\n', '\t' ], [ "\n", "\t" ], $p[0]);
 	}
 
 	$this->loop = split_str($delimiter, $txt, true);
