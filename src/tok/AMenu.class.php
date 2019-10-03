@@ -18,7 +18,6 @@ use function rkphplib\lib\redirect;
  * Tokenizer base Menu plugin.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- *
  */
 abstract class AMenu implements TokPlugin {
 
@@ -37,7 +36,7 @@ private  $ignore_level = 0;
 
 
 /**
- * Return Tokenizer plugin list: menu, menu:add, menu:conf
+ * @plugin menu, menu:add, menu:conf 
  */
 public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;
@@ -52,16 +51,12 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
- * Set menu configuration. Example (see subclass constructor for default configuration):
+ * Set menu configuration. 
  *
  * @tok {menu:conf:custom}CUSTOM{:menu}
  * @tok {menu:add:1}_tpl=custom|#|...{:menu}
- *  
- * @throws
- * @param string $name (required)
- * @param string $value
  */
-public function tok_menu_conf($name, $value) {
+public function tok_menu_conf(string $name, string $value) : void {
 
 	if (mb_strpos($name, 'level_') === 0 && !empty($this->conf['level_6'])) {
 		// reset default configuration
@@ -81,11 +76,8 @@ public function tok_menu_conf($name, $value) {
 
 /**
  * Implement menu output.
- *
- * @param string $tpl
- * @return string
  */
-abstract public function tok_menu($tpl);
+abstract public function tok_menu(string $tpl) : string;
 
 
 /**
@@ -107,11 +99,8 @@ abstract public function tok_menu($tpl);
  * - dir: e.g. apps/shop/config
  * - level (= param)
  * - type (l|b, autoset)
- * 
- * @param int $level
- * @param map $node
  */
-public function tok_menu_add($level, $node) {
+public function tok_menu_add(string $level, array $node) : void {
 	$level = intval($level);
 
 	if (!$level && !empty($node['level'])) {
@@ -202,10 +191,8 @@ public function tok_menu_add($level, $node) {
 
 /**
  * If skipped node is no current path redirect to conf.redirect_access_denied (= login/access_denied).
- *
- * @param map $node
  */
-private function skipNode($node) {
+private function skipNode(array $node) : void {
 	$dir = empty($_REQUEST[SETTINGS_REQ_DIR]) ? '' : $_REQUEST[SETTINGS_REQ_DIR];
 
 	if (empty($dir) || empty($node['dir']) || mb_strpos($dir, $node['dir']) !== 0) {
@@ -224,7 +211,7 @@ private function skipNode($node) {
  * Add hi=1 to this.node if on $_REQUEST[SETTINGS_REQ_DIR] path.
  * Add curr=1 to this.node if node is end of current path.
  */
-public function addNodeHi() {
+public function addNodeHi() : void {
 	$dir = empty($_REQUEST[SETTINGS_REQ_DIR]) ? '' : $_REQUEST[SETTINGS_REQ_DIR];
 	$path = explode('/', $dir);
 	$curr_path = '';
@@ -261,12 +248,9 @@ public function addNodeHi() {
 
 
 /**
- * Return true if table exists.
- *
- * @param string $tables
- * @return boolean
+ * Return true if table exists. Parameter is string array with [,] as delimiter.
  */
-private function hasTables($tables) {
+private function hasTables(string $tables) : bool {
 	require_once __DIR__.'/../Database.class.php';
 	$db = \rkphplib\Database::getInstance();
 
@@ -290,12 +274,8 @@ private function hasTables($tables) {
  * - href: !empty(node.url) ? node.url : isset(node.dir) ? "index.php?dir=node.dir" : ''
  * - target: !empty(node.target) ? target="node.target" : ''
  * - label: isset(node.label) ? node.label : ''
- * 
- * @param int $n
- * @param string $tpl
- * @return string
  */
-protected function getNodeHTML($n, $tpl) {
+protected function getNodeHTML(int $n, string $tpl) : string {
 
 	$node = $this->node[$n];
 	$r = [ 'href' => '' ];
