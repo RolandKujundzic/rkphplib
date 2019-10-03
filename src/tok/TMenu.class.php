@@ -52,13 +52,9 @@ public function __construct() {
 
 
 /**
- * Return menu html.
- * 
- * @throws
- * @param string $tpl (if empty use "{:=level_1}")
- * @return string
+ * Return menu html. If $tpl is empty use "{:=level_1}".
  */
-public function tok_menu($tpl) {
+public function tok_menu(string $tpl) : string {
 
 	if (count($this->node) == 0) {
 		// empty node tree
@@ -80,7 +76,7 @@ public function tok_menu($tpl) {
 		$lname = 'level_'.$i;
 		$out = $this->conf[$lname.'_header'].join($this->conf[$lname.'_delimiter'], $html[$i]).
 			$this->conf[$lname.'_footer'];
-		// \rkphplib\lib\log_debug("TMenu.tok_menu:83> $lname:\n$out");
+		// \rkphplib\lib\log_debug("TMenu.tok_menu:79> $lname:\n$out");
 		$res = $this->tok->replaceTags($res, [ $lname => $out ]);
 	}
 
@@ -88,7 +84,7 @@ public function tok_menu($tpl) {
 		$res = $this->tok->replaceTags($res, [ $tag => $out ]);
 	}
 
-	// \rkphplib\lib\log_debug("TMenu.tok_menu:91> i=$i res: [$res]");
+	// \rkphplib\lib\log_debug("TMenu.tok_menu:87> i=$i res: [$res]");
 
 	// remove next level include
 	$res = $this->tok->replaceTags($res, [ 'level_'.$i => '' ]);
@@ -146,7 +142,7 @@ private function level_n($start, &$html) {
  * @param int $pos
  */
 private function node_html($pos) {
-	// \rkphplib\lib\log_debug("TMenu.node_html:149> pos=$pos, node=(".join('|', $this->node[$pos]).")");
+	// \rkphplib\lib\log_debug("TMenu.node_html:145> pos=$pos, node=(".join('|', $this->node[$pos]).")");
 	$node = $this->node[$pos];
 	$lname = 'level_'.$node['level'];
 
@@ -185,7 +181,7 @@ private function node_html($pos) {
 	}
 
 	$tpl = $this->tok->replaceTags($tpl, $node);
-	// \rkphplib\lib\log_debug("TMenu.node_html:188> pos=$pos tpl=[$tpl] node: ".print_r($node, true));
+	// \rkphplib\lib\log_debug("TMenu.node_html:184> pos=$pos tpl=[$tpl] node: ".print_r($node, true));
 	return $tpl;
 }
 
