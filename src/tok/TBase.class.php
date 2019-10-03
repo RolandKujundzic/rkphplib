@@ -95,39 +95,12 @@ public function __construct() {
 /**
  * Return Tokenizer plugin list:
  *
- * - tf: PARAM_LIST
- * - t, true: REQUIRE_BODY, TEXT, REDO
- * - f, false: REQUIRE_BODY, TEXT, REDO, NO_PARAM
- * - find: TEXT, REDO
- * - filter: REQUIRE_PARAM, REQUIRE_BODY, CSLIST_BODY
- * - plugin: NO_PARAM, REQUIRE_BODY, CSLIST_BODY
- * - escape:tok: NO_PARAM, TEXT
- * - escape: REQUIRE_PARAM
- * - unescape: REQUIRE_PARAM
- * - encode: REQUIRE_PARAM
- * - decode: REQUIRE_PARAM
- * - get: 0
- * - include: REDO, REQUIRE_BODY
- * - include_if: REDO, REQUIRE_BODY, LIST_BODY
- * - ignore: NO_PARAM, TEXT, REQUIRE_BODY
- * - if: REQUIRE_BODY, LIST_BODY
- * - keep: TEXT, REQUIRE_BODY
- * - load: TEXT, REQUIRE_BODY
- * - link: PARAM_CSLIST, KV_BODY
- * - redo: NO_PARAM, REDO
- * - json:exit: KV_BODY
- * - toupper: NO_PARAM
- * - tolower: NO_PARAM
- * - hidden: PARAM_CSLIST, CSLIST_BODY
- * - join: LIST_BODY
- * - var: REQUIRE_PARAM
- * - view: REQUIRE_PARAM, KV_BODY, REDO
- * - esc: 0
- * - row:n,n: REQUIRE_PARAM, PARAM_CSLIST, REQUIRE_BODY, LIST_BODY, IS_STATIC
- * - tpl_set: REQUIRE_PARAM, PARAM_LIST, REQUIRE_BODY, TEXT, IS_STATIC
- * - tpl: REQUIRE_PARAM, PARAM_LIST, LIST_BODY, IS_STATIC
- * - shorten: REQUIRE_PARAM
- * - strlen: NO_PARAM 
+ * @plugin row, row:init, tpl_set, tpl, tf, t, f, true, false
+ * @plugin find, filter, plugin, escape, escape:tok, unescape
+ * @plugin encode, decode, get, const, include, include_if, view, clear
+ * @plugin ignore, if, switch, keep, load, link, redo, toupper, tolower
+ * @plugin hidden, trim, join, set, set_default, redirect, var, esc, log
+ * @plugin shorten, strlen, json, json:exit
  */
 public function getPlugins(Tokenizer $tok) : array {
 	$this->_tok = $tok;
@@ -191,11 +164,8 @@ public function getPlugins(Tokenizer $tok) : array {
 
 /**
  * Return mb_strlen(trim($txt)).
- * 
- * @param string $txt
- * @return int
  */
-public function tok_strlen($txt) {
+public function tok_strlen(string $txt) : int {
 	return mb_strlen(trim($txt));
 }
 
@@ -208,12 +178,8 @@ public function tok_strlen($txt) {
  *
  * @tok {shorten:10}Shorten this Text{:shorten} -> <span title="Shorten this Text">Shorten ...</span>
  * @tok {shorten:20}Shorten this long Text{:shorten} -> <span title="Shorten this long Text">Shorten ... ong Text</span> 
- * 
- * @param int $maxlen
- * @param string $txt
- * @return string
  */
-public function tok_shorten($maxlen, $txt) {
+public function tok_shorten(int $maxlen, string $txt) : string {
 	$len = mb_strlen($txt);
 
 	if ($len < $maxlen) {
@@ -247,33 +213,24 @@ public function tok_shorten($maxlen, $txt) {
  * Output response code header and $kv as json.
  * 
  * @exit
- * @param int $code (default = 200)
- * @param hash $kv
  */
-public function tok_json_exit($code = 200, $kv) {
+public function tok_json_exit(int $code = 200, array $kv) : void {
 	JSON::output($kv, $code);
 }
 
 
 /**
  * Write message via log_debug.
- * 
- * @param string $txt
- * @return ''
  */
-public function tok_log($txt) {
+public function tok_log(string $txt) : void {
 	\rkphplib\lib\log_debug("tok_log> $txt"); // @keep
 }
 
 
 /**
  * Return hidden input.
- *
- * @param array $param
- * @param array $arg
- * @return string
  */
-public function tok_hidden($param, $arg) {
+public function tok_hidden(array $param, array $arg) : string {
 	$list = (count($param) > 0) ? $param : $arg;
 	$res = '';
 
@@ -294,12 +251,8 @@ public function tok_hidden($param, $arg) {
  *
  * @tok {trim:dlines|ignore_empty|lines|pre|space|whitespace|comma} ... {:trim}
  * @tok {trim:whitespace} 1 3\n5\r\n\r\n3 {:trim} = "1353"
- *
- * @param string $param
- * @param string $txt
- * @return string
  */
-public function tok_trim($param, $txt) {
+public function tok_trim(string $param, string $txt) : string {
 	$res = trim($txt);
 
 	if ($param == 'dlines') {
@@ -356,13 +309,8 @@ public function tok_trim($param, $txt) {
  *
  * @tok {tpl_set:test}Nur ein Test{:tpl_set}
  * @tok {tpl_set:page:2:2}Page {:=param1}/{:=param2} line {:=arg1} column {:=arg2}{:tpl_set}
- * 
- * @throws if same template is defined twice.
- * @param vector $p 
- * @param string $arg
- * @return ''
  */
-public function tok_tpl_set($p, $arg) {
+public function tok_tpl_set(array $p, string $arg) : void {
 	$key = array_shift($p);
 
 	if (isset($this->_tpl[$key])) {
@@ -425,14 +373,8 @@ public function tok_tpl_set($p, $arg) {
  *
  * @tok {tpl_set:toc:0:1}Page {:=arg1} ... {:=title}{:tpl_set}
  * @tok {tpl:toc}1|#|title=Overview{:tpl} = Page 1 ... Overview 
- *
- * @throws
- * @see tok_tpl_set
- * @param vector $p 
- * @param string $arg
- * @return string
  */
-public function tok_tpl($p, $arg) {
+public function tok_tpl(array $p, string $arg) : string {
 	$key = array_shift($p);
 
 	if (!isset($this->_tpl[$key])) {
@@ -479,19 +421,15 @@ public function tok_tpl($p, $arg) {
  * @tok get required a: {var:a!} (abort if not found)
  * @tok set multi-map: {var:=person.age}42{:var}
  * @tok get multi-map: {var:person.age} or {var:person.}age{:var}
- *
- * @throws
- * @param string $name
- * @param string $value
  */
-public function tok_var($name, $value) {
+public function tok_var(string $name, string $value) : string {
 
 	if (substr($name, 0, 1) == '=' && substr($name, -1) == '?') {
 		$name = substr($name, 0, -1); // name is now =abc or =#abc
 		$key = (substr($name, 0, 1) == '#') ? substr($name, 2) : substr($name, 1);
 
 		if ($this->_tok->getVar($key) !== false) {
-			return;
+			return '';
 		}
 	}
 
@@ -527,6 +465,8 @@ public function setVar(string $name, string $value, int $flag = 0) : void {
  * If suffix of $name is ! throw exception if not found. 
  * If suffix of $name is [.] use $name.$name2. 
  * Name may contain [.] (a.b = getVar(a)[b], a.b.c = getVar(a)[b][c], ...).
+ *
+ * @return mixed
  */
 public function getVar(string $name, string $name2 = '') {
 	if (empty($name)) {
@@ -580,10 +520,8 @@ public function setVarHash(string $name, array $p) : void {
  * cellpadding: 0
  * cellspacing: 0 
  * rownum: 1 (=default = add header before and footer after each row)
- *
- * @param hash $p
  */
-public function tok_row_init($p) {
+public function tok_row_init(array $p) : void {
 	$default = [ 'mode' => 'bootstrap4', 'colnum' => 2, 'rownum' => 1, 'border' => 0, 'cellpadding' => 0, 'cellspacing' => 0 ];
 	$this->_conf['row'] = array_merge($default, $p);
 }
@@ -594,12 +532,8 @@ public function tok_row_init($p) {
  * If [row:init] was not called assume mode=bootstrap4.
  * 
  * @tok {row:6,6}1-6|#|7-12{:row} -> <div class="row"><div class="col-md-6">1-6</div><div class="col-md-6">7-12</div></div>
- *
- * @see getRowColAttributes
- * @param string $cols
- * @param vector $p
  */
-public function tok_row($cols, $p) {
+public function tok_row(array $cols, array $p) : string {
 
 	if (!isset($this->_conf['row']) || empty($this->_conf['row']['mode'])) {
 		$this->tok_row_init([ 'mode' => 'bootstrap4' ]);
@@ -624,14 +558,8 @@ public function tok_row($cols, $p) {
  * Place $p into table row grid. Wrap with row:header and row:footer.
  * 
  * @tok {row:6,6}a|#|b{:row} = <tr class="row"><td colspan="6">a</td><td colspan="6">b</td></tr>
- * 
- * @throws
- * @see getRowColAttributes
- * @param vector<int> $cols
- * @param vector<string> $p
- * @return string
  */
-private function tableRow($cols, $p) {
+private function tableRow(array $cols, array $p) : string {
 	$attributes = [];
 	$p_last = count($p) - 1;
 
@@ -698,11 +626,8 @@ private function tableRow($cols, $p) {
  * @tok {row:2,4}a|#|b|#|@1.style="background-image: url('bg.jpg')" @2.style="text-align:right"{:row} = <div class="mdl-grid">
  * 		<div class="mdl-cell mdl-cell--2-col" style="background-image: url('bg.jpg')">
  *		<div class="mdl-cell mdl-cell--4-col" style="text-align:right"></div>
- *
- * @param string $extra
- * @return vector<map> 
  */
-private function getRowColAttributes($extra) {
+private function getRowColAttributes(string $extra) : array {
 	$res = [];
 
 	while (preg_match('/^@([0-9]+)\.([a-z_\-]+)\=\"(.+?)\"/', $extra, $match)) {
@@ -725,14 +650,8 @@ private function getRowColAttributes($extra) {
  * @tok {row:6,6}a|#|b{:row} = <div class="mdl-grid">
  * 		<div class="mdl-cell mdl-cell--6-col">a</div>
  * 		<div class="mdl-cell mdl-cell--6-col">b</div></div>
- *
- * @throws
- * @see getRowColAttributes
- * @param vector<int> $cols
- * @param vector<string> $p
- * @return string
  */
-private function materialRow($cols, $p) {
+private function materialRow(array $cols, array $p) : string {
 	$attributes = [];
 	$p_last = count($p) - 1;
 
@@ -761,14 +680,8 @@ private function materialRow($cols, $p) {
  * Place $p into bootstrap row grid.
  * 
  * @tok {row:6,6}a|#|b{:row} = <div class="row"><div class="col-md-6">a</div><div class="col-md-6">b</div></div>
- * 
- * @throws
- * @see getRowColAttributes
- * @param vector<int> $cols
- * @param vector<string> $p
- * @return string
  */
-private function bootstrapRow($cols, $p) {
+private function bootstrapRow(array $cols, array $p) : string {
 	$attributes = [];
 	$p_last = count($p) - 1;
 
@@ -794,13 +707,11 @@ private function bootstrapRow($cols, $p) {
 
 
 /**
- * Redirect to $url. Use ERROR_[401|404] for error status.
- * Do nothing if $url is empty.
+ * Redirect to $url. Use ERROR_[401|404] for error status. Do nothing if $url is empty.
  *
  * @exit
- * @param string $url
  */
-public function tok_redirect($url) {
+public function tok_redirect(string $url) : void {
 	if ($url == 'ERROR_404') {
 		header("HTTP/1.0 404 Not Found");
 		header("Status: 404 Not Found");
@@ -818,14 +729,9 @@ public function tok_redirect($url) {
 
 
 /**
- * Join array $p. Delimiter is either param or $p[0].
- * Non-join param values are: ignore_empty.
- *
- * @param string $param
- * @param array $p
- * @return string
+ * Join array $p. Delimiter is either param or $p[0]. Non-join param values are: ignore_empty.
  */
-public function tok_join($param, $p) {
+public function tok_join(string $param, array $p) : string {
 	$delimiter = $param;
 	$ignore_empty = false;
 
@@ -854,75 +760,58 @@ public function tok_join($param, $p) {
 
 /**
  * Convert all characters in $txt into lowercase.
- *
- * @param string $txt
- * @return string
  */
-public function tok_tolower($txt) {
+public function tok_tolower(string $txt) : string {
 	return mb_strtolower($txt);
 }
 
 
 /**
  * Convert all characters in $txt into uppercase.
- *
- * @param string $txt
- * @return string
  */
-public function tok_toupper($txt) {
+public function tok_toupper(string $txt) : string {
 	return mb_strtoupper($txt);
 }
 
 
 /**
- * Don't parse body, return empty string.
+ * Return empty string (do nothing).
  *
  * @tok {ignore:}abc{:ignore} = [] 
- * 
- * @param string $txt
- * @return empty-string
  */
-public function tok_ignore($txt) {
+public function tok_ignore(string $txt) : string {
 	return '';
 }
 
 
 /**
- * Return empty text.
+ * Return empty string (do nothing - alias for ignore).
  *
  * @tok {clear:}{date:now}{:ignore} = return '', execute {date:now} 
- * 
- * @param string $txt
- * @return empty-string
+ * @tok_alias ignore
  */
-public function tok_clear($txt) {
+public function tok_clear(string $txt) : string {
 	return '';
 }
 
 
 /**
- * Return un-parsed text.
+ * Return un-parsed text (do nothing).
  *
  * @tok {keep:}{find:a}{:keep} = {find:a}
- * 
- * @param string $txt
- * @return string
  */
-public function tok_keep($txt) {
+public function tok_keep(string $txt) : string {
 	// \rkphplib\lib\log_debug("TBase.tok_keep:912> return $txt");
 	return $txt;
 }
 
 
 /**
- * Re-parse text.
+ * Re-parse text (done in Tokenizer).
  *
  * @tok {redo:}{dirname:}a/b{:dirname}{:redo} = a
- * 
- * @param string $txt
- * @return string
  */
-public function tok_redo($txt) {
+public function tok_redo(string $txt) : string {
 	return $txt;
 }
 
@@ -932,13 +821,8 @@ public function tok_redo($txt) {
  *
  * @tok {view:overview}name=Overview{:view} = 
  *   <div id="overview" class="view" data-name="Overview">{include:}{get:dir}/overview.inc.html{:include}</div>
- * 
- * @throws if file {get:dir}/$name.inc.html does not exists
- * @param string $name
- * @param map $p
- * @return string
  */
-public function tok_view($name, $p) {
+public function tok_view(string $name, array $p) : string {
 	$file = self::getReqDir(true).'/'.$name.'.inc.html';
 	$attrib = 'id="'.$name.'" class="view"';
 
@@ -958,13 +842,8 @@ public function tok_view($name, $p) {
  * @tok {include:static}a.html{:include} = return tokenized content of a.html (throw error if file does not exist)
  * @tok {include:optional}a.html{:include} = do not throw error if file does not exist (short version is "?" instead of optional)
  * @tok {include:}{find:a.html}{:include} 
- * 
- * @throws if file does not exists (unless param = ?) 
- * @param string $param optional=?|static
- * @param string $file
- * @return string
  */
-public function tok_include($param, $file) {
+public function tok_include(string $param, string $file) : string {
 	$this->tok_var('=_include.file', $file);
 	return $this->tok_load($param, $file);
 }
@@ -977,13 +856,8 @@ public function tok_include($param, $file) {
  * @tok {include_if:}1|#|a.html{:include_if} = return empty string
  * @tok {include_if:b}a|#|a.html|#|b.html{:include_if} = return tokenized content of b.html
  * @tok {include_if:a}a|#|a.html{:include_if} = return tokenized content of a.html 
- * 
- * @throws if file does not exists 
- * @param array $param
- * @param array $a a[0]=condition, a[1]=true path, a[2]=false path
- * @return string return true_path_content|false_path_content|''
  */
-public function tok_include_if($param, $a) {
+public function tok_include_if(array $param, array $a) : string {
 
 	if (count($a) < 2) {
 		throw new Exception('invalid include_if:'.$param, print_r($a, true));
@@ -1014,13 +888,8 @@ public function tok_include_if($param, $a) {
  * 
  * @tok {load:}a.html{:load} = return raw content of a.html (throw error if file does not exist)
  * @tok {load:optional}a.html{:load} = do not throw error if file does not exist (short version is "?" instead of optional)
- * 
- * @throws if file does not exists (unless param = ?) 
- * @param string $param
- * @param string $file
- * @return string
  */
-public function tok_load($param, $file) {
+public function tok_load(string $param, string $file) : string {
 
 	if (substr($param, -1) == '?') {
 		$ignore_missing = true;
@@ -1060,12 +929,8 @@ public function tok_load($param, $file) {
  * from vector tok->getVar(link_keep).
  *
  * If SETTINGS_REQ_CRYPT is empty do not encode link.
- *
- * @param array $name_list
- * @param array[string]string $p
- * @return string
  */
-public function tok_link($name_list, $p) {
+public function tok_link(array $name_list, array $p) : string {
 	// \rkphplib\lib\log_debug("TBase.tok_link:1069> name_list: ".print_r($name_list, true)."\np: ".print_r($p, true));
 	$res = 'index.php?'.SETTINGS_REQ_CRYPT.'=';
 	$keep = false;
@@ -1172,11 +1037,8 @@ public function tok_link($name_list, $p) {
 
 /**
  * Return true if string is encoded hash.
- * 
- * @param string $txt
- * @return boolean
  */
-private static function isEncodedHash($txt) {
+private static function isEncodedHash(string $txt) : bool {
 	if (strlen($txt) < 5) {
 		return false;
 	}
@@ -1189,12 +1051,9 @@ private static function isEncodedHash($txt) {
 
 
 /**
- * Return checksum (hex, 2 character) for text.
- * 
- * @param string $txt
- * @return char(2) (hex in ]15,255[)
+ * Return text checksum (hex, 2 character in ]15,255[).
  */
-private static function checksum($txt) {
+private static function checksum(string $txt) : string {
 	$res = array_sum(str_split($txt.':'.strlen($txt).':'.crc32($txt))) % 255;
 
 	if ($res < 16) {
@@ -1206,12 +1065,9 @@ private static function checksum($txt) {
 
 
 /**
- * Convert map into encrypted string. 
- *
- * @param array[string]string $p
- * @return string
+ * Convert hash into encrypted string. 
  */
-public static function encodeHash($p) {
+public static function encodeHash(array $p) : string {
 	$query_string = http_build_query($p);
 	$len = strlen($query_string);
 	$secret = SETTINGS_CRYPT_SECRET;
@@ -1229,11 +1085,9 @@ public static function encodeHash($p) {
 /**
  * Decode data encoded with self::encodeHash.
  *
- * @param string $data
- * @param bool export into _REQUEST
- * @return hash|false
+ * @return mixed hash|false
  */
-public static function decodeHash($data, $export_into_req = false) {
+public static function decodeHash(string $data, bool $export_into_req = false) {
 	
 	if (($pos=strpos($data,',')) > 0) {
 
@@ -1272,16 +1126,11 @@ public static function decodeHash($data, $export_into_req = false) {
 
 
 /**
- * Return result of switch plugin. Example:
+ * Return result of switch plugin.
  * 
  * @tok {switch:a,b,c}value|#|if_eq_a|#|if_eq_b|#|if_eq_c|#|else{:switch}
- *
- * @throws 
- * @param vector $set
- * @param vector $p
- * @return string
  */
-public function tok_switch($set, $p) {
+public function tok_switch(array $set, array $p) : string {
 	$csa = count($set);
 	$cp = count($p);
 
@@ -1330,13 +1179,8 @@ public function tok_switch($set, $p) {
  * @tok {if:cmp:a}a|#|true|#|false{:if} = true
  * @tok {if:cmp:or}a|#|a|#|b|#|c|#|true|#|false{:if} = true
  * @tok {if:match}roland.+@inkoeln.com|#|{get:email}|#|roland@inkoeln.com|#|{get:email}{:if}
- * 
- * @throws 
- * @param string $param
- * @param string $arg
- * @return string
  */
-public function tok_if($param, $p) {
+public function tok_if(string $param, array $p) : string {
 	$has_empty_param = false;
 	
 	if (!empty($param)) {
@@ -1519,11 +1363,8 @@ public function tok_if($param, $p) {
  * @tok {filter:get}off{:filter} = no filter
  * @tok {filter:get}default{:filter} = use default filter
  * @tok {filter:esc}trim{:filter} = use trim and escape_db filter
- *
- * @param string $tag
- * @param vector $filter_list
  */
-public function tok_filter($tag, $filter_list) {
+public function tok_filter(string $tag, array $filter_list) : void {
 
 	$allow_tag = [ 'esc', 'get' ];
 	if (!in_array($tag, $allow_tag)) {
@@ -1571,14 +1412,9 @@ public function tok_filter($tag, $filter_list) {
  * Apply filter.
  *
  * @see tag_filter
- * @throws
- * @param string $tag
- * @param string $value
- * @return string
  */
-private function applyFilter($tag, $value) {
+private function applyFilter(string $tag, string $value) : string {
 	// \rkphplib\lib\log_debug("TBase.applyFilter:1580> tag=$tag value=[$value]");
-
 	if (!isset($this->_conf['filter.'.$tag])) {
 		throw new Exception('no filter', "tag=$tag value=[$value] _conf: ".print_r($this->_conf, true));
 	}
@@ -1625,12 +1461,8 @@ private function applyFilter($tag, $value) {
  * @tok {esc:null}{:esc} -> NULL
  * 
  * @filter trim, escape_html, escape_tok, escape_arg, escape_db
- *
- * @param string $param
- * @param string $arg
- * @return string|null
  */
-public function tok_esc($param, $arg) {
+public function tok_esc(string $param, string $arg) : ?string {
 
 	if (!empty($param) && substr($param, 0, 1) != '@') {
 		if (!isset($_REQUEST[$param])) {
@@ -1666,13 +1498,8 @@ public function tok_esc($param, $arg) {
  * @tok {set_default:id!}value{:set_default} - abort if _REQUEST['id'] is set
  * @tok {set_default:key}value{:set_default}
  * @tok {set_default:}key=value|#|...{:set_default}
- *
- * @throws if name! and _REQUEST[name] already defined
- * @param string $name
- * @param string $value
- * @return ''
  */
-public function tok_set_default($name, $value) {
+public function tok_set_default(string $name, string $value) : void {
 
 	if (strlen($value) == 0) {
 		return;
@@ -1696,8 +1523,6 @@ public function tok_set_default($name, $value) {
 	else if (!isset($_REQUEST[$name]) || strlen($_REQUEST[$name]) == 0) {
 		$_REQUEST[$name] = $value;
 	}
-
-	return '';
 }
 
 
@@ -1706,12 +1531,8 @@ public function tok_set_default($name, $value) {
  *
  * @tok {set:id}value{:set} - set _REQUEST['id']=value
  * @tok {set:}key=value|#|...{:set}
- *
- * @param string $name
- * @param string $value
- * @return ''
  */
-public function tok_set($name, $value) {
+public function tok_set(string $name, string $value) : void {
 
   if (empty($name)) {
 		$kv = conf2kv($value);
@@ -1722,20 +1543,13 @@ public function tok_set($name, $value) {
 	else {
 		$_REQUEST[$name] = $value;
 	}
-
-	return '';
 }
 
 
 /**
  * Return constant value. Constant name is either param or arg.
- *
- * @throws if undefined constant
- * @param string $param
- * @param string $arg
- * @return string
  */
-public function tok_const($param, $arg) {
+public function tok_const(string $param, string $arg) : string {
 	$name = empty($arg) ? $param : trim($arg);
 
 	if (!defined($name)) {
@@ -1762,12 +1576,8 @@ public function tok_const($param, $arg) {
  * @tok {get:*}, return kv2conf(_REQUEST) 
  * @tok {get:a?}, (!isset(_REQUEST[a]) || strlen($_REQUEST[a]) == 0) = 0 : 1
  * @tok {get:xn--*}, return _REQUEST values where substr(key, 0, 4) == 'xn--' as hash string
- *
- * @param string $param
- * @param string $arg
- * @return string
  */
-public function tok_get($param, $arg) {
+public function tok_get(string $param, string $arg) : string {
 	$key = empty($arg) ? $param : trim($arg);
 	$res = '';
 
@@ -1835,12 +1645,8 @@ public function tok_get($param, $arg) {
  * Return escape value. No body tokenization. No redo.
  *
  * @tok {escape:tok}{get:t}{:escape} = &#123;get&#58;t&#125; 
- *
- * @throws
- * @param string $txt
- * @return string
  */
-public function tok_escape_tok($txt) {
+public function tok_escape_tok(string $txt) : string {
 	return $res = $this->_tok->escape($txt);
 }
 
@@ -1859,13 +1665,8 @@ public function tok_escape_tok($txt) {
  * @tok {escape:js}'; alert('test'); '{:escape} = '&#39;; alert&#40;&#39;test&#39;&#41;; &#39;'
  * @tok {escape:url}a b{:escape} = a%20b
  * @tok {escape:html}<a href="abc">{:escape} = &lt;a href=&quot;abc&quot;&gt;
- *  
- * @throws
- * @param string $param
- * @param string $txt
- * @return string
  */
-public function tok_escape($param, $txt) {
+public function tok_escape(string $param, string $txt) : string {
 	$res = $txt;
 
 	if ($param == 'tok') {
@@ -1909,13 +1710,8 @@ public function tok_escape($param, $txt) {
  * @tok {unescape:js}'&#39;; alert&#40;&#39;test&#39;&#41;; &#39;'{:unescape} =  '; alert('test'); '
  * @tok {unescape:url}a%20b{:unescape} = a b
  * @tok {unescape:utf8}R\u00FCssel{:unescape} = Rüssel
- * 
- * @throws 
- * @param string $param
- * @param string $txt
- * @return string
  */
-public function tok_unescape($param, $txt) {
+public function tok_unescape(string $param, string $txt) : string {
 	$res = '';
 
 	if ($param == 'tok') {
@@ -1954,13 +1750,8 @@ public function tok_unescape($param, $txt) {
  * - base64: base64 encode $txt
  *
  * @tok {encode:base64}hello{:encode} = aGVsbG8=
- *
- * @throws
- * @param string $param
- * @param string $txt
- * @return string
  */
-public function tok_encode($param, $txt) {
+public function tok_encode(string $param, string $txt) : string {
 	$res = '';
 
 	if ($param == 'base64') {
@@ -1980,13 +1771,8 @@ public function tok_encode($param, $txt) {
  * - base64: base64 decode $txt
  *
  * @tok {decode:base64}aGVsbG8={:decode} = hello
- *
- * @throws
- * @param string $param
- * @param string $txt
- * @return string
  */
-public function tok_decode($param, $txt) {
+public function tok_decode(string $param, string $txt) : string {
 	$res = '';
 
 	if ($param == 'base64') {
@@ -2008,14 +1794,9 @@ public function tok_decode($param, $txt) {
  *   require_once(PATH_RKPHPLIB.'TLanguage.class.php'); $this->tok->register(new \rkphplib\TLanguage());
  *   require_once(PATH_PHPLIB.'TShop.class.php'); $this->tok->register(new \phplib\TShop());
  *   require_once('inc/abc.php', $this->tok->register(new \custom\XY());
- *
- * @param vector $p
- * @return ''
  */
-public function tok_plugin($p) {
-	
+public function tok_plugin(array $p) : void {
 	foreach ($p as $plugin) {
-
 		if (mb_strpos($plugin, ':') === false) {
 			require_once PATH_RKPHPLIB.'tok/'.$plugin.'.class.php';
 			$obj = '\\rkphplib\\tok\\'.$plugin;
@@ -2049,16 +1830,8 @@ public function tok_plugin($p) {
  * - _REQUEST[dir] = a/b/c, b/test.html exists: a/b/test.html
  * - _REQUEST[dir] = a/b/c, c/test.html exists: a/b/c/test.html
  * - _REQUEST[dir] = a/b/c, ./test.html exists: test.html
- *
- * @throws if nothing was found (avoid with "?" suffix)
- * @see self::getReqDir
- * @see self::findPath
- * @param string $file
- * @param string $file2 (default = '')
- * @return string self::findPath(file, self::getReqDir(true))
  */
-public function tok_find($file, $file2 = '') {
-
+public function tok_find(string $file, string $file2 = '') : string {
 	if (empty($file) && !empty($file2)) {
 		$file = $file2;
 	}
@@ -2083,12 +1856,8 @@ public function tok_find($file, $file2 = '') {
 /**
  * Return $_REQUEST[SETTINGS_REQ_DIR]. If $use_dot_prefix = true return [.] 
  * (if result is empty) or prepend [./].
- *
- * @param bool $use_dot_prefix (default = false)
- * @return string
  */
-public static function getReqDir($use_dot_prefix = false) {
-
+public static function getReqDir(bool $use_dot_prefix = false) : string {
 	if (empty($_REQUEST[SETTINGS_REQ_DIR])) {
 		$res = $use_dot_prefix ? '.' : '';
 	}
@@ -2101,16 +1870,10 @@ public static function getReqDir($use_dot_prefix = false) {
 
 
 /**
- * Search path = (dir/file) in dir until found or dir = [.].
- * Throw Exception if path is not relative or has [../] or [\].
- * Return found path. 
- *
- * @throws
- * @param string $file
- * @param string $dir (default = '.')
- * @return string
+ * Search path = (dir/file) in dir until found or dir = [.]. Throw Exception if path is not 
+ * relative or has [../] or [\]. Return found path. 
  */
-public static function findPath($file, $dir = '.') {
+public static function findPath(string $file, string $dir = '.') : string {
 
 	if (mb_substr($dir, 0, 1) === '/' || mb_substr($dir, 0, 3) === './/') {
 		throw new Exception('invalid absolute directory path', $dir);
@@ -2171,11 +1934,8 @@ public static function findPath($file, $dir = '.') {
  * - p.length == 2 and p[0] == prev[:n]: modify result of previous evaluation
  *
  * @tok {tf:eq:5}3{:tf} = false, {tf:lt:3}1{:tf} = true, {tf:}0{:tf} = false, {tf:}00{:tf} = true
- * @param array $p
- * @param string $arg
- * @return empty
  */
-public function tok_tf($p, $arg) {
+public function tok_tf(array $p, string $arg) : void {
 	$tf = false;
 
 	$ta = trim($arg);
@@ -2225,7 +1985,7 @@ public function tok_tf($p, $arg) {
 
 	if (empty($do)) {
 		$this->_tok->setCallStack('tf', $tf);
-		return '';
+		return;
 	}
 
 	if ($do == 'cmp') {
@@ -2344,19 +2104,15 @@ public function tok_tf($p, $arg) {
  * Same as tok_true().
  * @alias tok_true()
  */
-public function tok_t($param, $arg) {
+public function tok_t(string $param, string $arg) : string {
 	return $this->tok_true($param, $arg);
 }
 
 
 /**
  * Return $out if last tf from tok.callstack is: $tf = true or (is_string(top($tf)) && $val = top($tf)).
- *
- * @param string $val
- * @param string $out
- * @return $out|empty
  */
-public function tok_true($val, $out) {
+public function tok_true(string $val, string $out) : string {
 	$tf = $this->_tok->getCallStack('tf');
 
 	if (is_string($tf) && strpos($tf, 'switch:') === 0) {
@@ -2384,18 +2140,15 @@ public function tok_true($val, $out) {
  * Same as tok_false().
  * @alias tok_false()
  */
-public function tok_f($out) {
+public function tok_f(string $out) : string {
 	return $this->tok_false($out);
 }
 
 
 /**
- * Return $out if last tf from tok.callstack is false.
- *
- * @param string $out
- * @return $out|empty
+ * Return $out if last tf from tok.callstack is false. Otherwise return empty string.
  */
-public function tok_false($out) {
+public function tok_false(string $out) : string {
 	$tf = $this->_tok->getCallStack('tf');
 	return (is_bool($tf) && !$tf) ? $out : '';
 }
