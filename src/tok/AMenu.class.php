@@ -100,7 +100,7 @@ abstract public function tok_menu(string $tpl) : string;
  * - level (= param)
  * - type (l|b, autoset)
  */
-public function tok_menu_add(string $level, array $node) : void {
+public function tok_menu_add(int $level, array $node) : void {
 	$level = intval($level);
 
 	if (!$level && !empty($node['level'])) {
