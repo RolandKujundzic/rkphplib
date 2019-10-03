@@ -22,7 +22,6 @@ use rkphplib\Dir;
  * Use lid=NULL for system data.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- *
  */
 abstract class ACatchall implements TokPlugin {
 
@@ -43,11 +42,9 @@ protected $source_dir = '';
 /**
  * Set layout and include files.
  * 
- * @param string $source_dir
- * @param string $layout (e.g. 'layout.inc.html')
- * @param array $include (e.g. [ 'content.inc.html' ])
+ * @example setLayoutInclude('/path/to/www', 'layout.inc.html', [ 'content.inc.html' ]);
  */
-public function setLayoutInclude($source_dir, $layout, $include) {
+public function setLayoutInclude(string $source_dir, string $layout, array $include) : void {
 	$this->crawl_dir = [];
 	$this->source_dir = $source_dir;
 	$this->layout = $layout;
@@ -72,7 +69,7 @@ public function setLayoutInclude($source_dir, $layout, $include) {
 
 
 /**
- * Register catchall plugin.
+ * @plugin catchall
  */
 public function getPlugins(Tokenizer $tok) : array {
   $plugin = [];
@@ -82,31 +79,21 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
- * Catch all plugins.
- *
- * @param string $param
- * @param string $arg
- * @return string
+ * Catch all plugins. Usual result is empty string.
  */
-abstract public function tok_catchall($param, $arg);
+abstract public function tok_catchall(string $param, string $arg) : string;
 
 
 /**
  * Process parsed file data.
- *
- * @param string $file
- * @param string $data
  */
-abstract public function processFile($file, $data);
+abstract public function processFile(string $file, string $data) : void;
 
 
 /**
  * Return tokenized via layout. Assume _REQUEST[dir] is exported.
- * 
- * @param string $file
- * @return string
  */
-public function parseLayout($file) {
+public function parseLayout(string $file) : string {
 	$curr = getcwd();
 	chdir($this->source_dir);
 
@@ -125,11 +112,8 @@ public function parseLayout($file) {
 
 /**
  * Return tokenized file. Assume _REQUEST[dir] is exported.
- * 
- * @param string $file
- * @return string
  */
-public function parseFile($file) {
+public function parseFile(string $file) : string {
 	$this->log("parse $file");
 
 	$this->tok = new Tokenizer();
@@ -143,13 +127,9 @@ public function parseFile($file) {
 
 
 /**
- * Call this.processFile($file) for every matching file
- * in directory. 
- *
- * @param string $directory
- * @param array $suffix_list (default [ 'inc.html' ]
+ * Call this.processFile($file) for every matching file in directory. 
  */
-public function scan($directory, $suffix_list = [ 'inc.html' ]) {
+public function scan(string $directory, array $suffix_list = [ 'inc.html' ]) : void {
 	$files = Dir::scanTree('src', $suffix_list);
 	$dlen = strlen($directory);
 
@@ -166,15 +146,9 @@ public function scan($directory, $suffix_list = [ 'inc.html' ]) {
 
 
 /**
- * Copy $source_dir content to $target_dir. Process files with suffix in
- * $parse_suffix_list.
- * 
- * @param string $source_dir
- * @param string $target_dir 
- * @param array $parse_suffix_list (default = [ 'inc.html', 'js', 'conf' ])
- * @param int $slen (default = 0, internal for recursive call)
+ * Copy $source_dir content to $target_dir. Process files with suffix in $parse_suffix_list.
  */
-public function copy($source_dir, $target_dir, $parse_suffix_list = [ 'inc.html', 'js', 'conf' ], $slen = 0) {
+public function copy(string $source_dir, string $target_dir, array $parse_suffix_list = [ 'inc.html', 'js', 'conf' ], int $slen = 0) : void {
 	$entries = Dir::entries($source_dir);
 
 	if (!$slen) {
@@ -219,10 +193,8 @@ public function copy($source_dir, $target_dir, $parse_suffix_list = [ 'inc.html'
 
 /**
  * Print message to stdout (prepend 2x space, append \n).
- *
- * @param string $message
  */
-public function log($message) {
+public function log(string $message) : void {
 	print "  $message\n";
 }
 
