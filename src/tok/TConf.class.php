@@ -49,10 +49,8 @@ public $lid = null;
  * - dsn = empty (default = SETTINGS_DSN)
  * - table.conf = cms_conf
  * - table.link = cms_login
- *
- * @param map $options
  */
-public function __construct($options = []) {
+public function __construct(array $options = []) {
 	$default_options = [
 		'table.conf' => 'cms_conf',
 		'table.login' => 'cms_login',
@@ -79,7 +77,7 @@ public function __construct($options = []) {
 
 
 /**
- * Return {conf:[id|var|get|get_path|set|set_path|set_default|append}
+ * @plugin conf:id|var|get|get_path|set|set_path|set_default|append
  */
 public function getPlugins(Tokenizer $tok) : array {
   $plugin = [];
@@ -100,12 +98,8 @@ public function getPlugins(Tokenizer $tok) : array {
  * Return tokenized configuration value. If configuration value is not in database add it tokenized.
  * 
  * @tok {conf:since}{date:now}{:conf} - set since=NOW() if not already set
- *
- * @param string $key
- * @param string $value
- * @return string
  */
-public function tok_conf($key, $value) {
+public function tok_conf(string $key, string $value) : string {
 	$qtype = (intval($this->lid) > 0) ? 'select_user_path' : 'select_system_path';
 	$lid = ($this->lid > 0) ? intval($this->lid) : null;
 
@@ -128,11 +122,8 @@ public function tok_conf($key, $value) {
  * Set login id. If id is empty reset to null (= no login).
  *
  * @tok {conf:id}{login:id}{:conf}
- * 
- * @param string
- * @return ''
  */
-public function tok_conf_id($id) {
+public function tok_conf_id(string $id) : void {
 	if (intval($id) < 1) {
 		if ($id == '') {
 			$this->lid = null;
@@ -143,7 +134,6 @@ public function tok_conf_id($id) {
 	}
 
 	$this->lid = $id;
-	return '';
 }
 
 
@@ -152,18 +142,13 @@ public function tok_conf_id($id) {
  *
  * @tok {conf:set:spread_sheet}{:conf}
  * @tok {conf:set}spread_sheet|#|x{:conf}
- *
- * @param string $key
- * @param string $value
- * @return ''
  */
-public function tok_conf_set($key, $value) {
+public function tok_conf_set(string $key, string $value) : void {
 	if (empty($key)) {
 		list ($key, $value) = explode(HASH_DELIMITER, $value, 2);
 	}
 
 	$this->set($this->lid, $key, $value);
-	return '';
 }
 
 
@@ -172,12 +157,8 @@ public function tok_conf_set($key, $value) {
  *
  * @tok {conf:set_path:spread_sheet.shop_item}column_{get:column}.label|#|{get:label}{:conf}
  * @tok {conf:set_path}spread_sheet.{get:table}|#|column_{get:column}.label|#|{get:label}{:conf}
- *
- * @param string $name
- * @param vector $p ([name|#|]path|#|value)
- * @return ''
  */
-public function tok_conf_set_path($name, $p) {
+public function tok_conf_set_path(string $name, array $p) : void {
 
 	if (empty($name)) {
 		$name = array_shift($p);
@@ -193,7 +174,6 @@ public function tok_conf_set_path($name, $p) {
 	$map = conf2kv($this->get($this->lid, $name));
 	self::setMapPathValue($map, $path, $value);
 	$this->set($this->lid, $name, kv2conf($map));
-	return '';
 }
 
 
@@ -202,12 +182,8 @@ public function tok_conf_set_path($name, $p) {
  * 
  * @tok {conf:set_default:since}{date:now}{:conf} - set since="{date:now}" if not already set
  * @tok {conf:set_default}since|#|{date:now}{:conf}
- *
- * @param string $key
- * @param string $value
- * @return string
  */
-public function tok_conf_set_default($key, $value) {
+public function tok_conf_set_default(string $key, string $value) : void {
 	if (empty($key)) {
 		list ($key, $value) = explode(HASH_DELIMITER, $value, 2);
 	}
@@ -221,50 +197,34 @@ public function tok_conf_set_default($key, $value) {
 	if (is_null($current)) {
 		$this->set($lid, $key, $value);
 	}
-
-	return '';
 }
-
 
 
 /**
  * Append value to current value. Do not append multiple times (if value is already suffix).
- *
- * @param string $key
- * @param string $value
- * @return ''
  */
-public function tok_conf_append($key, $value) {
+public function tok_conf_append(string $key, string $value) : void {
 	$current = $this->get($this->lid, $key);
-
 	$vlen = strlen($value);
-	if (substr($current, -1 * $vlen) == $value) {
-		return '';
-	}
 
-	$this->set($this->lid, $key, $current.$value);
-	return '';
+	if (substr($current, -1 * $vlen) != $value) {
+		$this->set($this->lid, $key, $current.$value);
+	}
 }
 
 
 /**
  * Get raw (untokenized) configuration value.
- *
- * @param string $key
- * @return string
  */
-public function tok_conf_var($key) {
+public function tok_conf_var(string $key) : string {
 	return $this->get($this->lid, $key);
 }
 
 
 /**
  * Return tokenized configuration value.
- *  
- * @param string $key
- * @return string
  */
-public function tok_conf_get($key) {
+public function tok_conf_get(string $key) : string {
 	return $this->get($this->lid, $key);
 }
 
@@ -275,13 +235,8 @@ public function tok_conf_get($key) {
  * 
  * @tok {conf:get_path:spread_sheet.shop_item}table{:conf}
  * @tok {conf:get_path}spread_sheet.shop_item|#|table{:conf}
- * 
- * @param string $name
- * @param vector $p
- * @return string
  */
-public function tok_conf_get_path($name, $p) {
-	
+public function tok_conf_get_path(string $name, array $p) : string {
 	if (empty($name)) {
 		$name = array_shift($p);
 	}
@@ -299,14 +254,9 @@ public function tok_conf_get_path($name, $p) {
 
 
 /**
- * Return configuration value.
- *
- * @throws
- * @param int $lid (0 = system)
- * @param string $name
- * @return string
+ * Return configuration value ($lid 0 = system).
  */
-public function get($lid, $name) {
+public function get(int $lid, string $name) : string {
 	$qtype = (intval($lid) > 0) ? 'select_user_path' : 'select_system_path';
 	$lid = ($lid > 0) ? intval($lid) : null;
 
@@ -317,14 +267,8 @@ public function get($lid, $name) {
 
 /**
  * Set configuration value, return id. 
- *
- * @throws
- * @param int $lid (0 = system)
- * @param string $name
- * @param string $value
- * @return int
  */
-public function set($lid, $name, $value) {
+public function set(int $lid, string $name, string $value) : int {
 	$qtype = (intval($lid) > 0) ? 'select_user_path' : 'select_system_path';
 	$lid = ($lid > 0) ? intval($lid) : null;
 	$path = explode('.', $name);
