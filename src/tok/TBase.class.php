@@ -449,6 +449,8 @@ public function tok_var(string $name, string $value) : string {
 	else {
 		return (string) $this->getVar($name, trim($value));
 	}
+
+	return '';
 }
 
 
