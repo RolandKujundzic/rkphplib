@@ -17,7 +17,7 @@ class TEval implements TokPlugin {
 
 
 /**
- * Return {eval:math|logic}
+ * @plugin eval:math|logic
  */
 public function getPlugins(Tokenizer $tok) : array {
   $plugin = [];
@@ -29,17 +29,14 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
- * Return result of boolean expression evaluation.
+ * Return result of boolean expression evaluation (0|1).
  * Remove all characters not in "tf01&|x!)(". Operators:
  * 
  * & = and, | = or, x = xor and ! = not, 0 = f = false, 1 = t = true
  *
  * @tok {eval:logic}(1 & 0) | t{:eval} = 1 
- *
- * @param string logic expression 
- * @return 0|1
  */
-public static function tok_eval_logic($expr) {
+public static function tok_eval_logic(string $expr) : int {
 
 	$expr = preg_replace("/[\r\n\t ]+/", '', $expr);
 	$expr_check = strtr($expr, 'tf01)(x&|!', '          ');
@@ -66,11 +63,8 @@ public static function tok_eval_logic($expr) {
  * Replace "," into ".".
  *
  * @tok {eval:math}5 * ((6 - 20) / 2 + 1){:eval} = -30 
- *
- * @param string expr math expression 
- * @return float
  */
-public static function tok_eval_math($expr) {
+public static function tok_eval_math(string $expr) : float {
 
 	$expr = preg_replace("/[\r\n\t ]+/", '', $expr);
 	$expr = str_replace(',', '.', $expr);
