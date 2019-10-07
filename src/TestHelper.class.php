@@ -77,7 +77,24 @@ private function _error_cmp(string $msg, $out, $ok) : void {
 		$m_ok = "\nok: ".print_r($ok, true)."\n";
 	}
 
-	print "\nERROR: $m_out $m_ok\n\n";
+	$diff = '';
+	if (is_string($out) && is_string($ok)) {
+		$lout = strlen($out);
+		$lok = strlen($ok);
+
+		if ($lout != $lok) {
+			$diff = "\nlenght(out) = ".$lout.' != '.$lok. ' = length(ok)';
+		}
+
+		for ($i = 0, $done = false; !$done && $i < $lout && $i < $lok; $i++) {
+			if ($out[$i] != $ok[$i]) {
+				$diff .= "\nout[$i] = chr(".ord($out[$i]).') != chr('.ord($ok[$i]).") = ok[$i]";
+				$done = true;
+			}
+		}
+	}
+
+	print "\nERROR: $m_out $m_ok$diff\n\n";
 }
 
 
