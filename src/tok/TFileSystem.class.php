@@ -26,7 +26,7 @@ use TokHelper;
 
 
 /**
- * Return {directory:copy|move|create|exists|entries|is}, {file:size|copy|exists}, {dirname:} and {basename:}
+ * @plugin directory:copy|move|create|exists|entries|is, file:size|copy|exists, dirname and basename
  */
 public function getPlugins(Tokenizer $tok) : array {
   $plugin = [];
@@ -53,12 +53,8 @@ public function getPlugins(Tokenizer $tok) : array {
  *
  * @tok {basename:}a/b/c.gif{:basename} = c.gif
  * @tok {basename:a/b}a/b/c/d{:basename} = c/d
- *  
- * @param string $param
- * @param string $param
- * @return string
  */
-public static function tok_basename($param, $arg) {
+public static function tok_basename(string $param, string $arg) : string {
 	$res = basename(trim($arg));
 
 	if ($param == 'no_suffix' && ($pos = mb_strrpos($res, '.')) !== false) {
@@ -78,12 +74,8 @@ public static function tok_basename($param, $arg) {
  * @tok {dirname:}a/b/c{:dirname} = {dirname:1}a/b/c{:dirname} = a/b
  * @tok {dirname:2}a/b/c{:dirname} = {dirname:-1}a/b/c{:dirname} = a
  * @tok {dirname:NAME} (and _REQUEST[NAME]=x/y) = x
- *
- * @param int $param
- * @param string $arg
- * return string
  */
-public static function tok_dirname($param, $arg) {
+public static function tok_dirname(string $param, string $arg) : string {
 	$arg = trim($arg);
 	$path = explode('/', $arg);
 	$n = intval($param);
@@ -115,7 +107,7 @@ public static function tok_dirname($param, $arg) {
 
 
 /**
- * Return error html if directory is not writeable|readable|existing.
+ * Return error html if directory is not writeable|readable|existing (= $param).
  * If error return $p.error and set _REQUEST[error_directory_is]=1,
  * otherwise return $p.success (or '' if not set).
  *
@@ -132,13 +124,8 @@ public static function tok_dirname($param, $arg) {
  * error= Make directory writeable with: <tt>chmod -R 777 data</tt>|#|
  * wait= Scanning directory data{:directory}
  * return: <div class="wait">Scanning directory data ... <span id="ID"><img src="wait.png"></span></div>
- *
- * @throws
- * @param string $check value writeable|readable|existing
- * @param map $p keys directory, error
- * @return string
  */
-public function tok_directory_is($param, $p) {
+public function tok_directory_is(string $param, array $p) : string {
 	$this->checkMap('directory:is:'.$param, $p, [ 'directory!', 'error!' ]);
 	$is_readable_dir = FSEntry::isDir($p['directory'], false, true); 
 	$ok = true;
@@ -189,11 +176,8 @@ public function tok_directory_is($param, $p) {
 
 /**
  * Return ajax call html. Implement p.ajax_callback(id, data).
- *
- * @param map $p
- * @return string
  */
-private function _directory_is_ajax($p) {
+private function _directory_is_ajax(array $p) : string {
 	$id = $p['ajax_output_id'];
 	$ajax_url = $p['ajax'];
 	$ajax_callback = $p['ajax_callback'];
@@ -221,67 +205,43 @@ END;
 
 /**
  * Copy p[0] recursive to p[1].
- *
- * @throws
- * @param vector $p
- * @return ''
  */
-public function tok_directory_copy($p) {
+public function tok_directory_copy(array $p) : void {
 	Dir::copy($p[0], $p[1]);
-	return '';
 }
 
 
 /**
  * Remove directory path.
- *
- * @throws if directory does not exist
- * @param string $path
- * @return ''
  */
-public function tok_directory_remove($path) {
+public function tok_directory_remove(string $path) : void {
 	Dir::remove(trim($path), true);
-	return '';
 }
 
 
 /**
  * Move p[0] recursive to p[1].
- *
- * @throws
- * @param vector $p
- * @return ''
  */
-public function tok_directory_move($p) {
+public function tok_directory_move(array $p) : void {
 	Dir::move($p[0], $p[1]);
-	return '';
 }
 
 
 /**
- * Return 1|'' if directory (does not) exist.
- *
- * @throws if required and directory does not exist
- * @param string $param (required or empty = default)
- * @param string $path
- * @return 1|''
+ * Return 1|'' if directory (does not) exist. Throw exception if
+ * $param == required and directory does not exist.
  */
-public function tok_directory_exists($param, $path) {
+public function tok_directory_exists(string $param, string $path) : string {
 	$required = $param == 'required';
 	return Dir::exists(trim($path), $required) ? 1 : '';
 }
 
 
 /**
- * Return directory entries. If param is file|directory return
+ * Return directory entries. If $param is file|directory return
  * only files|subdirectories. Return comma separated list.
- *
- * @throws if directory does not exist
- * @param string $param (file|directory, empty = default = any)
- * @param string $path
- * @return string
  */
-public function tok_directory_entries($param, $path) {
+public function tok_directory_entries(string $param, string $path) : string {
 	if ($param == 'file') {
 		$type = 1;
 	}
@@ -297,7 +257,7 @@ public function tok_directory_entries($param, $path) {
 
 	$entries = Dir::entries(trim($path), $type);
 	sort($entries);
-	return $entries;
+	return array_join(',', $entries);
 }
 
 
@@ -310,24 +270,17 @@ public function tok_directory_entries($param, $path) {
  * @tok {directory:create:htaccess_deny}test{:directory} = same as above
  * @tok {directory:create:htaccess_no_php}data{:directory} = disable php execution in data/ via .htaccess (php_flag engine off)
  *
- * @throws
  * @see self::createDirectory()
- * @param string $param
- * @param string $path
- * @return ''
  */
-public function tok_directory_create($param, $path) {
+public function tok_directory_create(string $param, string $path) : void {
 	self::createDirectory($path, $param);
 }
 
 
 /**
- * Create directory path (recursive).
- *
- * @param $path string
- * @param $feature string
+ * Create directory path (recursive). Use $feature = empty(=default)|htaccess_protected|htaccess_deny|htaccess_no_php.
  */
-public static function createDirectory($path, $feature) {
+public static function createDirectory(string $path, string $feature) : void {
 	Dir::create($path, 0, true);
 
 	if ($feature == 'htaccess_protected' || $feature == 'htaccess_deny') {
@@ -345,39 +298,28 @@ END;
 	else if (!empty($feature)) {
 		throw new Exception('Unkown feature', $feature);
 	}
-
-	return '';
 }
 
 
 /**
- * Copy file from source to target.
- *
- * @throws
- * @tok_log
- * @param vector $p [ $source, $target ]
- * @return ''
+ * Copy file from source to target ($p = [ $source, $target ]).
  */
-public function tok_file_copy($p) {
+public function tok_file_copy(array $p) : void {
 	if (File::exists($p[1])) {
 		if (File::md5($p[0]) == File::md5($p[1])) {
-			return '';
+			return;
 		}
 	}
 
 	File::copy($p[0], $p[1]);
-	return '';
 }
 
 
 /**
  * Return File::size(path). if path does not exists return ''.
- *
- * @param string $param (format|not_empty|byte, empty = default = byte)
- * @param string $path
- * @return string
+ * Set file size format with $param (format|not_empty|byte, empty = default = byte).
  */
-public function tok_file_size($param, $path) {
+public function tok_file_size(string $param, string $path) : string {
 
 	if (!File::exists($path)) {
 		return '';
@@ -398,14 +340,10 @@ public function tok_file_size($param, $path) {
 
 
 /**
- * Return 1|'' if file (does not) exist.
- *
- * @throws if required and file does not exist
- * @param string $param (required or empty = default)
- * @param string $path
- * @return 1|''
+ * Return 1|'' if file (does not) exist. Throw exception if $param == 'required' and file 
+ * does not exist.
  */
-public function tok_file_exists($param, $path) {
+public function tok_file_exists(string $param, string $path) : string {
 	$required = $param == 'required';
 	return File::exists(trim($path), $required) ? 1 : '';
 }
