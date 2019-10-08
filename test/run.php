@@ -14,6 +14,7 @@ print $res;
 $th->runTest('lib_conf2kv/run.php');
 $th->runTest('lib_kv2conf/run.php');
 $th->runTest('lib_split_str/run.php');
+$th->runTest('lib_array_join/run.php');
 $th->runTest('lib_csv_explode/run.php');
 $th->runTest('lib_replace_tags/run.php');
 $th->runTest('ArrayHelper/run.php');
