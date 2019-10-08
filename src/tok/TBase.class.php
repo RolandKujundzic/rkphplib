@@ -422,7 +422,7 @@ public function tok_tpl(array $p, string $arg) : string {
  * @tok set multi-map: {var:=person.age}42{:var}
  * @tok get multi-map: {var:person.age} or {var:person.}age{:var}
  */
-public function tok_var(string $name, string $value) : string {
+public function tok_var(string $name, ?string $value) : string {
 
 	if (substr($name, 0, 1) == '=' && substr($name, -1) == '?') {
 		$name = substr($name, 0, -1); // name is now =abc or =#abc
@@ -1579,7 +1579,7 @@ public function tok_const(string $param, string $arg) : string {
  * @tok {get:a?}, (!isset(_REQUEST[a]) || strlen($_REQUEST[a]) == 0) = 0 : 1
  * @tok {get:xn--*}, return _REQUEST values where substr(key, 0, 4) == 'xn--' as hash string
  */
-public function tok_get(string $param, string $arg) : string {
+public function tok_get(string $param, ?string $arg) : string {
 	$key = empty($arg) ? $param : trim($arg);
 	$res = '';
 
@@ -1833,7 +1833,7 @@ public function tok_plugin(array $p) : void {
  * - _REQUEST[dir] = a/b/c, c/test.html exists: a/b/c/test.html
  * - _REQUEST[dir] = a/b/c, ./test.html exists: test.html
  */
-public function tok_find(string $file, string $file2 = '') : string {
+public function tok_find(string $file, ?string $file2 = '') : string {
 	if (empty($file) && !empty($file2)) {
 		$file = $file2;
 	}
