@@ -401,6 +401,8 @@ function _docs {
 function _strict_types_off {
   local LOG=`echo "sto_$1.log" | sed -E 's/\//:/g'`
 
+	_mkdir .rkscript
+
   echo -e "remove strict types from $1 (see .rkscript/$LOG)"
   "$PATH_PHPLIB/bin/toggle" "$1" strict_types off >".rkscript/$LOG" 2>&1
 
@@ -416,6 +418,8 @@ function _strict_types_off {
 #------------------------------------------------------------------------------
 function _log_debug_off {
   local LOG=`echo "ldo_$1.log" | sed -E 's/\//:/g'`
+
+	_mkdir .rkscript
 
   echo -e "update log debug line numbers in $1 (see .rkscript/$LOG)"
   "$PATH_PHPLIB/bin/toggle" "$1" log_debug on >".rkscript/$LOG" 2>&1
@@ -862,23 +866,25 @@ function _require_dir {
 
 #------------------------------------------------------------------------------
 # Abort if global variable is empty. With bash version >= 4.4 check works even
-# for arrays.
+# for arrays. If bash version < 4.4 export HAS_HASH_$1
 #
 # @param variable name (e.g. "GLOBAL" or "GLOB1 GLOB2 ...")
 # @require _abort
 #------------------------------------------------------------------------------
 function _require_global {
-	local BASH_VERSION=`bash --version | grep -E '.+bash.+Version [0-9\.]+' | sed -E 's/^.+Version ([0-9]+)\.([0-9]+)\..+$/\1.\2/'`
+	local BASH_VERSION=`bash --version | grep -iE '.+bash.+version [0-9\.]+' | sed -E 's/^.+version ([0-9]+)\.([0-9]+)\..+$/\1.\2/i'`
 
-	local a=; for a in $1; do
+	local a=; local has_hash=; for a in $1; do
+		has_hash="HAS_HASH_$a"
+
 		if (( $(echo "$BASH_VERSION >= 4.4" | bc -l) )); then
 			typeset -n ARR=$a
 
 			if test -z "$ARR" && test -z "${ARR[@]:1:1}"; then
 				echo "no such global variable $a"
 			fi
-		elif test -z "${!a}"; then
-			echo "no such global variable $a"
+		elif test -z "${a}" && test -z "${has_hash}"; then
+			echo "no such global variable $a - add HAS_HASH_$a if necessary"
 		fi
 	done
 }
@@ -993,7 +999,10 @@ function _sudo {
 	# change $2 into number
 	local FLAG=$(($2 + 0))
 
-	if test $((FLAG & 1)) = 1 && test -z "$CURR_SUDO"; then
+	if test "$USER" = "root"; then
+		_log "$EXEC" sudo
+		eval "$EXEC ${LOG_CMD[sudo]}" || _abort "$EXEC"
+	elif test $((FLAG & 1)) = 1 && test -z "$CURR_SUDO"; then
 		_log "$EXEC" sudo
 		eval "$EXEC ${LOG_CMD[sudo]}" || \
 			( echo "try sudo $EXEC"; eval "sudo $EXEC ${LOG_CMD[sudo]}" || _abort "sudo $EXEC" )
