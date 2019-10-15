@@ -625,11 +625,17 @@ public function tokCheck(string $php_source) : void {
 		$linebreak = false;
 		$result_file = '';
 
-		if (strlen($line) == 0 || $line[0] != '*' || mb_substr($line, 2, 5) != '@tok ') {
+		if (strlen($line) == 0 || $line[0] != '*' || mb_substr($line, 2, 4) != '@tok') {
 			continue;
 		}
 
 		$line = trim(mb_substr($line, 7));
+
+		if (substr($line, 0, 9) == 'request {' && substr($line, -1) == '}') {
+			$_REQUEST = array_merge($_REQUEST, json_decode(substr($line, 8), true));
+			continue;
+		}
+
 		$tok = new \rkphplib\tok\Tokenizer();
 		$tok->register(new $pclass());
 
@@ -638,7 +644,7 @@ public function tokCheck(string $php_source) : void {
 			$linebreak = true;
 		}
 		elseif (($pos = mb_strrpos($line, '=')) !== false) {
-			$plugin = trim(mb_substr($line, 7, $pos - 7));
+			$plugin = trim(mb_substr($line, 0, $pos));
 			$result = trim(mb_substr($line, $pos + 1));
 		}
 		else {
@@ -656,7 +662,6 @@ public function tokCheck(string $php_source) : void {
 			}
 		}
 
-print "linebreak=[$linebreak] result file = [$result_file]\n";
 		$this->_tc['num']++;
 		if ($linebreak) {
 			$this->_log("$plugin\n\t$result\n\t... ", 0);
