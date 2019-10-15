@@ -12,12 +12,14 @@ require_once $parent_dir.'/lib/htmlescape.php';
 require_once $parent_dir.'/lib/split_str.php';
 require_once $parent_dir.'/lib/conf2kv.php';
 require_once $parent_dir.'/lib/kv2conf.php';
+require_once $parent_dir.'/lib/http_code.php';
 
 use rkphplib\Exception;
 use rkphplib\tok\Tokenizer;
 use rkphplib\ValueCheck;
 
 use function rkphplib\lib\htmlescape;
+use function rkphplib\lib\http_code;
 use function rkphplib\lib\split_str;
 use function rkphplib\lib\conf2kv;
 use function rkphplib\lib\kv2conf;
@@ -658,9 +660,7 @@ private function ajaxOutput(string $ajax) : string {
 	try {
 		$output = $this->tok->callPlugin('tpl', $ajax);
 		// \rkphplib\lib\log_debug("TFormValidator.ajaxOutput:660> TFormValidator.ajaxOutput($ajax)> $output");
-		http_response_code(200);
-		print $output;
-		exit(0);
+		http_code(200, [ '@output' => $output ]);
 	}
 	catch (\Exception $e) {
 		Exception::httpError(400, "@ajax catch Exception in TFormValidator.ajaxOutput(): ".$e->getMessage());
