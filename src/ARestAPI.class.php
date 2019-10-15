@@ -15,7 +15,9 @@ require_once __DIR__.'/Dir.class.php';
 require_once __DIR__.'/ValueCheck.class.php';
 require_once __DIR__.'/Database.class.php';
 require_once __DIR__.'/lib/translate.php';
+require_once __DIR__.'/lib/http_code.php';
 
+use function rkphplib\lib\http_code;
 use function rkphplib\lib\translate;
 
 
@@ -523,30 +525,27 @@ public function out(array $o, int $code = 200) : void {
 
 	$jsonp = empty($this->request['map']['jsonpCallback']) ? '' : $this->request['map']['jsonpCallback'];
 
-	http_response_code($code);
+	$header = [];
 
 	if (!$this->options['internal_error'] && isset($o['error_info'])) {
 		unset($o['error_info']);
 	}
 
 	if (!empty($_SERVER['HTTP_ACCEPT']) && $_SERVER['HTTP_ACCEPT'] == 'application/xml') {
-		header('Content-Type: application/xml');
-		$output = XML::fromMap($o);
+		$header['Content-Type'] = 'application/xml';
+		$header['@output'] = XML::fromMap($o);
 	}
 	else if (!empty($jsonp)) {
-		header('Content-Type: application/javascript');
-		$output = $jsonp.'('.JSON::encode($o).')';
+		$header['Content-Type'] = 'application/javascript';
+		$header['@output'] = $jsonp.'('.JSON::encode($o).')';
 	}
 	else {
-		header('Content-Type: application/json');
-		$output = JSON::encode($o);
+		$header['Content-Type'] = 'application/json';
+		$header['@output'] = JSON::encode($o);
 	}
 
 	$this->logResult($code, $o, $output);
-
-	header('Content-Length: '.mb_strlen($output));
-	print $output;
-	exit(0);
+	http_code($code, $header);
 }
 
 
