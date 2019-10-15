@@ -6,8 +6,6 @@ require_once __DIR__.'/Exception.class.php';
 require_once __DIR__.'/lib/split_str.php';
 require_once __DIR__.'/lib/redirect.php';
 
-use function rkphplib\lib\split_str;
-use function rkphplib\lib\redirect;
 
 
 
@@ -25,7 +23,7 @@ protected $conf = [];
 /**
  * Set (default) options.
  */
-public function __construct(array $options = []) {
+public function __construct($options = []) {
 	$this->conf = $options;
 }
 
@@ -35,7 +33,7 @@ public function __construct(array $options = []) {
  * Implement function php_session_refresh(data) { ... } (data = OK or EXPIRED)
  * and set $on_success = 'php_session_refresh' if you want to track refresh success.
  */
-public function getJSRefresh(string $url, string $on_success = '', int $minutes = 10) : string {
+public function getJSRefresh($url, $on_success = '', $minutes = 10) {
 
 	$millisec = 60000 * $minutes;
 	$success = '';
@@ -68,10 +66,10 @@ END;
  *  start: time()
  *  last: time()
  */
-public function initMeta() : void {
+public function initMeta() {
 
 	if (!empty($this->conf['init_meta'])) {
-		// \rkphplib\lib\log_debug('ASession.initMeta:74> use existing'); 
+		// \rkphplib\lib\log_debug('ASession.initMeta:72> use existing'); 
 		return;
 	}
 
@@ -96,7 +94,7 @@ public function initMeta() : void {
  *
  * @return mixed
  */
-public function getConf(string $key) {
+public function getConf($key) {
 
 	if (count($this->conf) === 0) {
 		throw new Exception('call setConf first');
@@ -126,8 +124,8 @@ public function getConf(string $key) {
  * 
  *  Check inactive and ttl with hasExpired().
  */
-protected function setConf(array $conf) : void {
-	// \rkphplib\lib\log_debug('ASession.setConf:130> enter - conf: '.print_r($conf, true));
+protected function setConf($conf) {
+	// \rkphplib\lib\log_debug('ASession.setConf:128> enter - conf: '.print_r($conf, true));
 
 	$default = [ 'name' => '', 'table' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => '0', 
 		'redirect_login' => 'index.php?dir=login',  'redirect_logout' => 'index.php?dir=login/exit',
@@ -157,8 +155,8 @@ protected function setConf(array $conf) : void {
 		throw new Exception('no such scope', $this->conf['scope']);
 	}
 
-	$this->conf['required'] = split_str(',', $this->conf['required'], true);
-	$this->conf['allow_dir'] = split_str(',', $this->conf['allow_dir'], true);
+	$this->conf['required'] = \rkphplib\lib\split_str(',', $this->conf['required'], true);
+	$this->conf['allow_dir'] = \rkphplib\lib\split_str(',', $this->conf['allow_dir'], true);
 
 	$time_keys = [ 'inactive' => [1, 21600], 'ttl' => [1, 345600] ];
 
@@ -177,14 +175,14 @@ protected function setConf(array $conf) : void {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('ASession.setConf:180> exit - this.conf: '.print_r($this->conf, true));
+	// \rkphplib\lib\log_debug('ASession.setConf:178> exit - this.conf: '.print_r($this->conf, true));
 }
 
 
 /**
  * Return true if scope is valid.
  */
-public function validScope() : bool {
+public function validScope() {
 
 	if (empty($this->conf['scope'])) {
 		throw new Exception('call setConf first');
@@ -232,10 +230,10 @@ public function validScope() : bool {
 /**
  * If conf.redirect_forbidden is set redirect otherwise throw exception. 
  */
-public function redirectForbidden() : void {
+public function redirectForbidden() {
 
 	if (!empty($this->conf['redirect_forbidden'])) {
-		redirect($this->conf['redirect_forbidden']);
+		\rkphplib\lib\redirect($this->conf['redirect_forbidden']);
 	}
 	else {
 		throw new Exception('forbidden');
@@ -246,12 +244,12 @@ public function redirectForbidden() : void {
 /**
  * If conf.redirect_login is set redirect otherwise throw exception.
  */
-public function redirectLogin(string $reason, array $p = []) : void {
-	// \rkphplib\lib\log_debug('ASession.redirectLogin:250> reason='.$reason.' - conf: '.print_r($this->conf, true)."\np: ".print_r($p, true));
+public function redirectLogin($reason, $p = []) {
+	// \rkphplib\lib\log_debug('ASession.redirectLogin:248> reason='.$reason.' - conf: '.print_r($this->conf, true)."\np: ".print_r($p, true));
 	$this->destroy();
 
 	if (!empty($this->conf['redirect_login'])) {
-		redirect($this->conf['redirect_login'], $p);
+		\rkphplib\lib\redirect($this->conf['redirect_login'], $p);
 	}
 	else {
 		throw new Exception($reason);
@@ -262,7 +260,7 @@ public function redirectLogin(string $reason, array $p = []) : void {
 /**
  * Return expiration reason (ttl|inactive|) if session has become invalid. Update lchange.
  */
-public function hasExpired() : string {
+public function hasExpired() {
 	$now = time();
 	$expire_reason = '';
 
@@ -283,7 +281,7 @@ public function hasExpired() : string {
 /**
  * Return (meta) session key. Key is md5(conf.name:conf.scope)[_meta].
  */
-public function getSessionKey(string $map = '') : string {
+public function getSessionKey($map = '') {
 
 	if (empty($this->conf['name'])) {
 		throw new Exception('call setConf first');
@@ -304,61 +302,61 @@ public function getSessionKey(string $map = '') : string {
  * If required session parameter does not exist redirect to redirect_login or throw exception.
  * New parameter "save_path" (overwrite with define('SESSION_SAVE_PATH', '...')).
  */
-abstract public function init(array $conf) : void;
+abstract public function init($conf);
 
 
 /**
  * Set session value. Use $map=meta for metadata.
  */
-abstract public function set(string $key, $value, string $map = '') : void;
+abstract public function set($key, $value, $map = '');
 
 
 /**
  * Push value into session key. If value is pair assume session hash (otherwise vector).
  * Use map=meta for metadata.
  */
-abstract public function push(string $key, $value, string $map = '') : void;
+abstract public function push($key, $value, $map = '');
 
 
 /**
  * Set session hash. Overwrite existing unless merge = true.
  */
-abstract public function setHash(array $p, bool $merge = false, string $map = '') : void;
+abstract public function setHash($p, $merge = false, $map = '');
 
 
 /**
  * Get session key value. Use suffix '?' on key to prevent exception if key is not found.
  */
-abstract public function get(string $key, bool $required = true, string $map = '');
+abstract public function get($key, $required = true, $map = '');
 
 
 /**
  * Get session hash.
  */
-abstract public function getHash(string $map = '') : array;
+abstract public function getHash($map = '');
 
 
 /**
  * True if session key exists. If key is null return true if session hash is empty.
  */
-abstract public function has(string $key, string $map = '') : bool;
+abstract public function has($key, $map = '');
 
 
 /**
  * Remove session key.
  */
-abstract public function remove(string $key, string $map = '') : void;
+abstract public function remove($key, $map = '');
 
 
 /**
  * Return number of session keys.
  */
-abstract public function count(string $key, string $map = '') : int;
+abstract public function count($key, $map = '');
 
 
 /**
  * Destroy session data.
  */
-abstract public function destroy() : void;
+abstract public function destroy();
 
 }

@@ -18,7 +18,7 @@ class TMath implements TokPlugin {
 /**
  * Return {nf:}, {number_format:}, {intval:}, {floatval:}, {rand:}, {math:} and {md5:}
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$plugin = [];
 	$plugin['nf'] = 0;
 	$plugin['number_format'] = 0;

@@ -16,8 +16,6 @@ use rkphplib\JSON;
 use rkphplib\File;
 use rkphplib\Dir;
 
-use function rkphplib\lib\ps;
-use function rkphplib\lib\execute;
 
 
 
@@ -39,7 +37,7 @@ private $conf = [];
 /**
  * Return job plugin.
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$this->tok = $tok;
 
 	$plugin = [];
@@ -81,7 +79,7 @@ public function getPlugins(Tokenizer $tok) : array {
  */
 public function tok_job($conf) {
 	$default = [ 'do.run' => 'run=yes', 'do.remove' => 'lock=remove' ];
-	// \rkphplib\lib\log_debug("TJob.tok_job:84> default: ".print_r($default, true)." conf: ".print_r($conf, true));
+	// \rkphplib\lib\log_debug("TJob.tok_job:82> default: ".print_r($default, true)." conf: ".print_r($conf, true));
 	$this->conf = array_merge($default, $conf);  
 
 	if (isset($this->conf['if']) && empty($this->conf['if'])) {
@@ -121,7 +119,7 @@ public function tok_job($conf) {
  * @return boolean
  */
 private function running() {
-	// \rkphplib\lib\log_debug("TJob.running:124> lockfile=".$this->conf['lockfile']);
+	// \rkphplib\lib\log_debug("TJob.running:122> lockfile=".$this->conf['lockfile']);
 
 	if (!File::exists($this->conf['lockfile'])) {	
 		$_REQUEST['job_status'] = 'prepare';
@@ -177,8 +175,8 @@ private function run() {
 	if (!empty($this->conf['execute'])) {
 		$cmd = $this->conf['execute'].$bg_pid;
 		$this->lock([ 'execute' => $cmd, 'start' => microtime(), 'status' => 'start' ]);
-		$pid = execute($cmd);
-		$ps = ps($pid);
+		$pid = \rkphplib\lib\execute($cmd);
+		$ps = \rkphplib\lib\ps($pid);
 		if (isset($ps['PID']) && $ps['PID'] == $pid) {
 			$this->lock([ 'pid' => $pid, 'status' => 'running' ]);
 		}
@@ -194,8 +192,8 @@ private function run() {
 		$cmd = "cd '".dirname($this->conf['zip_dir'])."' && zip -r '".$this->conf['zip_file']."' '".
 			basename($this->conf['zip_dir']).$bg_pid; 
 		$this->lock([ 'execute' => $cmd, 'start' => microtime(), 'status' => 'start' ]);
-		$pid = execute($cmd);
-		$ps = ps($pid);
+		$pid = \rkphplib\lib\execute($cmd);
+		$ps = \rkphplib\lib\ps($pid);
 		if (isset($ps['PID']) && $ps['PID'] == $pid) {
 			$this->lock([ 'pid' => $pid, 'status' => 'running' ]);
 		}

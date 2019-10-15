@@ -27,7 +27,6 @@ use rkphplib\FSEntry;
 use rkphplib\File;
 use rkphplib\Dir;
 
-use function rkphplib\lib\syntax;
 
 
 
@@ -55,7 +54,7 @@ private $languages = [];
 /**
  * Catch {language:[init|get]} plugin and return plugin text.
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
   $plugin = [
     'language:init' => TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY,
     'language:get' => TokPlugin::NO_PARAM | TokPlugin::NO_BODY,
@@ -69,7 +68,7 @@ public function getPlugins(Tokenizer $tok) : array {
 /**
  * Catch {language:init}. Return plugin text.
  */
-public function tok_language_init(string $arg) : string {
+public function tok_language_init($arg) {
 	return '{language:init}'.$arg.'{:language}';
 }
 
@@ -77,7 +76,7 @@ public function tok_language_init(string $arg) : string {
 /**
  * Catch {language:get}. Return plugin text.
  */
-public function tok_language_get() : string {
+public function tok_language_get() {
 	return '{language:get}';
 }
 
@@ -85,7 +84,7 @@ public function tok_language_get() : string {
 /**
  * Set language table.
  */
-public function setTable(string $name, string $txt_lang = 'de') : bool {
+public function setTable($name, $txt_lang = 'de') {
 	$this->db = Database::getInstance();
 
 	if (!$this->db->hasTable($name)) {
@@ -119,7 +118,7 @@ public function setTable(string $name, string $txt_lang = 'de') : bool {
 /**
  * Load $file and return parsed content.
  */
-public function file(string $file) : string {
+public function file($file) {
 	$this->tok->load($file);
 	return $this->tok->toString();
 }
@@ -128,7 +127,7 @@ public function file(string $file) : string {
 /**
  * Print log message.
  */
-private function log(string $message) : void {
+private function log($message) {
 	print $message."\n";
 }
 
@@ -141,7 +140,7 @@ private function log(string $message) : void {
  * suffix_list = [ 'inc.html', 'conf', 'js', 'css' ]
  * exclude_dir = [ 'cms', 'data', 'php', 'setup' ]
  */
-public function run($option, string $language_table, string $default_language) : void {
+public function run($option, $language_table, $default_language) {
 	if (!$this->setTable($language_table, $default_language)) {
 		return;
 	}
@@ -189,7 +188,7 @@ public function run($option, string $language_table, string $default_language) :
 /**
  * Link all files not in LANG/ directory to parent directory.
  */
-public function link() : void {
+public function link() {
 	$entries = Dir::entries('.');
 	$found = [];
 
@@ -222,7 +221,7 @@ public function link() : void {
  * M A I N
  */
 
-if (!syntax([ '@docroot' ])) {
+if (!\rkphplib\lib\syntax([ '@docroot' ])) {
 	return;
 }
 

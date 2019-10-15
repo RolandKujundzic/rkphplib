@@ -15,7 +15,7 @@ class StringHelper {
  *
  * [ <a href="...">Home</a>  |  <a href="..."> Somewhere </a> ] = [<a href="...">Home</a>|<a href="...">Somewhere</a>]
  */
-public static function removeHtmlWhiteSpace(string $html) : string {
+public static function removeHtmlWhiteSpace($html) {
 	return str_replace([ "^M" ], [ "" ], preg_replace('/\s+(<)|(>)\s+/', '\2\1', $html));
 }
 
@@ -25,7 +25,7 @@ public static function removeHtmlWhiteSpace(string $html) : string {
  * 
  * <a href="..." class="..."><i class="..."></i> Text</a> = <a><i></i> Text</a>
  */
-public static function removeHtmlAttributes(string $html) : string {
+public static function removeHtmlAttributes($html) {
 	return preg_replace('/<([a-zA-Z]+).*?>/', '<\1>', $html);
 }
 
@@ -33,7 +33,7 @@ public static function removeHtmlAttributes(string $html) : string {
 /**
  * Remove all tags from $html. If allow = '<p><a>' then <p> and <a> tags are kept.
  */
-public static function removeHtmlTags(string $html, string $allow = '') : string {
+public static function removeHtmlTags($html, $allow = '') {
 	$html = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $html);
 	$html = strip_tags($html, $allow);
 	return $html;
@@ -46,7 +46,7 @@ public static function removeHtmlTags(string $html, string $allow = '') : string
  *
  * @param string|array $url
  */
-public static function url($url) : string {
+public static function url($url) {
 	if (is_array($url)) {
 		for ($i = 0; $i < count($url); $i++) {
 			$url[$i] = trim($url[$i]);

@@ -39,7 +39,7 @@ else {
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-function log_debug($msg, bool $prepend_info = false) : void {
+function log_debug($msg, $prepend_info = false) {
 
 	if (!defined('SETTINGS_LOG_DEBUG') || empty(SETTINGS_LOG_DEBUG)) {
 		return;

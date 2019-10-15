@@ -37,7 +37,7 @@ private $id_is_uid = 0;
 /**
  * Open IMAP/POP3 connection.
  */
-public function __construct(array $conf = []) {
+public function __construct($conf = []) {
 
 	$this->reset();
 
@@ -50,7 +50,7 @@ public function __construct(array $conf = []) {
 /**
  * Close connection and reset to default connection parameter.
  */
-public function reset() : void {
+public function reset() {
 
 	if (!is_null($this->con)) {
 		$this->close();
@@ -89,7 +89,7 @@ public function reset() : void {
  * 
  * @see http://de.php.net/manual/de/function.imap-open.php
  */
-public function set(string $key, string $value) : void {
+public function set($key, $value) {
 
 	if (!isset($this->conf[$key])) {
 		throw new Exception('invalid parameter '.$key);
@@ -110,7 +110,7 @@ public function set(string $key, string $value) : void {
 /**
  * Return configuration value.
  */
-public function get(string $key) : string {
+public function get($key) {
 
 	if (!isset($this->conf[$key])) {
 		throw new Exception('no such configuration parameter '.$key);
@@ -123,7 +123,7 @@ public function get(string $key) : string {
 /**
  * Open connection.
  */
-public function open(array $conf = []) : void {
+public function open($conf = []) {
 
 	foreach ($conf as $key => $value) {
 		$this->set($key, $value);
@@ -175,7 +175,7 @@ public function open(array $conf = []) : void {
 /**
  * Return message number.
  */
-public function count() : int {
+public function count() {
 	$this->_check_con();
   return $this->inbox_count;
 }
@@ -195,7 +195,7 @@ public function getConnection() {
 /**
  * Check if message exists. Return true|false if $abort == false.
  */
-public function hasMessage(int $num, bool $abort = false) : bool {
+public function hasMessage($num, $abort = false) {
 	$this->_check_con();
 
 	if ($num < 1 || $num > $this->inbox_count) {
@@ -213,7 +213,7 @@ public function hasMessage(int $num, bool $abort = false) : bool {
 /**
  * Delete message.
  */
-public function deleteMsg(int $num) : void {
+public function deleteMsg($num) {
 	$this->hasMessage($num, true);
    
 	if (!imap_delete($this->con, $num)) {
@@ -227,7 +227,7 @@ public function deleteMsg(int $num) : void {
 /**
  * Select message by number. Necessary for getXXX() operations.
  */
-public function selectMsg(int $num) : void {
+public function selectMsg($num) {
 	$this->hasMessage($num, true);
   $this->id = $num;
   $this->id_as_uid = 0;
@@ -237,7 +237,7 @@ public function selectMsg(int $num) : void {
 /**
  * Set message id. Necessary for getXXX() operations.
  */
-public function setUid(string $uid) : void {
+public function setUid($uid) {
 	$this->_check_con();
   $this->id_is_uid = FT_UID;
   $this->id = $uid;
@@ -251,7 +251,7 @@ public function setUid(string $uid) : void {
  *
  * @see php imap_fetch_overview()
  */
-public function getHeader() : array {
+public function getHeader() {
   $this->_check_id();
   $h = imap_fetch_overview($this->con, $this->id, $this->id_id_uid);
 	return $this->_convert_overview($h[0]);
@@ -261,7 +261,7 @@ public function getHeader() : array {
 /**
  * Convert overview object to map. Add first part of message_id as mid (= unique identifier).
  */
-private function _convert_overview(object $o) : array {
+private function _convert_overview($o) {
   $res = [];
   $res['subject'] = $o->subject;
   $res['from'] = $o->from;
@@ -294,7 +294,7 @@ private function _convert_overview(object $o) : array {
 /**
  * Return raw mail header.
  */
-public function getRawHeaders() : string {
+public function getRawHeaders() {
 	$this->_check_id();
   return imap_fetchheader($this->con, $this->id, $this->id_is_uid);
 }
@@ -303,7 +303,7 @@ public function getRawHeaders() : string {
 /**
  * Return current mailbox.
  */
-public function getMailbox() : object {
+public function getMailbox() {
 	$this->_check_con();
 	return imap_check($this->con);
 }
@@ -313,7 +313,7 @@ public function getMailbox() : object {
  * Return table with mailbox overview.
  * @see getHeader() for table rows
  */
-public function getListing(bool $show_all = true) : array {
+public function getListing($show_all = true) {
 	$this->_check_con();
   $res = array();
 
@@ -337,7 +337,7 @@ public function getListing(bool $show_all = true) : array {
 /**
  * Return mail structure.
  */
-public function getStructure() : object {
+public function getStructure() {
 	$this->_check_id();
   return imap_fetchstructure($this->con, $this->id, $this->id_as_uid);
 }
@@ -349,7 +349,7 @@ public function getStructure() : object {
  * @param string $head
  * @return hash
  */
-public function parseHeaders(string $head) : array {
+public function parseHeaders($head) {
 	$h = imap_rfc822_parse_headers($head);
 	$p = array();
 	
@@ -369,7 +369,7 @@ public function parseHeaders(string $head) : array {
  * @param string $suffix
  * @return table  
  */
-public function getAttachments(string $suffix = '') : array {
+public function getAttachments($suffix = '') {
 	$this->_check_id();
 	$res = array();
 
@@ -423,7 +423,7 @@ public function getAttachments(string $suffix = '') : array {
 /**
  * Return Message as (head, body) hash. Use getAttachments() for attachment retrieval.
  */
-public function getMsg() : array {
+public function getMsg() {
   $this->_check_id();
   $res = array();
   
@@ -462,7 +462,7 @@ public function getMsg() : array {
 /**
  * Save all messages in directory. Return number of saved messages. 
  */
-public function saveAll(string $dir) : int {
+public function saveAll($dir) {
 	$this->_check_con();
 
 	$mbox = $this->getMailbox();
@@ -497,7 +497,7 @@ public function saveAll(string $dir) : int {
  * Save serialized message map in directory. Parameter are getHeader() parameter plus raw_headers, body and
  * attachments.
  */
-public function save(string $dir, int $msg_num) : void {
+public function save($dir, $msg_num) {
 	require_once __DIR__.'/File.class.php';
 
 	$this->selectMsg($msg_num);
@@ -520,7 +520,7 @@ public function save(string $dir, int $msg_num) : void {
 /**
  * Close imap connection.
  */
-public function close() : void {
+public function close() {
 	$this->_check_con(false);
 
 	if ($this->_expunge) {
@@ -538,7 +538,7 @@ public function close() : void {
  * @param int $coding
  * @return string
  */
-private function _decode(string $txt, int $coding) : string {
+private function _decode($txt, $coding) {
 	
   switch ($coding) {
     case 0:
@@ -562,7 +562,7 @@ private function _decode(string $txt, int $coding) : string {
 /**
  * Check if connection exists. Throw exception if abort is true.
  */
-private function _check_con(bool $is_inbox = true, bool $abort = true) : bool {
+private function _check_con($is_inbox = true, $abort = true) {
 	$error_msg = '';
 
 	if (is_null($this->con) || !is_resource($this->con)) {
@@ -584,7 +584,7 @@ private function _check_con(bool $is_inbox = true, bool $abort = true) : bool {
 /**
  * Throw exception if this.id is null.
  */
-private function _check_id() : void {
+private function _check_id() {
 	if (is_null($this->id)) {
     throw new Exception('call selectMsg() or setUid() first');
   }	

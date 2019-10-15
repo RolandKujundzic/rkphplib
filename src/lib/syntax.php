@@ -17,7 +17,7 @@ namespace rkphplib\lib;
  * Export APP_DESC if $desc is not empty (and APP_DESC undefined).
  * Define APP_HELP to show help syntax and return false (use APP_HELP=quiet to disable output).
  */
-function syntax(array $argv_example = [], string $desc = '') : bool {
+function syntax($argv_example = [], $desc = '') {
 
 	if (!empty($desc) && !defined('APP_DESC')) {
 		define('APP_DESC', $desc);

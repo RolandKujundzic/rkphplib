@@ -36,7 +36,7 @@ private $cache = [];
  * - local_dsn: 
  *
  */
-public function __construct(array $options) {
+public function __construct($options) {
 	$required = [ 'local_dsn', 'remote_dsn' ];
 
 	foreach ($required as $key) {
@@ -55,7 +55,7 @@ public function __construct(array $options) {
  * Return value. If value is empty and key exists, return
  * current value.
  */
-public function set(string $key, string $value) : string {
+public function set($key, $value) {
 
 	if (!isset($this->config[$key])) {
 		throw new Exception('no such configuration key '.$key);
@@ -80,7 +80,7 @@ public function set(string $key, string $value) : string {
 /**
  * Get configuration value. Throw exception if value is empty.
  */
-public function get(string $key) : string {
+public function get($key) {
 
 	if (!isset($this->config[$key])) {
 		throw new Exception('no such configuration key '.$key);
@@ -99,7 +99,7 @@ public function get(string $key) : string {
 /**
  * Return true if local table is superset of remote table.
  */
-public function compareTable(string $table = '') : bool {
+public function compareTable($table = '') {
 	$remote_desc = $this->remote_db->getTableDesc($table);
 	$local_desc = $this->remote_db->getTableDesc($table);
 	$table = $this->set('table', $table);
@@ -125,7 +125,7 @@ public function compareTable(string $table = '') : bool {
  * overwrite remote data with custom data. If $id value column is
  * not id use table.column_name as $table.
  */
-public function syncEntry(string $table, int $id, array $custom_data = []) : void {
+public function syncEntry($table, $id, $custom_data = []) {
 
 	$id_col = 'id';
 	if (($pos = strpos($table, '.')) > 0) {
@@ -169,7 +169,7 @@ public function syncEntry(string $table, int $id, array $custom_data = []) : voi
 /**
  * Recursive loop syncEntry - syncForeignKeyReferences.
  */
-private function syncForeignKeyReferences(string $table, string $id_col, string $id) : void {
+private function syncForeignKeyReferences($table, $id_col, $id) {
 
 	$references = $this->local_db->getReferences($table, $id_col);
 
@@ -203,7 +203,7 @@ private function syncForeignKeyReferences(string $table, string $id_col, string 
 /**
  * Return true if values in $a are the same in $b.
  */
-private function compareRows(array $a, array $b) : bool {
+private function compareRows($a, $b) {
 	foreach ($a as $key => $value) {
 		if (!array_key_exists($key, $b) || $b[$key] != $value) {
 			return false;
@@ -217,7 +217,7 @@ private function compareRows(array $a, array $b) : bool {
 /**
  * Print message.
  */
-protected function log(string $message) : void {
+protected function log($message) {
 	print $message."\n";
 }
 

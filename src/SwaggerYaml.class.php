@@ -8,7 +8,6 @@ require_once __DIR__.'/YAML.class.php';
 require_once __DIR__.'/JSON.class.php';
 require_once __DIR__.'/lib/split_str.php';
 
-use function rkphplib\lib\split_str;
 
 
 
@@ -65,7 +64,7 @@ private $last_api_call = '';
 /**
  * Check parameter map. Add to param.
  */
-private function checkParameter(string $pname, array $info) : void {
+private function checkParameter($pname, $info) {
 	$keys = [ 'in', 'name', 'description', 'required', 'type', 'default', 'enum', 'example' ];
 	$required = [ 'in', 'name', 'type', 'required' ]; 
 	# byte = base64 encoded characters, password = obscured input
@@ -127,7 +126,7 @@ private function checkParameter(string $pname, array $info) : void {
 /**
  * Extract parameter names from path. Update path_param index. Return parameter list.
  */
-private function pathParameter(string $path) : array {
+private function pathParameter($path) {
 	$parameter = [];
 
 	if (substr($path, 0, 1) != '/') {
@@ -166,7 +165,7 @@ private function pathParameter(string $path) : array {
  *   required: true
  *   type: string
  */
-private function addPath(string $method, string $path, array $api) : void {
+private function addPath($method, $path, $api) {
 
 	$method = strtolower($method);
 
@@ -263,7 +262,7 @@ private function addPath(string $method, string $path, array $api) : void {
  *  - consumes: string
  *  - parameter: 
  */
-private function apiInfo(array $api, string $path) : array {
+private function apiInfo($api, $path) {
 	$info = [];
 	$remove_param = [];
 	$remove_security = [];
@@ -317,7 +316,7 @@ private function apiInfo(array $api, string $path) : array {
 				$this->addParametersFromInput($info, $pval, $path);
 			}
 			else {
-				$this->addNewParameter($info, split_str(',', $pval));
+				$this->addNewParameter($info, \rkphplib\lib\split_str(',', $pval));
 			}
 		}
 	}
@@ -341,7 +340,7 @@ private function apiInfo(array $api, string $path) : array {
 /**
  * Add new parameter $pval (file:test_nr:in) to info (and data[parameters]). Load parameter list from input.json.  
  */
-private function addParametersFromInput(array &$info, string $pval, string $path) : void {
+private function addParametersFromInput(&$info, $pval, $path) {
 	list ($file, $test_nr, $in) = explode(':', substr($pval, 1));
 
 	if (!in_array($in, [ 'body', 'header', 'path', 'query', 'formData' ])) {
@@ -370,7 +369,7 @@ private function addParametersFromInput(array &$info, string $pval, string $path
 /**
  * Return json from $file. Replace !TAG!.
  */
-private function loadJSON(string $file, string $test_nr) : array {
+private function loadJSON($file, $test_nr) {
 	
 	$json_str = File::load($file);
 	$json = JSON::decode($json_str);
@@ -395,7 +394,7 @@ private function loadJSON(string $file, string $test_nr) : array {
 /**
  * Add new parameter $pinfo (name, type, required, in, default, desc, extra) to info (and data[parameters]). 
  */
-private function addNewParameter(array &$info, array $pinfo) : void {
+private function addNewParameter(&$info, $pinfo) {
 	if (count($pinfo) < 5 || !in_array($pinfo[3], [ 'body', 'header', 'path', 'query', 'formData' ])) {
 		throw new Exception('invalid parameter description', print_r($pinfo, true));
 	}
@@ -425,7 +424,7 @@ private function addNewParameter(array &$info, array $pinfo) : void {
  *  - enum:A:B:C:D
  *  - example:EXAMPLE, example:|\nMULTILINE\nEXAMPLE
  */
-private static function param2map(array $pinfo) : array {
+private static function param2map($pinfo) {
 
 	$res = [ 
 		'name' => $pinfo[0],
@@ -445,10 +444,10 @@ private static function param2map(array $pinfo) : array {
 	if (count($pinfo) > 6) {
 		for ($i = 6; $i < count($pinfo); $i++) {
 			if (($pos = strpos($pinfo[$i], 'default:')) === 0 || ($pos = strpos($pinfo[$i], 'example:')) === 0) {
-				$tmp = split_str(':', $pinfo[$i], false, 2);
+				$tmp = \rkphplib\lib\split_str(':', $pinfo[$i], false, 2);
 			}
 			else {
-				$tmp = split_str(':', $pinfo[$i]);
+				$tmp = \rkphplib\lib\split_str(':', $pinfo[$i]);
 			}
 
 			$key = array_shift($tmp);
@@ -463,7 +462,7 @@ private static function param2map(array $pinfo) : array {
 /**
  * Add existing parameter to info (and data[parameters]).
  */
-private function addExistingParameter(array &$info, string $name, string $in) : void {
+private function addExistingParameter(&$info, $name, $in) {
 
 	if (empty($in) || empty($name)) {
 		throw new Exception('invalid parameter reference', "in=$in name=$name info: ".print_r($info, true));
@@ -496,7 +495,7 @@ private function addExistingParameter(array &$info, string $name, string $in) : 
 /**
  * Add parameter to body object.
  */
-private function addToBody(array &$info, array $pinfo) : void {
+private function addToBody(&$info, $pinfo) {
 
 	if (!isset($info['parameters'])) {
 		$info['parameters'] = [];
@@ -558,7 +557,7 @@ private function addToBody(array &$info, array $pinfo) : void {
 /**
  * Log message if $level < options.log_level.
  */
-private function log(string $message, int $level) : void {
+private function log($message, $level) {
 	if ($level <= $this->options['log_level']) {
 		print $message."\n";
 	}
@@ -568,7 +567,7 @@ private function log(string $message, int $level) : void {
 /**
  * Return paths.$path.$method map. Use data.paths.__default.post as template.
  */
-private function getMethod(array $parameter) : array {
+private function getMethod($parameter) {
 
 	if (!isset($this->data['paths']) || 
 			!isset($this->data['paths']['__default']) || 
@@ -591,7 +590,7 @@ private function getMethod(array $parameter) : array {
 /**
  * Add tags to data.paths.path.method map.
  */
-private function setTags(array $prefix_tag) : void {
+private function setTags($prefix_tag) {
 	foreach ($this->data['paths'] as $path => $ignore) {
 		foreach ($this->data['paths'][$path] as $method => $info) {
 			$tags = [];
@@ -627,7 +626,7 @@ private function setTags(array $prefix_tag) : void {
 /**
  * Scan $file for @api-route or options.route_rx (after "@api") and call "$this->addPath($method, $path)". Either escape with // or *.
  */
-private function scan(string $file) : void {
+private function scan($file) {
 	$lines = File::loadLines($file);
 	$is_comment = false; // true = we are inside multiline comment block
 	$route_rx = empty($this->options['route_rx']) ? '' : $this->options['route_rx'];
@@ -648,7 +647,7 @@ private function scan(string $file) : void {
 		}
 		else if ((!$is_comment && preg_match('/^\/\/\s*@api\s+(.+)$/', $line, $match)) ||
 						($is_comment && $rx_check && preg_match('/^\s*\*\s*@api\s+(.+)$/', $line, $match))) {
-			$api = split_str(',', trim($match[1]));
+			$api = \rkphplib\lib\split_str(',', trim($match[1]));
 			$set_api = true;
 		}
 		else if ((!$is_comment && count($api) > 0 && preg_match('/^\/\/\s*@api_(.+?)\s+(.+)$/', $line, $match)) ||
@@ -687,7 +686,7 @@ private function scan(string $file) : void {
  * @param vector $match
  * @param map $api
  */
-private function route_rx(array $match, array $api) : void {
+private function route_rx($match, $api) {
 	$rx_check = empty($this->options['route_rx_check']) ? '' : $this->options['route_rx_check'];
 	$method = strtolower($match[1]);
 	$path = $match[2];
@@ -740,7 +739,7 @@ private function route_rx(array $match, array $api) : void {
 /**
  * Update options.save_yaml. Load options.load_yaml as template. Scan options.scan_files and add options.tags.
  */
-public function update() : void {
+public function update() {
 
 	$required_opt = [ 'load_yaml', 'save_yaml' ];
 	foreach ($required_opt as $key) {
@@ -785,7 +784,7 @@ public function update() : void {
 /**
  * Return yaml type of $any.
  */
-private function getYamlType($any) : array {
+private function getYamlType($any) {
 	$type = '';
 
 	if (is_null($any)) {
@@ -817,7 +816,7 @@ private function getYamlType($any) : array {
 /**
  * Return yaml swagger array description ($type = items|properties).
  */
-private function getYamlArray(array $arr, string $type) : array {
+private function getYamlArray($arr, $type) {
 	$res = [];
 
 	if ($type == 'properties') {
@@ -837,7 +836,7 @@ private function getYamlArray(array $arr, string $type) : array {
 /**
  * Return true if array is map.
  */
-private function isMap(array $arr) : bool {
+private function isMap($arr) {
 	if (array() === $arr) {
 		return false;
 	}
@@ -849,7 +848,7 @@ private function isMap(array $arr) : bool {
 /**
  * Scan options.test_dir for path1/path2/method.200.json.
  */
-private function addResponses(string $test_dir) : void {
+private function addResponses($test_dir) {
 
 	if (empty($this->options['test_dir'])) {
 		return;
@@ -904,7 +903,7 @@ private function addResponses(string $test_dir) : void {
  * - test_dir: if set scan for methodPATH.[input|output].json
  * - use_response: default = 0 (set only if method.ok.json is multi response vector)
  */
-public function __construct(array $options = [ 'log_level' => 1 ]) {
+public function __construct($options = [ 'log_level' => 1 ]) {
 	$this->options = [ 
 		'load_yaml' => '',
 		'save_yaml' => '',

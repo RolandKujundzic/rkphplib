@@ -53,7 +53,7 @@ public function __construct() {
  * @param mixed $out
  * @param mixed $ok
  */
-private function _error_cmp(string $msg, $out, $ok) : void {
+private function _error_cmp($msg, $out, $ok) {
 	$m_out = '';
 	$m_ok = '';
 
@@ -108,7 +108,7 @@ private function _error_cmp(string $msg, $out, $ok) : void {
  * 8: print delimiter line after $msg
  * 16: add linebreak to output
  */
-private function _log(string $msg, int $cn = 1) : void {
+private function _log($msg, $cn = 1) {
 
 	if ($cn & 2) {
 		print "\n";
@@ -133,7 +133,7 @@ private function _log(string $msg, int $cn = 1) : void {
 /**
  * Include (once) php file $file (relative path to rkphplib/ directory) from rkphplib/ directory.
  */
-public function load(string $file) : void {
+public function load($file) {
 	$rkphplib = '';
 
 	if (!empty($_SERVER['PWD']) && ($pos = mb_strpos($_SERVER['PWD'], '/rkphplib/')) !== false) {
@@ -160,7 +160,7 @@ public function load(string $file) : void {
 /**
  * Print overall result.
  */
-public function result() : void {
+public function result() {
 
 	if (count($this->_tc['overview']) == 0) {
 		return;
@@ -176,7 +176,7 @@ public function result() : void {
 /**
  * Run test script.
  */
-public function runTest(string $run_php) : void {
+public function runTest($run_php) {
 
 	FSEntry::isFile($run_php);
 	$script_dir = dirname($run_php);
@@ -215,7 +215,7 @@ public function runTest(string $run_php) : void {
 /**
  * Call function and compare result. Load $test (list of function calls - parameterlist + result) and $func (function name) from $path.fc.php.
  */
-public function runFuncTest(string $path) : void {
+public function runFuncTest($path) {
 
 	// execute test
 	$php_file = empty($this->_tc['path']) ? $path.'.fc.php' : $this->_tc['path'].'/'.$path.'.fc.php';
@@ -290,7 +290,7 @@ public function runFuncTest(string $path) : void {
  * 
  * @param mixed $arg
  */
-public function callTest(callable $func, $arg, array $result) : void {
+public function callTest($func, $arg, $result) {
   $this->_tc['num']++;
 
   $this->_log(array_shift($result).": ", 0);
@@ -325,7 +325,7 @@ public function callTest(callable $func, $arg, array $result) : void {
 /**
  * Compare output $out_list with expected result $ok_list. Result vector may contain less keys than output (e.g. ignore date values).
  */
-public function compare(string $msg, array $out_list, array $ok_list) : void {
+public function compare($msg, $out_list, $ok_list) {
 	$this->_log($msg.": ", 0);
 	$this->_tc['num']++;
 
@@ -384,7 +384,7 @@ public function compare(string $msg, array $out_list, array $ok_list) : void {
 /**
  * Compare hash output with expected result. Result hash may contain lass keys than output (e.g. ignore date values).
  */
-public function compareHash(string $msg, array $out, array $ok) : void {
+public function compareHash($msg, $out, $ok) {
 	$this->_log($msg.": ", 0);
 	$this->_tc['num']++;
 	$err = 0;
@@ -457,7 +457,7 @@ private function getResult($value) {
  *
  * @param mixed $x
  */
-private function _fc_log(string $call, $x) : string {
+private function _fc_log($call, $x) {
 	$y = array();
 	$prefix = '';
 	$suffix = '';
@@ -493,7 +493,7 @@ private function _fc_log(string $call, $x) : string {
  *
  * @return mixed
  */
-private function _fc_function(string $func, array $x) {
+private function _fc_function($func, $x) {
 
 	$this->_log($this->_fc_log("$func", $x), 0);
 	$pnum = count($x);
@@ -520,7 +520,7 @@ private function _fc_function(string $func, array $x) {
  * 
  * @return mixed
  */
-private function _fc_static_method(string $class, string $method, array $x) {
+private function _fc_static_method($class, $method, $x) {
 
 	$this->_log($this->_fc_log("$class::$method", $x), 0);
 	$pnum = count($x);
@@ -565,7 +565,7 @@ public static function res2str($res) {
 /**
  * Return test dir ([abs-path, rel-path]).
  */
-private function _test_dir() : array {
+private function _test_dir() {
 	$cwd = getcwd();
 	$tdir = '';
 
@@ -593,7 +593,7 @@ private function _test_dir() : array {
  *
  * @param int|string|array $num
  */
-public function runTokenizer($num, array $plugin_list) : void {
+public function runTokenizer($num, $plugin_list) {
 
 	list ($tdir, $rel_tdir) = $this->_test_dir();
 

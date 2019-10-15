@@ -7,7 +7,7 @@ require_once dirname(dirname(__DIR__)).'/src/ValueCheck.class.php';
  * Execute comparsing, log and return result (0|1). Use check('result', 'message') for result output.
  * Compare result sequence (1,0, ...) with global $expect vector.
  */
-function check(string $func, string $domain = '', int $lmin = 0, int $lmax = 0) : int {
+function check($func, $domain = '', $lmin = 0, $lmax = 0) {
 	static $found = [];
 	global $expect;
 

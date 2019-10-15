@@ -24,7 +24,7 @@ public function __construct($mode = 'A') {
 	$this->mode = $mode;
 }
 
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$plugin = [];
 
 	if ($this->mode == 'A') {

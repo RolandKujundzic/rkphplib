@@ -45,7 +45,7 @@ public function __construct() {
 /**
  * Start xdebug trace. Needs xdebug module (apt-get install php5-xdebug).
  */
-public function startXDTrace(string $trace_file = '/tmp/php5-xdebug.trace') : void {
+public function startXDTrace($trace_file = '/tmp/php5-xdebug.trace') {
 	xdebug_start_trace($trace_file); 
 
 	if (!$this->_xdebug_on) {
@@ -60,7 +60,7 @@ public function startXDTrace(string $trace_file = '/tmp/php5-xdebug.trace') : vo
  * Return hash (file, line, call, args) or array of hash. Flag $mode is 2^0=1=file, 2^1=2=line, 
  * 4=call, 8=args (default=file|line|call=7).
  */
-public static function trace(int $num = -6, int $mode = 7) : array {
+public static function trace($num = -6, $mode = 7) {
 
 	$trace = debug_backtrace();
 	$tnum = count($trace);
@@ -142,7 +142,7 @@ public static function trace(int $num = -6, int $mode = 7) : array {
  * Return mixed $var as string. Return boolean as 'true'|'false' string. 
  * Cut string to 80 characters, return object as $Classname, array as array(key => value, ...) 
  */
-public static function print_var($var) : string {
+public static function print_var($var) {
   $res = '';
 
   if (is_string($var)) {
@@ -185,7 +185,7 @@ public static function print_var($var) : string {
 /**
  * Add log message (time, memory, message, call, file_line) to _log. Use Profile::traceLast() for $bt.
  */
-public function log(string $msg = '') : void {
+public function log($msg = '') {
 	$ts = microtime(true);
 	$mem = memory_get_usage();
 
@@ -219,7 +219,7 @@ public function log(string $msg = '') : void {
 /**
  * Return last backtrace information (call, file.line). Call is either function or class::method.
  */
-public static function traceLast() : array {
+public static function traceLast() {
 	$bt = debug_backtrace();
 	$res = array('', '');
 
@@ -237,7 +237,7 @@ public static function traceLast() : array {
 /**
  * Write (print) log.
  */
-public function writeLog(string $file = 'php://STDOUT') : void {
+public function writeLog($file = 'php://STDOUT') {
 	$fd = fopen($file, 'a');
 	$elapsed_time = 0;
 
@@ -262,7 +262,7 @@ public function writeLog(string $file = 'php://STDOUT') : void {
 /**
  * Stop xdebug trace. Call startXDTrace() first.
  */
-public function stopXDTrace(string $file = 'php://STDOUT') : void {
+public function stopXDTrace($file = 'php://STDOUT') {
 	$trace_file = xdebug_get_tracefile_name();
 	xdebug_stop_trace();
 

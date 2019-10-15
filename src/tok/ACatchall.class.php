@@ -44,7 +44,7 @@ protected $source_dir = '';
  * 
  * @example setLayoutInclude('/path/to/www', 'layout.inc.html', [ 'content.inc.html' ]);
  */
-public function setLayoutInclude(string $source_dir, string $layout, array $include) : void {
+public function setLayoutInclude($source_dir, $layout, $include) {
 	$this->crawl_dir = [];
 	$this->source_dir = $source_dir;
 	$this->layout = $layout;
@@ -71,7 +71,7 @@ public function setLayoutInclude(string $source_dir, string $layout, array $incl
 /**
  * @plugin catchall
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
   $plugin = [];
   $plugin['catchall'] = 0;
   return $plugin;
@@ -81,19 +81,19 @@ public function getPlugins(Tokenizer $tok) : array {
 /**
  * Catch all plugins. Usual result is empty string.
  */
-abstract public function tok_catchall(string $param, string $arg) : string;
+abstract public function tok_catchall($param, $arg);
 
 
 /**
  * Process parsed file data.
  */
-abstract public function processFile(string $file, string $data) : void;
+abstract public function processFile($file, $data);
 
 
 /**
  * Return tokenized via layout. Assume _REQUEST[dir] is exported.
  */
-public function parseLayout(string $file) : string {
+public function parseLayout($file) {
 	$curr = getcwd();
 	chdir($this->source_dir);
 
@@ -113,7 +113,7 @@ public function parseLayout(string $file) : string {
 /**
  * Return tokenized file. Assume _REQUEST[dir] is exported.
  */
-public function parseFile(string $file) : string {
+public function parseFile($file) {
 	$this->log("parse $file");
 
 	$this->tok = new Tokenizer();
@@ -129,7 +129,7 @@ public function parseFile(string $file) : string {
 /**
  * Call this.processFile($file) for every matching file in directory. 
  */
-public function scan(string $directory, array $suffix_list = [ 'inc.html' ]) : void {
+public function scan($directory, $suffix_list = [ 'inc.html' ]) {
 	$files = Dir::scanTree('src', $suffix_list);
 	$dlen = strlen($directory);
 
@@ -148,7 +148,7 @@ public function scan(string $directory, array $suffix_list = [ 'inc.html' ]) : v
 /**
  * Copy $source_dir content to $target_dir. Process files with suffix in $parse_suffix_list.
  */
-public function copy(string $source_dir, string $target_dir, array $parse_suffix_list = [ 'inc.html', 'js', 'conf' ], int $slen = 0) : void {
+public function copy($source_dir, $target_dir, $parse_suffix_list = [ 'inc.html', 'js', 'conf' ], $slen = 0) {
 	$entries = Dir::entries($source_dir);
 
 	if (!$slen) {
@@ -194,7 +194,7 @@ public function copy(string $source_dir, string $target_dir, array $parse_suffix
 /**
  * Print message to stdout (prepend 2x space, append \n).
  */
-public function log(string $message) : void {
+public function log($message) {
 	print "  $message\n";
 }
 

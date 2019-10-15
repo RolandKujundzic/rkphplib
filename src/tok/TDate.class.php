@@ -25,7 +25,7 @@ private $env = [ 'format_in' => null, 'format_out' => null, 'format_cut' => '' ]
 /**
  * @plugin date
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
   $plugin = [];
   $plugin['date'] = TokPlugin::PARAM_CSLIST | TokPlugin::LIST_BODY;
   return $plugin;
@@ -35,7 +35,7 @@ public function getPlugins(Tokenizer $tok) : array {
 /**
  * Return time or microtime ($param = time|microtime). 
  */
-private function date_param(string $param) : ?string {
+private function date_param($param) {
 	$res = null;
 
 	if ($param == 'time') {
@@ -61,7 +61,7 @@ private function date_param(string $param) : ?string {
  *
  * @see DateCalc::formatDateStr()
  */
-public function tok_date(array $p, array $arg) : string {
+public function tok_date($p, $arg) {
 
 	if (count($p) == 1 && !empty($p[0])) {
 		if ($p[0] == 'set_format') {

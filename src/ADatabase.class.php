@@ -8,8 +8,6 @@ require_once __DIR__.'/Dir.class.php';
 require_once __DIR__.'/lib/split_str.php';
 require_once __DIR__.'/lib/is_map.php';
 
-use function rkphplib\lib\split_str;
-use function rkphplib\lib\is_map;
 
 
 /**
@@ -82,7 +80,7 @@ protected $_qinfo = [];
 /**
  * Return md5 hash based on dsn and $query_map (see setQueryMap).
  */
-public static function computeId(string $dsn, array $query_map = null) : string {
+public static function computeId($dsn, $query_map = null) {
 	
 	if (empty($dsn)) {
 		throw new Exception('empty database source name');
@@ -111,7 +109,7 @@ public static function computeId(string $dsn, array $query_map = null) : string 
 /**
  * Compute md5 of map. Ignore columns in exclude list.
  */
-public static function getMapId(array $p, array $exclude = []) : string {
+public static function getMapId($p, $exclude = []) {
 	$id = '';
 
 	foreach ($p as $key => $value) {
@@ -127,7 +125,7 @@ public static function getMapId(array $p, array $exclude = []) : string {
 /**
  * Return md5 identifier. Same as self::computeId(getDSN(), getQueryMap()).
  */
-abstract public function getId() : string;
+abstract public function getId();
 
 
 /**
@@ -137,7 +135,7 @@ abstract public function getId() : string;
  * mysqli://user:password@tcp+localhost/dbname
  * sqlite://[password]@path/to/file.sqlite
  */
-public function setDSN(string $dsn = '') : void {
+public function setDSN($dsn = '') {
 
 	if (empty($dsn) && defined('SETTINGS_DSN')) {
 		$dsn = SETTINGS_DSN;
@@ -158,7 +156,7 @@ public function setDSN(string $dsn = '') : void {
 /**
  * Return database connect string.
  */
-public function getDSN() : string {
+public function getDSN() {
 
 	if (empty($this->_dsn)) {
 		throw new Exception('call setDSN() first');
@@ -171,7 +169,7 @@ public function getDSN() : string {
 /**
  * Return query map.
  */
-public function getQueryMap() : array {
+public function getQueryMap() {
 	return $this->_query;
 }
 
@@ -183,7 +181,7 @@ public function getQueryMap() : array {
  * type://login:password@protocol+host:port/name 
  * type://[password]@./file or type://@/path/to/file 
  */
-public static function splitDSN(string $dsn) : array {
+public static function splitDSN($dsn) {
 
 	$file_db = array('sqlite');
 
@@ -245,7 +243,7 @@ public static function splitDSN(string $dsn) : array {
  * - table: name of table
  * - master_query: INSERT INTO table (id, last_modified, login, password) values (0, null, CRC32(RAND()), CRC32(RAND())) 
  */
-public function setQueryInfo(string $qkey, array $info) : void {
+public function setQueryInfo($qkey, $info) {
 	if (empty($qkey)) {
 		throw new Exception('empty query key');
 	}
@@ -269,7 +267,7 @@ public function setQueryInfo(string $qkey, array $info) : void {
 /**
  * Return query info map (or value if $ikey is set).
  */
-public function getQueryInfo(string $qkey, string $ikey = '') {
+public function getQueryInfo($qkey, $ikey = '') {
 	if (empty($qkey)) {
 		throw new Exception('empty query key');
 	}
@@ -301,7 +299,7 @@ public function getQueryInfo(string $qkey, string $ikey = '') {
  * If tag is {:=^x} apply escape_name($value).
  * If tag is {:=_x} keep $value.
  */
-public function setQuery(string $qkey, string $query, array $info = []) : void {
+public function setQuery($qkey, $query, $info = []) {
 
 	if (empty($qkey)) {
 		throw new Exception('empty query key');
@@ -369,7 +367,7 @@ public function setQuery(string $qkey, string $query, array $info = []) : void {
  * If $replace[$qkey] is not empty return getQuery('_custom_'.$qkey, $replace)
  * otherwise return getQuery($qkey, $replace).
  */
-public function getCustomQuery(string $qkey, array $replace) {
+public function getCustomQuery($qkey, $replace) {
 	if (!empty($replace[$qkey])) {
 		$this->setQuery('_custom_'.$qkey, $replace[$qkey]);
 		return $this->getQuery('_custom_'.$qkey, $replace);
@@ -382,7 +380,7 @@ public function getCustomQuery(string $qkey, array $replace) {
 /**
  * Return (prepared) query defined via setQuery($qkey, '...').
  */
-public function getQuery(string $qkey, array $replace = null) {
+public function getQuery($qkey, $replace = null) {
 
 	if (!isset($this->_query[$qkey])) {
 		throw new Exception('call setQuery() first', "qkey=[$qkey]");
@@ -459,7 +457,7 @@ public function getQuery(string $qkey, array $replace = null) {
 /**
  * True if query key exists. If query is not empty compare too.
  */
-public function hasQuery(string $qkey, string $query = '') : bool {
+public function hasQuery($qkey, $query = '') {
 
 	if (!isset($this->_query[$qkey])) {
 		return false;
@@ -483,15 +481,15 @@ public function hasQuery(string $qkey, string $query = '') : bool {
  * True if every query key from query_map exists and if query_map is map (and not vector)
  * all queries must be same.
  */
-public function hasQueries(array $query_map) : bool {
-	// \rkphplib\lib\log_debug("ADatabase.hasQueries:487> query_map: ".print_r($query_map, true));
+public function hasQueries($query_map) {
+	// \rkphplib\lib\log_debug("ADatabase.hasQueries:485> query_map: ".print_r($query_map, true));
 	if (!is_array($query_map)) {
 		return false;
 	}
 	else if (count($query_map) == 0) {
 		return true;
 	}
-	else if (is_map($query_map)) {
+	else if (\rkphplib\lib\is_map($query_map)) {
 		foreach ($query_map as $qkey => $query) {
 			if (!$this->hasQuery($qkey, $query)) {
 				return false;
@@ -513,7 +511,7 @@ public function hasQueries(array $query_map) : bool {
 /**
  * Apply setQuery($key, value) for every key value pair in $query_map.
  */
-public function setQueryMap(array $query_map) : void {
+public function setQueryMap($query_map) {
 	foreach ($query_map as $qkey => $query) {
 		$this->setQuery($qkey, $query);
 	}
@@ -525,7 +523,7 @@ public function setQueryMap(array $query_map) : void {
  * Change/remove query prefix with conf_hash[@query_prefix].
  * Use query.escape_name@table=test name to replace {:=@table} with `test name`.
  */
-public function setQueryHash(array $conf_hash, array $require_keys = []) : void {
+public function setQueryHash($conf_hash, $require_keys = []) {
 
 	foreach ($require_keys as $qkey) {
 		if (empty($conf_hash['query.'.$qkey]) && empty($this->_query[$qkey])) {
@@ -567,7 +565,7 @@ public function setQueryHash(array $conf_hash, array $require_keys = []) : void 
  * Escape table or column name with `col name`.
  * If abort is true abort if name doesn't match [a-zA-Z0-9_\.]+.
  */
-public static function escape_name(string $name, bool $abort = false) : string {
+public static function escape_name($name, $abort = false) {
 	$res = $name;
 
 	if (!preg_match("/^[a-zA-Z0-9_\.]+$/", $name)) {
@@ -589,62 +587,62 @@ public static function escape_name(string $name, bool $abort = false) : string {
 /**
  * Write lock tables.
  */
-abstract public function lock(array $tables) : void;
+abstract public function lock($tables);
 
 
 /**
  * Unlock locked tables.
  *
  */
-abstract public function unlock() : void;
+abstract public function unlock();
 
 
 /**
  * Get named lock. Use releaseLock($name) to free.
  */
-abstract public function getLock(string $name) : int;
+abstract public function getLock($name);
 
 
 /**
  * True if named lock exists.
  */
-abstract public function hasLock(string $name) : bool;
+abstract public function hasLock($name);
 
 
 /**
  * Release lock $name.
  */
-abstract public function releaseLock(string $name) : int;
+abstract public function releaseLock($name);
 
 
 /**
  * Return true if result set exists.
  */
-abstract public function hasResultSet() : bool;
+abstract public function hasResultSet();
 
 
 /**
  * Return database name vector.
  */
-abstract public function getDatabaseList(bool $reload_cache = false) : array;
+abstract public function getDatabaseList($reload_cache = false);
 
 
 /**
  * Return table name vector.
  */
-abstract public function getTableList(bool $reload_cache = false) : array;
+abstract public function getTableList($reload_cache = false);
 
 
 /**
  * Return last error message. Result is null or [custom_error, native_error, native_error_code ].
  */
-abstract public function getError() : ?array;
+abstract public function getError();
 
 
 /**
  * Return number of affected rows of last execute query.
  */
-abstract public function getAffectedRows() : int;
+abstract public function getAffectedRows();
 
 
 /**
@@ -655,7 +653,7 @@ abstract public function getAffectedRows() : int;
  * If table has dot assume table.name_id as sequence. In this case use_table = where condition.
  * If use_table is @table_seq.owner assume table has owner and start end columns.
  */
-public function nextId(string $table, string $use_table = '') : int {
+public function nextId($table, $use_table = '') {
 
 	if (empty($table)) {
 		throw new Exception('empty table name');
@@ -740,7 +738,7 @@ public function nextId(string $table, string $use_table = '') : int {
 /**
  * Return unique id for string rid. Auto-create and use table.
  */
-public function nextIdAlias(string $rid, string $use_table = 'rid_alias') : int {
+public function nextIdAlias($rid, $use_table = 'rid_alias') {
 	
 	if (empty($rid)) {
 		throw new Exception('empty rid');
@@ -789,7 +787,7 @@ public function nextIdAlias(string $rid, string $use_table = 'rid_alias') : int 
  * @param string $name
  * @return boolean
  */
-public function hasDatabase(string $name) : bool {
+public function hasDatabase($name) {
 	return in_array($name, $this->getDatabaseList());
 }
 
@@ -797,7 +795,7 @@ public function hasDatabase(string $name) : bool {
 /**
  * True if table exists.
  */
-public function hasTable(string $name) : bool {
+public function hasTable($name) {
 	if (empty($name)) {
 		throw new Exception('empty table name');
 	}
@@ -810,19 +808,19 @@ public function hasTable(string $name) : bool {
  * Return auto_increment column value if last 
  * query was insert and table has auto_increment column.
  */
-abstract public function getInsertId() : int;
+abstract public function getInsertId();
 
 
 /**
  * Create database and account (drop if exists).
  */
-abstract public function createDatabase(string $dsn = '', string $opt = 'utf8') : void;
+abstract public function createDatabase($dsn = '', $opt = 'utf8');
 
 
 /**
  * Drop database and account (if exists).
  */
-abstract public function dropDatabase(string $dsn = '') : void;
+abstract public function dropDatabase($dsn = '');
 
 
 /**
@@ -834,7 +832,7 @@ abstract public function dropDatabase(string $dsn = '') : void;
  * - delete_entries: 1|0
  * - table.*: optional - see saveTableDump
  */
-abstract public function saveDump(array $opt) : void;
+abstract public function saveDump($opt);
 
 
 /**
@@ -851,7 +849,7 @@ abstract public function saveDump(array $opt) : void;
  * @throws
  * @param hash $opt
  */
-abstract public function saveTableDump(array $opt) : void;
+abstract public function saveTableDump($opt);
 
  
 /**
@@ -859,7 +857,7 @@ abstract public function saveTableDump(array $opt) : void;
  *
  * self::LOAD_DUMP_USE_SHELL | self::LOAD_DUMP_ADD_DROP_TABLE | self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS
  */
-public function loadDump(string $file, int $flags) : void {
+public function loadDump($file, $flags) {
 
 	if ($flags & self::LOAD_DUMP_USE_SHELL) {
 		throw new Exception('implement loadDump() for LOAD_DUMP_USE_SHELL');
@@ -934,7 +932,7 @@ public function loadDump(string $file, int $flags) : void {
  *			"colA:colB:colC" => 208" = "FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE"
  *			EXTRA example: NOT_NULL|INDEX, NOT_NULL|UNIQUE, INDEX, ...
  */
-public static function createTableQuery(array $conf) : string {
+public static function createTableQuery($conf) {
 
 	$tname = $conf['@table'];
 
@@ -1052,7 +1050,7 @@ public static function createTableQuery(array $conf) : string {
  * Return true if table was created. Create only if table does not exists or drop_existing = true.
  * Return value 0=error, 1=create table ok, 2=multi query ok = create table + insert ok.
  */
-public function createTable(array $conf, bool $drop_existing = false) : int {
+public function createTable($conf, $drop_existing = false) {
 
 	if (empty($conf['@table'])) {
     throw new Exception('missing tablename', 'empty @table');
@@ -1094,7 +1092,7 @@ public function createTable(array $conf, bool $drop_existing = false) : int {
  * "@timestamp": 1=[since, datetime::NOW():1], 2=[lchange, datetime::NOW():1], 
  *   3=[since, datetime::NOW():1, lchange, datetime::NOW():1]
  */
-public static function parseCreateTableConf(array $conf) : array {
+public static function parseCreateTableConf($conf) {
 
 	if (empty($conf['@table'])) {
     throw new Exception('missing tablename', 'empty @table');
@@ -1117,8 +1115,8 @@ public static function parseCreateTableConf(array $conf) : array {
 
 	// resolve multilanguage
 	if (!empty($conf['@language']) && !empty($conf['@multilang'])) {
-		$lang_suffix = split_str(',', $conf['@language']);
-		$lang_cols = split_str(',', $conf['@multilang']);
+		$lang_suffix = \rkphplib\lib\split_str(',', $conf['@language']);
+		$lang_cols = \rkphplib\lib\split_str(',', $conf['@multilang']);
 		unset($conf['@language']);
 		unset($conf['@multilang']);
 
@@ -1162,49 +1160,49 @@ public static function parseCreateTableConf(array $conf) : array {
 /**
  * Drop table (if exists).
  */
-abstract public function dropTable(string $table) : void;
+abstract public function dropTable($table);
 
 
 /**
  * Apply database specific escape function (fallback is self::escape).
  */
-abstract public function esc(string $value) : string;
+abstract public function esc($value);
 
 
 /**
  * Execute query (string or prepared statement). Parameter $query is string or array.
  */
-abstract public function execute(string $query, bool $use_result = false) : void;
+abstract public function execute($query, $use_result = false);
 
 
 /**
  * Adjust result pointer to first row for getNextRow().
  */
-abstract public function setFirstRow(int $offset) : void;
+abstract public function setFirstRow($offset);
 
 
 /**
  * Return next row or null.
  */
-abstract public function getNextRow() : ?array;
+abstract public function getNextRow();
 
 
 /**
  * Free result of execute(QUERY, true).
  */
-abstract public function freeResult() : void;
+abstract public function freeResult();
 
 
 /**
  * Return number of rows in resultset.
  */
-abstract public function getRowNumber() : int;
+abstract public function getRowNumber();
 
 
 /**
  * Return column values as vector.
  */
-abstract public function selectColumn($query, string $colname = 'col') : array;
+abstract public function selectColumn($query, $colname = 'col');
 
 
 /**
@@ -1213,7 +1211,7 @@ abstract public function selectColumn($query, string $colname = 'col') : array;
  * Result hash keys are column names, values are arrays with column info
  * (e.g. mysql: { type: 'double', is_null: true|false, key: '', default: '', extra: '' }).
  */
-abstract public function getTableDesc(string $table) : array;
+abstract public function getTableDesc($table);
 
 
 /**
@@ -1221,7 +1219,7 @@ abstract public function getTableDesc(string $table) : array;
  * Result is { table1: [ col1, ... ], ... }. If column = '*' return
  * { table.col: ftable.fcol, ... }.
  */
-abstract public function getReferences(string $table, string $column = 'id') : array;
+abstract public function getReferences($table, $column = 'id');
 
 
 /**
@@ -1230,27 +1228,27 @@ abstract public function getReferences(string $table, string $column = 'id') : a
  * Use $value_col = '*' to get ($id, $row[$id]) hash (if $ignore_double = true 
  * then doublette is ($id, [ $row[N1], .... ])).
 */
-abstract public function selectHash(string $query, string $key_col = 'name', 
-	string $value_col = 'value', bool $ignore_double = false) : array;
+abstract public function selectHash($query, $key_col = 'name', 
+	$value_col = 'value', $ignore_double = false);
 
 
 /**
  * Return query result row $rnum.
  */
-abstract public function selectRow($query, int $rnum = 0) : array;
+abstract public function selectRow($query, $rnum = 0);
 
 
 /**
  * Return query result table. If res_count > 0 and result is empty throw "no result" error message.
  * If $res_count > 0 throw error if column count doesn't match.
  */
-abstract public function select($query, int $res_count = 0) : array;
+abstract public function select($query, $res_count = 0);
 
 
 /**
  * Return table data checksum.
  */
-abstract public function getTableChecksum(string $table, bool $native = false) : string;
+abstract public function getTableChecksum($table, $native = false);
 
 
 /**
@@ -1260,13 +1258,13 @@ abstract public function getTableChecksum(string $table, bool $native = false) :
  *  - auto_increment: name of auto increment column
  *  - create_time: sql-timestamp
  */
-abstract public function getTableStatus(string $table) : array;
+abstract public function getTableStatus($table);
 
 
 /**
  * Set offset for following select* function.
  */
-public function seek(int $offset) : void {
+public function seek($offset) {
 	$this->_seek = $offset;
 }
 
@@ -1276,7 +1274,7 @@ public function seek(int $offset) : void {
  * Use column alias "split_cs_list" to split comma separated value (if query was 
  * "SELECT GROUP_CONCAT(name) AS split_cs_list ...").
  */
-public function selectOne($query, string $col = '') {
+public function selectOne($query, $col = '') {
 	$dbres = $this->select($query, 1);
 
 	if (empty($col)) {
@@ -1285,7 +1283,7 @@ public function selectOne($query, string $col = '') {
 				throw new Exception('increase group_concat_max_len');
 			}
 
-			$res = split_str(',', $dbres[0]['split_cs_list']);
+			$res = \rkphplib\lib\split_str(',', $dbres[0]['split_cs_list']);
 		}
 		else {
 			$res = $dbres[0];
@@ -1305,7 +1303,7 @@ public function selectOne($query, string $col = '') {
  * Return vector of result hashes. If vector has only one result hash
  * return result hash.
  */
-abstract public function multiQuery(string $query) : array;
+abstract public function multiQuery($query);
 
 
 /**
@@ -1322,7 +1320,7 @@ abstract public function multiQuery(string $query) : array;
  *      $opt[0], $opt[1], false) ($opt == '' == [name, value ])
  *  - name:row = $this->selectRow($this->getQuery($name, $replace), intval($opt)) 
  */
-public function query(string $name, array $replace = null, $opt = '') {
+public function query($name, $replace = null, $opt = '') {
 
 	if (($pos = mb_strpos($name, ':')) > 0) {
 		// selectDo ...
@@ -1380,7 +1378,7 @@ public function query(string $name, array $replace = null, $opt = '') {
 /**
  * Escape ' with ''. Append \ to trailing uneven number of \. 
  */
-public static function escape(string $txt) : string {
+public static function escape($txt) {
 
 	if (mb_substr($txt, -1) === '\\') {
 		// trailing [\'] is a problem because \ is mysql escape char
@@ -1407,7 +1405,7 @@ public static function escape(string $txt) : string {
  * Return comma separted list of columns. Example:
  * self::columnList(['a', 'b', 'c'], 'l') = 'l.a AS l_a, l.b AS l_b, l.c AS l_c'. 
  */
-public static function columnList(array $cols, string $prefix = '') : string {
+public static function columnList($cols, $prefix = '') {
 	$cnames = [];
 
 	if (!is_array($cols)) {
@@ -1433,7 +1431,7 @@ public static function columnList(array $cols, string $prefix = '') : string {
  * Return insert|update query string. If type=update key '@where' = 'WHERE ...' is required in $kv.
  * Use kv[@add_default] add default columns.
  */
-public function buildQuery(string $table, string $type, array $kv = []) : string {
+public function buildQuery($table, $type, $kv = []) {
 
 	$p = $this->getTableDesc($table);
 	$key_list = [];
@@ -1441,7 +1439,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 
 	$add_default = empty($kv['@add_default']) ? false : true;
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1444> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1442> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
 
 	foreach ($p as $col => $cinfo) {
 		$val = false;
@@ -1466,17 +1464,17 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			}
 		}
 
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1469> col=$col, val=$val");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1467> col=$col, val=$val");
 
 		if ($val !== false) {
 			array_push($key_list, self::escape_name($col));
 			array_push($val_list, $val);
-			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1474> table=$table, type=$type, col=$col, val=$val");
+			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1472> table=$table, type=$type, col=$col, val=$val");
 		}
 	}
 
 	if (count($key_list) == 0) {
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1479> empty key_list - return");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1477> empty key_list - return");
 		return '';
 	}
 
@@ -1502,7 +1500,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1505> table=$table, type=$type, res=$res");
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1503> table=$table, type=$type, res=$res");
 	return $res;
 }
 
@@ -1520,7 +1518,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
  * // create cms_conf.sql, ... in setup/sql/cms/insert
  * $db->backup([ 'prefix' => 'cms_', 'directory' => 'setup/sql/cms/insert', 'backup' => 'cms.cms_conf' ]);
  */
-public function backup(array &$options) : void {
+public function backup(&$options) {
 	$this->addAppTables($options);
 
 	if (empty($options['backup'])) {
@@ -1551,7 +1549,7 @@ public function backup(array &$options) : void {
 /**
  * Backup table content to file sql_dump.
  */
-public function backupTable(string $table, string $sql_dump) : void {
+public function backupTable($table, $sql_dump) {
 
 	$fh = File::open($sql_dump, 'wb');
 	$tname = self::escape_name($table);
@@ -1593,7 +1591,7 @@ public function backupTable(string $table, string $sql_dump) : void {
  * Add application tables to $options.
  * Change app_tables into map with table => [ size => null, last_modified => null ].
  */
-private function addAppTables(array &$options) : void {
+private function addAppTables(&$options) {
 
 	if (empty($options['directory'])) {
 		throw new Exception('missing directory parameter');
@@ -1605,7 +1603,7 @@ private function addAppTables(array &$options) : void {
 		throw new Exception('missing application parameter');
 	}
 
-	$options['application'] = split_str(',', $options['application']);
+	$options['application'] = \rkphplib\lib\split_str(',', $options['application']);
 	$table_list = $this->getTableList();
 
 	foreach ($options['application'] as $app) {
@@ -1620,7 +1618,7 @@ private function addAppTables(array &$options) : void {
 			}
 		}
 		else if (!empty($options[$app.'_tables'])) {
-			$app_tables = split_str(',', $options[$app.'_tables']);
+			$app_tables = \rkphplib\lib\split_str(',', $options[$app.'_tables']);
 			foreach ($app_tables as $table) {
 				if (in_array($table, $table_list)) {
 					array_push($tables, $table);

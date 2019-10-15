@@ -28,7 +28,7 @@ use TokHelper;
 /**
  * @plugin directory:copy|move|create|exists|entries|is, file:size|copy|exists, dirname and basename
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
   $plugin = [];
   $plugin['directory:copy'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
   $plugin['directory:move'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
@@ -54,7 +54,7 @@ public function getPlugins(Tokenizer $tok) : array {
  * @tok {basename:}a/b/c.gif{:basename} = c.gif
  * @tok {basename:a/b}a/b/c/d{:basename} = c/d
  */
-public static function tok_basename(string $param, string $arg) : string {
+public static function tok_basename($param, $arg) {
 	$res = basename(trim($arg));
 
 	if ($param == 'no_suffix' && ($pos = mb_strrpos($res, '.')) !== false) {
@@ -75,7 +75,7 @@ public static function tok_basename(string $param, string $arg) : string {
  * @tok {dirname:2}a/b/c{:dirname} = {dirname:-1}a/b/c{:dirname} = a
  * @tok {dirname:NAME} (and _REQUEST[NAME]=x/y) = x
  */
-public static function tok_dirname(string $param, string $arg) : string {
+public static function tok_dirname($param, $arg) {
 	$arg = trim($arg);
 	$path = explode('/', $arg);
 	$n = intval($param);
@@ -125,7 +125,7 @@ public static function tok_dirname(string $param, string $arg) : string {
  * wait= Scanning directory data{:directory}
  * return: <div class="wait">Scanning directory data ... <span id="ID"><img src="wait.png"></span></div>
  */
-public function tok_directory_is(string $param, array $p) : string {
+public function tok_directory_is($param, $p) {
 	$this->checkMap('directory:is:'.$param, $p, [ 'directory!', 'error!' ]);
 	$is_readable_dir = FSEntry::isDir($p['directory'], false, true); 
 	$ok = true;
@@ -177,7 +177,7 @@ public function tok_directory_is(string $param, array $p) : string {
 /**
  * Return ajax call html. Implement p.ajax_callback(id, data).
  */
-private function _directory_is_ajax(array $p) : string {
+private function _directory_is_ajax($p) {
 	$id = $p['ajax_output_id'];
 	$ajax_url = $p['ajax'];
 	$ajax_callback = $p['ajax_callback'];
@@ -206,7 +206,7 @@ END;
 /**
  * Copy p[0] recursive to p[1].
  */
-public function tok_directory_copy(array $p) : void {
+public function tok_directory_copy($p) {
 	Dir::copy($p[0], $p[1]);
 }
 
@@ -214,7 +214,7 @@ public function tok_directory_copy(array $p) : void {
 /**
  * Remove directory path.
  */
-public function tok_directory_remove(string $path) : void {
+public function tok_directory_remove($path) {
 	Dir::remove(trim($path), true);
 }
 
@@ -222,7 +222,7 @@ public function tok_directory_remove(string $path) : void {
 /**
  * Move p[0] recursive to p[1].
  */
-public function tok_directory_move(array $p) : void {
+public function tok_directory_move($p) {
 	Dir::move($p[0], $p[1]);
 }
 
@@ -231,7 +231,7 @@ public function tok_directory_move(array $p) : void {
  * Return 1|'' if directory (does not) exist. Throw exception if
  * $param == required and directory does not exist.
  */
-public function tok_directory_exists(string $param, string $path) : string {
+public function tok_directory_exists($param, $path) {
 	$required = $param == 'required';
 	return Dir::exists(trim($path), $required) ? 1 : '';
 }
@@ -241,7 +241,7 @@ public function tok_directory_exists(string $param, string $path) : string {
  * Return directory entries. If $param is file|directory return
  * only files|subdirectories. Return comma separated list.
  */
-public function tok_directory_entries(string $param, string $path) : string {
+public function tok_directory_entries($param, $path) {
 	if ($param == 'file') {
 		$type = 1;
 	}
@@ -272,7 +272,7 @@ public function tok_directory_entries(string $param, string $path) : string {
  *
  * @see self::createDirectory()
  */
-public function tok_directory_create(string $param, string $path) : void {
+public function tok_directory_create($param, $path) {
 	self::createDirectory($path, $param);
 }
 
@@ -280,7 +280,7 @@ public function tok_directory_create(string $param, string $path) : void {
 /**
  * Create directory path (recursive). Use $feature = empty(=default)|htaccess_protected|htaccess_deny|htaccess_no_php.
  */
-public static function createDirectory(string $path, string $feature) : void {
+public static function createDirectory($path, $feature) {
 	Dir::create($path, 0, true);
 
 	if ($feature == 'htaccess_protected' || $feature == 'htaccess_deny') {
@@ -304,7 +304,7 @@ END;
 /**
  * Copy file from source to target ($p = [ $source, $target ]).
  */
-public function tok_file_copy(array $p) : void {
+public function tok_file_copy($p) {
 	if (File::exists($p[1])) {
 		if (File::md5($p[0]) == File::md5($p[1])) {
 			return;
@@ -319,7 +319,7 @@ public function tok_file_copy(array $p) : void {
  * Return File::size(path). if path does not exists return ''.
  * Set file size format with $param (format|not_empty|byte, empty = default = byte).
  */
-public function tok_file_size(string $param, string $path) : string {
+public function tok_file_size($param, $path) {
 
 	if (!File::exists($path)) {
 		return '';
@@ -343,7 +343,7 @@ public function tok_file_size(string $param, string $path) : string {
  * Return 1|'' if file (does not) exist. Throw exception if $param == 'required' and file 
  * does not exist.
  */
-public function tok_file_exists(string $param, string $path) : string {
+public function tok_file_exists($param, $path) {
 	$required = $param == 'required';
 	return File::exists(trim($path), $required) ? 1 : '';
 }

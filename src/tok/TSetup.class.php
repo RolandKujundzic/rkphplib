@@ -25,7 +25,7 @@ private $tok = null;
 /**
  * Return Tokenizer plugin list:  setup
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$this->tok = $tok;
 
   $plugin = [];

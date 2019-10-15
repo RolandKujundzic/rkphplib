@@ -15,7 +15,7 @@ class ArrayHelper {
  *
  * @example self::normalize([ [ [ a, b ], c ], d ]) = [ a, b, c, d ]
  */
-public static function normalize(array &$arr) : void {
+public static function normalize(&$arr) {
 	for ($i = 0; $i < count($arr); $i++) {
 		if (is_array($arr[$i])) {
 			$tmp = $arr[$i];
@@ -31,7 +31,7 @@ public static function normalize(array &$arr) : void {
  * Return all permutations of $x.
  * @see Example 4-7 from O'Reilly PHP Cookbook
  */
-public static function permutations(array $x) : array {
+public static function permutations($x) {
 	$size = count($x) - 1; 
 
 	if ($size == -1) {
@@ -59,7 +59,7 @@ public static function permutations(array $x) : array {
  * Return next permutation or null if finished. Paramter $size = count($p) - 1.
  * @see Example 4-7 from O'Reilly PHP Cookbook
  */
-private static function nextPermutation(array $p, int $size) : ?array {
+private static function nextPermutation($p, $size) {
 	// slide down the array looking for where we're smaller than the next guy
 	for ($i = $size - 1; $i >= 0 && $p[$i] >= $p[$i+1]; --$i) {
 	} 

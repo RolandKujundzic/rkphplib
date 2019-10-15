@@ -13,7 +13,7 @@ use rkphplib\Exception;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-function split_str(string $delim, $txt, bool $ignore_empty = false, int $limit = -1) : array {
+function split_str($delim, $txt, $ignore_empty = false, $limit = -1) {
 
 	if (is_array($txt)) {
 		$arr = [];

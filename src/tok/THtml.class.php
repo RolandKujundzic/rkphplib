@@ -19,7 +19,7 @@ class THtml implements TokPlugin {
 /**
  * Return {html:tag|inner|append|meta|meta_og|tidy|xml|uglify}, {text2html:}, {input:checkbox|radio} and {user_agent:} 
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
   $plugin = [];
   $plugin['html:tag'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
   $plugin['html:inner'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::POSTPROCESS;
@@ -50,7 +50,7 @@ public function getPlugins(Tokenizer $tok) : array {
  * @tok {user_agent:iPad|iPhone|iPod} = {user_agent:iOS} -> 1 if true
  * @tok {user_agent:Handheld} = {user_agent:iPad|iPhone|iPod|Android} -> 1 if true
  */
-public static function tok_user_agent(array $user_agent_list) : string {
+public static function tok_user_agent($user_agent_list) {
   $ua = $_SERVER['HTTP_USER_AGENT'];
   $res = '';
 
@@ -80,7 +80,7 @@ public static function tok_user_agent(array $user_agent_list) : string {
  *
  * @tok {text2html:}a\nb\nc{:text2html} -> a<br/>b<br/>c
  */
-public function tok_text2html(string $param, string $text) : string {
+public function tok_text2html($param, $text) {
 
 	if (empty($param)) {
 		$text = preg_replace("/\r?\n/", "<br/>", $text);
@@ -96,7 +96,7 @@ public function tok_text2html(string $param, string $text) : string {
  * @tok  {input:checkbox:agb}class=form-control{:checkbox} + $_REQUEST[agb]=1
  *   <input type="checkbox" name="agb" value="1" class="form-control" checked/>
  */
-public function tok_input_checkbox(string $name, array $attrib) : string {
+public function tok_input_checkbox($name, $attrib) {
   $html = '<input name="'.$name.'"';
 
   if (empty($attrib['type'])) {
@@ -125,7 +125,7 @@ public function tok_input_checkbox(string $name, array $attrib) : string {
  * @tok  {input:radio:of_age} + $_REQUEST[of_age]=1
  *   <input type="radio" name="of_age" value="1" checked />
  */
-public function tok_input_radio(string $name, array $attrib) : string {
+public function tok_input_radio($name, $attrib) {
 	$attrib['type'] = 'radio';
 	return $this->tok_input_checkbox($name, $attrib);
 }
@@ -137,7 +137,7 @@ public function tok_input_radio(string $name, array $attrib) : string {
  * @tok {input:button}value=Continue{:input} : <input type="button" value="Continue" />
  * @tok {input:text:email} + $_REQUEST[email]='joe@nowhere.com' : <input type="text" name="email" value="joe@nowhere.com" />
  */
-public function tok_input(array $type_name, array $attrib) : string {
+public function tok_input($type_name, $attrib) {
 	$html = '<input type="'.$type_name[0].'"';
 
 	if (!empty($type_name[1])) {
@@ -160,7 +160,7 @@ public function tok_input(array $type_name, array $attrib) : string {
 /**
  * Postprocess output. Pretty print Html via DOM.
  */
-public function tok_html_tidy(string $html) : string {
+public function tok_html_tidy($html) {
 	$dom = new \DOMDocument();
 
 	$dom->preserveWhiteSpace = false;
@@ -176,7 +176,7 @@ public function tok_html_tidy(string $html) : string {
  *
  * @tok {html:tag:test}hallo{:html} -> A{:=test}A = AhalloA
  */
-public function tok_html_tag(string $name, string $value, string $html) : string {
+public function tok_html_tag($name, $value, $html) {
 	$html = str_replace('{:='.$name.'}', $value, $html);
 	return $html;
 }
@@ -187,7 +187,7 @@ public function tok_html_tag(string $name, string $value, string $html) : string
  * 
  * @tok {html:meta_og:url}https://...{:html} -> <meta property="og:url" content="https://..." />
  */
-public function tok_html_meta_og(string $property, string $content, string $html) : string {
+public function tok_html_meta_og($property, $content, $html) {
 	$search = '<meta property="og:'.$property.'" content="';
 	$start = mb_stripos($html, $search);
 	$search_len = mb_strlen($search);
@@ -209,7 +209,7 @@ public function tok_html_meta_og(string $property, string $content, string $html
  * 
  * @tok {html:meta:keywords}new,key,words{:html} -> <meta name="keywords" content="new,key,words"
  */
-public function tok_html_meta(string $name, string $value, string $html) : string {
+public function tok_html_meta($name, $value, $html) {
 	$search = '<meta name="'.$name.'" content="';
 	$start = mb_stripos($html, $search);
 	$search_len = mb_strlen($search);
@@ -231,7 +231,7 @@ public function tok_html_meta(string $name, string $value, string $html) : strin
  *
  * @tok {html:append:head}<!-- insert appendHtml before </head> -->{:html}
  */
-public function tok_html_append(string $tag, string $appendHtml, string $html) : string {
+public function tok_html_append($tag, $appendHtml, $html) {
 	$tag_end = mb_stripos($html, '</'.$tag.'>');
 
 	if ($tag_end > 0) {
@@ -250,7 +250,7 @@ public function tok_html_append(string $tag, string $appendHtml, string $html) :
  *
  * @tok {html:inner:title}Replace "title" with this{:html}
  */
-public function tok_html_inner(string $tag, string $innerHtml, string $html) : string {
+public function tok_html_inner($tag, $innerHtml, $html) {
 	$start = mb_stripos($html, '<'.$tag.'>');
 	$tag_len = mb_strlen($tag) + 2;
 	$end = mb_stripos($html, '</'.$tag.'>', $start + $tag_len);
@@ -269,7 +269,7 @@ public function tok_html_inner(string $tag, string $innerHtml, string $html) : s
 /**
  * Convert html into single line.
  */
-public function tok_html_uglify(string $html) : string {
+public function tok_html_uglify($html) {
 	$res = preg_replace('/\s+(<)|(>)\s+/', '\2\1', $html);
 	$start = 1;
 
@@ -291,7 +291,7 @@ public function tok_html_uglify(string $html) : string {
  *
  * @see https://ideone.com/Q5USEF
  */
-public function minify_css(string $str) : string {
+public function minify_css($str) {
 
 	// remove comments first (simplifies the other regex)
 	$re1 = <<<'EOS'
@@ -358,7 +358,7 @@ EOS;
  *
  * @see http://gdatatips.blogspot.de/2008/11/xml-php-pretty-printer.html
  */
-public function tok_html_xml(string $html) : string {
+public function tok_html_xml($html) {
 	$xml_obj = new \SimpleXMLElement($html);
 	$level = 4;
 	$indent = 0; // current indentation level

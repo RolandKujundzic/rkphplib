@@ -13,8 +13,6 @@ use rkphplib\FSEntry;
 use rkphplib\File;
 use rkphplib\Dir;
 
-use function rkphplib\lib\execute;
-use function rkphplib\lib\split_str;
 
 
 
@@ -37,7 +35,7 @@ protected $conf = [];
 /**
  * Return {picture:src|init|list}
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$this->tok = $tok;
 
   $plugin = [];
@@ -129,7 +127,7 @@ public function tok_picture_init($p) {
 		$this->conf[$key] = $value;
 	}
 
-	// \rkphplib\lib\log_debug('TPicture.tok_picture_init:132> this.conf: '.print_r($this->conf, true));
+	// \rkphplib\lib\log_debug('TPicture.tok_picture_init:130> this.conf: '.print_r($this->conf, true));
 }
 
 
@@ -174,7 +172,7 @@ public function tok_picture_list($p) {
 		throw new Exception('missing parameter names');
 	}
 
-	$picture_list = split_str(',', $p['names']);
+	$picture_list = \rkphplib\lib\split_str(',', $p['names']);
 	unset($p['names']);
 	$res = [];
 
@@ -215,7 +213,7 @@ public function tok_picture_src($p) {
 	$this->checkConf($p);
 	$this->computeImgSource();
 
-	// \rkphplib\lib\log_debug('TPicture.tok_picture_src:218> this.conf: '.print_r($this->conf, true));
+	// \rkphplib\lib\log_debug('TPicture.tok_picture_src:216> this.conf: '.print_r($this->conf, true));
 	if (empty($this->conf['source'])) {
 		return '';
 	}
@@ -249,7 +247,7 @@ public function tok_picture_src($p) {
 private function computeImgSource() {
 
 	if (!empty($this->conf['names'])) {
-		$list = split_str(',', $this->conf['names']);
+		$list = \rkphplib\lib\split_str(',', $this->conf['names']);
 
 		if (empty($list[0]) && count($list) > 1) {
 			// fix ",01.jpg, 02.jpg, ..." into "01.jpg, 02.jpg, ..."
@@ -264,7 +262,7 @@ private function computeImgSource() {
 	}
 
 	if (empty($this->conf['source']) && !empty($this->conf['examples'])) {
-		$list = split_str(',', $this->conf['examples']);
+		$list = \rkphplib\lib\split_str(',', $this->conf['examples']);
 		$n = rand(0, count($list) - 1);
 		$this->conf['source'] = $this->conf['picture_dir'].'/'.$list[$n];
 	}
@@ -376,18 +374,18 @@ private function runConvertCmd($p) {
 	if (File::exists($this->conf['target']) && !empty($this->conf['use_cache'])) {
 		if ($this->conf['use_cache'] == 'check_time') {
 			if (File::lastModified($this->conf['source']) <= File::lastModified($this->conf['target'])) {
-				// \rkphplib\lib\log_debug('TPicture.runConvertCmd:379> check_time - use cache '.$this->conf['target'].': '.print_r($p, true));
+				// \rkphplib\lib\log_debug('TPicture.runConvertCmd:377> check_time - use cache '.$this->conf['target'].': '.print_r($p, true));
 				return $this->conf['target'];
 			}
 		}
 		else {
-			// \rkphplib\lib\log_debug('TPicture.runConvertCmd:384> use cache '.$this->conf['target'].': '.print_r($p, true));
+			// \rkphplib\lib\log_debug('TPicture.runConvertCmd:382> use cache '.$this->conf['target'].': '.print_r($p, true));
 			return $this->conf['target'];
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TPicture.runConvertCmd:389> $cmd\n".print_r($p, true));
-	execute($cmd, $p); 
+	// \rkphplib\lib\log_debug("TPicture.runConvertCmd:387> $cmd\n".print_r($p, true));
+	\rkphplib\lib\execute($cmd, $p); 
 
 	if (!FSEntry::isFile($p['target'], false)) {
 		throw new Exception('convert '.$p['source'].' to '.$p['target'].' failed', "cmd: $cmd\np: ".print_r($p, true));
@@ -414,7 +412,7 @@ public function resize_list($resize_clist) {
 	}
 
 	$source = escapeshellarg($this->conf['source']);
-	execute("convert '$source' ".join(' ', $resize_cmd));
+	\rkphplib\lib\execute("convert '$source' ".join(' ', $resize_cmd));
 }
 
 

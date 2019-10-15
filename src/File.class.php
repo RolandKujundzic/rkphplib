@@ -6,7 +6,6 @@ require_once __DIR__.'/FSEntry.class.php';
 require_once __DIR__.'/JSON.class.php';
 require_once __DIR__.'/lib/execute.php';
 
-use function rkphplib\lib\execute;
 
 
 
@@ -48,7 +47,7 @@ public static $USE_FLOCK = false;
  *  File::loadTable('split:string://a|&|b|@|c|&|d', [ '|&|', '|@|' ]) 
  *  File::loadTable('split:string://a=1|&|b=2|@|c=3|&|d=4', [ '|&|', '|@|', '=' ]) 
  */
-public static function loadTable(string $uri, array $options = []) : array {
+public static function loadTable($uri, $options = []) {
 
 	if (!preg_match('#^(csv|unserialize|json|split)\:(file|string|https?)\://#', substr($uri, 0, 20), $match)) {
 		throw new Exception('invalid uri', $uri);
@@ -118,7 +117,7 @@ public static function loadTable(string $uri, array $options = []) : array {
  * are file, name (basename without suffix), mime and 
  * suffix (with leading dot).
  */
-public static function nfo(string $file, string $source = '') : array {
+public static function nfo($file, $source = '') {
 	File::exists($file, true);
 
 	$nfo = $file.'.nfo';
@@ -170,7 +169,7 @@ public static function nfo(string $file, string $source = '') : array {
 /**
  * Return true if source and target files are equal. Autocreate $target.nfo file.
  */
-public static function equal(string $source, string $target, bool $check_source_nfo = false) : bool {
+public static function equal($source, $target, $check_source_nfo = false) {
 	File::exists($source, true);
 
 	if ($source == $target || !File::exists($target)) {
@@ -204,7 +203,7 @@ public static function equal(string $source, string $target, bool $check_source_
  * of bool do $trim($row). If callback returns row push row to table.
  * Last parameter $trim is either boolean or callable.
  */
-public static function loadCSV(string $file, string $delimiter = ',', string $quote = '"', $trim = true) : array {
+public static function loadCSV($file, $delimiter = ',', $quote = '"', $trim = true) {
 	$fh = File::open($file, 'rb');
 	$table = [];
 
@@ -247,7 +246,7 @@ public static function loadCSV(string $file, string $delimiter = ',', string $qu
  * basename($url) != rawurlencode(basename($url)) the function will automatically 
  * retry with modified url.
  */
-public static function fromURL(string $url, bool $required = true, array $header = []) : string {
+public static function fromURL($url, $required = true, $header = []) {
 
 	if (empty($url)) {
 		throw new Exception('empty url');
@@ -317,7 +316,7 @@ public static function fromURL(string $url, bool $required = true, array $header
  * works only from php 7.2.x upwards. If offset > 0 seek byte position first,
  * (-n = seek n bytes from end).
  */
-public static function load(string $file, int $offset = 0) : string {
+public static function load($file, $offset = 0) {
 
 	if (empty($file)) {
 		throw new Exception("empty filename");
@@ -342,7 +341,7 @@ public static function load(string $file, int $offset = 0) : string {
 /**
  * Return file content. Apply file locking. If $file = STDIN return self::stdin().
  */
-private static function _lload(string $file, int $offset = -1) : string {
+private static function _lload($file, $offset = -1) {
 
 	$fsize = self::size($file);
 	$res = '';
@@ -371,7 +370,7 @@ private static function _lload(string $file, int $offset = -1) : string {
  * Resize source image and save as target. If wxh is empty you can convert from one image type to another. 
  * Abort if w or h is greater than 2 * original size. Requires convert from ImageMagic.
  */
-public static function resizeImage(string $wxh, string $source, string $target = '') : void {
+public static function resizeImage($wxh, $source, $target = '') {
 
 	$info = File::imageInfo($source);
 	$resize = '';
@@ -399,12 +398,12 @@ public static function resizeImage(string $wxh, string $source, string $target =
 			throw new Exception('already resizing or resize failed', $temp);
 		}
 
-		execute("convert $resize '$wxh' '$source' '$temp'");
+		\rkphplib\lib\execute("convert $resize '$wxh' '$source' '$temp'");
 		File::move($temp, $source);
 		$target = $source;
 	}
 	else {
-		execute("convert $resize '$wxh' '$source' '$target'");
+		\rkphplib\lib\execute("convert $resize '$wxh' '$source' '$target'");
 	}
 
 	File::exists($target, true);
@@ -415,7 +414,7 @@ public static function resizeImage(string $wxh, string $source, string $target =
  * Return image info hash. If image is not detected and abort=false, return
  * width=height=0 and suffix=mime=file=''. Return (width, height, mime, suffix, file).
  */
-public static function imageInfo(string $file, bool $abort = true) : array {
+public static function imageInfo($file, $abort = true) {
 
 	if (!FSEntry::isFile($file, $abort)) {
 		return false;
@@ -484,7 +483,7 @@ public static function imageInfo(string $file, bool $abort = true) : array {
  * 
  * @return resource
  */
-private static function _open_lock(string $file, int $lock_mode, string $open_mode) {
+private static function _open_lock($file, $lock_mode, $open_mode) {
 
 	$map = array('STDIN' => 'php://stdin', 'STDOUT' => 'php://stdout');
 	if (!empty($map[$file])) {
@@ -511,7 +510,7 @@ private static function _open_lock(string $file, int $lock_mode, string $open_mo
 /**
  * Return filesize in byte (or formattet via File::formatSize if $as_text is true).
  */
-public static function size(string $file, bool $as_text = false) : int {
+public static function size($file, $as_text = false) {
 
 	FSEntry::isFile($file);
 
@@ -530,7 +529,7 @@ public static function size(string $file, bool $as_text = false) : int {
 /**
  * Return formated size (N MB, N KB or N Byte).
  */
-public static function formatSize(int $bytes) : string {
+public static function formatSize($bytes) {
 
 	if ($bytes > 1024 * 1024) {
 		$res = round($bytes / (1024 * 1024), 2).' MB';
@@ -549,7 +548,7 @@ public static function formatSize(int $bytes) : string {
 /**
  * Check if file exists.
  */
-public static function exists(string $file, bool $required = false) : bool {
+public static function exists($file, $required = false) {
   return FSEntry::isFile($file, $required);
 }
 
@@ -557,7 +556,7 @@ public static function exists(string $file, bool $required = false) : bool {
 /**
  * Return file md5 checksum.
  */
-public static function md5(string $file) : string {
+public static function md5($file) {
 	FSEntry::isFile($file);
 	return md5_file($file);
 }
@@ -566,7 +565,7 @@ public static function md5(string $file) : string {
 /**
  * True if file was modified.
  */
-public static function hasChanged(string $file, string $md5_log) : bool {
+public static function hasChanged($file, $md5_log) {
   $md5 = File::md5($file);
 
 	if (!FSEntry::isFile($md5_log, false)) {
@@ -588,7 +587,7 @@ public static function hasChanged(string $file, string $md5_log) : bool {
 /**
  * Return true if file changes within $watch seconds (default = 15 sec, max = 300 sec).
  */
-public static function isChanging(string $file, int $watch = 15) : bool {
+public static function isChanging($file, $watch = 15) {
 	$md5_old = File::md5($file);
 	sleep(min($watch, 300));
 	$md5_new = File::md5($file);
@@ -599,7 +598,7 @@ public static function isChanging(string $file, int $watch = 15) : bool {
 /**
  * Change file permissions. Use octal value for file priviles $mode (0 = default = FILE_DEFAULT_MODE).
  */
-public static function chmod(string $file, int $mode = 0) : void {
+public static function chmod($file, $mode = 0) {
 
 	if (!$mode) {
 		$mode = FILE_DEFAULT_MODE;
@@ -613,7 +612,7 @@ public static function chmod(string $file, int $mode = 0) : void {
 /**
  * Save $data to $file. Apply chmod($file, FILE_DEFAULT_MODE).
  */
-public static function save(string $file, string $data, int $flag = 0) : void {
+public static function save($file, $data, $flag = 0) {
 
 	if (empty($file)) {
 		throw new Exception('empty filename');
@@ -642,7 +641,7 @@ public static function save(string $file, string $data, int $flag = 0) : void {
 /**
  * Save $data to $file and modify privileges to $mode.
  */
-public static function save_rw(string $file, string $data, int $mode = 0) : void {
+public static function save_rw($file, $data, $mode = 0) {
 	File::save($file, $data);
 
 	if (!$mode) {
@@ -656,7 +655,7 @@ public static function save_rw(string $file, string $data, int $mode = 0) : void
 /**
  * Delete file. Abort if file does not exists (unless must_exist = false).
  */
-public static function remove(string $file, bool $must_exist = true) : void {
+public static function remove($file, $must_exist = true) {
 
 	if (!FSEntry::isFile($file, $must_exist)) {
 		return;
@@ -671,7 +670,7 @@ public static function remove(string $file, bool $must_exist = true) : void {
 /**
  * Append data to file.
  */
-public static function append(string $file, string $data) : void {
+public static function append($file, $data) {
 	self::save($file, $data, FILE_APPEND);
 }
 
@@ -682,7 +681,7 @@ public static function append(string $file, string $data) : void {
  * 
  * @return resource
  */
-public static function open(string $file, string $mode = 'rb') {
+public static function open($file, $mode = 'rb') {
 
 	$write_utf8_bom = false;
 	$read_utf8_bom = false;
@@ -726,7 +725,7 @@ public static function open(string $file, string $mode = 'rb') {
 /**
  * Load file content into array. Use $flags: FILE_IGNORE_NEW_LINES, FILE_SKIP_EMPTY_LINES.
  */
-public static function loadLines(string $file, int $flags = 0) : array {
+public static function loadLines($file, $flags = 0) {
 	$lines = array();
 
 	if (File::size($file) > 0) {
@@ -744,7 +743,7 @@ public static function loadLines(string $file, int $flags = 0) : array {
  *
  * @param resource $fh
  */
-public static function writeCSV($fh, array $data, string $delimiter = ',', string $enclosure = '"', string $escape = '\\') : void {
+public static function writeCSV($fh, $data, $delimiter = ',', $enclosure = '"', $escape = '\\') {
 
 	if (!$fh) {
 		throw new Exception('invalid file handle');
@@ -761,7 +760,7 @@ public static function writeCSV($fh, array $data, string $delimiter = ',', strin
  *
  * @param resource $fh
  */
-public static function write($fh, string $data) : void {
+public static function write($fh, $data) {
 	$data_len = strlen($data);
 
 	if ($data_len == 0) {
@@ -788,7 +787,7 @@ public static function write($fh, string $data) : void {
 			$data_len = $data_len - $byte;
 			$byte = fwrite($fh, substr($data, $byte));
 			$msg = ($data_len > 80) ? substr($data, 0, 40).' ... '.substr($data, -40) : $data;
-			// \rkphplib\lib\log_debug("File::write:791> retry write: n=[$n] prev_len=[$prev_len] data_len=[$data_len] byte=[$byte] data=[$msg]");
+			// \rkphplib\lib\log_debug("File::write:790> retry write: n=[$n] prev_len=[$prev_len] data_len=[$data_len] byte=[$byte] data=[$msg]");
 
 			if ($byte === false) {
 				throw new Exception('could not write data', "retry=[$n] fh=[$fh] byte=[$byte] len=[$data_len] prev_len=[$prev_len]");
@@ -814,7 +813,7 @@ public static function write($fh, string $data) : void {
  * @param resource $fh
  * @return mixed string|false
  */
-public static function read($fh, int $length = 8192) {
+public static function read($fh, $length = 8192) {
 
 	if (!$fh) {
 		throw new Exception('invalid file handle');
@@ -837,7 +836,7 @@ public static function read($fh, int $length = 8192) {
  *
  * @param resource $fh
  */
-public static function end($fh) : bool {
+public static function end($fh) {
 	return feof($fh);
 }
 
@@ -867,7 +866,7 @@ public static function readLine($fh) {
  * print_r(data, true) as $base.dump and serialized version
  * as $base.ser. Return true if successfull.
  */
-public static function saveJSON(string $file, $data) : bool {
+public static function saveJSON($file, $data) {
   $json = json_encode($data, 448);
 
   if (($err_no = json_last_error()) || strlen($json) == 0) {
@@ -886,7 +885,7 @@ public static function saveJSON(string $file, $data) : bool {
 /**
  * Return file content converted from json.
  */
-public static function loadJSON(string $file) {
+public static function loadJSON($file) {
 	return JSON::decode(File::load($file));
 }
 
@@ -894,7 +893,7 @@ public static function loadJSON(string $file) {
 /**
  * Save serialized data in file.
  */
-public static function serialize(string $file, $data) : void {
+public static function serialize($file, $data) {
 	File::save($file, serialize($data));
 }
 
@@ -902,7 +901,7 @@ public static function serialize(string $file, $data) : void {
 /**
  * Return unserialized file content.
  */
-public static function unserialize(string $file) {
+public static function unserialize($file) {
 	$res = unserialize(File::load($file));
 
 	if ($res === false && File::size($file) > 100) {
@@ -918,7 +917,7 @@ public static function unserialize(string $file) {
  *
  * @param resource $fh
  */
-public static function readCSV($fh, string $delimiter = ',', string $enclosure = '"', string $escape = '\\') : ?array {
+public static function readCSV($fh, $delimiter = ',', $enclosure = '"', $escape = '\\') {
 
 	if (!$fh) {
 		throw new Exception('invalid file handle');
@@ -946,7 +945,7 @@ public static function readCSV($fh, string $delimiter = ',', string $enclosure =
  * 
  * @param resource &$fh
  */
-public static function close(&$fh) : void {
+public static function close(&$fh) {
 
 	if (!$fh) {
 		throw new Exception('invalid file handle');
@@ -964,7 +963,7 @@ public static function close(&$fh) : void {
  * Return file mime type.
  * You might need to enable fileinfo extension (e.g. extension=php_fileinfo.dll).
  */
-public static function mime(string $file, bool $use_only_suffix = false) : string {
+public static function mime($file, $use_only_suffix = false) {
 	$res = '';
 
 	if (!$use_only_suffix && file_exists($file) && !is_dir($file) && is_readable($file)) {
@@ -993,7 +992,7 @@ public static function mime(string $file, bool $use_only_suffix = false) : strin
 /**
  * Return lowercase file name suffix (without dot - unless $keep_dot= true).
  */
-public static function suffix(string $file, bool $keep_dot = false) : string {
+public static function suffix($file, $keep_dot = false) {
 	$res = '';
 
 	$file = basename($file);
@@ -1022,7 +1021,7 @@ public static function suffix(string $file, bool $keep_dot = false) : string {
  * If remove_suffix is true remove .xxxx.
  * If rsuffix is set remove everything after rsuffix rpos (apply after remove_suffix). 
  */
-public static function basename(string $file, bool $remove_suffix = false, string $rsuffix = '') : string {
+public static function basename($file, $remove_suffix = false, $rsuffix = '') {
 
 	$res = basename($file);
 
@@ -1045,7 +1044,7 @@ public static function basename(string $file, bool $remove_suffix = false, strin
  * - remove_prefix: ''
  * - rsuffix: _
  */
-public static function basename_collect(array $list, array $options = []) : array {
+public static function basename_collect($list, $options = []) {
 
 	$default_options = [ 'remove_suffix' => true, 'remove_prefix' => '', 'rsuffix' => '_' ];
 
@@ -1094,7 +1093,7 @@ public static function basename_collect(array $list, array $options = []) : arra
  * @param string $target
  * @param int $mode default = 0 = source file mode
  */
-public static function copy(string $source, string $target, int $mode = 0) : void {
+public static function copy($source, $target, $mode = 0) {
 
 	if (!$mode) {
 		$stat = FSEntry::stat($source);
@@ -1116,7 +1115,7 @@ public static function copy(string $source, string $target, int $mode = 0) : voi
 /**
  * Move file. Use default $mode = 0 = source file mode.
  */
-public static function move(string $source, string $target, int $mode = 0) : void {
+public static function move($source, $target, $mode = 0) {
 
 	$rp_target = realpath($target);
 
@@ -1132,7 +1131,7 @@ public static function move(string $source, string $target, int $mode = 0) : voi
 /**
  * Return last modified. Return Y-m-d H:i:s instead of unix timestamp if $sql_ts is true.
  */
-public static function lastModified(string $path, bool $sql_ts = false) {
+public static function lastModified($path, $sql_ts = false) {
 
 	FSEntry::isFile($path);
 
@@ -1152,7 +1151,7 @@ public static function lastModified(string $path, bool $sql_ts = false) {
  * Send file as http download. Use disposition = 'inline' for in browser display.
  * Exit after send. If file does not exist send 404 not found.
  */
-public static function httpSend(string $file, string $disposition = 'attachment') : void {
+public static function httpSend($file, $disposition = 'attachment') {
 	
 	if (!FSEntry::isFile($file, false)) {
 		header("HTTP/1.0 404 Not Found");

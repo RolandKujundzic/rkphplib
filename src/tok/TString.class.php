@@ -21,7 +21,7 @@ class TString implements TokPlugin {
 /**
  *
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$plugin = [];
 	$plugin['string2url'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	return $plugin;
@@ -33,7 +33,7 @@ public function getPlugins(Tokenizer $tok) : array {
  *
  * @example {string2url:}Haus und Gartenmöbel{:string2url}.html = haus-und-gartenmoebel.html
  */
-public function tok_string2url(string $arg) : string {
+public function tok_string2url($arg) {
 	return StringHelper::url($arg);
 }
 

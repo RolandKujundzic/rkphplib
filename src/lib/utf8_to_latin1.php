@@ -9,7 +9,7 @@ namespace rkphplib\lib;
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @copyright 2016 Roland Kujundzic
  */
-function utf8_to_latin1(&$data) : void {
+function utf8_to_latin1(&$data) {
 
 	if (is_string($data)) {
 		if (mb_detect_encoding($data, 'UTF-8', true)) {

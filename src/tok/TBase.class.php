@@ -18,12 +18,6 @@ use rkphplib\Exception;
 use rkphplib\File;
 use rkphplib\JSON;
 
-use function rkphplib\lib\htmlescape;
-use function rkphplib\lib\split_str;
-use function rkphplib\lib\redirect;
-use function rkphplib\lib\conf2kv;
-use function rkphplib\lib\kv2conf;
-use function rkphplib\lib\entity;
 
 
 
@@ -102,7 +96,7 @@ public function __construct() {
  * @plugin hidden, trim, join, set, set_default, redirect, var, esc, log
  * @plugin shorten, strlen, json, json:exit
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$this->_tok = $tok;
 
 	$plugin = [];
@@ -165,7 +159,7 @@ public function getPlugins(Tokenizer $tok) : array {
 /**
  * Return mb_strlen(trim($txt)).
  */
-public function tok_strlen(string $txt) : int {
+public function tok_strlen($txt) {
 	return mb_strlen(trim($txt));
 }
 
@@ -179,11 +173,11 @@ public function tok_strlen(string $txt) : int {
  * @tok {shorten:10}Shorten this Text{:shorten} -> <span title="Shorten this Text">Shorten ...</span>
  * @tok {shorten:20}Shorten this long Text{:shorten} -> <span title="Shorten this long Text">Shorten ... ong Text</span> 
  */
-public function tok_shorten(int $maxlen, string $txt) : string {
+public function tok_shorten($maxlen, $txt) {
 	$len = mb_strlen($txt);
 
 	if ($len < $maxlen) {
-		return htmlescape($txt);
+		return \rkphplib\lib\htmlescape($txt);
 	}
 
 	if ($maxlen < 20) {
@@ -214,7 +208,7 @@ public function tok_shorten(int $maxlen, string $txt) : string {
  * 
  * @exit
  */
-public function tok_json_exit(int $code = 200, array $kv) : void {
+public function tok_json_exit($code = 200, $kv) {
 	JSON::output($kv, $code);
 }
 
@@ -222,7 +216,7 @@ public function tok_json_exit(int $code = 200, array $kv) : void {
 /**
  * Write message via log_debug.
  */
-public function tok_log(string $txt) : void {
+public function tok_log($txt) {
 	\rkphplib\lib\log_debug("tok_log> $txt"); // @keep
 }
 
@@ -230,7 +224,7 @@ public function tok_log(string $txt) : void {
 /**
  * Return hidden input.
  */
-public function tok_hidden(array $param, array $arg) : string {
+public function tok_hidden($param, $arg) {
 	$list = (count($param) > 0) ? $param : $arg;
 	$res = '';
 
@@ -252,7 +246,7 @@ public function tok_hidden(array $param, array $arg) : string {
  * @tok {trim:dlines|ignore_empty|lines|pre|space|whitespace|comma} ... {:trim}
  * @tok {trim:whitespace} 1 3\n5\r\n\r\n3 {:trim} = "1353"
  */
-public function tok_trim(string $param, string $txt) : string {
+public function tok_trim($param, $txt) {
 	$res = trim($txt);
 
 	if ($param == 'dlines') {
@@ -310,7 +304,7 @@ public function tok_trim(string $param, string $txt) : string {
  * @tok {tpl_set:test}Nur ein Test{:tpl_set}
  * @tok {tpl_set:page:2:2}Page {:=param1}/{:=param2} line {:=arg1} column {:=arg2}{:tpl_set}
  */
-public function tok_tpl_set(array $p, string $arg) : void {
+public function tok_tpl_set($p, $arg) {
 	$key = array_shift($p);
 
 	if (isset($this->_tpl[$key])) {
@@ -374,7 +368,7 @@ public function tok_tpl_set(array $p, string $arg) : void {
  * @tok {tpl_set:toc:0:1}Page {:=arg1} ... {:=title}{:tpl_set}
  * @tok {tpl:toc}1|#|title=Overview{:tpl} = Page 1 ... Overview 
  */
-public function tok_tpl(array $p, string $arg) : string {
+public function tok_tpl($p, $arg) {
 	$key = array_shift($p);
 
 	if (!isset($this->_tpl[$key])) {
@@ -392,7 +386,7 @@ public function tok_tpl(array $p, string $arg) : string {
 	}
 
 	if ($anum > 0) {
-		$list = split_str(HASH_DELIMITER, $arg);
+		$list = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
 
 		for ($i = 0; $i < $anum; $i++) {
 			$value = isset($list[$i]) ? $list[$i] : '';
@@ -401,10 +395,10 @@ public function tok_tpl(array $p, string $arg) : string {
 	}
 
 	if ($tnum > 0) {
-		$tpl = $this->_tok->replaceTags($tpl, conf2kv($arg));
+		$tpl = $this->_tok->replaceTags($tpl, \rkphplib\lib\conf2kv($arg));
 	}
 
-	// \rkphplib\lib\log_debug("TBase.tok_tpl:407> return $tpl"); 
+	// \rkphplib\lib\log_debug("TBase.tok_tpl:401> return $tpl"); 
 	return $tpl;
 }
 
@@ -422,7 +416,7 @@ public function tok_tpl(array $p, string $arg) : string {
  * @tok set multi-map: {var:=person.age}42{:var}
  * @tok get multi-map: {var:person.age} or {var:person.}age{:var}
  */
-public function tok_var(string $name, ?string $value) : string {
+public function tok_var($name, $value) {
 
 	if (substr($name, 0, 1) == '=' && substr($name, -1) == '?') {
 		$name = substr($name, 0, -1); // name is now =abc or =#abc
@@ -440,7 +434,7 @@ public function tok_var(string $name, ?string $value) : string {
 		$name = substr($name, 1);
 
 		if (substr($name, 0, 1) == '#') {
-			$this->setVarHash(substr($name, 1), conf2kv($value));
+			$this->setVarHash(substr($name, 1), \rkphplib\lib\conf2kv($value));
 		}
 		else {
 			$this->setVar($name, $value);
@@ -457,7 +451,7 @@ public function tok_var(string $name, ?string $value) : string {
 /**
  * Set variable $name = $value. If $flag = Tokenizer::VAR_APPEND append to existing value.
  */
-public function setVar(string $name, string $value, int $flag = 0) : void {
+public function setVar($name, $value, $flag = 0) {
 	$this->_tok->setVar($name, $value, $flag);
 }
 
@@ -470,7 +464,7 @@ public function setVar(string $name, string $value, int $flag = 0) : void {
  *
  * @return mixed
  */
-public function getVar(string $name, string $name2 = '') {
+public function getVar($name, $name2 = '') {
 	if (empty($name)) {
 		if (!empty($name2)) {
 			$name = $name2;
@@ -492,7 +486,7 @@ public function getVar(string $name, string $name2 = '') {
  * Set has $name. Abort if hash already exists. Use NAME! to merge existing 
  * key NAME with hash $p.
  */
-public function setVarHash(string $name, array $p) : void {
+public function setVarHash($name, $p) {
 	if (substr($name, -1) != '!') {
 		$this->_tok->setVar($name, $p, Tokenizer::VAR_MUST_NOT_EXIST);
 		return;
@@ -523,7 +517,7 @@ public function setVarHash(string $name, array $p) : void {
  * cellspacing: 0 
  * rownum: 1 (=default = add header before and footer after each row)
  */
-public function tok_row_init(array $p) : void {
+public function tok_row_init($p) {
 	$default = [ 'mode' => 'bootstrap4', 'colnum' => 2, 'rownum' => 1, 'border' => 0, 'cellpadding' => 0, 'cellspacing' => 0 ];
 	$this->_conf['row'] = array_merge($default, $p);
 }
@@ -535,7 +529,7 @@ public function tok_row_init(array $p) : void {
  * 
  * @tok {row:6,6}1-6|#|7-12{:row} -> <div class="row"><div class="col-md-6">1-6</div><div class="col-md-6">7-12</div></div>
  */
-public function tok_row(array $cols, array $p) : string {
+public function tok_row($cols, $p) {
 
 	if (!isset($this->_conf['row']) || empty($this->_conf['row']['mode'])) {
 		$this->tok_row_init([ 'mode' => 'bootstrap4' ]);
@@ -561,7 +555,7 @@ public function tok_row(array $cols, array $p) : string {
  * 
  * @tok {row:6,6}a|#|b{:row} = <tr class="row"><td colspan="6">a</td><td colspan="6">b</td></tr>
  */
-private function tableRow(array $cols, array $p) : string {
+private function tableRow($cols, $p) {
 	$attributes = [];
 	$p_last = count($p) - 1;
 
@@ -611,7 +605,7 @@ private function tableRow(array $cols, array $p) : string {
 		$res .= "</table>\n";
 	}
 
-	// \rkphplib\lib\log_debug("TBase.tableRow:614> return $res");
+	// \rkphplib\lib\log_debug("TBase.tableRow:608> return $res");
 	return $res;
 }
 
@@ -629,7 +623,7 @@ private function tableRow(array $cols, array $p) : string {
  * 		<div class="mdl-cell mdl-cell--2-col" style="background-image: url('bg.jpg')">
  *		<div class="mdl-cell mdl-cell--4-col" style="text-align:right"></div>
  */
-private function getRowColAttributes(string $extra) : array {
+private function getRowColAttributes($extra) {
 	$res = [];
 
 	while (preg_match('/^@([0-9]+)\.([a-z_\-]+)\=\"(.+?)\"/', $extra, $match)) {
@@ -653,7 +647,7 @@ private function getRowColAttributes(string $extra) : array {
  * 		<div class="mdl-cell mdl-cell--6-col">a</div>
  * 		<div class="mdl-cell mdl-cell--6-col">b</div></div>
  */
-private function materialRow(array $cols, array $p) : string {
+private function materialRow($cols, $p) {
 	$attributes = [];
 	$p_last = count($p) - 1;
 
@@ -683,7 +677,7 @@ private function materialRow(array $cols, array $p) : string {
  * 
  * @tok {row:6,6}a|#|b{:row} = <div class="row"><div class="col-md-6">a</div><div class="col-md-6">b</div></div>
  */
-private function bootstrapRow(array $cols, array $p) : string {
+private function bootstrapRow($cols, $p) {
 	$attributes = [];
 	$p_last = count($p) - 1;
 
@@ -713,7 +707,7 @@ private function bootstrapRow(array $cols, array $p) : string {
  *
  * @exit
  */
-public function tok_redirect(string $url) : void {
+public function tok_redirect($url) {
 	if ($url == 'ERROR_404') {
 		header("HTTP/1.0 404 Not Found");
 		header("Status: 404 Not Found");
@@ -725,7 +719,7 @@ public function tok_redirect(string $url) : void {
 		exit("<h1>401 Unauthorized</h1>\nThe page that you have requested can not accessed.");
   }
 	else if ($url) {
-		redirect($url);
+		\rkphplib\lib\redirect($url);
   }
 }
 
@@ -733,7 +727,7 @@ public function tok_redirect(string $url) : void {
 /**
  * Join array $p. Delimiter is either param or $p[0]. Non-join param values are: ignore_empty.
  */
-public function tok_join(string $param, array $p) : string {
+public function tok_join($param, $p) {
 	$delimiter = $param;
 	$ignore_empty = false;
 
@@ -763,7 +757,7 @@ public function tok_join(string $param, array $p) : string {
 /**
  * Convert all characters in $txt into lowercase.
  */
-public function tok_tolower(string $txt) : string {
+public function tok_tolower($txt) {
 	return mb_strtolower($txt);
 }
 
@@ -771,7 +765,7 @@ public function tok_tolower(string $txt) : string {
 /**
  * Convert all characters in $txt into uppercase.
  */
-public function tok_toupper(string $txt) : string {
+public function tok_toupper($txt) {
 	return mb_strtoupper($txt);
 }
 
@@ -781,7 +775,7 @@ public function tok_toupper(string $txt) : string {
  *
  * @tok {ignore:}abc{:ignore} = [] 
  */
-public function tok_ignore(string $txt) : string {
+public function tok_ignore($txt) {
 	return '';
 }
 
@@ -792,7 +786,7 @@ public function tok_ignore(string $txt) : string {
  * @tok {clear:}{date:now}{:ignore} = return '', execute {date:now} 
  * @tok_alias ignore
  */
-public function tok_clear(string $txt) : string {
+public function tok_clear($txt) {
 	return '';
 }
 
@@ -802,8 +796,8 @@ public function tok_clear(string $txt) : string {
  *
  * @tok {keep:}{find:a}{:keep} = {find:a}
  */
-public function tok_keep(string $txt) : string {
-	// \rkphplib\lib\log_debug("TBase.tok_keep:806> return $txt");
+public function tok_keep($txt) {
+	// \rkphplib\lib\log_debug("TBase.tok_keep:800> return $txt");
 	return $txt;
 }
 
@@ -813,7 +807,7 @@ public function tok_keep(string $txt) : string {
  *
  * @tok {redo:}{dirname:}a/b{:dirname}{:redo} = a
  */
-public function tok_redo(string $txt) : string {
+public function tok_redo($txt) {
 	return $txt;
 }
 
@@ -824,7 +818,7 @@ public function tok_redo(string $txt) : string {
  * @tok {view:overview}name=Overview{:view} = 
  *   <div id="overview" class="view" data-name="Overview">{include:}{get:dir}/overview.inc.html{:include}</div>
  */
-public function tok_view(string $name, array $p) : string {
+public function tok_view($name, $p) {
 	$file = self::getReqDir(true).'/'.$name.'.inc.html';
 	$attrib = 'id="'.$name.'" class="view"';
 
@@ -845,7 +839,7 @@ public function tok_view(string $name, array $p) : string {
  * @tok {include:optional}a.html{:include} = do not throw error if file does not exist (short version is "?" instead of optional)
  * @tok {include:}{find:a.html}{:include} 
  */
-public function tok_include(string $param, string $file) : string {
+public function tok_include($param, $file) {
 	$this->tok_var('=_include.file', $file);
 	return $this->tok_load($param, $file);
 }
@@ -859,7 +853,7 @@ public function tok_include(string $param, string $file) : string {
  * @tok {include_if:b}a|#|a.html|#|b.html{:include_if} = return tokenized content of b.html
  * @tok {include_if:a}a|#|a.html{:include_if} = return tokenized content of a.html 
  */
-public function tok_include_if(array $param, array $a) : string {
+public function tok_include_if($param, $a) {
 
 	if (count($a) < 2) {
 		throw new Exception('invalid include_if:'.$param, print_r($a, true));
@@ -891,7 +885,7 @@ public function tok_include_if(array $param, array $a) : string {
  * @tok {load:}a.html{:load} = return raw content of a.html (throw error if file does not exist)
  * @tok {load:optional}a.html{:load} = do not throw error if file does not exist (short version is "?" instead of optional)
  */
-public function tok_load(string $param, string $file) : string {
+public function tok_load($param, $file) {
 
 	if (substr($param, -1) == '?') {
 		$ignore_missing = true;
@@ -932,8 +926,8 @@ public function tok_load(string $param, string $file) : string {
  *
  * If SETTINGS_REQ_CRYPT is empty do not encode link.
  */
-public function tok_link(array $name_list, array $p) : string {
-	// \rkphplib\lib\log_debug("TBase.tok_link:936> name_list: ".print_r($name_list, true)."\np: ".print_r($p, true));
+public function tok_link($name_list, $p) {
+	// \rkphplib\lib\log_debug("TBase.tok_link:930> name_list: ".print_r($name_list, true)."\np: ".print_r($p, true));
 	$res = 'index.php?'.SETTINGS_REQ_CRYPT.'=';
 	$keep = false;
 	$seo = '';
@@ -1032,7 +1026,7 @@ public function tok_link(array $name_list, array $p) : string {
 		$res .= self::encodeHash($p);
 	}
 
-	// \rkphplib\lib\log_debug("TBase.tok_link:1035> return $res");
+	// \rkphplib\lib\log_debug("TBase.tok_link:1029> return $res");
 	return $res;
 }
 
@@ -1040,7 +1034,7 @@ public function tok_link(array $name_list, array $p) : string {
 /**
  * Return true if string is encoded hash.
  */
-private static function isEncodedHash(string $txt) : bool {
+private static function isEncodedHash($txt) {
 	if (strlen($txt) < 5) {
 		return false;
 	}
@@ -1055,7 +1049,7 @@ private static function isEncodedHash(string $txt) : bool {
 /**
  * Return text checksum (hex, 2 character in ]15,255[).
  */
-private static function checksum(string $txt) : string {
+private static function checksum($txt) {
 	$res = array_sum(str_split($txt.':'.strlen($txt).':'.crc32($txt))) % 255;
 
 	if ($res < 16) {
@@ -1069,7 +1063,7 @@ private static function checksum(string $txt) : string {
 /**
  * Convert hash into encrypted string. 
  */
-public static function encodeHash(array $p) : string {
+public static function encodeHash($p) {
 	$query_string = http_build_query($p);
 	$len = strlen($query_string);
 	$secret = SETTINGS_CRYPT_SECRET;
@@ -1089,7 +1083,7 @@ public static function encodeHash(array $p) : string {
  *
  * @return mixed hash|false
  */
-public static function decodeHash(string $data, bool $export_into_req = false) {
+public static function decodeHash($data, $export_into_req = false) {
 	
 	if (($pos=strpos($data,',')) > 0) {
 
@@ -1122,7 +1116,7 @@ public static function decodeHash(string $data, bool $export_into_req = false) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TBase::decodeHash:1125> return ".print_r($res, true));
+	// \rkphplib\lib\log_debug("TBase::decodeHash:1119> return ".print_r($res, true));
 	return $res;
 }
 
@@ -1132,7 +1126,7 @@ public static function decodeHash(string $data, bool $export_into_req = false) {
  * 
  * @tok {switch:a,b,c}value|#|if_eq_a|#|if_eq_b|#|if_eq_c|#|else{:switch}
  */
-public function tok_switch(array $set, array $p) : string {
+public function tok_switch($set, $p) {
 	$csa = count($set);
 	$cp = count($p);
 
@@ -1182,11 +1176,11 @@ public function tok_switch(array $set, array $p) : string {
  * @tok {if:cmp:or}a|#|a|#|b|#|c|#|true|#|false{:if} = true
  * @tok {if:match}roland.+@inkoeln.com|#|{get:email}|#|roland@inkoeln.com|#|{get:email}{:if}
  */
-public function tok_if(string $param, array $p) : string {
+public function tok_if($param, $p) {
 	$has_empty_param = false;
 	
 	if (!empty($param)) {
-		$tmp = split_str(':', $param);
+		$tmp = \rkphplib\lib\split_str(':', $param);
 		$do = $tmp[0];
 		$param = isset($tmp[1]) ? $tmp[1] : '';
 		$has_empty_param = (count($tmp) == 2) && ($tmp[1] == '');
@@ -1215,11 +1209,11 @@ public function tok_if(string $param, array $p) : string {
 		$res = ($param === $p[0]) ? $p[2] : $p[1];
 	}
 	else if ($do === 'in') {
-		$set = split_str(',', $param);
+		$set = \rkphplib\lib\split_str(',', $param);
 		$res = in_array($p[0], $set) ? $p[1] : $p[2];
 	}
 	else if ($do === 'if_in_set') {
-		$set = split_str(',', $param);
+		$set = \rkphplib\lib\split_str(',', $param);
 		$res = in_array($param, $set) ? $p[1] : $p[2];
 	}
 	else if ($do === 'le' || $do === 'lt' || $do === 'ge' || $do === 'gt') {
@@ -1366,7 +1360,7 @@ public function tok_if(string $param, array $p) : string {
  * @tok {filter:get}default{:filter} = use default filter
  * @tok {filter:esc}trim{:filter} = use trim and escape_db filter
  */
-public function tok_filter(string $tag, array $filter_list) : void {
+public function tok_filter($tag, $filter_list) {
 
 	$allow_tag = [ 'esc', 'get' ];
 	if (!in_array($tag, $allow_tag)) {
@@ -1415,8 +1409,8 @@ public function tok_filter(string $tag, array $filter_list) : void {
  *
  * @see tag_filter
  */
-private function applyFilter(string $tag, string $value) : string {
-	// \rkphplib\lib\log_debug("TBase.applyFilter:1419> tag=$tag value=[$value]");
+private function applyFilter($tag, $value) {
+	// \rkphplib\lib\log_debug("TBase.applyFilter:1413> tag=$tag value=[$value]");
 	if (!isset($this->_conf['filter.'.$tag])) {
 		throw new Exception('no filter', "tag=$tag value=[$value] _conf: ".print_r($this->_conf, true));
 	}
@@ -1433,7 +1427,7 @@ private function applyFilter(string $tag, string $value) : string {
 			$value = str_replace([ '&', '<', '>', '"', "'" ], [ '&amp;', '&lt;', '&gt;', '&quot;', '&#39;' ], $value);
 		}
 		else if ($filter == 'escape_arg') {
-			$value = str_replace(HASH_DELIMITER, entity(HASH_DELIMITER), $value);
+			$value = str_replace(HASH_DELIMITER, \rkphplib\lib\entity(HASH_DELIMITER), $value);
 		}
 		else if ($filter == 'escape_db') {
 			require_once PATH_RKPHPLIB.'ADatabase.class.php';
@@ -1442,8 +1436,7 @@ private function applyFilter(string $tag, string $value) : string {
 		else {
 			throw new Exception('invalid filter', "tag=$tag filter=$filter value=[$value]");
 		}
-
-		// \rkphplib\lib\log_debug("TBase.applyFilter:1446> filter=$filter value=[$value]");
+		// \rkphplib\lib\log_debug("TBase.applyFilter:1439> filter=$filter value=[$value]");
 	}
 
 	return $value;
@@ -1464,7 +1457,7 @@ private function applyFilter(string $tag, string $value) : string {
  * 
  * @filter trim, escape_html, escape_tok, escape_arg, escape_db
  */
-public function tok_esc(string $param, string $arg) : ?string {
+public function tok_esc($param, $arg) {
 
 	if (!empty($param) && substr($param, 0, 1) != '@') {
 		if (!isset($_REQUEST[$param])) {
@@ -1479,7 +1472,7 @@ public function tok_esc(string $param, string $arg) : ?string {
 	}
 
 	if (is_null($arg) || $arg === 'null' || $arg === 'NULL') {
-		// \rkphplib\lib\log_debug("TBase.tok_esc:1482> return NULL");
+		// \rkphplib\lib\log_debug("TBase.tok_esc:1475> return NULL");
 		return 'NULL';
 	}
 
@@ -1489,7 +1482,7 @@ public function tok_esc(string $param, string $arg) : ?string {
 
 	$arg = $this->applyFilter('esc', $arg);
 
-	// \rkphplib\lib\log_debug("TBase.tok_esc:1492> return [$arg]");
+	// \rkphplib\lib\log_debug("TBase.tok_esc:1485> return [$arg]");
 	return $arg;
 }
 
@@ -1501,7 +1494,7 @@ public function tok_esc(string $param, string $arg) : ?string {
  * @tok {set_default:key}value{:set_default}
  * @tok {set_default:}key=value|#|...{:set_default}
  */
-public function tok_set_default(string $name, string $value) : void {
+public function tok_set_default($name, $value) {
 
 	if (strlen($value) == 0) {
 		return;
@@ -1515,7 +1508,7 @@ public function tok_set_default(string $name, string $value) : void {
 	}
 
   if (empty($name)) {
-		$kv = conf2kv($value);
+		$kv = \rkphplib\lib\conf2kv($value);
 		foreach ($kv as $key => $value) {
 			if (!isset($_REQUEST[$key])) {
 				$_REQUEST[$key] = $value;
@@ -1534,10 +1527,10 @@ public function tok_set_default(string $name, string $value) : void {
  * @tok {set:id}value{:set} - set _REQUEST['id']=value
  * @tok {set:}key=value|#|...{:set}
  */
-public function tok_set(string $name, string $value) : void {
+public function tok_set($name, $value) {
 
   if (empty($name)) {
-		$kv = conf2kv($value);
+		$kv = \rkphplib\lib\conf2kv($value);
 		foreach ($kv as $key => $value) {
 			$_REQUEST[$key] = $value;
 		}
@@ -1551,7 +1544,7 @@ public function tok_set(string $name, string $value) : void {
 /**
  * Return constant value. Constant name is either param or arg.
  */
-public function tok_const(string $param, string $arg) : string {
+public function tok_const($param, $arg) {
 	$name = empty($arg) ? $param : trim($arg);
 
 	if (!defined($name)) {
@@ -1579,7 +1572,7 @@ public function tok_const(string $param, string $arg) : string {
  * @tok {get:a?}, (!isset(_REQUEST[a]) || strlen($_REQUEST[a]) == 0) = 0 : 1
  * @tok {get:xn--*}, return _REQUEST values where substr(key, 0, 4) == 'xn--' as hash string
  */
-public function tok_get(string $param, ?string $arg) : string {
+public function tok_get($param, $arg) {
 	$key = empty($arg) ? $param : trim($arg);
 	$res = '';
 
@@ -1621,7 +1614,7 @@ public function tok_get(string $param, ?string $arg) : string {
 			}
 		}
 
-		$res = kv2conf($found);
+		$res = \rkphplib\lib\kv2conf($found);
 	}
 
   if (!isset($this->_conf['filter.esc'])) {
@@ -1636,7 +1629,7 @@ public function tok_get(string $param, ?string $arg) : string {
 			$res[$key] = $this->applyFilter('get', $value);
 		}
 
-		$res = kv2conf($res);
+		$res = \rkphplib\lib\kv2conf($res);
 	}
 
 	return $res;
@@ -1648,7 +1641,7 @@ public function tok_get(string $param, ?string $arg) : string {
  *
  * @tok {escape:tok}{get:t}{:escape} = &#123;get&#58;t&#125; 
  */
-public function tok_escape_tok(string $txt) : string {
+public function tok_escape_tok($txt) {
 	return $res = $this->_tok->escape($txt);
 }
 
@@ -1668,7 +1661,7 @@ public function tok_escape_tok(string $txt) : string {
  * @tok {escape:url}a b{:escape} = a%20b
  * @tok {escape:html}<a href="abc">{:escape} = &lt;a href=&quot;abc&quot;&gt;
  */
-public function tok_escape(string $param, string $txt) : string {
+public function tok_escape($param, $txt) {
 	$res = $txt;
 
 	if ($param == 'tok') {
@@ -1679,10 +1672,10 @@ public function tok_escape(string $param, string $txt) : string {
 	}
 	else if ($param == 'entity') {
 		list ($entity, $txt) = explode(HASH_DELIMITER, $txt, 2);
-		$res = str_replace($entity, entity($entity), $txt);
+		$res = str_replace($entity, \rkphplib\lib\entity($entity), $txt);
 	}
 	else if ($param == 'arg') {
-		$res = str_replace(HASH_DELIMITER, entity(HASH_DELIMITER), $txt);
+		$res = str_replace(HASH_DELIMITER, \rkphplib\lib\entity(HASH_DELIMITER), $txt);
 	}
 	else if ($param == 'js') {
 		$res = str_replace([ '"', "'", '\\', '(', ')', '{', '}', '=' ], [ '&#34;', '&#39;', '&#92;', '&#40;', '&#41;', '&#123;', '&#125;', '&#61;' ], $txt);
@@ -1713,7 +1706,7 @@ public function tok_escape(string $param, string $txt) : string {
  * @tok {unescape:url}a%20b{:unescape} = a b
  * @tok {unescape:utf8}R\u00FCssel{:unescape} = Rüssel
  */
-public function tok_unescape(string $param, string $txt) : string {
+public function tok_unescape($param, $txt) {
 	$res = '';
 
 	if ($param == 'tok') {
@@ -1726,11 +1719,11 @@ public function tok_unescape(string $param, string $txt) : string {
 		$res = rawurldecode($txt);
 	}
 	else if ($param == 'arg') {
-    $res = str_replace(entity(HASH_DELIMITER), HASH_DELIMITER, $txt);
+    $res = str_replace(\rkphplib\lib\entity(HASH_DELIMITER), HASH_DELIMITER, $txt);
 	}
 	else if ($param == 'entity') {
 		list ($entity, $txt) = explode(HASH_DELIMITER, $txt, 2);
-		$res = str_replace(entity($entity), $entity, $txt);
+		$res = str_replace(\rkphplib\lib\entity($entity), $entity, $txt);
 	}
 	else if ($param == 'js') {
 		$res = str_replace([ '&#34;', '&#39;', '&#92;', '&#40;', '&#41;', '&#123;', '&#125;', '&#61;' ], [ '"', "'", '\\', '(', ')', '{', '}', '=' ], $txt);
@@ -1753,7 +1746,7 @@ public function tok_unescape(string $param, string $txt) : string {
  *
  * @tok {encode:base64}hello{:encode} = aGVsbG8=
  */
-public function tok_encode(string $param, string $txt) : string {
+public function tok_encode($param, $txt) {
 	$res = '';
 
 	if ($param == 'base64') {
@@ -1774,7 +1767,7 @@ public function tok_encode(string $param, string $txt) : string {
  *
  * @tok {decode:base64}aGVsbG8={:decode} = hello
  */
-public function tok_decode(string $param, string $txt) : string {
+public function tok_decode($param, $txt) {
 	$res = '';
 
 	if ($param == 'base64') {
@@ -1797,22 +1790,22 @@ public function tok_decode(string $param, string $txt) : string {
  *   require_once(PATH_PHPLIB.'TShop.class.php'); $this->tok->register(new \phplib\TShop());
  *   require_once('inc/abc.php', $this->tok->register(new \custom\XY());
  */
-public function tok_plugin(array $p) : void {
+public function tok_plugin($p) {
 	foreach ($p as $plugin) {
 		if (mb_strpos($plugin, ':') === false) {
 			require_once PATH_RKPHPLIB.'tok/'.$plugin.'.class.php';
 			$obj = '\\rkphplib\\tok\\'.$plugin;
-			// \rkphplib\lib\log_debug("TBase.tok_plugin:1805> require_once('".PATH_RKPHPLIB.'tok/'.$plugin.".class.php'); new $obj();");
+			// \rkphplib\lib\log_debug("TBase.tok_plugin:1798> require_once('".PATH_RKPHPLIB.'tok/'.$plugin.".class.php'); new $obj();");
 		}
 		else {
 			list ($path, $obj) = explode(':', $plugin);
 
 			if (basename($path) === $path && defined("PATH_$path")) {
 				$incl_path = constant("PATH_$path").'tok/'.$obj.'.class.php';
-				// \rkphplib\lib\log_debug("TBase.tok_plugin:1812> path=$path incl_path=$incl_path");
+				// \rkphplib\lib\log_debug("TBase.tok_plugin:1805> path=$path incl_path=$incl_path");
 				require_once $incl_path;
 				$obj = '\\'.strtolower($path).'\\tok\\'.$obj;
-				// \rkphplib\lib\log_debug("TBase.tok_plugin:1815> require_once('$incl_path'); new $obj();");
+				// \rkphplib\lib\log_debug("TBase.tok_plugin:1808> require_once('$incl_path'); new $obj();");
 			}
 			else {
 				throw new Exception("invalid path=[$path] or undefined PATH_$path");
@@ -1833,7 +1826,7 @@ public function tok_plugin(array $p) : void {
  * - _REQUEST[dir] = a/b/c, c/test.html exists: a/b/c/test.html
  * - _REQUEST[dir] = a/b/c, ./test.html exists: test.html
  */
-public function tok_find(string $file, ?string $file2 = '') : string {
+public function tok_find($file, $file2 = '') {
 	if (empty($file) && !empty($file2)) {
 		$file = $file2;
 	}
@@ -1859,7 +1852,7 @@ public function tok_find(string $file, ?string $file2 = '') : string {
  * Return $_REQUEST[SETTINGS_REQ_DIR]. If $use_dot_prefix = true return [.] 
  * (if result is empty) or prepend [./].
  */
-public static function getReqDir(bool $use_dot_prefix = false) : string {
+public static function getReqDir($use_dot_prefix = false) {
 	if (empty($_REQUEST[SETTINGS_REQ_DIR])) {
 		$res = $use_dot_prefix ? '.' : '';
 	}
@@ -1875,7 +1868,7 @@ public static function getReqDir(bool $use_dot_prefix = false) : string {
  * Search path = (dir/file) in dir until found or dir = [.]. Throw Exception if path is not 
  * relative or has [../] or [\]. Return found path. 
  */
-public static function findPath(string $file, string $dir = '.') : string {
+public static function findPath($file, $dir = '.') {
 
 	if (mb_substr($dir, 0, 1) === '/' || mb_substr($dir, 0, 3) === './/') {
 		throw new Exception('invalid absolute directory path', $dir);
@@ -1937,7 +1930,7 @@ public static function findPath(string $file, string $dir = '.') : string {
  *
  * @tok {tf:eq:5}3{:tf} = false, {tf:lt:3}1{:tf} = true, {tf:}0{:tf} = false, {tf:}00{:tf} = true
  */
-public function tok_tf(array $p, string $arg) : void {
+public function tok_tf($p, $arg) {
 	$tf = false;
 
 	$ta = trim($arg);
@@ -1954,16 +1947,16 @@ public function tok_tf(array $p, string $arg) : void {
 			$tf = empty($ta) ? false : 'switch:'.$ta;
 		}
 		else if ($p[0] === 'set') {
-			$tf = split_str(HASH_DELIMITER, $arg);
+			$tf = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
 		}
 		else if (!empty($p[0])) {
 			if (in_array($p[0], [ 'cmp', 'set', 'in_arr', 'in', 'in_set', 'and', 'or', 'cmp_and', 'cmp_or' ])) {
 				$do = $p[0];
-				$ap = split_str(HASH_DELIMITER, $arg);
+				$ap = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
 			}
 			else if (in_array($p[0], [ 'eq', 'ne', 'lt', 'gt', 'le', 'ge' ])) {
 				$do = $p[0];
-				$tmp = split_str(HASH_DELIMITER, $arg);
+				$tmp = \rkphplib\lib\split_str(HASH_DELIMITER, $arg);
 				$ap = [];
 
 				foreach ($tmp as $value) {
@@ -1982,7 +1975,7 @@ public function tok_tf(array $p, string $arg) : void {
 	else if (count($p) > 1) {
 		$do = array_shift($p);
 		// even if arg is empty we need [] as ap - e.g. {tf:cmp:}{:tf} = true
-		$ap = array_merge($p, split_str(HASH_DELIMITER, $arg));
+		$ap = array_merge($p, \rkphplib\lib\split_str(HASH_DELIMITER, $arg));
 	}
 
 	if (empty($do)) {
@@ -2056,11 +2049,11 @@ public function tok_tf(array $p, string $arg) : void {
 		}
 
 		if ($do == 'in') {
-			$set = split_str(',', $ap[0]);
+			$set = \rkphplib\lib\split_str(',', $ap[0]);
 			$tf = in_array($ap[1], $set);
 		}
 		else {
-			$set = split_str(',', $ap[1]);
+			$set = \rkphplib\lib\split_str(',', $ap[1]);
 			$tf = in_array($ap[0], $set);
 		}
 	}
@@ -2106,7 +2099,7 @@ public function tok_tf(array $p, string $arg) : void {
  * Same as tok_true().
  * @alias tok_true()
  */
-public function tok_t(string $param, string $arg) : string {
+public function tok_t($param, $arg) {
 	return $this->tok_true($param, $arg);
 }
 
@@ -2114,15 +2107,15 @@ public function tok_t(string $param, string $arg) : string {
 /**
  * Return $out if last tf from tok.callstack is: $tf = true or (is_string(top($tf)) && $val = top($tf)).
  */
-public function tok_true(string $val, string $out) : string {
+public function tok_true($val, $out) {
 	$tf = $this->_tok->getCallStack('tf');
 
 	if (is_string($tf) && strpos($tf, 'switch:') === 0) {
 		if (substr($val, 0, 4) == 'var:') {
-			$val = split_str(',', $this->_tok->getVar(substr($val, 4)));
+			$val = \rkphplib\lib\split_str(',', $this->_tok->getVar(substr($val, 4)));
 		}
 		else {
-			$val = split_str(',', $val);
+			$val = \rkphplib\lib\split_str(',', $val);
 		}
 
 		$tf = substr($tf, 7);
@@ -2132,7 +2125,7 @@ public function tok_true(string $val, string $out) : string {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('TBase.tok_true:2135> val='.print_r($val, true).' tf='.print_r($tf, true));
+	// \rkphplib\lib\log_debug('TBase.tok_true:2128> val='.print_r($val, true).' tf='.print_r($tf, true));
 	return ((is_bool($tf) && $tf) || (is_array($val) && in_array($tf, $val)) || (is_string($tf) && $tf === $val) || 
 		(is_array($tf) && !empty($val) && in_array($val, $tf))) ? $out : '';
 }
@@ -2142,7 +2135,7 @@ public function tok_true(string $val, string $out) : string {
  * Same as tok_false().
  * @alias tok_false()
  */
-public function tok_f(string $out) : string {
+public function tok_f($out) {
 	return $this->tok_false($out);
 }
 
@@ -2150,7 +2143,7 @@ public function tok_f(string $out) : string {
 /**
  * Return $out if last tf from tok.callstack is false. Otherwise return empty string.
  */
-public function tok_false(string $out) : string {
+public function tok_false($out) {
 	$tf = $this->_tok->getCallStack('tf');
 	return (is_bool($tf) && !$tf) ? $out : '';
 }

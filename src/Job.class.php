@@ -12,8 +12,6 @@ use rkphplib\JSON;
 use rkphplib\File;
 use rkphplib\Dir;
 
-use function rkphplib\lib\ps;
-use function rkphplib\lib\execute;
 
 
 
@@ -55,7 +53,7 @@ private $conf = [];
  * If old lockfile exists status must be done (move lockfile to lockfile.done) or 
  * continue (move lockfile to lockfile.old) otherwise throw exception.
  */
-public function __construct(array $options) {
+public function __construct($options) {
 	$required = [ 'name' ];
 
 	foreach ($required as $key) {
@@ -106,7 +104,7 @@ public function __construct(array $options) {
 /**
  * Return configuration key. Access old keys with old.NAME.
  */
-public function get(string $name) : string {
+public function get($name) {
 	if (!isset($this->conf[$name])) {
 		throw new Exception('no suche conf key '.$name);
 	}
@@ -118,7 +116,7 @@ public function get(string $name) : string {
 /**
  * Start job in background according to conf. Update lock file.
  */
-public function run() : void {
+public function run() {
 	$cmd = empty($this->conf['docker']) ? $this->conf['execute'] : 'docker run -rm '.$this->conf['docker'].' '.$this->conf['execute'];
 
 	$cmd .= ' && echo $! > "'.$this->conf['logfile'].'" 2>&1 &';
@@ -135,9 +133,9 @@ public function run() : void {
 	$lock['status'] = 'start';
 
 	try {
-		$lock['pid'] = execute($cmd);
+		$lock['pid'] = \rkphplib\lib\execute($cmd);
 
-		$ps = ps($lock['pid']);
+		$ps = \rkphplib\lib\ps($lock['pid']);
 		if (!isset($ps['PID']) || $ps['PID'] != $lock['pid']) {
 			throw new Exception('could not determine pid', "ps: ".print_r($ps, true)."\nlock: ".print_r($lock, true));
 		}
@@ -176,7 +174,7 @@ public function run() : void {
  * start: 
  * pid: 
  */
-public function updateLock(array $p, array $allow_status = []) : void {
+public function updateLock($p, $allow_status = []) {
 	$current = $this->loadLock($allow_status);
 	$current['date'] = microtime();
 
@@ -191,7 +189,7 @@ public function updateLock(array $p, array $allow_status = []) : void {
 /**
  * Load lockfile. If allow_status is set and current status is not allowed throw exception.
  */
-public function loadLock(array $allow_status = []) : array {
+public function loadLock($allow_status = []) {
 	$conf = [ 'status' => '' ];
 
 	if (File::exists($this->conf['lockfile'])) {

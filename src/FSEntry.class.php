@@ -31,8 +31,7 @@ public static $CHMOD_ABORT = true;
  * If $flag is 2^0: symlink to basename($target)
  * If $flag is 2^1: cd dirname($link); ln -s relpath($target) basename($link); cd back 
  */
-public static function link(string $target, string $link, int $flag = 0) : void {
-
+public static function link($target, $link, $flag = 0) {
 	$rp_target = realpath($target);
 	if (is_link($link) && ($rp_target == realpath($link) || $rp_target == realpath(readlink($link)))) {
 		// already exists
@@ -84,7 +83,7 @@ public static function link(string $target, string $link, int $flag = 0) : void 
 /**
  * Remove link.
  */
-public static function unlink(string $link) : void {
+public static function unlink($link) {
 
 	if (!is_link($link)) {
 		throw new Exception('no such link', "link=[$link]");
@@ -99,7 +98,7 @@ public static function unlink(string $link) : void {
  * PATHINFO_DIRNAME | PATHINFO_BASENAME | PATHINFO_EXTENSION | PATHINFO_FILENAME.
  * If $opt = '' (default) return hash otherwise string.
  */
-public static function path(string $path, int $opt = 0) {
+public static function path($path, $opt = 0) {
 	return pathinfo($path, $opt);
 }
 
@@ -108,7 +107,7 @@ public static function path(string $path, int $opt = 0) {
  * Change $path mode. Privileges $mode are octal. Return true if change was successfull or 
  * change is not possible but privileges are already sufficient.
  */
-public static function chmod(string $path, int $mode) : bool {
+public static function chmod($path, $mode) {
 
 	if (mb_strlen(trim($path)) == 0) {
 		throw new Exception('empty path');
@@ -161,7 +160,7 @@ public static function chmod(string $path, int $mode) : bool {
 /**
  * True if $path is link. Default is to throw exception if path is not link. 
  */
-public static function isLink(string $path, bool $abort = true) : bool {
+public static function isLink($path, $abort = true) {
 
 	if (empty($path)) {
 		if ($abort) {
@@ -185,7 +184,7 @@ public static function isLink(string $path, bool $abort = true) : bool {
 /**
  * Return true if file exists. If $abort is true throw exception (default) otherwise return false.
  */
-public static function isFile(string $path, bool $abort = true, bool $is_readable = true) : bool {
+public static function isFile($path, $abort = true, $is_readable = true) {
 
 	if (empty($path)) {
 		if ($abort) {
@@ -210,7 +209,7 @@ public static function isFile(string $path, bool $abort = true, bool $is_readabl
 /**
  * Return true if directory exists. If $abort is true throw exception (default) otherwise return false.
  */
-public static function isDir(string $path, bool $abort = true, bool $is_readable = true) : bool {
+public static function isDir($path, $abort = true, $is_readable = true) {
 
 	if (empty($path)) {
 		if ($abort) {
@@ -241,7 +240,7 @@ public static function isDir(string $path, bool $abort = true, bool $is_readable
  * device.[device|device_number|inode|link_count|link_to], size.[size|blocks|block_size],
  * time.[stime|mtime|atime|ctime|since|accessed|modified|created].
  */
-public static function stat(string $path, bool $clearcache = false) : array {
+public static function stat($path, $clearcache = false) {
 
 	if ($clearcache) {
 		clearstatcache();

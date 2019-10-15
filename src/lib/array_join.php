@@ -12,7 +12,7 @@ use rkphplib\Exception;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-function array_join(string $delimiter, array $parts) : string {
+function array_join($delimiter, $parts) {
 	for ($i = 0; $i < count($parts); $i++) {
 		if (strpos($parts[$i], $delimiter) !== false) {
 			$parts[$i] = str_replace($delimiter, '\\'.$delimiter, $parts[$i]); 

@@ -13,8 +13,6 @@ use rkphplib\Exception;
 use rkphplib\ADatabase;
 use rkphplib\Database;
 
-use function rkphplib\lib\conf2kv;
-use function rkphplib\lib\kv2conf;
 
 
 
@@ -50,7 +48,7 @@ public $lid = null;
  * - table.conf = cms_conf
  * - table.link = cms_login
  */
-public function __construct(array $options = []) {
+public function __construct($options = []) {
 	$default_options = [
 		'table.conf' => 'cms_conf',
 		'table.login' => 'cms_login',
@@ -79,7 +77,7 @@ public function __construct(array $options = []) {
 /**
  * @plugin conf:id|var|get|get_path|set|set_path|set_default|append
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
   $plugin = [];
 	$plugin['conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REDO;
 	$plugin['conf:id'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
@@ -99,7 +97,7 @@ public function getPlugins(Tokenizer $tok) : array {
  * 
  * @tok {conf:since}{date:now}{:conf} - set since=NOW() if not already set
  */
-public function tok_conf(string $key, string $value) : string {
+public function tok_conf($key, $value) {
 	$qtype = (intval($this->lid) > 0) ? 'select_user_path' : 'select_system_path';
 	$lid = ($this->lid > 0) ? intval($this->lid) : null;
 
@@ -107,7 +105,7 @@ public function tok_conf(string $key, string $value) : string {
 	$current = (count($dbres) == 0) ? null : $dbres[0]['value'];
 
 	if (is_null($current)) {
-		// \rkphplib\lib\log_debug("TConf.tok_conf:110> set [$key]=[$value]");
+		// \rkphplib\lib\log_debug("TConf.tok_conf:108> set [$key]=[$value]");
 		$this->set($lid, $key, $value);
 	}
 	else {
@@ -123,7 +121,7 @@ public function tok_conf(string $key, string $value) : string {
  *
  * @tok {conf:id}{login:id}{:conf}
  */
-public function tok_conf_id(string $id) : void {
+public function tok_conf_id($id) {
 	if (intval($id) < 1) {
 		if ($id == '') {
 			$this->lid = null;
@@ -143,7 +141,7 @@ public function tok_conf_id(string $id) : void {
  * @tok {conf:set:spread_sheet}{:conf}
  * @tok {conf:set}spread_sheet|#|x{:conf}
  */
-public function tok_conf_set(string $key, string $value) : void {
+public function tok_conf_set($key, $value) {
 	if (empty($key)) {
 		list ($key, $value) = explode(HASH_DELIMITER, $value, 2);
 	}
@@ -158,7 +156,7 @@ public function tok_conf_set(string $key, string $value) : void {
  * @tok {conf:set_path:spread_sheet.shop_item}column_{get:column}.label|#|{get:label}{:conf}
  * @tok {conf:set_path}spread_sheet.{get:table}|#|column_{get:column}.label|#|{get:label}{:conf}
  */
-public function tok_conf_set_path(string $name, array $p) : void {
+public function tok_conf_set_path($name, $p) {
 
 	if (empty($name)) {
 		$name = array_shift($p);
@@ -171,9 +169,9 @@ public function tok_conf_set_path(string $name, array $p) : void {
 	$path = array_shift($p);
 	$value = join(HASH_DELIMITER, $p);
 
-	$map = conf2kv($this->get($this->lid, $name));
+	$map = \rkphplib\lib\conf2kv($this->get($this->lid, $name));
 	self::setMapPathValue($map, $path, $value);
-	$this->set($this->lid, $name, kv2conf($map));
+	$this->set($this->lid, $name, \rkphplib\lib\kv2conf($map));
 }
 
 
@@ -183,7 +181,7 @@ public function tok_conf_set_path(string $name, array $p) : void {
  * @tok {conf:set_default:since}{date:now}{:conf} - set since="{date:now}" if not already set
  * @tok {conf:set_default}since|#|{date:now}{:conf}
  */
-public function tok_conf_set_default(string $key, string $value) : void {
+public function tok_conf_set_default($key, $value) {
 	if (empty($key)) {
 		list ($key, $value) = explode(HASH_DELIMITER, $value, 2);
 	}
@@ -203,7 +201,7 @@ public function tok_conf_set_default(string $key, string $value) : void {
 /**
  * Append value to current value. Do not append multiple times (if value is already suffix).
  */
-public function tok_conf_append(string $key, string $value) : void {
+public function tok_conf_append($key, $value) {
 	$current = $this->get($this->lid, $key);
 	$vlen = strlen($value);
 
@@ -216,7 +214,7 @@ public function tok_conf_append(string $key, string $value) : void {
 /**
  * Get raw (untokenized) configuration value.
  */
-public function tok_conf_var(string $key) : string {
+public function tok_conf_var($key) {
 	return $this->get($this->lid, $key);
 }
 
@@ -224,7 +222,7 @@ public function tok_conf_var(string $key) : string {
 /**
  * Return tokenized configuration value.
  */
-public function tok_conf_get(string $key) : string {
+public function tok_conf_get($key) {
 	return $this->get($this->lid, $key);
 }
 
@@ -236,7 +234,7 @@ public function tok_conf_get(string $key) : string {
  * @tok {conf:get_path:spread_sheet.shop_item}table{:conf}
  * @tok {conf:get_path}spread_sheet.shop_item|#|table{:conf}
  */
-public function tok_conf_get_path(string $name, array $p) : string {
+public function tok_conf_get_path($name, $p) {
 	if (empty($name)) {
 		$name = array_shift($p);
 	}
@@ -247,8 +245,8 @@ public function tok_conf_get_path(string $name, array $p) : string {
 		throw new Exception('invalid parameter list', "name=$name path=$path p: ".print_r($p, true));
 	}
 
-	$map = conf2kv($this->get($this->lid, $name));
-	$res = kv2conf(self::getMapPathValue($map, $path));
+	$map = \rkphplib\lib\conf2kv($this->get($this->lid, $name));
+	$res = \rkphplib\lib\kv2conf(self::getMapPathValue($map, $path));
 	return $res;
 }
 
@@ -256,7 +254,7 @@ public function tok_conf_get_path(string $name, array $p) : string {
 /**
  * Return configuration value ($lid 0 = system).
  */
-public function get(int $lid, string $name) : string {
+public function get($lid, $name) {
 	$qtype = (intval($lid) > 0) ? 'select_user_path' : 'select_system_path';
 	$lid = ($lid > 0) ? intval($lid) : null;
 
@@ -268,7 +266,7 @@ public function get(int $lid, string $name) : string {
 /**
  * Set configuration value, return id. 
  */
-public function set(int $lid, string $name, string $value) : int {
+public function set($lid, $name, $value) {
 	$qtype = (intval($lid) > 0) ? 'select_user_path' : 'select_system_path';
 	$lid = ($lid > 0) ? intval($lid) : null;
 	$path = explode('.', $name);

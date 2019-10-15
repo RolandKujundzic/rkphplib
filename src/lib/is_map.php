@@ -11,7 +11,7 @@ namespace rkphplib\lib;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-function is_map(array $arr, int $flags = 0) : bool {
+function is_map($arr, $flags = 0) {
   $n = is_array($arr) ? count($arr) : 0;
 
 	if ($n == 0 && ($flags & 1)) {

@@ -9,8 +9,6 @@ require_once __DIR__.'/../lib/redirect.php';
 
 use rkphplib\Exception;
 
-use function rkphplib\lib\split_str;
-use function rkphplib\lib\redirect;
 
 
 
@@ -38,7 +36,7 @@ private  $ignore_level = 0;
 /**
  * @plugin menu, menu:add, menu:conf 
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$this->tok = $tok;
 
 	$plugin = [];
@@ -56,7 +54,7 @@ public function getPlugins(Tokenizer $tok) : array {
  * @tok {menu:conf:custom}CUSTOM{:menu}
  * @tok {menu:add:1}_tpl=custom|#|...{:menu}
  */
-public function tok_menu_conf(string $name, string $value) : void {
+public function tok_menu_conf($name, $value) {
 
 	if (mb_strpos($name, 'level_') === 0 && !empty($this->conf['level_6'])) {
 		// reset default configuration
@@ -77,7 +75,7 @@ public function tok_menu_conf(string $name, string $value) : void {
 /**
  * Implement menu output.
  */
-abstract public function tok_menu(string $tpl) : string;
+abstract public function tok_menu($tpl);
 
 
 /**
@@ -100,7 +98,7 @@ abstract public function tok_menu(string $tpl) : string;
  * - level (= param)
  * - type (l|b, autoset)
  */
-public function tok_menu_add(int $level, array $node) : void {
+public function tok_menu_add($level, $node) {
 	$level = intval($level);
 
 	if (!$level && !empty($node['level'])) {
@@ -113,9 +111,9 @@ public function tok_menu_add(int $level, array $node) : void {
 
 	$label = isset($node['label']) ? $node['label'] : (isset($node['dir']) ? $node['dir'] : $level); 
 
-	// \rkphplib\lib\log_debug("AMenu.tok_menu_add:116> label=$label level=$level ignore_level=".$this->ignore_level);
+	// \rkphplib\lib\log_debug("AMenu.tok_menu_add:114> label=$label level=$level ignore_level=".$this->ignore_level);
 	if ($this->ignore_level > 0 && $level >= $this->ignore_level) {
-		// \rkphplib\lib\log_debug("AMenu.tok_menu_add:118> call skipNode and return - label=$label level=$level ignore_level=".$this->ignore_level);
+		// \rkphplib\lib\log_debug("AMenu.tok_menu_add:116> call skipNode and return - label=$label level=$level ignore_level=".$this->ignore_level);
 		$this->skipNode($node);
 		return;
 	}
@@ -127,7 +125,7 @@ public function tok_menu_add(int $level, array $node) : void {
 	$node['id'] = $nc + 1;
 	$node['parent'] = 0;
 
-	// \rkphplib\lib\log_debug("AMenu.tok_menu_add:130> nc=$nc id=".($nc + 1)." parent=0 prev=node.".($nc - 1));
+	// \rkphplib\lib\log_debug("AMenu.tok_menu_add:128> nc=$nc id=".($nc + 1)." parent=0 prev=node.".($nc - 1));
 	if ($prev) {
 		if ($level === $prev['level'] + 1) {
 			$node['parent'] = $prev['id'];
@@ -153,14 +151,14 @@ public function tok_menu_add(int $level, array $node) : void {
 
 	if (isset($node['if']) && empty($node['if'])) {
 		$this->ignore_level = $level + 1;
-		// \rkphplib\lib\log_debug("AMenu.tok_menu_add:156> skipNode and return - if = false");
+		// \rkphplib\lib\log_debug("AMenu.tok_menu_add:154> skipNode and return - if = false");
 		$this->skipNode($node);
 		return;
 	}
 
 	if (!empty($node['if_table']) && !$this->hasTables($node['if_table'])) {
 		$this->ignore_level = $level + 1;
-		// \rkphplib\lib\log_debug("AMenu.tok_menu_add:163> skipNode and return - no such table ".$node['if_table']);
+		// \rkphplib\lib\log_debug("AMenu.tok_menu_add:161> skipNode and return - no such table ".$node['if_table']);
 		$this->skipNode($node);
 		return;
 	}
@@ -184,7 +182,7 @@ public function tok_menu_add(int $level, array $node) : void {
 		$node['dir'] = mb_substr($node['dir'], 0, -1);
 	}
 
-	// \rkphplib\lib\log_debug("AMenu.tok_menu_add:187> add node: ".print_r($node, true));
+	// \rkphplib\lib\log_debug("AMenu.tok_menu_add:185> add node: ".print_r($node, true));
 	array_push($this->node, $node);
 }
 
@@ -192,7 +190,7 @@ public function tok_menu_add(int $level, array $node) : void {
 /**
  * If skipped node is no current path redirect to conf.redirect_access_denied (= login/access_denied).
  */
-private function skipNode(array $node) : void {
+private function skipNode($node) {
 	$dir = empty($_REQUEST[SETTINGS_REQ_DIR]) ? '' : $_REQUEST[SETTINGS_REQ_DIR];
 
 	if (empty($dir) || empty($node['dir']) || mb_strpos($dir, $node['dir']) !== 0) {
@@ -200,9 +198,9 @@ private function skipNode(array $node) : void {
 	}
 
 	if (isset($node['if_priv']) && !$this->tok->callPlugin('login', 'hasPrivileges', [ $node['if_priv'] ])) {
-		// \rkphplib\lib\log_debug("AMenu.skipNode:203> current dir is forbidden - node: ".join('|', $node));
+		// \rkphplib\lib\log_debug("AMenu.skipNode:201> current dir is forbidden - node: ".join('|', $node));
 		$redir_url = empty($this->conf['redirect_access_denied']) ? 'login/access_denied' : $this->conf['redirect_access_denied'];
-		redirect($redir_url, [ '@link' => 1, '@back' => 1 ]);
+		\rkphplib\lib\redirect($redir_url, [ '@link' => 1, '@back' => 1 ]);
 	}
 }
 
@@ -211,7 +209,7 @@ private function skipNode(array $node) : void {
  * Add hi=1 to this.node if on $_REQUEST[SETTINGS_REQ_DIR] path.
  * Add curr=1 to this.node if node is end of current path.
  */
-public function addNodeHi() : void {
+public function addNodeHi() {
 	$dir = empty($_REQUEST[SETTINGS_REQ_DIR]) ? '' : $_REQUEST[SETTINGS_REQ_DIR];
 	$path = explode('/', $dir);
 	$curr_path = '';
@@ -234,7 +232,7 @@ public function addNodeHi() : void {
 			}
 
 			if ($node['dir'] == $curr_path) {
-				// \rkphplib\lib\log_debug("AMenu.addNodeHi:237> ($i, $j): curr_path=$curr_path node.dir=".$node['dir']);
+				// \rkphplib\lib\log_debug("AMenu.addNodeHi:235> ($i, $j): curr_path=$curr_path node.dir=".$node['dir']);
 				$this->node[$j]['hi'] = 1;
 				$found = true;
 
@@ -250,14 +248,14 @@ public function addNodeHi() : void {
 /**
  * Return true if table exists. Parameter is string array with [,] as delimiter.
  */
-private function hasTables(string $tables) : bool {
+private function hasTables($tables) {
 	require_once __DIR__.'/../Database.class.php';
 	$db = \rkphplib\Database::getInstance();
 
-	$table_list = split_str(',', $tables);
+	$table_list = \rkphplib\lib\split_str(',', $tables);
 	foreach ($table_list as $table) {
 		if (!$db->hasTable($table)) {
-			// \rkphplib\lib\log_debug("AMenu.hasTables:260> if_table = false - missing $table");
+			// \rkphplib\lib\log_debug("AMenu.hasTables:258> if_table = false - missing $table");
 			return false;
 		}
 	}
@@ -275,7 +273,7 @@ private function hasTables(string $tables) : bool {
  * - target: !empty(node.target) ? target="node.target" : ''
  * - label: isset(node.label) ? node.label : ''
  */
-protected function getNodeHTML(int $n, string $tpl) : string {
+protected function getNodeHTML($n, $tpl) {
 
 	$node = $this->node[$n];
 	$r = [ 'href' => '' ];

@@ -86,7 +86,7 @@ private $_postprocess = [];
  * Default $flag (=16) is to abort if unknown plugin is found. Values are
  * 2^n: Tokenizer::TOK_[IGNORE|KEEP|DEBUG|AUTOLOAD])
  */
-public function __construct(int $flag = 16) {
+public function __construct($flag = 16) {
 	if (is_null(self::$site)) {
 		self::$site =& $this;
 	}
@@ -100,7 +100,7 @@ public function __construct(int $flag = 16) {
  * If variable does not exist return false. If variable ends with ! throw 
  * exception if it does not exist.
  */
-public function getVar(string $name) {
+public function getVar($name) {
 	$required = false;
 
 	if (substr($name, -1) == '!') {
@@ -145,7 +145,7 @@ public function getVar(string $name) {
  * Log only if SETTINGS_TOKENIZER_LOG is set. Message is
  * either string or [ 'message' => '...', 'label' => '...' ].
  */
-public static function log($message, string $to) : void {
+public static function log($message, $to) {
 
 	if (!defined('SETTINGS_TOKENIZER_LOG') || !SETTINGS_TOKENIZER_LOG) {
 		return;
@@ -181,7 +181,7 @@ public static function log($message, string $to) : void {
  * Set this.vmap[$name] = $value ($value type = any). If $name is "a.b.c" set this.vmap[a][b][c] = $value.
  * Concatenate with existing value in append mode ($flag = VAR_MUST_NOT_EXIST | VAR_APPEND). 
  */
-public function setVar(string $name, $value, int $flags = 0) : void {
+public function setVar($name, $value, $flags = 0) {
 
 	if (empty($name)) {
 		if (is_array($value)) {
@@ -229,7 +229,7 @@ public function setVar(string $name, $value, int $flags = 0) : void {
 /**
  * Return callstack.
  */
-public function printCallStack() : array {
+public function printCallStack() {
 	$cs_rownum = count($this->_callstack);
 	$res = '';
 
@@ -255,7 +255,7 @@ public function printCallStack() : array {
 /**
  * Set value (any) to first found name from end of callstack. 
  */
-public function setCallStack(string $name, $value) : void {
+public function setCallStack($name, $value) {
 	$cs_rownum = count($this->_callstack);
 
 	for ($i = $cs_rownum - 1; $i >= 0; $i--) {
@@ -275,7 +275,7 @@ public function setCallStack(string $name, $value) : void {
 /**
  * Get value (any) of first found name from end of callstack. 
  */
-public function getCallStack(string $name) {
+public function getCallStack($name) {
 	$cs_rownum = count($this->_callstack);
 
 	for ($i = $cs_rownum - 1; $i >= 0; $i--) {
@@ -294,7 +294,7 @@ public function getCallStack(string $name) {
 /**
  * Tokenize $file content according to this.$rx.
  */
-public function load(string $file) : void {
+public function load($file) {
 	$this->setText(File::load($file));
 	$this->file = $file;
 }
@@ -303,7 +303,7 @@ public function load(string $file) : void {
 /**
  * Tokenize $text according to this.$rx.
  */
-public function setText(string $txt) : void {
+public function setText($txt) {
 	$this->_tok = preg_split($this->rx[0], $txt, -1, PREG_SPLIT_DELIM_CAPTURE);
 	$this->_endpos = $this->_compute_endpos($this->_tok);
 }
@@ -312,7 +312,7 @@ public function setText(string $txt) : void {
 /**
  * Return true if all $tags (e.g. {:=TAG}) exist in $txt.
  */
-public function hasReplaceTags(string $txt, array $tags) : bool {
+public function hasReplaceTags($txt, $tags) {
 
 	if (empty($txt) || mb_strpos($txt, $this->rx[2].'=') === false) {
 		return false;
@@ -340,7 +340,7 @@ public function hasReplaceTags(string $txt, array $tags) : bool {
 /**
  * Return true if tag {$name:...} exists.
  */
-public function hasTag(string $name) : bool {
+public function hasTag($name) {
 
 	if (count($this->_tok) == 0) {
 		throw new Exception('call setText() or load() first');
@@ -385,7 +385,7 @@ public function hasTag(string $name) : bool {
  *
  * If plugin parameter or argument needs parsing use handler.getPlugins() = { "name": { "parse": 2, "param": required }}.
  */
-public function register(TokPlugin $handler) : void {
+public function register($handler) {
 
 	$plugins = $handler->getPlugins($this);
 
@@ -398,7 +398,7 @@ public function register(TokPlugin $handler) : void {
 /**
  * Old style plugin registration. These plugins use tokCall() callback.
  */
-public function setPlugin(string $name, TokPlugin $obj) : void {
+public function setPlugin($name, $obj) {
 	$this->_plugin[$name] = [ $handler, TokPlugin::TOKCALL ];
 }
 
@@ -406,7 +406,7 @@ public function setPlugin(string $name, TokPlugin $obj) : void {
 /**
  * Apply Tokenizer.
  */
-public function toString() : string {
+public function toString() {
 	$out = $this->_join_tok(0, count($this->_tok));
 
 	for ($i = 0; $i < count($this->_postprocess); $i++) {
@@ -433,7 +433,7 @@ public function toString() : string {
 /**
  * Recursive $_tok parser.
  */
-private function _join_tok(int $start, int $end) : string {
+private function _join_tok($start, $end) {
 	array_push($this->_callstack, []);
 
 	if (count($this->_tok) < 1 || count($this->_endpos) != count($this->_tok)) {
@@ -483,7 +483,7 @@ private function _join_tok(int $start, int $end) : string {
 /**
  * Return current plugin name. Call only once before executing callPlugin().
  */
-public function getCurrentPlugin() : string {
+public function getCurrentPlugin() {
 	if (count($this->last) < 1) {
 		throw new Exception('last is not set');
 	}
@@ -495,7 +495,7 @@ public function getCurrentPlugin() : string {
 /**
  * Compute plugin output. Loop position $i will change.
  */
-private function _join_tok_plugin(int &$i) : ?string {
+private function _join_tok_plugin(&$i) {
 	$tok = $this->_tok[$i];
 
 	// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:501> i=$i, tok=".mb_substr($tok, 0, 60));
@@ -643,7 +643,7 @@ private function _join_tok_plugin(int &$i) : ?string {
 /**
  * Return tokenizer dump (tok, endpos). Flag: 1 = 2^0 = _tok, 2 = 2^1 = _endpos
  */
-public function dump(int $flag = 3) : string {
+public function dump($flag = 3) {
 	$res = '';
 
 	if ($flag & 2) {
@@ -675,7 +675,7 @@ public function dump(int $flag = 3) : string {
  * Return {PLUGIN:PARAM}$arg{:PLUGIN}. Parameter $tok (string|array[2]) is either 'name:param' or [ name, param ].
  * No argument if $arg is null.
  */
-public function getPluginTxt($tok, ?string $arg = null) : string {
+public function getPluginTxt($tok, $arg = null) {
 
 	if (is_array($tok) && count($tok) == 2) {
 		list ($name, $param) = $tok;
@@ -701,7 +701,7 @@ public function getPluginTxt($tok, ?string $arg = null) : string {
 /**
  * Return unparsed merged _tok from n to m.
  */
-private function _merge_txt(int $n, int $m) : string {
+private function _merge_txt($n, $m) {
 	$res = '';
 
 	for ($i = $n; $i <= $m; $i++) {
@@ -720,7 +720,7 @@ private function _merge_txt(int $n, int $m) : string {
 /**
  * Return result of buildin $action (ignore|keep|debug). If action is ignore return empty. 
  */
-private function _buildin(string $action, string $name, string $param, ?string $arg = null) : string {
+private function _buildin($action, $name, $param, $arg = null) {
 	$res = '';
 
 	if ($action == 'ignore') {
@@ -741,7 +741,7 @@ private function _buildin(string $action, string $name, string $param, ?string $
 /**
  * Return true if plugin $name exists.
  */
-public function hasPlugin(string $name) : bool {
+public function hasPlugin($name) {
 	return !empty($this->_plugin[$name]);
 }
 
@@ -758,7 +758,7 @@ public function hasPlugin(string $name) : bool {
  *  callPlugin('row', 'init', 'mode=material');
  *  callPlugin('row', '2,3', 'a|#|b');
  */
-public function callPlugin(string $name, string $func, $args = []) {
+public function callPlugin($name, $func, $args = []) {
 
 	if (empty($this->_plugin[$name])) {
 		throw new Exception('no such plugin '.$name, join('|', array_keys($this->_plugin)));
@@ -813,7 +813,7 @@ public function callPlugin(string $name, string $func, $args = []) {
  * Convert param into vector and arg into map if plugin $name is configured with
  * TokPlugin::KV_BODY | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::REQUIRE_PARAM 
  */
-private function _call_plugin(string $name, string $param, ?string $arg = null) : ?string {
+private function _call_plugin($name, $param, $arg = null) {
 
 	$csl = count($this->_callstack);
 	array_push($this->_callstack[$csl - 1], [ $name, null ]);
@@ -934,7 +934,7 @@ private function _call_plugin(string $name, string $param, ?string $arg = null) 
  *  -2: ignore
  *  -3: plugin end ({:xxxx})
  */
-private function _compute_endpos(array $tok) : array {
+private function _compute_endpos($tok) {
 
 	$endpos = array();
 
@@ -1010,7 +1010,7 @@ private function _compute_endpos(array $tok) : array {
  * Return escaped string. Replace $rx[1..3] with rx[4..6]. If $rx is null (default) use this.$rx.
  * Example: {action:param} = &#123;action&#58;param&#125;
  */
-public function escape(string $txt, ?array $rx = null) : string {
+public function escape($txt, $rx = null) {
 
 	if (is_null($rx)) {
 		$rx = $this->rx;
@@ -1040,7 +1040,7 @@ public function escape(string $txt, ?array $rx = null) : string {
  * Return unescaped string. Replace $rx[4..6] with rx[1..3]. If $rx is null (default) use this.$rx.
  * Example: &#123;action&#58;param&#125; = {action:param}
  */
-public function unescape(string $txt, ?string $rx = null) : string {
+public function unescape($txt, $rx = null) {
 	$rx = [ '', $this->rx[4], $this->rx[5], $this->rx[6], $this->rx[1], $this->rx[2], $this->rx[3] ];
 	$rx[0] = '/'.preg_quote($this->rx[4]).'([a-zA-Z0-9_]*'.preg_quote($this->rx[5]).'.*?)'.preg_quote($this->rx[6]).'/s';
 	return $this->escape($txt, $rx);
@@ -1050,7 +1050,7 @@ public function unescape(string $txt, ?string $rx = null) : string {
 /**
  * Return $tpl with {:=key} (rx[1].$rx[2].'='.$key.$rx[3]) replaced by replace[key].
  */
-public function replaceTags(string $tpl, array $replace, string $prefix = '') : string {
+public function replaceTags($tpl, $replace, $prefix = '') {
 	if (is_string($replace) && strlen(trim($replace)) == 0) {
 		throw new Exception('replaceTags hash is string', "replace=[$replace] tpl=[$tpl]");
 	}
@@ -1075,7 +1075,7 @@ public function replaceTags(string $tpl, array $replace, string $prefix = '') : 
 /**
  * Replace all tags with $replace_with (default = ''). 
  */
-public function removeTags(string $txt, string $replace_with = '') : string {
+public function removeTags($txt, $replace_with = '') {
 	$prefix = $this->rx[1].$this->rx[2].'=';
 	$suffix = $this->rx[3];
 
@@ -1090,7 +1090,7 @@ public function removeTags(string $txt, string $replace_with = '') : string {
 /**
  * Return tag list vector.
  */
-public function getTagList(string $txt, bool $as_name = false) : array {
+public function getTagList($txt, $as_name = false) {
 	$prefix = $this->rx[1].$this->rx[2].'=';
 	$suffix = $this->rx[3];
   $res = [];
@@ -1108,7 +1108,7 @@ public function getTagList(string $txt, bool $as_name = false) : array {
 /**
  * Return {:=$name}. Use $name = 'TAG:PREFIX' for "{:=" and $name = 'TAG:SUFFIX' for "}".
  */
-public function getTag(string $name) : string {
+public function getTag($name) {
 	$res = $this->rx[1].$this->rx[2].'='.$name.$this->rx[3];
 
 	if ($name == 'TAG:PREFIX') {
@@ -1123,7 +1123,7 @@ public function getTag(string $name) : string {
 
 
 /** AUTO CREATED BY bin/plugin_map */
-private function tryPluginMap(string $name) : void {
+private function tryPluginMap($name) {
 	static $map = [
 		'TArray' => [ 'array', 'array:set', 'array:get', 'array:shift', 'array:unshift', 'array:pop', 'array:push', 'array:join', 'array:length', 'array:split' ],
 		'TBase' => [ 'row:init', 'row', 'tpl_set', 'tpl', 'tf', 't', 'true', 'f', 'false', 'find', 'filter', 'plugin', 'escape:tok', 'escape', 'unescape', 'encode', 'decode', 'get', 'const', 'include', 'include_if', 'view', 'clear', 'ignore', 'if', 'switch', 'keep', 'load', 'link', 'redo', 'toupper', 'tolower', 'hidden', 'trim', 'join', 'set_default', 'set', 'redirect', 'var', 'esc', 'log', 'shorten', 'strlen', 'json:exit', 'json' ],

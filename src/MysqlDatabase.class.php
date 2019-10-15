@@ -26,7 +26,7 @@ private $_dbres = null;
 /**
  * Load mysql host, user and password from $path (my.cnf) and define DB_HOST|USER|PASS.
  */
-public function loadMyCnf(string $path) : void {
+public function loadMyCnf($path) {
   $mysql_conf = File::load($path);
 
 	$get_value = function (string $key, string $define_key) use ($mysql_conf, $path) {
@@ -48,7 +48,7 @@ public function loadMyCnf(string $path) : void {
  * Load mysql configuration file (my.cnf) from $dsn if dsn starts with "/" or "mysqli:///".
  * If dsn is empty try SETTINGS_DSN.
  */
-public function setDSN(string $dsn = '') : void {
+public function setDSN($dsn = '') {
 
   if (empty($dsn) && defined('SETTINGS_DSN')) {
 		$dsn = SETTINGS_DSN;
@@ -70,7 +70,7 @@ public function setDSN(string $dsn = '') : void {
 /**
  *
  */
-public function getId() : string {
+public function getId() {
 	$dsn_query_id = self::computeId($this->_dsn, $this->_query);
 	$db_id = is_null($this->_db) ? 0 : md5(spl_object_hash($this->_db));
 	$tmp = [ md5(spl_object_hash($this)), $db_id, $dsn_query_id ];
@@ -90,7 +90,7 @@ public function getId() : string {
 /**
  *
  */
-public function hasResultSet() : bool {
+public function hasResultSet() {
 	return !is_null($this->_dbres);
 }
 
@@ -98,7 +98,7 @@ public function hasResultSet() : bool {
 /**
  *
  */
-public function lock(array $tables) : void {
+public function lock($tables) {
 	throw new Exception('ToDo');
 }
 
@@ -106,7 +106,7 @@ public function lock(array $tables) : void {
 /**
  *
  */
-public function unlock() : void {
+public function unlock() {
 	throw new Exception('ToDo');
 }
 
@@ -114,7 +114,7 @@ public function unlock() : void {
 /**
  *
  */
-public function getLock(string $name) : int {
+public function getLock($name) {
 	$r = $this->selectOne("SELECT GET_LOCK('lck_$name', 10) AS r", 'r');
 	return intval($r);
 }
@@ -123,7 +123,7 @@ public function getLock(string $name) : int {
 /**
  *
  */
-public function hasLock(string $name) : bool {
+public function hasLock($name) {
 	$r = $this->selectOne("SELECT IS_FREE_LOCK('lck_$name', 10) AS r", 'r');
 	return !inval($r);
 }
@@ -132,7 +132,7 @@ public function hasLock(string $name) : bool {
 /**
  *
  */
-public function releaseLock(string $name) : int {
+public function releaseLock($name) {
 	$r = $this->selectOne("SELECT RELEASE_LOCK('lck_$name') AS r", 'r');
 	return intval($r);
 }
@@ -141,7 +141,7 @@ public function releaseLock(string $name) : int {
 /**
  *
  */
-private function _connect() : void {
+private function _connect() {
 
 	if (is_object($this->_db)) {
 		if ($this->_conn_ttl < time() && !$this->_db->ping()) {
@@ -193,7 +193,7 @@ private function _connect() : void {
 /**
  * Close database connection.
  */
-public function close() : void {
+public function close() {
 
 	if (!$this->_db) {
 		throw new Exception('no open database connection');
@@ -219,7 +219,7 @@ public function close() : void {
 /**
  * 
  */
-public function createDatabase(string $dsn = '', string $opt = 'utf8') : void {
+public function createDatabase($dsn = '', $opt = 'utf8') {
 	$db = empty($dsn) ? self::splitDSN($this->_dsn) : self::splitDSN($dsn);
 	$name = self::escape_name($db['name']);
 	$login = self::escape_name($db['login']);
@@ -241,7 +241,7 @@ public function createDatabase(string $dsn = '', string $opt = 'utf8') : void {
 /**
  * 
  */
-public function dropDatabase(string $dsn = '') : void {
+public function dropDatabase($dsn = '') {
 	$db = empty($dsn) ? self::splitDSN($this->_dsn) : self::splitDSN($dsn);
 	$name = self::escape_name($db['name']);
 	$login = self::escape_name($db['login']);
@@ -268,7 +268,7 @@ public function dropDatabase(string $dsn = '') : void {
 /**
  *
  */
-public function saveDump(array $opt) : void {
+public function saveDump($opt) {
 
 	if (empty($opt['save_dir'])) {
 		$opt['save_dir'] = getcwd();
@@ -302,7 +302,7 @@ public function saveDump(array $opt) : void {
 /**
  *
  */
-public function saveTableDump(array $opt) : void {
+public function saveTableDump($opt) {
 	$table = self::escape_name($opt['table']);
 
 	if (empty($opt['query'])) {
@@ -366,7 +366,7 @@ public function saveTableDump(array $opt) : void {
 /**
  *
  */
-public function loadDump(string $file, int $flags = 0) : void {
+public function loadDump($file, $flags = 0) {
 
 	if (!File::size($file)) {
 		return;
@@ -419,7 +419,7 @@ public function loadDump(string $file, int $flags = 0) : void {
 /**
  * 
  */
-public function dropTable(string $table) : void {
+public function dropTable($table) {
 	$this->execute("DROP TABLE IF EXISTS $table");
 }
 
@@ -427,7 +427,7 @@ public function dropTable(string $table) : void {
 /**
  *
  */
-public function execute($query, bool $use_result = false) : void {
+public function execute($query, $use_result = false) {
 	// \rkphplib\lib\log_debug("MysqlDatabase.execute:431> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
 	if (is_array($query)) {
 		if ($use_result) {
@@ -457,7 +457,7 @@ public function execute($query, bool $use_result = false) : void {
 /**
  *
  */
-public function setFirstRow(int $offset) : void {
+public function setFirstRow($offset) {
 	if (!$this->_dbres->data_seek($offset)) {
 		throw new Exception('failed to scroll to position '.$offset.' in database result set');
 	}
@@ -467,7 +467,7 @@ public function setFirstRow(int $offset) : void {
 /**
  *
  */
-public function getNextRow() : ?array {
+public function getNextRow() {
 
 	if (!is_object($this->_dbres)) {
 		throw new Exception('no resultset');
@@ -494,7 +494,7 @@ public function getNextRow() : ?array {
 /**
  *
  */
-public function freeResult() : void {
+public function freeResult() {
 	if (is_null($this->_dbres)) {
 		return;
 	}
@@ -515,7 +515,7 @@ public function freeResult() : void {
 /**
  *
  */
-public function getRowNumber() : int {
+public function getRowNumber() {
 
 	if (!is_object($this->_dbres)) {
 		throw new Exception('no resultset');
@@ -528,7 +528,7 @@ public function getRowNumber() : int {
 /**
  *
  */
-public function selectColumn($query, $colname = 'col') : array {
+public function selectColumn($query, $colname = 'col') {
 	
 	if (is_array($query)) {
 		$res = $this->_fetch_stmt($this->_exec_stmt($query), array($colname)); 
@@ -544,7 +544,7 @@ public function selectColumn($query, $colname = 'col') : array {
 /**
  * 
  */
-public function selectHash($query, string $key_col = 'name', string $value_col = 'value', bool $ignore_double = false) : array {
+public function selectHash($query, $key_col = 'name', $value_col = 'value', $ignore_double = false) {
 
 	if ($value_col == '*') {
 		$this->execute($query, true);
@@ -596,7 +596,7 @@ public function selectHash($query, string $key_col = 'name', string $value_col =
 /**
  * Return double keys from selectHash.
  */
-public function getDoubles() : array {
+public function getDoubles() {
 	return $this->_cache['FETCH:DOUBLE'];
 }
 
@@ -604,7 +604,7 @@ public function getDoubles() : array {
 /**
  *
  */
-public function select($query, int $res_count = 0) : array {
+public function select($query, $res_count = 0) {
 
 	if (is_array($query)) {
 		$res = $this->_fetch_stmt($this->_exec_stmt($query), null, $res_count); 
@@ -620,7 +620,7 @@ public function select($query, int $res_count = 0) : array {
 /**
  *
  */
-public function multiQuery(string $query) : array {
+public function multiQuery($query) {
 
 	if (self::$use_prepared) {
 		throw new Exception('multiQuery does not work in prepared query mode');
@@ -660,7 +660,7 @@ public function multiQuery(string $query) : array {
  * Return hash if count($rbind) = 2. Return array if count($rbind) = 1.
  * Return hash if $rcount < 0 (result[-1 * $rcount + 1]).
  */
-private function _fetch(string $query, ?array $rbind = null, int $rcount = 0) : array {
+private function _fetch($query, $rbind = null, $rcount = 0) {
 
 	$this->_connect();
 
@@ -748,7 +748,7 @@ private function _fetch(string $query, ?array $rbind = null, int $rcount = 0) : 
 /**
  * 
  */
-public function selectRow($query, int $rnum = 0) : array {
+public function selectRow($query, $rnum = 0) {
 
 	$rnum = -1 * $rnum - 1;
 
@@ -766,7 +766,7 @@ public function selectRow($query, int $rnum = 0) : array {
 /**
  * Execute prepared statement. Return statement.
  */
-private function _exec_stmt(array $q) : object {
+private function _exec_stmt($q) {
 
 	$this->_connect();
 
@@ -819,7 +819,7 @@ private function _exec_stmt(array $q) : object {
  * Return hash if count($rbind) = 2. Return array if count($rbind) = 1.
  * Return hash if $rcount < 0 (result[-1 * $rcount + 1]).
  */
-private function _fetch_stmt(object $stmt, ?array $rbind = null, int $rcount = 0) : array {
+private function _fetch_stmt($stmt, $rbind = null, $rcount = 0) {
 
 	if (!$stmt->store_result()) {
 		throw new Exception('failed to store result');
@@ -908,7 +908,7 @@ private function _fetch_stmt(object $stmt, ?array $rbind = null, int $rcount = 0
 /**
  * 
  */
-public function esc(string $txt) : string {
+public function esc($txt) {
 
 	if (!$this->_db) {
 		return self::escape($txt);
@@ -921,7 +921,7 @@ public function esc(string $txt) : string {
 /**
  * 
  */
-public function getDatabaseList(bool $reload_cache = false) : array {
+public function getDatabaseList($reload_cache = false) {
 
 	if ($reload_cache || !isset($this->_cache['DATABASE_LIST:']) || count($this->_cache['DATABASE_LIST:']) === 0) {
 		$dbres = $this->select('SHOW DATABASES');
@@ -939,7 +939,7 @@ public function getDatabaseList(bool $reload_cache = false) : array {
 /**
  * 
  */
-public function getTableList(bool $reload_cache = false) : array {
+public function getTableList($reload_cache = false) {
 
 	if ($reload_cache || !isset($this->_cache['TABLE_LIST:']) || count($this->_cache['TABLE_LIST:']) === 0) {
 		$dbres = $this->select('SHOW TABLES');
@@ -957,7 +957,7 @@ public function getTableList(bool $reload_cache = false) : array {
 /**
  *
  */
-public function getReferences(string $table, string $column = 'id') : array {
+public function getReferences($table, $column = 'id') {
 	$ckey = "FOREIGN_KEY_REFERENCES:$table.$column";
 	if (isset($this->_cache[$ckey])) {
 		return $this->_cache[$ckey];
@@ -1002,7 +1002,7 @@ public function getReferences(string $table, string $column = 'id') : array {
 /**
  * 
  */
-public function getAffectedRows() : int {
+public function getAffectedRows() {
 	return $this->_db->affected_rows;
 }
 
@@ -1010,7 +1010,7 @@ public function getAffectedRows() : int {
 /**
  *
  */
-public function getError() : ?array {
+public function getError() {
 
 	if (!$this->_db->errno) {
 		return null;
@@ -1027,7 +1027,7 @@ public function getError() : ?array {
 /**
  *
  */
-public function getTableDesc(string $table) : array {
+public function getTableDesc($table) {
 
 	if (isset($this->_cache['DESC:'.$table])) {
 		return $this->_cache['DESC:'.$table];
@@ -1057,7 +1057,7 @@ public function getTableDesc(string $table) : array {
 /**
  *
  */
-public function getInsertId() : int {
+public function getInsertId() {
 	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1061> id=".$this->getId().", insert_id=".$this->_db->insert_id);
 	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) === 0) {
 		throw new Exception('no_id', $this->_db->insert_id);
@@ -1070,7 +1070,7 @@ public function getInsertId() : int {
 /**
  *
  */
-public function getTableChecksum(string $table, bool $native = false) : string {
+public function getTableChecksum($table, $native = false) {
 	$tname = self::escape_name($table);
 
 	if ($native) {
@@ -1093,7 +1093,7 @@ public function getTableChecksum(string $table, bool $native = false) : string {
 /**
  * 
  */
-public function getTableStatus(string $table) : array {
+public function getTableStatus($table) {
 
 	if (empty($table)) {
 		throw new Exception('empty table name');

@@ -8,7 +8,6 @@ require_once __DIR__.'/../lib/split_str.php';
 
 use rkphplib\Exception;
 
-use function rkphplib\lib\split_str;
 
 
 
@@ -30,7 +29,7 @@ protected $tok = null;
 /**
  * Return {loop:var|list|hash|show|join|count}
  */
-public function getPlugins(Tokenizer $tok) : array {
+public function getPlugins($tok) {
 	$this->tok = $tok;
 
   $plugin = [];
@@ -90,7 +89,7 @@ public function tok_loop_list($p, $txt) {
 		$delimiter = str_replace([ '\n', '\t' ], [ "\n", "\t" ], $p[0]);
 	}
 
-	$this->loop = split_str($delimiter, $txt, true);
+	$this->loop = \rkphplib\lib\split_str($delimiter, $txt, true);
 }
 
 
