@@ -233,15 +233,13 @@ public function tok_json_exit(string $code, array $kv) : void {
 
 
 /**
- * Write message via log_debug.
- */
-public function tok_log(string $txt) : void {
-	\rkphplib\lib\log_debug("tok_log> $txt"); // @keep
-}
-
-
-/**
  * Return hidden input.
+ *
+ * @tok:request { "a": "7", "b": "8", "c": "test" }
+ * @tok {hidden:a,b,c}
+ * @tok:result tok_hidden
+ * @tok {hidden:}a, b, c{:hidden}
+ * @tok:result tok_hidden
  */
 public function tok_hidden(array $param, array $arg) : string {
 	$list = (count($param) > 0) ? $param : $arg;
@@ -2166,6 +2164,14 @@ public function tok_f(string $out) : string {
 public function tok_false(string $out) : string {
 	$tf = $this->_tok->getCallStack('tf');
 	return (is_bool($tf) && !$tf) ? $out : '';
+}
+
+
+/**
+ * Write message via log_debug.
+ */
+public function tok_log(string $txt) : void {
+	\rkphplib\lib\log_debug("tok_log> $txt"); // @keep
 }
 
 
