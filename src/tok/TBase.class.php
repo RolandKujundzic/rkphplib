@@ -164,6 +164,9 @@ public function getPlugins(Tokenizer $tok) : array {
 
 /**
  * Return mb_strlen(trim($txt)).
+ * 
+ * @tok {strlen:}abc{:strlen} = 3
+ * @tok {strlen:}üäößµ{:strlen} = 5
  */
 public function tok_strlen(string $txt) : int {
 	return mb_strlen(trim($txt));
@@ -176,8 +179,10 @@ public function tok_strlen(string $txt) : int {
  * If maxlen >= 20 use substr($txt, 0, maxlen/2 - 2).' ... '.substr($txt, -maxlen/2 + 2).
  * If maxlen >= 60 use substr($txt, 0, maxlen - 25).' ... '.substr($txt, -20).
  *
- * @tok {shorten:10}Shorten this Text{:shorten} -> <span title="Shorten this Text">Shorten ...</span>
- * @tok {shorten:20}Shorten this long Text{:shorten} -> <span title="Shorten this long Text">Shorten ... ong Text</span> 
+ * @tok {shorten:10}Shorten this Text{:shorten} 
+ * <span data-short="1" title="Shorten this Text">Shorten<span style="opacity:0.6"> ... </span></span>
+ * @tok {shorten:20}Shorten this long Text{:shorten}
+ * <span data-short="1" title="Shorten this long Text">Shorten <span style="opacity:0.6"> ... ong Text</span></span>
  */
 public function tok_shorten(int $maxlen, string $txt) : string {
 	$len = mb_strlen($txt);
@@ -210,12 +215,20 @@ public function tok_shorten(int $maxlen, string $txt) : string {
 
 
 /**
- * Output response code header and $kv as json.
+ * Output response code header and $kv as json. Default code is 200.
  * 
  * @exit
+ * @tok {json:exit:204}
+ * @tok:result tok_json_exit_1
+ * @tok "{json:exit}a=5|#|b=3{:json}"
+ * @tok:result tok_json_exit_2
  */
-public function tok_json_exit(int $code = 200, array $kv) : void {
-	JSON::output($kv, $code);
+public function tok_json_exit(string $code, array $kv) : void {
+	if (empty($code)) {
+		$code = '200';
+	}
+
+	JSON::output($kv, intval($code));
 }
 
 
