@@ -11,6 +11,7 @@ require_once __DIR__.'/lib/log_debug.php';
 require_once __DIR__.'/FSEntry.class.php';
 require_once __DIR__.'/File.class.php';
 require_once __DIR__.'/JSON.class.php';
+require_once __DIR__.'/tok/Tokenizer.class.php';
 
 
 
@@ -426,6 +427,7 @@ public function compareHash(string $msg, array $out, array $ok) : void {
  * If $value (any) is string with "@" prefix and [.json|.ser|.txt] suffix return file content. Otherwise return value.
  * 
  * @param mixed $value
+ * @return mixed
  */
 private function getResult($value) {
 
@@ -456,6 +458,7 @@ private function getResult($value) {
  * Return _fc_function|_fc_static_method call.
  *
  * @param mixed $x
+ * @return mixed
  */
 private function _fc_log(string $call, $x) : string {
 	$y = array();
@@ -583,6 +586,111 @@ private function _test_dir() : array {
 	$rel_dir = substr($tdir, $pos + 6);
 
 	return [ $tdir, $rel_dir ];
+}
+
+
+/**
+ * Load php source file and run all '@tok ...' examples.
+ */
+public function tokCheck(string $php_source) : void {
+	$code_lines = File::loadLines($php_source);
+	$found_pclass = false;
+	$pclass = '';
+
+	define('CLI_NO_EXIT', 1);
+
+	for ($i = 0; !$found_pclass && $i < count($code_lines); $i++) {
+		$line = trim($code_lines[$i]);
+
+		if (strlen($line) == 0) {
+			continue;
+		}
+		else if (substr($line, 0, 10) == 'namespace ') {
+			$pclass = '\\'.trim(substr($line, 10, -1));  
+		}
+		else if (preg_match('/^class ([a-zA-Z0-9_]+) implements TokPlugin/', $line, $match)) {
+			$pclass .= '\\'.$match[1];
+			$found_pclass = true;
+		}
+	}
+
+	if (!$found_pclass) {
+		throw new Exception('failed to find plugin class in '.$php_source);
+	}
+
+	$this->_log("\nrun @tok ... tests in $pclass");
+
+	for (; $i < count($code_lines); $i++) {
+		$line = trim($code_lines[$i]);
+		$linebreak = false;
+		$result_file = '';
+
+		if (strlen($line) == 0 || $line[0] != '*' || mb_substr($line, 2, 5) != '@tok ') {
+			continue;
+		}
+
+		$line = trim(mb_substr($line, 7));
+		$tok = new \rkphplib\tok\Tokenizer();
+		$tok->register(new $pclass());
+
+		if (substr($line, 0, 1) == '"' && substr($line, -1) == '"') {
+			$plugin = substr($line, 1, -1);
+			$linebreak = true;
+		}
+		elseif (($pos = mb_strrpos($line, '=')) !== false) {
+			$plugin = trim(mb_substr($line, 7, $pos - 7));
+			$result = trim(mb_substr($line, $pos + 1));
+		}
+		else {
+			$plugin = $line;
+			$linebreak = true;
+		}
+	
+		if ($linebreak) {
+			$result = trim(mb_substr($code_lines[$i + 1], 3));
+			$i++;
+
+			if (mb_substr($result, 0, 12) == '@tok:result ') {
+				$result_file = trim(mb_substr($result, 12));
+				$result = File::load($result_file.'.ok');
+			}
+		}
+
+print "linebreak=[$linebreak] result file = [$result_file]\n";
+		$this->_tc['num']++;
+		if ($linebreak) {
+			$this->_log("$plugin\n\t$result\n\t... ", 0);
+		}
+		else {
+			$this->_log("$plugin ? $result ... ", 0);
+		}
+
+		$tok->setText($plugin);
+
+    ob_start();
+		$res = $tok->toString();
+    $out = ob_get_contents();
+    ob_end_clean();
+
+		if (!empty($result) && empty($res) && !empty($out)) {
+			$res = $out;
+		}
+
+		if (!empty($result_file)) {
+			File::save($result_file.'.out', $res);
+		}
+
+		if ($res == $result) {
+			$this->_log('ok');
+			$this->_tc['ok']++;				
+		}
+		else {
+			$this->_log(" != $res - ERROR!");
+			$this->_tc['error']++;
+		}
+	}
+	
+	exit(1);
 }
 
 
