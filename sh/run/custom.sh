@@ -11,6 +11,8 @@ function _docs {
 function _strict_types_off {
   local LOG=`echo "sto_$1.log" | sed -E 's/\//:/g'`
 
+	_mkdir .rkscript
+
   echo -e "remove strict types from $1 (see .rkscript/$LOG)"
   "$PATH_PHPLIB/bin/toggle" "$1" strict_types off >".rkscript/$LOG" 2>&1
 
@@ -26,6 +28,8 @@ function _strict_types_off {
 #------------------------------------------------------------------------------
 function _log_debug_off {
   local LOG=`echo "ldo_$1.log" | sed -E 's/\//:/g'`
+
+	_mkdir .rkscript
 
   echo -e "update log debug line numbers in $1 (see .rkscript/$LOG)"
   "$PATH_PHPLIB/bin/toggle" "$1" log_debug on >".rkscript/$LOG" 2>&1
