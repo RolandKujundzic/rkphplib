@@ -2,17 +2,19 @@
 
 global $th;
 
+defined('DOCROOT') || define('DOCROOT', dirname(dirname(__DIR__)));
+defined('PATH_RKPHPLIB') || define('PATH_RKPHPLIB', DOCROOT.'/src/');
+
 if (!isset($th)) {
-	require_once(dirname(dirname(__DIR__)).'/src/lib/log_debug.php');
-	require_once(dirname(dirname(__DIR__)).'/src/TestHelper.class.php');
+	require_once PATH_RKPHPLIB.'lib/log_debug.php';
+	require_once PATH_RKPHPLIB.'TestHelper.class.php';
 	$th = new rkphplib\TestHelper();
 }
 
 $th->runTokenizer(15, array('TBase'));
 
-
-require_once(PATH_RKPHPLIB.'/tok/TBase.class.php');
-require_once(PATH_RKPHPLIB.'/lib/kv2conf.php');
+require_once PATH_RKPHPLIB.'/tok/TBase.class.php';
+require_once PATH_RKPHPLIB.'/lib/kv2conf.php';
 
 use \rkphplib\tok\TBase;
 
@@ -28,6 +30,8 @@ function _de_en_codeHash($map) {
 	$th->compare('(de|en)codeHash', [ \rkphplib\lib\kv2conf($dec) ], [ \rkphplib\lib\kv2conf($map) ]);
 }
 
+
+$th->tokCheck(PATH_RKPHPLIB.'tok/TBase.class.php');
 
 _de_en_codeHash([ 'dir' => 'company/contact', 'id' => 3872 ]);
 _de_en_codeHash([ "txt" => "Is it working properly?", "y" => rand(0,100000) ]);
