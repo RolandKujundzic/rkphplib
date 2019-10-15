@@ -37,7 +37,7 @@ private $conf = [];
 
 	
 /**
- * Return job plugin.
+ * @plugin job
  */
 public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;
@@ -75,11 +75,8 @@ public function getPlugins(Tokenizer $tok) : array {
  * end= [timestamp] (microtime)
  *
  * Export all lockfile parameter as _REQUEST[job_NAME] e.g. _REQUEST[job_status] = running
- *
- * @param hash $conf
- * @return ''
  */
-public function tok_job($conf) {
+public function tok_job(array $conf) : void {
 	$default = [ 'do.run' => 'run=yes', 'do.remove' => 'lock=remove' ];
 	// \rkphplib\lib\log_debug("TJob.tok_job:84> default: ".print_r($default, true)." conf: ".print_r($conf, true));
 	$this->conf = array_merge($default, $conf);  
@@ -120,7 +117,7 @@ public function tok_job($conf) {
  *
  * @return boolean
  */
-private function running() {
+private function running() : bool {
 	// \rkphplib\lib\log_debug("TJob.running:124> lockfile=".$this->conf['lockfile']);
 
 	if (!File::exists($this->conf['lockfile'])) {	
@@ -169,7 +166,7 @@ private function running() {
  * via conf.include (run php script via include).
  * Create conf.lock file with shell jobs. 
  */
-private function run() {
+private function run() : void {
 	$cmd = '';
 
 	$bg_pid = ' && echo $! > /dev/null 2>&1 &';
@@ -214,10 +211,8 @@ private function run() {
 
 /**
  * Create|Update lockfile.
- *
- * @param hash $p
  */
-public function lock($p = []) {
+public function lock(array $p = []) : void {
 	$lockfile = $this->conf['lockfile'];
 
 	if (File::exists($lockfile)) {
@@ -239,11 +234,8 @@ public function lock($p = []) {
 /**
  * Update lockfile. Create lockfile if it does not exist.
  * Increment progress counter if message exist.
- *
- * @param string $file
- * @param hash $p
  */
-public static function updateLock($file, $p) {
+public static function updateLock(string $file, array $p) : void {
 	if (!File::exists($file)) {
 		Dir::create(dirname($file), 0777, true);
 		$lock = [];
@@ -262,7 +254,6 @@ public static function updateLock($file, $p) {
 
 	File::save_rw($file, JSON::encode($lock));
 }
-
 
 
 }

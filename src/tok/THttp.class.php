@@ -23,7 +23,7 @@ class THttp implements TokPlugin {
 
 
 /**
- * Return http plugin.
+ * @plugin http:get, domain:idn|utf8
  */
 public function getPlugins(Tokenizer $tok) : array {
 	$plugin = [];
@@ -89,12 +89,8 @@ public function tok_domain_utf8(string $domain) : string {
  * 
  * @tok <pre>{http:get:*}</pre>
  * @tok {http:get}SERVER_NAME{:get}
- * 
- * @throws if _SERVER[$name] is not set
- * @param string $name
- * @return string
  */
-public function tok_http_get($name) {
+public function tok_http_get(string $name) : string {
 	return self::httpGet($name);
 }
 
@@ -103,11 +99,8 @@ public function tok_http_get($name) {
  * Static version of tok_http_get().
  *
  * @see tok_http_get
- * @throws
- * @param string $name
- * @return string 
  */
-public static function httpGet($name) {
+public static function httpGet(string $name) : string {
 	$custom = [ 'ip', 'is_msie', 'host', 'abs_host', 'script', 'query', 'script_query', 
 		'port', 'protocol', 'url', 'abs_url', 'abs_path', 'http_url', 'https_url' ];	
   $res = '';
