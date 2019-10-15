@@ -3,6 +3,9 @@
 namespace rkphplib;
 
 require_once __DIR__.'/Exception.class.php';
+require_once __DIR__.'/lib/http_code.php';
+
+use function rkphplib\lib\http_code;
 
 
 /**
@@ -95,12 +98,7 @@ public static function output($o, int $code = 200) : void {
 		}
 	}
 
-	http_response_code($code);
-	header('Content-Type: application/json');
-	$output = JSON::encode($o);
-	header('Content-Length: '.mb_strlen($output));
-	print $output;
-	exit(0);
+	http_code($code, [ 'Content-Type' => 'application/json', '@output' => JSON::encode($o) ]);
 }
 
 
