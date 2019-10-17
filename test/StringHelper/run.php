@@ -3,7 +3,7 @@
 global $th;
 
 if (!isset($th)) {
-	require_once(dirname(dirname(__DIR__)).'/src/TestHelper.class.php');
+	require_once dirname(dirname(__DIR__)).'/src/TestHelper.class.php';
 	$th = new rkphplib\TestHelper();
 }
 
@@ -48,5 +48,4 @@ $th->compare("StringHelper::removeHtmlTags(html, allow)", [ $out ], [ $ok ]);
 $out = \rkphplib\StringHelper::url('SEO Link - öäüß ÖÄÜ & "test"');
 $ok = 'seo-link-oeaeuess-oeaeue-test';
 $th->compare("StringHelper::url(link)", [ $out ], [ $ok ]);
-
 
