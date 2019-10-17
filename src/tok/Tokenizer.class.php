@@ -902,7 +902,7 @@ private function _call_plugin(string $name, string $param, ?string $arg = null) 
 	if ($pconf & TokPlugin::NO_PARAM) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func), $arg);
 	}
-	else if ($pconf & TokPlugin::NO_BODY || $pconf & TokPlugin::ONE_PARAM) {
+	else if (($pconf & TokPlugin::NO_BODY) || ($pconf & TokPlugin::ONE_PARAM)) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func), $param);
 	}
 	else {
