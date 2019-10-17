@@ -9,6 +9,7 @@ if (!defined('PATH_RKPHPLIB')) {
 require_once __DIR__.'/lib/config.php';
 require_once __DIR__.'/lib/log_debug.php';
 require_once __DIR__.'/FSEntry.class.php';
+require_once __DIR__.'/PhpCode.class.php';
 require_once __DIR__.'/File.class.php';
 require_once __DIR__.'/JSON.class.php';
 require_once __DIR__.'/tok/Tokenizer.class.php';
@@ -586,6 +587,97 @@ private function _test_dir() : array {
 	$rel_dir = substr($tdir, $pos + 6);
 
 	return [ $tdir, $rel_dir ];
+}
+
+
+/**
+ * Load php source file and run all '@tok ...' examples.
+ */
+public function tokCheck_new(string $php_source) : void {
+	$php = new PhpCode();
+	$php->load($php_source);
+	$pclass = $php->getClass('path');
+	define('CLI_NO_EXIT', 1);
+
+	$this->_log("\nrun @tok ... tests in $pclass");
+	exit(1);
+
+	for (; $i < count($code_lines); $i++) {
+		$line = trim($code_lines[$i]);
+		$linebreak = false;
+		$result_file = '';
+
+		if (strlen($line) == 0 || $line[0] != '*' || mb_substr($line, 2, 4) != '@tok') {
+			continue;
+		}
+
+		$line = trim(mb_substr($line, 7));
+
+		if (substr($line, 0, 9) == 'request {' && substr($line, -1) == '}') {
+			$_REQUEST = array_merge($_REQUEST, json_decode(substr($line, 8), true));
+			continue;
+		}
+
+		$tok = new \rkphplib\tok\Tokenizer();
+		$tok->register(new $pclass());
+
+		if (substr($line, 0, 1) == '"' && substr($line, -1) == '"') {
+			$plugin = substr($line, 1, -1);
+			$linebreak = true;
+		}
+		elseif (($pos = mb_strrpos($line, '=')) !== false) {
+			$plugin = trim(mb_substr($line, 0, $pos));
+			$result = trim(mb_substr($line, $pos + 1));
+		}
+		else {
+			$plugin = $line;
+			$linebreak = true;
+		}
+	
+		if ($linebreak) {
+			$result = trim(mb_substr($code_lines[$i + 1], 3));
+			$i++;
+
+			if (mb_substr($result, 0, 12) == '@tok:result ') {
+				$result_file = trim(mb_substr($result, 12));
+				$result = File::load($result_file.'.ok');
+			}
+		}
+
+		$this->_tc['num']++;
+		if ($linebreak) {
+			$this->_log("$plugin\n\t$result\n\t... ", 0);
+		}
+		else {
+			$this->_log("$plugin ? $result ... ", 0);
+		}
+
+		$tok->setText($plugin);
+
+    ob_start();
+		$res = $tok->toString();
+    $out = ob_get_contents();
+    ob_end_clean();
+
+		if (!empty($result) && empty($res) && !empty($out)) {
+			$res = $out;
+		}
+
+		if (!empty($result_file)) {
+			File::save($result_file.'.out', $res);
+		}
+
+		if ($res == $result) {
+			$this->_log('ok');
+			$this->_tc['ok']++;				
+		}
+		else {
+			$this->_log(" != $res - ERROR!");
+			$this->_tc['error']++;
+		}
+	}
+	
+	exit(1);
 }
 
 
