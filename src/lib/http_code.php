@@ -75,7 +75,7 @@ function http_code(int $code = 200, array $header = []) : void {
 		if (strlen($output) > 80) {
 			print substr($output, 0, 40).' ... '.substr($output, -40);
 		}
-		elseif (strlen($output) > 0) {
+		else if (strlen($output) > 0) {
 			print $output;
 		}
 
