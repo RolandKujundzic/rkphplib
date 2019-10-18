@@ -26,14 +26,20 @@ else {
 }
 
 
+if (!isset($GLOBALS['OVERWRITE_SETTINGS'])) {
+	$GLOBALS['OVERWRITE_SETTINGS'] = [];
+}
+
 
 /**
  * Log debug message (string or vector). If $prepend_info = true (default = false)
- * prepend timestamp and trace information.
+ * prepend timestamp and trace information. Use $GLOBALS['OVERWRITE_SETTINGS']['LOG_DEBUG'] = '...'
+ * to overwrite defined SETTINGS_LOG_DEBUG.
  *
  * Disable debug log with SETTINGS_LOG_DEBUG = 0,
  * Enable logging to default error_log with SETTINGS_LOG_DEBUG = 1.
  * Enable logging to file with SETTINGS_LOG_DEBUG = 'path/debug.log'.
+ * Log to STDOUT|STDERR with SETTINGS_LOG_DEBUG = 'php://STDOUT'; // 'php://STDERR', '/dev/stdout', '/dev/stderr'
  * If 'SETTINGS_LOG_DEBUG' is undefined use 'data/.log/php.log' (if data/.log exists)
  * or '/tmp/php.log'.
  *
@@ -84,7 +90,10 @@ function log_debug($msg, bool $prepend_info = false) : void {
 		$log = $msg;
 	}
 
-	if (mb_strlen(SETTINGS_LOG_DEBUG) > 1) {
+	if (!empty($GLOBALS['OVERWRITE_SETTINGS']['LOG_DEBUG'])) {
+		error_log($log."\n", 3, $GLOBALS['OVERWRITE_SETTINGS']['LOG_DEBUG']);
+	}
+	else if (mb_strlen(SETTINGS_LOG_DEBUG) > 1) {
 		error_log($log."\n", 3, SETTINGS_LOG_DEBUG);
 	}
 	else {
