@@ -2,17 +2,15 @@
 
 global $th;
 
-defined('DOCROOT') || define('DOCROOT', dirname(dirname(__DIR__)));
-
 if (!isset($th)) {
-	require_once DOCROOT.'/src/TestHelper.class.php';
+	require_once dirname(dirname(__DIR__)).'/src/TestHelper.class.php';
 	$th = new rkphplib\TestHelper();
 }
 
 $th->load('src/PhpCode.class.php');
 
 $code = new \rkphplib\PhpCode();
-$code->load(DOCROOT.'/src/tok/TBase.class.php');
+$code->load(PATH_RKPHPLIB.'tok/TBase.class.php');
 
 $namespace = $code->getNamespace(true);
 $th->compare("PhpCode->getNamespace", [ 'rkphplib\tok' ], [ 'rkphplib\tok' ]);
