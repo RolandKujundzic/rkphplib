@@ -17,6 +17,7 @@ $th->runTest('lib_split_str/run.php');
 $th->runTest('lib_array_join/run.php');
 $th->runTest('lib_csv_explode/run.php');
 $th->runTest('lib_replace_tags/run.php');
+$th->runTest('lib_log_debug/run.php');
 $th->runTest('ArrayHelper/run.php');
 $th->runTest('StringHelper/run.php');
 $th->runTest('DateTime/run.php');
