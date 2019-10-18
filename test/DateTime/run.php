@@ -3,11 +3,12 @@
 global $th;
 
 if (!isset($th)) {
-	require_once(dirname(dirname(__DIR__)).'/src/TestHelper.class.php');
+	require_once dirname(dirname(__DIR__)).'/src/TestHelper.class.php';
 	$th = new rkphplib\TestHelper();
 }
 
 $th->load('src/DateCalc.class.php');
+
 $th->runFuncTest('sql2num');
 $th->runFuncTest('max');
 $th->runFuncTest('sqlTS');
