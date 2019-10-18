@@ -2,12 +2,8 @@
 
 global $th;
 
-defined('DOCROOT') || define('DOCROOT', dirname(dirname(__DIR__)));
-defined('PATH_RKPHPLIB') || define('PATH_RKPHPLIB', DOCROOT.'/src/');
-
 if (!isset($th)) {
-	require_once PATH_RKPHPLIB.'lib/log_debug.php';
-	require_once PATH_RKPHPLIB.'TestHelper.class.php';
+	require_once dirname(dirname(__DIR__)).'/src/TestHelper.class.php';
 	$th = new rkphplib\TestHelper();
 }
 
