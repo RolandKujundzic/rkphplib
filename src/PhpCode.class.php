@@ -91,7 +91,7 @@ protected function reset($flag = 0) {
 		$this->methods = [];
 	}
 
-	if ($this->lpos == -1 && ($flag & 1)) {
+	if (($flag & 1) != 1 && $this->lpos == -1) {
 		$this->lpos = 0;
 	}
 }
@@ -169,6 +169,7 @@ public function nextLine() : bool {
 		$res = true;
 	}
 
+	\rkphplib\lib\log_debug("nextLine: found=$res lpos=".$this->lpos);
 	return $res;
 }
 
@@ -183,14 +184,15 @@ public function getNamespace(int $flag = 0) : ?string {
 			return null;
 		}
 	}
-	elseif ($this->namespace) {
+	else if ($this->namespace) {
+		\rkphplib\lib\log_debug("flag=$flag, return namespace=".$this->namespace);
 		return $this->namespace;
 	}
 
 	$this->reset(14);
 
 	for ($i = $this->lpos; $this->namespace == null && $i < 5 && $i < count($this->lines); $i++) {
-		if (strlen($this->lines[$i]) > 0 && preg_match('/^\s*namespace ([a-z_\\\]+)(;| \{)\s$/', $this->lines[$i], $match)) {
+		if (strlen($this->lines[$i]) > 0 && preg_match('/^\s*namespace ([a-zA-Z0-9_\\\]+)(;| \{)\s$/', $this->lines[$i], $match)) {
 			$this->namespace = $match[1];
 			$this->lpos = $i;
 		}
@@ -200,6 +202,7 @@ public function getNamespace(int $flag = 0) : ?string {
 		if ($this->lpos > 0 && ($flag & 2) != 2) {
 			// try again from start
 			$this->lpos = 0;
+			\rkphplib\lib\log_debug("set lpos=0, retry");
 			return $this->getNamespace($flag);
 		}
 
@@ -212,6 +215,7 @@ public function getNamespace(int $flag = 0) : ?string {
 		$this->namespaces[$this->namespace] = $this->lpos; 
 	}
 
+	\rkphplib\lib\log_debug("i=$i lpos=".$this->lpos.", return namespace=".$this->namespace);
 	return $this->namespace;
 }
 
@@ -227,7 +231,7 @@ public function getClass(int $flag = 0) : ?array {
 			return null;
 		}
 	}
-	elseif ($this->class) {
+	else if ($this->class) {
 		return $this->class;
 	}
 
@@ -300,7 +304,7 @@ public function getNextTok() : array {
 			$plugin = substr($line, 1, -1);
 			$linebreak = true;
 		}
-		elseif (($pos = mb_strrpos($line, '=')) !== false) {
+		else if (($pos = mb_strrpos($line, '=')) !== false) {
 			$plugin = trim(mb_substr($line, 7, $pos - 7));
 			$result = trim(mb_substr($line, $pos + 1));
 		}
