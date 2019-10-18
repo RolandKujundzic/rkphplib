@@ -2,9 +2,9 @@
 
 namespace rkphplib;
 
-if (!defined('PATH_RKPHPLIB')) {
-	define('PATH_RKPHPLIB', __DIR__.'/');
-}
+defined('SETTINGS_LOG_DEBUG') || define('SETTINGS_LOG_DEBUG', '/dev/stderr');
+defined('DOCROOT') || define('DOCROOT', __DIR__);
+defined('PATH_RKPHPLIB') || define('PATH_RKPHPLIB', __DIR__.'/');
 
 require_once __DIR__.'/lib/config.php';
 require_once __DIR__.'/lib/log_debug.php';
@@ -26,6 +26,10 @@ class TestHelper {
 
 /** @var hash $_tc test counter hash */
 private $_tc = [];
+
+/** @var string $output */
+public $output = '';
+
 
 
 /**
@@ -218,7 +222,6 @@ public function runTest(string $run_php) : void {
  * Call function and compare result. Load $test (list of function calls - parameterlist + result) and $func (function name) from $path.fc.php.
  */
 public function runFuncTest(string $path) : void {
-
 	// execute test
 	$php_file = empty($this->_tc['path']) ? $path.'.fc.php' : $this->_tc['path'].'/'.$path.'.fc.php';
 	$this->_log('runFuncTest: loading '.$php_file.' ... ', 2);
@@ -233,25 +236,41 @@ public function runFuncTest(string $path) : void {
 	}
 
 	$csm = false;
-	if (($pos = strpos($func, '::')) !== false) {
+	if (is_string($func) && ($pos = strpos($func, '::')) !== false) {
 		$class = substr($func, 0, $pos);
 		$method = substr($func, $pos + 2);
 		$csm = true;
 	}
 
 	$this->_tc['num']++;
+
 	$n_err = 0;
 	$n_ok = 0;
 
 	$this->_log('executing '.count($test).' tests', 9);
 	foreach ($test as $x) {
 		$ok = array_pop($x);
+		$res = null;
 
 		if ($csm) {
 			$res = $this->_fc_static_method($class, $method, $x);
 		}
-		else {
+		else if (is_string($func)) {
 			$res = $this->_fc_function($func, $x);
+		}
+		else {
+			if (empty($this->output)) {
+				$res = $func();
+			}
+			else {
+				File::remove($this->output, false);
+				$func();
+				$res = File::load($this->output);
+			}
+		}
+
+		if ($ok === '@file') {
+			$ok = File::load(dirname($php_file).'/'.File::basename($php_file, true).'.ok');
 		}
 
 		$res = self::res2str($res);
@@ -259,8 +278,8 @@ public function runFuncTest(string $path) : void {
 
 		if ($res !== $ok) {
 			$msg = ' != '.$ok.' - ERROR!';
-
-			if (strlen($res) > 40) {
+	
+			if (empty($ok) || strlen($res) > 40) {
 				$save_ok = sys_get_temp_dir().'/res.out';
 				File::save($save_ok, $res);
 				$msg .= ' (see: '.$save_ok.')';
@@ -268,12 +287,15 @@ public function runFuncTest(string $path) : void {
 
 			$n_err++;
 		}
+		else if (!empty($this->output)) {
+			File::remove($this->output, false);
+		}
 
-		if (is_string($res)) {
-			$this->_log("'$res' ... $msg");
+		if (is_numeric($res) || is_bool($res)) {
+			$this->_log("$res ... $msg");
 		}
 		else {
-			$this->_log("$res ... $msg");
+			$this->_log("'$res' ... $msg");
 		}
 	}
 
@@ -459,7 +481,6 @@ private function getResult($value) {
  * Return _fc_function|_fc_static_method call.
  *
  * @param mixed $x
- * @return mixed
  */
 private function _fc_log(string $call, $x) : string {
 	$y = array();
@@ -550,7 +571,7 @@ private function _fc_static_method(string $class, string $method, array $x) {
  * Convert $res (any) to string if object or array (json_encode).
  * 
  * @param mixed $res
- * @return mixed
+ * @return mixed number|bool|string
  */
 public static function res2str($res) {
 	if (is_float($res) || is_int($res) || is_bool($res)) {
@@ -625,7 +646,7 @@ public function tokCheck_new(string $php_source) : void {
 			$plugin = substr($line, 1, -1);
 			$linebreak = true;
 		}
-		elseif (($pos = mb_strrpos($line, '=')) !== false) {
+		else if (($pos = mb_strrpos($line, '=')) !== false) {
 			$plugin = trim(mb_substr($line, 0, $pos));
 			$result = trim(mb_substr($line, $pos + 1));
 		}
@@ -667,7 +688,7 @@ public function tokCheck_new(string $php_source) : void {
 			File::save($result_file.'.out', $res);
 		}
 
-		if ($res == $result) {
+		if ($res === $result) {
 			$this->_log('ok');
 			$this->_tc['ok']++;				
 		}
@@ -735,7 +756,7 @@ public function tokCheck(string $php_source) : void {
 			$plugin = substr($line, 1, -1);
 			$linebreak = true;
 		}
-		elseif (($pos = mb_strrpos($line, '=')) !== false) {
+		else if (($pos = mb_strrpos($line, '=')) !== false) {
 			$plugin = trim(mb_substr($line, 0, $pos));
 			$result = trim(mb_substr($line, $pos + 1));
 		}
@@ -777,7 +798,7 @@ public function tokCheck(string $php_source) : void {
 			File::save($result_file.'.out', $res);
 		}
 
-		if ($res == $result) {
+		if ($res === $result) {
 			$this->_log('ok');
 			$this->_tc['ok']++;				
 		}
@@ -796,7 +817,7 @@ public function tokCheck(string $php_source) : void {
  * If $num is string 'a.txt' run only this test. If $num is array [ 'a.inc.html', 'b.inc.html' ]
  * run a.inc.html (compare with a.inc.html.ok) and b.inc.html (compare with b.inc.html.ok).
  *
- * @param int|string|array $num
+ * @param mixed $num int|string|array
  */
 public function runTokenizer($num, array $plugin_list) : void {
 
