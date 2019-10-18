@@ -56,7 +56,7 @@ public static function link(string $target, string $link, int $flag = 0) : void 
 			throw new Exception('Could not create symlink', "link=$link target=".basename($target));
 		}
 	}
-	elseif (2 == ($flag & 2) && basename($link) != $link) {
+	else if (2 == ($flag & 2) && basename($link) != $link) {
 		$rp_link = realpath(dirname($link));
 		$rp_target = realpath($target);
 
