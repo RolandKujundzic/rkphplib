@@ -3,7 +3,7 @@
 namespace rkphplib;
 
 defined('SETTINGS_LOG_DEBUG') || define('SETTINGS_LOG_DEBUG', '/dev/stderr');
-defined('DOCROOT') || define('DOCROOT', __DIR__);
+defined('DOCROOT') || define('DOCROOT', dirname(__DIR__));
 defined('PATH_RKPHPLIB') || define('PATH_RKPHPLIB', __DIR__.'/');
 
 require_once __DIR__.'/lib/config.php';
