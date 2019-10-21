@@ -240,6 +240,7 @@ public function tok_output_set($name, $value) {
  * @tok {output:get:start|end|pagebreak|rownum|page_num|total|visible|rownum|tags.*|scroll.*} = ...
  * @tok {output:get:conf.*} = conf.query= ... |#| ...
  * @tok {output:get:*} = rownum= ... |#| ...
+ * @tok {output:get:row.N.colname} = this.table[n][colname]
  * 
  * @throws
  * @param string $name
@@ -260,7 +261,7 @@ public function tok_output_get($name) {
 		if (!isset($this->conf[$name])) {
 			throw new Exception('No such conf key', $name);
 		}
-		
+
 		return $this->conf[$name];
 	}
 
@@ -271,6 +272,21 @@ public function tok_output_get($name) {
 	}
 	else if (isset($this->env[$name])) {
 		$res = $this->env[$name];
+	}
+	else if (preg_match('/^row\.([0-9]+)\.(.+)$/', $name, $match)) {
+		$n = intval($match[1]);
+
+		if (!isset($this->table[$n])) {
+			throw new Exception("Row $n not found (use 0 ... ".(count($this->table) - 1)." as rownum");
+		}
+
+		$row = $this->table[$n];
+		$col = $match[2];
+		if (!isset($row[$col])) {
+			throw new Exception("Column $col not found in row", 'colnames: '.join(', ', array_keys($row)));
+		}
+
+		$res = $row[$col];
 	}
 	else if ($name == 'colnum') {
 		$res = count($this->conf['column_label']);
