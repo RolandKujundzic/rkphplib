@@ -1475,7 +1475,7 @@ private function applyFilter(string $tag, string $value) : string {
  * 
  * @filter trim, escape_html, escape_tok, escape_arg, escape_db
  */
-public function tok_esc(string $param, string $arg) : ?string {
+public function tok_esc(string $param, ?string $arg) : ?string {
 
 	if (!empty($param) && substr($param, 0, 1) != '@') {
 		if (!isset($_REQUEST[$param])) {
