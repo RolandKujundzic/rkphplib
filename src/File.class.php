@@ -293,7 +293,7 @@ public static function fromURL(string $url, bool $required = true, array $header
 	curl_close($cu);
 
 	if ($return_html_body) {
-		if (preg_match('/<body.*?>(.+?)<\/body>/si', $res, $match)) {
+		if (preg_match('/<body.*?'.'>(.+?)<\/body>/si', $res, $match)) {
 			$res = trim($match[1]);
 		}
 		else {
@@ -333,6 +333,11 @@ public static function load(string $file, int $offset = 0) : string {
 
 	if (($data = file_get_contents($file, false, null, $offset)) === false) {
 		throw new Exception("failed to load file", $file);
+	}
+
+	// PHP Bug
+	if ($data == '' && !is_file($file)) {
+		throw new Exception('invalid file '.$file);
 	}
 
 	return $data;
