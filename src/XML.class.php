@@ -16,19 +16,16 @@ class XML {
 
 
 /**
- * Convert xml to map.
- *
- * @param string $xml
- * @return array[string]string
+ * Convert xml to hash.
  */
-public static function toMap($xml) {
+public static function toMap(string $xml) : array {
 	$xml_obj = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
 	return json_decode(json_encode((array)$xml_obj), true);
 }
 
 
 /**
- * Convert map $data to xml document.
+ * Convert hashmap $data to xml document.
  *
  * Use special keys "@attributes" = map, "@value|@cdata" = string
  * If root is default or empty and data is hash with single key and value is array use key as root. 
@@ -38,14 +35,10 @@ public static function toMap($xml) {
  *  XML::fromMap(['A', 'B', 'C']) =  <root><vector>A</vector><vector>B</vector><vector>C</vector></root> 
  *  XML::fromMap(['names' => ['A', 'B', 'C']]) = <root><names>A</names>...</root>
  *
- * @throws
- * @param array[string]string|array|string $data
- * @param string $root
- * @param object $xml needed for recursion
- * @return string|\DOMNode
+ * @param mixed $data array|string
+ * @return mixed string|\DOMNode
  */
-public static function fromMap($data, $root = 'root', $xml = null) {
-
+public static function fromMap($data, string $root = 'root', ?\DomDocument $xml = null) {
 	$initial = false;
 
 	if (is_null($xml)) {
@@ -141,12 +134,8 @@ public static function fromMap($data, $root = 'root', $xml = null) {
 
 /**
  * Pretty print xml string.
- *
- * @throws 
- * @param string $xml_str
- * @return string
  */
-public static function prettyPrint($xml_str) {
+public static function prettyPrint(string $xml_str) : string {
 
 	if (strpos($xml_str, '<?xml') === false) {
 		throw new Exception('Invalid xml', '<?xml missing');
