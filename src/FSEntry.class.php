@@ -333,4 +333,61 @@ public static function stat(string $path, bool $clearcache = false) : array {
 }
 
 
+/**
+ * Return permission in human readable form. Return 
+ * 'u---------' for non existing $path.
+ */
+public static function getPermission(string $path) : string {
+	$perms = @fileperms($path);
+
+	if ($perms === false) {
+		throw new Exception('invalid file path '.$path);
+	}
+
+	switch ($perms & 0xF000) {
+		case 0xC000: // Socket
+			$info = 's';
+			break;
+		case 0xA000: // Symbolischer Link
+			$info = 'l';
+			break;
+		case 0x8000: // Regulär
+			$info = 'r';
+			break;
+		case 0x6000: // Block special
+			$info = 'b';
+			break;
+		case 0x4000: // Verzeichnis
+			$info = 'd';
+			break;
+		case 0x2000: // Character special
+			$info = 'c';
+			break;
+		case 0x1000: // FIFO pipe
+			$info = 'p';
+			break;
+		default: // unbekannt
+			$info = 'u';
+	}
+
+	// owner
+	$info .= (($perms & 0x0100) ? 'r' : '-');
+	$info .= (($perms & 0x0080) ? 'w' : '-');
+	$info .= (($perms & 0x0040) ? (($perms & 0x0800) ? 's' : 'x' ) : (($perms & 0x0800) ? 'S' : '-'));
+
+	// group
+	$info .= (($perms & 0x0020) ? 'r' : '-');
+	$info .= (($perms & 0x0010) ? 'w' : '-');
+	$info .= (($perms & 0x0008) ? (($perms & 0x0400) ? 's' : 'x' ) : (($perms & 0x0400) ? 'S' : '-'));
+
+	// other
+	$info .= (($perms & 0x0004) ? 'r' : '-');
+	$info .= (($perms & 0x0002) ? 'w' : '-');
+	$info .= (($perms & 0x0001) ? (($perms & 0x0200) ? 't' : 'x' ) : (($perms & 0x0200) ? 'T' : '-'));
+
+	return $info;
 }
+
+
+}
+
