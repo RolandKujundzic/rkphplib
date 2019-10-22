@@ -106,7 +106,7 @@ public static function path(string $path, int $opt = 0) {
 
 /**
  * Change $path mode. Privileges $mode are octal. Return true if change was successfull or 
- * change is not possible but privileges are already sufficient.
+ * change is not possible but privileges are already rw(x).
  */
 public static function chmod(string $path, int $mode) : bool {
 
@@ -127,31 +127,56 @@ public static function chmod(string $path, int $mode) : bool {
 	}
 
 	$has_priv = sprintf("0%o", 0777 & $stat['mode']);
-	$res = false;
+	$res = true;
 
-	if ($has_priv != decoct($mode)) {
-		if (posix_getuid() != $stat['uid']) {
-			// we can not chmod ...
-			if ("$has_priv" == '0777' || "$has_priv" == '0666') {
-				return true;
+	if ($has_priv == decoct($mode)) {
+		// no change necessary - '==' is required: [true = ('0777' == decoct(0755))] but [false = ('0777' === decoct(0755))]
+	}
+	else if (posix_getuid() != $stat['uid']) {
+		// we can not chmod ...
+		$perm = self::getPermission('', $stat['mode']); // e.g. drwxrw----
+		$res = false;
+
+		// perm[0] == 'l' is not possible because $stat = stat(realpath($path))
+		if (($perm[0] == '-' && substr($perm, 7, 2) == 'rw') || ($perm[0] == 'd' && substr($perm, 7, 3) == 'rwx')) {
+			$res = true;
+		}
+		else {
+			// check group privileges
+			$mygid = getmygid();
+
+			if ($stat['gid'] == $mygid) {
+				if (($perm[0] == '-' && substr($perm, 4, 2) == 'rw') || ($perm[0] == 'd' && substr($perm, 4, 3) == 'rwx')) {
+					$res = true;
+				}
+			}
+			else {
+				$g = posix_getgrgid($stat['gid']);
+				$pw = posix_getpwuid($mygid);
+
+				if (in_array($pw['name'], $g['members'])) {
+					if (($perm[0] == '-' && substr($perm, 4, 2) == 'rw') || ($perm[0] == 'd' && substr($perm, 4, 3) == 'rwx')) {
+						$res = true;
+					}
+				}
 			}
 		}
-
-		$res = true;
+	}
+	else {
 		try {
 			$res = chmod($entry, $mode);
 		}
 		catch(\Exception $e) {
 			$res = false;
 		}
+	}
 
-		if (!$res) {
-			if (!self::$CHMOD_ABORT) {
-				return false;
-			}
-
-			throw new Exception('chmod failed', "$entry to $mode");
+	if (!$res) {
+		if (!self::$CHMOD_ABORT) {
+			return false;
 		}
+
+		throw new Exception('chmod failed', "$entry to $mode");
 	}
 
 	return $res;
@@ -334,30 +359,30 @@ public static function stat(string $path, bool $clearcache = false) : array {
 
 
 /**
- * Return permission in human readable form. Return 
+ * Return permission in human readable form. Ignore path if perms > 0. Return 
  * 'u---------' for non existing $path.
  */
-public static function getPermission(string $path) : string {
-	$perms = @fileperms($path);
-
-	if ($perms === false) {
-		throw new Exception('invalid file path '.$path);
+public static function getPermission(string $path, int $perms = 0) : string {
+	if ($perms === 0) {
+		if (($perms = @fileperms($path)) === false) {
+			throw new Exception('invalid file path '.$path);
+		}
 	}
 
 	switch ($perms & 0xF000) {
 		case 0xC000: // Socket
 			$info = 's';
 			break;
-		case 0xA000: // Symbolischer Link
+		case 0xA000: // Symbolic Link
 			$info = 'l';
 			break;
-		case 0x8000: // Regulär
-			$info = 'r';
+		case 0x8000: // Regular File
+			$info = '-';
 			break;
 		case 0x6000: // Block special
 			$info = 'b';
 			break;
-		case 0x4000: // Verzeichnis
+		case 0x4000: // Directory
 			$info = 'd';
 			break;
 		case 0x2000: // Character special
@@ -366,7 +391,7 @@ public static function getPermission(string $path) : string {
 		case 0x1000: // FIFO pipe
 			$info = 'p';
 			break;
-		default: // unbekannt
+		default: // unknown
 			$info = 'u';
 	}
 
