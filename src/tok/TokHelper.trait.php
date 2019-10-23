@@ -48,11 +48,11 @@ private function checkMap($plugin_param, $map, $required_keys) {
 		}
 
 		if ($error) {
-			if (property_exists($this, 'tok')) {
-				$example = $this->tok->getPluginTxt($plugin_param, "$key=...");
-			}
-			else if (method_exists($this, $plugin_param)) {
+			if (method_exists($this, $plugin_param)) {
 				$example = $plugin_param."([ $key => '...', ... ])";
+			}
+			else if (property_exists($this, 'tok')) {
+				$example = $this->tok->getPluginTxt($plugin_param, "$key=...");
 			}
 			else {
 				$example = '{'.$plugin_param."}$key=...";
