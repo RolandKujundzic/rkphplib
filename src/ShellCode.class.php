@@ -49,6 +49,34 @@ public function getStatus() : array {
   return $status;
 }
 
+/**
+ *  Return $variable[$name]. If Variable does not exist return ''.
+ */
+public function getVar(string $name) : string {
+	$res = '';
+
+	if (isset($this->variable[$name])) {
+		$res = $this->variable[$name];
+	}
+
+	return $res;
+}
+
+
+/**
+ * Split $variable[$name] into array. Delimiter is '[ \t\r]*\n[ \t\r]*'.
+ * If variable does not exist return [].
+ */
+public function getArray(string $name) : array {
+	$res = [];
+
+	if (isset($this->variable[$name])) {
+		$res = preg_split("/[ \t\r]*\n[ \t\r]*/", trim($this->variable[$name]));
+	}
+
+	return $res;
+}
+
 
 /**
  * Return number lines in current file.
