@@ -374,7 +374,7 @@ public function tok_sql_qkey($qkey, $query) {
  * @param hash $p
  */
 public function tok_sql_change($p) {
-	$this->checkMap($this->tok->getPluginTxt('sql:change'), $p, [ 'table!', 'id_col!' ]);
+	$this->checkMap('sql:change', $p, [ 'table!', 'id_col!' ]);
 
 	$tmp = split_str(',', $p['id_col']);
 	$id = $tmp[0];
