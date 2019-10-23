@@ -26,7 +26,7 @@ trait TokHelper {
  * If map key from required_keys list is missing throw exception.
  * If key in required_keys has suffix "!" use strlen > 0 check.
  *
- * @code $this->checkMap($this->tok->getPluginTxt('plugin:param', $p, [ 'key', 'key_not_0!', ... ]);
+ * @code $this->checkMap('plugin:param', $p, [ 'key', 'key_not_0!', ... ]);
  *
  * @throws if required key is missing
  * @param string $plugin
