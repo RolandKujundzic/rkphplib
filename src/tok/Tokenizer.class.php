@@ -676,6 +676,8 @@ public function dump(int $flag = 3) : string {
  * No argument if $arg is null.
  */
 public function getPluginTxt($tok, ?string $arg = null) : string {
+	$name = ''; 
+	$param = '';
 
 	if (is_array($tok) && count($tok) == 2) {
 		list ($name, $param) = $tok;
