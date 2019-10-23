@@ -681,8 +681,11 @@ public function getPluginTxt($tok, ?string $arg = null) : string {
 		list ($name, $param) = $tok;
 		$tok = $name.$this->rx[2].$param;
 	}
-	else {
+	else if (mb_strpos($tok, $this->rx[2]) > 0) {
 		list ($name, $param) = mb_split($this->rx[2], $tok, 2);
+	}
+	else if (mb_strpos($tok, ':') > 0) {
+		list ($name, $param) = mb_split(':', $tok, 2);
 	}
 
 	$res = '';
