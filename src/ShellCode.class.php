@@ -290,7 +290,7 @@ public function parse(string $file) : void {
 				$this->parse_env['local_var'][$match[2]] = 1;
 			}
 
-			$this->parseVariable($match[2], $match[3]);
+			$this->parseVariable($match[2], $match[3]."\n");
 		}
 		else if (preg_match('/^\s*function ([a-zA-Z0-9_]+) \{\s+$/', $line, $match)) {
 			$this->parseFunction($match[1]);
