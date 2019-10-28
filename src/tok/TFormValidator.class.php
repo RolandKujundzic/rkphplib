@@ -720,7 +720,7 @@ public function tok_fv_error(string $name, string $tpl) : string {
  * Alias for {fv:error_message}.
  * @see tok_fv_error_message
  */
-public function tok_fv_emsg(string $name, string $tpl) : string {
+public function tok_fv_emsg(string $name, ?string $tpl) : string {
 	return $this->tok_fv_error_message($name, $tpl);
 }
 
@@ -731,7 +731,7 @@ public function tok_fv_emsg(string $name, string $tpl) : string {
  * Use name=* to return all error messages (concatenate ENGINE.error.message_multi).
  * Define default.error.message_none (with {:=msg} tag) to show no-errors and use $tpl as error message if error. 
  */
-public function tok_fv_error_message(string $name, string $tpl) : string {
+public function tok_fv_error_message(string $name, ?string $tpl) : string {
 	$res = '';
 
 	if ($name == '*') {
