@@ -14,6 +14,10 @@ use PHPMailer\PHPMailer\PHPMailer;
 use function rkphplib\lib\resolvPath;
 
 
+// @define SETTINGS_NO_SMTP 0 (force local mailer if 1)
+defined('SETTINGS_NO_SMTP') || define('SETTINGS_NO_SMTP', 0);
+
+
 /**
  * Mailer.
  *
@@ -182,7 +186,7 @@ public function useSMTP($smtp) : void {
 		$smtp = [ 'host' => $smtp ];
 	}
 
-  if (count($smtp) == 0 || empty($smtp['host'])) {
+  if (defined('SETTINGS_NO_SMTP') || count($smtp) == 0 || empty($smtp['host'])) {
     return;
   }
 
