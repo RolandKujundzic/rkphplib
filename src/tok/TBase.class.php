@@ -870,7 +870,7 @@ public function tok_include(string $param, string $file) : string {
  * @tok {include_if:b}a|#|a.html|#|b.html{:include_if} = return tokenized content of b.html
  * @tok {include_if:a}a|#|a.html{:include_if} = return tokenized content of a.html 
  */
-public function tok_include_if(array $param, array $a) : string {
+public function tok_include_if(string $param, array $a) : string {
 
 	if (count($a) < 2) {
 		throw new Exception('invalid include_if:'.$param, print_r($a, true));
