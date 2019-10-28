@@ -1635,7 +1635,7 @@ public function tok_get(string $param, ?string $arg) : string {
 		$res = kv2conf($found);
 	}
 
-  if (!isset($this->_conf['filter.esc'])) {
+  if (!isset($this->_conf['filter.get'])) {
     $this->tok_filter('get', [ 'default' ]);
   }
 
