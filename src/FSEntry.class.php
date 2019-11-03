@@ -129,8 +129,8 @@ public static function chmod(string $path, int $mode) : bool {
 	$has_priv = sprintf("0%o", 0777 & $stat['mode']);
 	$res = true;
 
-	if ($has_priv == decoct($mode)) {
-		// no change necessary - '==' is required: [true = ('0777' == decoct(0755))] but [false = ('0777' === decoct(0755))]
+	if ($has_priv === decoct($mode)) {
+		// no change necessary
 	}
 	else if (posix_getuid() != $stat['uid']) {
 		// we can not chmod ...
