@@ -50,7 +50,17 @@ if (!defined('SETTINGS_LANGUAGE')) {
 	define('SETTINGS_LANGUAGE', 'de');
 }
 
-define('RKPHPLIB_VERSION', 1.0);
+// make create files and directories rw for webserver
+if (php_sapi_name() == 'cli') {
+	define('FILE_DEFAULT_MODE', 0666);
+	define('DIR_DEFAULT_MODE', 0777);
+}
+else {
+	define('FILE_DEFAULT_MODE', 0660);
+	define('DIR_DEFAULT_MODE', 0770);
+}
+
+define('RKPHPLIB_VERSION', '$Id$');
 
 
 /**
