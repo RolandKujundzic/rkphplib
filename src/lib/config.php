@@ -60,7 +60,7 @@ else {
 	define('DIR_DEFAULT_MODE', 0770);
 }
 
-define('RKPHPLIB_VERSION', '$Id$');
+define('RKPHPLIB_VERSION', 'v1.0.2');
 
 
 /**
