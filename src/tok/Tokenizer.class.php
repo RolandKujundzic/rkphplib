@@ -482,13 +482,21 @@ private function _join_tok(int $start, int $end) : string {
 
 /**
  * Return current plugin name. Call only once before executing callPlugin().
+ * If flag == 1 return name:param.
  */
-public function getCurrentPlugin() : string {
+public function getCurrentPlugin(int $flag = 0) : string {
 	if (count($this->last) < 1) {
 		throw new Exception('last is not set');
 	}
 
-	return array_pop($this->last);
+	list ($name, $param) = array_pop($this->last);
+	$res = $name;
+
+	if ($flag == 1) {
+		$res = $name.$this->rx[2].$param;
+	}
+
+	return $res;
 }
 
 
@@ -510,7 +518,7 @@ private function _join_tok_plugin(int &$i) : ?string {
 	$check_np = 0;
 	$tp = 0;
 
-	array_push($this->last, $name);
+	array_push($this->last, [ $name, $param ]);
 
 	if (isset($this->_plugin['catchall'])) {
 		// if [catchall] was registered as plugin run everything through this handler ...
