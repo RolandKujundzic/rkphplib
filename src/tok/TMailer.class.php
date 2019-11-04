@@ -22,9 +22,6 @@ class TMailer implements TokPlugin {
 use TokHelper;
 
 
-/** @var Tokenizer $tok = null */
-protected $tok = null;
-
 /** @var Mailer $mail = null */
 protected $mail = null; 
 
@@ -39,14 +36,15 @@ protected $conf = null;
 public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;
 
-  $plugin = [];
-  $plugin['mail:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
-  $plugin['mail:html'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
-  $plugin['mail:txt'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
-  $plugin['mail:send'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
-  $plugin['mail:attach'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
-  $plugin['mail'] = 0;
-  return $plugin;
+	$plugin = [];
+	$plugin['mail:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['mail:html'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['mail:txt'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['mail:send'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
+	$plugin['mail:attach'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['mail'] = 0;
+
+	return $plugin;
 }
 
 

@@ -32,9 +32,6 @@ use function rkphplib\lib\split_str;
 class TSQL implements TokPlugin {
 use TokHelper;
 
-/** @var Tokenizer $tok */
-protected $tok = null;
-
 /** @var ADatabase $db */
 protected $db = null;
 

@@ -71,9 +71,6 @@ class TFormValidator implements TokPlugin {
 use TokHelper;
 
 
-/** @var Tokenizer $tok */
-private $tok;
-
 /** @var hash $conf */
 protected $conf = [ 'default' => [], 'current' => [] ];
 
