@@ -63,8 +63,8 @@ public function setLayoutInclude(string $source_dir, string $layout, array $incl
 			}
 
 			array_push($this->crawl_dir[$dir], $base);
-    }
-  }
+		}
+	}
 }
 
 
@@ -72,9 +72,9 @@ public function setLayoutInclude(string $source_dir, string $layout, array $incl
  * @plugin catchall
  */
 public function getPlugins(Tokenizer $tok) : array {
-  $plugin = [];
-  $plugin['catchall'] = 0;
-  return $plugin;
+	$plugin = [];
+	$plugin['catchall'] = 0;
+	return $plugin;
 }
 
 
@@ -160,13 +160,13 @@ public function copy(string $source_dir, string $target_dir, array $parse_suffix
 	foreach ($entries as $entry) {
 		if (FSEntry::isDir($entry, false)) {
 			$this->copy($entry, $target_dir, $parse_suffix_list, $slen);
-    }
-    else if (FSEntry::isFile($entry, false)) {
+		}
+		else if (FSEntry::isFile($entry, false)) {
 			$relpath = substr($entry, $slen + 1);
 			$target = $target_dir.'/'.$relpath;
 			$suffix = File::suffix($entry);
 
-  		Dir::create(dirname($target), 0, true);
+			Dir::create(dirname($target), 0, true);
 
 			$dir = dirname($relpath);
 			if ($dir == '.') {
@@ -186,8 +186,8 @@ public function copy(string $source_dir, string $target_dir, array $parse_suffix
 				$this->log("load file $entry");
 				$this->processFile($target, File::load($entry));
 			}
-    }
-  }
+		}
+	}
 }
 
 
@@ -200,4 +200,3 @@ public function log(string $message) : void {
 
 
 }
-
