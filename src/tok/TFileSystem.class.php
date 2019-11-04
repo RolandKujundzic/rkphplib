@@ -24,27 +24,88 @@ use rkphplib\FSEntry;
 class TFileSystem implements TokPlugin {
 use TokHelper;
 
+/** @var array $csv */
+private $csv = [ 'ignore' => 0, 'file' => '', 'fv' => null, 'escape_crlf' => ' ', 'delimiter' => ';' ];
+
 
 /**
  * @plugin directory:copy|move|create|exists|entries|is, file:size|copy|exists, dirname and basename
  */
 public function getPlugins(Tokenizer $tok) : array {
-  $plugin = [];
-  $plugin['directory:copy'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
-  $plugin['directory:move'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
-  $plugin['directory:create'] = TokPlugin::REQUIRE_BODY;
-  $plugin['directory:exists'] = TokPlugin::REQUIRE_BODY;
-  $plugin['directory:entries'] = TokPlugin::REQUIRE_BODY;
-  $plugin['directory:is'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$this->tok = $tok;
+
+	$plugin = [];
+	$plugin['directory:copy'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
+	$plugin['directory:move'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
+	$plugin['directory:create'] = TokPlugin::REQUIRE_BODY;
+	$plugin['directory:exists'] = TokPlugin::REQUIRE_BODY;
+	$plugin['directory:entries'] = TokPlugin::REQUIRE_BODY;
+	$plugin['directory:is'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['directory'] = 0;
 	$plugin['file:size'] = TokPlugin::REQUIRE_BODY;
 	$plugin['file:copy'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['file:exists'] = TokPlugin::REQUIRE_BODY;
+	$plugin['csv_file:conf'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['csv_file:append'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
+	$plugin['csv_file:open'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['csv_file'] = 0;
 	$plugin['file'] = 0;
 	$plugin['dirname'] = 0;
 	$plugin['basename'] = 0;
 
-  return $plugin;
+	return $plugin;
+}
+
+
+/**
+ * @tok_alias {csv_file:conf}file=$path{:csv_file}
+ */
+public function tok_csv_file_open(string $path) : void {
+	$this->tok_csv_file_conf([ 'file' => $file ]);
+}
+
+
+/**
+ * Set csv configuration. Parameter:
+ *  - file = open filename for writing (required - or use {csv_file:open} instead)
+ *  - escape_crlf = ' ' (default = escape \r and \n with space)
+ *  - delimiter = ; (default = use semicolon)
+ *  - if = (optional if send and empty no action)
+ */
+public function tok_csv_file_conf(array $conf) : void {
+	if (!empty($conf['ignore'])) {
+		$this->csv = [ 'ignore' => '1' ];
+		return;
+	}
+
+	$this->checkMap('csv_file:conf', $conf, [ 'file!' ]);
+	$this->csv = array_merge([ 'ignore' => '', 'file' => '', 'escape_crlf' => ' ', 'delimiter' => ';' ], $conf);
+	$this->csv['fh'] = File::open($this->csv['file'], 'wb');
+
+	if ($this->csv['delimiter'] == 'tab') {
+		$this->csv['delimiter'] = "\t";
+	}
+}
+
+
+/**
+ * Add csv row. 
+ * @param array $cols
+ * @return void
+ */
+public function tok_csv_file_append(array $cols) : void {
+	if (!$this->csv['fh']) {
+		$this->tokError('call {csv_file:conf|open} before {:=ref}', [ 'csv_file:append' ]);
+	}
+
+	for ($i = 0; $i < count($cols); $i++) {
+		$txt = str_replace('"', '""', $cols[$i]);
+		$txt = preg_replace("/[\r\n]+/", $this->csv['escape_crlf'], $txt);
+		$cols[$i] = '"'.$txt.'"';
+	}
+
+	$csv_line = join($this->csv['delimiter'], $cols)."\r\n";
+	File::write($this->csv['fh'], $csv_line);
 }
 
 
@@ -59,12 +120,12 @@ public static function tok_basename(string $param, string $arg) : string {
 
 	if ($param == 'no_suffix' && ($pos = mb_strrpos($res, '.')) !== false) {
 		$res = mb_substr($res, 0, $pos);
-  }
-  else if (mb_strpos($param, '/') !== false && ($pos = mb_strpos($arg, $param)) !== false) {
-    $res = mb_substr($arg, $pos + mb_strlen($param));
-  }
+	}
+	else if (mb_strpos($param, '/') !== false && ($pos = mb_strpos($arg, $param)) !== false) {
+		$res = mb_substr($arg, $pos + mb_strlen($param));
+	}
 
-  return $res;
+	return $res;
 }
 
 
@@ -320,20 +381,19 @@ public function tok_file_copy(array $p) : void {
  * Set file size format with $param (format|not_empty|byte, empty = default = byte).
  */
 public function tok_file_size(string $param, string $path) : string {
-
 	if (!File::exists($path)) {
 		return '';
 	}
 
-  if ($param == 'format') {
-    $res = File::formatSize($path, true);
-  }
-  else if ($param == 'not_empty') {
-    $res = (File::size($path) > 0) ? 1 : 0;
-  }
-  else {
-    $res = File::size($path);
-  }
+	if ($param == 'format') {
+		$res = File::formatSize($path, true);
+	}
+	else if ($param == 'not_empty') {
+		$res = (File::size($path) > 0) ? 1 : 0;
+	}
+	else {
+		$res = File::size($path);
+	}
 
 	return $res;
 }
