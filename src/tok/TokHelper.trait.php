@@ -51,27 +51,31 @@ private function checkMap($plugin_param, $map, $required_keys) {
 		}
 
 		if ($error) {
-			if (method_exists($this, $plugin_param)) {
-				$example = $plugin_param."([ $key => '...', ... ])";
-			}
-			else if (property_exists($this, 'tok')) {
-				$example = $this->tok->getPluginTxt($plugin_param, "$key=...");
-			}
-			else {
-				$example = '{'.$plugin_param."}$key=...";
-			}
-
-			throw new Exception("missing parameter $key (use $example)");
+			$this->tokError("missing parameter $key (use {:=ref})", [ $plugin_param, $key ]);
 		}
 	}
 }
 
 
 /**
- *
+ * Throw Exception. Resolve ref as function call or plugin call and replace {:=ref} in $error.
  */
-private function tokError(string $error) {
-	throw new Exception();
+private function tokError(string $error, ?array $ref = null) : void {
+	if ($ref) {
+		$name = array_pop($ref);
+		$ref_val = $name;
+
+		if (method_exists($this, $name)) {
+			$ref_val = $name.'('.join(', ', $ref).')';
+		}
+		else if ($this->tok) {
+			$ref_val = $this->tok->getPluginTxt($ref, join('=...'.HASH_DELIMITER, $ref).'=...'.HASH_DELIMITER.'...');
+		}
+
+		$error = str_replace('{:=ref}', $ref_val, $error);
+	}
+
+	throw new Exception($error);
 }
 
 
