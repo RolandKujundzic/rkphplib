@@ -501,6 +501,28 @@ public function getCurrentPlugin(int $flag = 0) : string {
 
 
 /**
+ * Return plugin features (e.g. TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY). 
+ * If plugin is build return null. If plugin is not loaded try autoload.
+ * If plugin is not found throw exception.
+ */
+public function getPluginFeatures(string $name) : ?int {
+	if (in_array($name, [ 'ignore', 'keep', 'debug' ])) {
+		return null;
+	}
+
+	if (!isset($this->_plugin[$name])) {
+		$this->tryPluginMap($name);
+
+		if (!isset($this->plugin[$name])) {
+			throw new Exception('unknown plugin '.$name);
+		}
+	}
+
+	return $this->_plugin[$name][1];
+}
+
+
+/**
  * Compute plugin output. Loop position $i will change.
  */
 private function _join_tok_plugin(int &$i) : ?string {
@@ -1174,5 +1196,6 @@ private function tryPluginMap(string $name) : void {
 		}
 	}
 }
+
 
 }
