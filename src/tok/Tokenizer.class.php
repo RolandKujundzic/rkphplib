@@ -390,7 +390,7 @@ public function register(TokPlugin $handler) : void {
 	$plugins = $handler->getPlugins($this);
 
 	foreach ($plugins as $name => $opt) {
-  	$this->_plugin[$name] = [ $handler, $opt ];
+		$this->_plugin[$name] = [ $handler, $opt ];
 	}
 }
 
@@ -424,7 +424,7 @@ public function toString() : string {
 		else if (($px[3] & TokPlugin::NO_PARAM) && ($px[3] & TokPlugin::NO_BODY)) {
 			$out = call_user_func($px[0], $out);
 		}
-  }
+	}
 
 	return $out;
 }
@@ -456,7 +456,7 @@ private function _join_tok(int $start, int $end) : string {
 		}
 		else if ($ep == -2) {
 			$out = $this->rx[1].$tok.$this->rx[3]; // ignore
-    }
+		}
 		else if ($ep == -3) {
 			// drop plugin end ...
 		}
@@ -914,17 +914,17 @@ private function _call_plugin(string $name, string $param, ?string $arg = null) 
 		$res = call_user_func(array($this->_plugin[$name][0], $func), $param, $arg);
 	}
 
-  if ($this->_plugin[$name][1] & TokPlugin::REDO) {
-    $old_tok = $this->_tok;
-    $old_endpos = $this->_endpos;
+	if ($this->_plugin[$name][1] & TokPlugin::REDO) {
+		$old_tok = $this->_tok;
+		$old_endpos = $this->_endpos;
 
-    // \rkphplib\lib\log_debug("Tokenizer._call_plugin:916> REDO:\n---\n$res\n---\n");
-    $this->setText($res);
-    $res = $this->_join_tok(0, count($this->_tok));
+		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:916> REDO:\n---\n$res\n---\n");
+		$this->setText($res);
+		$res = $this->_join_tok(0, count($this->_tok));
 
-    $this->_tok = $old_tok;
-    $this->_endpos = $old_endpos;
-  }
+		$this->_tok = $old_tok;
+		$this->_endpos = $old_endpos;
+	}
 
 	return $res;
 }
@@ -1084,11 +1084,11 @@ public function removeTags(string $txt, string $replace_with = '') : string {
 	$prefix = $this->rx[1].$this->rx[2].'=';
 	$suffix = $this->rx[3];
 
-  if (mb_strpos($txt, $prefix) !== false) {
-    $txt = preg_replace('/'.preg_quote($prefix).'.+?'.preg_quote($suffix).'/', $replace_with, $txt);
-  }
+	if (mb_strpos($txt, $prefix) !== false) {
+		$txt = preg_replace('/'.preg_quote($prefix).'.+?'.preg_quote($suffix).'/', $replace_with, $txt);
+	}
 
-  return $txt;
+	return $txt;
 }
 
 
@@ -1098,15 +1098,15 @@ public function removeTags(string $txt, string $replace_with = '') : string {
 public function getTagList(string $txt, bool $as_name = false) : array {
 	$prefix = $this->rx[1].$this->rx[2].'=';
 	$suffix = $this->rx[3];
-  $res = [];
+	$res = [];
 
-  while (preg_match('/'.preg_quote($prefix).'(.+?)'.preg_quote($suffix).'/', $txt, $match)) {
+	while (preg_match('/'.preg_quote($prefix).'(.+?)'.preg_quote($suffix).'/', $txt, $match)) {
 		$list_value = $as_name ? $match[1] : $prefix.$match[1].$suffix;
-    array_push($res, $list_value);
-    $txt = preg_replace('/'.preg_quote($prefix).preg_quote($match[1]).preg_quote($suffix).'/', '', $txt);
-  }
+		array_push($res, $list_value);
+		$txt = preg_replace('/'.preg_quote($prefix).preg_quote($match[1]).preg_quote($suffix).'/', '', $txt);
+	}
 
-  return $res;
+	return $res;
 }
 
 
