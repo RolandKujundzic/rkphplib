@@ -21,6 +21,9 @@ use rkphplib\Exception;
  */
 trait TokHelper {
 
+/** @var Tokenizer $tok */
+private $tok = null;
+
 
 /**
  * If map key from required_keys list is missing throw exception.
@@ -61,6 +64,14 @@ private function checkMap($plugin_param, $map, $required_keys) {
 			throw new Exception("missing parameter $key (use $example)");
 		}
 	}
+}
+
+
+/**
+ *
+ */
+private function tokError(string $error) {
+	throw new Exception();
 }
 
 
