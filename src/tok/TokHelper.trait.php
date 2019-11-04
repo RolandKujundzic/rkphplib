@@ -69,7 +69,8 @@ private function tokError(string $error, ?array $ref = null) : void {
 			$ref_val = $name.'('.join(', ', $ref).')';
 		}
 		else if ($this->tok) {
-			$ref_val = $this->tok->getPluginTxt($ref, join('=...'.HASH_DELIMITER, $ref).'=...'.HASH_DELIMITER.'...');
+			$arg = (count($ref) > 0) ? join('=...'.HASH_DELIMITER, $ref).'=...'.HASH_DELIMITER.'...' : '';
+			$ref_val = $this->tok->getPluginTxt($ref, $arg);
 		}
 
 		$error = str_replace('{:=ref}', $ref_val, $error);
