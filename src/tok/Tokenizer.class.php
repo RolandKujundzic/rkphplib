@@ -734,7 +734,7 @@ private function _buildin(string $action, string $name, string $param, ?string $
 	else if ($action == 'keep') {
 		$tok = $name.$this->rx[2].$param;
 		$res = is_null($arg) ? $this->rx[1].$tok.$this->rx[3] : $this->rx[1].$tok.$this->rx[3].$arg.$this->rx[1].$this->rx[2].$name.$this->rx[3];
-  }
+	}
 	else if ($action == 'debug') {
 		$res = is_null($arg) ? "{debug:$name:$param}": "{debug:$name:$param}$arg{:debug}";
 	}
@@ -1037,7 +1037,7 @@ public function escape(string $txt, ?array $rx = null) : string {
 		$tok[$i] = $rx[4].str_replace($rx[2], $rx[5], $tok[$i]).$rx[6];
 	}
 
-  return join('', $tok);
+	return join('', $tok);
 }
 
 
