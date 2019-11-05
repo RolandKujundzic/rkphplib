@@ -163,10 +163,7 @@ public function updateShopUrl(string $qkey) : void {
  */
 public function tok_sitemap(array $kv) : void {
 	$xml = chr(60).'?xml version="1.0" encoding="UTF-8"?'.chr(62)."\n".chr(60).
-		'urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'."\n".
-		"\t".'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'."\n".
-		"\t".'xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 '.
-		'http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"'.chr(62)."\n";
+		'urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'.chr(62)."\n";
 
 	File::save(DOCROOT.'/sitemap.xml', $xml);
 	$xml = '';
@@ -187,23 +184,18 @@ public function tok_sitemap(array $kv) : void {
 			$xml .= "<url>\n<loc>".$kv['@domain'].'/'.str_replace([ '&' ], [ '&amp;' ], $row['url'])."</loc>\n";
 			$xml .= "\t<lastmod>".$row['lchange']."</lastmod>\n";
 			$xml .= "\t<changefreq>weekly</changefreq>\n";
-			// $xml .= "\t<priority>0.8</priority>\n";
 			$xml .= "</url>\n";
 			$n++;
 
 			if ($n % 100 == 0) {
 				File::append(DOCROOT.'/sitemap.xml', $xml);
 				$xml = '';
-				$n = 0;	
 			}
 		}
 	}
 
 	$xml .= '</urlset>';
-
-	if (!empty($xml)) {
-		File::append(DOCROOT.'/sitemap.xml', $xml);
-	}
+	File::append(DOCROOT.'/sitemap.xml', $xml);
 }
 
 
