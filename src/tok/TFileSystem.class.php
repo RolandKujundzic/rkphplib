@@ -48,6 +48,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['csv_file:conf'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['csv_file:append'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['csv_file:open'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plubin['csv_file:close'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 	$plugin['csv_file'] = 0;
 	$plugin['file'] = 0;
 	$plugin['dirname'] = 0;
@@ -58,10 +59,21 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
+ * Close csv file.
+ */
+public function tok_csv_file_close() : void {
+	if ($this->csv['fh']) {
+		File::close($this->csv['fh']);
+		File::chmod($this->csv['file']);
+	}
+}
+
+
+/**
  * @tok_alias {csv_file:conf}file=$path{:csv_file}
  */
 public function tok_csv_file_open(string $path) : void {
-	$this->tok_csv_file_conf([ 'file' => $file ]);
+	$this->tok_csv_file_conf([ 'file' => $path ]);
 }
 
 
@@ -80,6 +92,7 @@ public function tok_csv_file_conf(array $conf) : void {
 
 	$this->checkMap('csv_file:conf', $conf, [ 'file!' ]);
 	$this->csv = array_merge([ 'ignore' => '', 'file' => '', 'escape_crlf' => ' ', 'delimiter' => ';' ], $conf);
+	$this->csv['file'] = FSEntry::checkPath($this->csv['file']);
 	$this->csv['fh'] = File::open($this->csv['file'], 'wb');
 
 	if ($this->csv['delimiter'] == 'tab') {
@@ -90,10 +103,12 @@ public function tok_csv_file_conf(array $conf) : void {
 
 /**
  * Add csv row. 
- * @param array $cols
- * @return void
  */
 public function tok_csv_file_append(array $cols) : void {
+	if (!empty($conf['ignore'])) {
+		return;
+	}
+
 	if (!$this->csv['fh']) {
 		$this->tokError('call {csv_file:conf|open} before {:=ref}', [ 'csv_file:append' ]);
 	}
