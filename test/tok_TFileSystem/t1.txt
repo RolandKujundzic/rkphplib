@@ -1,0 +1,3 @@
+{csv_file:open}/data/.tmp/test.csv{:csv_file}
+{csv_file:append}a|#|b b|#| c {:csv_file}
+{csv_file:close}
