@@ -3,8 +3,16 @@
 namespace rkphplib;
 
 defined('SETTINGS_LOG_DEBUG') || define('SETTINGS_LOG_DEBUG', '/dev/stderr');
-defined('DOCROOT') || define('DOCROOT', dirname(__DIR__));
 defined('PATH_RKPHPLIB') || define('PATH_RKPHPLIB', __DIR__.'/');
+
+if (!defined('DOCROOT')) {
+	if (is_dir(dirname(__DIR__).'/data')) {
+		define('DOCROOT', dirname(__DIR__));
+	}
+	else if (substr(PATH_RKPHPLIB, -18) == '/php/rkphplib/src/' && is_dir(dirname(dirname(dirname(__DIR__)))).'/data') {
+		define('DOCROOT', dirname(dirname(dirname(__DIR__))));
+	}
+}
 
 require_once __DIR__.'/lib/config.php';
 require_once __DIR__.'/lib/log_debug.php';
