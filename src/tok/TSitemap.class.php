@@ -46,11 +46,8 @@ public function getPlugins(Tokenizer $tok) : array {
 
 /**
  * Convert name to SEO url.
- * 
- * @param string $name
- * @return string
  */
-public static function name2url($name) {
+public static function name2url(string $name) : string {
 
 	$url = str_replace([ 'Ä', 'ä', 'Ü', 'ü', 'Ö', 'ö', 'ß', ' ' ], [ 'Ae', 'ae', 'Ue', 'ue', 'Oe', 'oe', 'ss', '-' ], trim($name));
 	$url = preg_replace('/[^A-Z|a-z|0-9|\-|\_|\%]/', '-', $url);
@@ -70,11 +67,8 @@ public static function name2url($name) {
 
 /**
  * Return query to fix url with sql.
- *
- * @param string $table
- * @return string
  */
-public static function sqlFixUrl($table) {
+public static function sqlFixUrl(string $table) : string {
 
 	$rx_url = "REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(url, 'Ü', 'Ue'), ".
 		"'Ä', 'Ae'), 'Ö', 'Oe'), 'ä', 'ae'), 'ö', 'oe'), 'ü', 'ue'), 'ß', 'ss')";
@@ -95,10 +89,9 @@ public static function sqlFixUrl($table) {
  * RewriteEngine on
  * RewriteRule ^(.+)\.([0-9]+)(1|2)\.html$ /index.php?alias=$1.$2$3&atype=$3&%{QUERY_STRING} [nc]
  *
- * @param hash $customer_query_map
  * @export dir, url, id, name, cat, url_append
  */
-public function __construct($custom_query_map = []) {
+public function __construct(array $custom_query_map = []) {
 
 	if (is_null($this->db)) {
 		$default_query_map = [
@@ -152,11 +145,9 @@ public function __construct($custom_query_map = []) {
 
 
 /**
- * Update url in shop_item or shop_category table.
- *
- * @param string $qkey shop_cat_url|shop_item_url
+ * Update url in shop_item or shop_category table ($qkey = shop_cat_url|shop_item_url).
  */
-public function updateShopUrl($qkey) {
+public function updateShopUrl(string $qkey) : void {
 	if ($this->db->hasQuery('update_'.$qkey)) {
 		$this->db->execute($this->db->getQuery('update_'.$qkey));
 		$this->db->execute($this->db->getQuery('fix_'.$qkey));
@@ -169,10 +160,8 @@ public function updateShopUrl($qkey) {
  * 
  * @if= 1 [ignore if empty|otherwise execute only if non-empty]
  * @domain= https://www.domain.tld
- *
- * @param hash $kv
  */
-public function tok_sitemap($kv) {
+public function tok_sitemap(array $kv) : void {
 	$xml = chr(60).'?xml version="1.0" encoding="UTF-8"?'.chr(62)."\n".chr(60).
 		'urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'."\n".
 		"\t".'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'."\n".
