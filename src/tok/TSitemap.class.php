@@ -37,10 +37,10 @@ protected $db = null;
 public function getPlugins(Tokenizer $tok) : array {
 	$this->tok =& $tok;
 
-  $plugin = [];
-  $plugin['sitemap'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin = [];
+	$plugin['sitemap'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 
-  return $plugin;
+	return $plugin;
 }
 
 
@@ -120,7 +120,7 @@ public function __construct($custom_query_map = []) {
 				"url, DATE_FORMAT(lchange, '%Y-%m-%d') AS lchange FROM shop_item WHERE url={:=url} AND owner=3 AND status='active'"
 			];
 
-	  $this->db = Database::getInstance(SETTINGS_DSN, array_merge($default_query_map, $custom_query_map));
+		$this->db = Database::getInstance(SETTINGS_DSN, array_merge($default_query_map, $custom_query_map));
 
 		$this->db->setQuery('shop_cat_alias_all', str_replace("url='url' AND ", '', 
 			$this->db->getQuery('shop_cat_alias', [ 'url' => 'url' ])));
@@ -173,10 +173,11 @@ public function updateShopUrl($qkey) {
  * @param hash $kv
  */
 public function tok_sitemap($kv) {
-	$xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n".
-		'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'."\n".
+	$xml = chr(60).'?xml version="1.0" encoding="UTF-8"?'.chr(62)."\n".chr(60).
+		'urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'."\n".
 		"\t".'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'."\n".
-		"\t".'xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">'."\n";
+		"\t".'xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 '.
+		'http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd"'.chr(62)."\n";
 
 	File::save(DOCROOT.'/sitemap.xml', $xml);
 	$xml = '';
@@ -215,5 +216,6 @@ public function tok_sitemap($kv) {
 		File::append(DOCROOT.'/sitemap.xml', $xml);
 	}
 }
+
 
 }
