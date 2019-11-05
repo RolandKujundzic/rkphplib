@@ -233,6 +233,43 @@ public static function isFile(string $path, bool $abort = true, bool $is_readabl
 
 
 /**
+ * Throw exception if prefix (default = DOCROOT) is not in path. 
+ * Return (real)path.
+ */
+public static function checkPath(string $path, string $prefix = '') : string {
+	if (empty($prefix)) {
+		if (!defined('DOCROOT')) {
+			throw new Exception('DOCROOT is undefined');
+		}
+
+		$prefix = DOCROOT;
+	}
+
+	if (substr($path, 0, 1) == '/') {
+		$path = $prefix.$path;
+	}
+
+	$real_path = realpath($path);
+	$real_prefix = realpath($prefix);
+
+	if (!empty($real_path) && !empty($real_prefix)) {
+		if (mb_strpos($real_path, $real_prefix) !== 0) {
+			throw new Exception('invalid path', $real_path.' not in '.$real_prefix);
+		}
+	}
+	else if (mb_strpos($path, $prefix) !== 0 || mb_strpos($path, '../') !== false) {
+		throw new Exception('invalid path', $path.' not in '.$prefix);
+	}
+
+	if (empty($real_path)) {
+		$real_path = $path;
+	}
+
+	return $real_path;
+}
+
+
+/**
  * Return true if directory exists. If $abort is true throw exception (default) otherwise return false.
  */
 public static function isDir(string $path, bool $abort = true, bool $is_readable = true) : bool {
