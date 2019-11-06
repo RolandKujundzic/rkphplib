@@ -13,7 +13,7 @@ use rkphplib\File;
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-public static function sitemap_xml(array $url_list, string $save_as = '') : void {
+function sitemap_xml(array $url_list, string $save_as = '') : void {
 	$xml = chr(60).'?xml version="1.0" encoding="UTF-8"?'.chr(62)."\n".chr(60).
 		'urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'.chr(62)."\n";
 
