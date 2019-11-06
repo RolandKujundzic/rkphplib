@@ -9,16 +9,19 @@ use rkphplib\File;
 
 
 /**
- * Create DOCROOT/sitemap.xml from $url_list.
+ * Create DOCROOT/sitemap.xml (= default $save_as) from $url_list.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- *
  */
-public static function sitemap_xml($url_list) : void {
+public static function sitemap_xml(array $url_list, string $save_as = '') : void {
 	$xml = chr(60).'?xml version="1.0" encoding="UTF-8"?'.chr(62)."\n".chr(60).
 		'urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'.chr(62)."\n";
 
-	File::save(DOCROOT.'/sitemap.xml', $xml);
+	if (empty($save_as)) {
+		$save_as = DOCROOT.'/sitemap.xml';
+	}
+
+	File::save($save_as, $xml);
 	$xml = '';
 	$n = 0;
 
@@ -27,11 +30,11 @@ public static function sitemap_xml($url_list) : void {
 		$n++;
 
 		if ($n % 100 == 0) {
-			File::append(DOCROOT.'/sitemap.xml', $xml);
+			File::append($save_as, $xml);
 			$xml = '';
 		}
 	}
 
 	$xml .= '</urlset>';
-	File::append(DOCROOT.'/sitemap.xml', $xml);
+	File::append($save_as, $xml);
 }
