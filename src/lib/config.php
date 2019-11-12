@@ -51,13 +51,15 @@ if (!defined('SETTINGS_LANGUAGE')) {
 }
 
 // make create files and directories rw for webserver
-if (php_sapi_name() == 'cli') {
-	define('FILE_DEFAULT_MODE', 0666);
-	define('DIR_DEFAULT_MODE', 0777);
-}
-else {
-	define('FILE_DEFAULT_MODE', 0660);
-	define('DIR_DEFAULT_MODE', 0770);
+if (!defined('FILE_DEFAULT_MODE') && !defined('DIR_DEFAULT_MODE')) {
+	if (php_sapi_name() == 'cli') {
+		define('FILE_DEFAULT_MODE', 0666);
+		define('DIR_DEFAULT_MODE', 0777);
+	}
+	else {
+		define('FILE_DEFAULT_MODE', 0660);
+		define('DIR_DEFAULT_MODE', 0770);
+	}
 }
 
 define('RKPHPLIB_VERSION', 'v1.0.2');
