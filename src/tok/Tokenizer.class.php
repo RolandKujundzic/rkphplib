@@ -431,6 +431,37 @@ public function toString() : string {
 
 
 /**
+ * Return tokenizer status. Flag (default=3): 
+ *   2^0 = 1: count info
+ *   2^1 = 2: _plugin keys
+ */
+public function getStatus($flag = 3) : string {
+	$plugin_list = join(', ', array_keys($this->_plugin));
+	$res = '';
+
+	$count = [ 'last:'.count($this->last),
+		'vmap:'.count($this->vmap),
+		'_plugin:'.count($this->_plugin),
+		'_tok:'.count($this->_tok),
+		'_endpos:'.count($this->_endpos),
+		'_callstack:'.count($this->_callstack),
+		'_config:'.$this->_config,
+		'_postprocess:'.count($this->_postprocess) 
+	];
+
+	if ($flag & 1) {
+		$res .= 'Tokenizer.count: '.join(', ', $count)."\n";
+	}
+
+	if ($flag & 2) {
+		$res .= "Tokenizer._plugins: $plugin_list\n";
+	}
+
+	return $res;
+}
+
+
+/**
  * Recursive $_tok parser.
  */
 private function _join_tok(int $start, int $end) : string {
@@ -1165,7 +1196,7 @@ private function tryPluginMap(string $name) : void {
 		'TConf' => [ 'conf', 'conf:id', 'conf:var', 'conf:get', 'conf:get_path', 'conf:set', 'conf:set_path', 'conf:set_default', 'conf:append' ],
 		'TDate' => [ 'date' ],
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval' ],
-		'TFileSystem' => [ 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'directory', 'file:size', 'file:copy', 'file:exists', 'csv_file:conf', 'csv_file:append', 'csv_file:open', 'csv_file', 'file', 'dirname', 'basename' ],
+		'TFileSystem' => [ 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'directory', 'file:size', 'file:copy', 'file:exists', 'csv_file:conf', 'csv_file:append', 'csv_file:open', 'csv_file:close', 'csv_file', 'file', 'dirname', 'basename' ],
 		'TFormValidator' => [ 'fv', 'fv:init', 'fv:conf', 'fv:get', 'fv:get_conf', 'fv:check', 'fv:in', 'fv:tpl', 'fv:hidden', 'fv:preset', 'fv:error', 'fv:appendjs', 'fv:error_message', 'fv:emsg', 'fv:set_error_message' ],
 		'THtml' => [ 'html:tag', 'html:inner', 'html:append', 'html:meta', 'html:meta_og', 'html:tidy', 'html:xml', 'html:uglify', 'html', 'text2html', 'input:checkbox', 'input:radio', 'input', 'user_agent' ],
 		'THttp' => [ 'http:get', 'http', 'domain:idn', 'domain:utf8', 'domain' ],
