@@ -1,3 +1,4 @@
+{set:t1_test_out}{const:DOCROOT}/data/.tmp/test.csv{:set}
 {csv_file:open}/data/.tmp/test.csv{:csv_file}
 {csv_file:append}a|#|b b|#| c {:csv_file}
 {csv_file:close}

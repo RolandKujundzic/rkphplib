@@ -7,5 +7,5 @@ if (!isset($th)) {
 	$th = new rkphplib\TestHelper();
 }
 
-$th->runTokenizer(1, array('TFileSystem'));
+$th->runTokenizer(1, array('TBase', 'TFileSystem'));
 
