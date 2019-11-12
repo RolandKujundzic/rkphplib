@@ -1562,7 +1562,7 @@ public function tok_set(string $name, string $value) : void {
 /**
  * Return constant value. Constant name is either param or arg.
  */
-public function tok_const(string $param, string $arg) : string {
+public function tok_const(string $param, ?string $arg) : string {
 	$name = empty($arg) ? $param : trim($arg);
 
 	if (!defined($name)) {
