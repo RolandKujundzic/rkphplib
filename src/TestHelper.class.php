@@ -874,6 +874,12 @@ public function runTokenizer($num, array $plugin_list) : void {
 		$ok = File::load($f_ok);
 		$out = $tok->toString();
 
+		$rkey = 't'.$i.'_test_';
+		if (!empty($_REQUEST[$rkey.'out'])) {
+			$out = File::load($_REQUEST[$rkey.'out']);
+			$f_out = $_REQUEST[$rkey.'out'];
+		}
+
 		$this->_tc['num']++;
 		$this->_log("Test $i ... ", 0);
 
