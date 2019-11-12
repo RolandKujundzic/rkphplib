@@ -48,7 +48,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['csv_file:conf'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['csv_file:append'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['csv_file:open'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
-	$plubin['csv_file:close'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
+	$plugin['csv_file:close'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 	$plugin['csv_file'] = 0;
 	$plugin['file'] = 0;
 	$plugin['dirname'] = 0;
