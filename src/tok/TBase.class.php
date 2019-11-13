@@ -165,8 +165,10 @@ public function getPlugins(Tokenizer $tok) : array {
 /**
  * Return mb_strlen(trim($txt)).
  * 
- * @tok {strlen:}abc{:strlen} = 3
- * @tok {strlen:}üäößµ{:strlen} = 5
+ * @tok {strlen:}abc{:strlen} 
+ * @tok:result 3
+ * @tok {strlen:}üäößµ{:strlen}
+ * @tok:result 5
  */
 public function tok_strlen(string $txt) : int {
 	return mb_strlen(trim($txt));
