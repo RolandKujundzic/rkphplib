@@ -23,6 +23,7 @@ $th->runTest('StringHelper/run.php');
 $th->runTest('DateTime/run.php');
 $th->runTest('Dir/run.php');
 $th->runTest('tok_Tokenizer/run.php');
+$th->runTest('tok_TFileSystem/run.php');
 $th->runTest('tok_TBase/run.php');
 $th->result();
 
