@@ -2,7 +2,6 @@
 
 namespace rkphplib\lib;
 
-require_once __DIR__.'/csv_explode.php';
 require_once __DIR__.'/entity.php';
 
 if (!defined('HASH_DELIMITER')) {

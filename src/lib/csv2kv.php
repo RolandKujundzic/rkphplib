@@ -14,20 +14,18 @@ if (!defined('HASH_DELIMITER')) {
 
 /**
  * Split text into key value hash or string. Use csv quote escape (broken if quotes are wrong).
- * 
- * Keys must not start with "@@", "@N" or "@_". 
- * Split text at $d2 (|#|) into lines. Split lines at first $d1 (=) into key value.
- * If key is not found return $text or use "@_N" as key (N is autoincrement 1, 2, ...) if mulitple keys are missing.
- * If key already exists rename to key.N (N is autoincrement 1, 2, ...).
+ * Quoted delimiter $d2 is escaped. Keys must not start with "@@", "@N" or "@_". 
+ * Split text with csv_explode($text, $d2, ...) into columns. Split column at first $d1 (=) into key value.
+ * If key is not found use autoincrement counter (0, 1, ... ). If key already exists use key.N (N = 1, 2, ...).
  * If value starts with "@N" use conf[@@N]="sd1","sd2" and set value = csv2kv(value, sd1, sd2).
- * Default values are [@@1="",","], [@@2=$d1,$d2] and [@@3="=","|:|". 
- * All keys and values are trimmed. Use Quote character ["] to preserve whitespace and delimiter.
- * Use double quote [""] to escape ["]. If $d1 is empty return array with $d2 as delimiter.
- * If text is empty return empty array. Unescape entity($d2).
+ * Default values are [@@1="",","], [@@2=$d1,$d2] and [@@3="=","|:|". All keys and values are trimmed. 
+ * Use Quote character ["] to preserve whitespace and delimiter. Use double quote [""] to escape ["]. 
+ * If $d1 is empty return array (use $d2 as delimiter). If text is empty return empty array. 
+ * Unescape entity($d2).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-function csv2kv(?string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, array $ikv = []) {
+function csv2kv(?string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, array $ikv = []) : array {
 	$ld1 = mb_strlen($d1);
 
 	if (empty($text)) {
@@ -38,13 +36,13 @@ function csv2kv(?string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, ar
 	$has_entity = mb_strpos($text, $e_d2) !== false;
 
 	if ($ld1 == 0 || mb_strpos($text, $d1) === false) {
-		$res = $text;
+		$res = [ $text ];
 
 		if (mb_strlen($d2) > 0 && mb_strpos($text, $d2) !== false) { 
 			$res = csv_explode($text, $d2, '"', 4);
 		}
-		else if (mb_substr($res, 0, 1) == '"' && mb_substr($res, -1) == '"'){
-			$res = mb_substr($res, 1, -1);
+		else if (mb_substr($text, 0, 1) == '"' && mb_substr($text, -1) == '"') {
+			$res = [ mb_substr($text, 1, -1) ];
 		}
 
 		if ($has_entity) {
@@ -53,14 +51,14 @@ function csv2kv(?string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, ar
 			}
 		}
 
-		// \rkphplib\lib\log_debug("csv2kv:56> text=[$text] d1=[$d1] d2=[$d2] res: ".print_r($res, true));
+		// \rkphplib\lib\log_debug("csv2kv:54> text=[$text] d1=[$d1] d2=[$d2] res: ".print_r($res, true));
 		return $res;
 	}
 
 	$tmp = csv_explode($text, $d2, '"', 15);
 	$kv = array();
 	$kn = array();
-	$n = 1;
+	$n = 0;
 
 	foreach ($tmp as $line) {
 		if (($pos = mb_strpos($line, $d1)) > 0) {
@@ -81,7 +79,7 @@ function csv2kv(?string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, ar
 			}
 		}
 		else {
-			$key = '@_'.$n;
+			$key = $n;
 			$value = $line;
 			$n++;
 		}
@@ -117,10 +115,6 @@ function csv2kv(?string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, ar
 
 			$kv[$key] = $value;
 		}
-	}
-
-	if ($n == 2 && count($kv) == 1 && isset($kv['@_1'])) {
-		return $kv['@_1'];
 	}
 
 	if ($has_entity) {
