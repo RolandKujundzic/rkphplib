@@ -36,6 +36,7 @@ function csv2kv(?string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, ar
 	$has_entity = mb_strpos($text, $e_d2) !== false;
 
 	if ($ld1 == 0 || mb_strpos($text, $d1) === false) {
+		$text = trim($text);
 		$res = [ $text ];
 
 		if (mb_strlen($d2) > 0 && mb_strpos($text, $d2) !== false) { 
