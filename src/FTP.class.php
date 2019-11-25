@@ -15,13 +15,13 @@ require_once __DIR__.'/Dir.class.php';
  */
 class FTP {
 
-/** @var resource $ftp */
+// @var resource $ftp
 private $ftp = null; 
 
-/** @var map $conf (@see setConf) */
+// @var map $conf (@see setConf)
 private $conf = [];
 
-/** @var map<string:[md5,size,since]> $cache */
+// @var map<string:[md5,size,since]> $cache
 private $cache = [];
 
 
