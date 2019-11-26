@@ -19,7 +19,7 @@ use function rkphplib\lib\is_map;
  */
 class Database {
 
-/** @var <vector:ADatabase> $pool Database connection pool */
+// @var ADatabase[] $pool Database connection pool
 private static $pool = [];
 
 
