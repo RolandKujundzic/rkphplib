@@ -32,10 +32,10 @@ require_once __DIR__.'/tok/Tokenizer.class.php';
  */
 class TestHelper {
 
-/** @var hash $_tc test counter hash */
+// @var hash $_tc test counter hash
 private $_tc = [];
 
-/** @var string $output */
+// @var string $output
 public $output = '';
 
 
