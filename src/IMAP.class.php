@@ -15,22 +15,22 @@ require_once __DIR__.'/Exception.class.php';
  */
 class IMAP {
 
-/** @var object $_con */
+// @var object $_con
 protected $con = null;
 
-/** @var map $conf */
+// @var map $conf
 protected $conf = [];
 
-/** @var int $inbox_count */
+// @var int $inbox_count
 protected $inbox_count = null;
 
-/** @var bool $expunge */
+// @var bool $expunge
 protected $expunge = false;
 
-/** @var int $id */
+// @var int $id
 protected $id = null;
 
-/** @var int $is_uid (0 = default, FT_UID otherwise) */
+// @var int $is_uid (0 = default, FT_UID otherwise)
 private $id_is_uid = 0;
 
 
