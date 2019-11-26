@@ -20,61 +20,59 @@ use function rkphplib\lib\is_map;
  */
 abstract class ADatabase {
 
-/** @const int LOAD_DUMP_USE_SHELL */
+// @const int LOAD_DUMP_USE_SHELL
 const LOAD_DUMP_USE_SHELL = 1;
 
-/** @const int LOAD_DUMP_ADD_DROP_TABLE */
+// @const int LOAD_DUMP_ADD_DROP_TABLE
 const LOAD_DUMP_ADD_DROP_TABLE = 2;
 
-/** @const int LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS */
+// @const int LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS
 const LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS = 4;
 
-
-/** @const int NOT_NULL = NOT NULL column */
+// @const int NOT_NULL = NOT NULL column 
 const NOT_NULL = 1;
 
-/** @const int PRIMARY = PRIMARY KEY (column) */
+// @const int PRIMARY = PRIMARY KEY (column)
 const PRIMARY = 2;
 
-/** @const int UNIQUE = UNIQUE (column) */
+// @const int UNIQUE = UNIQUE (column)
 const UNIQUE = 4;
 
-/** @const int INDEX = KEY (column) */
+// @const int INDEX = KEY (column)
 const INDEX = 8;
 
-/** @const int FOREIGN = FOREIGN KEY (column) REFERENCES ... */
+// @const int FOREIGN = FOREIGN KEY (column) REFERENCES ... 
 const FOREIGN = 16;
 
-/** @const int UNSIGNED */
+// @const int UNSIGNED
 const UNSIGNED = 32;
 
-/** @const int DELETE_CASCADE */
+// @const int DELETE_CASCADE 
 const DELETE_CASCADE = 64;
 
-/** @const int UPDATE_CASCADE */
+// @const int UPDATE_CASCADE 
 const UPDATE_CASCADE = 128;
 
-/** @const int AUTO_INCREMENT */
+// @const int AUTO_INCREMENT 
 const AUTO_INCREMENT = 256;
 
 
-
-/** @var bool $use_prepared */
+// @var bool $use_prepared
 public static $use_prepared = false;
 
-/** @var string $time_zone (default = empty = use db default, Example: 'Europe/Berlin') */ 
+// @var string $time_zone (default = empty = use db default, Example: 'Europe/Berlin')
 public static $time_zone = '';
 
-/** @var string $charset (default = empty = use db default, Example: 'utf8', 'utf8mb4') */
+// @var string $charset (default = empty = use db default, Example: 'utf8', 'utf8mb4')
 public static $charset = '';
 
-/** @var string $_dsn */
+// @var string $_dsn 
 protected $_dsn = null;
 
-/** @var array[string]string $_query */
+// @var array[string]string $_query
 protected $_query = [];
 
-/** @var array[string]array $_qinfo */
+// @var array[string]array $_qinfo
 protected $_qinfo = [];
 
 
