@@ -16,13 +16,13 @@ require_once __DIR__.'/Dir.class.php';
  */
 class Image {
 
-/** @var string url (e.g. https://...) */
+// @var string url (e.g. https://...)
 protected $url = null;
 
-/** @var string path (absolute path to image) */
+// @var string path (absolute path to image)
 protected $path = null;
 
-/** @var hash info (width, height, size, created, lastModified, md5, mime) */
+// @var hash info (width, height, size, created, lastModified, md5, mime)
 protected $info = [];
 
 

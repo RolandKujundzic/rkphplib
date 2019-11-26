@@ -30,10 +30,10 @@ use function rkphplib\lib\translate;
  */
 class RestServerException extends \Exception {
 
-/** @var int $http_error */
+// @var int $http_error
 public $http_code = 400;
 
-/** @var string error $internal_mesage error detail you don't want to expose */
+// @var string error $internal_mesage error detail you don't want to expose
 public $internal_message = '';
 
 
@@ -81,16 +81,16 @@ const ERR_INVALID_INPUT = 6;
 const ERR_NOT_IMPLEMENTED = 7;
 const ERR_CONFIGURATION = 8;
 
-/** @var map $options */
+// @var map $options
 protected $options = [];
 
-/** @var map $request */
+// @var map $request
 protected $request = [];
 
-/** @var map current user data */
+// @var map current user data
 protected $user = [];
 
-/** @var map user configuration */
+// @var map user configuration
 protected $config = [];
 
 

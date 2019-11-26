@@ -20,23 +20,13 @@ use function rkphplib\lib\execute;
  */
 class APIDocTest {
 
-/** 
- * Configuration map for api testing.
- * 
- * @var map $config = [] */
+// @var map $config = [] 
 protected $config = [];
 
-/**
- * Options.
- *
- * @see __construct()
- * @var map $options = { php_file: $base.php, config_file: $base.config.json, swagger_file: $base.swagger.json }
- */
+// @var map $options = { php_file: $base.php, config_file: $base.config.json, swagger_file: $base.swagger.json }
 protected $options = [];
 
-/**
- * @var map $parser = [ 'line' => '', 'custom' => '', 'json' => '', 'name' => '' ]
- */
+// @var map $parser = [ 'line' => '', 'custom' => '', 'json' => '', 'name' => '' ]
 private $parser = [ 'line' => '', 'custom' => '', 'json' => '', 'name' => '' ];
 
 

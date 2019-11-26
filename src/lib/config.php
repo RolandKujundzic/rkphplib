@@ -23,7 +23,6 @@ namespace rkphplib\lib;
  * Register exception_handler and error_handler.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- *
  */
 
 require_once __DIR__.'/log_debug.php';
@@ -41,12 +40,12 @@ if (setlocale(LC_ALL, 'de_DE.UTF-8') === false) {
 }
 
 if (!defined('SETTINGS_REQ_DIR')) {
-	/** @define string SETTINGS_REQ_DIR = 'dir' */
+	// @define string SETTINGS_REQ_DIR = 'dir' 
 	define('SETTINGS_REQ_DIR', 'dir');
 }
 
 if (!defined('SETTINGS_LANGUAGE')) {
-	/** @define string SETTINGS_LANGUAGE = 'de' */
+	// @define string SETTINGS_LANGUAGE = 'de'
 	define('SETTINGS_LANGUAGE', 'de');
 }
 

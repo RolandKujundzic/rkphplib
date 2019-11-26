@@ -15,43 +15,43 @@ use rkphplib\File;
  */
 class PDParser {
 
-/** @var array[string]string $class */
+// @var array[string]string $class
 private $class = []; 
 
-/** @var array[string]string $main */
+// @var array[string]string $main
 private $main = []; 
 
-/** @var array[string]array $function */
+// @var array[string]array $function
 private $function = [];
 
-/** @var array[string]array $var */
+// @var array[string]array $var
 private $var = [];
 
-/** @var array[string]array $const */
+// @var array[string]array $const
 private $const = [];
 
-/** @var array[string]array $define */
+// @var array[string]array $define
 private $define = [];
 
-/** @var string $namespace */
+// @var string $namespace
 private $namespace = '';
 
-/** @var array $include */
+// @var array $include
 private $include = [];
 
-/** @var array $include_once */
+// @var array $include_once
 private $include_once = [];
 
-/** @var array $require */
+// @var array $require
 private $require = [];
 
-/** @var array $require_once */
+// @var array $require_once
 private $require_once = [];
 
-/** @var array $comment */
+// @var array $comment
 private $comment = []; 
 
-/** @var array $use */
+// @var array $use
 private $use = [];
 
 
@@ -71,19 +71,19 @@ private static $tag = [
 	'const'     => [ 0, 1, [ '/^([a-zA-Z0-9_\|\[\]\:\\\]+) ([A-Z0-9_]+)(.*)$/', 'type', 'name', 'desc' ] ]
 ];
 
-/** @var array $code */
+// @var array $code
 private $code = [];
 
-/** @var int $line_num current line number in code (1, 2, ...) */
+// @var int $line_num current line number in code (1, 2, ...)
 private $line_num = 0;
 
-/** @var int $docblock line number after start marker (1, 2, ...) */
+// @var int $docblock line number after start marker (1, 2, ...)
 private $doc_start = 0;
 
-/** @var int $doc_end line number before end marker (1, 2, ...) */
+// @var int $doc_end line number before end marker (1, 2, ...)
 private $doc_end = 0;
 
-/** @var string $last_type */
+// @var string $last_type
 private $last_type = '';
 
 

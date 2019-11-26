@@ -18,7 +18,7 @@ require_once __DIR__.'/Exception.class.php';
  */
 class CryptoHelper {
 
-/** @var map $_opt default options */
+// @var map $_opt default options 
 private $_opt = array('secret' => '', 'enc' => 'xor', 'wrap' => 'urlenc_base64', 'xor_secret' => '');
 
 

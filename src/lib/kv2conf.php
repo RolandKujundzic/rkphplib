@@ -9,7 +9,7 @@ require_once __DIR__.'/is_map.php';
 use rkphplib\Exception;
 
 if (!defined('HASH_DELIMITER')) {
-	/** @const HASH_DELIMITER = '|#|' if undefined */
+	// @const HASH_DELIMITER = '|#|' if undefined 
 	define('HASH_DELIMITER', '|#|');
 }
 

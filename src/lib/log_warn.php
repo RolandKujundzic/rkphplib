@@ -3,7 +3,7 @@
 namespace rkphplib\lib;
 
 if (!defined('SETTINGS_LOG_WARN')) {
-	/** @define string SETTINGS_LOG_WARN = '[DOCROOT/data/.log|/tmp]/php.warn' */
+	// @define string SETTINGS_LOG_WARN = '[DOCROOT/data/.log|/tmp]/php.warn'
 	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/.log')) {
 		define('SETTINGS_LOG_WARN', DOCROOT.'/data/.log/php.warn');
 	}

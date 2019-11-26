@@ -6,7 +6,7 @@ require_once __DIR__.'/csv_explode.php';
 require_once __DIR__.'/entity.php';
 
 if (!defined('HASH_DELIMITER')) {
-  /** @const HASH_DELIMITER = '|#|' if undefined */
+  // @const HASH_DELIMITER = '|#|' if undefined 
   define('HASH_DELIMITER', '|#|');
 }
 

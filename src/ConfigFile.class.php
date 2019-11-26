@@ -18,13 +18,13 @@ use function rkphplib\lib\conf2kv;
  */
 class ConfigFile {
 
-/** @var bool $abort_if_key_missing */
+// @var bool $abort_if_key_missing
 public $abort_if_missing = false;
 
-/** @var map $conf */
+// @var map $conf
 public $conf = [];
 
-/** @var string $file */
+// @var string $file
 public $file = '';
 
 

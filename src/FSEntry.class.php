@@ -21,7 +21,7 @@ if (umask() > 0) {
  */
 class FSEntry {
 
-/** @var bool $CHMOD_ABORT abort if chmod failed (CHMOD is only possible if you are owner or root) */
+// @var bool $CHMOD_ABORT abort if chmod failed (CHMOD is only possible if you are owner or root)
 public static $CHMOD_ABORT = true;
 
 

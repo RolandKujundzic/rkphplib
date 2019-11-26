@@ -15,16 +15,16 @@ require_once __DIR__.'/File.class.php';
  */
 class PipeExecute {
 
-/** @var vector<vector> $descriptor [ input, output, error ] */
+// @var vector<vector> $descriptor [ input, output, error ]
 protected $descriptor = [];
 
-/** @var vectory<resource> $pipe */
+// @var vectory<resource> $pipe
 protected $pipe = [];
 
-/** @var resource $process */
+// @var resource $process
 protected $process = null;
 
-/** @var string $command */
+// @var string $command
 protected $command = null;
 
 

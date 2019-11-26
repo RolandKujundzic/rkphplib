@@ -23,13 +23,13 @@ class Zip {
 // set [TZip::$is_broken = true] if you want to zip more than 1000 Files
 public static $is_broken = false;
 
-/** @var string $zip_dir temporary archive directory */
+// @var string $zip_dir temporary archive directory
 private $zip_dir = null;
 
-/** @var ZipArchive $zip */
+// @var ZipArchive $zip
 private $zip = null;
 
-/** @var string zip filename */
+// @var string zip filename 
 private $save_as = null;
 
 

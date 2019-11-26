@@ -15,16 +15,16 @@ require_once PATH_RKPHPLIB.'Exception.class.php';
  */
 class DatabaseSync {
 
-/** @var ADatabase $local_db */
+// @var ADatabase $local_db
 protected $local_db = null;
 
-/** @var ADatabase $remote_db */
+// @var ADatabase $remote_db
 protected $remote_db = null;
 
-/** @var config */
+// @var config
 private $config = [ 'table' => '', 'id_col' => 'id', 'id' => '' ];
 
-/** @var map $cache */
+// @var map $cache
 private $cache = [];
 
 

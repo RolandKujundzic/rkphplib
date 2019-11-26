@@ -14,22 +14,22 @@ require_once __DIR__.'/File.class.php';
  */
 class ShellCode {
 
-/** @var string $file */
+// @var string $file
 private $file = null;
 
-/** @var array $lines */
+// @var array $lines
 private $lines = [];
 
-/** @var hash $variable */
+// @var hash $variable
 private $variable = [];
 
-/** @var hash $function */
+// @var hash $function
 private $function = [];
 
-/** @var int $lpos */
+// @var int $lpos
 private $lpos = -1;
 
-/** @var hash $parse_env */
+// @var hash $parse_env
 private $parse_env = null;
 
 

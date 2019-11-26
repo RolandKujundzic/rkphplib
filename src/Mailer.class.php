@@ -25,19 +25,19 @@ defined('SETTINGS_NO_SMTP') || define('SETTINGS_NO_SMTP', 0);
  */
 class Mailer {
 
-/** @var string $always_to force always same recpient */
+// @var string $always_to force always same recpient
 public static $always_to = '';
 
-/** @var string $always_from force always same sender */
+// @var string $always_from force always same sender 
 public static $always_from = '';
 
-/** @var array|string $smtp smtp-host (string) or smtp-configuration (array) */
+// @var array|string $smtp smtp-host (string) or smtp-configuration (array) 
 public static $smtp = null;
 
-/** @var PHPMailer $_mailer */
+// @var PHPMailer $_mailer 
 private $_mailer = null;
 
-/** @var array $type_email count doubles. Keys: to|cc|bcc|ReplyTo|from|recipient */
+// @var array $type_email count doubles. Keys: to|cc|bcc|ReplyTo|from|recipient 
 private $type_email = [ 'recipient' => [] ];
 
 

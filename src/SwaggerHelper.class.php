@@ -20,13 +20,13 @@ require_once __DIR__.'/Dir.class.php';
  */
 class SwaggerHelper {
 
-/** @var multi-map $sobj swagger object e.g. parsed yaml */
+// @var multi-map $sobj swagger object e.g. parsed yaml
 private $sobj = [];
 
-/** @var map $swg - swg info, header, ... */
+// @var map $swg - swg info, header, ...
 private $swg = [];
 
-/** @var string $last_schema */
+// @var string $last_schema
 public $last_schema = '';
 
 
