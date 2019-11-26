@@ -7,8 +7,6 @@ if (!isset($th)) {
 	$th = new rkphplib\TestHelper();
 }
 
-$th->runTokenizer(15, array('TBase'));
-
 require_once PATH_RKPHPLIB.'/tok/TBase.class.php';
 require_once PATH_RKPHPLIB.'/lib/kv2conf.php';
 
@@ -28,6 +26,9 @@ function _de_en_codeHash($map) {
 
 
 $th->tokCheck(PATH_RKPHPLIB.'tok/TBase.class.php');
+
+exit(0);
+$th->runTokenizer(15, array('TBase'));
 
 _de_en_codeHash([ 'dir' => 'company/contact', 'id' => 3872 ]);
 _de_en_codeHash([ "txt" => "Is it working properly?", "y" => rand(0,100000) ]);
