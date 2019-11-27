@@ -15,8 +15,7 @@ require_once __DIR__.'/Exception.class.php';
  */
 class Category {
 
-
-/** @var ADatabase $db (default = null) */
+// @var ADatabase $db (default = null)
 protected $db = null;
 
 

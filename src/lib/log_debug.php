@@ -7,7 +7,7 @@ if (!defined('DOCROOT') && !empty($_SERVER['CONTEXT_DOCUMENT_ROOT']) && is_dir($
 }
 
 if (!defined('SETTINGS_LOG_DEBUG')) {
-	/** @define string SETTINGS_LOG_DEBUG = '[DOCROOT/data/.log|/tmp]/php.log' */
+	// @define string SETTINGS_LOG_DEBUG = '[DOCROOT/data/.log|/tmp]/php.log'
 	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/.log')) {
 		define('SETTINGS_LOG_DEBUG', DOCROOT.'/data/.log/php.log');
 	}
@@ -17,7 +17,7 @@ if (!defined('SETTINGS_LOG_DEBUG')) {
 }
 
 if (!defined('SETTINGS_TIMEZONE')) {
-  /** @define string SETTINGS_TIMEZONE = Auto-Detect */
+  // @define string SETTINGS_TIMEZONE = Auto-Detect
   date_default_timezone_set(@date_default_timezone_get());
   define('SETTINGS_TIMEZONE', date_default_timezone_get());
 }

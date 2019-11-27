@@ -18,7 +18,7 @@ use function rkphplib\lib\redirect;
  */
 abstract class ASession {
 
-/** @var map $conf */
+// @var map $conf
 protected $conf = [];
 
 

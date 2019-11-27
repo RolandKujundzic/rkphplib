@@ -13,15 +13,15 @@ use rkphplib\Exception;
  * Persistant Hash. 
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2017 Roland Kujundzic
+ * @copyright 2017-2019 Roland Kujundzic
  *
  */
 class Map {
 
-/** @var array $map use if != null */
+// @var array $map use if != null
 private $map = null;
 
-/** @var array $option */
+// @var array $option
 private $option = null;
 
 

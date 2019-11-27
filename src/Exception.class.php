@@ -4,17 +4,17 @@ namespace rkphplib;
 
 
 if (!defined('TAG_PREFIX')) {
-  /** @define string TAG_PREFIX = '{:=' */
+  // @define string TAG_PREFIX = '{:='
   define('TAG_PREFIX', '{:=');
 }
 
 if (!defined('TAG_SUFFIX')) {
-  /** @define string TAG_SUFFIX = '}' */
+  // @define string TAG_SUFFIX = '}'
   define('TAG_SUFFIX', '}');
 }
 
 if (!defined('SETTINGS_LOG_ERROR')) {
-	/** @define string SETTINGS_LOG_ERROR = '[DOCROOT/data/.log|/tmp]/php.fatal' */
+	// @define string SETTINGS_LOG_ERROR = '[DOCROOT/data/.log|/tmp]/php.fatal'
 	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/.log')) {
 		define('SETTINGS_LOG_ERROR', DOCROOT.'/data/.log/php.fatal');
 	}
@@ -24,8 +24,8 @@ if (!defined('SETTINGS_LOG_ERROR')) {
 }
 
 if (!defined('SETTINGS_TIMEZONE')) {
-  /** @define string SETTINGS_TIMEZONE = Auto-Detect */
   date_default_timezone_set(@date_default_timezone_get());
+  // @define string SETTINGS_TIMEZONE = Auto-Detect
   define('SETTINGS_TIMEZONE', date_default_timezone_get());
 }
 else {
@@ -44,7 +44,7 @@ else {
  */
 class Exception extends \Exception {
 
-/** @var string $internal_message error message detail you don't want to expose */
+// @var string $internal_message error message detail you don't want to expose
 public $internal_message = '';
 
 

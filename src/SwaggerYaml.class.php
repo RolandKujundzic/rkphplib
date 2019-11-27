@@ -41,24 +41,22 @@ use function rkphplib\lib\split_str;
  */
 class SwaggerYaml {
 
-/**
- * @var map $data
- */
+// @var hash $data
 public $data = [ 'parameters' => [], 'paths' => [] ];
 
-/** @var map $path_param - avoid adding same path with different parameter names */
+// @var hash $path_param - avoid adding same path with different parameter names
 private $path_param = [ ];
 
-/** @var map $param - avoid adding same parameter */
+// @var hash $param - avoid adding same parameter
 private $param = [];
 
-/** @var map $options */
+// @var hash $options
 private $options = [];
 
-/** @var string $api_call - current api call */
+// @var string $api_call - current api call
 private $api_call = '';
 
-/** @var string $last_api_call - previous api call */
+// @var string $last_api_call - previous api call
 private $last_api_call = '';
 
 

@@ -6,7 +6,7 @@ require_once __DIR__.'/FSEntry.class.php';
 require_once __DIR__.'/File.class.php';
 
 
-/** @const int DIR_DEFAULT_MODE octal, default directory creation mode, 0777 (uid < 1000) or 0755 */
+// @const int DIR_DEFAULT_MODE octal, default directory creation mode, 0777 (uid < 1000) or 0755
 if (!defined('DIR_DEFAULT_MODE')) {
 	if (posix_getuid() < 1000) {
 		define('DIR_DEFAULT_MODE', 0777);
@@ -28,13 +28,13 @@ if (!defined('DIR_DEFAULT_MODE')) {
  */
 class Dir {
 
-/** @const int CREATE_TARGET_PATH */
+// @const int CREATE_TARGET_PATH
 const CREATE_TARGET_PATH = 1;
 
-/** @const int REMOVE_EXISTING */
+// @const int REMOVE_EXISTING
 const REMOVE_EXISTING = 2;
 
-/** @var bool $SKIP_UNREADABLE directory copy behaviour */
+// @var bool $SKIP_UNREADABLE directory copy behaviour
 public static $SKIP_UNREADABLE = false;
 
 
