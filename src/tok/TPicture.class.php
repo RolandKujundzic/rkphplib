@@ -26,10 +26,10 @@ use function rkphplib\lib\split_str;
  */
 class TPicture implements TokPlugin {
 
-/** @var Tokenizer $tok */
+// @var Tokenizer $tok
 protected $tok = null;
 
-/** @var array[string]string $conf */
+// @var array[string]string $conf
 protected $conf = [];
 
 

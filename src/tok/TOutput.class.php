@@ -35,19 +35,19 @@ use function rkphplib\lib\is_map;
  */
 class TOutput implements TokPlugin {
 
-/** @var array $table */
+// @var array $table
 protected $table = null;
 
-/** @var array[string]string $env */
+// @var array[string]string $env
 protected $env = [];
 
-/** @var array[string]string $conf */
+// @var array[string]string $conf
 protected $conf = [];
 
-/** @var Tokenizer $tok */
+// @var Tokenizer $tok
 protected $tok = null;
 
-/** @var map $set_search = [] */
+// @var map $set_search = []
 protected $set_search = [];
 
 

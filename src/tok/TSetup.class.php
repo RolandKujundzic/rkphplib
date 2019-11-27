@@ -18,7 +18,7 @@ use rkphplib\File;
  */
 class TSetup implements TokPlugin {
 
-/** @var rkphplib\tok\Tokenizer $tok */
+// @var rkphplib\tok\Tokenizer $tok
 private $tok = null;
 
 

@@ -17,7 +17,7 @@ use rkphplib\File;
 
 
 if (!defined('SETTINGS_LANGUAGE')) {
-  /** @define string SETTINGS_LANGUAGE = 'de' */
+  // @define string SETTINGS_LANGUAGE = 'de' 
   define('SETTINGS_LANGUAGE', 'de');
 }
 
@@ -30,16 +30,16 @@ if (!defined('SETTINGS_LANGUAGE')) {
  */
 class TLanguage implements TokPlugin {
 
-/** @var ADatabase $db */
+// @var ADatabase $db 
 private $db = null;
 
-/** @var Session $sess */
+// @var Session $sess 
 private $sess = null;
 
-/** @var map $conf */
+// @var map $conf 
 private $conf = [];
 
-/** @var Tokenizer $tok */
+// @var Tokenizer $tok 
 private $tok = null;
 
 

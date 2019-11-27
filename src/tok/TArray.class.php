@@ -31,10 +31,10 @@ use function rkphplib\lib\split_str;
  */
 class TArray implements TokPlugin {
 
-/** @var hash $env */
+// @var hash $env 
 protected $env = [ 'name' => null, 'isHash' => false, 'isVector' => false ];
 
-/** @var array $array */
+// @var array $array 
 protected $array = [];
 
 

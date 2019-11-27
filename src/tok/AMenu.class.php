@@ -21,16 +21,16 @@ use function rkphplib\lib\redirect;
  */
 abstract class AMenu implements TokPlugin {
 
-/** @var map $conf */
+// @var map $conf
 protected $conf = [];
 
-/** @var vector<map> $node */
+// @var vector<map> $node 
 protected $node = [];
 
-/** @var Tokenizer $tok */
+// @var Tokenizer $tok
 protected $tok = null;
 
-/** @var int $ignore_level */
+// @var int $ignore_level 
 private  $ignore_level = 0;
 
 

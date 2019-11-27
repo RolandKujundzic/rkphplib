@@ -19,10 +19,10 @@ use function rkphplib\lib\split_str;
  */
 class TLoop implements TokPlugin {
 
-/** @var array $loop */
+// @var array $loop
 protected $loop = array();
 
-/** @var Tokenizer $tok */
+// @var Tokenizer $tok
 protected $tok = null;
 
 

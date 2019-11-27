@@ -50,19 +50,19 @@ public $opt = [
 	'tags' => []
 	];
 
-/** @var map|string $result */
+// @var map|string $result
 public $result = null;
 
-/** @var map $info */
+// @var map $info
 public $info = null;
 
-/** @var int $status */
+// @var int $status
 public $status = null;
 
-/** @var vector|null $error (if not decode error null, otherwiese [ error_message, error_object ] */
+// @var vector|null $error (if not decode error null, otherwiese [ error_message, error_object ] 
 public $error = null;
 
-/** @var string $dump */
+// @var string $dump
 public $dump = '';
 
 

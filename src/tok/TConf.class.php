@@ -29,16 +29,16 @@ use function rkphplib\lib\kv2conf;
 class TConf implements TokPlugin {
 use \rkphplib\traits\Map;
 
-/** @param map system configuration */
+// @param map system configuration
 public $sconf = [];
 
-/** @param map user configuration */
+// @param map user configuration
 public $uconf = [];
 
-/** @param ADatabase $db */
+// @param ADatabase $db
 public $db = null;
 
-/** @param int $lid */
+// @param int $lid
 public $lid = null;
 
 

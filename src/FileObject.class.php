@@ -17,37 +17,37 @@ require_once __DIR__.'/JSON.class.php';
  */
 class FileObject {
 
-/** @var string $sync = [ 'server' => '', 'bin' => 'bin/md5sum.php', 'abort' => false, 'cwd' => '' ] */
+// @var string $sync = [ 'server' => '', 'bin' => 'bin/md5sum.php', 'abort' => false, 'cwd' => '' ]
 public static $sync = [ 'server' => '', 'bin' => 'bin/md5sum.php', 'abort' => true, 'cwd' => '' ];
 
-/** @var string $name basename */
+// @var string $name basename 
 public $name = null;
 
-/** @var string $path original file path */
+// @var string $path original file path 
 public $path = null;
 
-/** @var string $path_absolute realpath */
+// @var string $path_absolute realpath 
 public $path_absolute = null;
 
-/** @var string $remote_path */
+// @var string $remote_path 
 public $remote_path = null;
 
-/** @var string $md5 checksum */
+// @var string $md5 checksum
 public $md5 = null;
 
-/** @var int $last_modified */
+// @var int $last_modified 
 public $last_modified = null;
 
-/** @var int $size */
+// @var int $size 
 public $size = null;
 
-/** @var bool $modified true if file was modified */
+// @var bool $modified true if file was modified 
 public $is_modified = null;
 
-/** @var bool $synchronized true if file was synchronized */
+// @var bool $synchronized true if file was synchronized 
 public $is_synchronized = null;
 
-/** @var string $json_format (e.g. misl = md5 + (width + height) + size + last_modified) */
+// @var string $json_format (e.g. misl = md5 + (width + height) + size + last_modified) 
 public $json_format = null;
 
 

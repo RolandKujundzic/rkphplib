@@ -32,12 +32,12 @@ if (!defined('PATH_RKPHPLIB')) {
 }
 
 if (!defined('SETTINGS_REQ_CRYPT')) {
-  /** @const SETTINGS_REQ_CRYPT = 'cx' if undefined */
+  // @const SETTINGS_REQ_CRYPT = 'cx' if undefined
   define('SETTINGS_REQ_CRYPT', 'cx');
 }
 
 if (!defined('SETTINGS_CRYPT_SECRET')) {
-  /** @const SETTINGS_CRYPT_SECRET = md5(Server + Module Info) if undefined */
+  // @const SETTINGS_CRYPT_SECRET = md5(Server + Module Info) if undefined
   $tmp = function() {
     $module_list = array_intersect([ 'zlib', 'date' ], get_loaded_extensions());
     $secret = md5(PHP_OS.'_'.php_uname('r'));
@@ -60,13 +60,13 @@ if (!defined('SETTINGS_CRYPT_SECRET')) {
  */
 class TBase implements TokPlugin {
 
-/** @var Tokenizer $_tok */
+// @var Tokenizer $_tok
 private $_tok = null;
 
-/** @var Hash $_tpl */
+// @var Hash $_tpl
 private $_tpl = [];
 
-/** @var Hash $_conf  */
+// @var Hash $_conf
 private $_conf = [];
 
 

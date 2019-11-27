@@ -17,7 +17,7 @@ use rkphplib\Exception;
  */
 class TMenu extends AMenu implements TokPlugin {
 
-/** @var map $html_sub */
+// @var map $html_sub
 private $html_sub = [];
 
 

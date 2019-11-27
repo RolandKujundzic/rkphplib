@@ -17,31 +17,31 @@ use function rkphplib\lib\split_str;
  */
 class PhpCode {
 
-/** @var string $file */
+// @var string $file
 private $file = null; 
 
-/** @var array $lines */
+// @var array $lines
 private $lines = [];
 
-/** @var string $namespace */
+// @var string $namespace
 private $namespace = null;
 
-/** @var hash $namespaces */
+// @var hash $namespaces
 private $namespaces = [];
 
-/** @var hash $class */
+// @var hash $class
 private $class = null;
 
-/** @var hash $classes */
+// @var hash $classes
 private $classes = [];
 
-/** @var hash $method */
+// @var hash $method
 private $method = null;
 
-/** @var hash $methods */
+// @var hash $methods
 private $methods = [];
 
-/** @var int $lpos current line number (0, 1, ... ). Default is -1 (no line number scanned yet). */
+// @var int $lpos current line number (0, 1, ... ). Default is -1 (no line number scanned yet).
 private $lpos = -1;
 
 

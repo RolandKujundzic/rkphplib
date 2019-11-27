@@ -24,7 +24,7 @@ use rkphplib\FSEntry;
 class TFileSystem implements TokPlugin {
 use TokHelper;
 
-/** @var array $csv */
+// @var array $csv
 private $csv = [ 'ignore' => 0, 'file' => '', 'fv' => null, 'escape_crlf' => ' ', 'delimiter' => ';' ];
 
 

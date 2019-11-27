@@ -34,13 +34,13 @@ use function rkphplib\lib\conf2kv;
  */
 class TUpload implements TokPlugin {
 
-/** @var Tokenizer $tok */
+// @var Tokenizer $tok
 protected $tok = null;
 
-/** @var hash $conf common configuration hash */
+// @var hash $conf common configuration hash
 protected $conf = [];
 
-/** @var <string:hash> $options custom multi-upload configuration */
+// @var <string:hash> $options custom multi-upload configuration 
 protected $options = [ '@plugin_action' => 0 ];
 
 

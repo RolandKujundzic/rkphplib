@@ -8,8 +8,8 @@ use rkphplib\Exception;
 
 
 if (!defined('SETTINGS_TIMEZONE')) {
-  /** @const string SETTINGS_TIMEZONE = Auto-Detect */
 	date_default_timezone_set(@date_default_timezone_get());
+  // @const string SETTINGS_TIMEZONE = Auto-Detect
   define('SETTINGS_TIMEZONE', date_default_timezone_get());
 }
 else {
@@ -17,7 +17,7 @@ else {
 }
 
 if (!defined('SETTINGS_LANGUAGE')) {
-  /** @const string SETTINGS_LANGUAGE = 'de' */
+  // @const string SETTINGS_LANGUAGE = 'de'
   define('SETTINGS_LANGUAGE', 'de');
 }
 

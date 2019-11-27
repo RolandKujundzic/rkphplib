@@ -17,7 +17,7 @@ use rkphplib\DateCalc;
  */
 class TDate implements TokPlugin {
 
-/** @var map $env { format_in:null, format_out: null } */
+// @var map $env { format_in:null, format_out: null }
 private $env = [ 'format_in' => null, 'format_out' => null, 'format_cut' => '' ];
 
 

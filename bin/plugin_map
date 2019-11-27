@@ -78,7 +78,7 @@ public function createMap() {
 	$tokenizer = mb_substr(trim(File::load('src/tok/Tokenizer.class.php')), 0, -1);
 	$md5 = File::md5('src/tok/Tokenizer.class.php');
 
-	if (($pos = mb_strpos($tokenizer, '/** AUTO CREATED BY bin/plugin_map')) < 1) {
+	if (($pos = mb_strpos($tokenizer, '// AUTO CREATED BY bin/plugin_map')) < 1) {
 		throw new Exception('append point not found');
 	}
 
@@ -86,7 +86,7 @@ public function createMap() {
 
 	ksort($this->_plugin);
 
-	$code = "/** AUTO CREATED BY bin/plugin_map */\n".'private function tryPluginMap(string $name) : void {'."\n\t".
+	$code = "// AUTO CREATED BY bin/plugin_map\n".'private function tryPluginMap(string $name) : void {'."\n\t".
 		'static $map = ['."\n\t\t";
 
 	foreach ($this->_plugin as $cname => $list) {

@@ -27,7 +27,7 @@ use function rkphplib\lib\execute;
  */
 class Job {
 
-/** @var hash $conf */
+// @var hash $conf
 private $conf = [];
 
 

@@ -70,14 +70,13 @@ use function rkphplib\lib\kv2conf;
 class TFormValidator implements TokPlugin {
 use TokHelper;
 
-
-/** @var hash $conf */
+// @var hash $conf
 protected $conf = [ 'default' => [], 'current' => [] ];
 
-/** @var hash $error */
+// @var hash $error
 protected $error = [];
 
-/** @var hash $example */
+// @var hash $example
 protected $example = [];
 
 

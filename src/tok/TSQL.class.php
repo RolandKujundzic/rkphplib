@@ -32,10 +32,10 @@ use function rkphplib\lib\split_str;
 class TSQL implements TokPlugin {
 use TokHelper;
 
-/** @var ADatabase $db */
+// @var ADatabase $db
 protected $db = null;
 
-/** @var map first_row = null */
+// @var map first_row = null
 protected $first_row = null;
 
 

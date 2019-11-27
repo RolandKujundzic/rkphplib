@@ -25,58 +25,58 @@ use rkphplib\File;
  */
 class Tokenizer {
 
-/** @var Tokenizer $site Tokenizer Object for Website (first tokenizer object created) */
+// @var Tokenizer $site Tokenizer Object for Website (first tokenizer object created)
 public static $site = null;
 
-/** @var vector $rx Token expression (regular expression for start+end token, prefix, delimiter, suffix, esc-prefix, esc-delimiter, esc-suffix) */
+// @var vector $rx Token expression (regular expression for start+end token, prefix, delimiter, suffix, esc-prefix, esc-delimiter, esc-suffix)
 public $rx = [ "/\{([a-zA-Z0-9_]*\:.*?)\}/s", '{', ':', '}', '&#123;', '&#58;', '&#125;' ];
 
-/** @var string $file Token data from $file - defined if load($file) was used */
+// @var string $file Token data from $file - defined if load($file) was used
 public $file = '';
 
 
-/** @const TOK_IGNORE remove unkown plugin */
+// @const TOK_IGNORE remove unkown plugin
 const TOK_IGNORE = 2;
 
-/** @const TOK_KEEP keep unknown plugin */
+// @const TOK_KEEP keep unknown plugin
 const TOK_KEEP = 4;
 
-/** @const TOK_DEBUG debug unknown plugin */
+// @const TOK_DEBUG debug unknown plugin
 const TOK_DEBUG = 8;
 
-/** @const TOK_AUTOLOAD autoload unknown plugin */
+// @const TOK_AUTOLOAD autoload unknown plugin
 const TOK_AUTOLOAD = 16;
 
 
-/** @const VAR_MUST_NOT_EXIST throw exception in setVar() if key already exists */
+// @const VAR_MUST_NOT_EXIST throw exception in setVar() if key already exists
 const VAR_MUST_NOT_EXIST = 1;
 
-/** @const VAR_APPEND append value to vector key in setVar() */
+// @const VAR_APPEND append value to vector key in setVar()
 const VAR_APPEND = 2;
 
 
-/** @var $last plugin call stack */
+// @var $last plugin call stack
 public $last = [];
 
-/** @var map $vmap plugin variable interchange */
+// @var map $vmap plugin variable interchange
 private $vmap = [];
 
-/** @var map<string:map<object:int>> $_plugin */
+// @var map<string:map<object:int>> $_plugin
 private $_plugin = [];
 
-/** @var vector<string> $_tok */
+// @var vector<string> $_tok
 private $_tok = [];
 
-/** @var map<int:int> $_endpos */
+// @var map<int:int> $_endpos
 private $_endpos = [];
 
-/** @var table<string:any> $callstack */
+// @var table<string:any> $callstack
 private $_callstack = [];
 
-/** @var int $_config constructor config flag */
+// @var int $_config constructor config flag
 private $_config = 0;
 
-/** @var array $_postprocess */
+// @var array $_postprocess
 private $_postprocess = [];
 
 
@@ -1188,7 +1188,7 @@ public function getTag(string $name) : string {
 }
 
 
-/** AUTO CREATED BY bin/plugin_map */
+// AUTO CREATED BY bin/plugin_map
 private function tryPluginMap(string $name) : void {
 	static $map = [
 		'TArray' => [ 'array', 'array:set', 'array:get', 'array:shift', 'array:unshift', 'array:pop', 'array:push', 'array:join', 'array:length', 'array:split' ],

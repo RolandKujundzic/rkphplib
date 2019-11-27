@@ -29,10 +29,10 @@ use function rkphplib\lib\execute;
  */
 class TJob implements TokPlugin {
 
-/** @var Tokenizer $tok */
+// @var Tokenizer $tok
 private $tok = null;
 
-/** @var hash $conf */
+// @var hash $conf
 private $conf = [];
 
 	

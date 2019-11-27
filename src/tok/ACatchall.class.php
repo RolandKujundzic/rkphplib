@@ -25,16 +25,16 @@ use rkphplib\Dir;
  */
 abstract class ACatchall implements TokPlugin {
 
-/** @var Tokenizer $tok */
+// @var Tokenizer $tok
 protected $tok = null;
 
-/** @var hash $crawl_dir */
+// @var hash $crawl_dir
 protected $crawl_dir = [];
 
-/** @var string $layout */
+// @var string $layout
 protected $layout = '';
 
-/** @var string $source_dir */
+// @var string $source_dir
 protected $source_dir = '';
 
 

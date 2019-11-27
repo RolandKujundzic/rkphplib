@@ -21,8 +21,8 @@ use rkphplib\Exception;
  */
 trait TokHelper {
 
-/** @var Tokenizer $tok */
-private $tok = null;
+// @var Tokenizer $tok
+protected $tok = null;
 
 
 /**

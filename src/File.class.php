@@ -10,7 +10,7 @@ use function rkphplib\lib\execute;
 
 
 
-/** @const FILE_DEFAULT_MODE = 0666 (UID < 1000) or 0644 (UID >= 1000) */
+// @const FILE_DEFAULT_MODE = 0666 (UID < 1000) or 0644 (UID >= 1000) 
 if (!defined('FILE_DEFAULT_MODE')) {
 	if (posix_getuid() < 1000) {
 		define('FILE_DEFAULT_MODE', 0666);
@@ -34,7 +34,7 @@ if (!defined('FILE_DEFAULT_MODE')) {
  */
 class File {
 
-/** @var bool $USE_FLOCK don't use file locking by default (BEWARE: locking will not work on NFS) */
+// @var bool $USE_FLOCK don't use file locking by default (BEWARE: locking will not work on NFS) 
 public static $USE_FLOCK = false;
 
 

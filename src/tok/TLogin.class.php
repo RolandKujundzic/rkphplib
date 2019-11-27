@@ -35,13 +35,13 @@ use function rkphplib\lib\split_str;
 class TLogin implements TokPlugin {
 use TokHelper;
 
-/** @var Session $sess */
+// @var Session $sess 
 private $sess = null;
 
-/** @var ADatabase $db */
+// @var ADatabase $db 
 private $db = null;
 
-/** @var array $account */
+// @var array $account 
 private $account = [];
 
 

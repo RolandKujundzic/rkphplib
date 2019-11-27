@@ -21,11 +21,10 @@ use rkphplib\Mailer;
 class TMailer implements TokPlugin {
 use TokHelper;
 
-
-/** @var Mailer $mail = null */
+// @var Mailer $mail = null
 protected $mail = null; 
 
-/** @var map $conf = null */
+// @var map $conf = null
 protected $conf = null;
 
 
