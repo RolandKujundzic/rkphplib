@@ -64,11 +64,18 @@ public function __construct(array $syntax = []) {
   $php_rx['class'] = '/^\s*(abstract )?class ([a-zA-Z0-9_]+) (extends [a-zA-Z0-9_\\\]+ )?(implements [a-zA-Z0-9_\,\\\ ]+ )?\{/';
   $php_rx['function'] = '/^\s*(abstract )?(public |protected |private )?(static )?function ([a-zA-Z0-9_&]+)\(/';
 
+	$bash_rx = [];
+	$bash_rx['function'] = '/^\s*function ([a-zA-Z0-9_]+) \{/';
+
 	$default['bash'] = [
 		'sl_comment' => '#',
+		'ml_comment' => [ '#--', '#--', '#' ],
 		'first_line' => '/^#\!\/bin\/b?a?sh\\r?\\n?$/',
-		'file_suffix' => 'sh'
+		'file_suffix' => 'sh',
+		'rx' => $bash_rx
 		];
+
+	$default['sh'] = $default['bash'];
 
 	$default['php'] = [
 		'sl_comment' => '//',

@@ -12,10 +12,33 @@ if (!isset($th)) {
 require_once $src_dir.'code/Parser.class.php';
 require_once $src_dir.'Dir.class.php';
 
+use rkphplib\Exception;
 use rkphplib\code\Parser;
 use rkphplib\FSEntry;
 use rkphplib\Dir;
 
+
+
+/**
+ *
+ */
+function _scan_code($dir, $suffix) {
+	$files = Dir::scanTree($dir, [ $suffix ]);
+	$code = new Parser([ 'name' => $suffix ]);
+
+	print "Scan *.$suffix code in $dir (".count($files)." files) ... ";
+
+	foreach ($files as $file) {
+		$code->scan($file);
+	}
+
+	print "OK\n";
+}
+
+
+/*
+ * M A I N
+ */
 
 $load = 0;
 try {
@@ -25,7 +48,7 @@ try {
 	$bash->load('test2.sh');
 	$load++;
 }
-catch (\Exception $e) {
+catch (Exception $e) {
 	print "Exception ".($load + 1).': '.$e->getMessage()."\t".$e->internal_message."\n";
 }
 
@@ -39,22 +62,11 @@ try {
 	$php->load('test2.php');
 	$load++;
 }
-catch (\Exception $e) {
+catch (Exception $e) {
 	print "Exception ".($load + 1).': '.$e->getMessage()."\t".$e->internal_message."\n";
 }
 
 $th->compare("new Parser('php'): load test1.php, test2.php", [ $load ], [ 2 ]);
 
-if (!empty($_SERVER['argv'][1]) && FSEntry::isFile($_SERVER['argv'][1])) {
-	$php_files = [ $_SERVER['argv'][1] ];
-}
-else {
-	$php_files = Dir::scanTree($src_dir, [ '.php' ]);
-}
-
-$php = new Parser([ 'name' => 'php' ]);
-
-foreach ($php_files as $php_file) {
-	$php->scan($php_file);
-}
-
+_scan_code($src_dir, 'php');
+_scan_code(DOCROOT.'/shell/rkscript/src', 'sh');
