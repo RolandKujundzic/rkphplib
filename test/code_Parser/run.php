@@ -69,4 +69,6 @@ catch (Exception $e) {
 $th->compare("new Parser('php'): load test1.php, test2.php", [ $load ], [ 2 ]);
 
 _scan_code($src_dir, 'php');
+_scan_code(DOCROOT.'/php/phplib/src', 'php');
 _scan_code(DOCROOT.'/shell/rkscript/src', 'sh');
+_scan_code(DOCROOT.'/shell/shlib/sh/run', 'sh');
