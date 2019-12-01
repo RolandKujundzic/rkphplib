@@ -49,6 +49,15 @@ public function getStatus() : array {
   return $status;
 }
 
+
+/**
+ * Return true if variable exists.
+ */
+public function hasVar(string $name) : bool {
+	return isset($this->variable[$name]);
+}
+
+
 /**
  *  Return $variable[$name]. If Variable does not exist return ''.
  */
