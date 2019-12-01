@@ -259,16 +259,14 @@ public function scan(string $file) : void {
 
 				array_push($ml_comment, $k - $ml_comment[1] + 1);
 				$this->curr['ml_comment'] = $ml_comment;
+				$this->curr['doc'] = [];
 				$ml_comment = [];
 			}
 			else if (mb_strpos($line, $mlc_end) !== false) {
 				$this->error('unexpected '.$mlc_end);
 			}
 			else if (!empty($this->syntax['ml_comment'][$ml_comment[0] + 2]) && mb_strpos($l3, $this->syntax['ml_comment'][$ml_comment[0] + 2]) === 0) {
-				if (count($this->curr['doc']) == 0) {
-					$this->curr['doc'] = [];
-				}
-				else if ($this->curr['doc'][0] < $ml_comment[1] + 1) {
+				if (count($this->curr['doc']) > 0 && $this->curr['doc'][0] < $ml_comment[1] + 1) {
 					for ($j = 0; $j < count($this->curr['doc']); $j++) {
 						if ($this->curr['doc'][0] + $j != $this->curr['doc'][$j]) {
 							$this->error('unexpected doc comment');
