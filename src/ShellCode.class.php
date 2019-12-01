@@ -61,11 +61,14 @@ public function hasVar(string $name) : bool {
 /**
  *  Return $variable[$name]. If Variable does not exist return ''.
  */
-public function getVar(string $name) : string {
+public function getVar(string $name, bool $required = false) : string {
 	$res = '';
 
 	if (isset($this->variable[$name])) {
 		$res = $this->variable[$name];
+	}
+	else if ($required) {
+		throw new Exception('no such variable '.$name);
 	}
 
 	return $res;
@@ -76,11 +79,14 @@ public function getVar(string $name) : string {
  * Split $variable[$name] into array. Delimiter is '[ \t\r]*\n[ \t\r]*'.
  * If variable does not exist return [].
  */
-public function getArray(string $name) : array {
+public function getArray(string $name, bool $required = false) : array {
 	$res = [];
 
 	if (isset($this->variable[$name])) {
 		$res = preg_split("/[ \t\r]*\n[ \t\r]*/", trim($this->variable[$name]));
+	}
+	else if ($required) {
+		throw new Exception('no such array '.$name);
 	}
 
 	return $res;
