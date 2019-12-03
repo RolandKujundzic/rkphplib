@@ -51,7 +51,7 @@ function sitemap_xml(array $url_list, string $save_as = '') : void {
 			if (in_array($path, $index_file)) {
 				if (File::exists($docroot.'/'.$path)) {
 					$index_ts = "\n\t\t<lastmod>".date('Y-m-d\TH:i:s', File::lastModified($docroot.'/'.$path)).$tz.
-						"</lastmod>\n\t\t<priority>1.00</priority>\n";
+						"</lastmod>\n\t\t<priority>1.00</priority>";
 				}
 			}
 			else {
@@ -69,7 +69,7 @@ function sitemap_xml(array $url_list, string $save_as = '') : void {
 		$path_ts = '';
 		if (File::exists($docroot.'/'.$path)) {
 			$path_ts = "\n\t\t<lastmod>".date('Y-m-d\TH:i:s', File::lastModified($docroot.'/'.$path)).$tz.
-				"</lastmod>\n\t\t<priority>0.80</priority>\n";
+				"</lastmod>\n\t\t<priority>0.80</priority>";
 		}
 
 		$xml .= "\t<url>\n\t\t<loc>".$url.str_replace([ '&amp;', '&' ], [ '&', '&amp;' ], $path)."</loc>$path_ts\n\t</url>\n";
