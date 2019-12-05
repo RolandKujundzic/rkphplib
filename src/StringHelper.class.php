@@ -16,43 +16,36 @@ use rkphplib\HtmlTag;
  */
 class StringHelper {
 
-// @var ?string $html
-private $html = null;
+// @var ?string $text
+private $text = null;
 
 
 
 /**
- * Set html text.
+ * Set text.
  */
-public function setHtml(string $html) : void {
-	$this->html = $html;
+public function __construct(string $text = null) {
+	$this->text = $text;
 }
 
 
 /**
- * Update $tag.start and $tag.end.
+ * Return HtmlTag if found.
  */
-public function nextTag(HtmlTag &$tag) : bool {
-	if ($this->html === null) {
-		throw new Exception('call setHtml() first');
+public function nextTag(HtmlTag $tag) : ?HtmlTag {
+	$offset = $tag->has('end') ? $tag->get('end') + 1 : 0;
+	$tname = '<'.$tag->get('name');
+	$start = mb_stripos($this->text, $tname, $offset);
+	$len = mb_strlen($tname);
+
+	$tag = new HtmlTag($tag->get('name'));
+	if ($start !== false && ($next_char = mb_substr($this->text, $start + $len, 1)) && 
+			in_array($next_char, [ "\r", "\n", "\t", " " ]) &&
+			($end = mb_strpos($this->text, '>', $start + $len + 1)) !== false) {
+		$tag->setHtml(mb_substr($this->text, $start, $end - $start + 1), $start, $end);
 	}
 
-	$len = mb_strlen($tag->name) + 1;
-	$tag->html = '';
-
-	$offset = ($tag->end === false) ? 0 : $tag->end + 1;
-	$tag->start = mb_stripos($this->html, '<'.$tag->name, $offset);
-
-	if ($tag->start !== false && ($next_char = mb_substr($this->html, $tag->start + $len, 1)) && 
-			in_array($next_char, [ "\r", "\n", "\t", " " ])) {
-		$tag->end = mb_strpos($this->html, '>', $tag->start + $len + 1);
-
-		if ($tag->end !== false) {
-			$tag->setHtml(mb_substr($this->html, $tag->start, $tag->end - $tag->start + 1));
-		}
-	}
-
-	return $tag->html !== '';
+	return $tag->has('end') ? $tag : null;
 }
 
 
