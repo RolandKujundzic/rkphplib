@@ -2,6 +2,12 @@
 
 namespace rkphplib;
 
+require_once __DIR__.'/Exception.class.php';
+require_once __DIR__.'/HtmlTag.class.php';
+
+use rkphplib\Exception;
+use rkphplib\HtmlTag;
+
 
 /**
  * String manipulation.
@@ -9,6 +15,46 @@ namespace rkphplib;
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 class StringHelper {
+
+// @var ?string $html
+private $html = null;
+
+
+
+/**
+ * Set html text.
+ */
+public function setHtml(string $html) : void {
+	$this->html = $html;
+}
+
+
+/**
+ * Update $tag.start and $tag.end.
+ */
+public function nextTag(HtmlTag &$tag) : bool {
+	if ($this->html === null) {
+		throw new Exception('call setHtml() first');
+	}
+
+	$len = mb_strlen($tag->name) + 1;
+	$tag->html = '';
+
+	$offset = ($tag->end === false) ? 0 : $tag->end + 1;
+	$tag->start = mb_stripos($this->html, '<'.$tag->name, $offset);
+
+	if ($tag->start !== false && ($next_char = mb_substr($this->html, $tag->start + $len, 1)) && 
+			in_array($next_char, [ "\r", "\n", "\t", " " ])) {
+		$tag->end = mb_strpos($this->html, '>', $tag->start + $len + 1);
+
+		if ($tag->end !== false) {
+			$tag->setHtml(mb_substr($this->html, $tag->start, $tag->end - $tag->start + 1));
+		}
+	}
+
+	return $tag->html !== '';
+}
+
 
 /**
  * Remove all whitespace from html. Example:
