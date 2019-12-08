@@ -10,12 +10,12 @@ use rkphplib\Exception;
 /**
  * Trait collection for Tokenizer plugins.
  * 
- * @code:
+ * @code 
  * require_once(PATH_RKPHPLIB.'tok/TokHelper.trait.php');
  *
  * class SomePlugin {
  * use TokHelper;
- * @:
+ * @end:code
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
@@ -28,26 +28,40 @@ protected $tok = null;
 /**
  * If map key from required_keys list is missing throw exception.
  * If key in required_keys has suffix "!" use strlen > 0 check.
+ * If key=default is used set $map[$key]=default if not set (name=0 - allow keyless entry).
+ * If key is required and not set and $_REQUEST[key] is not empty, set $map[key]=$_REQUEST[key].
  *
- * @code $this->checkMap('plugin:param', $p, [ 'key', 'key_not_0!', ... ]);
- *
- * @throws if required key is missing
- * @param string $plugin
- * @param map $map
- * @param vector $required_keys
+ * @code $this->checkMap('plugin:param', $p, [ 'key', 'key_not_0!', 'key=default', ... ]);
  */
-private function checkMap($plugin_param, $map, $required_keys) {
-	foreach ($required_keys as $key) {
+private function checkMap(string $plugin_param, array &$map, array $key_def) : void {
+	foreach ($key_def as $key) {
 		$error = false;
 
 		if (mb_substr($key, -1) == '!') {
 			$key = mb_substr($key, 0, -1);
 			if (!isset($map[$key]) || strlen($map[$key]) == 0) {
-				$error = true;
+				if (!empty($_REQUEST[$key])) {
+					$map[$key] = $_REQUEST[$key];
+				}
+				else {
+					$error = true;
+				}
 			}
 		}
 		else if (!isset($map[$key])) {
-			$error = true;
+			if (mb_strpos($key, '=') > 0) {
+				list ($name, $default) = explode('=', $key, 2);
+				if ($default === '0') {
+					$map[$name] = $map[0];
+					unset($map[0]);
+				}
+				else if (!isset($map[$name])) {
+					$map[$name] = $default;
+				}
+			}
+			else {
+				$error = true;
+			}
 		}
 
 		if ($error) {
@@ -88,14 +102,11 @@ private function tokError(string $error, ?array $ref = null) : void {
  * $x = [ 'a' => 7, 'a.b.0' => 18, 'a.b.1' => 19, 'c' => [ 0 => 5, 1 => 6 ], 'd' => [ 'x' => 3, 'y' => 4 ] ];
  * getMapKeys('a', $x) == 7; getMapKeys('a.b') == [ 18, 19 ]; getMapKeys('c') == [ 5, 6 ];
  * getMapKeys('c.0', $x) == 5; getMapKeys('c.x', $x) == 3; getMapKeys('d') == [ 'x' => 3, 'y' => 4 ]
- * @:
+ * @end:code
  *
- * @throws
- * @param string $path_str e.g. name1.name2
- * @param map $map
  * @return map|string|false
  */
-private function getMapKeys($path_str, $map) {
+private function getMapKeys(string $path_str, array $map) {
 
 	if (empty($path_str)) {
 		throw new Exception('empty path', 'map: '.print_r($map, true));
