@@ -871,6 +871,7 @@ public function tok_include(string $param, string $file) : string {
  * @tok {include_if:}1|#|a.html{:include_if} = return empty string
  * @tok {include_if:b}a|#|a.html|#|b.html{:include_if} = return tokenized content of b.html
  * @tok {include_if:a}a|#|a.html{:include_if} = return tokenized content of a.html 
+ * @tok {include_if:?}a|#|a.html{:include_if} = return tokenized content of a.html 
  */
 public function tok_include_if(string $param, array $a) : string {
 
@@ -883,6 +884,9 @@ public function tok_include_if(string $param, array $a) : string {
 	}
 
 	if (strlen($param) == 0) {
+		$file = empty($a[0]) ? $a[2] : $a[1];
+	}
+	else if ($param == '?') {
 		$file = empty($a[0]) ? $a[2] : $a[1];
 	}
 	else {
