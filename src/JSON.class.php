@@ -59,16 +59,23 @@ public static function encode($any, int $options = 448, int $depth = 512) : stri
 
 
 /**
- * Return json decoded $txt as hash ($assoc = true) or object ($assoc = false).
+ * Return json decoded $txt as hash ($flag = 1) or object ($flag = 0).
+ * Flags: 2^0 = return assoc, 2^1 = html_entity_decode result
+ *
+ * @param int|bool flag (default 2^0 = 1 = return assoc)
+ * @return object|array
  */
-public static function decode(string $txt, bool $assoc = true) {
-	// $txt = trim(mb_convert_encoding($txt, 'UTF-8', 'HTML-ENTITIES'));
-	$txt = trim(html_entity_decode($txt));
+public static function decode(string $txt, $flag = 3) {
+	$assoc = is_bool($flag) ? $flag : $flag & 1;
 	$res = json_decode($txt, $assoc);
 
 	if (($err_no = json_last_error())) {
 		$txt = (mb_strlen($txt) > 80) ? substr($txt, 0, 30).' ... '.substr($txt, -30) : $txt;
 		throw new Exception("JSON.decode failed", self::_error_msg($err_no)."\nJSON=[".$txt."]");
+	}
+
+	if ($flag & 2) {
+		self::html_entity_decode($res);
 	}
 
 	return $res;
@@ -99,6 +106,31 @@ public static function output($o, int $code = 200) : void {
 	}
 
 	http_code($code, [ 'Content-Type' => 'application/json', '@output' => JSON::encode($o) ]);
+}
+
+
+/**
+ * Apply html_entity_decode to all (value) strings within $data.
+ * @param &any $data
+ */
+public static function html_entity_decode(&$data) : void {
+	if (is_string($data)) {
+		$data = html_entity_decode($data);
+	}
+	else if (is_array($data)) {
+		foreach ($data as &$value) {
+			self::html_entity_decode($value);
+		}
+
+		unset($value);
+	}
+	else if (is_object($data)) {
+		$vars = array_keys(get_object_vars($data));
+
+		foreach ($vars as $var) {
+			html_entity_decode($data->$var);
+		}
+	}
 }
 
 
