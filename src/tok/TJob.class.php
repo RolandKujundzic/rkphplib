@@ -241,7 +241,13 @@ public static function updateLock(string $file, array $p) : void {
 		$lock = [];
 	}
 	else {
-		$lock = array_merge(JSON::decode(File::load($file)), $p);
+		try {
+			$lock = array_merge(JSON::decode(File::load($file)), $p);
+		}
+		catch (Exception $e) {
+			$e->append('corrupt lock file', $file);
+			throw $e;
+		}
 	}
 
 	if (!isset($lock['progress'])) {
