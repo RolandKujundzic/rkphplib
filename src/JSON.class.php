@@ -65,7 +65,7 @@ public static function encode($any, int $options = 448, int $depth = 512) : stri
  * @param int|bool flag (default 2^0 = 1 = return assoc)
  * @return object|array
  */
-public static function decode(string $txt, $flag = 3) {
+public static function decode(string $txt, $flag = 1) {
 	$assoc = is_bool($flag) ? $flag : $flag & 1;
 	$res = json_decode($txt, $assoc);
 
