@@ -76,6 +76,15 @@ public function __construct(string $message, string $internal_message = '') {
 
 
 /**
+ * Enhance error messages.
+ */
+public function append(string $message, string $internal = '') : void {
+	$this->message = trim($message."\n".$this->message);
+	$this->internal_message = trim($internal."\n".$this->internal_message); 
+}
+
+
+/**
  * Log debug_backtrace to SETTINGS_LOG_EXCEPTION/NAME.json.
  */
 private static function logTrace(array $stack) : void {
