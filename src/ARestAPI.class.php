@@ -55,8 +55,9 @@ public function __construct(string $message, int $error_no, int $http_error = 40
 /**
  * Abstract rest api class. Example:
  *
- * class MyRestServer extends \rkphplib\ARestServer {
- *   ...
+ * class MyRestServer extends \rkphplib\ARestAPI {
+ * protected function setConfig() : void { ... }
+ * ...
  * }
  *
  * $rs = new MyRestServer();
@@ -310,16 +311,14 @@ public function __construct(array $options = []) {
 
 	$this->options['allow_api_call'] = [];
 	$this->options['allow_method'] = [ 'get', 'post', 'put', 'delete', 'patch', 'head', 'options' ];
-	$this->options['allow_auth'] = [ 'header', 'request', 'basic_auth', 'oauth2' ];
+	$this->options['allow_auth'] = [ 'header', 'request', 'basic_auth', 'oauth2', 'cli' ];
 	$this->options['xml_root'] = '<api></api>';
 	$this->options['log_dir'] = '';
 	$this->options['auth_query'] = "SELECT * FROM api_user WHERE token='{:=token}' AND valid > NOW() AND status=1";
 	$this->options['force_basic_auth'] = true;
 	$this->options['internal_error'] = false;
 
-	foreach ($options as $key => $value) {
-		$this->options[$key] = $value;
-	}
+	$this->options = array_merge($this->options, $options);
 
 	if (!empty($this->options['log_dir'])) {
 		$log_dir = $this->options['log_dir'].'/'.date('Ym').'/'.date('dH');
@@ -336,7 +335,7 @@ public function __construct(array $options = []) {
 /** 
  * Check authentication token, set request[auth] and request[token] accordingly:
  *
- * 	- _GET|_POST[api_token] (auth=request)
+ * 	- _GET|_POST[token|api_token] (auth=request)
  *  - _SERVER[HTTP_X_AUTH_TOKEN] (auth=header)
  *  - basic authentication, token = $_SERVER[PHP_AUTH_USER]:$_SERVER[PHP_AUTH_PW] (auth=basic_auth)
  *  - OAuth2 Token = Authorization header (auth=oauth2)
@@ -346,21 +345,31 @@ public function __construct(array $options = []) {
  * @exit If no credentials are passed basic_auth is allowed and required exit with "401 - basic auth required"
  */
 private function checkApiToken() : void {
-	$res = [ '', '' ];
-
 	$allow_basic_auth = in_array('basic_auth', $this->options['allow_auth']);
 
-	if (!empty($_REQUEST['api_token']) && in_array('request', $this->options['allow_auth'])) {
-		$res = [ $_REQUEST['api_token'], 'request' ];
+	if (in_array('request', $this->options['allow_auth'])) {
+		$token_keys = [ 'token', 'api_token' ];
+
+		foreach ($token_keys as $key) {
+			if (!empty($_REQUEST[$key])) {
+				$this->request['token'] = $_REQUEST[$key];
+				$this->request['auth'] = 'request';
+				return;
+			}
+		}
 	}
-	else if (!empty($_SERVER['HTTP_X_AUTH_TOKEN']) && in_array('header', $this->options['allow_auth'])) {
-		$res = [ $_SERVER['HTTP_X_AUTH_TOKEN'], 'header' ];
+
+	if (!empty($_SERVER['HTTP_X_AUTH_TOKEN']) && in_array('header', $this->options['allow_auth'])) {
+		$this->request['token'] = $_SERVER['HTTP_X_AUTH_TOKEN'];
+		$this->request['auth'] = 'header';
 	}
 	else if (!empty($_SERVER['AUTHORIZATION']) && in_array('oauth2', $this->options['allow_auth'])) {
-		$res = [ $_SERVER['HTTP_AUTHORIZATION'], 'oauth2' ];
+		$this->request['token'] = $_SERVER['HTTP_AUTHORIZATION'];
+		$this->request['auth'] = 'oauth2';
 	}
 	else if (!empty($_SERVER['PHP_AUTH_USER']) && !empty($_SERVER['PHP_AUTH_PW']) && $allow_basic_auth) {
-		$res = [ $_SERVER['PHP_AUTH_USER'].':'.$_SERVER['PHP_AUTH_PW'], 'basic_auth' ];
+		$this->request['token'] = $_SERVER['PHP_AUTH_USER'].':'.$_SERVER['PHP_AUTH_PW'];
+		$this->request['auth'] = 'basic_auth';
 	}
 	else if ($this->options['force_basic_auth'] && $allow_basic_auth) {
 		header('WWW-Authenticate: Basic realm="REST API"');
@@ -369,8 +378,6 @@ private function checkApiToken() : void {
 		$this->logRequest((string)401);
 		exit;
 	}
-
-	list ($this->request['token'], $this->request['auth']) = $res;
 }
 
 
@@ -591,7 +598,6 @@ protected function logRequest(string $stage) : void {
  * Overwrite method with header "X-HTTP-METHOD[-OVERRIDE]".
  */
 private function checkMethodContent() : void {
-
 	self::parseHeader($this->request); 
 
 	if (!in_array($this->request['method'], $this->options['allow_method'])) {
@@ -613,7 +619,7 @@ private function checkMethodContent() : void {
 public function readInput() : void {
 	$this->checkMethodContent();
 	$this->checkApiToken(); 
-	self::parse($this->result);
+	self::parse($this->request);
 
 	if (!empty($this->options['base64_scan']) && empty($this->options['log_dir'])) {
 		$this->options['base64_dir'] = $this->options['log_dir'];
@@ -624,11 +630,6 @@ public function readInput() : void {
 	}
 
 	$this->route();
-
-	if (empty($this->request['token']) && !empty($this->request['map']['api_token'])) {
-		$this->request['token'] = $this->request['map']['api_token'];
-		unset($this->request['map']['api_token']);
-	}
 
 	$this->logRequest('in');
 }
@@ -652,6 +653,31 @@ public static function saveBase64(array &$map, string $save_dir) : void {
 
 
 /**
+ * Map cli input to request. Parameter are --name=value (default: --http-method=get). First parameter is path.
+ */
+protected function cliInput() : void {
+	if (!in_array('cli', $this->options['allow_method'])) {
+		throw new RestServerException('cli is not allowed', self::ERR_INVALID_INPUT, 400);
+	}
+
+	foreach ($_SERVER['argv'] as $parameter) {
+		if (mb_substr($parameter, 0, 2) == '--' && ($pos = mb_strpos($parameter, '=')) > 0) {
+			$name = mb_substr($parameter, 2, $pos - 2);
+			$_REQUEST[$name] = mb_substr($parameter, $pos + 1);
+		}
+	}
+
+	if (empty($_REQUEST['--http-method'])) {
+		$_SERVER['REQUEST_METHOD'] = 'get';
+	}
+	else {
+		$_SERVER['REQUEST_METHOD'] = $_REQUEST['--http-method'];
+		unset($_REQUEST['--http-method']);
+	}
+}
+
+
+/**
  * Define this.config[default] and this.config[token].
  */
 abstract protected function setConfig() : void;
@@ -667,6 +693,11 @@ abstract protected function setConfig() : void;
  */
 public function run() : void {
 	$this->setConfig();
+
+	if (php_sapi_name() == 'cli') {
+		$this->cliInput();
+	}
+
 	$this->readInput();
 
 	if (empty($this->request['api_call'])) {
