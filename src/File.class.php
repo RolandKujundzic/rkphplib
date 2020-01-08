@@ -996,6 +996,33 @@ public static function mime(string $file, bool $use_only_suffix = false) : strin
 
 
 /**
+ * Replace old suffix with new suffix. New suffix can be with or without leading dot.
+ * Flag: 0 (=default) = replace old suffix, 1 = insert new suffix before old suffix.
+ */
+public static function newSuffix(string $file, string $suffix, $flag = 0) : string {
+	$res = $file;
+
+	if (mb_substr($file, -1) !== '/' && ($pos = mb_strrpos($file, '.')) !== false) {
+		$res = mb_substr($file, 0, $pos);
+		$old_suffix = mb_substr($file, $pos + 1);
+
+		if ($flag == 0) {
+			$res .= (mb_substr($suffix, 0, 1) == '.') ? $suffix : '.'.$suffix; 
+		}
+		else {
+			$res .= (mb_substr($suffix, 0, 1) == '.') ? $suffix : '.'.$suffix;
+			$res .= mb_substr($file, $pos);
+		}
+	}
+	else {
+		throw new Exception('no suffix in filename '.$file);
+	}
+
+	return $res;
+}
+
+
+/**
  * Return lowercase file name suffix (without dot - unless $keep_dot= true).
  */
 public static function suffix(string $file, bool $keep_dot = false) : string {
