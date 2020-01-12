@@ -456,7 +456,7 @@ public static function size(string $path) : int {
 public static function check(string $path, string $action) : int {
 
 	if ($action != 'readable' && $action != 'writeable') {
-		throw new Exception("invalid action [$action] use check(PATH, readable|writeable)", "path=[$path]");
+		throw new Exception("invalid action [$action] use check(PATH, readable|writeable)", "path=[$path] action=[$action]");
 	}
 
 	if (!FSEntry::isDir($path, false)) {
