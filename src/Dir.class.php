@@ -46,7 +46,7 @@ public static function exists(string $path, bool $required = false) : bool {
 	$pl = mb_strlen($path);
 
 	if ($pl == 0) {
-		$error = "empty diretory path";
+		$error = "empty directory path";
 	}
 	else if ($pl > 4096) {
 		$error = "directory path too long ($pl)";
