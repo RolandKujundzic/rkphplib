@@ -3,18 +3,13 @@
 namespace rkphplib\lib;
 
 if (!defined('SETTINGS_LOG_WARN')) {
-	// @define string SETTINGS_LOG_WARN = '[DOCROOT/data/.log|/tmp]/php.warn'
-	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/.log')) {
-		define('SETTINGS_LOG_WARN', DOCROOT.'/data/.log/php.warn');
-	}
-	else {
-		define('SETTINGS_LOG_WARN', '/tmp/php.warn');
-	}
+	// @define string SETTINGS_LOG_WARN = dirname(SETTINGS_LOG_DEBUG).'/php.warn'
+	define('SETTINGS_LOG_WARN', SETTINGS_LOG_DEBUG.'/php.warn');
 }
 
 
 /**
- * Log warning. Prepend timestamp and trace information.
+ * Log warning (print in cli mode). Prepend timestamp and trace information.
  *
  * Disable debug log with SETTINGS_LOG_WARN = 0,
  * Enable logging to default error_log with SETTINGS_LOG_WARN = 1.
@@ -29,6 +24,11 @@ function log_warn(string $msg) : void {
 	if (!defined('SETTINGS_LOG_WARN') || empty(SETTINGS_LOG_WARN)) {
 		return;
 	}
+
+  if (php_sapi_name() == 'cli') {
+    print "WARNING: $msg\n";  
+		return;
+  }
 
 	list($msec, $ts) = explode(" ", microtime());
 	$log = '['.date('YmdHis', $ts).'.'.(1000 * round((float)$msec, 3));
