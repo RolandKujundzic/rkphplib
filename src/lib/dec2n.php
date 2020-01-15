@@ -4,7 +4,7 @@ namespace rkphplib\lib;
 
 
 /**
- * Convert decimal to base len (default = 36, len in [2,62]).
+ * Convert decimal to base len (default = 36, len in [2,64]).
  * If len=36 use 0-9a-zA-Z, if len=10 use 0-9 (decimal), if len=16 use 0-9a-f (hexadecimal).
  * If len=62 use 0-9a-zA-Z.
  *
@@ -15,7 +15,7 @@ function dec2n(int $n, int $len = 36) : string {
 		'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
 		'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C',
 		'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-		'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' ];
+		'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '-', '_' ];
 
 	$s = '';
 	$m = 0;
@@ -31,7 +31,7 @@ function dec2n(int $n, int $len = 36) : string {
 
 
 /**
- * Convert base len (default = 36, len in [2,62]) to decimal (inverse of dec2n).
+ * Convert base len (default = 36, len in [2,64]) to decimal (inverse of dec2n).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
@@ -40,7 +40,7 @@ function n2dec(string $s, int $len = 36) : int {
 		'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
 		'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C',
 		'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-		'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' ];
+		'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '-', '_' ];
 
 	$sl = strlen($s);
 	$c = '';
