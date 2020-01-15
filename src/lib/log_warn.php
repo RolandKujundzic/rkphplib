@@ -4,7 +4,7 @@ namespace rkphplib\lib;
 
 if (!defined('SETTINGS_LOG_WARN')) {
 	// @define string SETTINGS_LOG_WARN = dirname(SETTINGS_LOG_DEBUG).'/php.warn'
-	define('SETTINGS_LOG_WARN', SETTINGS_LOG_DEBUG.'/php.warn');
+	define('SETTINGS_LOG_WARN', dirname(SETTINGS_LOG_DEBUG).'/php.warn');
 }
 
 
