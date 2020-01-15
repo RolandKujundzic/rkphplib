@@ -80,7 +80,7 @@ function log_debug($msg, bool $prepend_info = false) : void {
 		}
 
 		if (isset($_SERVER['SCRIPT_FILENAME']) && isset($_SERVER['QUERY_STRING'])) {
-		  $log .= '] '.$_SERVER['SCRIPT_FILENAME'].$_SERVER['QUERY_STRING']."\n$msg";
+		  $log .= '] '.$_SERVER['SCRIPT_FILENAME'].'?'.$_SERVER['QUERY_STRING']."\n$msg";
 		}
 		else {
 			$log .= "] $msg";
