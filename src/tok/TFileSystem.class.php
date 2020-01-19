@@ -39,7 +39,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['directory:move'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['directory:create'] = TokPlugin::REQUIRE_BODY;
 	$plugin['directory:exists'] = TokPlugin::REQUIRE_BODY;
-	$plugin['directory:entries'] = TokPlugin::REQUIRE_BODY;
+	$plugin['directory:entries'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['directory:is'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['directory'] = 0;
 	$plugin['file:size'] = TokPlugin::REQUIRE_BODY;
@@ -316,8 +316,11 @@ public function tok_directory_exists(string $param, string $path) : string {
 /**
  * Return directory entries. If $param is file|directory return
  * only files|subdirectories. Return comma separated list.
+ * 
+ * @tok {directory:entries:directory}.{:directory} - subdir,...
+ * @tok {directory:entries:directory}dir=.|#|has_file=info.json{:directory} - subdir,... (if subdir/info.json exists)
  */
-public function tok_directory_entries(string $param, string $path) : string {
+public function tok_directory_entries(string $param, array $p) : string {
 	if ($param == 'file') {
 		$type = 1;
 	}
@@ -331,9 +334,28 @@ public function tok_directory_entries(string $param, string $path) : string {
 		throw new Exception("invalid parameter [$param] use file|directory");
 	}
 
-	$entries = Dir::entries(trim($path), $type);
+	if (!empty($p[0])) {
+		$entries = Dir::entries(trim($path), $type);
+	}
+	else if (!empty($p['dir'])) {
+		$entries = Dir::entries($p['dir'], $type);
+
+		if (!empty($p['has_file'])) {
+			$el = count($entries); 
+
+			for ($i = 0; $i < $el; $i++) {
+				if (!File::exists($entries[$i].'/'.$p['has_file'])) {
+					unset($entries[$i]);
+				}
+			}
+		}
+	}
+	else {
+		throw new Exception('invalid argument', print_r($p, true));
+	}
+
 	sort($entries);
-	return array_join(',', $entries);
+	return join(',', $entries);
 }
 
 
