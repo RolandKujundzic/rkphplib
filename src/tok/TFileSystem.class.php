@@ -318,7 +318,7 @@ public function tok_directory_exists(string $param, string $path) : string {
  * only files|subdirectories. Return comma separated list.
  * 
  * @tok {directory:entries:directory}.{:directory} - subdir,...
- * @tok {directory:entries:directory}dir=.|#|has_file=info.json{:directory} - subdir,... (if subdir/info.json exists)
+ * @tok {directory:entries:directory}dir=.|#|has_file=info.json|#|return_basename=1{:directory} - subdir,... (if subdir/info.json exists)
  */
 public function tok_directory_entries(string $param, array $p) : string {
 	if ($param == 'file') {
@@ -348,10 +348,19 @@ public function tok_directory_entries(string $param, array $p) : string {
 					unset($entries[$i]);
 				}
 			}
+
+			$entries = array_values($entries);
 		}
 	}
 	else {
 		throw new Exception('invalid argument', print_r($p, true));
+	}
+
+	if (!empty($p['return_basename'])) {
+		$el = count($entries); 
+		for ($i = 0; $i < $el; $i++) {
+			$entries[$i] = basename($entries[$i]);
+		}
 	}
 
 	sort($entries);
