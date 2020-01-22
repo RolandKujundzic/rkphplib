@@ -41,7 +41,7 @@ public static $SKIP_UNREADABLE = false;
 /**
  * Return true if directory exists.
  */
-public static function exists(string $path, bool $required = false) : bool {
+public static function exists(?string $path, bool $required = false) : bool {
 	$error = '';
 	$pl = mb_strlen($path);
 
