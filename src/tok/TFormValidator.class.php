@@ -1179,7 +1179,7 @@ protected function parseInName(string $name, string $value, array &$p) : void {
 
 /**
  * Return html input. Use [template.engine].in.input for type=[text|password|radio|checkbox|hidden|image|email|...].
- * Use textarea, select for type=[textarea|select]. Attribute keys: size, maxlength, placeholder, type, class, style, 
+ * Use textarea, select for type=[textarea|select]. Attribute keys: size, maxlength, on*, placeholder, type, class, style, 
  * pattern, rows and cols (add value="{:=value}" if undefined). Boolean attributes: readonly, multiple and disabled 
  * (e.g. readonly=1). Other keys: prefix, suffix.
  */
@@ -1241,6 +1241,13 @@ protected function getInput(string $name, array $ri) : string {
 	// data- attributes
 	foreach ($ri as $key => $value) {
 		if (strpos($key, 'data-') === 0) {
+			$tags .= ' '.$key.'="'.$this->tok->getTag($key).'"';
+		}
+	}
+
+	// on* events
+	foreach ($ri as $key => $value) {
+		if (strpos($key, 'on') === 0) {
 			$tags .= ' '.$key.'="'.$this->tok->getTag($key).'"';
 		}
 	}
