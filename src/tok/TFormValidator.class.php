@@ -1230,8 +1230,8 @@ protected function getInput(string $name, array $ri) : string {
 		}
 	}
 
-	$attributes = [ 'id', 'size', 'maxlength', 'placeholder', 'pattern', 'rows', 'cols', 'style', 'class', 
-		'accept', 'onchange', 'onblur', 'autocomplete' ];
+	$attributes = [ 'id', 'size', 'maxlength', 'placeholder', 'pattern', 'rows', 'cols', 
+		'style', 'class', 'wrap', 'accept', 'onchange', 'onblur', 'autocomplete' ];
 	foreach ($attributes as $key) {
 		if (isset($ri[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
 			$tags .= ' '.$key.'="'.$this->tok->getTag($key).'"';
