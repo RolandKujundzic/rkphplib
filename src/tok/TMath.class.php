@@ -143,6 +143,7 @@ public function tok_floatval($round, $arg) {
  * @tok {rand:8} = aUlPmvei
  * @tok {rand:password} = str_replace(['0', 'O', 'i', 'l', 'o'], ['3', '7', '5', '2', 'e'], {rand:8})
  * @tok {rand:}5|#|10{:rand} = 10
+ * @tok {rand:txt}a|#|b|#|c{:rand} = b (select random from [a,b,c])
  *
  * @param int $param
  * @param vector<int> $p  [min, max ]
@@ -150,19 +151,25 @@ public function tok_floatval($round, $arg) {
 public function tok_rand($param, $p) {
 	$res = '';
 
-	if (empty($arg)) {
+	if (count($p) == 0) {
 		if (empty($param)) {
 			$res = md5(microtime() . rand());
 		}
 		else if ($param == 'password') {
 			$res = str_replace([ '0', 'O', 'i', 'l', 'o' ], [ '3', '7', '5', '2', 'e' ], self::randomString(intval($param)));
 		}
-		else {
-			$res = self::randomString(intval($param));
+		else if (($len = intval($param)) > 0 && $len <= 16384) {
+			$res = self::randomString($len);
 		}
 	}
-	else if (!empty($p['min']) && !empty($p['max'])) {
-		$res = mt_rand($p['min'], $p['max']);
+	else {
+		if ($param == 'txt') {
+			$n = mt_rand(0, count($p) - 1);
+			$res = $p[$n];
+		}
+		else if (count($p) == 2) {
+			$res = mt_rand($p[0], $p[0]);
+		}
 	}
 
 	return $res;
