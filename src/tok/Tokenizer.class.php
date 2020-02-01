@@ -740,8 +740,8 @@ public function getPluginTxt($tok, ?string $arg = null) : string {
 	$name = ''; 
 	$param = '';
 
-	if (is_array($tok) && count($tok) == 2) {
-		list ($name, $param) = $tok;
+	if (is_array($tok)) {
+		list ($name, $param) = (count($tok) >= 2) ? $tok : explode(':', $tok[0]);
 		$tok = $name.$this->rx[2].$param;
 	}
 	else if (mb_strpos($tok, $this->rx[2]) > 0) {
