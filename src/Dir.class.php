@@ -211,7 +211,8 @@ public static function move(string $old_dir, string $new_dir, int $opt = 0) : vo
 
 
 /**
- * Copy directory. Skip unreadable entries.
+ * Copy directory. Skip unreadable entries. Preserve links if sub-path of source_dir is
+ * defined as $link_root (e.g. $link_root = getcwd()).
  */
 public static function copy(string $source_dir, string $target_dir, string $link_root = '') : void {
 
@@ -234,14 +235,20 @@ public static function copy(string $source_dir, string $target_dir, string $link
 		$s = FSEntry::stat($entry);
 
 		if ($s['filetype']['is_link'] && $link_root) {
-			if (mb_strpos(realpath($source_dir), $link_root) === 0 && ($pos = mb_strpos($s['file']['realpath'], $link_root)) === 0) {
-				// link is inside source dir 
-				$link_target = str_replace($link_root.'/', '', $s['file']['realpath']);
-				symlink($link_target, $target_dir.'/'.basename($entry));
+			$link_target = $s['file']['realpath'];
+			$rpsd = realpath($source_dir);
+
+			if (mb_strpos($rpsd, $link_root) === 0 && ($pos = mb_strpos($link_target, $link_root)) === 0) {
+				if (mb_strpos($link_target, $rpsd) === 0) {
+					$link_target = str_replace($rpsd.'/', '', $link_target);
+				}
+				else {
+					$ppath = explode('/', str_replace($link_root.'/', '', $rpsd));
+					$link_target = str_repeat('../', count($ppath)).str_replace($link_root.'/', '', $link_target);
+				}
 			}
-			else {
-				symlink($s['file']['realpath'], $target_dir.'/'.basename($entry));
-			}
+
+			symlink($link_target, $target_dir.'/'.basename($entry));
 
 			continue;
 		}
