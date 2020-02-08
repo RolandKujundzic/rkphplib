@@ -234,7 +234,7 @@ public static function copy(string $source_dir, string $target_dir, string $link
 		$s = FSEntry::stat($entry);
 
 		if ($s['filetype']['is_link'] && $link_root) {
-			if (($pos = mb_strpos($s['file']['realpath'], $link_root)) !== false && $pos == 0) {
+			if (mb_strpos(realpath($source_dir), $link_root) === 0 && ($pos = mb_strpos($s['file']['realpath'], $link_root)) === 0) {
 				// link is inside source dir 
 				$link_target = str_replace($link_root.'/', '', $s['file']['realpath']);
 				symlink($link_target, $target_dir.'/'.basename($entry));
