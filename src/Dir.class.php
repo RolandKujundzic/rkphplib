@@ -248,7 +248,13 @@ public static function copy(string $source_dir, string $target_dir, string $link
 				}
 			}
 
-			symlink($link_target, $target_dir.'/'.basename($entry));
+			$link = $target_dir.'/'.basename($entry);
+			if (is_link($link) && realpath($link_target) == realpath($link)) {
+				// keep existing link ...
+			}
+			else {
+				symlink($link_target, $link);
+			}
 
 			continue;
 		}
