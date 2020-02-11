@@ -32,8 +32,8 @@ if (!defined('PATH_RKPHPLIB')) {
 }
 
 if (!defined('SETTINGS_REQ_CRYPT')) {
-  // @const SETTINGS_REQ_CRYPT = 'cx' if undefined
-  define('SETTINGS_REQ_CRYPT', 'cx');
+  // @const SETTINGS_REQ_CRYPT = '' (''=default|cx)
+  define('SETTINGS_REQ_CRYPT', '');
 }
 
 if (!defined('SETTINGS_CRYPT_SECRET')) {
