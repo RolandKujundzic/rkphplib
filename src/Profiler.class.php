@@ -235,9 +235,38 @@ public static function traceLast() : array {
 
 
 /**
- * Write (print) log.
+ * Return log as json (javascript).
  */
-public function writeLog(string $file = 'php://STDOUT') : void {
+public function log2json(string $js_var = '') : string {
+	$elapsed_time = 0;
+	$json = empty($js_var) ? "[\n" : "<script>\nvar $js_var = [\n";
+
+	for ($i = 0; $i < count($this->_log); $i++) {
+		$log = $this->_log[$i];
+
+		$time = ($log['time'] > 0.01) ? round($log['time'], 2).' s' : round($log['time'] * 1000, 2).' ms';
+		$mem = ($log['memory'] > 1024) ? round($log['memory'] / 1024, 2).' kb' : $log['memory'].' b';
+		$elapsed_time += $log['time'];
+
+		$json .= sprintf("\n\t".'[ "%s", "%s", "%s", "%s", "%s" ],', $time, $mem, $log['message'], $log['file_line'], $log['call']);
+	}
+
+	$minmem = round($this->_xlog['minmem'] / 1024, 2).' kb';
+	$maxmem = round($this->_xlog['maxmem'] / 1024, 2).' kb';
+	$json .= sprintf("\n\t".'[ "%s", "%s", "%s" ]'."\n]", round($elapsed_time, 2).' s', $minmem, $maxmem);
+
+	if ($js_var) {
+		$json .= ";\n</script>";
+	}
+
+	return $json;
+}
+
+
+/**
+ * Write log as tab csv (default: print = write to php://output).
+ */
+public function writeLog(string $file = 'php://output') : void {
 	$fd = fopen($file, 'a');
 	$elapsed_time = 0;
 
