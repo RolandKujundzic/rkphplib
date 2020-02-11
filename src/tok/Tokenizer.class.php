@@ -58,6 +58,9 @@ const VAR_APPEND = 2;
 // @var $last plugin call stack
 public $last = [];
 
+// @var Profiler $prof
+public $prof = null;
+
 // @var map $vmap plugin variable interchange
 private $vmap = [];
 
@@ -92,6 +95,15 @@ public function __construct(int $flag = 16) {
 	}
 
 	$this->_config = $flag;
+}
+
+
+/**
+ * Load Profiler.
+ */
+public function useProfiler() {
+	require_once dirname(__DIR__).'/Profiler.class.php';
+	$this->prof = new \rkphplib\Profiler();
 }
 
 
@@ -407,6 +419,10 @@ public function setPlugin(string $name, TokPlugin $obj) : void {
  * Apply Tokenizer.
  */
 public function toString() : string {
+	if (!is_null($this->prof)) {
+		$this->prof->log('enter Tokenizer::toString');
+	}
+
 	$out = $this->_join_tok(0, count($this->_tok));
 
 	for ($i = 0; $i < count($this->_postprocess); $i++) {
@@ -424,6 +440,11 @@ public function toString() : string {
 		else if (($px[3] & TokPlugin::NO_PARAM) && ($px[3] & TokPlugin::NO_BODY)) {
 			$out = call_user_func($px[0], $out);
 		}
+	}
+
+	if (!is_null($this->prof)) {
+		$this->prof->log('exit Tokenizer::toString');
+		$out = str_replace('</body>', $this->prof->log2json('profiler')."\n</body>", $out);
 	}
 
 	return $out;
