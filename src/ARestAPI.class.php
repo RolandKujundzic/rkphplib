@@ -8,6 +8,8 @@ namespace rkphplib;
 // https://github.com/thephpleague/oauth2-server
 // https://github.com/bshaffer/oauth2-server-php + https://github.com/bshaffer/oauth2-demo-php
 
+require_once __DIR__.'/traits/RestQuery.trait.php';
+require_once __DIR__.'/RestException.class.php';
 require_once __DIR__.'/XML.class.php';
 require_once __DIR__.'/JSON.class.php';
 require_once __DIR__.'/File.class.php';
@@ -19,37 +21,6 @@ require_once __DIR__.'/lib/http_code.php';
 
 use function rkphplib\lib\http_code;
 use function rkphplib\lib\translate;
-
-
-
-/**
- * Custom exception with public properties http_error and internal_message.
- *
- * @author Roland Kujundzic <roland@kujundzic.de>
- *
- */
-class RestServerException extends \Exception {
-
-// @var int $http_error
-public $http_code = 400;
-
-// @var string error $internal_mesage error detail you don't want to expose
-public $internal_message = '';
-
-
-
-/**
- * Class constructor.
- */
-public function __construct(string $message, int $error_no, int $http_error = 400, string $internal_message = '') {
-  parent::__construct($message, $error_no);
-	$this->http_error = $http_error;
-  $this->internal_message = $internal_message;
-}
-
-
-}
-
 
 
 /**
@@ -72,15 +43,7 @@ public function __construct(string $message, int $error_no, int $http_error = 40
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 abstract class ARestAPI {
-
-const ERR_UNKNOWN = 1;
-const ERR_INVALID_API_CALL = 2;
-const ERR_INVALID_ROUTE = 3;
-const ERR_PHP = 4;
-const ERR_CODE = 5;
-const ERR_INVALID_INPUT = 6;
-const ERR_NOT_IMPLEMENTED = 7;
-const ERR_CONFIGURATION = 8;
+use \rkphplib\traits\RestQuery;
 
 // @var map $options
 protected $options = [];
@@ -155,98 +118,6 @@ END;
 
 
 /**
- * Print CORS (allow-all) header.
- * 
- * Access-Control-Allow-Origin: *
- * Access-Control-Allow-Headers: *
- * Access-Control-Allow-Methods: GET,POST,PUT,DELETE (if parameter $methods is empty/not-used)
- * Access-Control-Max-Age: 600
- */
-public static function CorsAllowAll(string $methods = 'GET,POST,PUT,DELETE') : void {
-	header('Access-Control-Allow-Origin: *');
-	header('Access-Control-Allow-Headers: *');
-	header('Access-Control-Allow-Methods: '.$methods);
-	header('Access-Control-Max-Age: 600');  // max. 60 * 10 sec = 10 min cachable
-}
-
-
-/**
- * Parse Content-Type header and set request[input-type], request[method] and request[content-type].
- *
- * input: data, xml, json, urlencoded or multipart
- * mime_type: application/xml|json|octet-stream|x-www-form-urlencoded, [image|text|video|audio/]*
- */
-public static function parseHeader(array &$request) : void {
-	$method = empty($_SERVER['REQUEST_METHOD']) ? 'get' : $_SERVER['REQUEST_METHOD'];
-
-	if (!empty($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
-		$method = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
-	}
-	else if (!empty($_SERVER['HTTP_X_HTTP_METHOD'])) {
-		$method = $_SERVER['HTTP_X_HTTP_METHOD'];
-	}
-
-	if (empty($method)) {
-		throw new RestServerException('empty method', self::ERR_INVALID_INPUT, 400);
-	}
-
-	$request['method'] = strtolower($method);
-
-	if (empty($_SERVER['CONTENT_TYPE'])) {
-		$request['content-type'] = '';
-		$request['input-type'] = '';
-		return;
-	}
-
-	$type = mb_strtolower($_SERVER['CONTENT_TYPE']);
-	$input = null;
-
-	if (mb_strpos($type, 'image/') !== false) {
-		$type = 'image/*';
-		$input = 'data';
-	}
-	else if (mb_strpos($type, 'text/') !== false) {
-		$type = 'text/*';
-		$input = 'data';
-	}
-	else if (mb_strpos($type, 'video/') !== false) {
-		$type = 'video/*';
-		$input = 'data';
-	}
-	else if (mb_strpos($type, 'audio/') !== false) {
-		$type = 'audio/*';
-		$input = 'data';
-	}
-	else if (mb_strpos($type, 'application/octet-stream') !== false) {
-		$type = 'application/octet-stream';
-		$input = 'data';
-	}
-	else if (mb_strpos($type, 'application/xml') !== false) {
-		$type = 'application/xml';
-		$input = 'xml';
-	}
-	else if (mb_strpos($type, 'application/json') !== false) {
-		$type = 'application/json';
-		$input = 'json';
-	}
-	else if (mb_strpos($type, 'application/x-www-form-urlencoded') !== false) {
-		$type = 'application/x-www-form-urlencoded';
-		$input = 'urlencoded';
-	}
-	else if (mb_strpos($type, 'multipart/form-data') !== false) {
-		$type = 'multipart/form-data';
-		$input = 'multipart';
-	}
-	else {
-		throw new RestServerException('unknown content-type', self::ERR_INVALID_INPUT, 400, "type=$type");
-	}
-
-	$request['content-type'] = $type;
-	$request['input-type'] = $input;
-}
-
-
-/**
  * Catch all php errors. Activated in constructor: set_error_handler([$this, 'errorHandler']);
  * Exit with 500:ERR_PHP.
  */
@@ -258,7 +129,7 @@ public function errorHandler(int $errNo, string $errStr, string $errFile, int $e
   }
 
 	$result = [ 'error' => "PHP ERROR [$errNo] $errStr", 
-		'error_code' => self::ERR_PHP, 
+		'error_code' => RestException::ERR_PHP, 
 		'error_info' => "file=$errFile line=$errLine",
 		'api_call' => $this->request['api_call']
 	];
@@ -294,6 +165,7 @@ public function exceptionHandler(\Exception $e) : void {
  * - allow_api_call = [], e.g. [ getToken ] = allow GET /token without valid token
  * - allow_method = [ put, get, post, delete, patch, head, options ]
  * - force_basic_auth = true
+ * - require_auth = true
  * - xml_root: XML Root node of api result (default = '<api></api>')
  * - allow_auth = [ header, request, basic_auth, oauth2 ]
  * - log_dir = '' (if set save requests to this directory) 
@@ -316,6 +188,7 @@ public function __construct(array $options = []) {
 	$this->options['log_dir'] = '';
 	$this->options['auth_query'] = "SELECT * FROM api_user WHERE token='{:=token}' AND valid > NOW() AND status=1";
 	$this->options['force_basic_auth'] = true;
+	$this->options['require_auth'] = true;
 	$this->options['internal_error'] = false;
 
 	$this->options = array_merge($this->options, $options);
@@ -323,137 +196,18 @@ public function __construct(array $options = []) {
 	if (!empty($this->options['log_dir'])) {
 		$log_dir = $this->options['log_dir'].'/'.date('Ym').'/'.date('dH');
 		Dir::create($log_dir, 0, true);
-		$unique_id = sprintf("%08x", abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME_FLOAT'] . $_SERVER['REMOTE_PORT'])));
+		if (php_sapi_name() == 'cli') {
+			$unique_id = sprintf("%08x", abs(crc32($_SERVER['USERNAME'] . $_SERVER['REQUEST_TIME_FLOAT'] . $_SERVER['SESSION_MANAGER'])));
+		}
+		else {
+			$unique_id = sprintf("%08x", abs(crc32($_SERVER['REMOTE_ADDR'] . $_SERVER['REQUEST_TIME_FLOAT'] . $_SERVER['REMOTE_PORT'])));
+		}
+
 		$this->options['log_prefix'] = $log_dir.'/api_'.date('is').'_'.$unique_id;
 	}
 
 	set_error_handler([$this, 'errorHandler']);
 	set_exception_handler([$this, 'exceptionHandler']);
-}
-
-
-/** 
- * Check authentication token, set request[auth] and request[token] accordingly:
- *
- * 	- _GET|_POST[token|api_token] (auth=request)
- *  - _SERVER[HTTP_X_AUTH_TOKEN] (auth=header)
- *  - basic authentication, token = $_SERVER[PHP_AUTH_USER]:$_SERVER[PHP_AUTH_PW] (auth=basic_auth)
- *  - OAuth2 Token = Authorization header (auth=oauth2)
- * 
- * Default options.allow_auth is [ header, request, oauth2, basic_auth ].
- * 
- * @exit If no credentials are passed basic_auth is allowed and required exit with "401 - basic auth required"
- */
-private function checkApiToken() : void {
-	$allow_basic_auth = in_array('basic_auth', $this->options['allow_auth']);
-
-	if (in_array('request', $this->options['allow_auth'])) {
-		$token_keys = [ 'token', 'api_token' ];
-
-		foreach ($token_keys as $key) {
-			if (!empty($_REQUEST[$key])) {
-				$this->request['token'] = $_REQUEST[$key];
-				$this->request['auth'] = 'request';
-				return;
-			}
-		}
-	}
-
-	if (!empty($_SERVER['HTTP_X_AUTH_TOKEN']) && in_array('header', $this->options['allow_auth'])) {
-		$this->request['token'] = $_SERVER['HTTP_X_AUTH_TOKEN'];
-		$this->request['auth'] = 'header';
-	}
-	else if (!empty($_SERVER['AUTHORIZATION']) && in_array('oauth2', $this->options['allow_auth'])) {
-		$this->request['token'] = $_SERVER['HTTP_AUTHORIZATION'];
-		$this->request['auth'] = 'oauth2';
-	}
-	else if (!empty($_SERVER['PHP_AUTH_USER']) && !empty($_SERVER['PHP_AUTH_PW']) && $allow_basic_auth) {
-		$this->request['token'] = $_SERVER['PHP_AUTH_USER'].':'.$_SERVER['PHP_AUTH_PW'];
-		$this->request['auth'] = 'basic_auth';
-	}
-	else if ($this->options['force_basic_auth'] && $allow_basic_auth) {
-		header('WWW-Authenticate: Basic realm="REST API"');
-		header('HTTP/1.0 401 Unauthorized');
-		print translate('Please enter REST API basic authentication credentials');
-		$this->logRequest((string)401);
-		exit;
-	}
-}
-
-
-/**
- * Parse _GET, _POST and php://input (= Input) depending on (Content-Type header and Accept option).
- *
- * Content-type: application/xml = XML decode Input
- * Content-type: application/json = JSON decode Input
- * Content-type: application/x-www-form-urlencoded = Input is Query-String
- *
- * Request_Method: GET = use $_GET
- * Request_Method: POST(, PUT, DELETE, PATCH, HEAD, OPTIONS) = use $_POST
- *
- * Set this.request keys: ip, data, map, content-type and input-type
- */
-public static function parse(array &$request) : void {
-
-	$request['timestamp'] = date('Y-m-d H:i:s').':'.substr(microtime(), 2, 3);
-	$request['port'] = empty($_SERVER['REMOTE_PORT']) ? '' : $_SERVER['REMOTE_PORT'];
-	$request['ip'] = empty($_SERVER['REMOTE_ADDR']) ? '' : $_SERVER['REMOTE_ADDR'];
-	$request['data'] = null;
-	$request['map'] = [];
-
-	if (($input = file_get_contents('php://input'))) {
-		if (empty($request['input-type'])) {
-			throw new RestServerException('input-type missing call parseHeader first', self::ERR_NOT_IMPLEMENTED, 501);
-		}
-
-		if ($request['input-type'] == 'data') {
-			$request['data'] = $input;
-		}
-		else if ($request['input-type'] == 'xml') {
-			$request['map'] = XML::toMap($input);
-		}
-		else if ($request['input-type'] == 'json') {
-			$request['map'] = JSON::decode($input);
-		}
-		else if ($request['input-type'] == 'urlencoded') {
-			mb_parse_str($input, $request['map']);
-		}
-		else if ($request['input-type'] == 'multipart') {
-			throw new RestServerException('ToDo: parse multipart/form-data input', self::ERR_NOT_IMPLEMENTED, 501);
-		}
-		else {
-			throw new RestServerException('unknown input type', self::ERR_NOT_IMPLEMENTED, 501, 
-				"content=".$request['content-type']." input=".$request['input-type']);
-		}
-	}
-
-	if ($request['content-type'] == 'multipart/form-data' && count($_FILES) > 0) {
-		$request['map'] = array_merge($_POST, $_FILES);
-	}
-	else if ($request['content-type'] == 'application/x-www-form-urlencoded') {
-		if ($request['method'] == 'get') {
-			$request['map'] = array_merge($GET);
-		}
-		else {
-			$request['map'] = array_merge($request['map'], $_POST);
-
-			if (count($_GET) > 0) {
-				// always use query parameter - but prefer map parameter
-				$request['map'] = array_merge($_GET, $request['map']);
-			}
-		}
-	}
-	else {
-		if (count($_GET) > 0) {
-			// always use query parameter - but prefer map parameter
-			$request['map'] = array_merge($_GET, $request['map']);
-		}
-
-		if ($request['method'] != 'get' && count($_POST) > 0) {
-			// always use post data unless method is GET - but prefer map parameter
-			$request['map'] = array_merge($_POST, $request['map']);
-		}
-	}
 }
 
 
@@ -551,7 +305,7 @@ public function out(array $o, int $code = 200) : void {
 		$header['@output'] = JSON::encode($o);
 	}
 
-	$this->logResult($code, $o, $output);
+	$this->logResult($code, $o);
 	http_code($code, $header);
 }
 
@@ -594,31 +348,11 @@ protected function logRequest(string $stage) : void {
 
 
 /**
- * Set request.method (as lowerstring), request.content-type and request.input-type.
- * Overwrite method with header "X-HTTP-METHOD[-OVERRIDE]".
- */
-private function checkMethodContent() : void {
-	self::parseHeader($this->request); 
-
-	if (!in_array($this->request['method'], $this->options['allow_method'])) {
-		throw new RestServerException('invalid method', self::ERR_INVALID_INPUT, 400, 'method='.$this->request['method'].
-			' allowed='.join(', ', $this->options['allow_method']));
-	}
-
-	if (!empty($this->request['content-type']) && !in_array($this->request['content-type'], $this->options['accept'])) {
-		throw new RestServerException('invalid content-type', self::ERR_INVALID_INPUT, 400, 
-			'type='.$this->request['content-type'].' allowed='.join(', ', $this->options['accept']));
-	}
-}
-
-
-/**
  * Read api request. Use options.log_dir to save parsed input.
  * Use this.request to retrieve input (information). 
  */
 public function readInput() : void {
-	$this->checkMethodContent();
-	$this->checkApiToken(); 
+	self::parseHeader($this->request, $this->options);
 	self::parse($this->request);
 
 	if (!empty($this->options['base64_scan']) && empty($this->options['log_dir'])) {
@@ -630,34 +364,18 @@ public function readInput() : void {
 	}
 
 	$this->route();
+print "<pre>request: ".print_r($this->request, true)."</pre>";
 
 	$this->logRequest('in');
 }
 
 
 /**
- * Decode and save base64 data. Change value into file path.
- */
-public static function saveBase64(array &$map, string $save_dir) : void {
-	Dir::create($save_dir, 0, true);
-
-	foreach ($map as $key => $value) {
-  	if (is_string($value) && strlen($value) > 21 && preg_match('/^data\:image\/([a-z0-9]+);base64,/', $value, $match)) {
-			$suffix = ($match[1] == 'jpeg') ? '.jpg' : '.'.$match[1];
-			$skip = strlen($match[1]) + 19;
-			File::save($save_dir.'/'.$key.$suffix, base64_decode(substr($value, $skip)));
-			$map[$key] = $save_dir.'/'.$key.$suffix;
-		}
-  }
-}
-
-
-/**
- * Map cli input to request. Parameter are --name=value (default: --http-method=get). First parameter is path.
+ * Map cli input to request. Parameter are --name=value (default: --req-method=get). First parameter is path.
  */
 protected function cliInput() : void {
 	if (!in_array('cli', $this->options['allow_method'])) {
-		throw new RestServerException('cli is not allowed', self::ERR_INVALID_INPUT, 400);
+		throw new RestException('cli is not allowed', RestException::ERR_INVALID_INPUT, 400);
 	}
 
 	foreach ($_SERVER['argv'] as $parameter) {
@@ -667,12 +385,12 @@ protected function cliInput() : void {
 		}
 	}
 
-	if (empty($_REQUEST['--http-method'])) {
+	if (empty($_REQUEST['--req-method'])) {
 		$_SERVER['REQUEST_METHOD'] = 'get';
 	}
 	else {
-		$_SERVER['REQUEST_METHOD'] = $_REQUEST['--http-method'];
-		unset($_REQUEST['--http-method']);
+		$_SERVER['REQUEST_METHOD'] = $_REQUEST['--req-method'];
+		unset($_REQUEST['--req-method']);
 	}
 }
 
@@ -701,7 +419,7 @@ public function run() : void {
 	$this->readInput();
 
 	if (empty($this->request['api_call'])) {
-		throw new RestServerException('invalid route', self::ERR_INVALID_INPUT, 400, 
+		throw new RestException('invalid route', RestException::ERR_INVALID_INPUT, 400, 
 			"url=".$this->request['path']." method=".$this->request['method']);
 	}
  
@@ -782,7 +500,7 @@ protected function prepareApiCall() : void {
 /**
  * Overwrite for api logging. Call Exception::httpError($code) if $code >= 400.
  */
-protected function logResult(int $code, array $p, string $out) : void {
+protected function logResult(int $code, array $p) : void {
 
 	$this->logRequest((string)$code);
 
@@ -809,7 +527,7 @@ protected function checkRequest() : void {
 	if (isset($this->user['config']['required']) && is_array($this->user['config']['required'])) {
 		foreach ($this->user['config']['required'] as $key) {
 			if (empty($this->request['map'][$key])) {
-      	throw new RestServerException('missing required parameter '.$key, self::ERR_INVALID_INPUT, 403, 'parameter='.$key);
+      	throw new RestException('missing required parameter '.$key, RestException::ERR_INVALID_INPUT, 403, 'parameter='.$key);
 			}
 		}
 	}
@@ -817,7 +535,7 @@ protected function checkRequest() : void {
 	if (isset($this->user['config']['check']) && is_array($this->user['config']['check'])) {
 		foreach ($this->user['config']['check'] as $key => $check) {
 			if (!ValueCheck::run($key, [ $this, 'get' ], $check)) {
-				throw new RestServerException("parameter $key check failed", self::ERR_INVALID_INPUT, 403, "$key=$check");
+				throw new RestException("parameter $key check failed", RestException::ERR_INVALID_INPUT, 403, "$key=$check");
 			}
 		}
 	}
@@ -831,7 +549,7 @@ protected function checkRequest() : void {
 protected function setUser() : void {
 
 	if (!isset($this->config['default']) || !is_array($this->config['default']) || !is_array($this->config['default']['allow'])) {
-		throw new RestServerException('config.default missing or invalid', self::ERR_CODE, 501);
+		throw new RestException('config.default missing or invalid', RestException::ERR_CODE, 501);
 	}
 
 	$token = $this->request['token'];
@@ -844,14 +562,14 @@ protected function setUser() : void {
 			return;
 		}
 		else {
-			throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 401);
+			throw new RestException('invalid api token', RestException::ERR_INVALID_INPUT, 401);
 		}
 	}
 	else if (!empty($this->options['auth_query'])) {
 		$db = Database::getInstance(SETTINGS_DSN, [ 'check_token' => $this->options['auth_query'] ]);
 		$dbres = $db->select($db->getQuery('check_token', $this->request));
 		if (count($dbres) != 1) {
-			throw new RestServerException('invalid api token', self::ERR_INVALID_INPUT, 401);
+			throw new RestException('invalid api token', RestException::ERR_INVALID_INPUT, 401);
 		}
 
 		$user = $dbres[0];
@@ -865,7 +583,7 @@ protected function setUser() : void {
 		$this->config[$token]['allow'] : $this->config['default']['allow'];
 
 	if (!in_array($api_call, $allow)) {
-		throw new RestServerException('forbidden', self::ERR_INVALID_API_CALL, 403);
+		throw new RestException('forbidden', RestException::ERR_INVALID_API_CALL, 403);
 	}
 
 	$this->user = $user;
@@ -890,7 +608,7 @@ protected function setUserConfig() : void {
 	$api_call = $this->request['api_call'];
 
 	if (!isset($this->config['default'][$api_call])) {
-		throw new RestServerException('missing config.default.'.$api_call, self::ERR_INVALID_API_CALL, 501);
+		throw new RestException('missing config.default.'.$api_call, RestException::ERR_INVALID_API_CALL, 501);
 	}
 
 	$this->user['config'] = $this->config['default'][$api_call];
