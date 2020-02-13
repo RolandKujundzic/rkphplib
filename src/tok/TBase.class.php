@@ -28,6 +28,10 @@ use function rkphplib\lib\kv2conf;
 use function rkphplib\lib\entity;
 
 
+if (php_sapi_name() == 'cli' && !defined('SETTINGS_CLI_INPUT')) {
+	require_once $parent_dir.'/lib/cli_input.php';
+	\rkphplib\lib\cli_input();
+}
 
 if (!defined('PATH_RKPHPLIB')) {
 	define('PATH_RKPHPLIB', $parent_dir.'/');
