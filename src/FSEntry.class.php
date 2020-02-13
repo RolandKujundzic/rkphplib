@@ -233,10 +233,11 @@ public static function isFile(string $path, bool $abort = true, bool $is_readabl
 
 
 /**
- * Throw exception if prefix (default = DOCROOT) is not in path. 
+ * Throw exception if prefix (default = DOCROOT) is not in path.
+ * Throw exception if filename is not in allowed suffix list (if $allow_suffix != [] = default).
  * Return (real)path.
  */
-public static function checkPath(string $path, string $prefix = '') : string {
+public static function checkPath(string $path, string $prefix = '', array $allow_suffix = []) : string {
 	if (empty($prefix)) {
 		if (!defined('DOCROOT')) {
 			throw new Exception('DOCROOT is undefined');
@@ -263,6 +264,16 @@ public static function checkPath(string $path, string $prefix = '') : string {
 
 	if (empty($real_path)) {
 		$real_path = $path;
+	}
+
+	$suffix_ok = count($allow_suffix) > 0 ? false : true;
+
+	for ($i = 0; !$suffix_ok && $i < count($allow_suffix); $i++) {
+		$suffix_ok = mb_substr($real_path, -1 *  mb_strlen($allow_suffix[$i])) === $allow_suffix[$i];
+	}
+
+	if (!$suffix_ok) {
+		throw new Exception('invalid suffix', $real_path.' suffix not in '.join('|', $allow_suffix));
 	}
 
 	return $real_path;
