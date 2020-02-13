@@ -13,12 +13,14 @@ require_once $parent_dir.'/lib/redirect.php';
 require_once $parent_dir.'/lib/conf2kv.php';
 require_once $parent_dir.'/lib/kv2conf.php';
 require_once $parent_dir.'/lib/entity.php';
+require_once $parent_dir.'/lib/array_join.php';
 
 use rkphplib\Exception;
 use rkphplib\File;
 use rkphplib\JSON;
 
 use function rkphplib\lib\htmlescape;
+use function rkphplib\lib\array_join;
 use function rkphplib\lib\split_str;
 use function rkphplib\lib\redirect;
 use function rkphplib\lib\conf2kv;
@@ -1235,8 +1237,8 @@ public function tok_if(string $param, array $p) : string {
 		$set = split_str(',', $param);
 		$res = in_array($p[0], $set) ? $p[1] : $p[2];
 	}
-	else if ($do === 'if_in_set') {
-		$set = split_str(',', $param);
+	else if ($do === 'in_set') {
+		$set = split_str(',', $p[0]);
 		$res = in_array($param, $set) ? $p[1] : $p[2];
 	}
 	else if ($do === 'le' || $do === 'lt' || $do === 'ge' || $do === 'gt') {
@@ -1588,6 +1590,7 @@ public function tok_const(string $param, ?string $arg) : string {
  *
  * @tok {get:a}, _REQUEST['a'] = 7: 7
  * @tok {get:a}, _REQUEST['a'] = '-{x:}-': -&#123;x&#58;&#125;-
+ * @tok {get:a}, _REQUEST['a'] = [ 'x', 'y' ]: x,y
  * @tok {get:a}, !isset(_REQUEST['a']) && _FILES['a']['name'] = test.jpg: test.jpg
  * @tok {get:a.x}, _REQUEST['a'] = [ 'x' => 5, 'y' => 10 ]: 5
  * @tok {get:a}, _REQUEST['a'] = [ 3 ]: 3
@@ -1602,13 +1605,11 @@ public function tok_get(string $param, ?string $arg) : string {
 
 	if (substr($key, -1) == '?') {
 		$key = substr($key, 0, -1);
-		$res = (!isset($_REQUEST[$key]) || strlen($_REQUEST[$key]) == 0) ? '0' : '1';
+		$res = (!isset($_REQUEST[$key]) || is_array($_REQUEST[$key]) || strlen($_REQUEST[$key]) == 0) ? '0' : '1';
 	}
 	else if (isset($_REQUEST[$key])) {
 		if (is_array($_REQUEST[$key])) {
-			if (count($_REQUEST[$key]) === 1 && isset($_REQUEST[$key][0])) {
-				$res = $_REQUEST[$key];
-			}
+			$res = array_join(',', $_REQUEST[$key]);
 		}
 		else {
 			$res = $_REQUEST[$key];
@@ -1650,6 +1651,10 @@ public function tok_get(string $param, ?string $arg) : string {
 	}
 	else if (is_array($res)) {
 		foreach ($res as $key => $value) {
+			if (is_array($value)) {
+				$value = array_join(',', $value);
+			}
+
 			$res[$key] = $this->applyFilter('get', $value);
 		}
 
