@@ -58,6 +58,17 @@ protected $user = [];
 protected $config = [];
 
 
+/**
+ * @see RestQuery->askBasicAuth
+ */
+private function askBasicAuth() : void {
+	header('WWW-Authenticate: Basic realm="REST API"');
+	header('HTTP/1.0 401 Unauthorized');
+	print translate('Please enter REST API basic authentication credentials');
+	$this->logRequest((string)401);
+	exit;
+}
+
 
 /**
  * Use php buildin webserver as API server. Return routing script source.

@@ -7,12 +7,9 @@ require_once $parent_dir.'/RestException.class.php';
 require_once $parent_dir.'/File.class.php';
 require_once $parent_dir.'/XML.class.php';
 require_once $parent_dir.'/JSON.class.php';
-require_once $parent_dir.'/lib/translate.php';
 
 use rkphplib\RestException;
 use rkphplib\File;
-
-use function rkphplib\lib\translate;
 
 
 /**
@@ -180,9 +177,8 @@ public static function getTokenAndAuth(array $allow_auth) : array {
 
 /**
  * Set $request[method|content-type|input-type|token|auth].
- * If $options[force_basic_auth] is true and token was not determined exit with basic auth query.
+ * If $options[force_basic_auth] is true and token was not determined call askBasicAuth (overwrite if necessary).
  *
- * @exit 401 - basic auth required
  * @see getMethod
  * @see getContentType
  * @see getInputType
@@ -198,10 +194,10 @@ public static function parseHeader(array &$request, array $options = [
 	$request['method'] = self::getMethod();
 
 	if (empty($request['method'])) {
-		throw new RestException('empty method', 'INVALID_INPUT', 400);
+		throw new RestException('empty method', RestException::ERR_INVALID_INPUT, 400);
 	}
 	else if (!in_array($request['method'], $options['allow_method'])) {
-		throw new RestException('invalid method', 'INVALID_INPUT', 400,
+		throw new RestException('invalid method', RestException::ERR_INVALID_INPUT, 400,
 			'method='.$request['method'].' allowed='.join(', ', $options['allow_method']));
 	}
 
@@ -209,27 +205,33 @@ public static function parseHeader(array &$request, array $options = [
 	$request['input-type'] = self::getInputType($request['content-type']);
 
 	if (empty($request['content-type']) || empty($request['input-type']) || $request['content-type'] == $request['input-type']) {
-		throw new RestException('unknown content-type', 'INVALID_INPUT', 400, $request['content-type']);
+		throw new RestException('unknown content-type', RestException::ERR_INVALID_INPUT, 400, $request['content-type']);
 	}
 
 	if (!in_array($request['content-type'], $options['accept'])) {
-		throw new RestException('invalid content-type', 'INVALID_INPUT', 400, 
+		throw new RestException('invalid content-type', RestException::ERR_INVALID_INPUT, 400, 
 			'content-type='.$request['content-type'].' allowed='.join(', ', $options['accept']));
 	}
 
 	list ($request['token'], $request['auth']) = self::getTokenAndAuth($options['allow_auth']);
 
 	if (empty($request['token']) && $options['force_basic_auth'] && in_array('basic_auth', $options['allow_auth'])) {
-		header('WWW-Authenticate: Basic realm="REST API"');
-		header('HTTP/1.0 401 Unauthorized');
-		print translate('Please enter REST API basic authentication credentials');
-		$this->logRequest((string)401);
-		exit;
+		$this->askBasicAuth();
 	}
 
 	if (empty($request['token']) && $options['require_auth']) {
-		throw new RestException('invalid authentication', 'INVALID_INPUT', 400, 'allow_auth='.join(', ', $options['allow_auth']));
+		throw new RestException('invalid authentication', RestException::ERR_INVALID_INPUT, 400, 'allow_auth='.join(', ', $options['allow_auth']));
 	}
+}
+
+
+/**
+ * Send basic auth request to browser. Overwrite this if necessary otherwise RestException::ERR_NOT_IMPLEMENTED is thrown.
+ *
+ * @exit 401 - basic auth required
+ */
+private function askBasicAuth() : void {
+	throw new RestException('invalid authentication', RestException::ERR_NOT_IMPLEMENTED, 501, 'overwrite RestQuery->askBasicAuth()');
 }
 
 
@@ -255,7 +257,7 @@ public static function parse(array &$request) : void {
 
 	if (($input = file_get_contents('php://input'))) {
 		if (empty($request['input-type'])) {
-			throw new RestException('input-type missing call parseHeader first', 'NOT_IMPLEMENTED', 501);
+			throw new RestException('input-type missing call parseHeader first', RestException::ERR_NOT_IMPLEMENTED, 501);
 		}
 
 		if ($request['input-type'] == 'data') {
@@ -271,10 +273,10 @@ public static function parse(array &$request) : void {
 			mb_parse_str($input, $request['map']);
 		}
 		else if ($request['input-type'] == 'multipart') {
-			throw new RestException('ToDo: parse multipart/form-data input', 'NOT_IMPLEMENTED', 501);
+			throw new RestException('ToDo: parse multipart/form-data input', RestException::ERR_NOT_IMPLEMENTED, 501);
 		}
 		else {
-			throw new RestException('unknown input type', 'NOT_IMPLEMENTED', 501, 
+			throw new RestException('unknown input type', RestException::ERR_NOT_IMPLEMENTED, 501, 
 				"content=".$request['content-type']." input=".$request['input-type']);
 		}
 	}
