@@ -1219,6 +1219,7 @@ private function tryPluginMap(string $name) : void {
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval' ],
 		'TFileSystem' => [ 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'directory', 'file:size', 'file:copy', 'file:exists', 'csv_file:conf', 'csv_file:append', 'csv_file:open', 'csv_file:close', 'csv_file', 'file', 'dirname', 'basename' ],
 		'TFormValidator' => [ 'fv', 'fv:init', 'fv:conf', 'fv:get', 'fv:get_conf', 'fv:check', 'fv:in', 'fv:tpl', 'fv:hidden', 'fv:preset', 'fv:error', 'fv:appendjs', 'fv:error_message', 'fv:emsg', 'fv:set_error_message' ],
+		'THighlight' => [ 'source:php', 'source:html' ],
 		'THtml' => [ 'html:tag', 'html:inner', 'html:append', 'html:meta', 'html:meta_og', 'html:tidy', 'html:xml', 'html:uglify', 'html', 'text2html', 'input:checkbox', 'input:radio', 'input', 'user_agent' ],
 		'THttp' => [ 'http:get', 'http', 'domain:idn', 'domain:utf8', 'domain' ],
 		'TJob' => [ 'job' ],
