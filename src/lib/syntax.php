@@ -4,7 +4,7 @@ namespace rkphplib\lib;
 
 
 /**
- * Abort with syntax error if count($argv_example) != count($_SERVER['argv'] or if 
+ * Abort with syntax error if count($argv_example) != count($_SERVER['argv']) or if 
  * argv_example check failed. Exit with syntax message if $_SERVER['argv'][1] == '?' or 'help'.
  * Show APP_DESC if defined. Use APP instead of $_SERVER['argv'][0] if defined. 
  * Use '@file:path/to/file' to enable file exists check for parameter.
