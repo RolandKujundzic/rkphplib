@@ -208,6 +208,10 @@ public static function loadCSV(string $file, string $delimiter = ',', string $qu
 	$fh = File::open($file, 'rb');
 	$table = [];
 
+	if ($delimiter == '\t') {
+		$delimiter = "\t";
+	}
+
 	$callback = (!is_bool($trim) && is_callable($trim)) ? $trim : null;
 
 	while (($row = File::readCSV($fh, $delimiter, $quote))) {
