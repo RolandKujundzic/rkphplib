@@ -97,6 +97,10 @@ public static function url($url) : string {
 		$res = trim($url);
 	} 
 	
+	if (strpos($res, '%') !== false) {
+		throw new Exception('string is urlencoded', $res);
+	}
+
 	$res = str_replace([ " ", "\t", "\r", "\n" ], '-', $res);
 	$res = str_replace([ 'ö', 'ä', 'ü', 'ß', 'Ä', 'Ö', 'Ü', '/' ], [ 'oe', 'ae', 'ue', 'ss', 'Ae', 'Oe', 'Ue', '-' ], $res);
 	$res = preg_replace('/[^a-zA-Z0-9_,\.\-]/', '', $res);
