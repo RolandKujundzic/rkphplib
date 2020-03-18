@@ -873,22 +873,32 @@ public static function readLine($fh) {
 
 /**
  * Save data as json in file. If json conversion fails, save
- * print_r(data, true) as $base.dump and serialized version
- * as $base.ser. Return true if successfull.
+ * print_r(data, true) as .$base.dump and (if $flag & 2 serialized version 
+ * as $base.ser). Return false instead of Exception if $flag & 1.
  */
-public static function saveJSON(string $file, $data) : bool {
+public static function saveJSON(string $file, $data, int $flag = 0) : bool {
   $json = json_encode($data, 448);
 
   if (($err_no = json_last_error()) || strlen($json) == 0) {
 		$base = dirname($file).'/'.File::basename($file, true);				
-		File::save($base.'.dump', print_r($data, true));
-		File::save($base.'.ser', serialize($data));
-		return false;
+		File::save(".$base.dump", print_r($data, true));
+
+		if ($flag & 2 == 2) {
+			File::save($base.'.ser', serialize($data));
+		}
+
+		if ($flag & 1 == 1) { 
+			return false;
+		}
+		else {
+			throw new Exception('invalid json', "save_as=$file see: .$base.dump");
+		}
 	}
 	else {
 		File::save($file, $json);
-		return true;
 	}
+
+	return true;
 }
 
 
