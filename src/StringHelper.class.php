@@ -65,7 +65,7 @@ public static function removeHtmlWhiteSpace(string $html) : string {
  * <a href="..." class="..."><i class="..."></i> Text</a> = <a><i></i> Text</a>
  */
 public static function removeHtmlAttributes(string $html) : string {
-	return preg_replace('/<([a-zA-Z]+).*?>/', '<\1>', $html);
+	return preg_replace('/'.chr(60).'([a-zA-Z]+).*?'.chr(62).'/', '<\1>', $html);
 }
 
 
@@ -82,6 +82,7 @@ public static function removeHtmlTags(string $html, string $allow = '') : string
 /**
  * Convert string or array to url string. Join $url array with '-'. Apply strtolower.
  * Replace umlaute (Ä = Ae) and slash (/ = -). Remove special character ([^a-zA-Z0-9_,\.\-]).
+ * Keep / and abort if % is found.
  *
  * @param string|array $url
  */
@@ -102,8 +103,8 @@ public static function url($url) : string {
 	}
 
 	$res = str_replace([ " ", "\t", "\r", "\n" ], '-', $res);
-	$res = str_replace([ 'ö', 'ä', 'ü', 'ß', 'Ä', 'Ö', 'Ü', '/' ], [ 'oe', 'ae', 'ue', 'ss', 'Ae', 'Oe', 'Ue', '-' ], $res);
-	$res = preg_replace('/[^a-zA-Z0-9_,\.\-]/', '', $res);
+	$res = str_replace([ 'ö', 'ä', 'ü', 'ß', 'Ä', 'Ö', 'Ü' ], [ 'oe', 'ae', 'ue', 'ss', 'Ae', 'Oe', 'Ue' ], $res);
+	$res = preg_replace('/[^a-zA-Z0-9_,\.\-\/]/', '', $res);
 	$res = preg_replace('/\-+/', '-', $res);
 	return strtolower($res);
 }
