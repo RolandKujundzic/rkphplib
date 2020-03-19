@@ -24,7 +24,7 @@ function syntax(array $argv_example = [], string $desc = '') : bool {
 	}
 
 	if (!defined('APP_HELP') && (empty($_SERVER['argv'][0]) || php_sapi_name() !== 'cli')) {
-		print "\nERROR: run as cli\n\n\n";
+		fwrite(STDERR, "\nERROR: run as cli\n\n\n");
 		exit(1);
 	}
 
@@ -125,7 +125,7 @@ function syntax(array $argv_example = [], string $desc = '') : bool {
 
 	if (defined('APP_HELP')) {
 		if (APP_HELP != 'quiet') {
-			print "\nSYNTAX: $app ".join(' ', $argv_example)."\n$app_desc\n\n";
+			fwrite(STDERR, "\nSYNTAX: $app ".join(' ', $argv_example)."\n$app_desc\n\n");
 		}
 
 		$res = false;
@@ -135,7 +135,7 @@ function syntax(array $argv_example = [], string $desc = '') : bool {
 		exit(0);
 	}
 	else if ($is_error || ($arg_num > 0 && $arg_num != count($_SERVER['argv']))) {
-		print "\nSYNTAX: $app ".join(' ', $argv_example)."\n$app_desc\n$error_msg\n";
+		fwrite(STDERR, "\nSYNTAX: $app ".join(' ', $argv_example)."\n$app_desc\n$error_msg\n");
 		exit(1);
 	}
 
