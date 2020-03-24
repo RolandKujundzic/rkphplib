@@ -1519,10 +1519,11 @@ public function tok_esc(string $param, ?string $arg) : ?string {
 
 /**
  * Set _REQUEST[$name] = $value if empty (use trailing ! for unset).
- *
+ * 
  * @tok {set_default:id!}value{:set_default} - abort if _REQUEST['id'] is set
  * @tok {set_default:key}value{:set_default}
  * @tok {set_default:}key=value|#|...{:set_default}
+ * @tok {set_default:list[]}a,b,c{:set_default}
  */
 public function tok_set_default(string $name, string $value) : void {
 
@@ -1544,6 +1545,16 @@ public function tok_set_default(string $name, string $value) : void {
 				$_REQUEST[$key] = $value;
 			}
 		}
+	}
+	else if (substr($name, -2) == '[]') {
+		$name = substr($name, 0, -2);
+		if (!isset($_REQUEST[$name])) {
+			$_REQUEST[$name] = [];
+		}
+	
+		if (!in_array($value, $_REQUEST[$name])) {
+			array_push($_REQUEST[$name], $value);
+		}		
 	}
 	else if (!isset($_REQUEST[$name]) || strlen($_REQUEST[$name]) == 0) {
 		$_REQUEST[$name] = $value;
