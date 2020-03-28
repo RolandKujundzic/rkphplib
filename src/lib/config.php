@@ -75,10 +75,10 @@ function exception_handler($e) {
 	$trace = $e->getFile()." on line ".$e->getLine()."\n".$e->getTraceAsString();
 	$internal = property_exists($e, 'internal_message') ? "INFO: ".$e->internal_message : '';
 
-	if (php_sapi_name() !== 'cli') {
-		$ts = date('d.m.Y H:i:s');
-		error_log("$ts $msg\n$internal\n\n$trace\n\n", 3, SETTINGS_LOG_ERROR);
+	$ts = date('d.m.Y H:i:s');
+	error_log("$ts $msg\n$internal\n\n$trace\n\n", 3, SETTINGS_LOG_ERROR);
 
+	if (php_sapi_name() !== 'cli') {
 		if (!empty($_REQUEST['ajax']) || (!empty($_REQUEST[SETTINGS_REQ_DIR]) && strpos($_REQUEST[SETTINGS_REQ_DIR], 'ajax/') !== false)) {
 			http_response_code(400);
 			header('Content-Type: application/json');
