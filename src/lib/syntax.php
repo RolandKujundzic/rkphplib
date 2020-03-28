@@ -39,6 +39,7 @@ function syntax(array $argv_example = [], string $desc = '') : bool {
 	}
  
 	$arg_num = (count($argv_example) > 0) ? count($argv_example) + 1 : 0;
+	$argc = count($_SERVER['argv']);
 	$is_error = false;
 	$error_msg = '';
 	$example = [];
@@ -74,6 +75,40 @@ function syntax(array $argv_example = [], string $desc = '') : bool {
 			// optional parameter
 			$argv_example[$i] = '['.substr($param, 3).']';
 			$arg_num--;
+		}
+		else if (substr($param, 0, 5) == '@req:') {
+			$req_keys = explode(',', substr($param, 5));
+			$req_example='';
+			$arg_num--;
+
+			foreach ($req_keys as $rkey) {
+				if (!isset($_REQUEST[$rkey])) {
+					$req_example .= ' req:'.$rkey.'=…';
+					$is_error = true;
+				}
+				else {
+					$arg_num++;
+				}
+			}
+
+			$argv_example[$i] = ltrim($req_example);
+		}
+		else if (substr($param, 0, 5) == '@srv:') {
+			$srv_keys = explode(',', substr($param, 5));
+			$srv_example='';
+			$arg_num--;
+
+			foreach ($srv_keys as $skey) {
+				if (!isset($_SERVER[$skey])) {
+					$srv_example .= ' srv:'.$skey.'=…';
+					$is_error = true;
+				}
+				else {
+					$arg_num++;
+				}
+			}
+
+			$argv_example[$i] = ltrim($srv_example);
 		}
 		else if (substr($param, 0, 9) == '@example:') {
 			array_push($example, $i);
@@ -134,7 +169,7 @@ function syntax(array $argv_example = [], string $desc = '') : bool {
 		print "\nSYNTAX: $app ".join(' ', $argv_example)."\n$app_desc\n\n";
 		exit(0);
 	}
-	else if ($is_error || ($arg_num > 0 && $arg_num != count($_SERVER['argv']))) {
+	else if ($is_error || ($arg_num > 0 && $arg_num != $argc)) {
 		fwrite(STDERR, "\nSYNTAX: $app ".join(' ', $argv_example)."\n$app_desc\n$error_msg\n");
 		exit(1);
 	}
