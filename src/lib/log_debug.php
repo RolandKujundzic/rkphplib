@@ -31,6 +31,36 @@ if (!isset($GLOBALS['SETTINGS'])) {
 
 
 /**
+ * Return formated log message. Use traling '…' to shorten string (max 130 character).
+ * If $msg is array and $msg[0] is '<1> ... <2> ... <n>' and #$msg=n+1
+ * replace <k> with formatted $msg[k].
+ *
+ * @param any $msg
+ */
+function log_debug_msg($msg) : string {
+	if (is_string($msg)) {
+		$res = $msg;
+		if (mb_substr($msg, -1) == '…') {
+			$res = mb_strlen($msg) > 130 ? mb_substr($msg, 0, 130).'…' : mb_substr($msg, 0, -1);
+		}
+	}
+	else if (is_array($msg) && !empty($msg[0]) && ($len = count($msg)) > 1 && 
+						($p1 = mb_strpos($msg[0], '<1>')) !== false && mb_strpos($msg[0], '<'.($len - 1).'>') > $p1 + 2) {
+		$res = $msg[0];
+		for ($i = 1; $i < $len; $i++) {
+			$res = str_replace("<$i>", log_debug_msg($msg[$i]), $res);
+		}
+	} 
+	else {
+		$json_str = json_encode($msg);
+		$res = mb_strlen($json_str) < 130 ? $json_str : print_r($msg, true);
+	}
+
+	return $res;
+}
+
+
+/**
  * Log debug message (string or vector). 
  * Disable debug log with SETTINGS_LOG_DEBUG = 0,
  * Enable logging to default error_log with SETTINGS_LOG_DEBUG = 1.
@@ -46,9 +76,13 @@ if (!isset($GLOBALS['SETTINGS'])) {
  * Use SETTINGS_LOG_DEBUG_LEVEL ($GLOBALS['SETTINGS']['LOG_DEBUG_LEVEL']) = 16|24|28|30 to
  * log messages with LEVEL & LOG_DEBUG_LEVEL > 0. Use 30 to log all and 16 to log only most important.
  * 
+ * @see log_debug_msg
  * @author Roland Kujundzic <roland@kujundzic.de>
+ * @param any $msg
  */
-function log_debug(string $msg, int $flag = 0) : void {
+function log_debug($msg, int $flag = 0) : void {
+	$msg = log_debug_msg($msg);
+
 	if (!empty($GLOBALS['SETTINGS']['LOG_DEBUG'])) {
 		$log_to = $GLOBALS['SETTINGS']['LOG_DEBUG'];
 	}
