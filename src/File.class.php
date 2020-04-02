@@ -877,7 +877,7 @@ public static function readLine($fh) {
  * as $base.ser). Return false instead of Exception if $flag & 1.
  */
 public static function saveJSON(string $file, $data, int $flag = 0) : bool {
-  $json = json_encode($data, 448);
+  $json = json_encode($data, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);
 
   if (($err_no = json_last_error()) || strlen($json) == 0) {
 		$base = dirname($file).'/'.File::basename($file, true);				
