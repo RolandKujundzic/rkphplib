@@ -590,7 +590,7 @@ public static function res2str($res) {
 	}
 	else {
 		// is_object(), is_array()
-		return json_encode($res, 322);
+		return json_encode($res, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_HEX_AMP);
 	}
 }
 

@@ -253,7 +253,7 @@ public function printCallStack() : array {
 			$res .= ($j > 0) ? ', '.$cs_row[$j][0] : $cs_row[$j][0];
 	
 			if ($cs_row[$j][1] !== null) {
-				$res .= ':'.json_encode($cs_row[$j][1]);
+				$res .= ':'.json_encode($cs_row[$j][1], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 			}
 		}
 

@@ -45,9 +45,9 @@ private static function _error_msg(int $err_no) : string {
 
 
 /**
- * Return json encoded $any. Wrapper of json_encode() default options 448 = JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT.
+ * Return json encoded $any. Wrapper of json_encode() with sane options.
  */
-public static function encode($any, int $options = 448, int $depth = 512) : string {
+public static function encode($any, int $options = JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT, int $depth = 512) : string {
 	$res = json_encode($any, $options, $depth);
 
 	if (($err_no = json_last_error())) {
@@ -86,7 +86,7 @@ public static function decode(string $txt, $flag = 1) {
  * Return pretty printed json.
  */
 public static function pretty_print(string $json) : string {
-    return json_encode(json_decode($json), 320|JSON_PRETTY_PRINT);
+    return json_encode(json_decode($json), JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
 }
 
 

@@ -20,7 +20,7 @@ class XML {
  */
 public static function toMap(string $xml) : array {
 	$xml_obj = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
-	return json_decode(json_encode((array)$xml_obj, 320), true);
+	return json_decode(json_encode((array)$xml_obj, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE), true);
 }
 
 

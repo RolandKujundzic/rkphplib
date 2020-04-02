@@ -51,7 +51,7 @@ function log_debug_msg($msg) : string {
 		}
 	} 
 	else {
-		$json_str = json_encode($msg, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);
+		$json_str = json_encode($msg, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
 		$res = mb_strlen($json_str) < 130 ? $json_str : trim(print_r($msg, true));
 	}
 
