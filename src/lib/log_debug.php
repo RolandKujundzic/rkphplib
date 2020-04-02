@@ -44,16 +44,15 @@ function log_debug_msg($msg) : string {
 			$res = mb_strlen($msg) > 130 ? mb_substr($msg, 0, 130).'…' : mb_substr($msg, 0, -1);
 		}
 	}
-	else if (is_array($msg) && !empty($msg[0]) && ($len = count($msg)) > 1 && 
-						($p1 = mb_strpos($msg[0], '<1>')) !== false && mb_strpos($msg[0], '<'.($len - 1).'>') > $p1 + 2) {
+	else if (is_array($msg) && !empty($msg[0]) && ($len = count($msg)) > 1 && mb_strpos($msg[0], '<'.($len - 1).'>') !== false) {
 		$res = $msg[0];
 		for ($i = 1; $i < $len; $i++) {
 			$res = str_replace("<$i>", log_debug_msg($msg[$i]), $res);
 		}
 	} 
 	else {
-		$json_str = json_encode($msg);
-		$res = mb_strlen($json_str) < 130 ? $json_str : print_r($msg, true);
+		$json_str = json_encode($msg, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);
+		$res = mb_strlen($json_str) < 130 ? $json_str : trim(print_r($msg, true));
 	}
 
 	return $res;
