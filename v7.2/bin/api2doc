@@ -1,0 +1,16 @@
+#!/usr/bin/php
+<?php
+
+require_once dirname(__DIR__).'/src/SwaggerYaml.class.php';
+require_once dirname(__DIR__).'/src/lib/syntax.php';
+require_once 'vendor/autoload.php';
+
+
+
+if (!\rkphplib\lib\syntax([ '@file:path/to/config.json' ], 'description comming soon')) {
+	return;
+}
+
+$app = new \rkphplib\SwaggerYaml(\rkphplib\JSON::decode(\rkphplib\File::load($_SERVER['argv'][1])));
+$app->update();
+

@@ -1,0 +1,26 @@
+#!/usr/bin/php
+<?php
+
+require_once dirname(__DIR__).'/src/tok/Tokenizer.class.php';
+require_once dirname(__DIR__).'/src/tok/TTwig.class.php';
+require_once dirname(__DIR__).'/src/File.class.php';
+require_once dirname(__DIR__).'/src/lib/syntax.php';
+
+
+
+if (!\rkphplib\lib\syntax([ 'tok-test|tok-file' ], 'Tokenizer to twig converter')) {
+	return;
+}
+
+$tok = new rkphplib\tok\Tokenizer();
+$ttwig = new rkphplib\tok\TTwig();
+$tok->register($ttwig);
+
+if (rkphplib\File::exists($_SERVER['argv'][1])) {
+	$tok->load($_SERVER['argv'][1]);
+}
+else {
+	$tok->setText($_SERVER['argv'][1]);
+}
+
+print $tok->toString()."\n";
