@@ -71,3 +71,7 @@ Furthermore, you can do more cool stuff with rebase --interactive, like pluck, m
 
 git rebase origin/master -i
 
+Check extensions:
+ext-apc, ext-apcu, ext-dba, ext-memcache, ext-memcached, ext-mongo, ext-mongodb, ext-redis, ext-wincache, ext-xcache, ext-intl,
+ext-amqp, ext-twig, ext-xslcache
+
