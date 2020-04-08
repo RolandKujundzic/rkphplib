@@ -1,10 +1,13 @@
+php -l FILENAME # lint mode: validate syntax without execution
+
+
 PHP 7.4:
 --------
 
 Type Hint Class Properties> class A { public string $name; public ?Foo $foo; }
 $data['date'] ??= new DateTime();  // Null coalescing assignment operator
 $callable = [$this, 'method'];
-Types: bool, int, float, number, mixed, callable, void, string, array, iterable, object, ? (nullable), self & parent, Classes & interfaces
+Types: bool, int, float, number, mixed, callable, resource, void, string, array, iterable, object, ? (nullable), self & parent, Classes & interfaces
 see: https://stitcher.io/blog/typed-properties-in-php-74
 
 <?php declare(strict_types=1);
