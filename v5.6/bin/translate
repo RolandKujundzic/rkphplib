@@ -1,0 +1,244 @@
+#!/usr/bin/php
+<?php
+
+if (!defined('PATH_RKPHPLIB')) {
+	// assume: APP/php/rkphplib/bin/
+	require_once dirname(dirname(dirname(__DIR__))).'/settings.php';
+}
+else if (!defined('DOCROOT')) {
+	define('DOCROOT', dirname(dirname(PATH_RKPHPLIB)));
+}
+
+require_once PATH_RKPHPLIB.'Database.class.php';
+require_once PATH_RKPHPLIB.'tok/TokPlugin.iface.php';
+require_once PATH_RKPHPLIB.'tok/TLanguage.class.php';
+require_once PATH_RKPHPLIB.'tok/Tokenizer.class.php';
+require_once PATH_RKPHPLIB.'FSEntry.class.php';
+require_once PATH_RKPHPLIB.'File.class.php';
+require_once PATH_RKPHPLIB.'Dir.class.php';
+require_once PATH_RKPHPLIB.'lib/syntax.php';
+
+use rkphplib\Exception;
+use rkphplib\Database;
+use rkphplib\tok\TokPlugin;
+use rkphplib\tok\TLanguage;
+use rkphplib\tok\Tokenizer;
+use rkphplib\FSEntry;
+use rkphplib\File;
+use rkphplib\Dir;
+
+
+
+
+/**
+ * Process {txt:} plugins.
+ *
+ * @author Roland Kujundzic <roland@kujundzic.de>
+ */
+class Translate {
+
+/** @var Database $db */
+private $db = null;
+
+/** @var Tokenizer $tok */
+private $tok = null;
+
+/** @var TLanguage $t_lang */
+private $t_lang = null;
+
+/** @var vector $languages */
+private $languages = [];
+
+
+
+/**
+ * Catch {language:[init|get]} plugin and return plugin text.
+ */
+public function getPlugins($tok) {
+  $plugin = [
+    'language:init' => TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY,
+    'language:get' => TokPlugin::NO_PARAM | TokPlugin::NO_BODY,
+    'language' => 0
+  ];
+
+  return $plugin;
+}
+
+
+/**
+ * Catch {language:init}. Return plugin text.
+ */
+public function tok_language_init($arg) {
+	return '{language:init}'.$arg.'{:language}';
+}
+
+
+/**
+ * Catch {language:get}. Return plugin text.
+ */
+public function tok_language_get() {
+	return '{language:get}';
+}
+
+
+/**
+ * Set language table.
+ */
+public function setTable($name, $txt_lang = 'de') {
+	$this->db = Database::getInstance();
+
+	if (!$this->db->hasTable($name)) {
+		return false;
+	}
+
+	$table_desc = $this->db->getTableDesc($name);
+	$this->languages = [];
+
+	foreach ($table_desc as $column => $info) {
+		if (strlen($column) != 2 || $info['type'] != 'text') {
+			continue;
+		}
+		
+		array_push($this->languages, $column);
+	}
+
+	if (count($this->languages) < 2) {
+		throw new Exception('no languages detected', "name=$name, table_desc: ".print_r($table_desc, true));
+	}
+
+	$this->tok = new Tokenizer(Tokenizer::TOK_KEEP);
+	$this->t_lang = new TLanguage();
+	$this->tok->register($this->t_lang);
+	$this->tok->register($this);
+	$this->t_lang->tok_language_init([ 'table' => $name, 'default' => $txt_lang, 'txt' => $txt_lang ]);
+	return true;
+}
+
+
+/**
+ * Load $file and return parsed content.
+ */
+public function file($file) {
+	$this->tok->load($file);
+	return $this->tok->toString();
+}
+
+
+/**
+ * Print log message.
+ */
+private function log($message) {
+	print $message."\n";
+}
+
+
+/**
+ * Translate all *.inc.html, *.conf and *.js files. Save translation to /LANG.
+ * If first parameter is string assume root_dir. Default $options (string|array) are:
+ * 
+ * root_dir = '.'
+ * suffix_list = [ 'inc.html', 'conf', 'js', 'css' ]
+ * exclude_dir = [ 'cms', 'data', 'php', 'setup' ]
+ */
+public function run($option, $language_table, $default_language) {
+	if (!$this->setTable($language_table, $default_language)) {
+		return;
+	}
+
+	foreach ($this->languages as $lang) {
+		if (Dir::exists($lang)) {
+			Dir::remove($lang);
+		}
+	}
+
+	$default = [ 
+		'root_dir' => '.', 
+		'suffix_list' => [ 'inc.html', 'conf', 'js', 'css' ], 
+		'exclude_dir' => [ 'cms', 'data', 'php', 'setup' ] 
+		];
+
+	if (is_string($option)) {
+		$option = [ 'root_dir' => $option ];
+	}
+
+	$option = array_merge($default, $option);
+
+	$files = Dir::scanTree($option['root_dir'], $option['suffix_list' ], $option['exclude_dir']);
+
+	foreach ($this->languages as $lang) {
+		$this->t_lang->tok_language_init([ 'use' => $lang, 'default' => $default_language, 'txt' => $default_language, 
+			'table' => $language_table ]);
+
+		foreach ($files as $file) {
+			$rel_path = str_replace($option['root_dir'].'/', '', $file);
+			$target = $option['root_dir'].'/'.$lang.'/'.$rel_path;
+			$translation = $this->file($file);
+			$md5 = File::md5($file);
+
+			if (md5($translation) != $md5) {
+				$this->log('create '.$target);
+				Dir::create(dirname($target), 0, true);
+				File::save($target, $translation);
+			}
+		}
+	}
+}
+
+
+/**
+ * Link all files not in LANG/ directory to parent directory.
+ */
+public function link() {
+	$entries = Dir::entries('.');
+	$found = [];
+
+	foreach ($entries as $entry) {
+		$entry = substr($entry, 2); // remove leading ./
+		if (strlen($entry) != 2 || !in_array($entry, $this->languages)) {
+			array_push($found, $entry);
+		}
+	}
+
+	foreach ($this->languages as $lang) {
+		chdir($lang);
+
+		foreach ($found as $file) {
+			if (!File::exists($file)) {
+				FSEntry::link('../'.$file, $file);
+			}
+		}
+
+		chdir('..');
+	}
+}
+
+
+}
+
+
+
+/*
+ * M A I N
+ */
+
+if (!\rkphplib\lib\syntax([ '@docroot' ])) {
+	return;
+}
+
+if (!empty($_SERVER['argv'][1])) {
+	if (Dir::exists($_SERVER['argv'][1])) {
+		$translate = new Translate();
+		chdir($_SERVER['argv'][1]);
+
+		if (Dir::exists('assets') && File::exists('index.html')) {
+			$translate->run([ 'root_dir' => '.', 'suffix_list' => [ 'html' ], 'exclude_dir' => [ 'assets' ] ], 'language', 'de');
+			$translate->link();
+		}
+	}
+}
+else {
+	$translate = new Translate();
+	$translate->run(DOCROOT, 'language', 'de');
+	chdir('cms');
+	$translate->run('.', 'cms_language', 'en');
+}

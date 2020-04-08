@@ -1,0 +1,135 @@
+#!/usr/bin/php
+<?php
+
+require_once 'src/tok/Tokenizer.class.php';
+require_once 'src/lib/config.php';
+require_once 'src/File.class.php';
+require_once 'src/Dir.class.php';
+require_once 'src/lib/syntax.php';
+
+use rkphplib\tok\TokPlugin;
+use rkphplib\tok\Tokenizer;
+use rkphplib\Exception;
+use rkphplib\File;
+use rkphplib\Dir;
+
+
+
+
+/**
+ * @author Roland Kujundzic
+ */
+class Collector {
+
+private $_plugins = [];
+
+
+/**
+ * Scan src/tok for *.class.php. Execute register for every class.
+ */
+public function scan($dir = 'src/tok') {
+	Dir::exists($dir);
+	$php_files = Dir::scanTree($dir, [ '.class.php' ]);
+	$ignore = [ 'AMenu.class.php', 'Tokenizer.class.php' ];
+	$obj = [];
+	$n = 0;
+
+	foreach ($php_files as $file) {
+		if (in_array(basename($file), $ignore)) {
+			continue;
+		}
+
+		require_once $file;
+		$cname = '\\rkphplib'.substr(str_replace('/', '\\', $file), 3, -10);
+
+		// skip abstract class ...
+		if (substr($cname, 0, 15) == '\rkphplib\tok\A') {
+			continue;
+		}
+
+		print "$file: $cname\n";
+		$obj[$n] = new $cname();
+		$this->register($obj[$n], $cname);
+		$n++;
+	}
+}
+
+
+/**
+ * Register plugins
+ */
+public function register($handler, $cname) {
+	$dummy = new Tokenizer();
+
+  $plugins = $handler->getPlugins($dummy);
+	$this->_plugin[$cname] = [];
+
+  foreach ($plugins as $name => $opt) {
+		array_push($this->_plugin[$cname], $name);
+  }
+}
+
+
+/**
+ * Create plugin map. Add to Tokenizer class.
+ */
+public function createMap() {
+	$tokenizer = mb_substr(trim(File::load('src/tok/Tokenizer.class.php')), 0, -1);
+	$md5 = File::md5('src/tok/Tokenizer.class.php');
+
+	if (($pos = mb_strpos($tokenizer, '/** AUTO CREATED BY bin/plugin_map')) < 1) {
+		throw new Exception('append point not found');
+	}
+
+	$tokenizer = mb_substr($tokenizer, 0, $pos);
+
+	ksort($this->_plugin);
+
+	$code = "/** AUTO CREATED BY bin/plugin_map */\n".'private function tryPluginMap(string $name) : void {'."\n\t".
+		'static $map = ['."\n\t\t";
+
+	foreach ($this->_plugin as $cname => $list) {
+		$cname = mb_substr($cname, 14);
+		$code .= "'$cname' => [ '".join("', '", $list)."' ],\n\t\t";
+	}
+
+	$code = mb_substr($code, 0, -4)."\n\t];\n\n\t".
+		'foreach ($map as $cname => $list) {'."\n\t\t".
+		'if (in_array($name, $list)) {'."\n\t\t\t".
+		'require_once(__DIR__.\'/\'.$cname.\'.class.php\');'."\n\t\t\t".
+		"\$cname = '\\\\rkphplib\\\\tok\\\\'.\$cname;\n\t\t\t".
+		'$obj = new $cname();'."\n\t\t\t".
+		'$this->register($obj);'."\n\t\t\t".
+		'return;'."\n\t\t"."}\n\t}\n}\n\n}\n";
+
+	$new_code = $tokenizer.$code;
+
+	if (md5($new_code) != $md5) {
+		File::save('src/tok/Tokenizer.class.php', $tokenizer.$code);
+		print "src/tok/Tokenizer.class.php: tryPluginMap() has been updated\n";
+	}
+	else {
+		print "src/tok/Tokenizer.class.php: no change\n";
+	}
+}
+
+
+}
+
+
+
+/*
+ * M A I N 
+ */
+
+if (!defined('SETTINGS_DSN')) {
+	define('SETTINGS_DSN', 'mysqli://ignore:ignore@tcp+localhost/ignore');
+}
+
+if (!\rkphplib\lib\syntax([], "scan src/tok directory and update Tokenizer.tryPluginMap if necessary")) {
+	return;
+}
+
+$collector = new Collector();
+$collector->scan();
+$collector->createMap();
