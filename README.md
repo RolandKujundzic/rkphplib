@@ -1,6 +1,7 @@
 # rkphplib
 PHP library with template engine and wrapper classes to filesystem, mysql and other. 
-Object oriented, namespaced and with strict function types so php version >= 7.2 is required.
+Object oriented, namespaced and with strict function types. Strict type hinting features
+from php7.4 are used. For older PHP versions use either v5.6 or v7.2.
 
 ## Install
 

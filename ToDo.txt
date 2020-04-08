@@ -1,3 +1,13 @@
+PHP 7.4:
+--------
+
+Type Hint Class Properties> class A { public string $name; public ?Foo $foo; }
+
+Port src, bin and test to 7.4. Auto vM.N/src|bin|test - use M.N = 5.6, 7.2.
+
+
+
+
 replace [|#|] with Math "Parallel to" Symbol: [&#x2225;] = [∥] (VIM: STRG+v u2225) escape with [&#x2225;]
 other alternatives: 220e∎a 22c6⋆a 2223∣a (see https://www.w3schools.com/charsets/ref_utf_math.asp) 
 
