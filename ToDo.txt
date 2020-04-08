@@ -2,9 +2,40 @@ PHP 7.4:
 --------
 
 Type Hint Class Properties> class A { public string $name; public ?Foo $foo; }
+$data['date'] ??= new DateTime();  // Null coalescing assignment operator
+$callable = [$this, 'method'];
+Types: bool, int, float, number, mixed, callable, void, string, array, iterable, object, ? (nullable), self & parent, Classes & interfaces
+see: https://stitcher.io/blog/typed-properties-in-php-74
 
-Port src, bin and test to 7.4. Auto vM.N/src|bin|test - use M.N = 5.6, 7.2.
+<?php declare(strict_types=1);
+$foo = 10;            // $foo is an integer
+$str = "$foo";        // $str is a string
+$fst = (string) $foo; // $fst is also a string
+$binary = (binary) $string;
+$binary = b"binary string";
 
+object serialization: __serialize, __unserialize, __sleep, __wakeup
+
+ReflectionReference
+
+HereDoc - leading whitespace will be ignored
+
+list($a, &$b) = $array;  // list with reference support
+
+Foreign function interface (FFI) = call C code from userland 
+
+Preloading:
+	- loader script necessary (will be executed once on server startup)
+  - all preloaded files are available in memory for all requests (changes of FS won't have any effect unless server is restarted)
+
+php.ini: opcache.preload=/path/to/project/preload.php
+preload.php: foreach ($files as $file) { opcache_compile_file($file); }  
+// better: put opcache_compile_file($file) into custom autoload and use: foreach ($files as $file) { require_once $file; }
+see: https://stitcher.io/blog/preloading-in-php-74, https://stitcher.io/blog/php-preload-benchmarks
+
+
+5.6/7.2: Recover Type hinting errors via custom error handler ...
+https://www.php.net/manual/de/language.oop5.typehinting.php
 
 
 
