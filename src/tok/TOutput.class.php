@@ -1371,7 +1371,13 @@ protected function selectData() : void {
  * Load table data from table.data or retrieve from table.url = file|http[s]://.
  * Set env.total.
  */
-protected function fillTable() : void {
+public function fillTable(?array $table_data = null) : void {
+	if (!is_null($table_data)) {
+		$this->table = $table_data;
+		$this->env['total'] = count($this->table);		
+		return;
+	}
+
 	if (!empty($this->conf['table.url'])) {
 		$uri = strpos($this->conf['table.url'], '://') ? $this->conf['table.url'] : 'file://'.$this->conf['table.url'];
 	}
@@ -1390,7 +1396,6 @@ protected function fillTable() : void {
 	$uri = array_shift($table_type).':'.$uri;
 
 	$this->table = File::loadTable($uri, $table_type);
-
 	$this->env['total'] = count($this->table);
 }
 
