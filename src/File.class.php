@@ -904,9 +904,11 @@ public static function saveJSON(string $file, $data, int $flag = 0) : bool {
 
 /**
  * Return file content converted from json.
+ * @see JSON::decode 
+ * @return any
  */
-public static function loadJSON(string $file) {
-	return JSON::decode(File::load($file));
+public static function loadJSON(string $file, int $flag = 1) {
+	return JSON::decode(File::load($file), $flag);
 }
 
 
