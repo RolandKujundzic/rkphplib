@@ -297,7 +297,6 @@ public static function entries(string $path, int $type = 0) : array {
 	$res = array();
 
 	while (false !== ($entry = readdir($dh))) {
-
 		if ($entry == '.' || $entry == '..') {
 			continue;
 		}
@@ -378,7 +377,6 @@ private static function _has_suffix(string $file, array $suffix_list) : bool {
  * If $rel_dir is set remove $rel_dir in every entry.
  */
 public static function scanDir(string $path, array $suffix_list = array(), string $rel_dir = '') : array {
-
 	self::fixSuffixList($suffix_list);
 
 	$entries = Dir::entries($path);
