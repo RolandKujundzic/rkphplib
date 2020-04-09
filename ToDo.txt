@@ -7,7 +7,8 @@ PHP 7.4:
 Type Hint Class Properties> class A { public string $name; public ?Foo $foo; }
 $data['date'] ??= new DateTime();  // Null coalescing assignment operator
 $callable = [$this, 'method'];
-Types: bool, int, float, number, mixed, callable, resource, void, string, array, iterable, object, ? (nullable), self & parent, Classes & interfaces
+Types: class/interface name, self, array, callable, bool, float, int, string, iterable (, void) (>= PHP 7.0.0)
+Other/Missing: mixed, resource, iterable, object, ? (nullable), parent
 see: https://stitcher.io/blog/typed-properties-in-php-74
 
 <?php declare(strict_types=1);
@@ -35,11 +36,6 @@ php.ini: opcache.preload=/path/to/project/preload.php
 preload.php: foreach ($files as $file) { opcache_compile_file($file); }  
 // better: put opcache_compile_file($file) into custom autoload and use: foreach ($files as $file) { require_once $file; }
 see: https://stitcher.io/blog/preloading-in-php-74, https://stitcher.io/blog/php-preload-benchmarks
-
-
-5.6/7.2: Recover Type hinting errors via custom error handler ...
-https://www.php.net/manual/de/language.oop5.typehinting.php
-
 
 
 replace [|#|] with Math "Parallel to" Symbol: [&#x2225;] = [∥] (VIM: STRG+v u2225) escape with [&#x2225;]
