@@ -86,12 +86,8 @@ public function getPlugins(Tokenizer $tok) : array {
  *   <input type="text" name="s_name" value="{get:s_name}" style="width:$WIDTHch" onkeypress="rkphplib.searchOutput(this)">
  *
  * @tok {search:name}overlay=1|#|sort=1|#|label=NAME|#| ...{:search} = NAME
- *
- * @param string $col
- * @param map $p
- * @return string
  */
-public function tok_search($col, $p) {
+public function tok_search(string $col, array $p) : string {
 	$res = '';
 
 	if (empty($p['type'])) {
@@ -105,7 +101,7 @@ public function tok_search($col, $p) {
 
 	$s_value = isset($_REQUEST['s_'.$col]) ? htmlescape($_REQUEST['s_'.$col]) : '';
 
-	// \rkphplib\lib\log_debug("TOutput.tok_search:108> col=[$col] type=[".$p['type']."] s_value=[$s_value]");
+	// \rkphplib\lib\log_debug("TOutput.tok_search:104> col=[$col] type=[".$p['type']."] s_value=[$s_value]");
 	if ($p['type'] == 'select') {
 		$res = '<select name="s_'.$col.'" onchange="rkphplib.searchOutput(this)">';
 		$options = \rkphplib\lib\conf2kv($p['options'], '=', ',');
@@ -151,18 +147,15 @@ public function tok_search($col, $p) {
 		$res = empty($p['sort']) ? $p['label'] : $p['label'].' '.$this->tok->getPluginTxt('sort:'.$col);
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_search:154> return [$res]");
+	// \rkphplib\lib\log_debug("TOutput.tok_search:150> return [$res]");
 	return $res;
 }
 
 
 /**
  * Return placeholder information for column search.
- * 
- * @param string $col
- * @return string
  */
-private function getSearchPlaceholder($col) {
+private function getSearchPlaceholder(string $col) : string {
 	$res = '';
 
 	if (isset($this->set_search['s_'.$col.'_min']) && isset($this->set_search['s_'.$col.'_max'])) {
@@ -182,12 +175,8 @@ private function getSearchPlaceholder($col) {
 /**
  * Return sort icon (conf.sort.desc|asc|no). Sort by conf.sort = [a(scending)|d(escending)]COLNAME
  * or _REQUEST[conf.req.sort].
- *
- * @throws
- * @param string $col
- * @return string
  */
-public function tok_sort($col) {
+public function tok_sort(string $col) : string {
  
 	if (!isset($this->conf['req.sort']) || !isset($this->conf['sort'])) {
 		throw new Exception('missing [output:init]sort=...|#|req.sort=...');
@@ -216,20 +205,14 @@ public function tok_sort($col) {
 
 /**
  * Set conf.name=value.
- *
- * @param string $name
- * @param string $value
- * @return ''
  */
-public function tok_output_set($name, $value) {
-
+public function tok_output_set(string $name, string $value) : void {
 	if (count($this->conf) == 0) {
 		$this->tok_output_conf([]);
 	}
 
+	// \rkphplib\lib\log_debug("TOutput.tok_output_set:214> set conf[$name]=[$value]");
 	$this->conf[$name] = $value;
-	// \rkphplib\lib\log_debug("TOutput.tok_output_set:231> [$name]=[$value] conf: ".print_r($this->conf, true));
-	return '';
 }
 
 
@@ -241,13 +224,8 @@ public function tok_output_set($name, $value) {
  * @tok {output:get:conf.*} = conf.query= ... |#| ...
  * @tok {output:get:*} = rownum= ... |#| ...
  * @tok {output:get:row.N.colname} = this.table[n][colname]
- * 
- * @throws
- * @param string $name
- * @return string
  */
-public function tok_output_get($name) {
-
+public function tok_output_get(string $name) : string {
 	// run init and compute stuff if necessary ...
 	$this->isEmpty();
 
@@ -305,10 +283,8 @@ public function tok_output_get($name) {
 
 /**
  * Dynamic call in tok_output_get(). Return html option list of searchable columns.
- *
- * @return string
  */
-private function get_search_col_options() {
+private function get_search_col_options() : string {
 	$search_keys = [];
 
 	foreach ($this->conf as $key => $value)	{
@@ -324,11 +300,8 @@ private function get_search_col_options() {
 
 /**
  * Show if table is empty.
- *
- * @param string $tpl
- * @return string
  */
-public function tok_output_empty($tpl) {
+public function tok_output_empty(string $tpl) : string {
 	if (!$this->isEmpty()) {
 		return '';
 	}
@@ -339,10 +312,8 @@ public function tok_output_empty($tpl) {
 
 /**
  * Return true if table is empty.
- *
- * @return bool
  */
-private function isEmpty() {
+private function isEmpty() : bool {
 
 	if (is_null($this->table)) {
 		$p = (count($this->conf) > 0) ? [ 'reset' => 0 ] : [];
@@ -357,7 +328,7 @@ private function isEmpty() {
  * Process conf.column_label. Split into hash, add columns if necessary and save to conf-Table if 
  * necessary.
  */
-protected function checkColumnLabel() {
+protected function checkColumnLabel() : void {
 	$column_label = \rkphplib\lib\conf2kv($this->conf['column_label'], ':', ',');
 	$table_cols = $this->conf['table_desc'];
 
@@ -384,10 +355,8 @@ protected function checkColumnLabel() {
 
 /**
  * Return header_label tag replacement.
- * 
- * @return string
  */
-protected function getHeaderLabel() {
+protected function getHeaderLabel() : string {
 	$label_suffix = empty($this->conf['label_suffix']) ? [] : \rkphplib\lib\conf2kv($this->conf['label_suffix'], ':', ',');
 	$header_label = [];
 
@@ -419,11 +388,8 @@ protected function getHeaderLabel() {
  * @tok {output:init}column_label= id:ID, name:NAME|#|
  *   template.header_label= <td nowrap align="center"$suffix>$txt_label$sort</td>|#|{:output}
  * @tok {output:header}{:=header_label}{:output} -> <table>
- * 
- * @param string $tpl
- * @return string
  */
-public function tok_output_header($tpl) {
+public function tok_output_header(string $tpl) : string {
 	if ($this->isEmpty()) {
 		return '';
 	}
@@ -432,7 +398,7 @@ public function tok_output_header($tpl) {
 		$tpl = $this->tok->getPluginTxt('redo:', $this->tok->replaceTags($tpl, [ 'header_label' => $this->getHeaderLabel() ]));
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_header:419> replace tpl: $tpl");
+	// \rkphplib\lib\log_debug("TOutput.tok_output_header:401> replace tpl: $tpl");
 	if (!empty($this->env['tags'][0]) && $this->tok->hasReplaceTags($tpl, [ $this->env['tags'][0] ])) {
 		$replace = [];
 
@@ -451,18 +417,15 @@ public function tok_output_header($tpl) {
   	}
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_header:438> exit tpl: $tpl");
+	// \rkphplib\lib\log_debug("TOutput.tok_output_header:420> exit tpl: $tpl");
 	return $tpl;
 }
 
 
 /**
  * Show if table is not empty.
- *
- * @param string $tpl
- * @return string
  */
-public function tok_output_footer($tpl) {
+public function tok_output_footer(string $tpl) : string {
 	if ($this->isEmpty()) {
 		return '';
 	}
@@ -478,12 +441,8 @@ public function tok_output_footer($tpl) {
 
 /**
  * Return table json.
- *
- * @throws
- * @return string
  */
-public function tok_output_json() {
-
+public function tok_output_json() : string {
 	if ($this->isEmpty()) {
 		return '';
 	}
@@ -500,7 +459,7 @@ public function tok_output_json() {
 
 	$res = JSON::encode(array_slice($this->table, $start, $end - $start + 1));
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_json:487> return $res");
+	// \rkphplib\lib\log_debug("TOutput.tok_output_json:462> return $res");
 	return $res;
 }
 
@@ -508,11 +467,8 @@ public function tok_output_json() {
 /**
  * Return $tpl with {:=loop_column} replaced. If conf.action="id,TEMPLATE" is defined
  * use {tpl:TEMPLATE}{:=id}{:tpl} instead of {:=id}.
- * 
- * @param string $tpl
- * @return string
  */
-protected function getOutputLoopTemplate($tpl) {
+protected function getOutputLoopTemplate(string $tpl) : string {
 	$loop_column = [];
 
 	$language = $this->tok->callPlugin('language:get', 'tok_language_get');
@@ -546,7 +502,7 @@ protected function getOutputLoopTemplate($tpl) {
 	}
 	
 	$tpl = $this->tok->replaceTags($tpl, [ 'loop_column' => join("\n", $loop_column) ]); 
-	// \rkphplib\lib\log_debug("TOutput.getOutputLoopTemplate:533> return [$tpl]");
+	// \rkphplib\lib\log_debug("TOutput.getOutputLoopTemplate:505> return [$tpl]");
 	return $tpl;
 }
 
@@ -562,12 +518,8 @@ protected function getOutputLoopTemplate($tpl) {
  * @tag {:=_rownum} - 1, 2, 3, ...
  * @tag {:=_image1}, {:=_image_num}, {:=_image_preview_js} and {:=_image_preview}
  *   if conf.images= colname is set and value (image1, ...) is not empty
- *
- * @throws
- * @param string $arg
- * @return string
  */
-public function tok_output_loop($tpl) {
+public function tok_output_loop(string $tpl) : string {
 	if ($this->isEmpty()) {
 		return '';
 	}
@@ -659,19 +611,15 @@ public function tok_output_loop($tpl) {
  * If conf.images is empty or $row[conf.images] is empty return empty map.
  * Otherwise split image list (image1, ...) and set map keys _image1, 
  * _image_num, _image_preview_js and _image_preview.
- *
- * @param map $row
- * @return map
  */
-protected function getImageTags($row) {
+protected function getImageTags(array $row) : array {
 	if (empty($this->conf['images']) || empty($row[$this->conf['images']])) {
 		return [];
 	}
 
+	$img_dir = empty($row['_image_dir']) ? '' : $row['_image_dir'].'/';
 	$images = split_str(',', $row[$this->conf['images']]);
 	$id = $row['id'];
-
-	$img_dir = empty($row['_image_dir']) ? '' : $row['_image_dir'].'/';
 
 	$res = [];
 	$res['_image1'] = $img_dir.$images[0];
@@ -690,10 +638,8 @@ protected function getImageTags($row) {
  * this.conf == [] or $p['reset'] = 1. Overwrite with values from $p. 
  *
  * Enable sql sort with conf.sort= id, name, ... and place _SORT in query.
- *
- * @param array[string]string $p
  */
-public function tok_output_conf($p) {
+public function tok_output_conf(array $p) : void {
 
 	if (count($this->conf) == 0 || !empty($p['reset'])) {
 		$tag_min = $this->tok->getTag('min');
@@ -751,8 +697,7 @@ public function tok_output_conf($p) {
 	foreach ($p as $key => $value) {
 		$this->conf[$key] = $value;
 	}
-
-	// \rkphplib\lib\log_debug("TOutput.tok_output_conf:739> this.conf: ".print_r($this->conf, true));
+	// \rkphplib\lib\log_debug("TOutput.tok_output_conf:700> this.conf: ".print_r($this->conf, true));
 }
 
 
@@ -801,17 +746,14 @@ public function tok_output_conf($p) {
  *  scroll.jump_num= 4
  *
  * @see File::loadTable for table.type 
- * @param array[string]string $p
- * @return ''
  */
-public function tok_output_init($p) {
+public function tok_output_init(array $p) : void {
 
 	if (!isset($p['reset'])) {
 		$p['reset'] = 1;
 	}
 
 	$this->tok_output_conf($p);
-
 	$this->computePagebreak();
 
 	if (!empty($this->conf['query'])) {
@@ -842,8 +784,7 @@ public function tok_output_init($p) {
  *  next_pos= int
  *
  */
-private function computeEnv() {
-
+private function computeEnv() : void {
 	$this->env['is_map'] = false;
 	$this->env['rowbreak'] = intval($this->conf['rowbreak']);
 	$this->env['tags'] = [];
@@ -909,8 +850,7 @@ private function computeEnv() {
  *  page= 1 or last/pagebreak + 1
  *
  */
-private function computePagebreak() {
-
+private function computePagebreak() : void {
 	$pagebreak = intval($this->conf['pagebreak']);
 	$this->env['pagebreak'] = $pagebreak;
 
@@ -946,8 +886,7 @@ private function computePagebreak() {
  *  scroll.last= link
  *  scroll.jump= html
  */
-private function computeScroll() {
-
+private function computeScroll() : void {
 	if ($this->env['last'] > 0) {
 		$scroll['first'] = $this->_scroll_link('first', 0);
 		$scroll['prev'] = $this->_scroll_link('prev', ($this->env['last'] - $this->env['pagebreak']));
@@ -978,11 +917,8 @@ private function computeScroll() {
 
 /**
  * Return scroll jump html.
- * 
- * @return string
  */
-private function getScrollJumpHtml() {
-
+private function getScrollJumpHtml() : string {
 	$pbreak = $this->conf['pagebreak'];
 	$jn = $this->conf['scroll.jump_num'];
 	$j2 = intval($jn / 2);
@@ -992,7 +928,6 @@ private function getScrollJumpHtml() {
 	$jfpage = min($cpage - $j2, $lpage - $jn + 1);
 	$jfpage = max(1, $jfpage); 
 	$jlpage = min($lpage, $jfpage + $jn - 1);
-
 	$res = '';
 
 	for ($i = $jfpage; $i <= $jlpage; $i++) {
@@ -1026,17 +961,13 @@ private function getScrollJumpHtml() {
 
 /**
  * Return scroll link. Replace {:=link} and {:=last} in conf[scroll.$key].
- * 
- * @param string $key
- * @param int $last
- * @return string
  */
-private function _scroll_link($key, $last) {
+private function _scroll_link(string $key, int $last) : string {
 	$tpl = $this->conf['scroll.link'];
 	$link = $this->conf['scroll.'.$key];
 
 	$res = $this->tok->replaceTags($tpl, [ 'link' => $link, 'last' => $last ]);
-	// \rkphplib\lib\log_debug("TOutput._scroll_link:1023> key=[$key], last=[$last] tpl=[$tpl] link=[$link] last=[$last] res=[$res]");
+	// \rkphplib\lib\log_debug("TOutput._scroll_link:970> key=[$key], last=[$last] tpl=[$tpl] link=[$link] last=[$last] res=[$res]");
 	return $res;
 }
 
@@ -1044,7 +975,7 @@ private function _scroll_link($key, $last) {
 /**
  * Export link keep map {v:=#link_keep}dir={get:dir}|#|last={get:last}|#|...
  */
-private function exportLinkKeep() {
+private function exportLinkKeep() : void {
 	$keep_param = split_str(',', $this->conf['keep']);
 	$kv = [];
 
@@ -1060,7 +991,7 @@ private function exportLinkKeep() {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.exportLinkKeep:1047> keep_param: ".join('|', $keep_param));
+	// \rkphplib\lib\log_debug("TOutput.exportLinkKeep:994> keep_param: ".join('|', $keep_param));
 	foreach ($keep_param as $name) {
 		if (isset($_REQUEST[$name])) {
 			$kv[$name] = $this->getValue($name);
@@ -1073,23 +1004,19 @@ private function exportLinkKeep() {
 
 /**
  * Get request parameter value. Request key ist $name or this.conf[req.$name] (if defined).
- * 
- * @param string $name
- * @return string
- * 
  */
-protected function getValue($name) {
+protected function getValue(string $name) : string {
 	$key = empty($this->conf['req.'.$name]) ? $name : $this->conf['req.'.$name];
 	return isset($_REQUEST[$key]) ? $_REQUEST[$key] : '';
 }
 
 
 /**
- * Return sql search expression.
+ * Return sql search expression ([where, and]).
  *
  * @see getSqlSearch
  */
-protected function getSearch() {
+protected function getSearch() : array {
 	$options = [];
 
 	if (!empty($this->conf['req.search']) && isset($_REQUEST[$this->conf['req.search']])) {
@@ -1116,26 +1043,21 @@ protected function getSearch() {
 		list ($where, $and) = $this->getSqlSearch($options);
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.getSearch:1103> return where=[$where]\nand=[$and]");
+	// \rkphplib\lib\log_debug("TOutput.getSearch:1046> return where=[$where]\nand=[$and]");
 	return [ $where, $and ];
 }
 
 
 /**
- * Return sql search expression. Define search via conf.search= COLUMN:METHOD, .... 
+ * Return sql search expression ([where, and]). Define search via conf.search= COLUMN:METHOD, .... 
  * Search methods: =|EQ, %$%|LIKE, %$|LLIKE, $%|RLIKE, [a,b], [] (with value = a,b), 
  * ]], [[, ][, ?|OPTION, <|LT, >|GT, <=|LE, >=|GE. Place _[WHERE¦AND]_SEARCH in query.
  *
  * @example conf.search= id:=, age:EQ, firstname:LIKE, lastname:%$%, ...
  *
  * Search value is either _REQUEST[s_NAME] of if not set and req.search=X: $_REQUEST[X].
- *
- * @throws
- * @param hash $options ({ value: '...', join_or: 1|0, no_value: 1|0, search_cols: [ col:method, ... ] })
- * @return array [ _WHERE_SEARCH, _AND_SEARCH ]
  */ 
-protected function getSqlSearch($options = []) {
-
+protected function getSqlSearch(array $options = []) : array {
   $env = [ 'col' => '', 'cname' => '', 'method' => '', 'value' => '', 'set_search' => [], 'select_search' => [], 'expr' => [] ];
 
 	if (isset($options['search_cols']) && is_array($options['search_cols'])) {
@@ -1204,12 +1126,8 @@ protected function getSqlSearch($options = []) {
 
 /**
  * Update $env.
- *
- * @param hash-ref &$env
- * @param array $match
- * @return boolean
  */
-private function searchRange(&$env, $match) {
+private function searchRange(array &$env, array $match) : bool {
 	$col = $env['col'];
 	$value = '';
 
@@ -1243,13 +1161,8 @@ private function searchRange(&$env, $match) {
 
 /**
  * Update env.expr if necessary. Return true if found.
- *
- * @param hash-ref &$env
- * @param string $col e.g. age
- * @param string $method e.g. EQ, LIKE, int, ...
- * @return boolean
  */
-private function searchColumnValue(&$env) {
+private function searchColumnValue(array &$env) : bool {
 	$compare = [ 'EQ' => '=', 'LT' => '<', 'GT' => '>', 'LE' => '<=', 'GE' => '>=' ];
 	$like = [ 'LIKE' => '%$%', 'LLIKE' => '$%', 'RLIKE' => '%$' ];
 	$func = [ 'int' => "=FLOOR('\$')", 'in' => " IN ('\$,')", 'or' => "" ];
@@ -1309,26 +1222,22 @@ private function searchColumnValue(&$env) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.searchColumnValue:1296> return - expr_before=[$expr_befrore] env: ".print_r($env, true));
+	// \rkphplib\lib\log_debug("TOutput.searchColumnValue:1225> return - expr_before=[$expr_befrore] env: ".print_r($env, true));
 	return $expr_before < count($env['expr']);
 }
 
 
 /**
- * Return range limits and options for search evaluation. 
- *
- * @throws
- * @param vector $cols 
- * @return map
+ * Return select (one) from query.table.
  */
-private function selectSearch($cols) {
+private function selectSearch(array $cols) : array {
 	if (empty($this->conf['query.table'])) {
 		throw new Exception('missing [output:]query.table=...');
 	}
 
 	$query = "SELECT ".join(', ', $cols)." FROM ".ADatabase::escape_name($this->conf['query.table']);
 	$db = Database::getInstance($this->conf['query.dsn'], [ 'search_info' => $query ]);
-	// \rkphplib\lib\log_debug("TOutput.selectSearch:1315> query.search_info: ".$db->getQuery('search_info'));
+	// \rkphplib\lib\log_debug("TOutput.selectSearch:1240> query.search_info: ".$db->getQuery('search_info'));
 	return $db->selectOne($db->getQuery('search_info'));
 }
 
@@ -1339,14 +1248,8 @@ private function selectSearch($cols) {
  * 
  * age, "18,24", [] = (18 <= age AND age <= 24)
  * s_age_min=18, s_age_max=24
- *
- * @throws
- * @param string $col
- * @param string $value
- * @param string $range
- * @return string
  */
-private function getRangeExpression($col, $value, $range) {
+private function getRangeExpression(string $col, string $value, string $range) : string {
 	$value = preg_replace('/[^0-9\-\+\.\,]/', '', $value);
 
 	if (mb_strpos($value, ',') === false) {
@@ -1384,11 +1287,8 @@ private function getRangeExpression($col, $value, $range) {
 /**
  * Return "ORDER BY ...". Use conf.sort or _REQUEST[conf.req.sort] = sort.
  * Sort value is [a|d]colname.
- *
- * @throws
- * @return string ''|ORDER BY ...
  */
-protected function getSqlSort() {
+protected function getSqlSort() : string {
   $sort = isset($_REQUEST[$this->conf['req.sort']]) ? $_REQUEST[$this->conf['req.sort']] : $this->conf['sort'];
 
 	if (empty($sort)) {
@@ -1415,9 +1315,8 @@ protected function getSqlSort() {
 
 /**
  * Load data with select query. Extract only data we are displaying.
- *
  */
-protected function selectData() {
+protected function selectData() : void {
 	$query = $this->conf['query'];
 
 	if (!empty($this->conf['search'])) {
@@ -1428,11 +1327,11 @@ protected function selectData() {
 
 	$this->conf['query'] = $query;
 	$db = Database::getInstance($this->conf['query.dsn'], [ 'output' => $this->conf['query'] ]);
-	// \rkphplib\lib\log_debug("TOutput.selectData:1415> query.output: ".$db->getQuery('output', $_REQUEST));
+	// \rkphplib\lib\log_debug("TOutput.selectData:1330> query.output: ".$db->getQuery('output', $_REQUEST));
 	$db->execute($db->getQuery('output', $_REQUEST), true);
 
 	$this->env['total'] = $db->getRowNumber();
-	// \rkphplib\lib\log_debug("TOutput.selectData:1419> found ".$this->env['total'].' entries');
+	// \rkphplib\lib\log_debug("TOutput.selectData:1334> found ".$this->env['total'].' entries');
 	$this->table = [];
 
 	if ($this->env['start'] >= $this->env['total']) {
@@ -1447,7 +1346,7 @@ protected function selectData() {
 	$skip = intval($this->conf['skip']);
 	$this->env['total'] -= $skip;
 
-	// \rkphplib\lib\log_debug("TOutput.selectData:1434> show max. $n rows");
+	// \rkphplib\lib\log_debug("TOutput.selectData:1349> show max. $n rows");
 	while (($row = $db->getNextRow()) && $n < $this->env['pagebreak']) {
 		if ($skip > 0) {
 			$skip--;
@@ -1463,18 +1362,16 @@ protected function selectData() {
 		$this->checkColumnLabel();
 	}
 
+	// \rkphplib\lib\log_debug('TOutput.selectData:1365> show '.count($this->table).' rows');
 	$db->freeResult();
-	// \rkphplib\lib\log_debug('TOutput.selectData:1451> show '.count($this->table).' rows');
 }
 
 
 /**
  * Load table data from table.data or retrieve from table.url = file|http[s]://.
  * Set env.total.
- *
  */
-protected function fillTable() {
-
+protected function fillTable() : void {
 	if (!empty($this->conf['table.url'])) {
 		$uri = strpos($this->conf['table.url'], '://') ? $this->conf['table.url'] : 'file://'.$this->conf['table.url'];
 	}
