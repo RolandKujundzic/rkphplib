@@ -59,8 +59,10 @@ public static function encode($any, int $options = JSON_UNESCAPED_SLASHES|JSON_U
 
 
 /**
- * Return json decoded $txt as hash ($flag = 1) or object ($flag = 0).
- * Flags: 2^0 = return assoc, 2^1 = html_entity_decode result
+ * Return json decoded $txt as hash ($flag = 1) or object ($flag = 0). Flags: 
+ * - 2^0 = return assoc
+ * - 2^1 = html_entity_decode result 
+ * - 2^2 = return empty array if error
  *
  * @param int|bool flag (default 2^0 = 1 = return assoc)
  * @return object|array
@@ -70,6 +72,10 @@ public static function decode(string $txt, $flag = 1) {
 	$res = json_decode($txt, $assoc);
 
 	if (($err_no = json_last_error())) {
+		if ($flag & 4) {
+			return [];
+		}
+
 		$txt = (mb_strlen($txt) > 80) ? substr($txt, 0, 30).' ... '.substr($txt, -30) : $txt;
 		throw new Exception("JSON.decode failed", self::_error_msg($err_no)."\nJSON=[".$txt."]");
 	}
