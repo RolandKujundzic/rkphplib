@@ -1384,6 +1384,10 @@ public function fillTable(?array $table_data = null) : void {
 	else if (!empty($this->conf['table.data'])) {
 		$uri = 'string://';
 	}
+	else if (!is_null($this->table) && isset($this->env['total'])) {
+		// use existing ...
+		return;
+	}
 	else {
 		throw new Exception('empty table.data and table.url');
 	}
