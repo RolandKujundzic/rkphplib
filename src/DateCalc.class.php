@@ -21,7 +21,7 @@ class DateCalc {
  * Parse date string. Return as $2 (de|sql|unix=default).
  */
 public static function parse(string $date, $out = 'unix') : string {
-	if (($time = strtotime($date))) {
+	if (($time = strtotime($date)) === false) {
 		throw new Exception('parse date', $date);
 	}
 
