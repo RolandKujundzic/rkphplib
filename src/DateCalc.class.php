@@ -33,6 +33,27 @@ class DateCalc {
 
 
 /**
+ * Parse date string. Return as $2 (de|sql|unix=default).
+ */
+public static function parse(string $date, $out = 'unix') : string {
+	if (($time = strtotime($date))) {
+		throw new Exception('parse date', $date);
+	}
+
+	$res = $time;
+
+	if ($out == 'sql') {
+		$res = date('Y-m-d H:i:s', $time);
+	}
+	else if ($out = 'de') {
+		$res = date('d.m.Y H:i:s', $time);
+	}
+
+	return $res;
+}
+
+
+/**
  * Return localized month names (SETTINGS_LANGUAGE = en|de|hr, default = de). Month is from [1,12].
  */
 public static function monthName(int $month) : string {
