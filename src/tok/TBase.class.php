@@ -33,10 +33,6 @@ if (php_sapi_name() == 'cli' && !defined('SETTINGS_CLI_INPUT')) {
 	\rkphplib\lib\cli_input();
 }
 
-if (!defined('PATH_RKPHPLIB')) {
-	define('PATH_RKPHPLIB', $parent_dir.'/');
-}
-
 if (!defined('SETTINGS_REQ_CRYPT')) {
   // @const SETTINGS_REQ_CRYPT = '' (''=default|cx)
   define('SETTINGS_REQ_CRYPT', '');
@@ -1459,7 +1455,7 @@ private function applyFilter(string $tag, string $value) : string {
 			$value = str_replace(HASH_DELIMITER, entity(HASH_DELIMITER), $value);
 		}
 		else if ($filter == 'escape_db') {
-			require_once PATH_RKPHPLIB.'ADatabase.class.php';
+			require_once __DIR__.'/../ADatabase.class.php';
 			$value = "'".\rkphplib\ADatabase::escape($value)."'";
 		}	
 		else {
@@ -1828,16 +1824,16 @@ public function tok_decode(string $param, string $txt) : string {
 /**
  * Load plugin class. Examples:
  * 
- * {plugin:}TLogin, TLanguage, PHPLIB:TShop, inc/abc.php:\custom\XY{:plugin} -> 
- *   require_once(PATH_RKPHPLIB.'TLogin.class.php'); $this->tok->register(new \rkphplib\TLogin());
- *   require_once(PATH_RKPHPLIB.'TLanguage.class.php'); $this->tok->register(new \rkphplib\TLanguage());
- *   require_once(PATH_PHPLIB.'TShop.class.php'); $this->tok->register(new \phplib\TShop());
- *   require_once('inc/abc.php', $this->tok->register(new \custom\XY());
+ * {plugin:}TLogin, TLanguage, PHPLIB:TShop, inc/abc.php:\custom\XY{:plugin}
+ * require_once PATH_RKPHPLIB.'tok/TLogin.class.php'; $this->tok->register(new \rkphplib\tok\TLogin());
+ * require_once PATH_RKPHPLIB.'tok/TLanguage.class.php'; $this->tok->register(new \rkphplib\tok\TLanguage());
+ * require_once PATH_PHPLIB.'tok/TShop.class.php'; $this->tok->register(new \phplib\tok\TShop());
+ * require_once 'inc/abc.php'; $this->tok->register(new \custom\XY());
  */
 public function tok_plugin(array $p) : void {
 	foreach ($p as $plugin) {
 		if (mb_strpos($plugin, ':') === false) {
-			require_once PATH_RKPHPLIB.'tok/'.$plugin.'.class.php';
+			require_once __DIR__."/$plugin.class.php";
 			$obj = '\\rkphplib\\tok\\'.$plugin;
 			// \rkphplib\lib\log_debug("TBase.tok_plugin:1805> require_once('".PATH_RKPHPLIB.'tok/'.$plugin.".class.php'); new $obj();");
 		}

@@ -5,13 +5,6 @@ namespace rkphplib;
 require_once __DIR__.'/ASession.class.php';
 require_once __DIR__.'/Dir.class.php';
 
-
-if (!defined('SETTINGS_REQ_DIR')) {
-	// @const SETTINGS_REQ_DIR = 'dir'
-	define('SETTINGS_REQ_DIR', 'dir');
-}
-
-
 use rkphplib\Dir;
 
 

@@ -9,18 +9,6 @@ require_once __DIR__.'/lib/execute.php';
 use function rkphplib\lib\execute;
 
 
-
-// @const FILE_DEFAULT_MODE = 0666 (UID < 1000) or 0644 (UID >= 1000) 
-if (!defined('FILE_DEFAULT_MODE')) {
-	if (posix_getuid() < 1000) {
-		define('FILE_DEFAULT_MODE', 0666);
-	}
-	else {
-		define('FILE_DEFAULT_MODE', 0644);
-	}
-}
-
-
 /**
  * File access wrapper.
  * 
@@ -36,7 +24,6 @@ class File {
 
 // @var bool $USE_FLOCK don't use file locking by default (BEWARE: locking will not work on NFS) 
 public static $USE_FLOCK = false;
-
 
 
 /**

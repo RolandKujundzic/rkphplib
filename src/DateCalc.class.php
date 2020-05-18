@@ -7,21 +7,6 @@ require_once __DIR__.'/Exception.class.php';
 use rkphplib\Exception;
 
 
-if (!defined('SETTINGS_TIMEZONE')) {
-	date_default_timezone_set(@date_default_timezone_get());
-  // @const string SETTINGS_TIMEZONE = Auto-Detect
-  define('SETTINGS_TIMEZONE', date_default_timezone_get());
-}
-else {
-  date_default_timezone_set(SETTINGS_TIMEZONE);
-}
-
-if (!defined('SETTINGS_LANGUAGE')) {
-  // @const string SETTINGS_LANGUAGE = 'de'
-  define('SETTINGS_LANGUAGE', 'de');
-}
-
-
 /**
  * Date calculation helper class. All methods are static.
  * Define SETTINGS_TIMEZONE = CET and SETTINGS_LANGUAGE = de if unset.

@@ -2,31 +2,8 @@
 
 namespace rkphplib\lib;
 
-if (!defined('DOCROOT') && !empty($_SERVER['CONTEXT_DOCUMENT_ROOT']) && is_dir($_SERVER['CONTEXT_DOCUMENT_ROOT'].'/data/.log')) {
-	define('DOCROOT', $_SERVER['CONTEXT_DOCUMENT_ROOT']);
-}
-
 if (!defined('SETTINGS_LOG_DEBUG')) {
-	// @define string SETTINGS_LOG_DEBUG = '[DOCROOT/data/.log|/tmp]/php.log'
-	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/.log')) {
-		define('SETTINGS_LOG_DEBUG', DOCROOT.'/data/.log/php.log');
-	}
-	else {
-		define('SETTINGS_LOG_DEBUG', '/tmp/php.log');
-	}
-}
-
-if (!defined('SETTINGS_TIMEZONE')) {
-  // @define string SETTINGS_TIMEZONE = Auto-Detect
-  date_default_timezone_set(@date_default_timezone_get());
-  define('SETTINGS_TIMEZONE', date_default_timezone_get());
-}
-else {
-  date_default_timezone_set(SETTINGS_TIMEZONE);
-}
-
-if (!isset($GLOBALS['SETTINGS'])) {
-	$GLOBALS['SETTINGS'] = [];
+	require_once __DIR__.'/lib/config.php';
 }
 
 

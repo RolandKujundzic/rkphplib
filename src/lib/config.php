@@ -3,27 +3,75 @@
 namespace rkphplib\lib;
 
 /**
- * Configuration file. Include lib/log_debug.php.
- * Change PrivateTmp=true into false in 
- *  
- * /etc/systemd/system/multi-user.target.wants/apache2.service to use real /tmp directory - otherwise
- * /tmp/systemd-private-f9...09-apache2.service-eC...Xy/tmp/ will be used.
+ * Configuration file. Usually included automatically by Exception, DateCalc, Session,
+ * tok/TokPlugin.iface.php, lib/log_debug or lib/log_warn. Load lib/log_debug.php and 
+ * lib/log_warn.php. Define:
  *
- * Preset global defines SETTINGS_* with default values:
+ * TAG_PREFIX = '{:='
+ * TAG_SUFFIX = '}'
+ * HASH_DELIMITER = |#|
+ * DOCROOT = $PWD|$_SERVER[CONTEXT_DOCUMENT_ROOT]
+ * SETTINGS_LOG_ERROR = (DOCROOT/data/.log|/tmp)/php.fatal
+ * SETTINGS_LOG_WARN = dirname(SETTINGS_LOG_ERROR)/php.warn
+ * SETTINGS_LOG_DEBUG = dirname(SETTINGS_LOG_ERROR)/php.log
+ * SETTINGS_TIMEZONE = date_default_timezone_get()
+ * SETTINGS_LANGUAGE = de|$_SERVER[HTTP_ACCEPT_LANGUAGE]
+ * SETTINGS_REQ_DIR = dir
+ * RKPHPLIB_VERSION = 1.0.3
+ * FILE_DEFAULT_MODE = 0644(=cli)|0660
+ * DIR_DEFAULT_MODE = 0755(=cli)|0770
+ * $_GLOBALS[SETTINGS] = []
  *
- *  SETTINGS_TIMEZONE = Auto-Detect (e.g. CET)
- *  SETTINGS_LANGUAGE = de
- *
- * Set date_default_timezone_set(SETTINGS_TIMEZONE) if unset and mb_internal_encoding('UTF-8').
- *
- * Define:
- *
- *  RKPHPLIB_VERSION = 1.0
+ * Set date_default_timezone_set(SETTINGS_TIMEZONE) if unset.
+ * Set mb_internal_encoding('UTF-8') and LC_ALL='de_DE.UTF-8'.
  *
  * Register exception_handler and error_handler.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
+
+if (!defined('DOCROOT')) {
+	if (!empty($_SERVER['CONTEXT_DOCUMENT_ROOT']) && is_dir($_SERVER['CONTEXT_DOCUMENT_ROOT'].'/data/.log')) {
+		define('DOCROOT', $_SERVER['CONTEXT_DOCUMENT_ROOT']);
+	}
+	else {
+		define('DOCROOT', getcwd()); 
+	}
+}
+
+if (!defined('SETTINGS_LOG_ERROR')) {
+	// @define string SETTINGS_LOG_ERROR = '[DOCROOT/data/.log|/tmp]/php.fatal'
+	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/.log')) {
+		define('SETTINGS_LOG_ERROR', DOCROOT.'/data/.log/php.fatal');
+	}
+	else {
+		define('SETTINGS_LOG_ERROR', '/tmp/php.fatal');
+	}
+}
+
+if (!defined('SETTINGS_LOG_WARN')) {
+	// @define string SETTINGS_LOG_WARN = dirname(SETTINGS_LOG_ERROR).'/php.warn'
+	define('SETTINGS_LOG_WARN', dirname(SETTINGS_LOG_ERROR).'/php.warn');
+}
+
+if (!defined('SETTINGS_LOG_DEBUG')) {
+	// @define string SETTINGS_LOG_DEBUG = dirname(SETTINGS_LOG_ERROR)/php.log'
+	define('SETTINGS_LOG_DEBUG', dirname(SETTINGS_LOG_ERROR).'/php.log');
+}
+
+if (!defined('SETTINGS_TIMEZONE')) {
+  // @define string SETTINGS_TIMEZONE = Auto-Detect
+  date_default_timezone_set(@date_default_timezone_get());
+  define('SETTINGS_TIMEZONE', date_default_timezone_get());
+}
+else {
+  date_default_timezone_set(SETTINGS_TIMEZONE);
+}
+
+if (!isset($GLOBALS['SETTINGS'])) {
+	$GLOBALS['SETTINGS'] = [];
+}
+
 
 require_once __DIR__.'/log_debug.php';
 require_once __DIR__.'/log_warn.php';
@@ -39,21 +87,68 @@ if (setlocale(LC_ALL, 'de_DE.UTF-8') === false) {
   die("setlocale de_DE.UTF-8 failed");
 }
 
+if (!defined('TAG_PREFIX')) {
+  // @define string TAG_PREFIX = '{:='
+  define('TAG_PREFIX', '{:=');
+}
+
+if (!defined('TAG_SUFFIX')) {
+  // @define string TAG_SUFFIX = '}'
+  define('TAG_SUFFIX', '}');
+}
+
+if (!defined('HASH_DELIMITER')) {
+	// @const HASH_DELIMITER = '|#|' if undefined 
+	define('HASH_DELIMITER', '|#|');
+}
+
 if (!defined('SETTINGS_REQ_DIR')) {
 	// @define string SETTINGS_REQ_DIR = 'dir' 
 	define('SETTINGS_REQ_DIR', 'dir');
 }
 
+if (!defined('SETTINGS_TIMEZONE')) {
+	date_default_timezone_set(@date_default_timezone_get());
+	// @const string SETTINGS_TIMEZONE = Auto-Detect
+	define('SETTINGS_TIMEZONE', date_default_timezone_get());
+}
+else {
+	date_default_timezone_set(SETTINGS_TIMEZONE);
+}
+
 if (!defined('SETTINGS_LANGUAGE')) {
-	// @define string SETTINGS_LANGUAGE = 'de'
-	define('SETTINGS_LANGUAGE', 'de');
+	// @const string SETTINGS_LANGUAGE = 'de|HTTP_ACCEPT_LANGUAGE'
+	if (!empty($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+		define('SETTINGS_LANGUAGE', substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2));
+	}
+	else {
+		// @define string SETTINGS_LANGUAGE = 'de'
+		define('SETTINGS_LANGUAGE', 'de');
+	}
 }
 
 // make create files and directories rw for webserver
 if (!defined('FILE_DEFAULT_MODE') && !defined('DIR_DEFAULT_MODE')) {
 	if (php_sapi_name() == 'cli') {
-		define('FILE_DEFAULT_MODE', 0666);
-		define('DIR_DEFAULT_MODE', 0777);
+		// @const FILE_DEFAULT_MODE = 0666 (UID < 1000) or 0644 (UID >= 1000) 
+		if (!defined('FILE_DEFAULT_MODE')) {
+			if (posix_getuid() < 1000) {
+				define('FILE_DEFAULT_MODE', 0666);
+			}
+			else {
+				define('FILE_DEFAULT_MODE', 0644);
+			}
+		}
+
+		// @const int DIR_DEFAULT_MODE octal, default directory creation mode, 0777 (uid < 1000) or 0755
+		if (!defined('DIR_DEFAULT_MODE')) {
+			if (posix_getuid() < 1000) {
+				define('DIR_DEFAULT_MODE', 0777);
+			}
+			else {
+				define('DIR_DEFAULT_MODE', 0755);
+			}
+		}
 	}
 	else {
 		define('FILE_DEFAULT_MODE', 0660);
@@ -61,7 +156,7 @@ if (!defined('FILE_DEFAULT_MODE') && !defined('DIR_DEFAULT_MODE')) {
 	}
 }
 
-define('RKPHPLIB_VERSION', 'v1.0.2');
+define('RKPHPLIB_VERSION', 'v1.0.3');
 
 
 /**

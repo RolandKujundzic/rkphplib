@@ -2,35 +2,7 @@
 
 namespace rkphplib;
 
-
-if (!defined('TAG_PREFIX')) {
-  // @define string TAG_PREFIX = '{:='
-  define('TAG_PREFIX', '{:=');
-}
-
-if (!defined('TAG_SUFFIX')) {
-  // @define string TAG_SUFFIX = '}'
-  define('TAG_SUFFIX', '}');
-}
-
-if (!defined('SETTINGS_LOG_ERROR')) {
-	// @define string SETTINGS_LOG_ERROR = '[DOCROOT/data/.log|/tmp]/php.fatal'
-	if (defined('DOCROOT') && is_dir(DOCROOT.'/data/.log')) {
-		define('SETTINGS_LOG_ERROR', DOCROOT.'/data/.log/php.fatal');
-	}
-	else {
-		define('SETTINGS_LOG_ERROR', '/tmp/php.fatal');
-	}
-}
-
-if (!defined('SETTINGS_TIMEZONE')) {
-  date_default_timezone_set(@date_default_timezone_get());
-  // @define string SETTINGS_TIMEZONE = Auto-Detect
-  define('SETTINGS_TIMEZONE', date_default_timezone_get());
-}
-else {
-  date_default_timezone_set(SETTINGS_TIMEZONE);
-}
+require_once __DIR__.'/lib/config.php';
 
 
 /**
@@ -54,10 +26,6 @@ public $internal_message = '';
 public function __construct(string $message, string $internal_message = '') {
 	parent::__construct($message);
 	$this->internal_message = $internal_message;
-
-	if (!defined('DOCROOT')) {
-		return;
-	}
 
 	$default_log_dir = DOCROOT.'/data/.log/exception';
 

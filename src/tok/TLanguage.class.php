@@ -15,13 +15,6 @@ use rkphplib\Session;
 use rkphplib\File;
 
 
-
-if (!defined('SETTINGS_LANGUAGE')) {
-  // @define string SETTINGS_LANGUAGE = 'de' 
-  define('SETTINGS_LANGUAGE', 'de');
-}
-
-
 /**
  * Multilanguage plugin. Use Database and Session (site.language).
  * Set SETTINGS_LANGUAGE = de if unset.
