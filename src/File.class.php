@@ -229,10 +229,10 @@ public static function loadCSV(string $file, string $delimiter = ',', string $qu
 
 
 /**
- * Return filecontent loaded from url.
- * If required (default) abort if result has zero size.
- * Use pseudo header [return_html_body] = [1|true|y] = NOT_EMPTY
- * to return body content only.
+ * Return filecontent loaded from url.  If required (default) abort if 
+ * result has zero size.  Use pseudo header [return_html_body] = [1|true|y] = NOT_EMPTY 
+ * to return body content only. Use pseudo header cache_as|cache_ttl to enable caching
+ * (cache_ttl > 2, cache_as = SETTINGS_CACHE_DIR(=DOCROOT/data/.tmp)/url_$(md5($url)).cache).
  *
  * You might need to rawurlencode url. If you do not and download failed with
  * basename($url) != rawurlencode(basename($url)) the function will automatically 
@@ -242,6 +242,18 @@ public static function fromURL(string $url, bool $required = true, array $header
 
 	if (empty($url)) {
 		throw new Exception('empty url');
+	}
+
+	$cache_ttl = 0;
+	if (!empty($header['cache_ttl']) && intval($header['cache_ttl']) > 5) {
+		$cache_ttl = $header['cache_ttl'];
+		$cache_as = empty($header['cache_as']) ? SETTINGS_CACHE_DIR.'/url_'.md5($url).'.cache' : $header['cache_as'];
+		unset($header['cache_as']);
+		unset($header['cache_ttl']);
+
+		if (self::exists($cache_as) && File::lastModified($cache_as) + $cache_ttl > time()) {
+			return self::load($cache_as);
+		}
 	}
 
 	$cu = curl_init();
@@ -295,6 +307,10 @@ public static function fromURL(string $url, bool $required = true, array $header
 	if (trim($res) == '' && $required) {
 		throw new Exception('empty file', $url);
 	}
+
+  if ($cache_ttl) {
+    File::save($cache_as, $res);
+  }
 
 	return $res;
 }
