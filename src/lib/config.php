@@ -17,6 +17,7 @@ namespace rkphplib\lib;
  * SETTINGS_TIMEZONE = date_default_timezone_get()
  * SETTINGS_LANGUAGE = de|$_SERVER[HTTP_ACCEPT_LANGUAGE]
  * SETTINGS_REQ_DIR = dir
+ * SETTINGS_CACHE_DIR = DOCROOT/data/.tmp
  * RKPHPLIB_VERSION = 1.0.3
  * FILE_DEFAULT_MODE = 0644(=cli)|0660
  * DIR_DEFAULT_MODE = 0755(=cli)|0770
@@ -105,6 +106,11 @@ if (!defined('HASH_DELIMITER')) {
 if (!defined('SETTINGS_REQ_DIR')) {
 	// @define string SETTINGS_REQ_DIR = 'dir' 
 	define('SETTINGS_REQ_DIR', 'dir');
+}
+
+if (!defined('SETTINGS_CACHE_DIR')) {
+	// @define string SETTINGS_CACHE_DIR = DOCROOT.'/data/.tmp'
+	define('SETTINGS_CACHE_DIR', DOCROOT.'/data/.tmp');
 }
 
 if (!defined('SETTINGS_TIMEZONE')) {
