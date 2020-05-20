@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace rkphplib;
 
@@ -15,12 +15,12 @@ if (!defined('DOCROOT')) {
 }
 
 require_once __DIR__.'/lib/config.php';
-require_once __DIR__.'/lib/log_debug.php';
+require_once __DIR__.'/tok/Tokenizer.class.php';
 require_once __DIR__.'/FSEntry.class.php';
 require_once __DIR__.'/PhpCode.class.php';
-require_once __DIR__.'/File.class.php';
 require_once __DIR__.'/JSON.class.php';
-require_once __DIR__.'/tok/Tokenizer.class.php';
+require_once __DIR__.'/File.class.php';
+require_once __DIR__.'/Dir.class.php';
 
 
 
@@ -616,6 +616,27 @@ private function _test_dir() : array {
 	$rel_dir = substr($tdir, $pos + 6);
 
 	return [ $tdir, $rel_dir ];
+}
+
+
+/**
+ * Execute (include) php file in/$n.php, save output as out/$n.txt
+ * and compare with ok/$n.txt. Log _tc.num|err.ok and print message.
+ */
+public function execPHP(int $n) : void {
+	$dir = getcwd();
+
+	if (!Dir::exists($dir.'/out')) {
+		Dir::create($dir.'/out');
+	}
+
+	ob_start();
+	include "$dir/in/t$n.php";
+	$out = ob_get_contents();
+	ob_end_clean();
+	File::save("$dir/out/t$n.txt", $out);
+	$ok = File::load("$dir/ok/t$n.txt");
+	$this->compare(basename($dir)."/in/t$n.php", [ $out ], [ $ok ]);
 }
 
 
