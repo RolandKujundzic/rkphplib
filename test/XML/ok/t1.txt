@@ -79,3 +79,17 @@ Array
     [cdata] => ... cdata example ...
 )
 ignore missing doc.required
+toMap (keep root): Array
+(
+    [doc] => Array
+        (
+            [@attributes] => Array
+                (
+                    [language] => en
+                )
+
+            [title] => Keep doc
+        )
+
+)
+

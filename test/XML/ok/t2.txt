@@ -100,3 +100,17 @@ Array
     [cdata] => ... cdata example ...
 )
 ignore missing /doc/required
+toArray(fromMap): Array
+(
+    [doc] => Array
+        (
+            [@] => Array
+                (
+                    [language] => en
+                )
+
+            [title] => Keep doc
+        )
+
+)
+
