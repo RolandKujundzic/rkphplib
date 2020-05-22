@@ -224,12 +224,13 @@ public static function toMap(string $xml) : array {
  *
  *  XML::fromMap(['A', 'B', 'C']) =  <root><vector>A</vector><vector>B</vector><vector>C</vector></root> 
  *  XML::fromMap(['names' => ['A', 'B', 'C']]) = <root><names>A</names>...</root>
- *
- * @param mixed $data array|string
  */
-public static function fromMap($data, string $root = 'root') : string {
-
-	$add_elements = function($data, string $root, \DomDocument $xml) use (&$add_elements) : \DomDocument {
+public static function fromMap(array $data, string $root = 'root') : string {
+	/**
+	 *  Convert array to DOMElement (recursive).
+	 * @param mixed $data array|string
+	 */
+	$array2xml = function ($data, string $root, \DomDocument $xml) use (&$array2xml) : \DOMElement {
 		if (!preg_match('/^[a-z_]+[a-z0-9\:\-\.\_]*[^:]*$/i', $root)) {
 			throw new Exception('Invalid xml tag name '.$root);
 		}
@@ -276,19 +277,15 @@ public static function fromMap($data, string $root = 'root') : string {
 				unset($data['@cdata']);
 			}
 
-			if ($initial && count(array_filter(array_keys($data), 'is_string')) == 0) {
-				throw new Exception("Root level vector");
-			}
-
 			foreach ($data as $key => $value) {
 				if (is_array($value) && key($value) === 0) {
 					// first key of $value is 0 ... assume value is vector use $key as tag
 					foreach ($value as $k => $v) {
-						$node->appendChild(self::fromMap($v, $key, $xml));
+						$node->appendChild($array2xml($v, $key, $xml));
 					}
 				}
 				else {
-					$node->appendChild($add_elements($value, $key, $xml));	// recursion
+					$node->appendChild($array2xml($value, $key, $xml));
 				}
 
 				unset($data[$key]);
@@ -302,7 +299,8 @@ public static function fromMap($data, string $root = 'root') : string {
 	$xml = new \DomDocument('1.0', 'UTF-8');
 	$xml->preserveWhiteSpace = false;
 	$xml->formatOutput = true;
-
+	$initial = true;
+	
 	if ((empty($root) || $root == 'root') && is_array($data)) {
 		$keys = array_keys($data);
 		if (count($keys) == 1 && count($data[$keys[0]]) > 1) {
@@ -311,8 +309,7 @@ public static function fromMap($data, string $root = 'root') : string {
 		}
 	}
 
-	$xml->appendChild($add_elements($data, $root, $xml));
-
+	$xml->appendChild($array2xml($data, $root, $xml));
 	return $xml->saveXML();
 }
 
