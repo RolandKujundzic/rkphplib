@@ -12,12 +12,11 @@ $xml_str .= <<<END
 </json2xml>
 END;
 
-print \rkphplib\XML::fromMap(\rkphplib\XML::toMap($xml_str))."\n";
+print \rkphplib\XML::fromMap(\rkphplib\XML::toMap($xml_str, true))."\n";
 $xml = new \rkphplib\XML($xml_str);
 
 $xml_array = $xml->toArray();
 print_r($xml_array); 
 
-$xml->load($xml_array);
-print $xml;
+print $xml->fromMap($xml_array, 'json2xml');
 

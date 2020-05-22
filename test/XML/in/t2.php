@@ -29,3 +29,12 @@ catch (\Exception $e) {
 	print "ignore missing /doc/required\n";
 }
 
+$xml_str  = '<?xml version="1.0" encoding="utf-8"?>';
+$xml_str .= <<<XML
+<doc
+	language="en">
+	<title>Keep doc</title>
+</doc>
+XML;
+print "toArray(fromMap): ".print_r(\rkphplib\XML::string2array($xml_str, true), true)."\n";
+
