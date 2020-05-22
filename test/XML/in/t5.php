@@ -1,7 +1,7 @@
 <?php
 
-$xml_str = <<<END
-<?xml version="1.0" encoding="utf-8"?>
+$xml_str  = '<?xml version="1.0" encoding="utf-8"?>';
+$xml_str .= <<<END
 <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
 	<channel>
 		<title>OMR Daily</title>
