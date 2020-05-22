@@ -197,7 +197,16 @@ public function toArray(?\SimpleXMLElement $xml = null) {
 	}
 	else {
 		foreach ($nodes as $nodeName => $nodeValue) {
-			$res[$nodeName] = $this->toArray($nodeValue);
+			if (isset($res[$nodeName]) && !is_array($res[$nodeName])) {
+				$res[$nodeName] = [ $res[$nodeName] ];
+			}
+
+			if (isset($res[$nodeName])) {
+				array_push($res[$nodeName], $this->toArray($nodeValue));
+			}
+			else {
+				$res[$nodeName] = $this->toArray($nodeValue);
+			}
 		}
 	}
 
