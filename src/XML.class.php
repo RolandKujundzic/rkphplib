@@ -163,11 +163,15 @@ public static function isValid(string $xml, bool $abort = false) : bool {
 
 
 /**
- * Convert SimpleXMLElement to array. Tag is either string or array
- * with subtags. Use '=' and '@' as attributes hash key.
+ * Convert SimpleXMLElement to array (if null convert me). Tag is either string
+ * or array with subtags. Use '=' and '@' as attributes hash key.
  * @return array|string
  */
-public static function toArray(\SimpleXMLElement $xml) {
+public function toArray(?\SimpleXMLElement $xml = null) {
+	if (is_null($xml)) {
+		$xml = $this->xml;
+	}
+
 	$nodes = $xml->children();
 	$name = $xml->getName();
 	$attributes = $xml->attributes();
@@ -193,7 +197,7 @@ public static function toArray(\SimpleXMLElement $xml) {
 	}
 	else {
 		foreach ($nodes as $nodeName => $nodeValue) {
-			$res[$nodeName] = self::toArray($nodeValue);
+			$res[$nodeName] = $this->toArray($nodeValue);
 		}
 	}
 
@@ -222,101 +226,102 @@ public static function toMap(string $xml) : array {
  *  XML::fromMap(['names' => ['A', 'B', 'C']]) = <root><names>A</names>...</root>
  *
  * @param mixed $data array|string
- * @return mixed string|\DOMNode
  */
-public static function fromMap($data, string $root = 'root', ?\DomDocument $xml = null) {
-	$initial = false;
+public static function fromMap($data, string $root = 'root') : string {
 
-	if (is_null($xml)) {
-		$xml = new \DomDocument('1.0', 'UTF-8');
-		$xml->preserveWhiteSpace = false;
-		$xml->formatOutput = true;
-		$initial = true;
-	
-		if ((empty($root) || $root == 'root') && is_array($data)) {
-			$keys = array_keys($data);
-			if (count($keys) == 1 && count($data[$keys[0]]) > 1) {
-				$data = $data[$keys[0]];
-				$root = $keys[0];
+	$add_elements = function($data, string $root, \DomDocument $xml) use (&$add_elements) : \DomDocument {
+		if (!preg_match('/^[a-z_]+[a-z0-9\:\-\.\_]*[^:]*$/i', $root)) {
+			throw new Exception('Invalid xml tag name '.$root);
+		}
+
+		if (($node = $xml->createElement($root)) === false) {
+			throw new Exception('Failed to create xml tag '.$root);
+		}
+
+		if (!is_array($data)) {
+			$data = (string) $data;
+
+			if (substr($data, 0, 6) == '@file:') {
+				$file = substr($data, 6);
+				$node->setAttribute('file', $file);
+				$node->setAttribute('encoding', 'base64');
+				$data = base64_encode(file_get_contents($file));
+			}
+
+			if (mb_strlen($data) > 0) {
+				$node->appendChild($xml->createTextNode($data));
 			}
 		}
-	}
+		else {
+			$attr = isset($data['@attributes']) ? '@attributes' : isset($data['@']) ? '@' : '';
+			if (isset($data[$attr])) {
+				foreach ($data[$attr] as $key => $value) {
+					if (!preg_match('/^[a-z_]+[a-z0-9\:\-\.\_]*[^:]*$/i', $key)) {
+						throw new Exception("Invalid $root attribute name ".$key);
+					}
 
-	if (!preg_match('/^[a-z_]+[a-z0-9\:\-\.\_]*[^:]*$/i', $root)) {
-		throw new Exception('Invalid xml tag name '.$root);
-	}
-
-	if (($node = $xml->createElement($root)) === false) {
-		throw new Exception('Failed to create xml tag '.$root);
-	}
-
-	if (!is_array($data)) {
-		$data = (string) $data;
-
-		if (substr($data, 0, 6) == '@file:') {
-			$file = substr($data, 6);
-			$node->setAttribute('file', $file);
-			$node->setAttribute('encoding', 'base64');
-			$data = base64_encode(file_get_contents($file));
-		}
-
-		if (mb_strlen($data) > 0) {
-			$node->appendChild($xml->createTextNode($data));
-		}
-	}
-	else {
-		$attr = isset($data['@attributes']) ? '@attributes' : isset($data['@']) ? '@' : '';
-		if (isset($data[$attr])) {
-			foreach ($data[$attr] as $key => $value) {
-				if (!preg_match('/^[a-z_]+[a-z0-9\:\-\.\_]*[^:]*$/i', $key)) {
-					throw new Exception("Invalid $root attribute name ".$key);
+					$node->setAttribute($key, (string) $value);
 				}
 
-				$node->setAttribute($key, (string) $value);
+				unset($data[$attr]);
 			}
 
-			unset($data[$attr]);
-		}
+			$vkey = isset($data['@value']) ? '@value' : isset($data['=']) ? '=' : '';
+			if (isset($data[$vkey])) {
+				$node->appendChild($xml->createTextNode((string) $data[$vkey]));
+				unset($data[$vkey]);
+			}
+			else if (isset($data['@cdata'])) {
+				$node->appendChild($xml->createCDATASection((string) $data['@cdata']));
+				unset($data['@cdata']);
+			}
 
-		$vkey = isset($data['@value']) ? '@value' : isset($data['=']) ? '=' : '';
-		if (isset($data[$vkey])) {
-			$node->appendChild($xml->createTextNode((string) $data[$vkey]));
-			unset($data[$vkey]);
-		}
-		else if (isset($data['@cdata'])) {
-			$node->appendChild($xml->createCDATASection((string) $data['@cdata']));
-			unset($data['@cdata']);
-		}
+			if ($initial && count(array_filter(array_keys($data), 'is_string')) == 0) {
+				throw new Exception("Root level vector");
+			}
 
-		if ($initial && count(array_filter(array_keys($data), 'is_string')) == 0) {
-			throw new Exception("Root level vector");
-		}
-
-		foreach ($data as $key => $value) {
-			if (is_array($value) && key($value) === 0) {
-				// first key of $value is 0 ... assume value is vector use $key as tag
-				foreach ($value as $k => $v) {
-					$node->appendChild(self::fromMap($v, $key, $xml));
+			foreach ($data as $key => $value) {
+				if (is_array($value) && key($value) === 0) {
+					// first key of $value is 0 ... assume value is vector use $key as tag
+					foreach ($value as $k => $v) {
+						$node->appendChild(self::fromMap($v, $key, $xml));
+					}
 				}
-			}
-			else {
-				$node->appendChild(self::fromMap($value, $key, $xml));
-			}
+				else {
+					$node->appendChild($add_elements($value, $key, $xml));	// recursion
+				}
 
-			unset($data[$key]);
+				unset($data[$key]);
+			}
 		}
 
-		if (count($data) > 0) {
-			print_r($data);
+		return $node;
+	};
+
+
+	$xml = new \DomDocument('1.0', 'UTF-8');
+	$xml->preserveWhiteSpace = false;
+	$xml->formatOutput = true;
+
+	if ((empty($root) || $root == 'root') && is_array($data)) {
+		$keys = array_keys($data);
+		if (count($keys) == 1 && count($data[$keys[0]]) > 1) {
+			$data = $data[$keys[0]];
+			$root = $keys[0];
 		}
 	}
 
-	if ($initial) {
-		$xml->appendChild($node);
-		return $xml->saveXML();
-	}
+	$xml->appendChild($add_elements($data, $root, $xml));
 
-	return $node;
+	return $xml->saveXML();
+}
+
+
+/**
+ * Return xml string.
+ */
+public function __toString() : string {
+	return $this->xml->asXML();
 }
 
 
