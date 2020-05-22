@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<json2xml>
+  <names>a</names>
+  <names>b</names>
+  <names>c</names>
+  <id>a</id>
+  <id>b</id>
+  <id>c</id>
+</json2xml>
+
+Array
+(
+    [names] => c
+    [id] => c
+)
+<?xml version="1.0" encoding="UTF-8"?>
+<json2xml>
+  <names>a</names>
+  <names>b</names>
+  <names>c</names>
+  <id>a</id>
+  <id>b</id>
+  <id>c</id>
+</json2xml>
