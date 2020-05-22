@@ -10,8 +10,20 @@
 
 Array
 (
-    [names] => c
-    [id] => c
+    [names] => Array
+        (
+            [0] => a
+            [1] => b
+            [2] => c
+        )
+
+    [id] => Array
+        (
+            [0] => a
+            [1] => b
+            [2] => c
+        )
+
 )
 <?xml version="1.0" encoding="UTF-8"?>
 <json2xml>
