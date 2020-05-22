@@ -206,10 +206,34 @@ public function toArray(?\SimpleXMLElement $xml = null) {
 
 
 /**
+ * Convert xml string to array.
+ */
+public static function string2array(string $xml, bool $keep_root = false) : array {
+	$tmp = new XML($xml);
+	$res = $tmp->toArray();
+
+	if ($keep_root && preg_match('/<([a-z0-9_\:\-]+)\s+/i', $xml, $match)) {
+		$res = [ $match[1] => $res ];
+	}
+
+	return $res;
+}
+
+
+/**
  * Use toArray instead. Attributes are only preserved if tag has no body or subtags. 
  * Namespace tags are lost. 
  */
-public static function toMap(string $xml) : array {
+public static function toMap(string $xml, bool $keep_root = false) : array {
+	if ($keep_root) {
+		if (strpos($xml, '<'.'?xml') !== false && ($pos = strpos($xml, '?'.'>')) !== false) {
+			$xml = substr($xml, 0, $pos + 2).'<__root__>'.substr($xml, $pos + 2).'</__root__>';
+		}
+		else {
+			$xml = '<__root__>'.$xml.'</__root__>';
+		}
+	}
+
 	$xml_obj = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
 	return json_decode(json_encode($xml_obj, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE), true);
 }
