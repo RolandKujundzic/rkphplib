@@ -1,0 +1,102 @@
+toArray: Array
+(
+    [person] => Array
+        (
+            [@] => Array
+                (
+                    [firstname] => John
+                    [middlename] => Peter
+                    [lastname] => Smith
+                )
+
+            [=] => John Peter Smith
+        )
+
+    [attrib-only] => Array
+        (
+            [@] => Array
+                (
+                    [k1] => v1
+                    [k2] => v2
+                )
+
+            [=] => 
+        )
+
+    [age] => Array
+        (
+            [@] => Array
+                (
+                    [data-born] => 17.05.1990
+                )
+
+            [=] => 30
+        )
+
+    [address] => Array
+        (
+            [@] => Array
+                (
+                    [data-test] => test
+                )
+
+            [street] => Some Street
+        )
+
+    [utf8] => & äüöß
+    [cdata] => ... cdata example ...
+)
+
+John Peter Smith
+John Peter Smith
+30 years old, born 17.05.1990
+Some Street in 
+Array
+(
+    [person] => Array
+        (
+            [@] => Array
+                (
+                    [firstname] => John
+                    [middlename] => Peter
+                    [lastname] => Smith
+                )
+
+            [=] => John Peter Smith
+        )
+
+    [attrib-only] => Array
+        (
+            [@] => Array
+                (
+                    [k1] => v1
+                    [k2] => v2
+                )
+
+            [=] => 
+        )
+
+    [age] => Array
+        (
+            [@] => Array
+                (
+                    [data-born] => 17.05.1990
+                )
+
+            [=] => 30
+        )
+
+    [address] => Array
+        (
+            [@] => Array
+                (
+                    [data-test] => test
+                )
+
+            [street] => Some Street
+        )
+
+    [utf8] => & äüöß
+    [cdata] => ... cdata example ...
+)
+ignore missing /doc/required
