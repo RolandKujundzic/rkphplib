@@ -188,9 +188,25 @@ public function toArray(?\SimpleXMLElement $xml = null) {
 	$res = [];
 
 	$nodes = [];
+	$nc = [];
 	foreach ($this->ns as $prefix => $uri) {
 		foreach ($xml->children($prefix, true) as $cname => $cnode) {
-			$nodes[$cname] = $cnode; 
+			$key = empty($prefix) ? $cname : $prefix.':'.$cname;
+
+			if (isset($nc[$key])) {
+				if ($nc[$key] == 0) {
+					$nodes[$key.'.0'] = $nodes[$key];
+					unset($nodes[$key]);
+				}
+
+				$nc[$key]++;
+				$key .= '.'.$nc[$key];
+			}
+			else {
+				$nc[$key] = 0;
+			}
+
+			$nodes[$key] = $cnode; 
 		}
 	}
 
@@ -212,22 +228,7 @@ public function toArray(?\SimpleXMLElement $xml = null) {
 		return $res;
 	}
 
-	$akey = [];
-
 	foreach ($nodes as $nodeName => $nodeValue) {
-		if (isset($akey[$nodeName])) {
-			if ($akey[$nodeName] == 0) {
-				$res[$nodeName.'.0'] = $res[$nodeName];
-				unset($res[$nodeName]);
-			}
-
-			$akey[$nodeName]++;
-			$nodeName .= '.'.$akey[$nodeName];
-		}
-		else {
-			$akey[$nodeName] = 0;
-		}
-
 		$res[$nodeName] = $this->toArray($nodeValue);
 	}
 

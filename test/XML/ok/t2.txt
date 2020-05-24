@@ -1,115 +1,29 @@
-toArray: Array
+
+Namespace example:
+<people xmlns:xsi="a" xsi:schemaLocation="http://..." xmlns:l="b" xmlns="c"> 
+	<person>
+		<name>Marcus</name>
+		<language>
+			<l:primary>XML</l:primary>
+			<xsi:secondary>HTML</xsi:secondary>
+		</language>
+	</person>
+</people>
+toMap (keep root): Array
 (
-    [person] => Array
+    [people] => Array
         (
-            [@] => Array
+            [person] => Array
                 (
-                    [firstname] => John
-                    [middlename] => Peter
-                    [lastname] => Smith
+                    [name] => Marcus
+                    [language] => Array
+                        (
+                            [xsi:secondary] => HTML
+                            [l:primary] => XML
+                        )
+
                 )
 
-            [=] => John Peter Smith
-        )
-
-    [attrib-only] => Array
-        (
-            [@] => Array
-                (
-                    [k1] => v1
-                    [k2] => v2
-                )
-
-            [=] => 
-        )
-
-    [age] => Array
-        (
-            [@] => Array
-                (
-                    [data-born] => 17.05.1990
-                )
-
-            [=] => 30
-        )
-
-    [address] => Array
-        (
-            [@] => Array
-                (
-                    [data-test] => test
-                )
-
-            [street] => Some Street
-        )
-
-    [utf8] => & äüöß
-    [cdata] => ... cdata example ...
-)
-
-John Peter Smith
-John Peter Smith
-30 years old, born 17.05.1990
-Some Street in 
-Array
-(
-    [person] => Array
-        (
-            [@] => Array
-                (
-                    [firstname] => John
-                    [middlename] => Peter
-                    [lastname] => Smith
-                )
-
-            [=] => John Peter Smith
-        )
-
-    [attrib-only] => Array
-        (
-            [@] => Array
-                (
-                    [k1] => v1
-                    [k2] => v2
-                )
-
-            [=] => 
-        )
-
-    [age] => Array
-        (
-            [@] => Array
-                (
-                    [data-born] => 17.05.1990
-                )
-
-            [=] => 30
-        )
-
-    [address] => Array
-        (
-            [@] => Array
-                (
-                    [data-test] => test
-                )
-
-            [street] => Some Street
-        )
-
-    [utf8] => & äüöß
-    [cdata] => ... cdata example ...
-)
-ignore missing /doc/required
-toArray(fromMap): Array
-(
-    [doc] => Array
-        (
-            [@] => Array
-                (
-                    [language] => en
-                )
-
-            [title] => Keep doc
         )
 
 )

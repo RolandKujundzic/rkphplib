@@ -1,94 +1,41 @@
+Simple example:
+<doc
+	language="en">
+	<t>t1</t>
+	<br/>
+	<t>t2</t>
+	<br/>
+	<s>
+		<sa>sa</sa>
+		<sb x="xx" t="true" />
+		sval
+	</s>
+</doc>
 toMap: Array
 (
-    [person] => John Peter Smith
-    [attrib-only] => Array
+    [@] => Array
         (
-            [@attributes] => Array
-                (
-                    [k1] => v1
-                    [k2] => v2
-                )
-
+            [language] => en
         )
 
-    [age] => 30
-    [address] => Array
+    [t.0] => t1
+    [t.1] => t2
+    [br.0] => 
+    [br.1] => 
+    [s] => Array
         (
-            [@attributes] => Array
+            [sa] => sa
+            [sb] => Array
                 (
-                    [data-test] => test
+                    [@] => Array
+                        (
+                            [x] => xx
+                            [t] => true
+                        )
+
                 )
 
-            [street] => Some Street
-        )
-
-    [utf8] => & äüöß
-    [cdata] => ... cdata example ...
-)
-
-John Peter Smith
-John Peter Smith
-30 years old, born 17.05.1990
-Some Street in 
-Array
-(
-    [person] => Array
-        (
-            [@] => Array
-                (
-                    [firstname] => John
-                    [middlename] => Peter
-                    [lastname] => Smith
-                )
-
-            [=] => John Peter Smith
-        )
-
-    [attrib-only] => Array
-        (
-            [@] => Array
-                (
-                    [k1] => v1
-                    [k2] => v2
-                )
-
-            [=] => 
-        )
-
-    [age] => Array
-        (
-            [@] => Array
-                (
-                    [data-born] => 17.05.1990
-                )
-
-            [=] => 30
-        )
-
-    [address] => Array
-        (
-            [@] => Array
-                (
-                    [data-test] => test
-                )
-
-            [street] => Some Street
-        )
-
-    [utf8] => & äüöß
-    [cdata] => ... cdata example ...
-)
-ignore missing doc.required
-toMap (keep root): Array
-(
-    [doc] => Array
-        (
-            [@attributes] => Array
-                (
-                    [language] => en
-                )
-
-            [title] => Keep doc
+            [=] => sval
         )
 
 )
