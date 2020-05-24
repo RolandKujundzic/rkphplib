@@ -18,6 +18,9 @@ class XML {
 // @var SimpleXMLElement $xml = null
 protected $xml = null;
 
+// @var array $ns = null
+protected $ns = null;
+
 
 /**
  * Call load($source) if $source is set.
@@ -50,13 +53,15 @@ public function load(string $source) : void {
 	}
 
 	libxml_use_internal_errors(true);
-	$this->xml = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
-
+	$this->xml = new \SimpleXMLElement($xml, LIBXML_NOCDATA);
 	if ($this->xml == false) {
 		$errors = libxml_get_errors();
 		$lines = explode("\n", $xml);
-		throw new Exception('invalid xml', self::getError($errors[0], $lines, $source));
+		$info = count($errors) ? self::getError($errors[0], $lines, $source) : 'unknown error'; 
+		throw new Exception('invalid xml', $info);
 	}
+
+	$this->ns = $this->xml->getDocNamespaces(true);
 }
 
 
@@ -139,7 +144,6 @@ public static function getError(object $error, array $xml, string $source = '') 
  */
 public static function isValid(string $xml, bool $abort = false) : bool {
 	libxml_use_internal_errors(true);
-
 	$doc = new DOMDocument('1.0', 'utf-8');
 	$doc->loadXML($xml);
 	$errors = libxml_get_errors();
@@ -155,7 +159,8 @@ public static function isValid(string $xml, bool $abort = false) : bool {
 
 	if ($abort) {
 		$lines = explode("\n", $xml);
-		throw new Exception('invalid xml', self::getError($errors[0], $lines));
+		$info = count($errors) ? self::getError($errors[0], $lines) : 'unknown error'; 
+		throw new Exception('invalid xml', $info);
 	}
 
 	return false;
@@ -163,8 +168,11 @@ public static function isValid(string $xml, bool $abort = false) : bool {
 
 
 /**
- * Convert SimpleXMLElement to array (if null convert me). Tag is either string
- * or array with subtags. Use '=' and '@' as attributes hash key.
+ * Return loaded xml as array. If tag has attriburtes or subtags return 
+ * array with "@" als Attribute array key and "=" as value key. 
+ * Multiple tags are named tag.0, tag.1, ...
+ * Parameter is used for recursion. Use toMap to keep root node.
+ *
  * @return array|string
  */
 public function toArray(?\SimpleXMLElement $xml = null) {
@@ -172,10 +180,18 @@ public function toArray(?\SimpleXMLElement $xml = null) {
 		$xml = $this->xml;
 	}
 
-	$nodes = $xml->children();
 	$name = $xml->getName();
+	$value = trim(strval($xml));
+	$has_value = strlen($value);
 	$attributes = $xml->attributes();
 	$res = [];
+
+	$nodes = [];
+	foreach ($this->ns as $prefix => $uri) {
+		foreach ($xml->children($prefix, true) as $cname => $cnode) {
+			$nodes[$cname] = $cnode; 
+		}
+	}
 
 	if (!is_null($attributes)) {
 		foreach ($attributes as $attrName => $attrValue) {
@@ -183,31 +199,39 @@ public function toArray(?\SimpleXMLElement $xml = null) {
 		}
 	}
 
-	if (is_null($nodes)) {
-		return strval($xml);
+	if (count($nodes) == 0) {
+		if (!isset($res['@'])) {
+			return $value;
+		}
+
+		if ($has_value) {
+			$res['='] = $value;
+		}
+
+		return $res;
 	}
 
-	if (0 == $nodes->count()) {
-		if (isset($res['@'])) {
-			$res['='] = strval($xml);
+	$akey = [];
+
+	foreach ($nodes as $nodeName => $nodeValue) {
+		if (isset($akey[$nodeName])) {
+			if ($akey[$nodeName] == 0) {
+				$res[$nodeName.'.0'] = $res[$nodeName];
+				unset($res[$nodeName]);
+			}
+
+			$akey[$nodeName]++;
+			$nodeName .= '.'.$akey[$nodeName];
 		}
 		else {
-			$res = strval($xml);
+			$akey[$nodeName] = 0;
 		}
-	}
-	else {
-		foreach ($nodes as $nodeName => $nodeValue) {
-			if (isset($res[$nodeName]) && !is_array($res[$nodeName])) {
-				$res[$nodeName] = [ $res[$nodeName] ];
-			}
 
-			if (isset($res[$nodeName])) {
-				array_push($res[$nodeName], $this->toArray($nodeValue));
-			}
-			else {
-				$res[$nodeName] = $this->toArray($nodeValue);
-			}
-		}
+		$res[$nodeName] = $this->toArray($nodeValue);
+	}
+
+	if ($has_value) {
+		$res['='] = $value;
 	}
 
 	return $res;
@@ -217,11 +241,11 @@ public function toArray(?\SimpleXMLElement $xml = null) {
 /**
  * Convert xml string to array.
  */
-public static function string2array(string $xml, bool $keep_root = false) : array {
+public static function toMap(string $xml, bool $keep_root = false) : array {
 	$tmp = new XML($xml);
 	$res = $tmp->toArray();
 
-	if ($keep_root && preg_match('/<([a-z0-9_\:\-]+)\s+/i', $xml, $match)) {
+	if ($keep_root && preg_match('/<([a-z0-9_\:\-]+)\s*/i', $xml, $match)) {
 		$res = [ $match[1] => $res ];
 	}
 
@@ -230,28 +254,9 @@ public static function string2array(string $xml, bool $keep_root = false) : arra
 
 
 /**
- * Use toArray instead. Attributes are only preserved if tag has no body or subtags. 
- * Namespace tags are lost. 
- */
-public static function toMap(string $xml, bool $keep_root = false) : array {
-	if ($keep_root) {
-		if (strpos($xml, '<'.'?xml') !== false && ($pos = strpos($xml, '?'.'>')) !== false) {
-			$xml = substr($xml, 0, $pos + 2).'<__root__>'.substr($xml, $pos + 2).'</__root__>';
-		}
-		else {
-			$xml = '<__root__>'.$xml.'</__root__>';
-		}
-	}
-
-	$xml_obj = simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOCDATA);
-	return json_decode(json_encode($xml_obj, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE), true);
-}
-
-
-/**
  * Convert hashmap $data to xml document.
  *
- * Use special keys "@|@attributes" for attribute hash and "=|@value|@cdata" for tag value.
+ * Use special keys "@" for attribute hash and "=" for tag value (use "@cdata" for cdata value).
  * If root is default or empty and data is hash with single key and value is array use key as root. 
  * Use "@file:path/to/file" to load base64 encoded file content. Example:
  *
@@ -287,9 +292,8 @@ public static function fromMap(array $data, string $root = 'root') : string {
 			}
 		}
 		else {
-			$attr = isset($data['@attributes']) ? '@attributes' : isset($data['@']) ? '@' : '';
-			if (isset($data[$attr])) {
-				foreach ($data[$attr] as $key => $value) {
+			if (isset($data['@'])) {
+				foreach ($data['@'] as $key => $value) {
 					if (!preg_match('/^[a-z_]+[a-z0-9\:\-\.\_]*[^:]*$/i', $key)) {
 						throw new Exception("Invalid $root attribute name ".$key);
 					}
@@ -297,13 +301,12 @@ public static function fromMap(array $data, string $root = 'root') : string {
 					$node->setAttribute($key, (string) $value);
 				}
 
-				unset($data[$attr]);
+				unset($data['@']);
 			}
 
-			$vkey = isset($data['@value']) ? '@value' : isset($data['=']) ? '=' : '';
-			if (isset($data[$vkey])) {
-				$node->appendChild($xml->createTextNode((string) $data[$vkey]));
-				unset($data[$vkey]);
+			if (isset($data['='])) {
+				$node->appendChild($xml->createTextNode((string) $data['=']));
+				unset($data['=']);
 			}
 			else if (isset($data['@cdata'])) {
 				$node->appendChild($xml->createCDATASection((string) $data['@cdata']));
