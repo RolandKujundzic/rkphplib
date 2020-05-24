@@ -62,6 +62,7 @@ public function load(string $source) : void {
 	}
 
 	$this->ns = $this->xml->getDocNamespaces(true);
+	$this->ns[''] = '';
 }
 
 
