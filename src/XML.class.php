@@ -72,6 +72,7 @@ public function load(string $source) : void {
 public function get(string $xpath, $required = false) {
 	if (strpos($xpath, '/') === false) {
 		$xpath = '/'.str_replace([ '.', '@' ], [ '/', '/@' ], $xpath);
+		$xpath = preg_replace('/\[@?([a-zA-Z0-9_\-]+)=["\']?(.+?)["\']?\]$/', '[@\1="\2"]', $xpath);
 	}
 
 	foreach ($this->ns as $prefix => $namespace) {

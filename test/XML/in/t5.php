@@ -28,8 +28,8 @@ $xml_str = <<<XML
 	<address data-test="test">
 		<street>Some Street</street>
 	</address>
-	<phone>001</phone>
-	<phone>002</phone>
+	<phone type="office">001</phone>
+	<phone type="private">002</phone>
 	<utf8>&amp; äüöß</utf8>
 	<cdata><![CDATA[... cdata example ...]]></cdata>
 </doc>
@@ -49,6 +49,7 @@ $get('//address/street');
 $get('/doc/address/city');
 $get('//phone');
 $get('//phone[2]');
+$get('//phone[@type="office"]');
 $get('//utf8');
 $get('//cdata');
 

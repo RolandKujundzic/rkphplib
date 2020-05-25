@@ -5,8 +5,8 @@
 	<address data-test="test">
 		<street>Some Street</street>
 	</address>
-	<phone>001</phone>
-	<phone>002</phone>
+	<phone type="office">001</phone>
+	<phone type="private">002</phone>
 	<utf8>&amp; äüöß</utf8>
 	<cdata><![CDATA[... cdata example ...]]></cdata>
 </doc>
@@ -21,5 +21,6 @@
 /doc/address/city: []
 //phone: [001, 002]
 //phone[2]: [002]
+//phone[@type="office"]: [001]
 //utf8: [& äüöß]
 //cdata: [... cdata example ...]
