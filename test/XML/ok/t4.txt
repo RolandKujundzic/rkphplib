@@ -1,0 +1,24 @@
+<doc>
+	<person firstname="John" middlename="Peter" lastname="Smith">John Peter Smith</person>
+	<attrib-only k1="v1" k2="v2" />
+	<age data-born="17.05.1990">30</age>
+	<address data-test="test">
+		<street>Some Street</street>
+	</address>
+	<phone>001</phone>
+	<phone>002</phone>
+	<utf8>&amp; äüöß</utf8>
+	<cdata><![CDATA[... cdata example ...]]></cdata>
+</doc>
+doc.person: [John Peter Smith]
+doc.person@no-such-attribute: []
+doc.person@firstname: [John]
+doc.person@middlename: [Peter]
+doc.person@lastname: [Smith]
+doc.age: [30]
+doc.age@data-born: [17.05.1990]
+doc.address.street: [Some Street]
+doc.address.city: []
+doc.phone: [001, 002]
+doc.utf8: [& äüöß]
+doc.cdata: [... cdata example ...]
