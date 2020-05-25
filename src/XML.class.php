@@ -62,7 +62,6 @@ public function load(string $source) : void {
 	}
 
 	$this->ns = $this->xml->getDocNamespaces(true);
-	$this->ns[''] = '';
 }
 
 
@@ -75,39 +74,33 @@ public function get(string $xpath, $required = false) {
 		$xpath = '/'.str_replace([ '.', '@' ], [ '/', '/@' ], $xpath);
 	}
 
-	foreach ($this->xml->getNamespaces() as $prefix => $namespace) {
+	foreach ($this->ns as $prefix => $namespace) {
 		$this->xml->registerXPathNamespace($prefix, $namespace);
 	}
 
 	$xp = $this->xml->xpath($xpath);
-	$res = '';
 
-	if (false === $xp) {
-		if ($required) {
-			throw new Exception('invalid xpath query', $xpath);
-		}
-		
-		return $res;
-	}
-	else if (0 === count($xp)) {
+	if (false === $xp || 0 === count($xp)) {
 		if ($required) {
 			throw new Exception('xpath query failed', $xpath);
 		}
 		
-		return $res;
-	}
-	else if (1 === count($xp)) {
-		$res = $this->toArray($xp[0]);
-
-		if (is_array($res) && isset($res['='])) {
-			$res = $res['='];
-		} 
-	}
-	else {
-		throw new Exception('todo');
+		return '';
 	}
 
-	return $res; 
+	$res = [];
+
+	for ($i = 0; $i < count($xp); $i++) {
+		$arr = $this->toArray($xp[$i]);
+
+		if (is_array($arr) && isset($arr['='])) {
+			$arr = $arr['='];
+		}
+
+		array_push($res, $arr);
+	}
+
+	return (1 == count($res)) ? $res[0] : $res;
 }
 
 
@@ -177,6 +170,7 @@ public static function isValid(string $xml, bool $abort = false) : bool {
  * @return array|string
  */
 public function toArray(?\SimpleXMLElement $xml = null) {
+
 	if (is_null($xml)) {
 		$xml = $this->xml;
 	}
@@ -189,8 +183,13 @@ public function toArray(?\SimpleXMLElement $xml = null) {
 
 	$nodes = [];
 	$nc = [];
-	foreach ($this->ns as $prefix => $uri) {
-		foreach ($xml->children($prefix, true) as $cname => $cnode) {
+
+	$getChildren = function (?\SimpleXMLElement $children, string $prefix) use (&$nodes, &$nc) : void { 
+		if (is_null($children)) {
+			return;
+		}
+
+		foreach ($children as $cname => $cnode) {
 			$key = empty($prefix) ? $cname : $prefix.':'.$cname;
 
 			if (isset($nc[$key])) {
@@ -207,6 +206,13 @@ public function toArray(?\SimpleXMLElement $xml = null) {
 			}
 
 			$nodes[$key] = $cnode; 
+		}
+	};
+
+	$getChildren($xml->children(), '');
+	foreach ($this->ns as $prefix => $uri) {
+		if (!empty($prefix)) {
+			$getChildren($xml->children($prefix, true), $prefix);
 		}
 	}
 

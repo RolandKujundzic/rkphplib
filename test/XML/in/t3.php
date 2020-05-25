@@ -1,22 +1,29 @@
 <?php
 
-$xml_str  = '<'.'?xml version="1.0" encoding="UTF-8"?'.'>';
-$xml_str .= <<<END
-<json2xml>
-	<names>a</names>
-	<names>b</names>
-	<names>c</names>
-	<id>a</id>
-	<id>b</id>
-	<id>c</id>
-</json2xml>
-END;
+$xml_str = <<<XML
+<doc>
+	<person firstname="John" middlename="Peter" lastname="Smith">John Peter Smith</person>
+	<attrib-only k1="v1" k2="v2" />
+	<age data-born="17.05.1990">30</age>
+	<address data-test="test">
+		<street>Some Street</street>
+	</address>
+	<phone>001</phone>
+	<phone>002</phone>
+	<utf8>&amp; äüöß</utf8>
+	<cdata><![CDATA[... cdata example ...]]></cdata>
+</doc>
+XML;
 
-print \rkphplib\XML::fromMap(\rkphplib\XML::toMap($xml_str, true))."\n";
+print $xml_str."\n";
 $xml = new \rkphplib\XML($xml_str);
+print_r($xml->get('doc'));
 
-$xml_array = $xml->toArray();
-print_r($xml_array); 
+try {
+	print $xml->get('doc.required', true);
+}
+catch (\Exception $e) {
+	print "ignore missing doc.required\n";
+}
 
-print $xml->fromMap($xml_array, 'json2xml');
 

@@ -1,36 +1,62 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<json2xml>
-  <names>a</names>
-  <names>b</names>
-  <names>c</names>
-  <id>a</id>
-  <id>b</id>
-  <id>c</id>
-</json2xml>
-
+<doc>
+	<person firstname="John" middlename="Peter" lastname="Smith">John Peter Smith</person>
+	<attrib-only k1="v1" k2="v2" />
+	<age data-born="17.05.1990">30</age>
+	<address data-test="test">
+		<street>Some Street</street>
+	</address>
+	<phone>001</phone>
+	<phone>002</phone>
+	<utf8>&amp; äüöß</utf8>
+	<cdata><![CDATA[... cdata example ...]]></cdata>
+</doc>
 Array
 (
-    [names] => Array
+    [person] => Array
         (
-            [0] => a
-            [1] => b
-            [2] => c
+            [@] => Array
+                (
+                    [firstname] => John
+                    [middlename] => Peter
+                    [lastname] => Smith
+                )
+
+            [=] => John Peter Smith
         )
 
-    [id] => Array
+    [attrib-only] => Array
         (
-            [0] => a
-            [1] => b
-            [2] => c
+            [@] => Array
+                (
+                    [k1] => v1
+                    [k2] => v2
+                )
+
         )
 
+    [age] => Array
+        (
+            [@] => Array
+                (
+                    [data-born] => 17.05.1990
+                )
+
+            [=] => 30
+        )
+
+    [address] => Array
+        (
+            [@] => Array
+                (
+                    [data-test] => test
+                )
+
+            [street] => Some Street
+        )
+
+    [phone.0] => 001
+    [phone.1] => 002
+    [utf8] => & äüöß
+    [cdata] => ... cdata example ...
 )
-<?xml version="1.0" encoding="UTF-8"?>
-<json2xml>
-  <names>a</names>
-  <names>b</names>
-  <names>c</names>
-  <id>a</id>
-  <id>b</id>
-  <id>c</id>
-</json2xml>
+ignore missing doc.required
