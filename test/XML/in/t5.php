@@ -1,28 +1,54 @@
 <?php
 
-$xml_str  = '<?xml version="1.0" encoding="utf-8"?>';
-$xml_str .= <<<END
-<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
-	<channel>
-		<title>OMR Daily</title>
-		<link>https://omr.com/</link>
-		<item>
-			<title><![CDATA[OMR50 – Das ist das komplette Ranking unserer Marketingmacher des Jahres]]></title>
-			<link>https://omr.com/de/omr50-2020/</link>
-			<content:encoded><![CDATA[<p>Das gesamte Jahr über beschäftigen wir uns ... meistens jedenfalls&#8230; ... also [&hellip;]</p>]]></content:encoded>
-		</item>
-		<item>
-			<title><![CDATA[Produktverbesserung oder Zugriff auf wertvolle Daten: Warum kauft Facebook Giphy?]]></title>
-			<link>https://omr.com/de/facebook-giphy/</link>
-			<guid>https://omr.com/de/facebook-giphy/</guid>
-			<pubDate>Mon, 18 May 2020 23:08:09 GMT</pubDate>
-			<content:encoded><![CDATA[<p>Facebook kauft Giphy: Es ist ... der einzige Grund [&hellip;]</p>]]></content:encoded>
-		</item>
-	</channel>
-</rss>
-END;
 
-print \rkphplib\XML::fromMap(\rkphplib\XML::toMap($xml_str));
-$xml = new \rkphplib\XML($xml_str);
-print "\n\n".$xml;
+// for some reason global $xml is null ???? - use $get instead
+// function get(string $path) : void {
+//	 global $xml;
+//   ... 
+// }
+
+$xml = new \rkphplib\XML();
+$get = function (string $path) use ($xml) : void {
+	$res = $xml->get($path);
+	print "$path: [";
+	if (is_array($res)) {
+		print join(', ', $res)."]\n";
+	}
+	else {
+		print $res."]\n";
+	}
+};
+
+
+$xml_str = <<<XML
+<doc>
+	<person firstname="John" middlename="Peter" lastname="Smith">John Peter Smith</person>
+	<attrib-only k1="v1" k2="v2" />
+	<age data-born="17.05.1990">30</age>
+	<address data-test="test">
+		<street>Some Street</street>
+	</address>
+	<phone>001</phone>
+	<phone>002</phone>
+	<utf8>&amp; äüöß</utf8>
+	<cdata><![CDATA[... cdata example ...]]></cdata>
+</doc>
+XML;
+
+print "$xml_str\n";
+$xml->load($xml_str);
+
+$get('//person');
+$get('//person/@no-such-attribute');
+$get('//person@firstname');
+$get('/doc/person/@middlename');
+$get('/doc/person/@lastname');
+$get('//age');
+$get('/doc/age/@data-born');
+$get('//address/street');
+$get('/doc/address/city');
+$get('//phone');
+$get('//phone[2]');
+$get('//utf8');
+$get('//cdata');
 

@@ -9,7 +9,7 @@ if (!isset($th)) {
 	$th = new \rkphplib\TestHelper();
 }
 
-$n = 4;
+$n = 5;
 
 for ($i = 1; $i <= $n; $i++) {
 	$th->execPHP($i);

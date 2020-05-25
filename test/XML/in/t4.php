@@ -48,6 +48,7 @@ $get('doc.age@data-born');
 $get('doc.address.street');
 $get('doc.address.city');
 $get('doc.phone');
+$get('doc.phone[2]');
 $get('doc.utf8');
 $get('doc.cdata');
 
