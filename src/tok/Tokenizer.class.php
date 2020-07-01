@@ -410,7 +410,7 @@ public function register(TokPlugin $handler) : void {
 /**
  * Old style plugin registration. These plugins use tokCall() callback.
  */
-public function setPlugin(string $name, TokPlugin $obj) : void {
+public function setPlugin(string $name, TokPlugin $handler) : void {
 	$this->_plugin[$name] = [ $handler, TokPlugin::TOKCALL ];
 }
 
@@ -565,7 +565,7 @@ public function getPluginFeatures(string $name) : ?int {
 	if (!isset($this->_plugin[$name])) {
 		$this->tryPluginMap($name);
 
-		if (!isset($this->plugin[$name])) {
+		if (!isset($this->_plugin[$name])) {
 			throw new Exception('unknown plugin '.$name);
 		}
 	}
