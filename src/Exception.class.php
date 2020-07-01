@@ -85,7 +85,8 @@ private static function logTrace(array $stack, string $log_dir) : void {
  * If SETTINGS_LOG_ERROR is undefined use 'data/.log/php.fatal' 
  * if (data/.log exists) or /tmp/php.fatal.
  *
- * @param Exception|string $msg 
+ * @param Exception|string $msg
+ * @psalm-suppress MissingPropertyType 
  */
 public static function logError($msg) : void {
 
