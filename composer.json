@@ -28,7 +28,4 @@
 		"files": []
 	},
 	"license": "GPL-3.0-or-later",
-	"require-dev": {
-		"psalm/phar": "^3.12"
-	}
 }
