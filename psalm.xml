@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<psalm>
+	<projectFiles>
+		<!--
+		<directory name="src" />
+		-->
+		<file name="src/Exception.class.php" />
+	</projectFiles>
+
+	<issueHandlers>
+		<MissingPropertyType errorLevel="suppress" />
+		<MissingDocblockType errorLevel="suppress" />
+		<InvalidDocblock errorLevel="suppress" />
+		<MixedOperand errorLevel="suppress" />
+		<MixedArgument errorLevel="suppress" />
+		<MixedArrayAccess errorLevel="suppress" />
+		<MixedAssignment errorLevel="suppress" />
+	</issueHandlers>
+</psalm>
