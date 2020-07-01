@@ -2,6 +2,7 @@ PHPDoc Links:
 -------------
 http://phpdoc.org/docs/latest/references/phpdoc/tags/author.html
 
-Psalm:
-------
-./tools/psalm.phar [--show-info=true] src/File.class.php
+Static Code Analysis:
+---------------------
+tools/phpstan analyse src
+tools/psalm.phar [--show-info=true] src/File.class.php
