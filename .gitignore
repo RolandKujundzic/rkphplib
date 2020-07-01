@@ -6,6 +6,7 @@
 /.buildpath
 /.project
 /.settings
+/tools
 /example/api/.htaccess
 /example/api/routing.php
 /example/upload/data
