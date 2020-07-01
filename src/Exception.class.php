@@ -32,13 +32,12 @@ public function __construct(string $message, string $internal_message = '') {
 	if (defined('SETTINGS_LOG_EXCEPTION')) {
 		if (!empty(SETTINGS_LOG_EXCEPTION)) {
 			$stack = debug_backtrace();
-			self::logTrace($stack);
+			self::logTrace($stack, SETTINGS_LOG_EXCEPTION);
 		}
 	}
 	else if (is_dir($default_log_dir) && is_readable($default_log_dir) && is_writeable($default_log_dir)) {
-		define('SETTINGS_LOG_EXCEPTION', $default_log_dir);
 		$stack = debug_backtrace();
-		self::logTrace($stack);
+		self::logTrace($stack, $default_log_dir);
 	}
 }
 
@@ -53,14 +52,14 @@ public function append(string $message, string $internal = '') : void {
 
 
 /**
- * Log debug_backtrace to SETTINGS_LOG_EXCEPTION/NAME.json.
+ * Log debug_backtrace to $log_dir.
  */
-private static function logTrace(array $stack) : void {
+private static function logTrace(array $stack, string $log_dir) : void {
 	require_once __DIR__.'/File.class.php';
 
 	$last = isset($stack[1]) ? $stack[1] : $stack[0];
 	list($msec, $ts) = explode(" ", microtime());
-	$last['TIME'] = date('YmdHis', $ts).'.'.(1000 * round((float)$msec, 3));
+	$last['TIME'] = date('YmdHis', (int)$ts).'.'.(1000 * round((float)$msec, 3));
 	
 	$add_server = [ 'REMOTE_ADDR', 'SCRIPT_FILENAME', 'QUERY_STRING' ];
 	foreach ($add_server as $key) {
@@ -72,8 +71,8 @@ private static function logTrace(array $stack) : void {
 	$save_as  = (!empty($last['file']) && !empty($last['line'])) ? md5($last['file'].':'.$last['line']) : md5($last['TIME']);
 	$save_as .= '.'.$last['TIME'];
 
-	File::saveJSON(SETTINGS_LOG_EXCEPTION.'/'.$save_as.'.last.json', $last);
-	File::saveJSON(SETTINGS_LOG_EXCEPTION.'/'.$save_as.'.stack.json', $stack);
+	File::saveJSON($log_dir.'/'.$save_as.'.last.json', $last);
+	File::saveJSON($log_dir.'/'.$save_as.'.stack.json', $stack);
 }
 
 
@@ -85,15 +84,17 @@ private static function logTrace(array $stack) : void {
  * Enable logging to file with SETTINGS_LOG_ERROR = 'path/error.log'.
  * If SETTINGS_LOG_ERROR is undefined use 'data/.log/php.fatal' 
  * if (data/.log exists) or /tmp/php.fatal.
+ *
+ * @param Exception|string $msg 
  */
-public static function logError(string $msg) : void {
+public static function logError($msg) : void {
 
 	if (!defined('SETTINGS_LOG_ERROR') || empty(SETTINGS_LOG_ERROR)) {
 		return;
 	}
 
 	list($msec, $ts) = explode(" ", microtime());
-	$log = '['.date('YmdHis', $ts).'.'.(1000 * round((float)$msec, 3));
+	$log = '['.date('YmdHis', (int)$ts).'.'.(1000 * round((float)$msec, 3));
 
 	if (!empty($_SERVER['REMOTE_ADDR'])) { 
 		$log .= $_SERVER['REMOTE_ADDR'];
@@ -101,11 +102,9 @@ public static function logError(string $msg) : void {
 
 	$e = null;
 
-	if (method_exists($msg, 'getMessage')) {
+	if (is_object($msg)) {
 		$e = $msg;
 		$msg = "\n\nABORT: ".$e->getMessage();
-		$trace = $e->getFile()." on line ".$e->getLine()."\n".$e->getTraceAsString();
-		$internal = property_exists($e, 'internal_message') ? "INFO: ".$e->internal_message : '';
 	}
 
 	if (isset($_SERVER['SCRIPT_FILENAME']) && isset($_SERVER['QUERY_STRING'])) {
@@ -137,6 +136,8 @@ public static function logError(string $msg) : void {
 		}
 	}
 	else {
+		$trace = $e->getFile()." on line ".$e->getLine()."\n".$e->getTraceAsString();
+		$internal = property_exists($e, 'internal_message') ? "INFO: ".$e->internal_message : '';
 		$log .= "\n$internal\n$trace";
 	}
 
