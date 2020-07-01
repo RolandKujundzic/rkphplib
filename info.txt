@@ -1,4 +1,7 @@
 PHPDoc Links:
 -------------
-
 http://phpdoc.org/docs/latest/references/phpdoc/tags/author.html
+
+Psalm:
+------
+./vendor/bin/psalm.phar --show-info=true src/File.class.php
