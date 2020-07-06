@@ -92,7 +92,7 @@ public static function decode(string $txt, $flag = 1) {
  * Return pretty printed json.
  */
 public static function pretty_print(string $json) : string {
-    return json_encode(json_decode($json), JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+    return json_encode(json_decode($json), JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);
 }
 
 
