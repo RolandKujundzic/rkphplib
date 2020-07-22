@@ -256,7 +256,7 @@ public function tok_conf_get_path(string $name, array $p) : string {
 /**
  * Return configuration value ($lid 0 = system).
  */
-public function get(int $lid, string $name) : string {
+public function get(?int $lid, string $name) : string {
 	$qtype = (intval($lid) > 0) ? 'select_user_path' : 'select_system_path';
 	$lid = ($lid > 0) ? intval($lid) : null;
 
