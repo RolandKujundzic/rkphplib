@@ -21,7 +21,7 @@ use function rkphplib\lib\kv2conf;
 /**
  * Database configuration plugin. Table is cms_conf.
  * Use cms_conf.lid = cms_login.id for user data.
- * Use lid=NULL for system data.
+ * Use lid=0 for system data.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
@@ -29,17 +29,11 @@ use function rkphplib\lib\kv2conf;
 class TConf implements TokPlugin {
 use \rkphplib\traits\Map;
 
-// @param map system configuration
-public $sconf = [];
-
-// @param map user configuration
-public $uconf = [];
-
 // @param ADatabase $db
-public $db = null;
+private $db = null;
 
 // @param int $lid
-public $lid = null;
+private $lid = null;
 
 
 
@@ -100,18 +94,16 @@ public function getPlugins(Tokenizer $tok) : array {
  * @tok {conf:since}{date:now}{:conf} - set since=NOW() if not already set
  */
 public function tok_conf(string $key, string $value) : string {
-	$qtype = (intval($this->lid) > 0) ? 'select_user_path' : 'select_system_path';
-	$lid = ($this->lid > 0) ? intval($this->lid) : null;
-
-	$dbres = $this->db->select($this->db->getQuery($qtype, [ 'lid' => $lid, 'path' => $key ]));
+	$qtype = ($this->lid > 0) ? 'select_user_path' : 'select_system_path';
+	$dbres = $this->db->select($this->db->getQuery($qtype, [ 'lid' => $this->lid, 'path' => $key ]));
 	$current = (count($dbres) == 0) ? null : $dbres[0]['value'];
 
 	if (is_null($current)) {
 		// \rkphplib\lib\log_debug("TConf.tok_conf:110> set [$key]=[$value]");
-		$this->set($lid, $key, $value);
+		$this->set($key, $value);
 	}
 	else {
-		$value = $this->get($lid, $key);
+		$value = $this->get($key);
 	}
 
 	return $value;
@@ -124,16 +116,15 @@ public function tok_conf(string $key, string $value) : string {
  * @tok {conf:id}{login:id}{:conf}
  */
 public function tok_conf_id(string $id) : void {
-	if (intval($id) < 1) {
-		if ($id == '') {
-			$this->lid = null;
-		}
-		else {
-			throw new Exception('invalid id', "id=[$id]");
-		}
+	if (empty($id)) {
+		$this->lid = null;
 	}
-
-	$this->lid = $id;
+	else if (preg_match('/^[1-9][0-9]*$/', $id)) {
+		$this->lid = (int) $id;
+	}
+	else {
+		throw new Exception('invalid id', "id=[$id]");
+	}
 }
 
 
@@ -148,7 +139,7 @@ public function tok_conf_set(string $key, string $value) : void {
 		list ($key, $value) = explode(HASH_DELIMITER, $value, 2);
 	}
 
-	$this->set($this->lid, $key, $value);
+	$this->set($key, $value);
 }
 
 
@@ -171,9 +162,9 @@ public function tok_conf_set_path(string $name, array $p) : void {
 	$path = array_shift($p);
 	$value = join(HASH_DELIMITER, $p);
 
-	$map = conf2kv($this->get($this->lid, $name));
+	$map = conf2kv($this->get($name));
 	self::setMapPathValue($map, $path, $value);
-	$this->set($this->lid, $name, kv2conf($map));
+	$this->set($name, kv2conf($map));
 }
 
 
@@ -188,14 +179,12 @@ public function tok_conf_set_default(string $key, string $value) : void {
 		list ($key, $value) = explode(HASH_DELIMITER, $value, 2);
 	}
 
-	$qtype = (intval($this->lid) > 0) ? 'select_user_path' : 'select_system_path';
-	$lid = ($this->lid > 0) ? intval($this->lid) : null;
-
-	$dbres = $this->db->select($this->db->getQuery($qtype, [ 'lid' => $lid, 'path' => $key ]));
+	$qtype = ($this->lid > 0) ? 'select_user_path' : 'select_system_path';
+	$dbres = $this->db->select($this->db->getQuery($qtype, [ 'lid' => $this->lid, 'path' => $key ]));
 	$current = (count($dbres) == 0) ? null : $dbres[0]['value'];
 
 	if (is_null($current)) {
-		$this->set($lid, $key, $value);
+		$this->set($key, $value);
 	}
 }
 
@@ -204,11 +193,11 @@ public function tok_conf_set_default(string $key, string $value) : void {
  * Append value to current value. Do not append multiple times (if value is already suffix).
  */
 public function tok_conf_append(string $key, string $value) : void {
-	$current = $this->get($this->lid, $key);
+	$current = $this->get($key);
 	$vlen = strlen($value);
 
 	if (substr($current, -1 * $vlen) != $value) {
-		$this->set($this->lid, $key, $current.$value);
+		$this->set($key, $current.$value);
 	}
 }
 
@@ -217,7 +206,7 @@ public function tok_conf_append(string $key, string $value) : void {
  * Get raw (untokenized) configuration value.
  */
 public function tok_conf_var(string $key) : string {
-	return $this->get($this->lid, $key);
+	return $this->get($key);
 }
 
 
@@ -225,7 +214,7 @@ public function tok_conf_var(string $key) : string {
  * Return tokenized configuration value.
  */
 public function tok_conf_get(string $key) : string {
-	return $this->get($this->lid, $key);
+	return $this->get($key);
 }
 
 
@@ -247,20 +236,18 @@ public function tok_conf_get_path(string $name, array $p) : string {
 		throw new Exception('invalid parameter list', "name=$name path=$path p: ".print_r($p, true));
 	}
 
-	$map = conf2kv($this->get($this->lid, $name));
+	$map = conf2kv($this->get($name));
 	$res = kv2conf(self::getMapPathValue($map, $path));
 	return $res;
 }
 
 
 /**
- * Return configuration value ($lid 0 = system).
+ * Return configuration value ($lid null = system).
  */
-public function get(?int $lid, string $name) : string {
-	$qtype = (intval($lid) > 0) ? 'select_user_path' : 'select_system_path';
-	$lid = ($lid > 0) ? intval($lid) : null;
-
-	$dbres = $this->db->select($this->db->getQuery($qtype, [ 'lid' => $lid, 'path' => $name ]));
+public function get(string $name) : string {
+	$qtype = ($this->lid > 0) ? 'select_user_path' : 'select_system_path';
+	$dbres = $this->db->select($this->db->getQuery($qtype, [ 'lid' => $this->lid, 'path' => $name ]));
 	return (count($dbres) == 0) ? '' : $dbres[0]['value'];
 }
 
@@ -268,9 +255,8 @@ public function get(?int $lid, string $name) : string {
 /**
  * Set configuration value, return id. 
  */
-public function set(int $lid, string $name, string $value) : int {
-	$qtype = (intval($lid) > 0) ? 'select_user_path' : 'select_system_path';
-	$lid = ($lid > 0) ? intval($lid) : null;
+public function set(string $name, string $value) : int {
+	$qtype = ($this->lid > 0) ? 'select_user_path' : 'select_system_path';
 	$path = explode('.', $name);
 
 	if (count($path) > 1) {
@@ -278,14 +264,14 @@ public function set(int $lid, string $name, string $value) : int {
 		$path_last = array_pop($path);
 		$path_pid = join('.', $path);
 
-		$r = [ 'lid' => $lid, 'path' => $path_pid ];
+		$r = [ 'lid' => $this->lid, 'path' => $path_pid ];
 
 		try {
 			$parent = $this->db->selectOne($this->db->getQuery($qtype, $r));
 		}
 		catch (\Exception $e) {
 			if ($e->getMessage() == 'no result' && count($path) == 1) {
-				$rp = [ 'lid' => $lid, 'pid' => null, 'path' => $path[0], 'name' => '', 'value' => '' ];
+				$rp = [ 'lid' => $this->lid, 'pid' => null, 'path' => $path[0], 'name' => '', 'value' => '' ];
 				$this->db->execute($this->db->getQuery('insert', $rp));
 				$parent = $this->db->selectOne($this->db->getQuery($qtype, $r));
 			}
@@ -294,14 +280,14 @@ public function set(int $lid, string $name, string $value) : int {
 			}
 		}
 
-		$r = [ 'lid' => $lid, 'pid' => $parent['id'], 'path' => $name, 'name' => $path_last, 'value' => $value ];
+		$r = [ 'lid' => $this->lid, 'pid' => $parent['id'], 'path' => $name, 'name' => $path_last, 'value' => $value ];
 	}
 	else {
-		$r = [ 'lid' => $lid, 'pid' => null, 'path' => $name, 'name' => $name, 'value' => $value ];
+		$r = [ 'lid' => $this->lid, 'pid' => null, 'path' => $name, 'name' => $name, 'value' => $value ];
 	}
 
 	// check if replace or insert is necessary
-	$dbres = $this->db->select($this->db->getQuery($qtype, [ 'lid' => $lid, 'path' => $name ]));
+	$dbres = $this->db->select($this->db->getQuery($qtype, [ 'lid' => $this->lid, 'path' => $name ]));
 
 	if (count($dbres) == 0) {
 		$this->db->execute($this->db->getQuery('insert', $r));
