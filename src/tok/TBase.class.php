@@ -389,7 +389,7 @@ public function tok_tpl_set(array $p, string $arg) : void {
  * @tok {tpl_set:toc:0:1}Page {:=arg1} ... {:=title}{:tpl_set}
  * @tok {tpl:toc}1|#|title=Overview{:tpl} = Page 1 ... Overview 
  */
-public function tok_tpl(array $p, string $arg) : string {
+public function tok_tpl(array $p, ?string $arg) : string {
 	$key = array_shift($p);
 
 	if (!isset($this->_tpl[$key])) {
