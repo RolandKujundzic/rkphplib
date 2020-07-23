@@ -29,13 +29,14 @@ protected $command = null;
 
 
 /**
- * Execute command via pipe.
+ * Execute command via pipe. Write to pipe[0] read from pipe[1] (output) and
+ * pipe[2] (errors). Process will read from 0 and write to 1 and 2.
  */
 public function __construct(string $command, array $parameter = []) {
 	$this->descriptor = [
 		0 => [ 'pipe', 'r' ],
-		1 => [ 'pipe', 'rw' ],
-		2 => [ 'pipe', 'rw' ]
+		1 => [ 'pipe', 'w' ],
+		2 => [ 'pipe', 'w' ]
 	];
 
   if (empty($command) || !is_string($command)) {
@@ -63,16 +64,17 @@ public function __construct(string $command, array $parameter = []) {
 		stream_set_blocking($this->pipe[$i], false);
 	}
 
+	\rkphplib\lib\log_debug("PipeExecute.__construct:66> $command");
 	$this->command = $command;
 }
 
 
 /**
- * Return stream contents of pipe[num].
+ * Return stream contents of pipe[num] (default is pipe[1] = output).
  */
-private function readStream(int $num) : ?string {
+private function readStream(int $num = 1) : ?string {
 	$res = stream_get_contents($this->pipe[$num]);
-	// \rkphplib\lib\log_debug("PipeExecute.readStream:75> exit - num=[$num] res=[$res]");
+	\rkphplib\lib\log_debug("PipeExecute.readStream:77> num=$num res=[$res]");
 	return $res;
 }
 
@@ -81,6 +83,7 @@ private function readStream(int $num) : ?string {
  * Write to pipe. Close is necessary.
  */
 public function write(string $txt) : void {
+	\rkphplib\lib\log_debug("PipeExecute.write:86> $txt");
 	if (fwrite($this->pipe[0], $txt) === false) {
 		$log_txt = (strlen($txt) > 180) ? substr($txt, 0, 20).' ... '.substr($txt, -20) : $txt;
 		throw new Exception('write failed', "cmd=[".$this->command."] txt=[$log_txt]");
