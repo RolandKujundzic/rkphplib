@@ -180,11 +180,12 @@ function exception_handler($e) {
 	error_log("$ts $msg\n$internal\n\n$trace\n\n", 3, SETTINGS_LOG_ERROR);
 
 	if (php_sapi_name() !== 'cli') {
+
 		if (!empty($_REQUEST['ajax']) || (!empty($_REQUEST[SETTINGS_REQ_DIR]) && strpos($_REQUEST[SETTINGS_REQ_DIR], 'ajax/') !== false)) {
 			http_response_code(400);
 			header('Content-Type: application/json');
 			print '{ "error": "1", "error_message": "'.$e->getMessage().'", "error_code": "'.$e->getCode().'" }';
-			exit(0);
+			exit(1);
 		}
 		else if (defined('ABORT_DIR') && class_exists('\rkphplib\tok\Tokenizer') && class_exists('\rkphplib\tok\TBase')) {
 			$tok =& \rkphplib\tok\Tokenizer::$site;
@@ -201,15 +202,19 @@ function exception_handler($e) {
 			return;
 		}
 		else {
-			die("<h3 style='color:red'>$msg</h3>");
+			http_response_code(400);
+			print "<h3 style='color:red'>$msg</h3>";
+			exit(1);
 		}
 	}
 	else if (php_sapi_name() === 'cli' && property_exists($e, 'internal_message') && substr($e->internal_message, 0, 1) === '@') {
 		if ($e->internal_message == '@ABORT') {
-			print "\nABORT: ".$e->getMessage()."\n\n"; exit(1);
+			print "\nABORT: ".$e->getMessage()."\n\n";
+			exit(1);
 		}
 		else if ($e->internal_message == '@SYNTAX') {
-			print "\nSYNTAX: ".$e->getMessage()."\n\n"; exit(1);
+			print "\nSYNTAX: ".$e->getMessage()."\n\n";
+			exit(1);
 		}
 	}
 
