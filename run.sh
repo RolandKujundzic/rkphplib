@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2016 - 2020 Roland Kujundzic <roland@kujundzic.de>
 #
-# shellcheck disable=SC1091,SC1001,SC2006,SC2009,SC2012,SC2016,SC2028,SC2034,SC2046,SC2048,SC2068,SC2086,SC2119,SC2120,SC2153,SC2206
+# shellcheck disable=SC1091,SC1001,SC2006,SC2009,SC2012,SC2016,SC2024,SC2028,SC2034,SC2046,SC2048,SC2068,SC2086,SC2119,SC2120,SC2153,SC2206
 #
 
 
@@ -150,21 +150,48 @@ function _apt_install {
 
 	_require_program apt
 	_run_as_root 1
-
-	test "$RKBASH_DIR" = "$HOME/.rkbash/$$" && RKBASH_DIR="$HOME/.rkbash"
+	_rkbash_dir
 
 	for a in $*; do
 		if test -d "$RKBASH_DIR/apt/$a"; then
-			echo "already installed, skip: apt -y install $a"
+			_msg "already installed, skip: apt -y install $a"
 		else
 			sudo apt -y install "$a" || _abort "apt -y install $a"
 			_log "apt -y install $a" "apt/$a"
 		fi
 	done
 
-	test "$RKBASH_DIR" = "$HOME/.rkbash" && RKBASH_DIR="$HOME/.rkbash/$$"
-
+	_rkbash_dir reset
 	LOG_NO_ECHO=$curr_lne
+}
+
+
+function _apt_update {
+	_require_program apt
+	local lu now
+
+	_rkbash_dir apt
+	lu="$RKBASH_DIR/last_update"
+	now=$(date +%s)
+
+	if [[ -f "$lu" && $(cat "$lu") -gt $((now - 3600 * 24 * 7)) ]]; then
+		:
+	else
+		echo "$now" > "$lu" 
+
+		_run_as_root 1
+		echo -n "apt -y update &>$RKBASH_DIR/update.log ... "
+		sudo apt -y update &>"$RKBASH_DIR/update.log" || _abort 'sudo apt -y update'
+		echo "done"
+
+		if test "$1" = 1; then
+			echo -n "apt -y upgrade &>$RKBASH_DIR/upgrade.log  ... "
+ 			sudo apt -y upgrade &>"$RKBASH_DIR/upgrade.log" || _abort 'sudo apt -y upgrade'
+			echo "done"
+		fi
+	fi
+
+	_rkbash_dir reset
 }
 
 
@@ -605,6 +632,25 @@ function _git_checkout {
 }
 
 
+function _install_mariadb {
+	_apt_update
+	_apt_install 'mariadb-server mariadb-client php-mysql'
+}
+	
+
+function _install_nginx {
+	_apt_update
+	_apt_install 'nginx php-fpm'
+}
+	
+
+function _install_php {
+	_apt_update	
+  _apt_install 'php-cli php-curl php-mbstring php-gd php-xml php-tcpdf php-json'
+  _apt_install 'php-dev php-imap php-sqlite3 php-xdebug php-pear php-zip php-pclzip'
+}
+
+
 function _license {
 	if [[ -n "$1" && "$1" != 'gpl-3.0' ]]; then
 		_abort "unknown license [$1] use [gpl-3.0]"
@@ -877,6 +923,28 @@ function _mv {
 }
 
 
+function _nginx_php_fpm {
+	local site php_fpm
+	site=/etc/nginx/sites-available/default
+
+	_install_nginx
+
+	if [[ -f "$site" && ! -f "${site}.orig" ]]; then
+		_orig "$site"
+		echo "changing $site"
+		echo 'server {
+listen 80 default_server; root /var/www/html; index index.html index.htm index.php; server_name localhost;
+location / { try_files $uri $uri/ =404; }
+location ~ \.php$ { fastcgi_pass unix:/var/run/php5-fpm.sock; fastcgi_index index.php; include fastcgi_params; }
+}' > "$site"
+	fi
+
+	php_fpm=php$(ls /etc/php/*/fpm/php.ini | sed -E 's#/etc/php/(.+)/fpm/php.ini#\1#')-fpm
+	_service "$php_fpm" restart
+	_service nginx restart
+}
+
+
 function _ok {
 	echo -e "\033[0;32m$1\033[0m" 1>&2
 }
@@ -1095,7 +1163,7 @@ function _require_program {
 	command -v "./$1" >/dev/null 2>&1 && return
 
 	if test "${2:0:4}" = "apt:"; then
-		apt -y install "${2:4}"
+		_apt_install "${2:4}"
 	elif test -z "$2"; then
 		echo "No such program [$1]"
 		exit 1
@@ -1104,6 +1172,23 @@ function _require_program {
 	fi
 }
 
+
+function _rkbash_dir {
+	if [[ "$RKBASH_DIR" = "$HOME/.rkbash" && "$1" = 'reset' ]]; then
+		RKBASH_DIR="$HOME/.rkbash/$$"
+		return
+	fi
+
+	if [[ "$RKBASH_DIR" != "$HOME/.rkbash/$$" ]]; then
+		:
+	elif test -z "$1"; then
+		RKBASH_DIR="$HOME/.rkbash"
+	elif [[ "$1" != 'reset' ]]; then
+		RKBASH_DIR="$HOME/.rkbash/$1"
+		_mkdir "$RKBASH_DIR"
+	fi
+}
+	
 
 function _rkbash_inc {
 	local _HAS_SCRIPT
@@ -1240,7 +1325,7 @@ function _run_as_root {
 	if test -z "$1"; then
 		_abort "Please change into root and try again"
 	else
-		echo "sudo true - Please type in your password"
+		echo "sudo true - you might need to type in your password"
 		sudo true 2>/dev/null || _abort "sudo true failed - Please change into root and try again"
 	fi
 }
@@ -1615,45 +1700,17 @@ function strict_types_off {
 
 
 #--
-# Install ubuntu packages
-# shellcheck disable=SC2016
+# Install php, nginx and mariadb (apt packages)
 #--
-function update_ubuntu {
-	_require_program apt
+function ubuntu {
+	_confirm 'Install php packages' 1
+	test "$CONFIRM" = 'y' && _install_php
 
-	_sudo 'apt -y update'
+	_confirm 'Install mariadb-server, mariadb-client and php-mysql' 1
+	test "$CONFIRM" = 'y' && _install_mariadb
 
-	_confirm 'Install php packages cli, sqlite, curl, gd, xdebug and mbstring' 1
-	if test "$CONFIRM" = 'y'; then
-		_apt_install php-cli php-sqlite3 php-curl php-gd php-xdebug php-mbstring
-	fi
-
-	_confirm 'Install nginx and php-fpm'
-	if test "$CONFIRM" = 'y'; then
-		_apt_install nginx php-fpm
-	fi
-
-	_confirm 'Install mariadb-server, mariadb-client and php-mysql'
-	if test "$CONFIRM" = 'y'; then
-		_apt_install mariadb-server mariadb-client php-mysql
-	fi
-
-	local site
-	site=/etc/nginx/sites-available/default
-
-	if [[ -f "$site" && ! -f "${site}.orig" ]]; then
-		_orig "$site"
-		echo 'server {
-listen 80 default_server; root /var/www/html; index index.html index.htm index.php; server_name localhost;
-location / { try_files $uri $uri/ =404; }
-location ~ \.php$ { fastcgi_pass unix:/var/run/php5-fpm.sock; fastcgi_index index.php; include fastcgi_params; }
-}' > "$site"
-	fi
-
-	echo "start php5-fpm + nginx + mysql"
-	_service php5-fpm restart
-	_service nginx restart
-	_service mysql restart
+	_confirm 'Install nginx and php-fpm' 1
+	test "$CONFIRM" = 'y' && _nginx_php_fpm
 }
 
 # shellcheck disable=SC2034
@@ -1682,7 +1739,7 @@ case ${ARG[1]} in
 	mb_check)
 		_mb_check;;
 	ubuntu)
-		update_ubuntu;;
+		ubuntu;;
 	docker_osx)
 		docker_osx;;
 	opensource)
