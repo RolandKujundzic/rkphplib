@@ -10,6 +10,9 @@ function ubuntu {
 	_confirm 'Install mariadb-server, mariadb-client and php-mysql' 1
 	test "$CONFIRM" = 'y' && _install_mariadb
 
+	_confirm 'Install sqlite3 and php-sqlite3' 1
+	test "$CONFIRM" = 'y' && _install_sqlite3
+
 	_confirm 'Install nginx and php-fpm' 1
 	test "$CONFIRM" = 'y' && _nginx_php_fpm
 }

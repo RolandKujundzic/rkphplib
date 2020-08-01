@@ -647,9 +647,15 @@ function _install_nginx {
 function _install_php {
 	_apt_update	
   _apt_install 'php-cli php-curl php-mbstring php-gd php-xml php-tcpdf php-json'
-  _apt_install 'php-dev php-imap php-sqlite3 php-xdebug php-pear php-zip php-pclzip'
+  _apt_install 'php-dev php-imap php-xdebug php-pear php-zip php-pclzip'
 }
 
+
+function _install_sqlite3 {
+	_apt_update
+	_apt_install 'sqlite3 php-sqlite3'
+}
+	
 
 function _license {
 	if [[ -n "$1" && "$1" != 'gpl-3.0' ]]; then
@@ -1708,6 +1714,9 @@ function ubuntu {
 
 	_confirm 'Install mariadb-server, mariadb-client and php-mysql' 1
 	test "$CONFIRM" = 'y' && _install_mariadb
+
+	_confirm 'Install sqlite3 and php-sqlite3' 1
+	test "$CONFIRM" = 'y' && _install_sqlite3
 
 	_confirm 'Install nginx and php-fpm' 1
 	test "$CONFIRM" = 'y' && _nginx_php_fpm
