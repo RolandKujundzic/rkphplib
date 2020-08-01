@@ -1,46 +1,36 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 
-APP=$0
-APP_DESC=
-
-export APP_PID="$APP_PID $$"
+_parse_arg "$@"
+APP_DESC='Administration script'
+_rks_app "$0" "$@"
 
 if test -s ../phplib/bin/toggle; then
-	PATH_PHPLIB=`realpath ../phplib`
+	PATH_PHPLIB=$(realpath ../phplib)
 elif test -s ../../bin/toggle; then
-	PATH_PHPLIB=`realpath ../..`
+	PATH_PHPLIB=$(realpath ../..)
 fi
 
-case $1 in
-build)
-	_build
-	;;
-php5)
-	_php5
-	;;
-composer)
-	_composer $2
-	;;
-test)
-	# run all tests
-	php test/run.php
-	;;
-docs)
-	_docs
-	;;
-mb_check)
-	_mb_check
-	;;
-ubuntu)
-	_ubuntu
-	;;
-docker_osx)
-	_docker_osx
-	;;
-opensource)
-	_opensource $2
-	;;
-*)
-	_syntax "[build|opensource|composer|docs|php5|test|mb_check|ubuntu|docker_osx]"
+case ${ARG[1]} in
+	build)
+		build;;
+	php5)
+		build_php5;;
+	composer)
+		_composer "${ARG[2]}";;
+	test)
+		php test/run.php;;
+	docs)
+		docs;;
+	mb_check)
+		_mb_check;;
+	ubuntu)
+		update_ubuntu;;
+	docker_osx)
+		docker_osx;;
+	opensource)
+		opensource "${ARG[2]}";;
+	*)
+		_syntax "build|composer|docs|docker_osx|mb_check|opensource|php5|test|ubuntu"
 esac
 

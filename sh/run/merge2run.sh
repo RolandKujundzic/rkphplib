@@ -1,3 +1,4 @@
 #!/bin/bash
-MERGE2RUN="custom main"
+# shellcheck disable=SC2034
+MERGE2RUN="build_php5 build  docker_osx docs log_debug_off opensource strict_types_off update_ubuntu main"
 SCAN_INCLUDE=1
