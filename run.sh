@@ -1623,10 +1623,9 @@ function update_ubuntu {
 
 	_sudo 'apt -y update'
 
-	_confirm 'Install php packages cli, sqlite, curl, gd, mcrypt, xdebug and mbstring' 1
+	_confirm 'Install php packages cli, sqlite, curl, gd, xdebug and mbstring' 1
 	if test "$CONFIRM" = 'y'; then
-		_apt_install php-cli php-sqlite php-curl php-gd php-mcrypt php-xdebug php-mbstring
-		_sudo "php5enmod mcrypt"
+		_apt_install php-cli php-sqlite3 php-curl php-gd php-xdebug php-mbstring
 	fi
 
 	_confirm 'Install nginx and php-fpm'
@@ -1634,9 +1633,9 @@ function update_ubuntu {
 		_apt_install nginx php-fpm
 	fi
 
-	_confirm 'Install mysql-server, mysql-client and php-mysql'
+	_confirm 'Install mariadb-server, mariadb-client and php-mysql'
 	if test "$CONFIRM" = 'y'; then
-		_apt_install mysql-server mysql-client php-mysql
+		_apt_install mariadb-server mariadb-client php-mysql
 	fi
 
 	local site

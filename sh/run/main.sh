@@ -25,7 +25,7 @@ case ${ARG[1]} in
 	mb_check)
 		_mb_check;;
 	ubuntu)
-		update_ubuntu;;
+		ubuntu;;
 	docker_osx)
 		docker_osx;;
 	opensource)
