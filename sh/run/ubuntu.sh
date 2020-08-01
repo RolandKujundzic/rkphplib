@@ -4,7 +4,7 @@
 # Install php, nginx and mariadb (apt packages)
 # shellcheck disable=SC2016,SC2012
 #--
-function update_ubuntu {
+function ubuntu {
 	_confirm 'Install php packages' 1
 	test "$CONFIRM" = 'y' && _install_php
 
