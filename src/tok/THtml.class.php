@@ -246,23 +246,37 @@ public function tok_html_append(string $tag, string $appendHtml, string $html) :
 
 
 /**
- * Postprocess output. Replace inner html of tag (= <tag>).
+ * Postprocess output. Replace inner html of <tag>...</tag> 
+ * or id="ID">...</tag>] if $tag = tag:id. Return modified html.
  *
- * @tok {html:inner:title}Replace "title" with this{:html}
+ * @tokBefore <title></title><h3 id="headline"></h3>
+ * @tok {html:inner:title}New Title{:html}
+ * @tok {html:inner:h3:headline}New Headline{:html}
+ * @tokAfter <title>New Title</title><h3 id="headline">New Headline</h3>
+ * @return string
  */
 public function tok_html_inner(string $tag, string $innerHtml, string $html) : string {
-	$start = mb_stripos($html, '<'.$tag.'>');
-	$tag_len = mb_strlen($tag) + 2;
-	$end = mb_stripos($html, '</'.$tag.'>', $start + $tag_len);
+	if (strpos($tag, ':') > 0) {
+		list ($tag, $id) = explode(':', $tag, 2);
+		if (($start = mb_stripos($html, 'id="'.$id.'">')) === false) {
+    	throw new Exception('missing id="'.$id.'">');
+		}
 
-	if ($start > 0 && $end >= $start + $tag_len) {
-		$res = mb_substr($html, 0, $start).'<'.$tag.'>'.$innerHtml.'</'.$tag.'>'.mb_substr($html, $end + $tag_len + 1);
+		$start += mb_strlen($id) + 6;
 	}
-  else {
-    throw new Exception('failed to find tag body', "search=[<$tag>] start=$start end=$end");
-  }
+	else {
+		if (($start = mb_stripos($html, '<'.$tag.'>')) === false) {
+    	throw new Exception('missing <'.$tag.'>');
+		}
 
-	return $res;
+		$start += mb_strlen($tag) + 2;
+	}
+
+	if (($end = mb_stripos($html, '</'.$tag.'>', $start)) === false) {
+    throw new Exception('missing </'.$tag.'>');
+	}
+
+	return mb_substr($html, 0, $start).$innerHtml.mb_substr($html, $end);
 }
 
 
