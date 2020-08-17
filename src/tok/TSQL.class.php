@@ -55,21 +55,22 @@ public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [];
-	$plugin['sql:query'] = 0;
+	$plugin['sql'] = 0;
+	$plugin['sql:col'] = 0;
 	$plugin['sql:change'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['sql:dsn'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY; 
-	$plugin['sql:name'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
-	$plugin['sql:qkey'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY;
-	$plugin['sql:json'] = TokPlugin::REQUIRE_BODY;
-	$plugin['sql:col'] = 0;
-	$plugin['sql:options'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['sql:getId'] = TokPlugin::NO_PARAM;
-	$plugin['sql:nextId'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
-	$plugin['sql:in'] = TokPlugin::CSLIST_BODY;
 	$plugin['sql:hasTable'] = 0;
-	$plugin['sql:password'] = 0;
 	$plugin['sql:import'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
-	$plugin['sql'] = 0;
+	$plugin['sql:in'] = TokPlugin::CSLIST_BODY;
+	$plugin['sql:json'] = TokPlugin::REQUIRE_BODY;
+	$plugin['sql:loop'] = TokPlugin::REQUIRE_BODY;
+	$plugin['sql:name'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['sql:nextId'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+	$plugin['sql:options'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
+	$plugin['sql:password'] = 0;
+	$plugin['sql:qkey'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['sql:query'] = 0;
 	$plugin['null'] = TokPlugin::NO_PARAM;
 
 	return $plugin;
@@ -550,11 +551,52 @@ public function tok_sql_options($p = []) {
 
 
 /**
+ * Output {sql_query:} result.
+ *
+ * @tokBefore …
+ * {sql:set}id=ID1|#|name=NAME1{:sql}
+ * {sql:set}id=ID2|#|name=NAME2{:sql}
+ * @EOL
+ * 
+ * @tok {sql:loop:\n}{:=id}, {:=name}{:sql} 
+ * 
+ * @tokAfter …
+ * ID1, NAME1
+ * ID2, NAME2
+ * @EOL
+ * 
+ * @throws
+ * @param string $delimiter
+ * @param string $tpl
+ * @return string
+ */
+public function tok_sql_loop($delimiter, $tpl) {
+	$output = [];
+	while (($row = $this->db->getNextRow())) {
+		array_push($output, $this->tok->replaceTags($tpl, $row));
+	}
+
+	if ($delimiter == '\n') {
+		$delimiter = "\n";
+	}
+
+	return join($delimiter, $output);
+}
+
+
+/**
  * Return colum value of last {sql_query:}.
  *
- * @tok {sql:col:name} -> NAME
- * @tok {sql:col:*} -> name=NAME|#|id=ID
- * @tok {sql:col}{:=id}{:sql} -> use {:=id} as name 
+ * @tokBefore {sql:set}id=ID|#|name=NAME{:sql}
+ *
+ * @tok {sql:col:name}
+ * @tokAfter NAME
+ *
+ * @tok {sql:col:*}
+ * @tokAfter id=ID|#|name=NAME
+ *
+ * @tok {sql:col}{:=id}{:sql}
+ * @tokAfter ID
  *  
  * @throws
  * @param string $name
@@ -591,8 +633,8 @@ public function tok_sql_col($name, $arg = '') {
  *
  * @tok {sql:json:hash}SELECT name, value FROM abc{:sql} -> return json encoded map
  * @tok {sql:json[:table]}SELECT * FROM somewhere{:sql} -> return json encoded table
- * @tok {sql:spreadsheet}SELECT * FROM somewhere{:sql} -> return json encoded csv table (table[0] = column names)
- * @tok {sql:spreadsheet_js}SELECT * FROM somewhere{:sql} -> @see spreadSheetJS
+ * @tok {sql:json:spreadsheet}SELECT * FROM somewhere{:sql} -> return json encoded csv table (table[0] = column names)
+ * @tok {sql:json:spreadsheet_js}SELECT * FROM somewhere{:sql} -> @see spreadSheetJS
  * 
  * @throws
  * @param string $mode table=''|hash|spreadsheet_js
