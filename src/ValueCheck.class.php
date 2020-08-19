@@ -18,6 +18,18 @@ use function rkphplib\lib\split_str;
 class ValueCheck {
 
 
+/**
+ * Check _REQUEST
+ * @example ValueCheck::REQUEST([ 'day' => 'isSQLDate' ])
+ */
+public static function REQUEST(array $param_check) : void {
+	foreach ($param_check as $key => $check) {
+		if (!empty($_REQUEST[$key]) && !self::$check($_REQUEST[$key])) {
+			throw new Exception('invalid '.$key, $check);
+		}
+	}
+}
+
 
 /**
  * Run check if string $value is not empty. If $value is callable replace $value with $value() result.
@@ -495,6 +507,26 @@ public static function isDate(string $value, int $min_year = 1900, int $max_year
 public static function isDateTime(string $value, int $min_year = 1900, int $max_year = 2150) : bool {
 	$time = mb_substr($value, 11);
 	return self::isDate(mb_substr($value, 0, 10), $min_year, $max_year) && (!$time || self::isTime($time));
+}
+
+
+/**
+ * True if value is hh:mm[:ss]
+ */
+public static function isTime(string $value) : bool {
+	if (!preg_match('/^([0-9]{2}):([0-9]{2}):?([0-9]{2})?$/', $value, $time)) {
+		return false;
+	}
+
+	$h = intval($time[1]);
+	$m = intval($time[2]);
+	$s = isset($time[3]) ? intval($time[3]) : 0;
+
+	if ($h < 0 || $h > 60 || $m < 0 || $m > 60 || $s < 0 || $s > 60) {
+		return false;
+	}
+
+	return true;
 }
 
 
