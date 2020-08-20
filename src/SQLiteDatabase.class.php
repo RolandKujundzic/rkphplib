@@ -71,7 +71,7 @@ public function close() {
 /**
  *
  */
-public function execute(string $query, bool $use_result = false) : void {
+public function execute(string $query, bool $use_result = false) : bool {
 
 	if (is_array($query)) {
 		$stmt = $this->_exec_stmt($query);
@@ -81,9 +81,23 @@ public function execute(string $query, bool $use_result = false) : void {
 		$this->_connect();
 
 		if (!@$this->_db->query($query)) {
-			throw new Exception('failed to execute sql query', $query."\n".$this->_db->lastErrorMsg());
+			return $this->error('failed to execute sql query', $query);
 		}
 	}
+
+	return true;
+}
+
+
+/**
+ *
+ */
+private function error(string $msg, string $query) : bool {
+	if ($this->abort) {
+		throw new Exception($msg, $query."\n".$this->_db->lastErrorMsg());
+	}
+
+	return false;
 }
 
 

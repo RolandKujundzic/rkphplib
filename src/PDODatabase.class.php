@@ -34,7 +34,7 @@ public function close() {
 /**
  *
  */
-public function execute(string $query, bool $use_result = false) : void {
+public function execute(string $query, bool $use_result = false) : bool {
 	throw new Exception('ToDo');
 }
 
