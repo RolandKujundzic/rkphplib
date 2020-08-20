@@ -427,7 +427,7 @@ public function dropTable(string $table) : void {
 /**
  *
  */
-public function execute($query, bool $use_result = false) : void {
+public function execute($query, bool $use_result = false) : bool {
 	// \rkphplib\lib\log_debug("MysqlDatabase.execute:431> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
 	if (is_array($query)) {
 		if ($use_result) {
@@ -442,15 +442,29 @@ public function execute($query, bool $use_result = false) : void {
 		$this->_connect();
 
 		if ($this->_db->real_query($query) === false) {
-			throw new Exception('failed to execute sql query', $query."\n(".$this->_db->errno.') '.$this->_db->error);
+			return $this->error('failed to execute sql query', $query);
 		}
 
 		if ($use_result) {
 			if (($this->_dbres = $this->_db->store_result()) === false) {
-				throw new Exception('failed to use query result', $query."\n(".$this->_db->errno.') '.$this->_db->error);
+				return $this->error('failed to use query result', $query);
 			}
 		}
 	}
+
+	return true;
+}
+
+
+/**
+ * Throw Exception if this.abort = true (default). Otherwise return false.
+ */
+private function error(string $msg, string $query) : bool {
+	if ($this->abort) {
+		throw new Exception($msg, $query."\n(".$this->_db->errno.') '.$this->_db->error);
+	}
+
+	return false;
 }
 
 
