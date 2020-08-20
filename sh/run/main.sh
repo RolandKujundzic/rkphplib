@@ -1,6 +1,10 @@
 #!/bin/bash
 # shellcheck disable=SC2034
 
+#--
+# M A I N
+#--
+
 _parse_arg "$@"
 APP_DESC='Administration script'
 _rks_app "$0" "$@"
@@ -28,9 +32,7 @@ case ${ARG[1]} in
 		ubuntu;;
 	docker_osx)
 		docker_osx;;
-	opensource)
-		opensource "${ARG[2]}";;
 	*)
-		_syntax "build|composer|docs|docker_osx|mb_check|opensource|php5|test|ubuntu"
+		_syntax "build|composer|docs|docker_osx|mb_check|php5|test|ubuntu"
 esac
 

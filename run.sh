@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2016 - 2020 Roland Kujundzic <roland@kujundzic.de>
 #
-# shellcheck disable=SC1091,SC1001,SC2006,SC2009,SC2012,SC2016,SC2024,SC2028,SC2034,SC2046,SC2048,SC2068,SC2086,SC2119,SC2120,SC2153,SC2206
+# shellcheck disable=SC1091,SC1001,SC2006,SC2009,SC2012,SC2016,SC2024,SC2028,SC2034,SC2046,SC2048,SC2068,SC2086,SC2119,SC2120,SC2153,SC2183,SC2206
 #
 
 
@@ -552,83 +552,14 @@ function _cp {
 
 function _find {
 	FOUND=()
-	local a=
+	local a
 
 	_require_program find
+	_require_dir "$1"
 
 	while read -r a; do
 		FOUND+=("$a")
-	done <<< "$(find "$@" 2>/dev/null)"
-}
-
-
-function _git_checkout {
-	local curr git_dir lnk_dir
-	curr="$PWD"
-	git_dir="${2:-$(basename "$1" | sed -E 's/\.git$//')}"
-
-	if test -n "${ARG[docroot]}"; then
-		lnk_dir="$2"
-		git_dir="${ARG[docroot]}"
-
-		if [[ -L "$lnk_dir" && "$(realpath "$lnk_dir")" = "$(realpath "$git_dir")" ]]; then
-			_confirm "Update $git_dir (git pull)?" 1
-		elif [[ ! -L "$lnk_dir" && ! -d "$lnk_dir" && ! -d "$git_dir" ]]; then
-			_confirm "Checkout $1 to $git_dir (git clone)?" 1
-		elif test -d "$git_dir"; then
-			_abort "link to $git_dir missing ($lnk_dir)"
-		elif test -L "$lnk_dir"; then
-			_abort "$lnk_dir does not link to $git_dir"
-		elif test -d "$lnk_dir"; then
-			_abort "directory $lnk_dir already exists"
-		fi
-	elif test -d "$git_dir"; then
-		_confirm "Update $git_dir (git pull)?" 1
-	elif test -n "$CONFIRM_CHECKOUT"; then
-		_confirm "Checkout $1 to $git_dir (git clone)?" 1
-	fi
-
-	if test "$CONFIRM" = "n"; then
-		echo "Skip $1"
-		return
-	fi
-
-	if test -d "$git_dir"; then
-		_cd "$git_dir"
-		echo "git pull $git_dir"
-		git pull
-		test -s .gitmodules && git submodule update --init --recursive --remote
-		test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
-		_cd "$curr"
-	elif test -d "../../$git_dir/.git" && ! test -L "../../$git_dir"; then
-		_ln "../../$git_dir" "$git_dir"
-		_git_checkout "$1" "$git_dir"
-	else
-		echo -e "git clone $GIT_PARAMETER '$1' '$git_dir'\nEnter password if necessary"
-		git clone $GIT_PARAMETER "$1" "$git_dir"
-
-		if ! test -d "$git_dir/.git"; then
-			_abort "git clone failed - no $git_dir/.git directory"
-		fi
-
-		if test -s "$git_dir/.gitmodules"; then
-			_cd "$git_dir"
-			test -s .gitmodules && git submodule update --init --recursive --remote
-			test -s .gitmodules && git submodule foreach "(git checkout master; git pull)"
-			_cd ..
-		fi
-
-		if test -n "$3"; then
-			_cd "$git_dir"
-			echo "run [$3] in $git_dir"
-			$3
-			_cd ..
-		fi
-	fi
-
-	[[ -n "$lnk_dir" && ! -L "$lnk_dir" ]] && _ln "$git_dir" "$lnk_dir"
-
-	GIT_PARAMETER=
+	done < <(eval "find '$1' $2" || _abort "find '$1' $2")
 }
 
 
@@ -647,7 +578,7 @@ function _install_nginx {
 function _install_php {
 	_apt_update	
   _apt_install 'php-cli php-curl php-mbstring php-gd php-xml php-tcpdf php-json'
-  _apt_install 'php-dev php-imap php-xdebug php-pear php-zip php-pclzip'
+  _apt_install 'php-dev php-imap php-intl php-xdebug php-pear php-zip php-pclzip'
 }
 
 
@@ -686,50 +617,6 @@ function _license {
 
 	_wget "http://www.gnu.org/licenses/gpl-3.0.txt" "$lfile"
 }
-
-function _ln {
-	local target target_dir link_dir old_target
-	_require_program realpath
-
-	target=$(realpath "$1")
-	test -z "$target" && _abort "no such directory [$1]"
-	test "$2" = "$target" && _abort "ln -s '$target' '$2' # source=target"
-
-	if test -L "$2"; then
-		old_target=$(realpath "$2")
-
-		if test "$target" = "$old_target"; then
-			echo "Link $2 to $target already exists"
-			return
-		fi
-
-		_rm "$2"
-	fi
-
-	link_dir=$(dirname "$2")
-	link_dir=$(realpath "$link_dir")
-	target_dir=$(dirname "$target")
-
-	local tname lname cwd
-	if test "$target_dir" = "$link_dir"; then
-		cwd="$PWD"
-		_cd "$target_dir"
-		tname=$(basename "$1")
-		lname=$(basename "$2")
-		echo "ln -s '$tname' '$lname' # in $PWD"
-		ln -s "$tname" "$lname" || _abort "ln -s '$tname' '$lname' # in $PWD"
-		_cd "$cwd"
-	else
-		_mkdir "$link_dir"
-		echo "Link $2 to $target"
-		ln -s "$target" "$2"
-	fi
-
-	if ! test -L "$2"; then
-		_abort "ln -s '$target' '$2'"
-	fi
-}
-
 
 declare -Ai LOG_COUNT  # define hash (associative array) of integer
 declare -A LOG_FILE  # define hash
@@ -1415,9 +1302,9 @@ function _syntax {
 
 	base=$(basename "$APP")
 	if test -n "$APP_PREFIX"; then
-		echo -e "$syntax \033[0;31m$APP_PREFIX $base $msg\033[0m" 1>&2
+		echo -e "$syntax $(_warn_msg "$APP_PREFIX $base $msg")" 1>&2
 	else
-		echo -e "$syntax \033[0;31m$base $msg\033[0m" 1>&2
+		echo -e "$syntax $(_warn_msg "$base $msg")" 1>&2
 	fi
 
 	for a in APP_DESC APP_DESC_2 APP_DESC_3 APP_DESC_4; do
@@ -1516,6 +1403,51 @@ function _syntax_check_php {
 			echo "_syntax_test('$a');" >> "$2"
 		fi
 	done
+}
+
+
+function _version {
+	local flag version
+	flag=$(($2 + 0))
+
+	if [[ "$1" =~ ^v?[0-9\.]+$ ]]; then
+		version="$1"
+	elif command -v "$1" &>/dev/null; then
+		version=$({ $1 --version || _abort "$1 --version"; } | head -1 | grep -E -o 'v?[0-9]+\.[0-9\.]+')
+	fi
+
+	version="${version/v/}"
+
+	[[ "$version" =~ ^[0-9\.]+$ ]] || _abort "version detection failed ($1)"
+
+	if [[ $((flag & 1)) = 1 ]]; then
+		if [[ "$version" =~ ^[0-9]{1,2}\.[0-9]{1,2}$ ]]; then
+			printf "%d%02d" $(echo "$version" | tr '.' ' ')
+		elif [[ "$version" =~ ^[0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,2}$ ]]; then
+			printf "%d%02d%02d" $(echo "$version" | tr '.' ' ')
+		else
+			_abort "failed to convert $version to number"
+		fi
+	elif [[ $((flag & 2)) ]]; then
+		echo -n "${version%%.*}"
+	elif [[ $((flag & 4)) ]]; then
+		echo -n "${version%.*}"
+	else
+		echo -n "$version"
+	fi
+}
+
+
+function _warn_msg {
+	local line first
+	while IFS= read -r line; do
+		if test "$first" = '1'; then
+			echo "$line"
+		else
+			echo '\033[0;31m'"$line"'\033[0m'
+			first=1
+		fi
+	done <<< "${1//\\n/$'\n'}"
 }
 
 
@@ -1654,35 +1586,6 @@ function log_debug_off {
 
 
 #--
-# Install opensource packages
-#
-# @param package (dropzone)
-#--
-function opensource {
-	test -z "$1" && _syntax "opensource [dropzone]"
-
-	_mkdir opensource
-  _cd opensource
-
-	case $1 in
-		dropzone)
-  		_git_checkout "https://gitlab.com/meno/dropzone.git" dropzone
-			_cd dropzone
-			npm install
-			npm test
-			echo "start dropzone jekyll server on http://127.0.0.1:400 with"
-			echo "cd opensource/dropzone/; grunt build-website; cd website; jekyll serve"
-			_cd ..
-  		;;
-		*)
-			_syntax "opensource [dropzone]"
-	esac
-
-	_cd ..
-}
-
-
-#--
 # Call $PATH_PHPLIB/bin/toggle $1 strict_types off
 # @param file
 # @global RKBASH_DIR PATH_PHPLIB
@@ -1724,6 +1627,10 @@ function ubuntu {
 
 # shellcheck disable=SC2034
 
+#--
+# M A I N
+#--
+
 _parse_arg "$@"
 APP_DESC='Administration script'
 _rks_app "$0" "$@"
@@ -1751,9 +1658,7 @@ case ${ARG[1]} in
 		ubuntu;;
 	docker_osx)
 		docker_osx;;
-	opensource)
-		opensource "${ARG[2]}";;
 	*)
-		_syntax "build|composer|docs|docker_osx|mb_check|opensource|php5|test|ubuntu"
+		_syntax "build|composer|docs|docker_osx|mb_check|php5|test|ubuntu"
 esac
 
