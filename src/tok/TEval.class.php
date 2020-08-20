@@ -23,8 +23,77 @@ public function getPlugins(Tokenizer $tok) : array {
   $plugin = [];
   $plugin['eval:math'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
   $plugin['eval:logic'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+  $plugin['eval:call'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
   $plugin['eval'] = 0;
   return $plugin;
+}
+
+
+/**
+ * Execute php function or method. Up to 4 arguments (arg1, ..., arg4).
+ * @example {eval:call}function=session_start{:eval}
+ * @example {eval:call}class=Test|#|[static_]method=sum|#|arg1=5|#|arg2=3{:eval)
+ */
+public static function tok_eval_call($p) : string {
+	if (!empty($p['function'])) {
+		if (!isset($p['arg1'])) {
+			return $p['function']();
+		}
+		else if (!isset($p['arg2'])) {
+			return $p['function']($p['arg1']);
+		}
+		else if (!isset($p['arg3'])) {
+			return $p['function']($p['arg1'], $p['arg2']);
+		}
+		else if (!isset($p['arg4'])) {
+			return $p['function']($p['arg1'], $p['arg2'], $p['arg3']);
+		}
+		else if (!isset($p['arg5'])) {
+			return $p['function']($p['arg1'], $p['arg2'], $p['arg3'], $p['arg4']);
+		}
+	}
+	else if (!empty($p['class']) && !empty($p['method'])) {
+		$obj = new $p['class']();
+		$func = $p['method'];
+
+		if (!isset($p['arg1'])) {
+			return $obj->$func();
+		}
+		else if (!isset($p['arg2'])) {
+			return $obj->$func($p['arg1']);
+		}
+		else if (!isset($p['arg3'])) {
+			return $obj->$func($p['arg1'], $p['arg2']);
+		}
+		else if (!isset($p['arg4'])) {
+			return $obj->$func($p['arg1'], $p['arg2'], $p['arg3']);
+		}
+		else if (!isset($p['arg5'])) {
+			return $obj->$func($p['arg1'], $p['arg2'], $p['arg3'], $p['arg4']);
+		}
+	}
+	else if (!empty($p['class']) && !empty($p['static_method'])) {
+		$func = $p['static_method'];
+
+		if (!isset($p['arg1'])) {
+			return $p['class']::$func->$func();
+		}
+		else if (!isset($p['arg2'])) {
+			return $p['class']::$func($p['arg1']);
+		}
+		else if (!isset($p['arg3'])) {
+			return $p['class']::$func($p['arg1'], $p['arg2']);
+		}
+		else if (!isset($p['arg4'])) {
+			return $p['class']::$func($p['arg1'], $p['arg2'], $p['arg3']);
+		}
+		else if (!isset($p['arg5'])) {
+			return $p['class']::$func($p['arg1'], $p['arg2'], $p['arg3'], $p['arg4']);
+		}
+	}
+	else {
+		throw new Exception('missing function or class and ([static_]method) parameter', print_r($p, true));
+	}
 }
 
 
