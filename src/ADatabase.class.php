@@ -66,6 +66,9 @@ public static $time_zone = '';
 // @var string $charset (default = empty = use db default, Example: 'utf8', 'utf8mb4')
 public static $charset = '';
 
+// @var bool $abort = true
+public $abort = true;
+
 // @var string $_dsn 
 protected $_dsn = null;
 
@@ -1171,8 +1174,9 @@ abstract public function esc(string $value) : string;
 
 /**
  * Execute query (string or prepared statement). Parameter $query is string or array.
+ * Set this.abort = false to use bool Result instead of Exception.
  */
-abstract public function execute(string $query, bool $use_result = false) : void;
+abstract public function execute(string $query, bool $use_result = false) : bool;
 
 
 /**
