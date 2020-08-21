@@ -24,9 +24,17 @@ public function getId() : string {
 
 
 /**
- * Close connection.
+ *
  */
-public function close() {
+public function close() : bool {
+	throw new Exception('ToDo');
+}
+
+
+/**
+ * 
+ */
+public function connect() : bool {
 	throw new Exception('ToDo');
 }
 
@@ -290,7 +298,7 @@ public function releaseLock(string $name) : int {
 /**
  *
  */
-public function multiQuery(string $query) : array {
+public function multiQuery(string $query) : ?array {
   throw new Exception('@ToDo ... ');
 }
 
