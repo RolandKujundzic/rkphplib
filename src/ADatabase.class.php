@@ -1319,7 +1319,19 @@ public function selectOne($query, string $col = '') {
  * Return vector of result hashes. If vector has only one result hash
  * return result hash.
  */
-abstract public function multiQuery(string $query) : array;
+abstract public function multiQuery(string $query) : ?array;
+
+
+/**
+ * Useage is optional
+ */
+abstract public function connect() : bool;
+
+
+/**
+ * Usage is optional
+ */
+abstract public function close() : bool;
 
 
 /**
