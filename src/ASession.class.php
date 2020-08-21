@@ -113,26 +113,38 @@ public function getConf(string $key) {
 /**
  * Set session configuration. Use $conf = [] to initialize. Required Parameter:
  *
- *  name|table: Session Name - required
- *  scope: file|dir|subdir|host|docroot (default = docroot)
- *  inactive: seconds of inactivity. Session expires after lchange + inactive. Range [1-21600] (default = 7200 = 2 h)
- *	ttl: time to live in seconds. Session expires after start + ttl. Range [1, 345600] (default = 172800 = 48 h)
- *  unlimited: optional - if set use inactive=21600 and ttl=345600
- *  allow_dir: 'login' (list of allowed directories)
- *  redirect_login: index.php?dir=login
- *  redirect_logout: index.php?dir=login/exit (default: redirect_login.'/exit')
- *  redirect_forbidden: index.php?dir=login/access_denied
- *  required: '' (list of session parameter - if one is empty redirect to login page)
+ * name|table: Session Name - required
+ * handler: files[|Database] - required
+ * scope: file|dir|subdir|host|docroot (default = docroot)
+ * cross_site: 1 (default = allow cross site cookies - works only on ssl)
+ * inactive: seconds of inactivity. Session expires after lchange + inactive. Range [1-21600] (default = 7200 = 2 h)
+ * ttl: time to live in seconds. Session expires after start + ttl. Range [1, 345600] (default = 172800 = 48 h)
+ * unlimited: optional - if set use inactive=21600 and ttl=345600
+ * allow_dir: 'login' (list of allowed directories)
+ * redirect_login: index.php?dir=login
+ * redirect_logout: index.php?dir=login/exit (default: redirect_login.'/exit')
+ * redirect_forbidden: index.php?dir=login/access_denied
+ * required: '' (list of session parameter - if one is empty redirect to login page)
  * 
- *  Check inactive and ttl with hasExpired().
+ * Check inactive and ttl with hasExpired().
  */
 protected function setConf(array $conf) : void {
 	// \rkphplib\lib\log_debug('ASession.setConf:130> enter - conf: '.print_r($conf, true));
 
-	$default = [ 'name' => '', 'table' => '', 'scope' => 'docroot', 'inactive' => 7200, 'ttl' => 172800, 'init_meta' => '0', 
-		'redirect_login' => 'index.php?dir=login',  'redirect_logout' => 'index.php?dir=login/exit',
-		'redirect_forbidden' => 'index.php?dir=login/access_denied', 
-		'required' => '', 'allow_dir' => 'login' ];
+	$default = [
+		'handler' => 'files', 
+		'name' => '', 
+		'table' => '', 
+		'required' => '', 
+		'allow_dir' => 'login',
+		'scope' => 'docroot', 
+		'cross_site' => 1,
+		'inactive' => 7200, 
+		'ttl' => 172800, 
+		'init_meta' => 0, 
+		'redirect_login' => 'index.php?dir=login',  
+		'redirect_logout' => 'index.php?dir=login/exit',
+		'redirect_forbidden' => 'index.php?dir=login/access_denied' ];
 
 	foreach ($default as $key => $value) {
 		if (isset($conf[$key])) {

@@ -4,6 +4,7 @@ namespace rkphplib;
 
 require_once __DIR__.'/ASession.class.php';
 require_once __DIR__.'/Dir.class.php';
+require_once __DIR__.'/lib/is_ssl.php';
 
 use rkphplib\Dir;
 
@@ -56,12 +57,6 @@ public static function readPHPSessionFile(string $file) : array {
 public function init(array $conf) : void {
 	$this->setConf($conf);
 
-	$sess_ttl = ini_get('session.gc_maxlifetime');
-	if ($sess_ttl > 0 && $sess_ttl < $this->conf['inactive']) {
-		// avoid session garbage collection during session lifetime 
-		ini_set('session.gc_maxlifetime', $this->conf['inactive']);
-	}
-
 	if (defined('SESSION_SAVE_PATH')) {
 		$this->conf['save_path'] = SESSION_SAVE_PATH;
 	}
@@ -72,8 +67,26 @@ public function init(array $conf) : void {
 		ini_set('session.save_path', $this->conf['save_path']);
 	}
 
-	if (!session_id() && empty($_SERVER['SSH_TTY'])) {
-		session_start();
+	if (!session_id()) {
+		$secure = intval(\rkphplib\lib\is_ssl());
+		$same_site = $secure && $this->conf['cross_site'] ? 'none' : 'strict';
+		$sess_opt = [
+			'cookie_httponly' => 1,
+			'cookie_samesite' => $same_site,
+			'cookie_secure' => $secure,
+			'cache_expire' => max(ini_get('session.cache_expire'), $this->conf['ttl']),
+			'gc_maxlifetime' => max(ini_get('session.gc_maxlifetime'), $this->conf['inactive']),
+			'strict_mode' => 0
+			];
+
+		if ($this->conf['ttl'] != 'files') {
+ 			$handler = $this->conf['handler'].'SessionHandler';
+			new $handler();
+		}
+
+		if (!session_start($sess_opt)) {
+			throw new Exception('session_start() failed');
+		}
 		// \rkphplib\lib\log_debug('Session.init:84> start session');
 	}
 	
