@@ -18,21 +18,23 @@ fi
 case ${ARG[1]} in
 	build)
 		build;;
-	php5)
-		build_php5;;
 	composer)
 		_composer "${ARG[2]}";;
-	test)
-		php test/run.php;;
 	docs)
 		docs;;
-	mb_check)
-		_mb_check;;
-	ubuntu)
-		ubuntu;;
 	docker_osx)
 		docker_osx;;
+	mb_check)
+		_mb_check;;
+	php5)
+		build_php5;;
+	php_server)
+		_php_server;;
+	test)
+		php test/run.php;;
+	ubuntu)
+		ubuntu;;
 	*)
-		_syntax "build|composer|docs|docker_osx|mb_check|php5|test|ubuntu"
+		_syntax "build|composer|docs|docker_osx|mb_check|php5|php_server|test|ubuntu"
 esac
 
