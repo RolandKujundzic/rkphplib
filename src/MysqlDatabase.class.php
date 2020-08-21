@@ -141,7 +141,7 @@ public function releaseLock(string $name) : int {
 /**
  *
  */
-private function _connect() : void {
+public function connect() : bool {
 
 	if (is_object($this->_db)) {
 		if ($this->_conn_ttl < time() && !$this->_db->ping()) {
@@ -149,70 +149,74 @@ private function _connect() : void {
 			$this->close();
 		}
 		else {
-			return;
+			return true;
 		}
 	}
 
 	if (empty($this->_dsn)) {
-		throw new Exception('call setDSN first');
+		return $this->error('call setDSN first', '', 2);
 	}
 
 	$dsn = self::splitDSN($this->_dsn);
 
 	if ($dsn['type'] != 'mysqli') {
-		throw new Exception('invalid dsn type: '.$dsn['type']);
+		return $this->error('invalid dsn type: '.$dsn['type'], '', 2);
 	}
 
 	if (!empty($dsn['port'])) {
 		$this->_db = \mysqli_init();
 		if (!$this->_db->real_connect($dsn['host'], $dsn['login'], $dsn['password'], $dsn['name'], $dsn['port'])) {
-			throw new Exception('Failed to connect to MySQL ('.$this->_db->connect_errno.')', $this->_db->connect_error);
+			return $this->error('Failed to connect to MySQL ('.$this->_db->connect_errno.')', $this->_db->connect_error, 2);
 		}
 	}
 	else {
 		$this->_db = new \mysqli($dsn['host'], $dsn['login'], $dsn['password'], $dsn['name']);
 		if ($this->_db->connect_errno) {
-			throw new Exception('Failed to connect to MySQL ('.$this->_db->connect_errno.')', $this->_db->connect_error);
+			return $this->error('Failed to connect to MySQL ('.$this->_db->connect_errno.')', $this->_db->connect_error, 2);
 		}
 	}
 
 	if (!empty(self::$charset) && !$this->_db->set_charset(self::$charset)) {
 		// $this->execute("SET names '".self::escape(self::$charset)."'");
-		throw new Exception('set charset failed', self::$charset);
+		return $this->error('set charset failed', self::$charset, 2);
 	}
 
+	$res = true;
+
 	if (!empty(self::$time_zone)) {
-		$this->execute("SET time_zone = '".self::escape(self::$time_zone)."'");
+		$res = $this->execute("SET time_zone = '".self::escape(self::$time_zone)."'");
 	}
 	
 	// \rkphplib\lib\log_debug('MysqlDatabase._connect:188> login@host='.$dsn['login'].'@'.$dsn['host'].', name='.$dsn['name'].', id='.$this->getId());
 	$this->_conn_ttl = time() + 5 * 60; // re-check connection in 5 minutes ...
+	return $res;
 }
 
 
 /**
  * Close database connection.
  */
-public function close() : void {
+public function close() : bool {
 
 	if (!$this->_db) {
-		throw new Exception('no open database connection');
+		return $this->error('no open database connection', '', 2);
 	}
 
 	if (!$this->_db->close()) {
-		throw new Exception('failed to close database connection');
+		return $this->error('failed to close database connection', '', 2);
 	}
 
 	foreach ($this->_query as $key) {
 		if (is_object($this->_query[$key])) {
 			if (!$this->_query[$key]->close()) {
-				throw new Exception('failed to close prepared statement', $key);
+				return $this->error('failed to close prepared statement', $key, 2);
 			}
 		}
 	}
 
 	$this->_db = null;
 	$this->_conn_ttl = 0;
+	return true;
 }
 
 
@@ -431,15 +435,22 @@ public function execute($query, bool $use_result = false) : bool {
 	// \rkphplib\lib\log_debug("MysqlDatabase.execute:431> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
 	if (is_array($query)) {
 		if ($use_result) {
-			$stmt = $this->_exec_stmt($query);
+			if (($stmt = $this->_exec_stmt($query)) === null) {
+				return false;
+			}
 		}
 		else {
-			$stmt = $this->_exec_stmt($query);
+			if (($stmt = $this->_exec_stmt($query)) === null) {
+				return false;
+			}
+
 			$stmt->close();
 		}
 	}
 	else {
-		$this->_connect();
+		if (!$this->connect()) {
+			return false;
+		}
 
 		if ($this->_db->real_query($query) === false) {
 			return $this->error('failed to execute sql query', $query);
@@ -639,16 +650,18 @@ public function select($query, int $res_count = 0) : ?array {
 /**
  *
  */
-public function multiQuery(string $query) : array {
+public function multiQuery(string $query) : ?array {
 
 	if (self::$use_prepared) {
 		throw new Exception('multiQuery does not work in prepared query mode');
 	}
 
-	$this->_connect();
+	if (!$this->connect()) {
+		return null;
+	}
 
 	if (($dbres = $this->_db->multi_query($query)) === false) {
-		throw new Exception('multi query failed', $query."\n(".$this->_db->errno.') '.$this->_db->error);
+		$this->error('multi query failed', $query, 1);
 	}
 	
 	$res = [];
@@ -681,7 +694,9 @@ public function multiQuery(string $query) : array {
  */
 private function _fetch(string $query, ?array $rbind = null, int $rcount = 0) : ?array {
 
-	$this->_connect();
+	if (!$this->connect()) {
+		return null;
+	}
 
 	// query = real_query + store_result
 	if (($dbres = $this->_db->query($query)) === false) {
@@ -784,16 +799,18 @@ public function selectRow($query, int $rnum = 0) : ?array {
 /**
  * Execute prepared statement. Return statement.
  */
-private function _exec_stmt(array $q) : object {
+private function _exec_stmt(array $q) : ?object {
 
-	$this->_connect();
+	if (!$this->connect()) {
+		return null;
+	}
 
 	$ql = count($q);
 	$replace = $q[$ql - 1];
 	$query = $q[$ql - 2];
 
 	if (!($stmt = $this->_db->prepare($query))) {
-		throw new Exception("Prepare query failed", $query."\n(".$this->_db->errno.') '.$this->_db->error."\n$query");
+		return $this->error('Prepared query failed', $query, 1);
 	}
 
 	$bind_arr = array('');
@@ -802,7 +819,7 @@ private function _exec_stmt(array $q) : object {
 		$key = $q[$i];
 
 		if (!isset($replace[$key]) && !array_key_exists($key, $replace)) {
-			throw new Exception("query replace key $key missing", "$query: ".print_r($replace, true));
+			return $this->error("query replace key $key missing", "$query: ".print_r($replace, true), 3);
 		}
 
 		$bind_arr[0] .= 's';
@@ -814,16 +831,16 @@ private function _exec_stmt(array $q) : object {
 	$method = $ref->getMethod('bind_param');
 
 	if ($method->invokeArgs($stmt, $bind_arr) === false) {
-		throw new Exception('query bind parameter failed', "$query\n(".$stmt->errno.') '.$stmt->error."\n".print_r($bind_arr, true));
+		return $this->error('query bind parameter failed', "$query\n(".$stmt->errno.') '.$stmt->error."\n".print_r($bind_arr, true), 3);
 	}
 
 	if (count($replace) > 0) {
-		throw new Exception('Too many replace parameter', print_r($replace, true)); 
+		return $this->error('Too many replace parameter', print_r($replace, true), 3); 
 	}
 
 	// prepared statement ...
 	if (!$stmt->execute()) {
-		throw new Exception('failed to execute sql statement');
+		return $this->error('failed to execute sql statement', '', 3);
 	}
 
 	return $stmt;
@@ -838,6 +855,10 @@ private function _exec_stmt(array $q) : object {
  * Return hash if $rcount < 0 (result[-1 * $rcount + 1]).
  */
 private function _fetch_stmt(object $stmt, ?array $rbind = null, int $rcount = 0) : ?array {
+
+	if (is_null($stmt)) {
+		return null;
+	}
 
 	if (!$stmt->store_result()) {
 		return $this->error('failed to store result', '', 3);
@@ -1078,7 +1099,7 @@ public function getTableDesc(string $table) : array {
 public function getInsertId() : int {
 	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1061> id=".$this->getId().", insert_id=".$this->_db->insert_id);
 	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) === 0) {
-		throw new Exception('no_id', $this->_db->insert_id);
+		return intval($this->error('no_id', $this->_db->insert_id, 2));
 	}
 
 	return $this->_db->insert_id;
