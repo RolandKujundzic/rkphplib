@@ -45,42 +45,45 @@ public function getId() : string {
 /**
  * Connect to sqlite3 database.
  */
-private function _connect() {
+public function connect() : bool {
 
 	if (is_object($this->_db)) {
-		return;
+		return true;
 	}
 
 	if (empty($this->_dsn)) {
-		throw new Exception('call setDSN first');
+		return $this->error('call setDSN first', '', 2);
 	}
 
 	$dsn = self::splitDSN($this->_dsn);
 
 	if ($dsn['type'] != 'sqlite') {
-		throw new Exception('invalid dsn type: '.$dsn['type']);
+		return $this->error('invalid dsn type: '.$dsn['type'], '', 2);
 	}
 
 	try {
 		$this->_db = new \SQLite3($dsn['file']);
 	}
 	catch (\Exception $e) {
-		throw new Exception('Failed to connect to SQLite3', $e->getMessage());
+		return $this->error('Failed to connect to SQLite3', $e->getMessage(), 2);
 	}
+
+	return true;
 }
 
 
 /**
  * Close connection.
  */
-public function close() {
+public function close() : bool {
 
 	if (!$this->_db) {
-		throw new Exception('no open database connection');
+		return $this->error('no open database connection', '', 2);
 	}
 
 	$this->_db->close();
 	$this->_db = null;
+	return true;
 }
 
 
@@ -636,7 +639,7 @@ public function releaseLock(string $name) : int {
 /**
  *
  */
-public function multiQuery(string $query) : array {
+public function multiQuery(string $query) : ?array {
   throw new Exception('@ToDo ... ');
 }
 
