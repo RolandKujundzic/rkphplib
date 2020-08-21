@@ -458,13 +458,18 @@ public function execute($query, bool $use_result = false) : bool {
 
 /**
  * Throw Exception if this.abort = true (default). Otherwise return false.
+ * flag: 1 = return null, 2 = don't add _db.errno and _db.error to $internal
  */
-private function error(string $msg, string $query) : bool {
+private function error(string $msg, string $internal, int $flag = 0) : ?bool {
 	if ($this->abort) {
-		throw new Exception($msg, $query."\n(".$this->_db->errno.') '.$this->_db->error);
+		if ($flag & 2 != 2) {
+			$internal .= "\n(".$this->_db->errno.') '.$this->_db->error;
+		}
+
+		throw new Exception($msg, $internal);
 	}
 
-	return false;
+	return $return_null ? null : false;
 }
 
 
@@ -542,7 +547,7 @@ public function getRowNumber() : int {
 /**
  *
  */
-public function selectColumn($query, $colname = 'col') : array {
+public function selectColumn($query, $colname = 'col') : ?array {
 	
 	if (is_array($query)) {
 		$res = $this->_fetch_stmt($this->_exec_stmt($query), array($colname)); 
@@ -558,7 +563,7 @@ public function selectColumn($query, $colname = 'col') : array {
 /**
  * 
  */
-public function selectHash($query, string $key_col = 'name', string $value_col = 'value', bool $ignore_double = false) : array {
+public function selectHash($query, string $key_col = 'name', string $value_col = 'value', bool $ignore_double = false) : ?array {
 
 	if ($value_col == '*') {
 		$this->execute($query, true);
@@ -566,7 +571,7 @@ public function selectHash($query, string $key_col = 'name', string $value_col =
 
 		while (($row = $this->getNextRow())) {
 			if (!isset($row[$key_col])) {
-				throw new Exception("no such column $key_col", $query);
+				return $this->error("no such column $key_col", $query, 1);
 			}
 
 			$id = $row[$key_col];
@@ -582,7 +587,7 @@ public function selectHash($query, string $key_col = 'name', string $value_col =
 					array_push($res[$id], $row);
 				}
 				else {
-					throw new Exception("$key_col = $id already exists", $query);
+					return $this->error("$key_col = $id already exists", $query, 1);
 				}
 			}
 			else {
@@ -599,7 +604,7 @@ public function selectHash($query, string $key_col = 'name', string $value_col =
 		}
 
 		if (!$ignore_double && isset($this->_cache['FETCH:DOUBLE'])) {
-			throw new Exception('Hashkeys are not unique', print_r($this->_cache['FETCH:DOUBLE'], true));
+			return $this->error('Hashkeys are not unique', print_r($this->_cache['FETCH:DOUBLE'], true), 3);
 		}
 	}
 
@@ -618,7 +623,7 @@ public function getDoubles() : array {
 /**
  *
  */
-public function select($query, int $res_count = 0) : array {
+public function select($query, int $res_count = 0) : ?array {
 
 	if (is_array($query)) {
 		$res = $this->_fetch_stmt($this->_exec_stmt($query), null, $res_count); 
@@ -674,13 +679,13 @@ public function multiQuery(string $query) : array {
  * Return hash if count($rbind) = 2. Return array if count($rbind) = 1.
  * Return hash if $rcount < 0 (result[-1 * $rcount + 1]).
  */
-private function _fetch(string $query, ?array $rbind = null, int $rcount = 0) : array {
+private function _fetch(string $query, ?array $rbind = null, int $rcount = 0) : ?array {
 
 	$this->_connect();
 
 	// query = real_query + store_result
 	if (($dbres = $this->_db->query($query)) === false) {
-		throw new Exception('failed to execute sql query', $query."\n(".$this->_db->errno.') '.$this->_db->error);
+		return $this->error('failed to execute sql query', $query, 1);
 	}
 
 	$rnum = $dbres->num_rows;
@@ -688,19 +693,19 @@ private function _fetch(string $query, ?array $rbind = null, int $rcount = 0) : 
 
 	if ($rcount > 0 && $rnum != $rcount) {
 		if ($rnum == 0) {
-			throw new Exception('no result', "$rcount rows expected - query=$query");
+			return $this->error('no result', "$rcount rows expected - query=$query", 3);
 		}
 		else {
-			throw new Exception('unexpected number of rows', "$rnum != $rcount query=$query");
+			return $this->error('unexpected number of rows', "$rnum != $rcount query=$query", 3);
 		}
 	}
 
 	if ($rcount < 0 && -1 * $rcount > $rnum) {
-		throw new Exception('number of rows too low', "$rnum < -1 * $rcount query=$query");
+		return $this->error('number of rows too low', "$rnum < -1 * $rcount query=$query", 3);
 	}
 
 	if ($rnum > 50000) {
-		throw new Exception('number of rows too high', "$rnum query=$query");
+		return $this->error('number of rows too high', "$rnum query=$query", 3);
 	}
 
 	if ($rnum === 0) {
@@ -725,7 +730,7 @@ private function _fetch(string $query, ?array $rbind = null, int $rcount = 0) : 
 		$dbrow = $dbres->fetch_assoc();
 
 		if (!empty($rbind[0]) && !isset($dbrow[$rbind[0]]) && !array_key_exists($rbind[0], $dbrow)) {
-			throw new Exception('no such column ['.$rbind[0].']', $rbind[0]);
+			return $this->error('no such column ['.$rbind[0].']', $rbind[0], 3);
 		}
 
 		if ($bl === 1) {
@@ -762,8 +767,7 @@ private function _fetch(string $query, ?array $rbind = null, int $rcount = 0) : 
 /**
  * 
  */
-public function selectRow($query, int $rnum = 0) : array {
-
+public function selectRow($query, int $rnum = 0) : ?array {
 	$rnum = -1 * $rnum - 1;
 
 	if (is_array($query)) {
@@ -833,10 +837,10 @@ private function _exec_stmt(array $q) : object {
  * Return hash if count($rbind) = 2. Return array if count($rbind) = 1.
  * Return hash if $rcount < 0 (result[-1 * $rcount + 1]).
  */
-private function _fetch_stmt(object $stmt, ?array $rbind = null, int $rcount = 0) : array {
+private function _fetch_stmt(object $stmt, ?array $rbind = null, int $rcount = 0) : ?array {
 
 	if (!$stmt->store_result()) {
-		throw new Exception('failed to store result');
+		return $this->error('failed to store result', '', 3);
 	}
 
 	$rnum = $stmt->num_rows;
@@ -844,19 +848,19 @@ private function _fetch_stmt(object $stmt, ?array $rbind = null, int $rcount = 0
 
 	if ($rcount > 0 && $rnum != $rcount) {
 		if ($rnum == 0) {
-			throw new Exception('no result', $rcount.' rows expected');
+			return $this->error('no result', $rcount.' rows expected', 3);
 		}
 		else {
-			throw new Exception('unexpected number of rows', $rnum.' != '.$rcount);
+			return $this->error('unexpected number of rows', $rnum.' != '.$rcount, 3);
 		}
 	}
 
 	if ($rcount < 0 && -1 * $rcount > $rnum) {
-		throw new Exception('number of rows too low', $rnum.' < '.(-1 * $rcount));
+		return $this->error('number of rows too low', $rnum.' < '.(-1 * $rcount), 3);
 	}
 
 	if ($rnum > 50000) {
-		throw new Exception('number of rows too high', $rnum);
+		return $this->error('number of rows too high', $rnum, 3);
 	}
 
 	if ($rnum === 0) {
@@ -888,7 +892,7 @@ private function _fetch_stmt(object $stmt, ?array $rbind = null, int $rcount = 0
 	}
 
 	if (call_user_func_array(array($stmt, 'bind_result'), $db_refs) === false) {
-		throw new Exception('failed to bind result');
+		return $this->error('failed to bind result', '', 3);
 	}
 
 	$bl = count($rbind);
