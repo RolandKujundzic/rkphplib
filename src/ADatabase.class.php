@@ -1206,7 +1206,7 @@ abstract public function getRowNumber() : int;
 /**
  * Return column values as vector.
  */
-abstract public function selectColumn($query, string $colname = 'col') : array;
+abstract public function selectColumn($query, string $colname = 'col') : ?array;
 
 
 /**
@@ -1233,20 +1233,20 @@ abstract public function getReferences(string $table, string $column = 'id') : a
  * then doublette is ($id, [ $row[N1], .... ])).
 */
 abstract public function selectHash(string $query, string $key_col = 'name', 
-	string $value_col = 'value', bool $ignore_double = false) : array;
+	string $value_col = 'value', bool $ignore_double = false) : ?array;
 
 
 /**
  * Return query result row $rnum.
  */
-abstract public function selectRow($query, int $rnum = 0) : array;
+abstract public function selectRow($query, int $rnum = 0) : ?array;
 
 
 /**
  * Return query result table. If res_count > 0 and result is empty throw "no result" error message.
- * If $res_count > 0 throw error if column count doesn't match.
+ * If $res_count > 0 throw error if column count doesn't match (if this.abort == false return []).
  */
-abstract public function select($query, int $res_count = 0) : array;
+abstract public function select($query, int $res_count = 0) : ?array;
 
 
 /**
@@ -1274,17 +1274,29 @@ public function seek(int $offset) : void {
 
 
 /**
- * Return hash (single row) or string (hash[$col]). Throw exception if result has more than one row. 
- * Use column alias "split_cs_list" to split comma separated value (if query was 
- * "SELECT GROUP_CONCAT(name) AS split_cs_list ...").
+ * Return hash (single row), string (hash[$col]) or null. 
+ * Throw exception if result has more than one row. 
+ * Use column alias "split_cs_list" to split comma separated 
+ * value (if query was "SELECT GROUP_CONCAT(name) AS split_cs_list ...").
+ *
+ * @return hash|string|null
  */
 public function selectOne($query, string $col = '') {
 	$dbres = $this->select($query, 1);
 
+	if (is_null($dbres)) {
+		return null;
+	}
+
 	if (empty($col)) {
 		if (count($dbres[0]) === 1 && !empty($dbres[0]['split_cs_list'])) {
 			if (mb_strlen($dbres[0]['split_cs_list']) === 1024 && mb_stripos($query, 'group_concat') > 0) {
-				throw new Exception('increase group_concat_max_len');
+				if ($this->abort) {
+					throw new Exception('increase group_concat_max_len');
+				}
+				else {
+					return null;
+				}
 			}
 
 			$res = split_str(',', $dbres[0]['split_cs_list']);
