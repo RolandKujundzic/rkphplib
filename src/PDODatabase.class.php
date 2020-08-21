@@ -90,7 +90,7 @@ public function getRowNumber() : int {
 /**
  *
  */
-public function selectColumn($query, string $colname = 'col') : array {
+public function selectColumn($query, string $colname = 'col') : ?array {
 	throw new Exception('ToDo');
 }
 
@@ -98,7 +98,7 @@ public function selectColumn($query, string $colname = 'col') : array {
 /**
  *
  */
-public function selectHash(string $query, string $key_col = 'name', string $value_col = 'value', bool $ignore_double = false) : array {
+public function selectHash(string $query, string $key_col = 'name', string $value_col = 'value', bool $ignore_double = false) : ?array {
 	throw new Exception('ToDo');
 }
 
@@ -106,7 +106,7 @@ public function selectHash(string $query, string $key_col = 'name', string $valu
 /**
  *
  */
-public function select($query, int $res_count = 0) : array {
+public function select($query, int $res_count = 0) : ?array {
 	throw new Exception('ToDo');
 }
 
@@ -114,7 +114,7 @@ public function select($query, int $res_count = 0) : array {
 /**
  *
  */
-public function selectRow($query, int $rnum = 0) : array {
+public function selectRow($query, int $rnum = 0) : ?array {
 	throw new Exception('ToDo');
 }
 
