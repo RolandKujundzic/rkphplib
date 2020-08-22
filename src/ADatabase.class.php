@@ -66,7 +66,7 @@ public static $time_zone = '';
 // @var string $charset (default = empty = use db default, Example: 'utf8', 'utf8mb4')
 public static $charset = '';
 
-// @var bool $abort = true
+// @var bool abort (default = true)
 public $abort = true;
 
 // @var string $_dsn 
@@ -637,7 +637,7 @@ abstract public function getTableList(bool $reload_cache = false) : array;
 
 
 /**
- * Return last error message. Result is null or [custom_error, native_error, native_error_code ].
+ * Return last error message. Result is null or [custom_error, native_error, native_error_code, internal message ].
  */
 abstract public function getError() : ?array;
 
@@ -821,7 +821,7 @@ abstract public function getInsertId() : int;
 /**
  * Create database and account (drop if exists).
  */
-abstract public function createDatabase(string $dsn = '', string $opt = 'utf8') : void;
+abstract public function createDatabase(string $dsn = '', string $opt = 'utf8') : bool;
 
 
 /**

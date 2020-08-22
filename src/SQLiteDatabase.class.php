@@ -13,7 +13,10 @@ require_once __DIR__.'/ADatabase.class.php';
  */
 class SQLiteDatabase extends ADatabase {
 
+//
 private $_db = null;
+
+//
 private $_seek = -1;
 
 
@@ -527,7 +530,7 @@ public function getAffectedRows() : int {
 /**
  *
  */
-public function createDatabase(string $dsn = '', string $opt = 'utf8') : void {
+public function createDatabase(string $dsn = '', string $opt = 'utf8') : bool {
 	throw new Exception('ToDo ...');
 }
 

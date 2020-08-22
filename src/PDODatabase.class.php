@@ -186,7 +186,7 @@ public function getAffectedRows() : int {
 /**
  *
  */
-public function createDatabase(string $dsn = '', string $opt = 'utf8') : void {
+public function createDatabase(string $dsn = '', string $opt = 'utf8') : bool {
 	throw new Exception('ToDo ...');
 }
 

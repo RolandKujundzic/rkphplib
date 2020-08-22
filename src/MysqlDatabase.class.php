@@ -20,7 +20,7 @@ private $_conn_ttl = 0;
 private $_seek = -1;
 private $_cache = array();
 private $_dbres = null;
-
+private $_abort_error = null;
 
 
 /**
@@ -225,22 +225,30 @@ public function close() : bool {
 /**
  * 
  */
-public function createDatabase(string $dsn = '', string $opt = 'utf8') : void {
+public function createDatabase(string $dsn = '', string $opt = 'utf8') : bool {
 	$db = empty($dsn) ? self::splitDSN($this->_dsn) : self::splitDSN($dsn);
 	$name = self::escape_name($db['name']);
 	$login = self::escape_name($db['login']);
 	$pass = self::escape_name($db['password']);
 	$host = self::escape_name($db['host']);
 
-	$this->dropDatabase($dsn);
+	if (!$this->dropDatabase($dsn)) {
+		return false;
+	}
 
 	if ($opt === 'utf8') {
 		$opt = " CHARACTER SET='utf8mb4' COLLATE='utf8mb4_unicode_ci'";
 	}
 
-	$this->execute("CREATE DATABASE ".$name.$opt);
-	$this->execute("GRANT ALL PRIVILEGES ON $name.* TO '$login'@'$host' IDENTIFIED BY '$pass'");
-	$this->execute("FLUSH PRIVILEGES");
+	if (!$this->execute("CREATE DATABASE ".$name.$opt)) {
+		return false;
+	}
+
+	if (!$this->execute("GRANT ALL PRIVILEGES ON $name.* TO '$login'@'$host' IDENTIFIED BY '$pass'")) {
+		return false;
+	}
+
+	return $this->execute("FLUSH PRIVILEGES");
 }
 
 
@@ -473,13 +481,19 @@ public function execute($query, bool $use_result = false) : bool {
  * Throw Exception if this.abort = true (default). Otherwise return false.
  * flag: 1 = return null, 2 = don't add _db.errno and _db.error to $internal
  */
-private function error(string $msg, string $internal, int $flag = 0) : ?bool {
+private function error(string $msg, string $internal = '', int $flag = 0) : ?bool {
 	if ($this->abort) {
 		if (2 != $flag & 2) {
 			$internal .= "\n(".$this->_db->errno.') '.$this->_db->error;
 		}
 
 		throw new Exception($msg, $internal);
+	}
+
+	$this->_abort_error = [ $msg, null, null, $internal ];
+	if (2 != $flag & 2) {
+		$this->_abort_error[1] = $this->_db->error;
+		$this->_abort_error[2] = $this->_db->errno;
 	}
 
 	return ($flag & 1) ? null : false;
@@ -1057,14 +1071,18 @@ public function getAffectedRows() : int {
 public function getError() : ?array {
 
 	if (!$this->_db->errno) {
-		return null;
+		return $this->_abort_error;
+	}
+
+	if (!is_null($this->_abort_error) && $this->_abort_error[2] == $this->_db->errno) {
+		return $this->_abort_error;
 	}
 
 	$map = [ 1146 => 'no_such_table' ];
 
 	$error = isset($map[$this->_db->errno]) ? $map[$this->_db->errno] : '';
 
-	return  [ $error, $this->_db->error, $this->_db->errno ];
+	return  [ $error, $this->_db->error, $this->_db->errno, null ];
 }
 
 
