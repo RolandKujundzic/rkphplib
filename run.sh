@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2016 - 2020 Roland Kujundzic <roland@kujundzic.de>
 #
-# shellcheck disable=SC1091,SC1001,SC2006,SC2009,SC2012,SC2016,SC2024,SC2028,SC2034,SC2046,SC2048,SC2068,SC2086,SC2119,SC2120,SC2153,SC2183,SC2206
+# shellcheck disable=SC1091,SC1001,SC2006,SC2009,SC2012,SC2016,SC2024,SC2028,SC2034,SC2044,SC2046,SC2048,SC2068,SC2086,SC2119,SC2120,SC2153,SC2183,SC2206
 #
 
 
@@ -1697,6 +1697,37 @@ function build {
 
 
 #--
+# Execute mb_check|v5|v7|server
+# @param action
+# shellcheck disable=SC2044,SC2034
+#--
+function do_php {
+	local a
+
+	APP_DESC="mb_check: show missing mb_*
+v5: update php 5.6 version in v5.6
+server: start buildin php server
+syntax: check php syntax in src/"
+
+	test -z "$1" && _syntax 'php mb_check|v5|server|syntax'
+
+	case $1 in
+		mb_check)
+			_mb_check;;
+		v5)
+			build_php5;;
+		server)
+			_php_server;;
+		syntax)
+			for a in $(find src -name '*.php'); do
+				php -l "$a" >/dev/null
+			done
+			;;
+	esac
+}
+
+
+#--
 # Run docker-machine start default#
 # shellcheck disable=SC2016
 #--
@@ -1812,17 +1843,13 @@ case ${ARG[1]} in
 		docs;;
 	docker_osx)
 		docker_osx;;
-	mb_check)
-		_mb_check;;
-	php5)
-		build_php5;;
-	php_server)
-		_php_server;;
+	php)
+		do_php "${ARG[2]}";;
 	test)
 		php test/run.php;;
 	ubuntu)
 		ubuntu;;
 	*)
-		_syntax "build|composer|docs|docker_osx|mb_check|php5|php_server|test|ubuntu"
+		_syntax "build|composer|docs|docker_osx|php|test|ubuntu"
 esac
 

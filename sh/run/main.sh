@@ -24,17 +24,13 @@ case ${ARG[1]} in
 		docs;;
 	docker_osx)
 		docker_osx;;
-	mb_check)
-		_mb_check;;
-	php5)
-		build_php5;;
-	php_server)
-		_php_server;;
+	php)
+		do_php "${ARG[2]}";;
 	test)
 		php test/run.php;;
 	ubuntu)
 		ubuntu;;
 	*)
-		_syntax "build|composer|docs|docker_osx|mb_check|php5|php_server|test|ubuntu"
+		_syntax "build|composer|docs|docker_osx|php|test|ubuntu"
 esac
 
