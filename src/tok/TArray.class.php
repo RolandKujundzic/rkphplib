@@ -89,7 +89,7 @@ private function &getArray(string $name = '', string $type = '') : array {
 		$type = 'hash';
 	}
 
-	// \rkphplib\lib\log_debug("TArray.&getArray:92> TArray.&getArray:92> TArray.&getArray:92> TArray.&getArray:92> TArray.&getArray:92> name=[$name] type=[$type] env.name=[".$this->env['name']."]");
+	// \rkphplib\lib\log_debug("TArray.&getArray:92> TArray.&getArray:92> TArray.&getArray:92> TArray.&getArray:92> TArray.&getArray:92> TArray.&getArray:92> TArray.&getArray:92> name=[$name] type=[$type] env.name=[".$this->env['name']."]");
 	if ($this->env['name'] != $name || !array_key_exists($name, $this->array)) {
 		$prefix = $this->env['isHash'] ? '#' : '';
 		throw new Exception("no such array '$prefix$name' - call [array:$prefix$name] or [array:]$prefix$name".'[:array] first');
