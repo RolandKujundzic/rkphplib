@@ -15,7 +15,7 @@ use rkphplib\Exception;
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @phpVersionLt 7.0 class DatabaseSession implements SessionHandlerInterface {
  */
-class DatabaseSessionHandler implements SessionHandlerInterface, SessionUpdateTimestampHandlerInterface {
+class DatabaseSessionHandler implements \SessionHandlerInterface, \SessionUpdateTimestampHandlerInterface {
 
 // @param ADatabase $db = null
 private $db = null;
@@ -28,7 +28,7 @@ private $ttl = 3600;
  * Initialize database and call session_set_save_handler($this, true) and session_start().
  */
 public function __construct() {
-	// \rkphplib\lib\log_debug('create database');
+	// \rkphplib\lib\log_debug('DatabaseSessionHandler.__construct:31> create database');
 	$query_map = [
 		'select' => "SELECT data FROM cms_session WHERE id={:=id} AND until > NOW()",
 		'insert' => "INSERT INTO cms_session (id, until, data) VALUES ({:=id}, {:=until}, {:=data})",
@@ -49,7 +49,7 @@ public function __construct() {
 
 	$this->db->abort = false;
 
-	// \rkphplib\lib\log_debug('start session');
+	// \rkphplib\lib\log_debug('DatabaseSessionHandler.__construct:52> start session');
 	session_set_save_handler($this, true);
 	if (session_start()) {
 		throw new Exception('session_start() failed');
@@ -86,8 +86,8 @@ public function has(string $key) : bool {
 /**
  * Session callback.
  */
-public function close() : bool {
-	// \rkphplib\lib\log_debug('close()');	
+public function close() {
+	// \rkphplib\lib\log_debug('DatabaseSessionHandler.close:90> close()');	
 	return $this->db->close();
 }
 
@@ -95,8 +95,8 @@ public function close() : bool {
 /**
  * Session callback.
  */
-public function destroy(string $sessionId) : bool {
-	// \rkphplib\lib\log_debug("destroy($sessionId)");	
+public function destroy($sessionId) {
+	// \rkphplib\lib\log_debug("DatabaseSessionHandler.destroy:99> destroy($sessionId)");	
 	return $this->db->execute($this->db->getQuery('delete', [ 'id' => $sessionId ]));
 }
 
@@ -104,8 +104,8 @@ public function destroy(string $sessionId) : bool {
 /**
  * Session callback.
  */
-public function gc(int $maxLifetime) : bool {
-	// \rkphplib\lib\log_debug("gc($maxLifetime)");	
+public function gc($maxLifetime) {
+	// \rkphplib\lib\log_debug("DatabaseSessionHandler.gc:108> gc($maxLifetime)");	
 	return $this->db->execute($this->db->getQuery('garbage_collect', [ 'until' => date('Y-m-d H:i:s', time() - $maxLifetime) ]));
 }
 
@@ -113,8 +113,8 @@ public function gc(int $maxLifetime) : bool {
 /**
  * Session callback.
  */
-public function open(string $sessionSavePath, string $sessionName) : bool {
-	// \rkphplib\lib\log_debug("open($sessionSavePath, $sessionName)");	
+public function open($sessionSavePath, $sessionName) {
+	// \rkphplib\lib\log_debug("DatabaseSessionHandler.open:117> open($sessionSavePath, $sessionName)");	
 	return $this->db->connect();
 }
 
@@ -122,8 +122,8 @@ public function open(string $sessionSavePath, string $sessionName) : bool {
 /**
  * Session callback.
  */
-public function read(string $sessionId) : string {
-	// \rkphplib\lib\log_debug("read($sessionId)");	
+public function read($sessionId) {
+	// \rkphplib\lib\log_debug("DatabaseSessionHandler.read:126> read($sessionId)");	
 	$dbres = $this->db->selectOne($this->db->getQuery('select', [ 'id' => $sessionId ]));
 	return is_null($dbres) ? '' : $dbres[0]['data'];
 }
@@ -132,8 +132,8 @@ public function read(string $sessionId) : string {
 /**
  * Session callback.
  */
-public function write(string $sessionId, string $sessionData) : bool {
-	// \rkphplib\lib\log_debug("write($sessionId, ".substr($sessionData, 0, 40)."…)");
+public function write($sessionId, $sessionData) {
+	// \rkphplib\lib\log_debug("DatabaseSessionHandler.write:136> write($sessionId, ".substr($sessionData, 0, 40)."…)");
 	$until = date('Y-m-d H:i:s', time() + $this->ttl);
 	return $this->db->execute($this->db->getQuery('update', [ 'id' => $sessionId, 'data' => $sessionData, 'until' => $until ]));
 }
@@ -142,7 +142,7 @@ public function write(string $sessionId, string $sessionData) : bool {
 /**
  * Session callback.
  */
-public function create_sid() : string {
+public function create_sid() {
   $id = '';
 
   for ($i = 0; $i < 4; $i++) {
@@ -150,7 +150,7 @@ public function create_sid() : string {
     $id .= \rkphplib\lib\dec2n(mt_rand(4096, 65535), 16);
   }
 
-	// \rkphplib\lib\log_debug("create_sid() = $id");	
+	// \rkphplib\lib\log_debug("DatabaseSessionHandler.create_sid:153> create_sid() = $id");	
   return $id;
 }
 
@@ -159,8 +159,8 @@ public function create_sid() : string {
  * Session callback.
  * @phpVersionLt 7.0 skip
  */
-public function validateId(string $sessionId) : bool {
-	// \rkphplib\lib\log_debug("validateId($sessionId)");	
+public function validateId($sessionId) {
+	// \rkphplib\lib\log_debug("DatabaseSessionHandler.validateId:163> validateId($sessionId)");	
 	$dbres = $this->db->selectOne($this->db->getQuery('select', [ 'id' => $sessionId ]));
 	return !is_null($dbres);
 }
@@ -170,8 +170,8 @@ public function validateId(string $sessionId) : bool {
  * Session callback.
  * @phpVersionLt 7.0 skip 
  */
-public function updateTimestamp(string $sessionId, string $sessionData) : bool {
-	// \rkphplib\lib\log_debug("updateTimestamp($sessionId, ".substr($sessionData, 0, 40)."…)");	
+public function updateTimestamp($sessionId, $sessionData) {
+	// \rkphplib\lib\log_debug("DatabaseSessionHandler.updateTimestamp:174> updateTimestamp($sessionId, ".substr($sessionData, 0, 40)."…)");	
 	$until = date('Y-m-d H:i:s', time() + $this->ttl);
 	return $this->db->execute($this->db->getQuery('update', [ 'id' => $sessionId, 'data' => $sessionData, 'until' => $until ]));
 }

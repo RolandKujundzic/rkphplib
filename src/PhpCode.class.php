@@ -169,7 +169,7 @@ public function nextLine() : bool {
 		$res = true;
 	}
 
-	\rkphplib\lib\log_debug("nextLine: found=$res lpos=".$this->lpos);
+	// \rkphplib\lib\log_debug("PhpCode.nextLine:172> nextLine: found=$res lpos=".$this->lpos);
 	return $res;
 }
 
@@ -185,7 +185,7 @@ public function getNamespace(int $flag = 0) : ?string {
 		}
 	}
 	else if ($this->namespace) {
-		\rkphplib\lib\log_debug("flag=$flag, return namespace=".$this->namespace);
+		// \rkphplib\lib\log_debug("PhpCode.getNamespace:188> flag=$flag, return namespace=".$this->namespace);
 		return $this->namespace;
 	}
 
@@ -202,7 +202,7 @@ public function getNamespace(int $flag = 0) : ?string {
 		if ($this->lpos > 0 && ($flag & 2) != 2) {
 			// try again from start
 			$this->lpos = 0;
-			\rkphplib\lib\log_debug("set lpos=0, retry");
+			// \rkphplib\lib\log_debug("PhpCode.getNamespace:205> set lpos=0, retry");
 			return $this->getNamespace($flag);
 		}
 
@@ -215,7 +215,7 @@ public function getNamespace(int $flag = 0) : ?string {
 		$this->namespaces[$this->namespace] = $this->lpos; 
 	}
 
-	\rkphplib\lib\log_debug("i=$i lpos=".$this->lpos.", return namespace=".$this->namespace);
+	// \rkphplib\lib\log_debug("PhpCode.getNamespace:218> i=$i lpos=".$this->lpos.", return namespace=".$this->namespace);
 	return $this->namespace;
 }
 

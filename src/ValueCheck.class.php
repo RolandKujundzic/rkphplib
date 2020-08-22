@@ -37,7 +37,7 @@ public static function REQUEST(array $param_check) : void {
  * doesn't exist assume isMatch and self::method = name of regular expression (see isMatch).
  */
 public static function run(string $key, $value, string $check) : bool {
-	// \rkphplib\lib\log_debug("ValueCheck::run:28> key=$key value=$value check=$check");
+	// \rkphplib\lib\log_debug("ValueCheck::run:40> key=$key value=$value check=$check");
 	$condition = '';
 
 	if (($start = mb_strpos($key, '[')) > 0 && ($end = mb_strrpos($key, ']')) > $start + 1) {
@@ -54,7 +54,7 @@ public static function run(string $key, $value, string $check) : bool {
 				return self::run($key, $value, $check);
 			}
 			else {
-				// \rkphplib\lib\log_debug("ValueCheck::run:45> return true");
+				// \rkphplib\lib\log_debug("ValueCheck::run:57> return true");
 				return true;
 			}
 		}
@@ -70,7 +70,7 @@ public static function run(string $key, $value, string $check) : bool {
 	}
 
 	if (strlen($value) == 0) {
-		// \rkphplib\lib\log_debug("ValueCheck::run:61> empty value - return true");
+		// \rkphplib\lib\log_debug("ValueCheck::run:73> empty value - return true");
 		return true;
 	}
 
@@ -93,7 +93,7 @@ public static function run(string $key, $value, string $check) : bool {
 	$pn = count($check);
 	$res = false;
 
-	// \rkphplib\lib\log_debug("ValueCheck::run:84> method=[$method] pn=[$pn] check: ".print_r($check, true));
+	// \rkphplib\lib\log_debug("ValueCheck::run:96> method=[$method] pn=[$pn] check: ".print_r($check, true));
 	if ($pn > 3) {
 		$res = self::$method($value, $check);
 	}
@@ -110,7 +110,7 @@ public static function run(string $key, $value, string $check) : bool {
 		$res = self::$method($value);
 	}
 
-	// \rkphplib\lib\log_debug("ValueCheck::run:101> check=[".join(':', $check)."] method=[$method] res=[$res]");
+	// \rkphplib\lib\log_debug("ValueCheck::run:113> check=[".join(':', $check)."] method=[$method] res=[$res]");
 	return $res;
 }
 
@@ -167,7 +167,7 @@ public static function sqlQuery(string $ignore, string $colnames, string $query)
 		}
   }
 
-  // \rkphplib\lib\log_debug("ValueCheck::sqlQuery:158> ignore=[$ignore] colnames=[$colnames] query: $query");
+  // \rkphplib\lib\log_debug("ValueCheck::sqlQuery:170> ignore=[$ignore] colnames=[$colnames] query: $query");
   $dbres = $db->select($query);
   return count($dbres) > 0;
 }
@@ -304,10 +304,10 @@ public static function isUnique(string $value, array $p) : bool {
 
 	$db = \rkphplib\Database::getInstance('', [ 'select_unique' => $query ]);
 	$query = $db->getQuery('select_unique', [ 'id_val' => $id_val, 'u_val' => $p[2] ]);
-	// \rkphplib\lib\log_debug("ValueCheck::isUnique:295> value=[$value] p=".print_r($p, true)."\n$query");
+	// \rkphplib\lib\log_debug("ValueCheck::isUnique:307> value=[$value] p=".print_r($p, true)."\n$query");
 	$dbres = $db->select($query);
 	$anz = intval($dbres[0]['anz']);
-	// \rkphplib\lib\log_debug("ValueCheck::isUnique:298> anz=$anz");
+	// \rkphplib\lib\log_debug("ValueCheck::isUnique:310> anz=$anz");
 	return (!empty($p[3]) && $p[3] == '1') ? $anz == 1 : $anz == 0;
 }
 
@@ -317,7 +317,7 @@ public static function isUnique(string $value, array $p) : bool {
  * Slash at start and end of regular expression are optional.
  */
 public static function isMatch(string $value, string $rx) : bool {
-	// \rkphplib\lib\log_debug("ValueCheck::isMatch:308> value=[$value] rx=[$rx]");
+	// \rkphplib\lib\log_debug("ValueCheck::isMatch:320> value=[$value] rx=[$rx]");
 	if (empty($rx)) {
 		throw new Exception('empty regular expression', "value=[$value]");
 	}
@@ -330,7 +330,7 @@ public static function isMatch(string $value, string $rx) : bool {
 	}
 
   $res = preg_match($rx, $value);
-	// \rkphplib\lib\log_debug("ValueCheck::isMatch:321> value=[$value], rx=[$rx] return res=[".intval($res)."]");
+	// \rkphplib\lib\log_debug("ValueCheck::isMatch:333> value=[$value], rx=[$rx] return res=[".intval($res)."]");
   return $res;
 }
 

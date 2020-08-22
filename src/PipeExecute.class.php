@@ -64,7 +64,7 @@ public function __construct(string $command, array $parameter = []) {
 		stream_set_blocking($this->pipe[$i], false);
 	}
 
-	\rkphplib\lib\log_debug("PipeExecute.__construct:66> $command");
+	// \rkphplib\lib\log_debug("PipeExecute.__construct:67> $command");
 	$this->command = $command;
 }
 
@@ -74,7 +74,7 @@ public function __construct(string $command, array $parameter = []) {
  */
 private function readStream(int $num = 1) : ?string {
 	$res = stream_get_contents($this->pipe[$num]);
-	\rkphplib\lib\log_debug("PipeExecute.readStream:77> num=$num res=[$res]");
+	// \rkphplib\lib\log_debug("PipeExecute.readStream:77> num=$num res=[$res]");
 	return $res;
 }
 
@@ -83,7 +83,7 @@ private function readStream(int $num = 1) : ?string {
  * Write to pipe. Close is necessary.
  */
 public function write(string $txt) : void {
-	\rkphplib\lib\log_debug("PipeExecute.write:86> $txt");
+	// \rkphplib\lib\log_debug("PipeExecute.write:86> $txt");
 	if (fwrite($this->pipe[0], $txt) === false) {
 		$log_txt = (strlen($txt) > 180) ? substr($txt, 0, 20).' ... '.substr($txt, -20) : $txt;
 		throw new Exception('write failed', "cmd=[".$this->command."] txt=[$log_txt]");
@@ -96,7 +96,7 @@ public function write(string $txt) : void {
  */
 public function load(string $file) : void {
 	$fh = File::open($file, 'rb');
-	// \rkphplib\lib\log_debug("PipeExecute.load:96> open file=[$file] fh=[$fh]\n");
+	// \rkphplib\lib\log_debug("PipeExecute.load:99> open file=[$file] fh=[$fh]\n");
 	while (!feof($fh)) { 
 		if (($buffer = fread($fh, 4096)) === false) {
 			throw new Exception('fread file failed', "file=$file buffer=$buffer");
@@ -132,7 +132,7 @@ public function close(bool $abort = false) : array {
 	}
 
 	$retval = proc_close($this->process);
-	// \rkphplib\lib\log_debug("PipeExecute.close:132> retval=[$retval] output=[$output] error=[$error]");
+	// \rkphplib\lib\log_debug("PipeExecute.close:135> retval=[$retval] output=[$output] error=[$error]");
 
 	if ($retval === -1) {
 		if ($abort) {

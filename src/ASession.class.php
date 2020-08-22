@@ -129,7 +129,7 @@ public function getConf(string $key) {
  * Check inactive and ttl with hasExpired().
  */
 protected function setConf(array $conf) : void {
-	// \rkphplib\lib\log_debug('ASession.setConf:130> enter - conf: '.print_r($conf, true));
+	// \rkphplib\lib\log_debug('ASession.setConf:132> enter - conf: '.print_r($conf, true));
 
 	$default = [
 		'handler' => 'files', 
@@ -189,7 +189,7 @@ protected function setConf(array $conf) : void {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('ASession.setConf:180> exit - this.conf: '.print_r($this->conf, true));
+	// \rkphplib\lib\log_debug('ASession.setConf:192> exit - this.conf: '.print_r($this->conf, true));
 }
 
 
@@ -259,7 +259,7 @@ public function redirectForbidden() : void {
  * If conf.redirect_login is set redirect otherwise throw exception.
  */
 public function redirectLogin(string $reason, array $p = []) : void {
-	// \rkphplib\lib\log_debug('ASession.redirectLogin:250> reason='.$reason.' - conf: '.print_r($this->conf, true)."\np: ".print_r($p, true));
+	// \rkphplib\lib\log_debug('ASession.redirectLogin:262> reason='.$reason.' - conf: '.print_r($this->conf, true)."\np: ".print_r($p, true));
 	$this->destroy();
 
 	if (!empty($this->conf['redirect_login'])) {

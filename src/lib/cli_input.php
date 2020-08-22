@@ -112,7 +112,7 @@ function cli_input() : ?array {
 		}
 	}
  
-	\rkphplib\lib\log_debug("cli_input:115> _SERVER[argv]: ".print_r($_SERVER['argv'], true)."\nresult: ".print_r($res, true));
+	// \rkphplib\lib\log_debug("cli_input:115> _SERVER[argv]: ".print_r($_SERVER['argv'], true)."\nresult: ".print_r($res, true));
 	return $res;
 }
 
@@ -152,7 +152,7 @@ function cli_http_input() : void {
 
 		if (substr($key, 0, 4) == 'req:') {
 			$key = substr($key, 4);
-			\rkphplib\lib\log_debug("cli_http_input:155> set _REQUEST[$key]=[$value_str]");
+			// \rkphplib\lib\log_debug("cli_http_input:155> set _REQUEST[$key]=[$value_str]");
 			$_REQUEST[$key] = $value;
 		}
 		else {
@@ -167,7 +167,7 @@ function cli_http_input() : void {
 			}
 
 			if (!isset($_SERVER[$key])) {
-				\rkphplib\lib\log_debug("cli_http_input:170> set _SERVER[$key]=[$value_str]");
+				// \rkphplib\lib\log_debug("cli_http_input:170> set _SERVER[$key]=[$value_str]");
 				$_SERVER[$key] = $value;
 			}
 		}

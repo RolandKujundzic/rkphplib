@@ -120,7 +120,7 @@ public function nextLine() : ?string {
 		$res = $this->lines[$this->lpos];
 	}
 
-	// \rkphplib\lib\log_debug("nextLine: lpos=".$this->lpos." found: ".$res);
+	// \rkphplib\lib\log_debug("ShellCode.nextLine:123> nextLine: lpos=".$this->lpos." found: ".$res);
 	return $res;
 }
 
