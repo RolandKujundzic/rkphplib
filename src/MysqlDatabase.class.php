@@ -960,10 +960,13 @@ public function esc(string $txt) : string {
 /**
  * 
  */
-public function getDatabaseList(bool $reload_cache = false) : array {
+public function getDatabaseList(bool $reload_cache = false) : ?array {
 
 	if ($reload_cache || !isset($this->_cache['DATABASE_LIST:']) || count($this->_cache['DATABASE_LIST:']) === 0) {
-		$dbres = $this->select('SHOW DATABASES');
+		if (($dbres = $this->select('SHOW DATABASES'))) { 
+			return null;
+		}
+
 		$this->_cache['DATABASE_LIST:'] = [ ];
 
 		for ($i = 0; $i < count($dbres); $i++) {

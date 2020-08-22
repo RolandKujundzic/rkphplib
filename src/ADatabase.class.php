@@ -627,7 +627,7 @@ abstract public function hasResultSet() : bool;
 /**
  * Return database name vector.
  */
-abstract public function getDatabaseList(bool $reload_cache = false) : array;
+abstract public function getDatabaseList(bool $reload_cache = false) : ?array;
 
 
 /**
@@ -791,7 +791,10 @@ public function nextIdAlias(string $rid, string $use_table = 'rid_alias') : int 
  * @return boolean
  */
 public function hasDatabase(string $name) : bool {
-	return in_array($name, $this->getDatabaseList());
+	$abort = $this->abort;
+	$list = $this->getDatabaseList();
+	$this->abort = $abort;
+	return is_null($list) ? false : in_array($name, $list);
 }
 
 

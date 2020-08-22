@@ -146,7 +146,7 @@ public function getTableDesc(string $table) : array {
 /**
  *
  */
-public function getDatabaseList(bool $reload_cache = false) : array {
+public function getDatabaseList(bool $reload_cache = false) : ?array {
 	throw new Exception('ToDo ...');	
 }
 
