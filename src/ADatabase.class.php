@@ -58,16 +58,17 @@ const AUTO_INCREMENT = 256;
 
 
 // @var bool $use_prepared
-public static $use_prepared = false;
+public $use_prepared = false;
 
 // @var string $time_zone (default = empty = use db default, Example: 'Europe/Berlin')
-public static $time_zone = '';
+public $time_zone = '';
 
 // @var string $charset (default = empty = use db default, Example: 'utf8', 'utf8mb4')
-public static $charset = '';
+public $charset = '';
 
 // @var bool abort (default = true)
 public $abort = true;
+
 
 // @var string $_dsn 
 protected $_dsn = null;
@@ -297,7 +298,7 @@ public function getQueryInfo(string $qkey, string $ikey = '') {
  * Example:
  * INSERT INTO {:=^table} (a, b, c) VALUES ('{:=a}', '{:=b}', {:=_c})
  * 
- * If tag is '{:=x}' use prepared statement value bind (or change into {:=x} if self::$use_prepared = false). 
+ * If tag is '{:=x}' use prepared statement value bind (or change into {:=x} if this.use_prepared = false). 
  * If tag is {:=x} apply escape($value).
  * If tag is {:=^x} apply escape_name($value).
  * If tag is {:=_x} keep $value.
@@ -333,7 +334,7 @@ public function setQuery(string $qkey, string $query, array $info = []) : void {
 		$m = $tok[$i];
 
 		if (mb_substr($m, 0, 1) === "'" && mb_substr($m, -1) === "'" && mb_substr($m, 4, 1) !== '^') {
-			if (self::$use_prepared) {
+			if ($this->use_prepared) {
 				array_push($map['bind'], mb_substr($m, 4, -2));
 				$tok[$i] = '?';
 			}
@@ -791,10 +792,7 @@ public function nextIdAlias(string $rid, string $use_table = 'rid_alias') : int 
  * @return boolean
  */
 public function hasDatabase(string $name) : bool {
-	$abort = $this->abort;
-	$this->abort = false;
 	$list = $this->getDatabaseList();
-	$this->abort = $abort;
 	return is_null($list) ? false : in_array($name, $list);
 }
 
