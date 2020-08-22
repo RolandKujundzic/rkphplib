@@ -23,6 +23,19 @@ private $_dbres = null;
 private $_abort_error = null;
 
 
+
+/**
+ * @example $mysql = new \rkphplib\MysqlDatabase([ 'abort' => false, 'charset' => 'latin1' ]);
+ */
+public function __construct(array $options = []) {
+	foreach ($options as $key => $value) {
+		if (property_exists($this, $key)) {
+			$this->$key = $value;
+		}
+	}
+}
+
+
 /**
  * Load mysql host, user and password from $path (my.cnf) and define DB_HOST|USER|PASS.
  */
