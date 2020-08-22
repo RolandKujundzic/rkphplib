@@ -4,9 +4,7 @@ require_once(dirname(__DIR__).'/testlib.php');
 require_once(dirname(dirname(__DIR__)).'/src/MysqlDatabase.class.php');
 require_once(dirname(dirname(__DIR__)).'/src/Profiler.class.php');
 
-
-$dsn = 'mysqli://unit_test:magic123@tcp+localhost/unit_test';
-$admin_dsn = 'mysqli://sql:admin@tcp+localhost/';
+define('SETTINGS_DSN', 'mysqli://unit_test:magic123@tcp+localhost/unit_test');
 
 
 
@@ -14,10 +12,10 @@ $admin_dsn = 'mysqli://sql:admin@tcp+localhost/';
  *
  */
 function get_db() {
-	global $dsn, $prof;
+	global $prof;
 
 	$db = new \rkphplib\MysqlDatabase();
-	$db->setDSN($dsn);
+	$db->setDSN(SETTINGS_DSN);
 	$prof->log('setDSN');
 
 	return $db;
@@ -169,12 +167,16 @@ php aaa.php &
  */
 
 // create database if necessary ...
-$db = new \rkphplib\MysqlDatabase();
-$db->setDSN($admin_dsn);
+$db = new \rkphplib\MysqlDatabase([ 'abort' => false ]);
+$db->setDSN(SETTINGS_DSN);
 
-$dsn_info = \rkphplib\ADatabase::splitDSN($dsn);
+$dsn_info = \rkphplib\ADatabase::splitDSN(SETTINGS_DSN);
 if (!$db->hasDatabase($dsn_info['name'])) {
-	$db->createDatabase($dsn);
+	if (!$db->createDatabase(SETTINGS_DSN)) {
+		print "create database ${dsn_info['name']} failed try:\n";
+		print "sudo rks-db account ${dsn_info['name']} ${dsn_info['password']}\n";
+		exit(1);
+	}
 }
 
 $prof = new \rkphplib\Profiler();
@@ -191,3 +193,4 @@ $prof->stopXDTrace();
 print "\nProfiler Log:\n";
 $prof->writeLog();
 print "\n\n";
+
