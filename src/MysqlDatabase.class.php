@@ -178,15 +178,15 @@ public function connect() : bool {
 		}
 	}
 
-	if (!empty(self::$charset) && !$this->_db->set_charset(self::$charset)) {
-		// $this->execute("SET names '".self::escape(self::$charset)."'");
-		return $this->error('set charset failed', self::$charset, 2);
+	if (!empty($this->charset) && !$this->_db->set_charset($this->charset)) {
+		// $this->execute("SET names '".self::escape($this->charset)."'");
+		return $this->error('set charset failed', $this->charset, 2);
 	}
 
 	$res = true;
 
-	if (!empty(self::$time_zone)) {
-		$res = $this->execute("SET time_zone = '".self::escape(self::$time_zone)."'");
+	if (!empty($this->time_zone)) {
+		$res = $this->execute("SET time_zone = '".self::escape($this->time_zone)."'");
 	}
 	
 	// \rkphplib\lib\log_debug('MysqlDatabase.connect:190> login@host='.$dsn['login'].'@'.$dsn['host'].', name='.$dsn['name'].', id='.$this->getId());
@@ -668,7 +668,7 @@ public function select($query, int $res_count = 0) : ?array {
  */
 public function multiQuery(string $query) : ?array {
 
-	if (self::$use_prepared) {
+	if ($this->use_prepared) {
 		throw new Exception('multiQuery does not work in prepared query mode');
 	}
 
