@@ -26,6 +26,16 @@ function build {
 	_require_program composer
 	composer validate --no-check-all --strict
 
-  git status
+	for a in $(git status | grep 'src/' | sed -E 's#^.+src/#src/#'); do
+		change=$(git diff --color=always "$a" | rks-filter diff | \
+			sed -E -e 's#diff .+##' -e 's#index .+##' -e 's#\-\-\- .+##' -e 's#\+\+\+ .+##' | xargs | \
+			sed -E -e 's/[^a-z0-9]//gi' -e 's/1m//g')
+	
+		if test -z "$change"; then
+			_ok "$a"
+		else
+			git diff --color=always "$a" | rks-filter diff
+		fi
+	done
 }
 
