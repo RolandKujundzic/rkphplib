@@ -77,7 +77,7 @@ public function setDSN($dsn = SETTINGS_DSN, $opt = [ 'table' => 'language', 'use
 		'delete' => "DELETE FROM $table WHERE id='{:=id}'"
 	];
 
-	// \rkphplib\lib\log_debug("TLanguage.setDSN:87> table=$table use=$use default=$default select: ".$query_map['select']);
+	// \rkphplib\lib\log_debug("TLanguage.setDSN:80> table=$table use=$use default=$default select: ".$query_map['select']);
 	$this->db = Database::getInstance($dsn, $query_map);
 	$this->createTable($opt['table']);
 }
@@ -144,7 +144,7 @@ public function initSession($p) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TLanguage.initSession:154> res=[$res] p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TLanguage.initSession:147> res=[$res] p: ".print_r($p, true));
 	return $res;
 }
 
@@ -184,7 +184,7 @@ public function tok_language_init($p) {
 	$this->setDSN($p['dsn'], $p);
 	$this->conf = $p;
 
-	// \rkphplib\lib\log_debug("TLanguage.tok_language_init:194> conf=".print_r($p, true));
+	// \rkphplib\lib\log_debug("TLanguage.tok_language_init:187> conf=".print_r($p, true));
 	return '';
 }
 
@@ -315,7 +315,7 @@ public function tok_t($param, $txt) {
  * @return string
  */
 public function tok_txt($param, $txt) {
-	// \rkphplib\lib\log_debug("TLanguage.tok_txt:325> param=$param txt=$txt is_null(this->db)=".is_null($this->db));
+	// \rkphplib\lib\log_debug("TLanguage.tok_txt:318> param=$param txt=$txt is_null(this->db)=".is_null($this->db));
 	if (is_null($txt)) {
 		$txt = '';
 	}

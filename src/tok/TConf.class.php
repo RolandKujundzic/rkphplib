@@ -99,7 +99,7 @@ public function tok_conf(string $key, string $value) : string {
 	$current = (count($dbres) == 0) ? null : $dbres[0]['value'];
 
 	if (is_null($current)) {
-		// \rkphplib\lib\log_debug("TConf.tok_conf:110> set [$key]=[$value]");
+		// \rkphplib\lib\log_debug("TConf.tok_conf:102> set [$key]=[$value]");
 		$this->set($key, $value);
 	}
 	else {
