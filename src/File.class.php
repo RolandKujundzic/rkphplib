@@ -886,11 +886,11 @@ public static function saveJSON(string $file, $data, int $flag = 0) : bool {
 		$base = dirname($file).'/'.File::basename($file, true);				
 		File::save(".$base.dump", print_r($data, true));
 
-		if ($flag & 2 == 2) {
+		if ($flag & 2) {
 			File::save($base.'.ser', serialize($data));
 		}
 
-		if ($flag & 1 == 1) { 
+		if ($flag & 1) { 
 			return false;
 		}
 		else {

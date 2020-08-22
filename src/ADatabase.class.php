@@ -792,6 +792,7 @@ public function nextIdAlias(string $rid, string $use_table = 'rid_alias') : int 
  */
 public function hasDatabase(string $name) : bool {
 	$abort = $this->abort;
+	$this->abort = false;
 	$list = $this->getDatabaseList();
 	$this->abort = $abort;
 	return is_null($list) ? false : in_array($name, $list);

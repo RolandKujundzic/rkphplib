@@ -170,9 +170,11 @@ public function connect() : bool {
 		}
 	}
 	else {
-		$this->_db = new \mysqli($dsn['host'], $dsn['login'], $dsn['password'], $dsn['name']);
-		if ($this->_db->connect_errno) {
-			return $this->error('Failed to connect to MySQL ('.$this->_db->connect_errno.')', $this->_db->connect_error, 2);
+		try {
+			$this->_db = new \mysqli($dsn['host'], $dsn['login'], $dsn['password'], $dsn['name']);
+		}
+		catch (\Exception $e) {
+			return $this->error('Failed to connect to MySQL ('.$e->getCode().')', $e->getMessage(), 2);
 		}
 	}
 
@@ -473,14 +475,14 @@ public function execute($query, bool $use_result = false) : bool {
  */
 private function error(string $msg, string $internal, int $flag = 0) : ?bool {
 	if ($this->abort) {
-		if ($flag & 2 != 2) {
+		if (2 != $flag & 2) {
 			$internal .= "\n(".$this->_db->errno.') '.$this->_db->error;
 		}
 
 		throw new Exception($msg, $internal);
 	}
 
-	return $return_null ? null : false;
+	return ($flag & 1) ? null : false;
 }
 
 
@@ -963,7 +965,7 @@ public function esc(string $txt) : string {
 public function getDatabaseList(bool $reload_cache = false) : ?array {
 
 	if ($reload_cache || !isset($this->_cache['DATABASE_LIST:']) || count($this->_cache['DATABASE_LIST:']) === 0) {
-		if (($dbres = $this->select('SHOW DATABASES'))) { 
+		if (($dbres = $this->select('SHOW DATABASES')) === null) { 
 			return null;
 		}
 

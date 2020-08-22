@@ -91,7 +91,7 @@ protected function reset($flag = 0) {
 		$this->methods = [];
 	}
 
-	if (($flag & 1) != 1 && $this->lpos == -1) {
+	if ((1 != $flag & 1) && ($this->lpos == -1)) {
 		$this->lpos = 0;
 	}
 }
@@ -199,7 +199,7 @@ public function getNamespace(int $flag = 0) : ?string {
 	}
 
 	if ($this->namespace == null) {
-		if ($this->lpos > 0 && ($flag & 2) != 2) {
+		if (($this->lpos > 0) && (2 != $flag & 2)) {
 			// try again from start
 			$this->lpos = 0;
 			// \rkphplib\lib\log_debug("PhpCode.getNamespace:205> set lpos=0, retry");
@@ -211,7 +211,7 @@ public function getNamespace(int $flag = 0) : ?string {
 		}
 	}
 
-	if (($flag & 2) && $this->namespace != null) {
+	if (($flag & 2) && ($this->namespace != null)) {
 		$this->namespaces[$this->namespace] = $this->lpos; 
 	}
 
@@ -237,7 +237,7 @@ public function getClass(int $flag = 0) : ?array {
 
 	$this->reset(8);
 
-	if (($flag & 2) != 2 && !$this->namespace) {
+	if ((2 != $flag & 2) && !$this->namespace) {
 		$this->getNamespace();
 	}
 
@@ -261,7 +261,7 @@ public function getClass(int $flag = 0) : ?array {
 	}
 
 	if ($this->class == null) {
-		if ($this->lpos > 0 && ($flag & 2) != 2) {
+		if (($this->lpos > 0) && (2 != $flag & 2)) {
 			// try again from start
 			$this->lpos = 0;
 			return $this->getClass($flag);
@@ -272,7 +272,7 @@ public function getClass(int $flag = 0) : ?array {
 		}
 	}
 
-	if (($flag & 2) && $this->class != null) {
+	if (($flag & 2) && ($this->class != null)) {
 		$this->classes[$this->class['name']] = $this->lpos;
 	}
 

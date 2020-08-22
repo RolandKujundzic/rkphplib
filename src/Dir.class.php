@@ -180,7 +180,7 @@ public static function move(string $old_dir, string $new_dir, int $opt = 0) : vo
 		throw new Exception('source and target directory are same', "mv [$old_dir] to [$new_dir]");
 	}
 
-	if ($opt & Dir::REMOVE_EXISTING && Dir::exists($new_dir)) {
+	if (($opt & Dir::REMOVE_EXISTING) && Dir::exists($new_dir)) {
 		Dir::remove($new_dir);
 	}
 

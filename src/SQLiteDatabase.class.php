@@ -23,14 +23,14 @@ private $_seek = -1;
  */
 private function error(string $msg, string $internal, int $flag = 0) : ?bool {
 	if ($this->abort) {
-		if ($flag & 2 != 2) {
+		if (2 != $flag & 2) {
 			$internal .= "\n".$this->_db->lastErrorMsg();
 		}
 
 		throw new Exception($msg, $internal);
 	}
 
-	return $return_null ? null : false;
+	return ($flag & 1) ? null : false;
 }
 
 
