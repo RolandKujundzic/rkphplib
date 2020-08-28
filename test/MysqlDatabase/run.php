@@ -174,11 +174,12 @@ $dsn_info = \rkphplib\ADatabase::splitDSN(SETTINGS_DSN);
 if (!$db->hasDatabase($dsn_info['name'])) {
 	if (!$db->createDatabase(SETTINGS_DSN)) {
 		print "create database ${dsn_info['name']} failed try:\n";
-		print "sudo rks-db account ${dsn_info['name']} ${dsn_info['password']}\n";
+		print "sudo rks-db account --name=${dsn_info['name']} --password=${dsn_info['password']}\n";
 		exit(1);
 	}
 }
 
+$db->abort = true;
 $prof = new \rkphplib\Profiler();
 $prof->startXDTrace();
 $prof->log('start test');
