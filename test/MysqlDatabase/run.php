@@ -87,7 +87,7 @@ function insert() {
 	global $prof;
 
 	$prof->log('enter insert');
-	$res = array(0, 0, 0, 0);
+	$res = array(0, 0);
 	$db = get_db();
 
 try {
@@ -187,7 +187,7 @@ $prof->log('start test');
 // \rkphplib\MysqlDatabase::$use_prepared = false;
 
 call_test('create', array(), array('MysqlDatabase create/desc', 1, 1, 1, 1));
-call_test('insert', array(), array('MysqlDatabase insert', 1, 1, 1, 1));
+call_test('insert', array(), array('MysqlDatabase insert', 1, 1));
 
 $prof->log('done.');
 $prof->stopXDTrace();
