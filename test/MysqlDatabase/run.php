@@ -1,11 +1,13 @@
 <?php
 
-require_once(dirname(__DIR__).'/testlib.php');
-require_once(dirname(dirname(__DIR__)).'/src/MysqlDatabase.class.php');
-require_once(dirname(dirname(__DIR__)).'/src/Profiler.class.php');
+global $th;
 
-define('SETTINGS_DSN', 'mysqli://unit_test:magic123@tcp+localhost/unit_test');
+if (!isset($th)) {
+	require_once dirname(dirname(__DIR__)).'/src/TestHelper.class.php';
+	$th = new rkphplib\TestHelper();
+}
 
+$th->load('src/MysqlDatabase.class.php');
 
 
 /**
@@ -15,7 +17,7 @@ function get_db() {
 	global $prof;
 
 	$db = new \rkphplib\MysqlDatabase();
-	$db->setDSN(SETTINGS_DSN);
+	$db->setDSN(UNIT_TEST_DSN);
 	$prof->log('setDSN');
 
 	return $db;
@@ -168,11 +170,11 @@ php aaa.php &
 
 // create database if necessary ...
 $db = new \rkphplib\MysqlDatabase([ 'abort' => false ]);
-$db->setDSN(SETTINGS_DSN);
+$db->setDSN(UNIT_TEST_DSN);
 
-$dsn_info = \rkphplib\ADatabase::splitDSN(SETTINGS_DSN);
+$dsn_info = \rkphplib\ADatabase::splitDSN(UNIT_TEST_DSN);
 if (!$db->hasDatabase($dsn_info['name'])) {
-	if (!$db->createDatabase(SETTINGS_DSN)) {
+	if (!$db->createDatabase()) {
 		print "create database ${dsn_info['name']} failed try:\n";
 		print "sudo rks-db account --name=${dsn_info['name']} --password=${dsn_info['password']}\n";
 		exit(1);
@@ -180,18 +182,12 @@ if (!$db->hasDatabase($dsn_info['name'])) {
 }
 
 $db->abort = true;
-$prof = new \rkphplib\Profiler();
-$prof->startXDTrace();
-$prof->log('start test');
+$db->use_prepared = false;
 
-// \rkphplib\MysqlDatabase::$use_prepared = false;
+$prof = $th->profilerStart();
 
-call_test('create', array(), array('MysqlDatabase create/desc', 1, 1, 1, 1));
-call_test('insert', array(), array('MysqlDatabase insert', 1, 1));
+$th->callTest('create', array(), array('MysqlDatabase create/desc', 1, 1, 1, 1));
+$th->callTest('insert', array(), array('MysqlDatabase insert', 1, 1));
 
-$prof->log('done.');
-$prof->stopXDTrace();
-print "\nProfiler Log:\n";
-$prof->writeLog();
-print "\n\n";
+$th->profilerStop();
 
