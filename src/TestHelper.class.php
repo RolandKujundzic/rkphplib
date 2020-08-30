@@ -14,7 +14,8 @@ if (!defined('DOCROOT')) {
 	}
 }
 
-define('UNIT_TEST_DSN', 'mysqli://unit_test:magic123@tcp+localhost/unit_test');
+define('TEST_MYSQL', 'mysqli://unit_test:magic123@tcp+localhost/unit_test');
+define('TEST_SQLITE', 'sqlite://magic123@./unit_test.sqlite');
 
 require_once __DIR__.'/lib/config.php';
 require_once __DIR__.'/tok/Tokenizer.class.php';
