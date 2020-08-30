@@ -26,8 +26,9 @@ private $ttl = 3600;
 
 /**
  * Initialize database and call session_set_save_handler($this, true) and session_start().
+ * Default $dsn is SETTINGS_DSN.
  */
-public function __construct() {
+public function __construct(string $dsn = '') {
 	// \rkphplib\lib\log_debug('DatabaseSessionHandler.__construct:31> create database');
 	$query_map = [
 		'select' => "SELECT data FROM cms_session WHERE id={:=id} AND until > NOW()",
@@ -37,7 +38,7 @@ public function __construct() {
 		'garbage_collect' => "DELETE FROM cms_session WHERE until < '{:=until}'"
 		];
 
-	$this->db = Database::getInstance(SETTINGS_DSN, $query_map); 
+	$this->db = Database::getInstance($dsn, $query_map); 
 
 	$tconf = [];
 	$tconf['@table'] = 'cms_session';
