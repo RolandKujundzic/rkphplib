@@ -17,7 +17,7 @@ function get_db() {
 	global $prof;
 
 	$db = new \rkphplib\MysqlDatabase();
-	$db->setDSN(UNIT_TEST_DSN);
+	$db->setDSN(TEST_MYSQL);
 	$prof->log('setDSN');
 
 	return $db;
@@ -170,9 +170,9 @@ php aaa.php &
 
 // create database if necessary ...
 $db = new \rkphplib\MysqlDatabase([ 'abort' => false ]);
-$db->setDSN(UNIT_TEST_DSN);
+$db->setDSN(TEST_MYSQL);
 
-$dsn_info = \rkphplib\ADatabase::splitDSN(UNIT_TEST_DSN);
+$dsn_info = \rkphplib\ADatabase::splitDSN(TEST_MYSQL);
 if (!$db->hasDatabase($dsn_info['name'])) {
 	if (!$db->createDatabase()) {
 		print "create database ${dsn_info['name']} failed try:\n";

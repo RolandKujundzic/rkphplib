@@ -10,7 +10,7 @@ if (!isset($th)) {
 
 $th->load('src/DatabaseSessionHandler.class.php');
 
-$sh = new \rkphplib\DatabaseSessionHandler();
+$sh = new \rkphplib\DatabaseSessionHandler(TEST_MYSQL);
 
 $sh->set('abc', 3);
 $th->compare('has|get()', [ $sh->has('abc'), $sh->get('abc') ], [ true, 3 ]);

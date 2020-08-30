@@ -1,20 +1,21 @@
 <?php
 
-// create database: sqlite://magic123@phplib.sqlite
-$dsn = 'sqlite://magic123@./phplib.sqlite';
+global $th;
 
-require_once(dirname(__DIR__).'/testlib.php');
-require_once(dirname(dirname(__DIR__)).'/src/SQLiteDatabase.class.php');
+if (!isset($th)) {
+	require_once dirname(dirname(__DIR__)).'/src/TestHelper.class.php';
+	$th = new rkphplib\TestHelper();
+}
+
+$th->load('src/SQLiteDatabase.class.php');
 
 
 /**
  *
  */
 function get_db() {
-	global $dsn;
-
 	$db = new \rkphplib\SQLiteDatabase();
-	$db->setDSN($dsn);
+	$db->setDSN(TEST_SQLITE);
 
 	return $db;
 }
