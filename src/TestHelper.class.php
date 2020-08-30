@@ -14,9 +14,13 @@ if (!defined('DOCROOT')) {
 	}
 }
 
+define('UNIT_TEST_DSN', 'mysqli://unit_test:magic123@tcp+localhost/unit_test');
+
 require_once __DIR__.'/lib/config.php';
 require_once __DIR__.'/tok/Tokenizer.class.php';
 require_once __DIR__.'/FSEntry.class.php';
+require_once __DIR__.'/PhpCode.class.php';
+require_once __DIR__.'/Profiler.class.php';
 require_once __DIR__.'/PhpCode.class.php';
 require_once __DIR__.'/JSON.class.php';
 require_once __DIR__.'/File.class.php';
@@ -38,6 +42,9 @@ private $_tc = [];
 // @var string $output
 public $output = '';
 
+// @var Profiler $profiler
+public $profiler = null;
+
 
 
 /**
@@ -58,6 +65,35 @@ public function __construct() {
 	$this->_tc['t_num'] = 0;
 	$this->_tc['t_pass'] = 0;
 	$this->_tc['t_fail'] = 0;
+}
+
+
+/**
+ * Initialize and start profiler.
+ * @example:
+ * $this->profilerStart();
+ * $this->profiler->log($message);
+ * $this->profilerEnd();
+ * @:example
+ */
+public function profilerStart() : Profiler {
+	$this->profiler = new Profiler();
+	$this->profiler->startXDTrace();
+	$this->profiler->log('start test');
+	return $this->profiler;
+}
+
+
+/**
+ * Stop profiler and print report.
+ * @see profilerStart()
+ */
+public function profilerStop() : void {
+	$this->profiler->log('done.');
+	$this->profiler->stopXDTrace();
+	print "\nProfiler Log:\n";
+	$this->profiler->writeLog();
+	print "\n\n";
 }
 
 
