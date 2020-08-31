@@ -1,5 +1,10 @@
 <?php
 
+/*
+ * ../../run.sh php server --port=8080
+ * http://localhost:8080/run.php
+ */
+
 global $th;
 
 if (!isset($th)) {
