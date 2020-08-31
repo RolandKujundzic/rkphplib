@@ -158,7 +158,7 @@ public function connect() : bool {
 
 	if (is_object($this->_db)) {
 		if ($this->_conn_ttl < time() && !$this->_db->ping()) {
-			// \rkphplib\lib\log_debug('MysqlDatabase.connect:148> close expired connection '.$this->getId());
+			// \rkphplib\lib\log_debug('MysqlDatabase.connect:161> close expired connection '.$this->getId());
 			$this->close();
 		}
 		else {
@@ -202,7 +202,7 @@ public function connect() : bool {
 		$res = $this->execute("SET time_zone = '".self::escape($this->time_zone)."'");
 	}
 	
-	// \rkphplib\lib\log_debug('MysqlDatabase.connect:190> login@host='.$dsn['login'].'@'.$dsn['host'].', name='.$dsn['name'].', id='.$this->getId());
+	// \rkphplib\lib\log_debug('MysqlDatabase.connect:205> login@host='.$dsn['login'].'@'.$dsn['host'].', name='.$dsn['name'].', id='.$this->getId());
 	$this->_conn_ttl = time() + 5 * 60; // re-check connection in 5 minutes ...
 	return $res;
 }
@@ -455,7 +455,7 @@ public function dropTable(string $table) : void {
  *
  */
 public function execute($query, bool $use_result = false) : bool {
-	// \rkphplib\lib\log_debug("MysqlDatabase.execute:435> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
+	// \rkphplib\lib\log_debug("MysqlDatabase.execute:458> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
 	if (is_array($query)) {
 		if ($use_result) {
 			if (($stmt = $this->_exec_stmt($query)) === null) {
@@ -509,6 +509,7 @@ private function error(string $msg, string $internal = '', int $flag = 0) : ?boo
 		$this->_abort_error[2] = $this->_db->errno;
 	}
 
+	\rkphplib\lib\log_warn("MysqlDatabase.error> $msg (flag=$flag internal=$internal)");
 	return ($flag & 1) ? null : false;
 }
 
@@ -1133,7 +1134,7 @@ public function getTableDesc(string $table) : array {
  *
  */
 public function getInsertId() : int {
-	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1100> id=".$this->getId().", insert_id=".$this->_db->insert_id);
+	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1137> id=".$this->getId().", insert_id=".$this->_db->insert_id);
 	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) === 0) {
 		return intval($this->error('no_id', $this->_db->insert_id, 2));
 	}
