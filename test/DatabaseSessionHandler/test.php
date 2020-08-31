@@ -3,7 +3,7 @@
 require_once '../../src/lib/log_debug.php';
 
 
-class CustomHandler implements SessionHandlerInterface {
+class CustomHandler implements SessionHandlerInterface, SessionUpdateTimestampHandlerInterface, SessionIdInterface {
 
 
 public function __construct() {	
@@ -57,6 +57,26 @@ public function gc($maxlifetime) {
 	\rkphplib\lib\log_debug("gc($maxlifetime)");
 	return true;
 }
+
+
+public function updateTimestamp($key, $val) {
+	\rkphplib\lib\log_debug("updateTimestamp($key, $val)");
+	return true;
+}
+
+
+public function validateId($key) {
+	\rkphplib\lib\log_debug("validateId($key)");
+	$val = $this->read($key);
+	return !empty($val);
+}
+
+
+public function create_sid() {
+	\rkphplib\lib\log_debug("create_sid()");
+	return 'a'.time();
+}
+
 
 }
 
