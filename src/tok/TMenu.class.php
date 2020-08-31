@@ -54,7 +54,7 @@ public function __construct() {
 /**
  * Return menu html. If $tpl is empty use "{:=level_1}".
  */
-public function tok_menu(string $tpl) : string {
+public function tok_menu(?string $tpl) : string {
 
 	if (count($this->node) == 0) {
 		// empty node tree

@@ -77,7 +77,7 @@ public function tok_menu_conf(string $name, string $value) : void {
 /**
  * Implement menu output.
  */
-abstract public function tok_menu(string $tpl) : string;
+abstract public function tok_menu(?string $tpl) : string;
 
 
 /**
@@ -87,7 +87,7 @@ abstract public function tok_menu(string $tpl) : string;
  *
  * {menu:add:1}label=Main|#|dir=/|#|if={:menu} -> ignore empty if, use dir=/ for active root
  * {menu:add:2}label=Sub 1|#|if_table=shop_customer, shop_item{:menu} -> ignore if table does not exist
- * {menu:add:}level=2|#|lable=sub 2|#|if_priv={:=super} | {:=shop.super}{:menu} -> active if user has super or shop.super priv
+ * {menu:add:}level=2|#|label=sub 2|#|if_priv={:=super} | {:=shop.super}{:menu} -> active if user has super or shop.super priv
  * {menu:add:1}label=Main 2|#|dir=main2{:menu} -> active if dir=main2|main2/*
  * 
  * Parameter: 
