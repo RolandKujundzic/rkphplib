@@ -47,7 +47,7 @@ public function __construct(string $dsn = '') {
 	$tconf = [];
 	$tconf['@table'] = 'cms_session';
 	$tconf['@timestamp'] = 2;
-	$tconf['id'] = 'varbinary:30::3';
+	$tconf['id'] = 'binary:16::3';
 	$tconf['until'] = 'datetime:::9';
 	$tconf['data'] = 'blob:::1';
 	$this->db->createTable($tconf);
