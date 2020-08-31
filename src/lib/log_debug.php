@@ -3,7 +3,7 @@
 namespace rkphplib\lib;
 
 if (!defined('SETTINGS_LOG_DEBUG')) {
-	require_once __DIR__.'/lib/config.php';
+	require_once __DIR__.'/config.php';
 }
 
 
