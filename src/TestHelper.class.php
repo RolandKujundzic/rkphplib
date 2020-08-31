@@ -190,6 +190,9 @@ public function load(string $file) : void {
 	if (!empty($_SERVER['PWD']) && ($pos = mb_strpos($_SERVER['PWD'], '/rkphplib/')) !== false) {
 		$rkphplib = mb_substr($_SERVER['PWD'], 0, $pos).'/rkphplib';
 	}
+	else if (!empty($_SERVER['SCRIPT_FILENAME']) && ($pos = mb_strpos($_SERVER['SCRIPT_FILENAME'], '/rkphplib/')) !== false) {
+		$rkphplib = mb_substr($_SERVER['SCRIPT_FILENAME'], 0, $pos).'/rkphplib';
+	}
 
 	FSEntry::isDir($rkphplib);
 
