@@ -23,13 +23,16 @@ private $db = null;
 // @param int $ttl = 3600 (1h valid)
 private $ttl = 3600;
 
+//
+private $missing = '';
+
 
 /**
  * Initialize database and call session_set_save_handler($this, true) and session_start().
  * Default $dsn is SETTINGS_DSN.
  */
 public function __construct(string $dsn = '') {
-	\rkphplib\lib\log_debug('DatabaseSessionHandler.__construct:32> create database');
+	\rkphplib\lib\log_debug('DatabaseSessionHandler.__construct:35> create database');
 	$query_map = [
 		'select' => "SELECT data FROM cms_session WHERE id={:=id} AND until > NOW()",
 		'insert' => "INSERT INTO cms_session (id, until, data) VALUES ({:=id}, {:=until}, {:=data})",
@@ -43,17 +46,17 @@ public function __construct(string $dsn = '') {
 	$tconf = [];
 	$tconf['@table'] = 'cms_session';
 	$tconf['@timestamp'] = 2;
-	$tconf['id'] = 'binary:16::3';
+	$tconf['id'] = 'varbinary:30::3';
 	$tconf['until'] = 'datetime:::9';
 	$tconf['data'] = 'blob:::1';
 	$this->db->createTable($tconf);
 
 	$this->db->abort = false;
 
-	\rkphplib\lib\log_debug('DatabaseSessionHandler.__construct:53> start session');
+	\rkphplib\lib\log_debug('DatabaseSessionHandler.__construct:56> start session');
 	session_set_save_handler($this, true);
 	if (!session_start()) {
-		throw new Exception('session_start() failed');
+		throw new Exception('session_start() failed', print_r($_SERVER, true));
 	}
 }
 
@@ -88,34 +91,34 @@ public function has(string $key) : bool {
  * Session callback.
  */
 public function close() {
-	\rkphplib\lib\log_debug('DatabaseSessionHandler.close:91> close()');	
-	return $this->db->close();
+	\rkphplib\lib\log_debug('DatabaseSessionHandler.close:94> close()');
+	return true;
 }
 
 
 /**
  * Session callback.
  */
-public function destroy($sessionId) {
-	\rkphplib\lib\log_debug("DatabaseSessionHandler.destroy:100> destroy($sessionId)");	
-	return $this->db->execute($this->db->getQuery('delete', [ 'id' => $sessionId ]));
+public function destroy($sid) {
+	\rkphplib\lib\log_debug("DatabaseSessionHandler.destroy:103> destroy($sid)");
+	return $this->db->execute($this->db->getQuery('delete', [ 'id' => $sid ]));
 }
 
 
 /**
  * Session callback.
  */
-public function gc($maxLifetime) {
-	\rkphplib\lib\log_debug("DatabaseSessionHandler.gc:109> gc($maxLifetime)");	
-	return $this->db->execute($this->db->getQuery('garbage_collect', [ 'until' => date('Y-m-d H:i:s', time() - $maxLifetime) ]));
+public function gc($lifetime) {
+	\rkphplib\lib\log_debug("DatabaseSessionHandler.gc:112> gc($lifetime)");
+	return $this->db->execute($this->db->getQuery('garbage_collect', [ 'until' => date('Y-m-d H:i:s', time() - $lifetime) ]));
 }
 
 
 /**
  * Session callback.
  */
-public function open($sessionSavePath, $sessionName) {
-	\rkphplib\lib\log_debug("DatabaseSessionHandler.open:118> open($sessionSavePath, $sessionName)");	
+public function open($save_path, $sname) {
+	\rkphplib\lib\log_debug("DatabaseSessionHandler.open:121> open($save_path, $sname)");
 	return $this->db->connect();
 }
 
@@ -123,20 +126,37 @@ public function open($sessionSavePath, $sessionName) {
 /**
  * Session callback.
  */
-public function read($sessionId) {
-	\rkphplib\lib\log_debug("DatabaseSessionHandler.read:127> read($sessionId)");	
-	$dbres = $this->db->selectOne($this->db->getQuery('select', [ 'id' => $sessionId ]));
-	return is_null($dbres) ? '' : $dbres[0]['data'];
+public function read($sid) {
+	\rkphplib\lib\log_debug("DatabaseSessionHandler.read:130> read($sid)");
+	$query = $this->db->getQuery('select', [ 'id' => $sid ]);
+	$dbres = $this->db->selectOne($query);
+	$res = is_null($dbres) ? '' : $dbres['data'];
+
+	if ($res == '') {
+		\rkphplib\lib\log_debug("DatabaseSessionHandler.read:136> no result: $query");
+		$this->missing = $sid;
+	}
+
+	return $res;
 }
 
 
 /**
  * Session callback.
  */
-public function write($sessionId, $sessionData) {
-	\rkphplib\lib\log_debug("DatabaseSessionHandler.write:137> write($sessionId, ".substr($sessionData, 0, 40)."…)");
+public function write($sid, $data) {
+	\rkphplib\lib\log_debug("DatabaseSessionHandler.write:148> write($sid, ".substr($data, 0, 40)."…)");
 	$until = date('Y-m-d H:i:s', time() + $this->ttl);
-	return $this->db->execute($this->db->getQuery('update', [ 'id' => $sessionId, 'data' => $sessionData, 'until' => $until ]));
+
+	if ($this->missing == $sid) {
+		$query = $this->db->getQuery('insert', [ 'id' => $sid, 'data' => $data, 'until' => $until ]);
+	}
+	else {
+		$query = $this->db->getQuery('update', [ 'id' => $sid, 'data' => $data, 'until' => $until ]);
+	}
+
+	\rkphplib\lib\log_debug("DatabaseSessionHandler.write:158> $query");
+	return $this->db->execute($query);
 }
 
 
@@ -151,7 +171,7 @@ public function create_sid() {
     $id .= \rkphplib\lib\dec2n(mt_rand(4096, 65535), 16);
   }
 
-	\rkphplib\lib\log_debug("DatabaseSessionHandler.create_sid:154> create_sid() = $id");	
+	\rkphplib\lib\log_debug("DatabaseSessionHandler.create_sid:174> create_sid() = $id");
   return $id;
 }
 
@@ -160,9 +180,9 @@ public function create_sid() {
  * Session callback.
  * @phpVersionLt 7.0 skip
  */
-public function validateId($sessionId) {
-	\rkphplib\lib\log_debug("DatabaseSessionHandler.validateId:164> validateId($sessionId)");	
-	$dbres = $this->db->selectOne($this->db->getQuery('select', [ 'id' => $sessionId ]));
+public function validateId($sid) {
+	\rkphplib\lib\log_debug("DatabaseSessionHandler.validateId:184> validateId($sid)");
+	$dbres = $this->db->selectOne($this->db->getQuery('select', [ 'id' => $sid ]));
 	return !is_null($dbres);
 }
 
@@ -171,10 +191,10 @@ public function validateId($sessionId) {
  * Session callback.
  * @phpVersionLt 7.0 skip 
  */
-public function updateTimestamp($sessionId, $sessionData) {
-	\rkphplib\lib\log_debug("DatabaseSessionHandler.updateTimestamp:175> updateTimestamp($sessionId, ".substr($sessionData, 0, 40)."…)");	
+public function updateTimestamp($sid, $data) {
+	\rkphplib\lib\log_debug("DatabaseSessionHandler.updateTimestamp:195> updateTimestamp($sid, ".substr($data, 0, 40)."…)");
 	$until = date('Y-m-d H:i:s', time() + $this->ttl);
-	return $this->db->execute($this->db->getQuery('update', [ 'id' => $sessionId, 'data' => $sessionData, 'until' => $until ]));
+	return $this->db->execute($this->db->getQuery('update', [ 'id' => $sid, 'data' => $data, 'until' => $until ]));
 }
 
 
