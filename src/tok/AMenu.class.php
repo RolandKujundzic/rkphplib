@@ -51,12 +51,18 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
- * Set menu configuration. 
+ * Set menu configuration. Use {menu:conf:*} to reset.
  *
+ * @tok {menu:conf:*}
  * @tok {menu:conf:custom}CUSTOM{:menu}
  * @tok {menu:add:1}_tpl=custom|#|...{:menu}
  */
-public function tok_menu_conf(string $name, string $value) : void {
+public function tok_menu_conf(string $name, ?string $value) : void {
+
+	if ($name == '*' && empty($value)) {
+		$this->conf = [];
+		$this->node = [];
+	}
 
 	if (mb_strpos($name, 'level_') === 0 && !empty($this->conf['level_6'])) {
 		// reset default configuration
