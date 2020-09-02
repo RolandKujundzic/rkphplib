@@ -55,9 +55,11 @@ public function __construct(string $dsn = '') {
 	$this->db->abort = false;
 
 	// \rkphplib\lib\log_debug('DatabaseSessionHandler.__construct:57> start session');
-	session_set_save_handler($this, true);
-	if (!session_start()) {
-		throw new Exception('session_start() failed', print_r($_SERVER, true));
+	if (!isset($_SESSION)) {
+		session_set_save_handler($this, true);
+		if (!session_start()) {
+			throw new Exception('session_start() failed', print_r($_SERVER, true));
+		}
 	}
 }
 
