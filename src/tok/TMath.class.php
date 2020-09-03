@@ -62,6 +62,7 @@ public function tok_math($arg) {
 			}
 		}
 
+		// \rkphplib\lib\log_debug('TMath.tok_math:65> eval($res = "'.$expr.'";)');
 		if (eval('$res = '.$expr.';') === false) {
 			throw new Exception("evaluation of [$expr]; failed");
 		}
