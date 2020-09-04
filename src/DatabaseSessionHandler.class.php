@@ -160,7 +160,6 @@ public function write($sid, $data) {
 
 	// \rkphplib\lib\log_debug("DatabaseSessionHandler.write:161> $query");
 	$res = $this->db->execute($query);
-	if ($res === true) \rkphplib\lib\log_debug('DatabaseSessionHandler.write:163> ok');
 	return $res;
 }
 
@@ -176,7 +175,7 @@ public function create_sid() {
     $id .= \rkphplib\lib\dec2n(mt_rand(4096, 65535), 16);
   }
 
-	// \rkphplib\lib\log_debug("DatabaseSessionHandler.create_sid:179> create_sid() = $id");
+	// \rkphplib\lib\log_debug("DatabaseSessionHandler.create_sid:178> create_sid() = $id");
   return $id;
 }
 
@@ -186,7 +185,7 @@ public function create_sid() {
  * @phpVersionLt 7.0 skip
  */
 public function validateId($sid) {
-	// \rkphplib\lib\log_debug("DatabaseSessionHandler.validateId:189> validateId($sid)");
+	// \rkphplib\lib\log_debug("DatabaseSessionHandler.validateId:188> validateId($sid)");
 	$dbres = $this->db->selectOne($this->db->getQuery('select', [ 'id' => $sid ]));
 	return !is_null($dbres);
 }
@@ -197,7 +196,7 @@ public function validateId($sid) {
  * @phpVersionLt 7.0 skip 
  */
 public function updateTimestamp($sid, $data) {
-	// \rkphplib\lib\log_debug("DatabaseSessionHandler.updateTimestamp:200> updateTimestamp($sid, ".substr($data, 0, 40)."…)");
+	// \rkphplib\lib\log_debug("DatabaseSessionHandler.updateTimestamp:199> updateTimestamp($sid, ".substr($data, 0, 40)."…)");
 	$until = date('Y-m-d H:i:s', time() + $this->ttl);
 	return $this->db->execute($this->db->getQuery('update', [ 'id' => $sid, 'data' => $data, 'until' => $until ]));
 }
