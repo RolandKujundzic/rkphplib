@@ -491,8 +491,11 @@ public function execute($query, bool $use_result = false) : bool {
 
 
 /**
- * Throw Exception if this.abort = true (default). Otherwise return false.
- * flag: 1 = return null, 2 = don't add _db.errno and _db.error to $internal
+ * Throw Exception if this.abort = true (default). Otherwise return false. Flags: 
+ * 
+ * 1 = return null
+ * 2 = don't add _db.errno and _db.error to $internal
+ * 4 = log_debug instead of log_warn
  */
 private function error(string $msg, string $internal = '', int $flag = 0) : ?bool {
 	if ($this->abort) {
@@ -509,7 +512,13 @@ private function error(string $msg, string $internal = '', int $flag = 0) : ?boo
 		$this->_abort_error[2] = $this->_db->errno;
 	}
 
-	\rkphplib\lib\log_warn("MysqlDatabase.error> $msg (flag=$flag internal=$internal)");
+	if ($flag & 4) {
+		// \rkphplib\lib\log_debug("MysqlDatabase.error:516> $msg (flag=$flag internal=$internal)");
+	}
+	else {
+		\rkphplib\lib\log_warn("MysqlDatabase.error> $msg (flag=$flag internal=$internal)");
+	}
+
 	return ($flag & 1) ? null : false;
 }
 
@@ -738,7 +747,7 @@ private function _fetch(string $query, ?array $rbind = null, int $rcount = 0) : 
 
 	if ($rcount > 0 && $rnum != $rcount) {
 		if ($rnum == 0) {
-			return $this->error('no result', "$rcount rows expected - query=$query", 3);
+			return $this->error('no result', "$rcount rows expected - query=$query", 7);
 		}
 		else {
 			return $this->error('unexpected number of rows', "$rnum != $rcount query=$query", 3);
@@ -1134,7 +1143,7 @@ public function getTableDesc(string $table) : array {
  *
  */
 public function getInsertId() : int {
-	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1137> id=".$this->getId().", insert_id=".$this->_db->insert_id);
+	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1146> id=".$this->getId().", insert_id=".$this->_db->insert_id);
 	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) === 0) {
 		return intval($this->error('no_id', $this->_db->insert_id, 2));
 	}
