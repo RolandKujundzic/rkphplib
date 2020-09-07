@@ -928,14 +928,19 @@ public function loadDump(string $file, int $flags) : void {
  * Parameter examples:
  * 
  * - @table|language|multilang|id|status|timestamp: see parseCreateTableConf
- * - colname: TYPE:SIZE:DEFAULT:EXTRA, e.g. 
- *			"colname => int:11:1:33" = "colname int(11) UNSIGNED NOT NULL DEFAULT 1"
- * 			"colname => varchar:30:admin:9" = "colname varchar(30) NOT NULL DEFAULT 'admin', KEY (colname(20))"
- *			"colname => varchar:50::5" = "colname varchar(50) NOT NULL, UNIQUE (colname(20))"
- *			"colname => enum:'a','b'::1" = "colname enum('a', 'b') NOT NULL"
- *			"colA:colB" => 4" = "UNIQUE ('colA', 'colB')"
- *			"colA:colB:colC" => 208" = "FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE"
- *			EXTRA example: NOT_NULL|INDEX, NOT_NULL|UNIQUE, INDEX, ...
+ * - colname: TYPE:SIZE:DEFAULT:EXTRA
+ * - TYPE: int, bigint, float, varchar, varbinary, enum, set, date, datetime, text, blog, ...
+ * - EXTRA: NOT_NULL|INDEX, NOT_NULL|UNIQUE, INDEX, ...
+ * 
+ * - 'colA:colB:colC' => 208: FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE
+ * - 'colA:colB' => 4: UNIQUE ('colA', 'colB')
+ * 
+ * @example int:11:1:33 = int(11) UNSIGNED NOT NULL DEFAULT 1
+ * @example varchar:80:admin:9 = varchar(80) NOT NULL DEFAULT 'admin', KEY (colname(20))
+ * @example varbinary:1024::5 = varbinary(1024) NOT NULL, UNIQUE (colname(20))
+ * @example enum:'a','b'::1" = enum('a', 'b') NOT NULL
+ * @example set:'','a','b','c'::1 = set('', 'a', 'b', '') NOT NULL
+ *
  */
 public static function createTableQuery(array $conf) : string {
 
