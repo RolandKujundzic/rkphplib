@@ -30,9 +30,9 @@ public function __construct(string $dsn = '') {
 
 
 /**
- * Import csv file
+ * Import csv file. Assume first line is column names.
  */
-public function csv(string $file, string $delimiter = "'", string $quote = '"') : void {
+public function csv(string $file, string $delimiter = ',', string $quote = '"') : void {
 	$fh = File::open($file, 'rb');
 
 	while (($row = File::readCSV($fh, $delimiter, $quote))) {
@@ -41,7 +41,7 @@ public function csv(string $file, string $delimiter = "'", string $quote = '"') 
 		}
 
 		if ($this->rownum == 0) {
-			$this->createTable($row);
+			$this->createTable(File::basename($file, true), $row);
 		}
 
 		$this->rownum++;
@@ -54,8 +54,9 @@ public function csv(string $file, string $delimiter = "'", string $quote = '"') 
 /**
  *
  */
-private function createTable(array $row) : void {
-	print_r($row);
+private function createTable(string $name, array $row) : void {
+	$tconf = [ '@table' => 'csv_'.$name ];
+	$this->db->createTable($tconf, true);
 }
 
 
