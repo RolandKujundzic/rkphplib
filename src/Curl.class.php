@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once __DIR__.'/traits/Options.class.php';
+require_once __DIR__.'/traits/Options.php';
 require_once __DIR__.'/JSON.class.php';
 require_once __DIR__.'/File.class.php';
 require_once __DIR__.'/Dir.class.php';
