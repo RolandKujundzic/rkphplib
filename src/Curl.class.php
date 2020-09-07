@@ -2,6 +2,7 @@
 
 namespace rkphplib;
 
+require_once __DIR__.'/traits/Options.class.php';
 require_once __DIR__.'/JSON.class.php';
 require_once __DIR__.'/File.class.php';
 require_once __DIR__.'/Dir.class.php';
@@ -16,6 +17,8 @@ require_once __DIR__.'/XML.class.php';
  *
  */
 class Curl {
+
+use \rkphplib\traits\Options;
 
 // @var string $cookiejar
 private $cookiejar = '';
@@ -37,21 +40,7 @@ private $cache = [];
  * Options: cookiejar, url, header.name 
  */
 public function __construct(array $options = []) {
-	foreach ($options as $key => $value) {
-		if (method_exists($this, $key)) {
-			$this->$key($value);
-		}
-		else if (strpos($key, '.') > 0) {
-			list ($name, $key) = explode('.', $key);
-			$method = 'set'.ucfirst($name);
-			if (method_exists($this, $method)) {
-				$this->$method($key, $value);
-			}
-		}
-		else if (property_exists($this, $key)) {
-			$this->$key = $value;
-		}
-	}
+	$this->setOptions($options);
 }
 
 
