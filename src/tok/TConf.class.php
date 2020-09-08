@@ -5,7 +5,7 @@ namespace rkphplib\tok;
 $parent_dir = dirname(__DIR__);
 require_once __DIR__.'/TokPlugin.iface.php';
 require_once $parent_dir.'/Database.class.php';
-require_once $parent_dir.'/traits/Map.trait.php';
+require_once $parent_dir.'/traits/Map.php';
 require_once $parent_dir.'/lib/conf2kv.php';
 require_once $parent_dir.'/lib/kv2conf.php';
 
