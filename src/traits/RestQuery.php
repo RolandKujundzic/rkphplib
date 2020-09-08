@@ -16,10 +16,10 @@ use rkphplib\File;
  * Parse Rest Query.
  * 
  * @code:
- * require_once(PATH_RKPHPLIB.'trait/RestQuery.trait.php');
+ * require_once(PATH_RKPHPLIB.'traits/RestQuery.php');
  *
  * class SomeClass {
- * use \rkphplib\trait\RestQuery;
+ * use \rkphplib\traits\RestQuery;
  * @:
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
