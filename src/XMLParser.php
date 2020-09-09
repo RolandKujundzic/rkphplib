@@ -51,15 +51,19 @@ private function reset() {
  *   public function addItem(string $tag, string $text, array $attrib, string $path) { ... }
  * }
  * 
+ * function xml_tag(string $tag, string $text, array $attrib, string $path) { ... }
+ *
  * $import = new ShopImport();
- * // call $import->addItem(...) foreach tag (without subtags) in <shop><item>...</item></shop>
- * setCallback($import, [ 'shop/item' => 'addItem' ]); 
+ * $xml_reader = new XMLParser(); 
+ * $xml_reader->setCallback($import, [ 'shop/item' => 'addItem' ]); 
+ * $xml_reader->setCallback(null, [ 'shop' => 'xml_tag' ]);
+ * $xml_reader->parse('<shop><category>...</category>...<item>...</item></shop>');
  * @end_example
  */
-public function setCallback(object $obj, array $map) {
+public function setCallback(?object $obj, array $map) {
 	foreach ($map as $path => $func) {
 		$path = strtolower($path);
-		$this->_callback[$path] = [ $obj, $func ];
+		$this->_callback[$path] = is_null($obj) ? $func : [ $obj, $func ];
 	}
 }
 
