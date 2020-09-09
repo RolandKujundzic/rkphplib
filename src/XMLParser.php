@@ -125,7 +125,7 @@ public function load(string $xml_file, int $start_line = 0, int $end_line = 0) :
 		$line = fgets($fh);
 		$n++;
 
-		\rkphplib\lib\log_debug("XMLParser.load:129> $n: ".trim($line));
+		// \rkphplib\lib\log_debug("XMLParser.load:128> $n: ".trim($line));
 		if (!xml_parse($parser, $line, $eof)) {
 			$error_msg = sprintf('XML error %d: "%s" at line %d column %d byte %d',
 				xml_get_error_code($parser),
@@ -286,7 +286,7 @@ protected function xmlTagClose($parser, $name) {
 		$this->data[$dp]['>text_pos'] = join(',', $text_pos);
 		$this->data[$dp]['>end_pos'] = count($this->data) - 1;
 		
-		\rkphplib\lib\log_debug("XMLParser.xmlTagClose:283> $dp: ".print_r($this->data[$dp], true));
+		// \rkphplib\lib\log_debug("XMLParser.xmlTagClose:289> $dp: ".print_r($this->data[$dp], true));
 		$cpath_list = array_keys($this->_callback);
 		foreach ($cpath_list as $cpath) {
 			if (strpos($path, $cpath) === 0) {
@@ -323,7 +323,7 @@ private function call_back(string $cpath, array $data) : void {
 	$text = isset($data['>text']) ? $data['>text'] : null;
 
 	if (!is_null($text) || count($attrib) > 0) {
-		\rkphplib\lib\log_debug([ "XMLParser.call_back:309> <1>(<2>, <3>, <4>, <5>)", $this->_callback[$cpath][1], $tag, $text, $attrib, $data['>path'] ]);
+		// \rkphplib\lib\log_debug([ "XMLParser.call_back:326> <1>(<2>, <3>, <4>, <5>)", $this->_callback[$cpath][1], $tag, $text, $attrib, $data['>path'] ]);
 		call_user_func($this->_callback[$cpath], $tag, $text, $attrib, $data['>path']);
 	}
 }
