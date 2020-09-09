@@ -1,0 +1,23 @@
+
+Input:
+<doc>
+	before_Sub1
+	<sub>Sub1
+		before Sub2
+		<sub>Sub2 äüö Sub2 ßÖÄÜ Sub2</sub>
+		after Sub2
+	</sub>
+	after Sub1
+</doc>
+Output:
+<doc>
+	before_Sub1
+	<sub>Sub1
+		before Sub2
+		<sub>Sub2 äüö Sub2 ßÖÄÜ Sub2</sub>
+		after Sub2
+	</sub>
+	after Sub1
+</doc>
+Callback s:
+<sub>Sub2 äüö Sub2 ßÖÄÜ Sub2</sub>

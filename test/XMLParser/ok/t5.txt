@@ -1,0 +1,17 @@
+
+Input:
+<doc>
+	<person>John Smith</person>
+	<person age="14">Frank Miller</person>
+	<person>Anna Baum</person>
+</doc>
+Output:
+<doc>
+	<person>John Smith</person>
+	<person age="14">Frank Miller</person>
+	<person>Anna Baum</person>
+</doc>
+Callback s:
+<person>John Smith</person>
+<person age='14'>Frank Miller</person>
+<person>Anna Baum</person>

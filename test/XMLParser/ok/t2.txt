@@ -1,0 +1,33 @@
+
+Input:
+<people xmlns:xsi="a" xsi:schemaLocation="http://..." xmlns:l="b" xmlns="c"> 
+	<person>
+		<name>Marcus</name>
+		<language>
+			<l:primary>XML</l:primary>
+			<xsi:secondary>HTML</xsi:secondary>
+		</language>
+	</person>
+</people>
+Output:
+<people xmlns:xsi="a" xsi:schemalocation="http://..." xmlns:l="b" xmlns="c"> 
+	<person>
+		<name>Marcus</name>
+		<language>
+			<l:primary>XML</l:primary>
+			<xsi:secondary>HTML</xsi:secondary>
+		</language>
+	</person>
+</people>
+Callback s:
+<name>Marcus</name>
+<l:primary>XML</l:primary>
+<xsi:secondary>HTML</xsi:secondary>
+<language>
+			
+			
+		</language>
+<person>
+		
+		
+	</person>

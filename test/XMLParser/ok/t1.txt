@@ -1,0 +1,35 @@
+Input:
+<doc
+	language="en">
+	<t>t1</t>
+	<br/>
+	<t>t2</t>
+	<br/>
+	<s>
+		<sa>sa</sa>
+		<sb x="xx" t="true" />
+		sval
+	</s>
+</doc>
+Output:
+<doc language="en">
+	<t>t1</t>
+	<br />
+	<t>t2</t>
+	<br />
+	<s>
+		<sa>sa</sa>
+		<sb x="xx" t="true" />
+		sval
+	</s>
+</doc>
+Callback s:
+<t>t1</t>
+<t>t2</t>
+<sa>sa</sa>
+<sb x='xx' t='true'/>
+<s>
+		
+		
+		sval
+	</s>
