@@ -18,39 +18,64 @@ class XMLParser {
 // @var array $data
 public $data = [];
 
-// @var array $env
-public $env = [];
+// @var array $_xml_tag
+private $_xml_tag = [];
 
-
-// @var array $_path
+// @var array $_path (tag call stack)
 private $_path = [];
 
-// @var array $_data_pos
+// @var array $_data_pos (last tag occurance)
 private $_data_pos = [];
+
+// @var callable $_callback
+private $_callback = [];
 
 
 /**
  * 
  */
-private function init() {
+private function reset() {
 	$this->data = [];
-	$this->env = [];
+	$this->_xml_tag = [];
 	$this->_path = [];
 	$this->_data_pos = [];
+	$this->_callback = [];
 }
 
 
 /**
+ * Set multiple tag path (a/b/...) callbacks.
+ * All tags path prefix and either attributes or text are callback.
  *
+ * @start_example
+ * class ShopImport {
+ *   public function addItem(string $tag, string $text, array $attrib, string $path) { ... }
+ * }
+ * 
+ * $import = new ShopImport();
+ * // call $import->addItem(...) foreach tag (without subtags) in <shop><item>...</item></shop>
+ * setCallback($import, [ 'shop/item' => 'addItem' ]); 
+ * @end_example
+ */
+public function setCallback(object $obj, array $map) {
+	foreach ($map as $path => $func) {
+		$path = strtolower($path);
+		$this->_callback[$path] = [ $obj, $func ];
+	}
+}
+
+
+/**
+ * Parse xml text
  */
 public function parse(string $xml_text) : void {
-	$this->init();
+	$this->reset();
 
 	if (preg_match("/^\<\?xml(.+?)\?\>/", $xml_text, $match)) {
 		// Match attribute-name attribute-value pairs.
 		if (preg_match_all('#[ \t]+(.+?)=\"(.+?)\"#', $match[1], $matches, PREG_SET_ORDER) != 0) {
 			foreach ($matches as $attribute) {
-				$this->env[$attribute[1]] = $attribute[2];
+				$this->_xml_tag[$attribute[1]] = $attribute[2];
 			}
 		}
 	}
@@ -76,20 +101,63 @@ public function parse(string $xml_text) : void {
 
 
 /**
+ * Parse xml file. Use $func(string $tag, string $text, array $attrib, array $path) as callback.
+ * Use $start_line = n (>0) and $end_line (>$start_line) to read only parts.
+ */
+public function load(string $xml_file, int $start_line = 0, int $end_line = 0) : void {
+	$this->reset();
+
+	$parser = xml_parser_create();
+
+	xml_set_object($parser, $this);
+	xml_set_element_handler($parser, 'xmlTagOpen', 'xmlTagClose');
+	xml_set_character_data_handler($parser, 'xmlTagData');
+
+	if (false === ($fh = fopen($xml_file, 'rb'))) {
+		throw new Exception('open xml file', "file=[$xml_file]");
+	}
+
+	$n = -1;
+	for ($n = 0; $n < $start_line; $n++) {
+		fgets($fh); // skip
+	}
+
+	while (!($eof = feof($fh)) && $n < $end_line) {
+		$line = fgets($fh);
+		$n++;
+
+		\rkphplib\lib\log_debug("$n: ".trim($line));
+		if (!xml_parse($parser, $line, $eof)) {
+			$error_msg = sprintf('XML error %d: "%s" at line %d column %d byte %d',
+				xml_get_error_code($parser),
+				xml_error_string(xml_get_error_code($parser)),
+				xml_get_current_line_number($parser),
+				xml_get_current_column_number($parser),
+				xml_get_current_byte_index($parser));
+			throw new Exception($error_msg);
+		}
+	}
+
+	fclose($fh);
+	xml_parser_free($parser);
+}
+
+
+/**
  * Return xml
  */
 public function toString() : string {
 	$close = array();
 	$res = '';
 
-	if (count($this->env) > 0) {
-		$res = '<?xml';
+	if (count($this->_xml_tag) > 0) {
+		$res = '<'.'?xml';
 
-		foreach ($this->env as $key => $value) {
+		foreach ($this->_xml_tag as $key => $value) {
 			$res .= ' '.$key.'="'.$value.'"';
 		}
 
-		$res .= " ?>\n";
+		$res .= ' ?'.">\n";
 	}
 
 	for ($i = 0; $i < count($this->data); $i++) {
@@ -173,7 +241,6 @@ public function debug() : string {
  * @param array $attributes
  */
 protected function xmlTagOpen($parser, $name, $attributes) {
-
 	$name = strtolower($name);
 	array_push($this->_path, $name);
 	$path = join('/', $this->_path);
@@ -192,13 +259,12 @@ protected function xmlTagOpen($parser, $name, $attributes) {
 
 
 /**
- * Expat callback function (on tag close)
+ * Expat callback function (on leaf tag close).
  *
  * @param resource $parser
  * @param string $name
  */
 protected function xmlTagClose($parser, $name) {
-
 	$name = strtolower($name);
 	$path = join('/', $this->_path);
 	$last_name = end($this->_path);
@@ -213,7 +279,36 @@ protected function xmlTagClose($parser, $name) {
 
 		$this->data[$dp]['>text_pos'] = join(',', $text_pos);
 		$this->data[$dp]['>end_pos'] = count($this->data) - 1;
+		
+		\rkphplib\lib\log_debug("$dp: ".print_r($this->data[$dp], true));
+		$cpath_list = array_keys($this->_callback);
+		foreach ($cpath_list as $cpath) {
+			if (strpos($path, $cpath) === 0) {
+				$this->call_back($cpath, $this->data[$dp]);
+			}
+		}
+
 		array_pop($this->_path);
+	}
+}
+
+
+/**
+ * Call $func 
+ */
+private function call_back(string $cpath, array $data) : void {
+	$data = $this->data[$i];
+	$attrib = [];
+
+	foreach ($data as $key => $value) {
+		if (substr($key, 0, 1) != '>') {
+			$attrib[$key] = $value;
+		}
+	}
+
+	if (strlen($data['>text']) > 0 || count($attrib) > 0) {
+		\rkphplib\lib\log_debug([ '<1>(<2>, <3>, <4>, <5>)', $this->_callback[$cpath][1], $data['>name'], $data['>text'], $attrib, $data['>path'] ]);
+		call_user_func($this->_callback[$cpath], $data['>name'], $data['>text'], $attrib, $data['>path']);
 	}
 }
 
