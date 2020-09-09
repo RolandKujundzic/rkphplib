@@ -884,7 +884,7 @@ public static function saveJSON(string $file, $data, int $flag = 0) : bool {
 
   if (($err_no = json_last_error()) || strlen($json) == 0) {
 		$base = dirname($file).'/'.File::basename($file, true);				
-		File::save(".$base.dump", print_r($data, true));
+		File::save($base.'.dump', print_r($data, true));
 
 		if ($flag & 2) {
 			File::save($base.'.ser', serialize($data));
