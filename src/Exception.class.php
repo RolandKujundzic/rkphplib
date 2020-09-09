@@ -71,8 +71,8 @@ private static function logTrace(array $stack, string $log_dir) : void {
 	$save_as  = (!empty($last['file']) && !empty($last['line'])) ? md5($last['file'].':'.$last['line']) : md5($last['TIME']);
 	$save_as .= '.'.$last['TIME'];
 
-	File::saveJSON($log_dir.'/'.$save_as.'.last.json', $last);
-	File::saveJSON($log_dir.'/'.$save_as.'.stack.json', $stack);
+	File::saveJSON($log_dir.'/'.$save_as.'.last.json', $last, 1);
+	File::saveJSON($log_dir.'/'.$save_as.'.stack.json', $stack, 1);
 }
 
 
