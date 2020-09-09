@@ -149,6 +149,11 @@ public function toString() : string {
 	$close = array();
 	$res = '';
 
+	if (count($this->_callback) > 0) {
+		// print "data: ".print_r($this->data, true)." _data_pos: ".print_r($this->_data_pos, true);
+		return '';
+	}
+
 	if (count($this->_xml_tag) > 0) {
 		$res = '<'.'?xml';
 
@@ -272,10 +277,12 @@ protected function xmlTagClose($parser, $name) {
 		$dp = $this->_data_pos[$path];
 		$text_pos = $this->data[$dp]['>text_pos'];
 
-		if (count($text_pos) == 1) {
-			$this->data[$dp]['>text'] = $this->data[$text_pos[0]]['>text'];
+		$text = '';
+		for ($i = 0; $i < count($text_pos); $i++) {
+			$text .= $this->data[$text_pos[$i]]['>text'];
 		}
 
+		$this->data[$dp]['>text'] = $text;
 		$this->data[$dp]['>text_pos'] = join(',', $text_pos);
 		$this->data[$dp]['>end_pos'] = count($this->data) - 1;
 		
@@ -284,6 +291,15 @@ protected function xmlTagClose($parser, $name) {
 		foreach ($cpath_list as $cpath) {
 			if (strpos($path, $cpath) === 0) {
 				$this->call_back($cpath, $this->data[$dp]);
+			}
+		}
+
+		if (count($cpath_list) > 0) {
+			// free memory in callback mode
+			foreach ($this->data[$dp] as $key => $value) {
+				if ($key != '>text_pos') {
+					unset($this->data[$dp][$key]);
+				}
 			}
 		}
 
@@ -320,7 +336,6 @@ private function call_back(string $cpath, array $data) : void {
  * @param string $data
  */
 protected function xmlTagData($parser, $data) {
-
 	$path = join('/', $this->_path);
 
 	$tag_data = array('>path' => $path, '>text' => $data);
