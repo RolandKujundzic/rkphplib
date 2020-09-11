@@ -27,8 +27,11 @@ private $_path = [];
 // @var array $_data_pos (last tag occurance)
 private $_data_pos = [];
 
-// @var callable $_callback
+// @var array $_callback (<string, callable>)
 private $_callback = [];
+
+// @var array $_path_list
+private $_path_list = [];
 
 
 /**
@@ -61,11 +64,12 @@ private function reset() {
  * @end_example
  */
 public function setCallback(?object $obj, array $map) {
+	$this->_callback = [];
 	foreach ($map as $path => $func) {
 		$path = strtolower($path);
 		$this->_callback[$path] = is_null($obj) ? $func : [ $obj, $func ];
 	}
-	// \rkphplib\lib\log_debug("XMLParser.setCallback:68> _callback: ".join("\n", array_keys($this->_callback)));
+	// \rkphplib\lib\log_debug("XMLParser.setCallback:72> _callback: ".join("\n", array_keys($this->_callback)));
 }
 
 
@@ -117,7 +121,7 @@ public function load(string $xml_file, int $start_line = 0, int $end_line = 0) :
 	xml_set_element_handler($parser, 'xmlTagOpen', 'xmlTagClose');
 	xml_set_character_data_handler($parser, 'xmlTagData');
 
-	// \rkphplib\lib\log_debug("XMLParser.load:120> $xml_file [$start_line,$end_line]");
+	// \rkphplib\lib\log_debug("XMLParser.load:124> $xml_file [$start_line,$end_line]");
 	if (false === ($fh = fopen($xml_file, 'rb'))) {
 		throw new Exception('open xml file', "file=[$xml_file]");
 	}
@@ -131,7 +135,7 @@ public function load(string $xml_file, int $start_line = 0, int $end_line = 0) :
 		$line = fgets($fh);
 		$n++;
 
-		// \rkphplib\lib\log_debug("XMLParser.load:134> $n: ".trim($line));
+		// \rkphplib\lib\log_debug("XMLParser.load:138> $n: ".trim($line));
 		if (!xml_parse($parser, $line, $eof)) {
 			$error_msg = sprintf('XML error %d: "%s" at line %d column %d byte %d',
 				xml_get_error_code($parser),
@@ -243,6 +247,48 @@ public function debug() : string {
 
 
 /**
+ * Scan xml file. Return path list. Parameter is either file path or xml string.
+ */
+public function scan(string $xml) : array {
+	$this->setCallback($this, [ '*' => 'scanPath' ]);
+
+	if (File::exists($xml)) {
+		$this->load($xml);
+	}
+	else {
+		$this->parse($xml);
+	}
+
+	return $this->_path_list;
+}
+
+
+/**
+ * tag callback (*)
+ */
+private function scanPath(string $tag, ?string $text, array $attrib, string $path) {
+	if (!in_array($path, $this->_path_list)) {
+		array_push($this->_path_list, $path);
+	}
+}
+
+
+/**
+ * tag callback
+ */
+private function printTags(string $tag, ?string $text, array $attrib, string $path) {
+	$attrib_str = '';
+	foreach ($attrib as $key => $value) {
+		$attrib_str .= ' '.$key.'="'.$value.'"';
+	}
+
+	$text = is_null($text) ? '/>' : '>'.trim($text)."</$tag>";
+
+	print "<$tag$attrib_str$text\n";
+}
+
+
+/**
  * Expat callback function (on tag open). Overwrite for custom parsing action.
  * 
  * @param resource $parser
@@ -291,11 +337,12 @@ protected function xmlTagClose($parser, $name) {
 		$this->data[$dp]['>text_pos'] = join(',', $text_pos);
 		$this->data[$dp]['>end_pos'] = count($this->data) - 1;
 		
-		// \rkphplib\lib\log_debug("XMLParser.xmlTagClose:294> $dp: ".print_r($this->data[$dp], true));
+		// \rkphplib\lib\log_debug("XMLParser.xmlTagClose:340> $dp: ".print_r($this->data[$dp], true));
 		$cpath_list = array_keys($this->_callback);
 		foreach ($cpath_list as $cpath) {
-			// \rkphplib\lib\log_debug("XMLParser.xmlTagClose:297> [$path] ? [$cpath]");
-			if (strpos($path, $cpath) === 0) {
+			// \rkphplib\lib\log_debug("XMLParser.xmlTagClose:343> [$path] ? [$cpath]");
+			if (strpos($path, $cpath) === 0 || $cpath == '*' ||
+					(substr($cpath, 0, 1) === '*' && strpos($path, strpos($cpath, 1)) !== false)) {
 				$this->call_back($cpath, $this->data[$dp]);
 			}
 		}
@@ -329,10 +376,9 @@ private function call_back(string $cpath, array $data) : void {
 	$tag = $data['>name'];
 	$text = isset($data['>text']) ? $data['>text'] : null;
 
-	if (!is_null($text) || count($attrib) > 0) {
-		// \rkphplib\lib\log_debug([ "XMLParser.call_back:333> <1>(<2>, <3>, <4>, <5>)", $this->_callback[$cpath][1], $tag, $text, $attrib, $data['>path'] ]);
-		call_user_func($this->_callback[$cpath], $tag, $text, $attrib, $data['>path']);
-	}
+	$method = is_array($this->_callback[$cpath]) ? $this->_callback[$cpath][1] : $this->_callback[$cpath];
+	// \rkphplib\lib\log_debug([ "XMLParser.call_back:380> <1>(<2>, '<3>', <4>, <5>)", $method, $tag, $text, $attrib, $data['>path'] ]);
+	call_user_func($this->_callback[$cpath], $tag, $text, $attrib, $data['>path']);
 }
 
 
