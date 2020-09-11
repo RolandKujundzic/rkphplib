@@ -1693,12 +1693,14 @@ public function tok_escape_tok(string $txt) : string {
  * - arg: replace |#| with &#124;&#35;&#124;
  * - url: rawurlencode 
  * - js: entity escape
+ * - var: convert into variable name ([a-zA-Z0-9_]+)
  * - html: replace [ '&', '<', '>', '"', "'" ] with [ '&amp;', '&lt;', '&gt;', '&quot;', '&#39;' ]
  *
  * @tok {escape:arg}a|#|b{:escape} = &#124;&#35;&#124; (|#| = HASH_DELIMITER)
  * @tok {escape:entity}|@||#|a|@|b{:escape} = a&#124;&#64;&#124b
  * @tok {escape:js}'; alert('test'); '{:escape} = '&#39;; alert&#40;&#39;test&#39;&#41;; &#39;'
  * @tok {escape:url}a b{:escape} = a%20b
+ * @tok {escape:var}Hütte-im-Wald/a.b{:escape} = Huette_im_Wald_a_b
  * @tok {escape:html}<a href="abc">{:escape} = &lt;a href=&quot;abc&quot;&gt;
  */
 public function tok_escape(string $param, string $txt) : string {
@@ -1722,6 +1724,12 @@ public function tok_escape(string $param, string $txt) : string {
 	}
 	else if ($param == 'html') {
 		$res = str_replace([ '&', '<', '>', '"', "'" ], [ '&amp;', '&lt;', '&gt;', '&quot;', '&#39;' ], $txt);
+	}
+	else if ($param == 'var') {
+		$res = str_replace([ 'ö', 'ä', 'ü', 'ß', 'Ä', 'Ö', 'Ü', '/', '-', '.', ',' ], 
+			[ 'oe', 'ae', 'ue', 'ss', 'Ae', 'Oe', 'Ue', '_', '_', '_', '_' ], $txt);
+		$res = preg_replace('/[^a-zA-Z0-9_]/', '', $res);
+		$res = preg_replace('/_+/', '_', $res);
 	}
 	else {
 		throw new Exception('invalid parameter', $param);
@@ -1835,17 +1843,17 @@ public function tok_plugin(array $p) : void {
 		if (mb_strpos($plugin, ':') === false) {
 			require_once __DIR__."/$plugin.class.php";
 			$obj = '\\rkphplib\\tok\\'.$plugin;
-			// \rkphplib\lib\log_debug("TBase.tok_plugin:1838> require_once('".PATH_RKPHPLIB.'tok/'.$plugin.".class.php'); new $obj();");
+			// \rkphplib\lib\log_debug("TBase.tok_plugin:1846> require_once('".PATH_RKPHPLIB.'tok/'.$plugin.".class.php'); new $obj();");
 		}
 		else {
 			list ($path, $obj) = explode(':', $plugin);
 
 			if (basename($path) === $path && defined("PATH_$path")) {
 				$incl_path = constant("PATH_$path").'tok/'.$obj.'.class.php';
-				// \rkphplib\lib\log_debug("TBase.tok_plugin:1845> path=$path incl_path=$incl_path");
+				// \rkphplib\lib\log_debug("TBase.tok_plugin:1853> path=$path incl_path=$incl_path");
 				require_once $incl_path;
 				$obj = '\\'.strtolower($path).'\\tok\\'.$obj;
-				// \rkphplib\lib\log_debug("TBase.tok_plugin:1848> require_once('$incl_path'); new $obj();");
+				// \rkphplib\lib\log_debug("TBase.tok_plugin:1856> require_once('$incl_path'); new $obj();");
 			}
 			else {
 				throw new Exception("invalid path=[$path] or undefined PATH_$path");
@@ -2165,7 +2173,7 @@ public function tok_true(string $val, string $out) : string {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('TBase.tok_true:2168> val='.print_r($val, true).' tf='.print_r($tf, true));
+	// \rkphplib\lib\log_debug('TBase.tok_true:2176> val='.print_r($val, true).' tf='.print_r($tf, true));
 	return ((is_bool($tf) && $tf) || (is_array($val) && in_array($tf, $val)) || (is_string($tf) && $tf === $val) || 
 		(is_array($tf) && !empty($val) && in_array($val, $tf))) ? $out : '';
 }
@@ -2193,7 +2201,7 @@ public function tok_false(string $out) : string {
  * Write message via log_debug.
  */
 public function tok_log(string $txt) : void {
-	\rkphplib\lib\log_debug("TBase.tok_log:2196> $txt"); // @keep
+	\rkphplib\lib\log_debug("TBase.tok_log:2204> $txt"); // @keep
 }
 
 
