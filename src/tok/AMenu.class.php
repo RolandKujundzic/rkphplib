@@ -176,7 +176,7 @@ public function tok_menu_add(int $level, array $node) : void {
 		$this->skipNode($node);
 		return;
 	}
-	else if (preg_match('/^apps\/([A-Za-z0-9_\-]+)$/', $node['dir'], $match) && !empty($match[1]) && 
+	else if (!empty($node['dir']) && preg_match('/^apps\/([A-Za-z0-9_\-]+)$/', $node['dir'], $match) && !empty($match[1]) && 
 						!$this->tok->callPlugin('login', 'tok_login', [ 'conf.'.$match[1].'?' ])) {
 		$this->ignore_level = $level + 1;
 		$this->skipNode($node);
