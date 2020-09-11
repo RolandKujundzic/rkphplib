@@ -1,0 +1,49 @@
+
+Input:
+<ARTICLE>
+        <FEATURE>
+          <FNAME>Pflegehinweise 5</FNAME>
+          <FVALUE>Reinigen mit Perchlorethylen</FVALUE>
+          <FUNIT></FUNIT>
+          <FORDER>30</FORDER>
+          <FDESCR>Pflegehinweise 5</FDESCR>
+          <FVALUE_DETAILS>Reinigen mit Perchlorethylen</FVALUE_DETAILS>
+        </FEATURE>
+        <FEATURE>
+          <FNAME>VE</FNAME>
+          <FVALUE>10</FVALUE>
+          <FUNIT></FUNIT>
+          <FORDER>900</FORDER>
+          <FDESCR></FDESCR>
+          <FVALUE_DETAILS></FVALUE_DETAILS>
+        </FEATURE>
+</ARTICLE>
+
+printTags:
+<fname>Pflegehinweise 5</fname>
+<fvalue>Reinigen mit Perchlorethylen</fvalue>
+<funit></funit>
+<forder>30</forder>
+<fdescr>Pflegehinweise 5</fdescr>
+<fvalue_details>Reinigen mit Perchlorethylen</fvalue_details>
+<feature></feature>
+<fname>VE</fname>
+<fvalue>10</fvalue>
+<funit></funit>
+<forder>900</forder>
+<fdescr></fdescr>
+<fvalue_details></fvalue_details>
+<feature></feature>
+
+scan:
+Array
+(
+    [0] => article/feature/fname
+    [1] => article/feature/fvalue
+    [2] => article/feature/funit
+    [3] => article/feature/forder
+    [4] => article/feature/fdescr
+    [5] => article/feature/fvalue_details
+    [6] => article/feature
+    [7] => article
+)
