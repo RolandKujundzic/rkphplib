@@ -30,7 +30,7 @@ if (!isset($th)) {
 }
 
 
-$n = 5;
+$n = 6;
 
 for ($i = 1; $i <= $n; $i++) {
 	$th->execPHP($i);
