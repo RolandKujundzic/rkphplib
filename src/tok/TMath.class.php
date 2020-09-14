@@ -64,7 +64,7 @@ public function tok_math($arg) {
 			}
 		}
 
-		\rkphplib\lib\log_debug('TMath.tok_math:65> eval($res = "'.$expr.'";)');
+		// \rkphplib\lib\log_debug('TMath.tok_math:67> eval($res = "'.$expr.'";)');
 		eval('$res = '.$expr.';');
 	}
 	else {
