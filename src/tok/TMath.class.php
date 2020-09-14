@@ -52,23 +52,23 @@ public function tok_md5($arg) {
 public function tok_math($arg) {
 	$expr = preg_replace("/[\r\n\t ]+/", '', $arg);
 	$expr = str_replace(',', '.', $expr);
-	$expr_check = strtr($expr, '.0123456789+-*/()&', '                  ');
+	$expr_check = trim(strtr($expr, '.0123456789+-*/()&', '                  '));
 	$res = '';
 
-	if (trim($expr_check) == '' && preg_match('/[0-9]+/', $expr)) {
+	$last_char_invalid = in_array(substr($expr, -1), [ '*', '/', '-', '+', '&' ]);
+	$first_char_invalid = in_array(substr($expr, 0, 1), [ '*', '/', '&' ]);
+	if ($expr_check == '' && preg_match('/[0-9]+/', $expr) && !$last_char_invalid && !$first_char_invalid) {
 		if (strpos($expr, '/0') !== false && preg_match('/\/([0-9\.]+)/', $expr, $match)) {
 			if (floatval($match[1]) == 0) {
 				throw new Exception('division by zero in [math:]', "arg=[$arg] expr=[$expr]");
 			}
 		}
 
-		// \rkphplib\lib\log_debug('TMath.tok_math:65> eval($res = "'.$expr.'";)');
-		if (eval('$res = '.$expr.';') === false) {
-			throw new Exception("evaluation of [$expr]; failed");
-		}
+		\rkphplib\lib\log_debug('TMath.tok_math:65> eval($res = "'.$expr.'";)');
+		eval('$res = '.$expr.';');
 	}
 	else {
-		throw new Exception("invalid expression [$expr]");
+		throw new Exception('invalid methematical expression', "[$expr]");
 	}
 
 	return $res;
