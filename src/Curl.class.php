@@ -53,10 +53,19 @@ public function setCache($name, $ttl) {
 
 
 /**
- * Set header $name = $value.
+ * Set header $name = $value. Use $keep = true to keep header in all requests.
  */
-public function setHeader(string $name, string $value) : void {
-	$this->header[$name] = $value;
+public function setHeader(string $name, string $value, bool $keep = false) : void {
+	if ($keep) {
+		$this->header[$name] = $value;
+	}
+	else {
+		if (!isset($this->opt['HTTPHEADER'])) {
+			$this->opt['HTTPHEADER'] = [];
+		}
+
+		array_push($this->opt['HTTPHEADER'], $name.': '.$value);
+	}
 }
 
 
@@ -119,7 +128,8 @@ public function post(array $data) : void {
 
 
 /**
- * Call authentication url and save cookies to cookiejar.
+ * Call authentication url and save cookies to cookiejar. 
+ * If $this->header[REFERER] use cookiejar (call createCookiejar() first).
  * Use setCache('ttl', 600) to keep authentication valid for 10 min.
  */
 public function auth(string $url) : void {
@@ -132,7 +142,13 @@ public function auth(string $url) : void {
 		return;
 	}
 
-	$this->opt['COOKIEJAR'] = $this->cookiejar;
+	if (!empty($this->header['REFERER'])) {
+		File::exists($this->cookiejar, true);
+		$this->opt['COOKIEFILE'] = $this->cookiejar;
+	}
+	else {
+		$this->opt['COOKIEJAR'] = $this->cookiejar;
+	}
 
 	if (!empty($this->opt['POST'])) {
 		$this->setPostString($url);
@@ -166,16 +182,34 @@ public function download(string $url, string $save_as) : void {
 
 
 /**
+ * Call $url and save cookies to cookiejar (use auth cache).
+ */
+public function createCookiejar(string $url) : void {
+	if (empty($this->cookiejar)) {
+		throw new Exception('empty cookiejar');
+	}
+
+	if ($this->cacheOk('auth', $this->cookiejar)) {
+		$this->opt = [];
+		return;
+	}
+
+	$this->opt['COOKIEJAR'] = $this->cookiejar;
+	$this->call_curl($url);
+	File::exists($this->cookiejar, true);
+}
+
+
+/**
  * Return true if lastModified($file) > NOW() - this.cache[$name]
  */
 private function cacheOk(string $name, string $file) : bool {
-
 	if (empty($this->cache[$name]) || !File::exists($file)) {
 		return false;
 	}
 	
 	$res = File::lastModified($file) > time() - $this->cache[$name];
-	// \rkphplib\lib\log_debug("Curl.cacheOk:178> $file: ".intval($res));
+	\rkphplib\lib\log_debug("Curl.cacheOk:213> $file: ".intval($res));
 	return $res;
 }
 
@@ -191,22 +225,32 @@ private function call_curl(string $url) : string {
 	$this->opt['SSL_VERIFYPEER'] = false;
 	$this->opt['RETURNTRANSFER'] = true;
 
+	if (count($this->header) > 0) {
+		if (!isset($this->opt['HTTPHEADER'])) {
+			$this->opt['HTTPHEADER'] = [];
+		}
+
+		foreach ($this->header as $key => $value) {
+			array_push($this->opt['HTTPHEADER'], $key.': '.$value);
+		}
+	}
+
 	if (empty($this->opt['URL'])) {
-		$this->opt['URL'] = empty($this->url) ? $url : $this->url.$url;
+		$this->opt['URL'] = (empty($this->url) || substr($url, 0, 4) == 'http') ? $url : $this->url.$url;
 	}
 
 	foreach ($this->opt as $key => $value) {
 		curl_setopt($ch, constant('CURLOPT_'.$key), $value);
 	}
 
-	// \rkphplib\lib\log_debug('Curl.call_curl:202> '.print_r($this->opt, true));
+	\rkphplib\lib\log_debug('Curl.call_curl:202> '.print_r($this->opt, true));
 
 	$res = curl_exec($ch);
 
 	$info = curl_getinfo($ch);
 	$status = intval($info['http_code']);
 	if ($status < 200 || $status >= 300) {
-		throw new Exception('curl failed', $this->opt['url']);
+		throw new Exception('curl failed', $this->opt['URL']);
 	}
 
 	curl_close($ch);
@@ -217,22 +261,29 @@ private function call_curl(string $url) : string {
 
 
 /**
- * Use ?key=value&... as post data. Ignore if $url does not start with ?
+ * Use [http...|path]?key=value&... as post data.
+ * Ignore if $url does not contain ?
  */
 private function setPostString(string $url) : void {
-	if (substr($url, 0, 1) != '?') {
+	if (false === strpos($url, '?')) {
 		return;
 	}
 
-	if (empty($this->opt['URL'])) {
+	list ($path, $query) = explode('?', $url, 2);
+
+	if (substr($path, 0, 4) == 'http') {
+		$this->opt['URL'] = $path;
+	}
+	else if (empty($this->opt['URL'])) {
 		if (empty($this->url)) {
 			throw new Exception('url is empty');
 		}
 
-		$this->opt['URL'] = $this->url;
+		$this->opt['URL'] = $this->url.$path;
 	}
 
-	$this->opt['POSTFIELDS'] = substr($url, 1);
+
+	$this->opt['POSTFIELDS'] = $query;
 }
 
 
