@@ -79,11 +79,17 @@ public function getPlugins(Tokenizer $tok) : array {
 /**
  * Return search input. Always call rkphplib.searchOutput() (include js/rkPhpLibJS.js). Examples:
  * 
- * @tok {search:status}options= 1={txt:}active{:txt},99={txt:}deleted{:txt},100={txt:}inactive{:txt}{:search} =
- *   <select name="s_status" onchange="rkphplib.searchOutput(this)"><option value="">...</option><option value="1">{txt:}active{:txt}</option>...</select>
+ * @tok {search:status}options= 1={txt:}active{:txt},99={txt:}deleted{:txt},100={txt:}inactive{:txt}{:search} …
+ * <select name="s_status" onchange="rkphplib.searchOutput(this)">
+ *   <option value="">...</option>
+ *   <option value="1">{txt:}active{:txt}</option>
+ *   ...
+ * </select>
+ * @EOL
  *
- * @tok {search:name}width=5{:search} =
- *   <input type="text" name="s_name" value="{get:s_name}" style="width:$WIDTHch" onkeypress="rkphplib.searchOutput(this)">
+ * @tok {search:name}width=5{:search} …
+ * <input type="text" name="s_name" value="{get:s_name}" style="width:$WIDTHch" onkeypress="rkphplib.searchOutput(this)">
+ * @EOL
  *
  * @tok {search:name}overlay=1|#|sort=1|#|label=NAME|#| ...{:search} = NAME
  */
@@ -385,9 +391,14 @@ protected function getHeaderLabel() : string {
 /**
  * Show if table is not empty.
  *
- * @tok {output:init}column_label= id:ID, name:NAME|#|
- *   template.header_label= <td nowrap align="center"$suffix>$txt_label$sort</td>|#|{:output}
- * @tok {output:header}{:=header_label}{:output} -> <table>
+ * @tok …
+ * {output:init}
+ * column_label= id:ID, name:NAME|#|
+ * template.header_label= <td nowrap align="center"$suffix>$txt_label$sort</td>|#|
+ * {:output}
+ * @EOL
+ *
+ * @tok {output:header}{:=header_label}{:output} = <table>
  */
 public function tok_output_header(string $tpl) : string {
 	if ($this->isEmpty()) {
