@@ -107,7 +107,7 @@ public function tok_search(string $col, array $p) : string {
 
 	$s_value = isset($_REQUEST['s_'.$col]) ? htmlescape($_REQUEST['s_'.$col]) : '';
 
-	// \rkphplib\lib\log_debug("TOutput.tok_search:104> col=[$col] type=[".$p['type']."] s_value=[$s_value]");
+	// \rkphplib\lib\log_debug("TOutput.tok_search:110> col=[$col] type=[".$p['type']."] s_value=[$s_value]");
 	if ($p['type'] == 'select') {
 		$res = '<select name="s_'.$col.'" onchange="rkphplib.searchOutput(this)">';
 		$options = \rkphplib\lib\conf2kv($p['options'], '=', ',');
@@ -153,7 +153,7 @@ public function tok_search(string $col, array $p) : string {
 		$res = empty($p['sort']) ? $p['label'] : $p['label'].' '.$this->tok->getPluginTxt('sort:'.$col);
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_search:150> return [$res]");
+	// \rkphplib\lib\log_debug("TOutput.tok_search:156> return [$res]");
 	return $res;
 }
 
@@ -217,7 +217,7 @@ public function tok_output_set(string $name, string $value) : void {
 		$this->tok_output_conf([]);
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_set:214> set conf[$name]=[$value]");
+	// \rkphplib\lib\log_debug("TOutput.tok_output_set:220> set conf[$name]=[$value]");
 	$this->conf[$name] = $value;
 }
 
@@ -409,7 +409,7 @@ public function tok_output_header(string $tpl) : string {
 		$tpl = $this->tok->getPluginTxt('redo:', $this->tok->replaceTags($tpl, [ 'header_label' => $this->getHeaderLabel() ]));
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_header:401> replace tpl: $tpl");
+	// \rkphplib\lib\log_debug("TOutput.tok_output_header:412> replace tpl: $tpl");
 	if (!empty($this->env['tags'][0]) && $this->tok->hasReplaceTags($tpl, [ $this->env['tags'][0] ])) {
 		$replace = [];
 
@@ -428,7 +428,7 @@ public function tok_output_header(string $tpl) : string {
   	}
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_header:420> exit tpl: $tpl");
+	// \rkphplib\lib\log_debug("TOutput.tok_output_header:431> exit tpl: $tpl");
 	return $tpl;
 }
 
@@ -470,7 +470,7 @@ public function tok_output_json() : string {
 
 	$res = JSON::encode(array_slice($this->table, $start, $end - $start + 1));
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_json:462> return $res");
+	// \rkphplib\lib\log_debug("TOutput.tok_output_json:473> return $res");
 	return $res;
 }
 
@@ -513,7 +513,7 @@ protected function getOutputLoopTemplate(string $tpl) : string {
 	}
 	
 	$tpl = $this->tok->replaceTags($tpl, [ 'loop_column' => join("\n", $loop_column) ]); 
-	// \rkphplib\lib\log_debug("TOutput.getOutputLoopTemplate:505> return [$tpl]");
+	// \rkphplib\lib\log_debug("TOutput.getOutputLoopTemplate:516> return [$tpl]");
 	return $tpl;
 }
 
@@ -708,7 +708,7 @@ public function tok_output_conf(array $p) : void {
 	foreach ($p as $key => $value) {
 		$this->conf[$key] = $value;
 	}
-	// \rkphplib\lib\log_debug("TOutput.tok_output_conf:700> this.conf: ".print_r($this->conf, true));
+	// \rkphplib\lib\log_debug("TOutput.tok_output_conf:711> this.conf: ".print_r($this->conf, true));
 }
 
 
@@ -978,7 +978,7 @@ private function _scroll_link(string $key, int $last) : string {
 	$link = $this->conf['scroll.'.$key];
 
 	$res = $this->tok->replaceTags($tpl, [ 'link' => $link, 'last' => $last ]);
-	// \rkphplib\lib\log_debug("TOutput._scroll_link:970> key=[$key], last=[$last] tpl=[$tpl] link=[$link] last=[$last] res=[$res]");
+	// \rkphplib\lib\log_debug("TOutput._scroll_link:981> key=[$key], last=[$last] tpl=[$tpl] link=[$link] last=[$last] res=[$res]");
 	return $res;
 }
 
@@ -1002,7 +1002,7 @@ private function exportLinkKeep() : void {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.exportLinkKeep:994> keep_param: ".join('|', $keep_param));
+	// \rkphplib\lib\log_debug("TOutput.exportLinkKeep:1005> keep_param: ".join('|', $keep_param));
 	foreach ($keep_param as $name) {
 		if (isset($_REQUEST[$name])) {
 			$kv[$name] = $this->getValue($name);
@@ -1054,7 +1054,7 @@ protected function getSearch() : array {
 		list ($where, $and) = $this->getSqlSearch($options);
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.getSearch:1046> return where=[$where]\nand=[$and]");
+	// \rkphplib\lib\log_debug("TOutput.getSearch:1057> return where=[$where]\nand=[$and]");
 	return [ $where, $and ];
 }
 
@@ -1233,7 +1233,7 @@ private function searchColumnValue(array &$env) : bool {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.searchColumnValue:1225> return - expr_before=[$expr_befrore] env: ".print_r($env, true));
+	// \rkphplib\lib\log_debug("TOutput.searchColumnValue:1236> return - expr_before=[$expr_befrore] env: ".print_r($env, true));
 	return $expr_before < count($env['expr']);
 }
 
@@ -1248,7 +1248,7 @@ private function selectSearch(array $cols) : array {
 
 	$query = "SELECT ".join(', ', $cols)." FROM ".ADatabase::escape_name($this->conf['query.table']);
 	$db = Database::getInstance($this->conf['query.dsn'], [ 'search_info' => $query ]);
-	// \rkphplib\lib\log_debug("TOutput.selectSearch:1240> query.search_info: ".$db->getQuery('search_info'));
+	// \rkphplib\lib\log_debug("TOutput.selectSearch:1251> query.search_info: ".$db->getQuery('search_info'));
 	return $db->selectOne($db->getQuery('search_info'));
 }
 
@@ -1338,11 +1338,11 @@ protected function selectData() : void {
 
 	$this->conf['query'] = $query;
 	$db = Database::getInstance($this->conf['query.dsn'], [ 'output' => $this->conf['query'] ]);
-	// \rkphplib\lib\log_debug("TOutput.selectData:1330> query.output: ".$db->getQuery('output', $_REQUEST));
+	// \rkphplib\lib\log_debug("TOutput.selectData:1341> query.output: ".$db->getQuery('output', $_REQUEST));
 	$db->execute($db->getQuery('output', $_REQUEST), true);
 
 	$this->env['total'] = $db->getRowNumber();
-	// \rkphplib\lib\log_debug("TOutput.selectData:1334> found ".$this->env['total'].' entries');
+	// \rkphplib\lib\log_debug("TOutput.selectData:1345> found ".$this->env['total'].' entries');
 	$this->table = [];
 
 	if ($this->env['start'] >= $this->env['total']) {
@@ -1357,7 +1357,7 @@ protected function selectData() : void {
 	$skip = intval($this->conf['skip']);
 	$this->env['total'] -= $skip;
 
-	// \rkphplib\lib\log_debug("TOutput.selectData:1349> show max. $n rows");
+	// \rkphplib\lib\log_debug("TOutput.selectData:1360> show max. $n rows");
 	while (($row = $db->getNextRow()) && $n < $this->env['pagebreak']) {
 		if ($skip > 0) {
 			$skip--;
@@ -1373,7 +1373,7 @@ protected function selectData() : void {
 		$this->checkColumnLabel();
 	}
 
-	// \rkphplib\lib\log_debug('TOutput.selectData:1365> show '.count($this->table).' rows');
+	// \rkphplib\lib\log_debug('TOutput.selectData:1376> show '.count($this->table).' rows');
 	$db->freeResult();
 }
 
