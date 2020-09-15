@@ -653,7 +653,7 @@ public static function formatDateStr(string $format_out, string $date_str, strin
  * strftime = use strftime($format_out, time)
  */
 public static function formatDateTimeStr(string $format_out, string $date_str, string $format_in = '') : string {
-
+	\rkphplib\lib\log_debug("DateCalc.formatDateTimeStr:656> ('$format_out', '$date_str', '$format_in')"); 
 	if ($format_in == 'unix' && mb_substr($date_str, 0, 4) == 'now(') {
 		$format_in = 'now';
 	}
@@ -674,11 +674,14 @@ public static function formatDateTimeStr(string $format_out, string $date_str, s
 	else if ($format_in == 'strtotime') {
 		$time = strtotime($date_str);
 	}
-	else if (preg_match("/^([0-9]{2})\/([0-9]{4})$/", $date_str, $m)) {
+	else if (preg_match('/^([0-9]{2})\/([0-9]{4})$/', $date_str, $m)) {
 		$time = mktime(0, 0, 0, $m[1], 1, $m[2]) - 1;
 	}
 	else if ($format_in == 'now' || mb_substr($date_str, 0, 4) == 'now(') {
 		$time = empty($date_str) ? time() : self::nowstr2time($date_str);
+	}
+	else if ($format_out == 'hm' && preg_match('/^[0-9]{2}:[0-9]{2}(:[0-9]{2})?$/', $date_str)) {
+		return substr($date_str, 0, 5);
 	}
 	else {
 		$date = self::date2dmyhis($date_str, true, true);
