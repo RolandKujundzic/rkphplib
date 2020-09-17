@@ -65,7 +65,8 @@ function log_debug($msg, int $flag = 0) : void {
 	else if (defined('SETTINGS_LOG_DEBUG') && !empty(SETTINGS_LOG_DEBUG)) {
 		$log_to = SETTINGS_LOG_DEBUG;
 	}
-	else {
+
+	if (empty($log_to)) {
 		return;
 	}
 
