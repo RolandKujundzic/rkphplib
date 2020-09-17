@@ -5,6 +5,7 @@ namespace rkphplib\tok;
 require_once __DIR__.'/TokPlugin.iface.php';
 require_once __DIR__.'/../Exception.class.php';
 require_once __DIR__.'/../File.class.php';
+require_once __DIR__.'/../lib/kv2conf.php';
 
 use rkphplib\Exception;
 use rkphplib\File;
@@ -492,7 +493,7 @@ private function _join_tok(int $start, int $end) : string {
 		throw new Exception('invalid status - call setText() first');
 	}
 
-	// \rkphplib\lib\log_debug("Tokenizer._join_tok:495> start=$start end=$end\ntok: ".print_r($this->_tok, true)."\nendpos: ".print_r($this->_endpos, true));
+	// \rkphplib\lib\log_debug("Tokenizer._join_tok:496> start=$start end=$end\ntok: ".print_r($this->_tok, true)."\nendpos: ".print_r($this->_endpos, true));
 	$tok_out = array();
 
 	for ($i = $start; $i < $end; $i++) {
@@ -527,7 +528,7 @@ private function _join_tok(int $start, int $end) : string {
 	$res = join('', $tok_out);
 	array_pop($this->_callstack);
 
-	// \rkphplib\lib\log_debug("Tokenizer._join_tok:530> i=[$i] return:\n[$res]\n");
+	// \rkphplib\lib\log_debug("Tokenizer._join_tok:531> i=[$i] return:\n[$res]\n");
 	return $res;
 }
 
@@ -580,7 +581,7 @@ public function getPluginFeatures(string $name) : ?int {
 private function _join_tok_plugin(int &$i) : ?string {
 	$tok = $this->_tok[$i];
 
-	// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:583> i=$i, tok=".mb_substr($tok, 0, 60));
+	// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:584> i=$i, tok=".mb_substr($tok, 0, 60));
 
 	// call plugin if registered ...
 	$d  = $this->rx[2];
@@ -678,9 +679,9 @@ private function _join_tok_plugin(int &$i) : ?string {
 	}
 	else {
 		if ($ep == -1) {
-			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:681> no arg: name=$name param=[$param] i=$i ep=$ep");
+			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:682> no arg: name=$name param=[$param] i=$i ep=$ep");
 			$out = $this->_call_plugin($name, $param);
-			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:683> out:\n[$out]\n");
+			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:684> out:\n[$out]\n");
 		}
 		else if ($ep > $i) {
 			if ($tp & TokPlugin::TEXT) {
@@ -689,13 +690,13 @@ private function _join_tok_plugin(int &$i) : ?string {
 			}
 			else {
 				// parse argument with recursive _join_tok call ...
-				// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:692> compute arg of $name with recursion: start=$i+1 end=$ep\n");
+				// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:693> compute arg of $name with recursion: start=$i+1 end=$ep\n");
 				$arg = $this->_join_tok($i + 1, $ep);
 			}
  
-			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:696> arg: name=$name param=[$param] arg=[$arg] i=$i ep=$ep");
+			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:697> arg: name=$name param=[$param] arg=[$arg] i=$i ep=$ep");
 			$out = $this->_call_plugin($name, $param, $arg);
- 			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:698> set i=$ep - out:\n[$out]\n");
+ 			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:699> set i=$ep - out:\n[$out]\n");
 
 			$i = $ep; // modify loop position
 		}
@@ -864,7 +865,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 			$func = '';
 		}
 
-		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:867> return this._call_plugin($name, $func, $args)");
+		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:868> return this._call_plugin($name, $func, $args)");
 		return $this->_call_plugin($name, $func, $args);
 	}
 
@@ -872,7 +873,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 		throw new Exception("no such plugin method $name.".$func);
 	}
 
-	// \rkphplib\lib\log_debug("Tokenizer.callPlugin:875> name=$name, funct=$func, args: ".print_r($args, true));
+	// \rkphplib\lib\log_debug("Tokenizer.callPlugin:876> name=$name, funct=$func, args: ".print_r($args, true));
 	if (count($args) == 0) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func));
 	}
@@ -1000,7 +1001,7 @@ private function _call_plugin(string $name, string $param, ?string $arg = null) 
 		$old_tok = $this->_tok;
 		$old_endpos = $this->_endpos;
 
-		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:1003> REDO:\n---\n$res\n---\n");
+		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:1004> REDO:\n---\n$res\n---\n");
 		$this->setText($res);
 		$res = $this->_join_tok(0, count($this->_tok));
 
@@ -1136,12 +1137,21 @@ public function unescape(string $txt, ?string $rx = null) : string {
 
 /**
  * Return $tpl with {:=key} (rx[1].$rx[2].'='.$key.$rx[3]) replaced by replace[key].
+ * If $tpl has {:=_hash} replace with $replace string hash.
  */
 public function replaceTags(string $tpl, array $replace, string $prefix = '') : string {
 	if (is_string($replace) && strlen(trim($replace)) == 0) {
 		throw new Exception('replaceTags hash is string', "replace=[$replace] tpl=[$tpl]");
 	}
-		
+
+	$hash_tag = $this->rx[1].$this->rx[2].'=_hash'.$this->rx[3];
+	if (false !== mb_strpos($tpl, $hash_tag)) {
+		$tpl = str_replace($hash_tag, \rkphplib\lib\kv2conf($replace), $tpl);
+		if (false === mb_strpos($tpl, $this->rx[1].$this->rx[2].'=')) {
+			return $tpl;
+		}
+	}
+
 	foreach ($replace as $key => $value) {
 		if (!is_array($value)) {
 			$tag = $this->rx[1].$this->rx[2].'='.$prefix.$key.$this->rx[3];
@@ -1213,7 +1223,7 @@ public function getTag(string $name) : string {
 private function tryPluginMap(string $name) : void {
 	static $map = [
 		'TArray' => [ 'array', 'array:set', 'array:get', 'array:shift', 'array:unshift', 'array:pop', 'array:push', 'array:join', 'array:length', 'array:split' ],
-		'TBase' => [ 'row:init', 'row', 'tpl_set', 'tpl', 'tf', 't', 'true', 'f', 'false', 'find', 'filter', 'plugin', 'escape:tok', 'escape', 'unescape', 'encode', 'decode', 'get', 'const', 'include', 'include_if', 'view', 'clear', 'ignore', 'if', 'switch', 'keep', 'load', 'link', 'redo', 'toupper', 'tolower', 'hidden', 'trim', 'join', 'set_default', 'set', 'redirect', 'var', 'esc', 'log', 'shorten', 'strlen', 'json:exit', 'json' ],
+		'TBase' => [ 'row:init', 'row', 'tpl_set', 'tpl', 'tf', 't', 'true', 'f', 'false', 'find', 'filter', 'plugin', 'escape:tok', 'escape', 'unescape', 'encode', 'decode', 'get', 'const', 'include', 'include_if', 'view', 'clear', 'ignore', 'if', 'switch', 'keep', 'load', 'link', 'redo', 'toupper', 'tolower', 'hidden', 'trim', 'join', 'set_default', 'set', 'redirect', 'var', 'esc', 'log', 'shorten', 'strlen', 'json:exit', 'json', 'log_debug' ],
 		'TConf' => [ 'conf', 'conf:id', 'conf:var', 'conf:get', 'conf:get_path', 'conf:set', 'conf:set_path', 'conf:set_default', 'conf:append' ],
 		'TDate' => [ 'date' ],
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval:call', 'eval' ],
