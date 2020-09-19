@@ -516,7 +516,9 @@ public function getVar(string $name, string $name2 = '') {
 		$name .= $name2;
 	}
 
-	return $this->_tok->getVar($name);
+	$res = $this->_tok->getVar($name);
+	\rkphplib\lib\log_debug("TBase.getVar:520> _tok.getVar($name): ".print_r($res, true));
+	return $res;
 }
 
 
