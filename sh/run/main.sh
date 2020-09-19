@@ -18,8 +18,6 @@ fi
 case ${ARG[1]} in
 	build)
 		build;;
-	composer)
-		_composer "${ARG[2]}";;
 	docs)
 		docs;;
 	docker_osx)
@@ -31,6 +29,6 @@ case ${ARG[1]} in
 	ubuntu)
 		ubuntu;;
 	*)
-		_syntax "build|composer|docs|docker_osx|php|test|ubuntu"
+		_syntax "build|docs|docker_osx|php|test|ubuntu"
 esac
 

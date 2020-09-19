@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2016 - 2020 Roland Kujundzic <roland@kujundzic.de>
 #
-# shellcheck disable=SC1091,SC1001,SC2006,SC2009,SC2012,SC2016,SC2024,SC2028,SC2034,SC2044,SC2046,SC2048,SC2068,SC2086,SC2119,SC2120,SC2153,SC2183,SC2206
+# shellcheck disable=SC1091,SC1001,SC2009,SC2012,SC2016,SC2024,SC2028,SC2034,SC2044,SC2046,SC2048,SC2068,SC2086,SC2119,SC2120,SC2153,SC2183,SC2206
 #
 
 
@@ -36,13 +36,13 @@ function _abort {
 
 	if test "$NO_ABORT" = 1; then
 		ABORT=1
-		echo "${rf}WARNING${line}: ${msg}${nf}"
+		echo -e "${rf}WARNING${line}: ${msg}${nf}"
 		return 1
 	fi
 
 	msg="${rf}${msg}${nf}"
 
-	local frame trace
+	local frame trace 
 	if type -t caller >/dev/null 2>/dev/null; then
 		frame=0
 		trace=$(while caller $frame; do ((frame++)); done)
@@ -52,6 +52,8 @@ function _abort {
 	if [[ -n "$LOG_LAST" && -s "$LOG_LAST" ]]; then
 		msg="$msg\n\n$(tail -n+5 "$LOG_LAST")"
 	fi
+
+	test -n "$ABORT_MSG" && msg="$msg\n\n$ABORT_MSG" 
 
 	echo -e "\n${brf}ABORT${line}:${nf} $msg\n" 1>&2
 
@@ -180,18 +182,74 @@ function _apt_update {
 		echo "$now" > "$lu" 
 
 		_run_as_root 1
-		echo -n "apt -y update &>$RKBASH_DIR/update.log ... "
+		_msg "apt -y update &>$RKBASH_DIR/update.log ... " -n
 		sudo apt -y update &>"$RKBASH_DIR/update.log" || _abort 'sudo apt -y update'
-		echo "done"
+		_msg "done"
 
 		if test "$1" = 1; then
-			echo -n "apt -y upgrade &>$RKBASH_DIR/upgrade.log  ... "
+			_msg "apt -y upgrade &>$RKBASH_DIR/upgrade.log  ... " -n
  			sudo apt -y upgrade &>"$RKBASH_DIR/upgrade.log" || _abort 'sudo apt -y upgrade'
-			echo "done"
+			_msg "done"
 		fi
 	fi
 
 	_rkbash_dir reset
+}
+
+
+function _ask {
+	local allow default msg label recursion
+	
+	if test -z "$2"; then
+		:
+	elif [[ "${2:0:1}" == "<" && "${2: -1}" == ">" ]]; then
+		label="$2  "
+ 		allow="|${2:1: -1}|"
+
+		if test -n "$ASK_DEFAULT"; then
+			default="$ASK_DEFAULT"
+			label="$label [$default]"
+			ASK_DEFAULT=
+		fi
+	else 
+		label="[$2]  "
+ 		default="$2"
+	fi
+	
+	if [[ "$AUTOCONFIRM" = "default" && -n "$default" ]]; then
+		ANSWER="$default"
+		AUTOCONFIRM=
+		return
+	fi
+
+	msg="\033[0;35m$1\033[0m"
+	if test -z "$ASK_DESC"; then
+		echo -en "$msg$label"
+	else
+		echo -en "$msg\n\n$ASK_DESC\n\n$label"
+	fi
+
+	ASK_DESC=
+	read -r
+
+	if test "$REPLY" = " "; then
+		ANSWER=
+	elif [[ -z "$REPLY" && -n "$default" ]]; then
+		ANSWER="$default"
+	elif test -n "$allow"; then
+		[[ "$allow" == *"|$REPLY|"* ]] && ANSWER="$REPLY" || ANSWER=
+	else
+		ANSWER="$REPLY"
+	fi
+
+	recursion="${4:-0}"
+	if test -z "$ANSWER" && test "$recursion" -lt 3; then
+		test "$recursion" -ge 2 && _abort "you failed to answer the question 3 times"
+		recursion=$((recursion + 1))
+		_ask "$1" "$2" "$3" "$recursion"
+	fi
+
+	[[ -z "$ANSWER" && "$1" = '1' ]] && _abort "you failed to answer the question"
 }
 
 
@@ -208,9 +266,7 @@ function _cd {
 		fi
 	fi
 
-	if test -z "$2"; then
-		echo "cd '$1'"
-	fi
+	test -z "$2" && _msg "cd '$1'"
 
 	if test -z "$1"; then
 		if test -n "$LAST_DIR"; then
@@ -250,7 +306,7 @@ function _chmod {
 			priv=
 
 			if test -f "${FOUND[$i]}" || test -d "${FOUND[$i]}"; then
-				priv=`stat -c "%a" "${FOUND[$i]}"`
+				priv=$(stat -c "%a" "${FOUND[$i]}")
 			fi
 
 			if test "$1" != "$priv" && test "$1" != "0$priv"; then
@@ -258,7 +314,7 @@ function _chmod {
 			fi
 		done
 	elif test -f "$2"; then
-		priv=`stat -c "%a" "$2"`
+		priv=$(stat -c "%a" "$2")
 
 		if [[ "$1" != "$priv" && "$1" != "0$priv" ]]; then
 			_sudo "$cmd $1 '$2'" 1
@@ -270,73 +326,87 @@ function _chmod {
 
 
 function _composer {
-	local action global_comp local_comp user_action cmd
+	local action global_comp local_comp cmd
 	global_comp=$(command -v composer)
 	action="$1"
 
-	test -f "composer.phar" && local_comp=composer.phar
+	test -f 'composer.phar' && local_comp=composer.phar
+
+	if [[ -z "$global_comp" && -z "$local_comp" ]]; then
+		_composer_install
+		test "$action" = 'q' && return
+	fi
 
 	if test -z "$action"; then
-		echo -e "\nWhat do you want to do?\n"
-
-		if [[ -z "$global_comp" && -z "$local_comp" ]]; then
-			action=l
-			echo "[g] = global composer installation: /usr/local/bin/composer"
-			echo "[l] = local composer installation: composer.phar"
-		else
-			if test -f composer.json; then
-				action=i
-				test -d vendor && action=u
-
-				echo "[i] = install packages from composer.json"
-				echo "[u] = update packages from composer.json"
-				echo "[a] = update vendor/composer/autoload*"
-			fi
-
-			if test -n "$local_comp"; then
-				echo "[r] = remove local composer.phar"
-			fi
-		fi
-
- 		echo -e "[q] = quit\n\n"
-		echo -n "Type ENTER or wait 10 sec to select default. Your Choice? [$action]  "
-		read -n1 -r -t 10 user_action
-		echo
-
-		test -z "$user_action" || action=$user_action
-		test "$action" = "q" && return
-	fi
-
-	if test "$action" = "remove" || test "$action" = "r"; then
-		echo "remove composer"
-		_rm "composer.phar vendor composer.lock ~/.composer"
-	fi
-
-	if test "$action" = "g" || test "$action" = "l"; then
-		echo -n "install composer as "
-		if test "$action" = "g"; then
-			echo "/usr/local/bin/composer - Enter root password if asked"
-			_composer_phar /usr/local/bin/composer
-		else
-			echo "composer.phar"
-			_composer_phar
-		fi
+		_composer_ask
+		test "$action" = 'q' && return
 	fi
 
 	if test -n "$local_comp"; then
-		cmd="php composer.phar"
+		cmd='php composer.phar'
 	elif test -n "$global_comp"; then
-		cmd="composer"
+		cmd='composer'
 	fi
 
+	$cmd validate --no-check-all --strict
+
 	if test -f composer.json; then
-		if test "$action" = "install" || test "$action" = "i"; then
+		if test "$action" = 'i'; then
 			$cmd install
-		elif test "$action" = "update" || test "$action" = "u"; then
+		elif test "$action" = 'u'; then
 			$cmd update
-		elif test "$action" = "a"; then
+		elif test "$action" = 'a'; then
 			$cmd dump-autoload -o
 		fi
+	fi
+}
+
+
+function _composer_install {
+	ASK_DESC="[g] = Global installation as /usr/local/bin/composer\n[l] = Local installation as ./composer.phar"
+	_ask 'Install composer' '<g|l>'
+
+	if test "$ANSWER" = 'g'; then
+		echo 'install composer as /usr/local/bin/composer - Enter root password if asked'
+		_composer_phar /usr/local/bin/composer
+	elif test "$ANSWER" = 'l'; then
+		echo 'install composer as ./composer.phar'
+		_composer_phar
+	else
+		action='q'
+	fi
+}
+
+
+function _composer_ask {
+	if ! test -f 'composer.json'; then
+		action='q'
+		return
+	fi
+
+	ask='<i'
+	ASK_DESC="[i] = install packages from composer.json"
+	ASK_DEFAULT='i'
+
+	if test -d 'vendor'; then
+		ASK_DESC="$ASK_DESC\n[u] = update packages from composer.json\n[a] = update vendor/composer/autoload*"
+		ASK_DEFAULT='u'
+		ask="$ask|u|a"
+	fi
+
+	if test -f 'composer.phar'; then
+		ask="$ask|r"
+		ASK_DESC="$ASK_DESC\n[r] = remove local composer.phar"
+	fi
+
+	ASK_DESC="$ASK_DESC\n[q] = quit"
+	_ask 'Composer action?' "$ask|q>" 1
+	action=$ANSWER
+
+	if test "$action" = "r"; then
+		echo "remove composer"
+		_rm "composer.phar vendor composer.lock ~/.composer"
+		action='q'
 	fi
 }
 
@@ -563,6 +633,29 @@ function _find {
 }
 
 
+function _git_status {
+	local a change files
+
+	_require_program 'rks-filter'
+
+  for a in $1; do
+		files="$files $(git status | grep "$a/" | sed -E 's#^.+src/#src/#')"
+	done
+
+	for a in $files; do
+    change=$(git diff --color=always "$a" | rks-filter diff | \
+      sed -E -e 's#diff .+##' -e 's#index .+##' -e 's#\-\-\- .+##' -e 's#\+\+\+ .+##' | xargs | \
+      sed -E -e 's/[^a-z0-9]//gi' -e 's/1m//g')
+  
+    if test -z "$change"; then
+      _ok "$a"
+    else
+      git diff --color=always "$a" | rks-filter diff
+    fi
+  done
+}
+
+
 function _install_mariadb {
 	_apt_update
 	_apt_install 'mariadb-server mariadb-client php-mysql'
@@ -648,7 +741,7 @@ declare -A LOG_CMD  # define hash
 LOG_NO_ECHO=
 
 function _log {
-	test -z "$LOG_NO_ECHO" && echo -n "$1"
+	test -z "$LOG_NO_ECHO" && _msg "$1" -n
 	
 	if test -z "$2"; then
 		test -z "$LOG_NO_ECHO" && echo
@@ -679,7 +772,7 @@ function _log {
 		chmod 666 "${LOG_FILE[$2]}" || _abort "chmod 666 '${LOG_FILE[$2]}'"
 	fi
 
-	test -z "$LOG_NO_ECHO" && echo " ${LOG_CMD[$2]}"
+	test -z "$LOG_NO_ECHO" && _msg " ${LOG_CMD[$2]}"
 	test -s "${LOG_FILE[$2]}" && LOG_LAST="${LOG_FILE[$2]}"
 }
 
@@ -736,7 +829,7 @@ function _merge_sh {
 
 	tmp_app="$sh_dir"'_'
 	test -s "$my_app" && md5_old=$(_md5 "$my_app")
-	echo -n "merge $sh_dir into $my_app ... "
+	_msg "merge $sh_dir into $my_app ... " -n
 
 	inc_sh=$(find "$sh_dir" -name '*.inc.sh' 2>/dev/null | sort)
 	scheck=$(grep -E '^# shellcheck disable=' $inc_sh | sed -E 's/.+ disable=(.+)$/\1/g' | tr ',' ' ' | xargs -n1 | sort -u | xargs | tr ' ' ',')
@@ -757,10 +850,10 @@ function _merge_sh {
 
 	md5_new=$(_md5 "$tmp_app")
 	if test "$md5_old" = "$md5_new"; then
-		echo "no change"
+		_msg "no change"
 		_rm "$tmp_app" >/dev/null
 	else
-		echo "update"
+		_msg "update"
 		_mv "$tmp_app" "$my_app"
 		_chmod 755 "$my_app"
 	fi
@@ -794,7 +887,7 @@ function _mkdir {
 		test $((flag & 1)) = 1 && _abort "directory $1 already exists"
 		test $((flag & 4)) = 4 && _msg "directory $1 already exists"
 	else
-		echo "mkdir -p $1"
+		_msg "mkdir -p $1"
 		$SUDO mkdir -p "$1" || _abort "mkdir -p '$1'"
 	fi
 
@@ -803,10 +896,10 @@ function _mkdir {
 
 
 function _msg {
-	if test -z "$2"; then
-		echo "$1"
+	if test "$2" == '-n'; then
+		echo -n -e "\033[0;2m$1\033[0m"
 	else
-		echo "$2" "$1"
+		echo -e "\033[0;2m$1\033[0m"
 	fi
 }
 
@@ -831,10 +924,10 @@ function _mv {
 
 	if test "$AFTER_LAST_SLASH" = "*"
 	then
-		echo "mv $1 $2"
+		_msg "mv $1 $2"
 		mv "$1" "$2" || _abort "mv $1 $2 failed"
 	else
-		echo "mv '$1' '$2'"
+		_msg "mv '$1' '$2'"
 		mv "$1" "$2" || _abort "mv '$1' '$2' failed"
 	fi
 }
@@ -955,6 +1048,7 @@ declare -A ARG
 declare ARGV
 
 function _parse_arg {
+	test "${#ARG[@]}" -gt 0 && return
 	ARGV=()
 
 	local i n key val
@@ -964,16 +1058,14 @@ function _parse_arg {
 		val="${!i}"
 		key=
 
-		if [[ $val == "--"*"="* ]]; then
+		if [[ "$val" =~ ^\-?\-?[a-zA-Z0-9_\.\-]+= ]]; then
 			key="${val/=*/}"
-			key="${key/--/}"
 			val="${val#*=}"
-		elif [[ $val == "--"* ]]; then
-			key="${val/--/}"
+			test "${key:0:2}" = '--' && key="${key:2}"
+			test "${key:0:1}" = '-' && key="${key:1}"
+		elif [[ "$val" =~ ^\-\-[[a-zA-Z0-9_\.\-]+$ ]]; then
+			key="${val:2}"
 			val=1
-		elif [[ $val =~ ^[a-zA-Z0-9_\.\-]+= ]]; then
-			key="${val/=*/}"
-			val="${val#*=}"
 		fi
 
 		if test -z "$key"; then
@@ -1087,7 +1179,7 @@ else {
 }
 EOF
 
-	test -z "${ARG[0]}" && _abort 'call _parse_arg "@$" first'
+	test -z "${ARG[0]}" && _abort 'call _rks_app "$@" or _parse_arg "@$" first'
 
 	if test -z "${ARG[script]}"; then
 		echo "$php_code" > "$RKBASH_DIR/php_server.php"
@@ -1203,18 +1295,25 @@ function _require_program {
 	local ptype
 	ptype=$(type -t "$1")
 
-	test "$ptype" = "function" && return
-	command -v "$1" >/dev/null 2>&1 && return
-	command -v "./$1" >/dev/null 2>&1 && return
+	test "$ptype" = "function" && return 0
+	command -v "$1" >/dev/null 2>&1 && return 0
+	command -v "./$1" >/dev/null 2>&1 && return 0
 
 	if test "${2:0:4}" = "apt:"; then
 		_apt_install "${2:4}"
-	elif test -z "$2"; then
-		echo "No such program [$1]"
-		exit 1
-	else
-		return 1
+		return 0
 	fi
+
+	[[ -n "$2" || "$NO_ABORT" = 1 ]] && return 1
+
+	local frame trace 
+	if type -t caller >/dev/null 2>/dev/null; then
+		frame=0
+		trace=$(while caller $frame; do ((frame++)); done)
+	fi
+
+	echo -e "\n\033[1;31mABORT:\033[0m \033[0;31mNo such program [$1]\033[0m\n\n$trace\n" 1>&2
+	exit 1
 }
 
 
@@ -1272,14 +1371,15 @@ function _rrs_scan {
 
 
 function _rks_app {
+	_parse_arg "$@"
+
 	local me p1 p2 p3
-	me="$1"
-	shift
+	me="$0"
 	p1="$1"
 	p2="$2"
 	p3="$3"
 
-	test -z "$me" && _abort "call _rks_app '$0' $*"
+	test -z "$me" && _abort 'call _rks_app "$@"'
 	test -z "${ARG[1]}" || p1="${ARG[1]}"
 	test -z "${ARG[2]}" || p2="${ARG[2]}"
 	test -z "${ARG[3]}" || p3="${ARG[3]}"
@@ -1304,11 +1404,16 @@ function _rks_app {
 	[[ "$p1" = 'help' ]] && _syntax "*" "cmd:* help:*"
 	test -z "$p1" && return
 
-	test -z "${SYNTAX_HELP[$p1]}" || APP_DESC="${SYNTAX_HELP[$p1]}"
-	test -z "${SYNTAX_HELP[$p1.$p2]}" || APP_DESC="${SYNTAX_HELP[$p1.$p2]}"
+	test -n "${SYNTAX_HELP[$p1]}" && APP_DESC="${SYNTAX_HELP[$p1]}"
+	[[ -n "$p2" && -n "${SYNTAX_HELP[$p1.$p2]}" ]] && APP_DESC="${SYNTAX_HELP[$p1.$p2]}"
 
-	[[ -n "${SYNTAX_CMD[$p1]}" && "$p2" = 'help' ]] && _syntax "$p1" "help:"
-	[[ -n "${SYNTAX_CMD[$p1.$p2]}" && "$p3" = 'help' ]] && _syntax "$p1.$p2" "help:"
+	[[ -n "$p2" && -n "${SYNTAX_CMD[$p1.$p2]}" && ("$p3" = 'help' || "${ARG[help]}" = '1') ]] && \
+		_syntax "$p1.$p2" "help:"
+
+	[[ -n "${SYNTAX_CMD[$p1]}" && ("$p2" = 'help' || "${ARG[help]}" = '1') ]] && \
+		_syntax "$p1" "help:"
+
+	test "${ARG[help]}" = '1' && _syntax "*" "cmd:* help:*"
 }
 
 
@@ -1359,7 +1464,7 @@ function _rsync {
 	if test "$error" = "1"; then
 		test -z "$(tail -4 "${LOG_FILE[rsync]}" | grep 'speedup is ')" && _abort "$rsync"
 		test -z "$(tail -1 "${LOG_FILE[rsync]}" | grep "rsync error:")" || \
-			_msg "[WARNING]: FIX rsync errors in ${LOG_FILE[rsync]}"
+			_warn "FIX rsync errors in ${LOG_FILE[rsync]}"
 	fi
 }
 
@@ -1416,7 +1521,7 @@ function _sudo {
 	elif test $((flag & 1)) = 1 && test -z "$curr_sudo"; then
 		_log "$exec" sudo
 		eval "$exec ${LOG_CMD[sudo]}" || \
-			( echo "try sudo $exec"; eval "sudo $exec ${LOG_CMD[sudo]}" || _abort "sudo $exec" )
+			( _msg "try sudo $exec"; eval "sudo $exec ${LOG_CMD[sudo]}" || _abort "sudo $exec" )
 	else
 		SUDO=sudo
 		_log "sudo $exec" sudo
@@ -1441,10 +1546,10 @@ function _syntax {
 
 		if test "${a:0:4}" = "cmd:"; then
 			test "$a" = "cmd:" && a="cmd:$1"
-			msg="$msg$(_syntax_cmd_other "$a")"
+			msg="$msg $(_syntax_cmd_other "$a")"
 		elif test "${a:0:5}" = "help:"; then
 			test "$a" = "help:" && a="help:$1"
-			msg="$msg$(_syntax_help "${a:5}")"
+			msg="$msg $(_syntax_help "${a:5}")"
 		fi
 
 		test "$old_msg" != "$msg" && msg="$msg\n"
@@ -1555,6 +1660,11 @@ function _syntax_check_php {
 			echo "_syntax_test('$a');" >> "$2"
 		fi
 	done
+
+	if test "$3" = '1'; then
+		php "$2" || _abort "php $2"
+		_rm "$2"
+	fi
 }
 
 
@@ -1590,6 +1700,11 @@ function _version {
 }
 
 
+function _warn {
+	echo -e "\033[0;31m$1\033[0m" 1>&2
+}
+
+
 function _warn_msg {
 	local line first
 	while IFS= read -r line; do
@@ -1613,20 +1728,20 @@ function _wget {
 	if test -s "$save_as"; then
 		_confirm "Overwrite $save_as" 1
 		if test "$CONFIRM" != "y"; then
-			echo "keep $save_as - skip wget '$1'"
+			_msg "keep $save_as - skip wget '$1'"
 			return
 		fi
 	fi
 
 	if test -z "$2"; then
-		echo "download $1"
+		_msg "download $1"
 		wget -q "$1" || _abort "wget -q '$1'"
 	elif test "$2" = "-"; then
 		wget -q -O "$2" "$1" || _abort "wget -q -O '$2' '$1'"
 		return
 	else
 		_mkdir "$(dirname "$2")"
-		echo "download $1 to $2"
+		_msg "download $1 to $2"
 		wget -q -O "$2" "$1" || _abort "wget -q -O '$2' '$1'"
 	fi
 
@@ -1657,42 +1772,25 @@ function build_php5 {
 
 
 #--
-# Build phplib
+# Build rkphplib
 # @global PATH_PHPLIB
 # shellcheck disable=SC2034,SC2153
 #--
 function build {
 	PATH_RKPHPLIB="src/"
 
-	_syntax_check_php "src" "syntax_check_src.php"
-	php syntax_check_src.php || _abort "php syntax_check_src.php"
-	_rm syntax_check_src.php
+	_composer
 
-	_syntax_check_php "bin" "syntax_check_bin.php"
-	php syntax_check_bin.php || _abort "php syntax_check_bin.php"
-	_rm syntax_check_bin.php
+	_require_dir "$PATH_PHPLIB"
+	"$PATH_PHPLIB/bin/toggle" src log_debug on
+	"$PATH_PHPLIB/bin/toggle" src log_debug off
 
-	if test -n "$PATH_PHPLIB"; then
-		"$PATH_PHPLIB/bin/toggle" src log_debug on
-		"$PATH_PHPLIB/bin/toggle" src log_debug off
-	fi
+	_syntax_check_php 'src' 'syntax_check_src.php' 1
+	_syntax_check_php 'bin' 'syntax_check_bin.php' 1
 
 	bin/plugin_map
 
-	_require_program composer
-	composer validate --no-check-all --strict
-
-	for a in $(git status | grep 'src/' | sed -E 's#^.+src/#src/#'); do
-		change=$(git diff --color=always "$a" | rks-filter diff | \
-			sed -E -e 's#diff .+##' -e 's#index .+##' -e 's#\-\-\- .+##' -e 's#\+\+\+ .+##' | xargs | \
-			sed -E -e 's/[^a-z0-9]//gi' -e 's/1m//g')
-	
-		if test -z "$change"; then
-			_ok "$a"
-		else
-			git diff --color=always "$a" | rks-filter diff
-		fi
-	done
+	_git_status
 }
 
 
@@ -1837,8 +1935,6 @@ fi
 case ${ARG[1]} in
 	build)
 		build;;
-	composer)
-		_composer "${ARG[2]}";;
 	docs)
 		docs;;
 	docker_osx)
@@ -1850,6 +1946,6 @@ case ${ARG[1]} in
 	ubuntu)
 		ubuntu;;
 	*)
-		_syntax "build|composer|docs|docker_osx|php|test|ubuntu"
+		_syntax "build|docs|docker_osx|php|test|ubuntu"
 esac
 
