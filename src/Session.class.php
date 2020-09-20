@@ -75,11 +75,12 @@ public function init(array $conf) : void {
 			'cookie_samesite' => $same_site,
 			'cookie_secure' => $secure,
 			'cache_expire' => max(ini_get('session.cache_expire'), $this->conf['ttl']),
-			'gc_maxlifetime' => max(ini_get('session.gc_maxlifetime'), $this->conf['inactive']),
-			'strict_mode' => 0
+			'gc_maxlifetime' => max(ini_get('session.gc_maxlifetime'), $this->conf['inactive'])
 			];
 
-		if ($this->conf['ttl'] != 'files') {
+		// $sess_opt['strict_mode'] = 0;
+
+		if ($this->conf['handler'] != 'files') {
  			$handler = $this->conf['handler'].'SessionHandler';
 			new $handler();
 		}
