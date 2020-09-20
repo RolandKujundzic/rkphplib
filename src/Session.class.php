@@ -72,13 +72,13 @@ public function init(array $conf) : void {
 		$same_site = $secure && $this->conf['cross_site'] ? 'none' : 'strict';
 		$sess_opt = [
 			'cookie_httponly' => 1,
-			'cookie_samesite' => $same_site,
 			'cookie_secure' => $secure,
+			// these options failed ...
+			// 'strict_mode' => 0,
+			// 'cookie_samesite' => $same_site,
 			'cache_expire' => max(ini_get('session.cache_expire'), $this->conf['ttl']),
 			'gc_maxlifetime' => max(ini_get('session.gc_maxlifetime'), $this->conf['inactive'])
 			];
-
-		// $sess_opt['strict_mode'] = 0;
 
 		if ($this->conf['handler'] != 'files') {
  			$handler = $this->conf['handler'].'SessionHandler';
