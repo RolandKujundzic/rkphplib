@@ -1,1 +1,6 @@
+{intval:}37.32{:intval} = [37]
+{intval:}15.000.000{:intval} = [15000000]
+{intval:}5,8{:intval} = [5]
+{intval:}abc{:intval} = [0]
+
 

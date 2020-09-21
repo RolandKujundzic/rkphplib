@@ -8,5 +8,5 @@ require_once '../settings.php';
  */
 
 $th->useTokPlugin([ 'TMath' ]);
-$th->run(1, 1);
+$th->run(1, 6);
 

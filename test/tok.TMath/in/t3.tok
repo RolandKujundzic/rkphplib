@@ -1,5 +1,13 @@
-12= {nf:}12{:nf}
-3.2= {number_format:}3.2{:number_format}
-7.99= {nf:}7.99{:nf}
-12.357= {nf:}12.357{:nf}
-1.5= {nf:}1.5{:nf}
+{test_helper:show_value}
+{nf:}12{:nf}
+{number_format:}3.2{:number_format}
+{number_format:2}3,2{:number_format}
+{nf:}7.99{:nf}
+{nf:}12.357{:nf}
+{nf:}1.5{:nf}
+{nf:2}7.8{:nf}
+{nf:}13 kg{:nf}
+{nf:}-5g{:nf}
+{nf:}+12px{:nf}
+{:test_helper}
+

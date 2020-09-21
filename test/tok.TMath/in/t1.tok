@@ -1,3 +1,7 @@
-37.32= {intval:}37.32{:intval}
-5,8= {intval:}5,8{:intval}
-abc= {intval:}abc{:intval}
+{test_helper:show_value}
+{intval:}37.32{:intval}
+{intval:}15.000.000{:intval}
+{intval:}5,8{:intval}
+{intval:}abc{:intval}
+{:test_helper}
+

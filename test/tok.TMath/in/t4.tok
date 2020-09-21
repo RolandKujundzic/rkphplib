@@ -1,4 +1,7 @@
-3+5= {math:}3+5{:math}
-2*1.7= {math:}2*1.7{:math}
-8/3= {math:}8/3{:math}
-2*(1+1/2)= {math:}2*(1+1/2){:math}
+{test_helper:show_value}
+{math:}3+5{:math}
+{math:}2*1.7{:math}
+{math:}8/3{:math}
+{math:}2*(1+1/2){:math}
+{:test_helper}
+

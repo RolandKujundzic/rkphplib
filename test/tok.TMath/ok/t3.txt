@@ -1,1 +1,12 @@
+{nf:}12{:nf} = [12]
+{number_format:}3.2{:number_format} = [3,2]
+{number_format:2}3,2{:number_format} = [3,20]
+{nf:}7.99{:nf} = [7,99]
+{nf:}12.357{:nf} = [12,36]
+{nf:}1.5{:nf} = [1,5]
+{nf:2}7.8{:nf} = [7,80]
+{nf:}13 kg{:nf} = [13 kg]
+{nf:}-5g{:nf} = [-5 g]
+{nf:}+12px{:nf} = [12 px]
+
 

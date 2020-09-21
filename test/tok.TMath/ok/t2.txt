@@ -1,1 +1,5 @@
+{floatval:}37.320.882{:floatval} = [37320882]
+{floatval:}12,80{:floatval} = [12.8]
+{floatval:2}37.32783{:floatval} = [37.33]
+
 
