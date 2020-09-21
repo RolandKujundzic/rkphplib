@@ -25,9 +25,8 @@ function _de_en_codeHash($map) {
 }
 
 
-$th->tokCheck(PATH_RKPHPLIB.'tok/TBase.class.php');
+// $th->tokCheck(PATH_RKPHPLIB.'tok/TBase.class.php'); exit(0);
 
-exit(0);
 $th->runTokenizer(15, array('TBase'));
 
 _de_en_codeHash([ 'dir' => 'company/contact', 'id' => 3872 ]);
