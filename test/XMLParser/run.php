@@ -1,7 +1,6 @@
 <?php
 
-$src = dirname(dirname(__DIR__)).'/src/';
-require_once $src.'XMLParser.php';
+require_once '../settings.php';
 
 
 /**
@@ -23,16 +22,5 @@ function xml_tag(string $tag, string $text, array $attrib, string $path) {
  * M A I N
  */
 
-global $th;
-if (!isset($th)) {
-	require_once $src.'TestHelper.class.php';
-	$th = new \rkphplib\TestHelper();
-}
-
-
-$n = 6;
-
-for ($i = 1; $i <= $n; $i++) {
-	$th->execPHP($i);
-}
+$th->run(1, 6);
 
