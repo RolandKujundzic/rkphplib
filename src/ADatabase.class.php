@@ -383,11 +383,21 @@ public function getCustomQuery(string $qkey, array $replace) {
 
 /**
  * Return (prepared) query defined via setQuery($qkey, '...').
+ * Allow custom query if $qkey matches /^SELECT|INSERT|UPDATE|REPLACE /i.
  */
 public function getQuery(string $qkey, array $replace = null) {
-
 	if (!isset($this->_query[$qkey])) {
-		throw new Exception('call setQuery() first', "qkey=[$qkey]");
+		if (preg_match('/^SELECT|INSERT|UPDATE|REPLACE /i', $qkey)) {
+			$qkey_md5 = md5($qkey);
+			if (!isset($this->_query[$qkey_md5])) {
+				$this->setQuery($qkey_md5, $qkey);
+			}
+
+			$qkey = $qkey_md5;
+		}
+		else {
+			throw new Exception('call setQuery() first', "qkey=[$qkey]");
+		}
 	}
 
 	$q = $this->_query[$qkey];
