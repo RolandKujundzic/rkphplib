@@ -1,15 +1,12 @@
 <?php
 
-global $th;
+require_once '../settings.php';
 
-if (!isset($th)) {
-	require_once dirname(dirname(__DIR__)).'/src/TestHelper.class.php';
-	$th = new rkphplib\TestHelper();
-}
 
-require_once PATH_RKPHPLIB.'/tok/TMath.class.php';
+/*
+ * M A I N
+ */
 
-use \rkphplib\tok\TMath;
-
-$th->runTokenizer(1, array('TMath'));
+$th->useTokPlugin([ 'TMath' ]);
+$th->run(1, 1);
 
