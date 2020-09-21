@@ -22,7 +22,7 @@ function _de_en_codeHash($map) {
 // $th->tokCheck(PATH_RKPHPLIB.'tok/TBase.class.php'); exit(0);
 
 $th->useTokPlugin([ 'TBase' ]);
-$th->run(1, 15);
+$th->run(1, 16);
 
 /*
 _de_en_codeHash([ 'dir' => 'company/contact', 'id' => 3872 ]);
