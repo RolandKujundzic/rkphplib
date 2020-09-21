@@ -37,6 +37,9 @@ require_once __DIR__.'/Dir.class.php';
  */
 class TestHelper {
 
+// @var Tokenizer $tok
+private $tok = null;
+
 // @var hash $_tc test counter hash
 private $_tc = [];
 
@@ -150,7 +153,9 @@ private function _error_cmp(string $msg, $out, $ok) : void {
 
 
 /**
- * Print log message. Values of cn (2^n):
+ * Print log message on 80 char width. If $msg is array
+ * print $msg[0] left and $msg[1] right aligned in same line.
+ * Flag $cn (2^n):
  *
  * 0: print only $msg
  * 1: add trailing linebreak to msg (default)
@@ -158,25 +163,38 @@ private function _error_cmp(string $msg, $out, $ok) : void {
  * 4: print delimiter line before $msg
  * 8: print delimiter line after $msg
  * 16: add linebreak to output
+ *
+ * @param string|array $msg
  */
-private function _log(string $msg, int $cn = 1) : void {
-
+private function _log($msg, int $cn = 1) : void {
 	if ($cn & 2) {
 		print "\n";
 	}
 
 	if ($cn & 4) {
-		print "---------------------------------------------------------------------------------------\n";
+		print "\x1b[0;2m".str_pad('', 80, '-', STR_PAD_LEFT)."\x1b[0m\n";
 	}
 
-	print $msg;
+	if (is_array($msg) && count($msg) == 2) {
+		if (preg_match("/^(.*?)\x1b\[.+?m(.*)\x1b\[0m$/", $msg[1], $match)) {
+			$len = strlen($match[1]) + strlen($match[2]);
+		}
+		else {
+			$len = strlen($msg[1]);
+		}
+
+		printf('%-'.(80 - $len)."s%s", $msg[0], $msg[1]);
+	}
+	else {
+		print $msg;
+	}
 
 	if ($cn & 1) {
 		print "\n";
 	}
 
 	if ($cn & 8) {
-		print "---------------------------------------------------------------------------------------\n";
+		print "\x1b[0;2m".str_pad('', 80, '-', STR_PAD_LEFT)."\x1b[0m\n";
 	}
 }
 
@@ -400,10 +418,6 @@ public function callTest(callable $func, $arg, array $result) : void {
 public function compare(string $msg, array $out_list, array $ok_list) : void {
 	$this->_log($msg.": ", 0);
 	$this->_tc['num']++;
-
-	if (is_string($ok_list)) {
-		$ok_list = $this->getResult($ok_list);
-	}
 
 	$n = count($ok_list);
 	$err = 0;
@@ -660,23 +674,155 @@ private function _test_dir() : array {
 
 
 /**
- * Execute (include) php file in/$n.php, save output as out/$n.txt
- * and compare with ok/$n.txt. Log _tc.num|err.ok and print message.
+ * Initialize Tokenizer with plugin list.
+ * 
+ * @example useTokPlugin([ 'TBase', 'TMath' ]);
  */
-public function execPHP(int $n) : void {
-	$dir = getcwd();
+public function useTokPlugin(array $plugin_list) : void {
+	list ($tdir, $rel_tdir) = $this->_test_dir();
 
-	if (!Dir::exists($dir.'/out')) {
-		Dir::create($dir.'/out');
+	$this->load_src('tok/Tokenizer');
+	$this->tok = new \rkphplib\tok\Tokenizer(\rkphplib\tok\Tokenizer::TOK_DEBUG);
+
+	for ($i = 0; $i < count($plugin_list); $i++) {
+		$this->load_src('tok/'.$plugin_list[$i]);
+		$plugin = 'rkphplib\\tok\\'.$plugin_list[$i];
+		$this->tok->register(new $plugin());
+	}
+}
+
+
+/**
+ * @example load_src('tok/Tokenizer')
+ * @example load_src(''); // in tok.TBase
+ */
+private function load_src(string $cpath = '') : void {
+	if (empty($cpath)) {
+		$cpath = str_replace('.', '/', basename(getcwd()));
 	}
 
+	if (File::exists(PATH_RKPHPLIB.$cpath.'.php')) {
+		require_once PATH_RKPHPLIB.$cpath.'.php';
+	}
+	else if (File::exists(PATH_RKPHPLIB.$cpath.'.class.php')) {
+		require_once PATH_RKPHPLIB.$cpath.'.class.php';
+	}
+	else {
+		throw new Exception("missing $cpath.[php|class.php]");
+	}
+}
+
+
+/**
+ * @example run(1, 6)
+ */
+public function run(int $first, int $last) : void {
+	Dir::exists('in', true);
+	Dir::exists('ok', true);
+
+	if (!Dir::exists('out')) {
+		Dir::create('out');
+	}
+
+	$this->load_src();
+
+	$cname = basename(getcwd());
+	$tnum = $last - $first + 1;
+
+	if ($tnum < 0) {
+		throw new Exception("invalid call run($first, $last)");
+	}
+	else if ($first == 0) {
+		$this->_log($cname.':  no tests', 3);
+	}
+	else if ($tnum == 1) {
+		$this->_log([ $cname.':', '1 test' ], 11);
+	}
+	else {
+		$this->_log([ $cname.':', $tnum.' tests' ], 11);
+	}
+
+	$this->_tc['ok'] = 0;
+	$this->_tc['num'] = 0;
+	$this->_tc['vim'] = [];
+	$this->_tc['error'] = 0;
+
+	for ($i = $first; $i > 0 && $i <= $last; $i++) {
+		$base = 't'.$i;
+		$prefix = 'in/'.$base;
+		$this->_tc['num']++;
+
+		if (File::exists($prefix.'.php')) {
+			$out = $this->execPHP($base);
+			$file = 'in/'.$base.'.php';
+		}
+		else if (File::exists($prefix.'.tok')) {
+			$out = $this->execTok($base);
+			$file = 'in/'.$base.'.tok';
+		}
+		else {
+			throw new Exception("no such file $prefix.[php|txt|tok]");
+		}
+
+		$ok = File::load("ok/{$base}.txt");
+		if ($ok == $out) {
+			$this->_log([ $file, "{$this->_tc['num']}/$tnum \x1b[0;32mOK\x1b[0m" ], 1);
+			$this->_tc['ok']++;
+		}
+		else {
+			$this->_log([ $file, "{$this->_tc['num']}/$tnum \x1b[0;31mERROR\x1b[0m" ], 1);
+			$this->_tc['error']++;
+
+			$vim = "out/e$i.vim";
+			File::save($vim, "e $file\nsplit\ne out/t$i.txt\nvsplit\ne ok/t$i.txt");
+			array_push($this->_tc['vim'], 'vim -S '.$vim);
+		}
+	}
+
+	$this->_log_result();
+}
+
+
+/**
+ *
+ */
+private function _log_result() {
+	if ($this->_tc['error'] == 0) {
+		$this->_log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - 0 ERROR",  "\x1b[0;32mPASS\x1b[0m" ], 5);
+	}
+	else {
+		$this->_log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - {$this->_tc['error']} ERROR",  "\x1b[0;31mFAIL\x1b[0m" ], 5);
+		$this->_log("VIEW ERROR: ".join('; ', $this->_tc['vim']).' (exit with :qa)');
+	}
+}
+
+
+/**
+ * Execute (include) $base.php, save output as out/$base.txt
+ * and compare with ok/$base.txt. Log _tc.num|err.ok and print message.
+ */
+private function execPHP(string $base) : string {
 	ob_start();
-	include "$dir/in/t$n.php";
+	include "in/$base.php";
 	$out = ob_get_contents();
 	ob_end_clean();
-	File::save("$dir/out/t$n.txt", $out);
-	$ok = File::load("$dir/ok/t$n.txt");
-	$this->compare(basename($dir)."/in/t$n.php", [ $out ], [ $ok ]);
+	File::save("out/$base.txt", $out);
+	return $out;
+}
+
+
+/**
+ * Parse in/$base.tok and save as out/$base.txt.
+ */
+private function execTok(string $base) : string {
+	if (is_null($this->tok)) {
+		throw new Exception('call useTokPlugin() first');
+	}
+
+	$this->tok->load('in/'.$base.'.tok');
+	$out = $this->tok->toString();
+	File::save('out/'.$base.'.txt', $out);
+	return $out;
 }
 
 
@@ -886,20 +1032,15 @@ public function tokCheck(string $php_source) : void {
  * If $num is string 'a.txt' run only this test. If $num is array [ 'a.inc.html', 'b.inc.html' ]
  * run a.inc.html (compare with a.inc.html.ok) and b.inc.html (compare with b.inc.html.ok).
  *
+ * @example
+ *  Call useTokenizer() first
+ *
  * @param mixed $num int|string|array
  */
 public function runTokenizer($num, array $plugin_list) : void {
 
 	list ($tdir, $rel_tdir) = $this->_test_dir();
-
-	$this->load('tok/Tokenizer.class.php');
-	$tok = new \rkphplib\tok\Tokenizer(\rkphplib\tok\Tokenizer::TOK_DEBUG);
-
-	for ($i = 0; $i < count($plugin_list); $i++) {
-		$plugin = 'rkphplib\\tok\\'.$plugin_list[$i];
-		$this->load($plugin_list[$i].'.class.php');
-		$tok->register(new $plugin());
-	}
+	$this->useTokPlugin($plugin_list);
 
 	$test_files = array();
 
