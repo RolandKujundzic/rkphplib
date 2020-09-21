@@ -19,6 +19,7 @@ define('TEST_SQLITE', 'sqlite://magic123@./unit_test.sqlite');
 
 require_once __DIR__.'/lib/config.php';
 require_once __DIR__.'/tok/Tokenizer.class.php';
+require_once __DIR__.'/tok/TokPlugin.iface.php';
 require_once __DIR__.'/FSEntry.class.php';
 require_once __DIR__.'/PhpCode.class.php';
 require_once __DIR__.'/Profiler.class.php';
@@ -27,7 +28,8 @@ require_once __DIR__.'/JSON.class.php';
 require_once __DIR__.'/File.class.php';
 require_once __DIR__.'/Dir.class.php';
 
-
+use rkphplib\tok\Tokenizer;
+use rkphplib\tok\TokPlugin;
 
 /**
  * Test suite class.
@@ -35,7 +37,7 @@ require_once __DIR__.'/Dir.class.php';
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
  */
-class TestHelper {
+class TestHelper implements TokPlugin {
 
 // @var Tokenizer $tok
 private $tok = null;
@@ -48,7 +50,6 @@ public $output = '';
 
 // @var Profiler $profiler
 public $profiler = null;
-
 
 
 /**
@@ -69,6 +70,41 @@ public function __construct() {
 	$this->_tc['t_num'] = 0;
 	$this->_tc['t_pass'] = 0;
 	$this->_tc['t_fail'] = 0;
+}
+
+
+/**
+ * Register {tok_helper:show_value}
+ */
+public function getPlugins(Tokenizer $tok) : array {
+	$plugin = [];
+	$plugin['test_helper:show_value'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
+	$plugin['test_helper'] = 0;
+	return $plugin;
+}
+
+
+/**
+ * @tok {test_helper:show_value}{math:}5+3{:math}{:test_helper} …
+ * &#123;math&#58;t&#125;5+3&#123;&#58;math&#125;=[8] 
+ * @EOL
+ */
+public function tok_test_helper_show_value(string $arg) : string {
+	$lines = explode("\n", $arg);
+	$res = '';
+
+	foreach ($lines as $line) {
+		$line = trim($line);
+
+		if (substr($line, 0, 1) == '{' && substr($line, -1) == '}') {
+			$res .= $this->tok->escape($line).' = ['.$line."]\n";
+		}
+		else if (strlen($line) > 0) {
+			throw new Exception("invalid line [$line]");
+		}
+	}
+
+	return $res;
 }
 
 
@@ -682,7 +718,8 @@ public function useTokPlugin(array $plugin_list) : void {
 	list ($tdir, $rel_tdir) = $this->_test_dir();
 
 	$this->load_src('tok/Tokenizer');
-	$this->tok = new \rkphplib\tok\Tokenizer(\rkphplib\tok\Tokenizer::TOK_DEBUG);
+	$this->tok = new Tokenizer(Tokenizer::TOK_DEBUG);
+	$this->tok->register($this);
 
 	for ($i = 0; $i < count($plugin_list); $i++) {
 		$this->load_src('tok/'.$plugin_list[$i]);
@@ -819,9 +856,16 @@ private function execTok(string $base) : string {
 		throw new Exception('call useTokPlugin() first');
 	}
 
-	$this->tok->load('in/'.$base.'.tok');
+	$in = File::load('in/'.$base.'.tok');
+	$this->tok->setText($in);
 	$out = $this->tok->toString();
+
+	if (strpos($in, '{test_helper:show_value}') !== false) {
+		$out = $this->tok->unescape($out);
+	}
+
 	File::save('out/'.$base.'.txt', $out);
+
 	return $out;
 }
 
@@ -854,7 +898,7 @@ public function tokCheck_new(string $php_source) : void {
 			continue;
 		}
 
-		$tok = new \rkphplib\tok\Tokenizer();
+		$tok = new Tokenizer();
 		$tok->register(new $pclass());
 
 		if (substr($line, 0, 1) == '"' && substr($line, -1) == '"') {
@@ -964,7 +1008,7 @@ public function tokCheck(string $php_source) : void {
 			continue;
 		}
 
-		$tok = new \rkphplib\tok\Tokenizer();
+		$tok = new Tokenizer();
 		$tok->register(new $pclass());
 
 		if (substr($line, 0, 1) == '"' && substr($line, -1) == '"') {
