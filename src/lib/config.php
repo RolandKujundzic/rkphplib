@@ -83,9 +83,18 @@ require_once __DIR__.'/log_warn.php';
 // Force UTF-8 encoding
 mb_internal_encoding('UTF-8');
 
-// Force de_DE.UTF-8 locale - otherwise escapeshellarg is broken !!!
-if (setlocale(LC_ALL, 'de_DE.UTF-8') === false) {
-  die("setlocale de_DE.UTF-8 failed");
+// Force de_DE.UTF-8 locale - except for numbers 
+// default: php -r 'print_r(setlocale(LC_ALL, 0));'
+foreach ([ 'LC_CTYPE', 'LC_TIME', 'LC_COLLATE', 'LC_MESSAGES' ] as $lc) {
+	if (setlocale(constant($lc), 'de_DE.UTF-8') === false) {
+		die("setlocale $lc $type failed");
+	}
+}
+
+foreach ([ 'LC_NUMERIC' => 'C', 'LC_MONETARY' => 'C' ] as $lc => $type) {
+	if (setlocale(constant($lc), $type) === false) {
+		die("setlocale $lc $type failed");
+	}
 }
 
 if (!defined('TAG_PREFIX')) {
