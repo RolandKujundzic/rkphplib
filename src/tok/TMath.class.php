@@ -33,23 +33,16 @@ public function getPlugins(Tokenizer $tok) : array {
 
 /**
  * Return md5(trim($arg)). Empty arg has non-empty result.
- *
- * @param string $arg
- * @return string
  */
-public function tok_md5($arg) {
+public function tok_md5(string $arg) : string {
 	return md5(trim($arg));
 }
 
 
 /**
  * Evaluate math expression.
- *
- * @throws
- * @param string $arg
- * @return float
  */
-public function tok_math($arg) {
+public function tok_math(string $arg) : float {
 	$expr = preg_replace("/[\r\n\t ]+/", '', $arg);
 	$expr = str_replace(',', '.', $expr);
 	$expr_check = trim(strtr($expr, '.0123456789+-*/()&', '                  '));
@@ -118,9 +111,10 @@ public function tok_intval($arg) {
 /**
  * Return floatval($arg).
  *
- * @tok {floatval:}37.32{:floatval} = 37.32
+ * @tok {floatval:}37.000{:floatval} = 37000
+ * @tok {floatval:}9,99{:floatval} = 9.99
  * @tok {floatval:2}37.32783{:floatval} = 37.33
- * @tok {floatval:}abc{:floatval) = 0
+ * @tok {floatval:}abc{:floatval} = 0
  *
  * @param string $arg
  * @param int $round
@@ -277,3 +271,4 @@ public function tok_number_format($param, $arg) {
 
 
 }
+
