@@ -1,0 +1,5 @@
+{tf:switch}a{:tf}{t:a}a{:t}{f:}F{:f}
+{tf:switch}b{:tf}{t:b}Tb{:t}{t:B}TB{:t}{t:ba}Tba{:t}
+{tf:switch}0{:tf}{t:}T{:t}{f:}F{:f}
+{tf:switch}{:tf}{t:}T{:t}{f:}F{:f}
+
