@@ -1,0 +1,2 @@
+md5(test)= {md5:}test{:md5}
+md5(110)= {md5:}110{:md5}
