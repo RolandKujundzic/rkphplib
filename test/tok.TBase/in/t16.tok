@@ -1,0 +1,8 @@
+{unescape:tok}&#123;x&#58;&#125;{:unescape} = {x:}
+{unescape:arg}a&#124;&#35;&#124;b{:unescape} = a|#|b 
+{unescape:entity}|@||#|a&#124;&#64;&#124;b{:unescape} = a|@|b
+{unescape:html}&lt;a href=&quot;abc&quot;&gt;{:unescape} = <a href="abc">
+{unescape:js}'&#39;; alert&#40;&#39;test&#39;&#41;; &#39;'{:unescape} =  '; alert('test'); '
+{unescape:url}a%20b{:unescape} = a b
+{unescape:utf8}R\u00FCssel{:unescape} = Rüssel
+

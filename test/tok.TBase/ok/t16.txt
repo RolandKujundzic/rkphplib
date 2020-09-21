@@ -1,0 +1,8 @@
+{x:} = {debug:x:}
+a|#|b = a|#|b 
+a|@|b = a|@|b
+<a href="abc"> = <a href="abc">
+''; alert('test'); '' =  '; alert('test'); '
+a b = a b
+Rüssel = Rüssel
+
