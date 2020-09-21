@@ -1,8 +1,6 @@
 <?php
 
-require_once dirname(__DIR__).'/src/TestHelper.class.php';
-
-$th = new rkphplib\TestHelper();
+require_once __DIR__.'/settings.php';
 
 // ob_* is necessary because of Session/run.php
 ob_start();
