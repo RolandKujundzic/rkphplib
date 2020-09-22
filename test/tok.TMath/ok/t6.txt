@@ -1,0 +1,7 @@
+{strlen:}{rand:8}{:strlen} = [8]
+{strlen:}{rand:password}{:strlen} = [8]
+{strlen:}{rand:}10000|#|99999{:rand}{:strlen} = [5]
+{rand:}5|#|5{:rand} = [5]
+{rand:txt}a|#|a|#|a{:rand} = [a]
+
+

@@ -1,0 +1,8 @@
+{test_helper:show_value}
+{strlen:}{rand:8}{:strlen}
+{strlen:}{rand:password}{:strlen}
+{strlen:}{rand:}10000|#|99999{:rand}{:strlen}
+{rand:}5|#|5{:rand}
+{rand:txt}a|#|a|#|a{:rand}
+{:test_helper}
+
