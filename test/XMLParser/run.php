@@ -22,5 +22,7 @@ function xml_tag(string $tag, string $text, array $attrib, string $path) {
  * M A I N
  */
 
+global $th;
+
 $th->run(1, 6);
 

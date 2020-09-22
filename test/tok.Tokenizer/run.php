@@ -41,6 +41,8 @@ public function tok_output_footer($txt) {	return 'f['.$txt.']'; }
  * M A I N
  */
 
+global $th;
+
 $tx = new Tokenizer();
 
 $th->runCompare('escape',
