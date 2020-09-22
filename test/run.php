@@ -2,6 +2,11 @@
 
 require_once __DIR__.'/settings.php';
 
+$th->test('XMLParser');
+$th->test('tok.Tokenizer');
+
+exit(0);
+
 // ob_* is necessary because of Session/run.php
 ob_start();
 $th->runTest('Session/run.php');
