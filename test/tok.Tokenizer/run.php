@@ -75,5 +75,5 @@ $th->run(1, 5);
 
 $to = new TOutput();
 $th->useTokPlugin([ $to ]);
-$th->run(1, 2);
+$th->run(1, 3);
 
