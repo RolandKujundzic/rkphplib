@@ -870,7 +870,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 			$func = '';
 		}
 
-		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:868> return this._call_plugin($name, $func, $args)");
+		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:873> return this._call_plugin($name, $func, $args)");
 		return $this->_call_plugin($name, $func, $args);
 	}
 
@@ -878,7 +878,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 		throw new Exception("no such plugin method $name.".$func);
 	}
 
-	// \rkphplib\lib\log_debug([ "Tokenizer.callPlugin:876> name=$name, func=$func, args: [<1>]", $args ]);
+	// \rkphplib\lib\log_debug([ "Tokenizer.callPlugin:881> name=$name, func=$func, args: [<1>]", $args ]);
 	if (count($args) == 0) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func));
 	}
@@ -909,7 +909,9 @@ public function callPlugin(string $name, string $func, $args = []) {
 private function _call_plugin(string $name, string $param, ?string $arg = null) : ?string {
 
 	$csl = count($this->_callstack);
-	array_push($this->_callstack[$csl - 1], [ $name, null ]);
+	if ($csl > 0) {
+		array_push($this->_callstack[$csl - 1], [ $name, null ]);
+	}
 
 	if ($this->_plugin[$name][1] & TokPlugin::TOKCALL) {
 		return call_user_func(array($this->_plugin[$name][0], 'tokCall'), $name, $param, $arg);
@@ -1006,7 +1008,7 @@ private function _call_plugin(string $name, string $param, ?string $arg = null) 
 		$old_tok = $this->_tok;
 		$old_endpos = $this->_endpos;
 
-		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:1004> redo=[$res]");
+		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:1011> redo=[$res]");
 		$this->setText($res);
 		$res = $this->_join_tok(0, count($this->_tok));
 
