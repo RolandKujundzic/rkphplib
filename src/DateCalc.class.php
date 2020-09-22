@@ -79,7 +79,7 @@ public static function monthName(int $month) : string {
 public static function sql2num(string $sql_date, int $day = 0) {
 	$res = null;
 
-	if (empty($sql_date) || mb_substr($sql_date, 0, 10) == '0000-00-00' || $sql_date == '0000-00-00 00:00:00') {
+	if (empty($sql_date) || $sql_date == '0000-00-00' || $sql_date == '0000-00-00 00:00:00') {
 		$res = 0;
 	}
 	else if (preg_match('/^([0-9]{4})-([0-9]{2})-([0-9]{2})$/', $sql_date, $m)) {
