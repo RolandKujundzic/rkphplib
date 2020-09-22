@@ -8,37 +8,7 @@ if (!defined('SETTINGS_LOG_DEBUG')) {
 
 
 /**
- * Return formated log message. Use traling '…' to shorten string (max 130 character).
- * If $msg is array and $msg[0] is '<1> ... <2> ... <n>' and #$msg=n+1
- * replace <k> with formatted $msg[k].
- *
- * @param any $msg
- */
-function log_debug_msg($msg) : string {
-	if (is_string($msg)) {
-		$res = $msg;
-		if (mb_substr($msg, -1) == '…') {
-			$res = mb_strlen($msg) > 130 ? mb_substr($msg, 0, 130).'…' : mb_substr($msg, 0, -1);
-		}
-	}
-	else if (is_array($msg) && !empty($msg[0]) && ($len = count($msg)) > 1 && mb_strpos($msg[0], '<'.($len - 1).'>') !== false) {
-		$res = $msg[0];
-		for ($i = 1; $i < $len; $i++) {
-			$res = str_replace("<$i>", log_debug_msg($msg[$i]), $res);
-		}
-	} 
-	else {
-		$json_str = json_encode($msg, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
-		$res = mb_strlen($json_str) < 130 ? $json_str : trim(print_r($msg, true));
-	}
-
-	return $res;
-}
-
-
-/**
- * Log debug message (string or vector). 
- * Disable debug log with SETTINGS_LOG_DEBUG = 0,
+ * Log debug message (string or vector). Disable with SETTINGS_LOG_DEBUG = 0.
  * Enable logging to default error_log with SETTINGS_LOG_DEBUG = 1.
  * Enable logging to file with SETTINGS_LOG_DEBUG = 'path/debug.log'.
  * Log to STDOUT with 'print|php://STDOUT|/dev/stdout' and to STDERR with 'php://STDERR|/dev/stderr'.
@@ -141,4 +111,32 @@ function log_debug($msg, int $flag = 0) : void {
 	}
 }
 
+
+/**
+ * Return formated log message. Use traling '…' to shorten string (max 130 character).
+ * If $msg is array and $msg[0] is '<1> ... <2> ... <n>' and #$msg=n+1
+ * replace <k> with formatted $msg[k].
+ *
+ * @param any $msg
+ */
+function log_debug_msg($msg) : string {
+	if (is_string($msg)) {
+		$res = $msg;
+		if (mb_substr($msg, -1) == '…') {
+			$res = mb_strlen($msg) > 130 ? mb_substr($msg, 0, 130).'…' : mb_substr($msg, 0, -1);
+		}
+	}
+	else if (is_array($msg) && !empty($msg[0]) && ($len = count($msg)) > 1 && mb_strpos($msg[0], '<'.($len - 1).'>') !== false) {
+		$res = $msg[0];
+		for ($i = 1; $i < $len; $i++) {
+			$res = str_replace("<$i>", log_debug_msg($msg[$i]), $res);
+		}
+	} 
+	else {
+		$json_str = json_encode($msg, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+		$res = mb_strlen($json_str) < 130 ? $json_str : trim(print_r($msg, true));
+	}
+
+	return $res;
+}
 

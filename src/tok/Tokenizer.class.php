@@ -493,7 +493,7 @@ private function _join_tok(int $start, int $end) : string {
 		throw new Exception('invalid status - call setText() first');
 	}
 
-	// \rkphplib\lib\log_debug("Tokenizer._join_tok:496> start=$start end=$end\ntok: ".print_r($this->_tok, true)."\nendpos: ".print_r($this->_endpos, true));
+	// \rkphplib\lib\log_debug([ "Tokenizer._join_tok:496> start=$start end=$end\ntok: <1>\nendpos: <2>", $this->_tok, $this->_endpos ]);
 	$tok_out = array();
 
 	for ($i = $start; $i < $end; $i++) {
@@ -528,7 +528,7 @@ private function _join_tok(int $start, int $end) : string {
 	$res = join('', $tok_out);
 	array_pop($this->_callstack);
 
-	// \rkphplib\lib\log_debug("Tokenizer._join_tok:531> i=[$i] return:\n[$res]\n");
+	// \rkphplib\lib\log_debug("Tokenizer._join_tok:531> i=[$i] return: [$res]");
 	return $res;
 }
 
@@ -567,7 +567,7 @@ public function getPluginFeatures(string $name) : ?int {
 		$this->tryPluginMap($name);
 
 		if (!isset($this->_plugin[$name])) {
-			throw new Exception('unknown plugin '.$name);
+			throw new Exception('no such plugin '.$name, join('|', array_keys($this->_plugin)));
 		}
 	}
 
@@ -681,7 +681,7 @@ private function _join_tok_plugin(int &$i) : ?string {
 		if ($ep == -1) {
 			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:682> no arg: name=$name param=[$param] i=$i ep=$ep");
 			$out = $this->_call_plugin($name, $param);
-			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:684> out:\n[$out]\n");
+			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:684> out: [$out]");
 		}
 		else if ($ep > $i) {
 			if ($tp & TokPlugin::TEXT) {
@@ -696,7 +696,7 @@ private function _join_tok_plugin(int &$i) : ?string {
  
 			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:697> arg: name=$name param=[$param] arg=[$arg] i=$i ep=$ep");
 			$out = $this->_call_plugin($name, $param, $arg);
- 			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:699> set i=$ep - out:\n[$out]\n");
+ 			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:699> set i=$ep - out: [$out]");
 
 			$i = $ep; // modify loop position
 		}
@@ -710,7 +710,7 @@ private function _join_tok_plugin(int &$i) : ?string {
 		$old_tok = $this->_tok;
 		$old_endpos = $this->_endpos;
 
-		\rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:680> REDO:\n---\n$out\n---\n");
+		\rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:680> redo: [$out]");
 		$this->setText($out);
 		$out = $this->_join_tok(0, count($this->_tok));
 		
@@ -841,15 +841,20 @@ public function hasPlugin(string $name) : bool {
  * - hash use call_user_func(PLUGIN, $func, args).
  * - string assume $func=$param and use this._call_plugin($name, $func, $args).
  * 
- * Example:
- *  callPlugin('login', 'tok_login', [ 'id' ]) = callPlugin('login', 'id')
- *  callPlugin('row', 'init', 'mode=material');
- *  callPlugin('row', '2,3', 'a|#|b');
+ * @example …
+ * callPlugin('login', 'id?')
+ * callPlugin('login', 'tok_login', [ 'name' ]) = callPlugin('login', 'name')
+ * callPlugin('row', 'init', 'mode=material');
+ * callPlugin('row', '2,3', 'a|#|b');
+ * @EOF
  */
 public function callPlugin(string $name, string $func, $args = []) {
+	if (!isset($this->_plugin[$name])) {
+		$this->tryPluginMap($name);
 
-	if (empty($this->_plugin[$name])) {
-		throw new Exception('no such plugin '.$name, join('|', array_keys($this->_plugin)));
+		if (!isset($this->_plugin[$name])) {
+			throw new Exception('no such plugin '.$name, join('|', array_keys($this->_plugin)));
+		}
 	}
 
 	if (strpos($func, 'tok_') !== 0 && !method_exists($this->_plugin[$name][0], $func)) {
@@ -873,7 +878,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 		throw new Exception("no such plugin method $name.".$func);
 	}
 
-	// \rkphplib\lib\log_debug("Tokenizer.callPlugin:876> name=$name, funct=$func, args: ".print_r($args, true));
+	// \rkphplib\lib\log_debug([ "Tokenizer.callPlugin:876> name=$name, func=$func, args: [<1>]", $args ]);
 	if (count($args) == 0) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func));
 	}
@@ -1001,7 +1006,7 @@ private function _call_plugin(string $name, string $param, ?string $arg = null) 
 		$old_tok = $this->_tok;
 		$old_endpos = $this->_endpos;
 
-		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:1004> REDO:\n---\n$res\n---\n");
+		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:1004> redo=[$res]");
 		$this->setText($res);
 		$res = $this->_join_tok(0, count($this->_tok));
 
