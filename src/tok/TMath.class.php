@@ -135,7 +135,7 @@ public function tok_floatval(string $round, string $arg) : string {
 public function tok_rand(string $param, array $p) : string {
 	$res = '';
 
-	if (count($p) == 0) {
+	if (count($p) == 0 || (count($p) == 1 && strlen($p[0]) == 0)) {
 		if (empty($param)) {
 			$res = md5(microtime() . rand());
 		}
@@ -152,7 +152,7 @@ public function tok_rand(string $param, array $p) : string {
 			$res = $p[$n];
 		}
 		else if (count($p) == 2) {
-			$res = mt_rand($p[0], $p[0]);
+			$res = mt_rand($p[0], $p[1]);
 		}
 	}
 
