@@ -110,8 +110,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin = [];
 
 	$plugin['row:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY | TokPlugin::IS_STATIC;
-	$plugin['row'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | 
-		TokPlugin::LIST_BODY | TokPlugin::IS_STATIC;
+	$plugin['row'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::LIST_BODY | TokPlugin::IS_STATIC;
 
 	$plugin['tpl_set'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::REQUIRE_BODY | 
 		TokPlugin::TEXT | TokPlugin::IS_STATIC;
@@ -567,7 +566,7 @@ public function tok_row_init(array $p) : void {
  * Place $p into into bootstrap|table row grid.
  * If [row:init] was not called assume mode=bootstrap4.
  * 
- * @tok {row:6,6}1-6|#|7-12{:row} -> <div class="row"><div class="col-md-6">1-6</div><div class="col-md-6">7-12</div></div>
+ * @tok {row:6,6}1-6|#|7-12{:row} -> <div class="row"><div class="col-6">1-6</div><div class="col-6">7-12</div></div>
  */
 public function tok_row(array $cols, array $p) : string {
 
@@ -715,7 +714,7 @@ private function materialRow(array $cols, array $p) : string {
 /**
  * Place $p into bootstrap row grid.
  * 
- * @tok {row:6,6}a|#|b{:row} = <div class="row"><div class="col-md-6">a</div><div class="col-md-6">b</div></div>
+ * @tok {row:6,6}a|#|b{:row} = <div class="row"><div class="col-6">a</div><div class="col-6">b</div></div>
  */
 private function bootstrapRow(array $cols, array $p) : string {
 	$attributes = [];
@@ -733,7 +732,7 @@ private function bootstrapRow(array $cols, array $p) : string {
 	for ($i = 0; $i < count($cols); $i++) {
 		$class = isset($attributes[$i]['class']) ? ' '.$attributes[$i]['class'] : '';
 		$other = isset($attributes[$i]['other']) ? ' '.$attributes[$i]['other'] : '';
-		$res .= '<div class="col-md-'.$cols[$i].$class.'"'.$other.'>'.$p[$i]."</div>\n";
+		$res .= '<div class="col-'.$cols[$i].$class.'"'.$other.'>'.$p[$i]."</div>\n";
 	}
 
 	$res .= "</div>\n";
