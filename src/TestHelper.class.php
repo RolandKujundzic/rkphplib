@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php
 
 namespace rkphplib;
 
@@ -290,6 +290,21 @@ public function result() : void {
 	$msg = sprintf("%s\n%'=".mb_strlen($overall)."s\n", $overall, '');
 	$this->_log($msg, 2);
 	$this->_log(join("\n", $this->_tc['overview'])."\n\n");
+}
+
+
+/**
+ * Execute $dir/run.php.
+ */
+public function test(string $dir) : void {
+	File::exists($dir.'/run.php');
+
+	if (!chdir($dir)) {
+		throw new Exception("chdir $dir");
+	}
+
+	include 'run.php';
+	chdir('..');
 }
 
 
@@ -766,19 +781,10 @@ private function load_src(string $cpath = '') : void {
 
 
 /**
- * Initialize run().
+ * Initialize run(). Calculate Test number.
  */
 private function prepareRun(int $first, int $last) : int {
-	Dir::exists('in', true);
-	Dir::exists('ok', true);
-
-	if (!Dir::exists('out')) {
-		Dir::create('out');
-	}
-
 	$tnum = $last - $first + 1;
-	$this->load_src();
-
 	$cname = basename(getcwd());
 
 	if ($tnum < 0) {
@@ -789,12 +795,13 @@ private function prepareRun(int $first, int $last) : int {
 		return 0;
 	}
 
-	if (isset($this->test[$first - 1]) && isset($this->test[$last - 1])) {
-		$tnum = 0;
-		for ($i = $first; $i <= $last; $i++) {
-			$tnum += count($this->test[$i - 1]) - 1;
-		}
+	$this->load_src();
+
+	if (!Dir::exists('out')) {
+		Dir::create('out');
 	}
+
+	$tnum = $this->getTestNumber($first, $last);
 
 	if ($tnum == 1) {
 		$this->_log([ $cname.':', '1 test' ], 11);
@@ -804,6 +811,53 @@ private function prepareRun(int $first, int $last) : int {
 	}
 
 	$this->reset();
+
+	return $tnum;
+}
+
+
+/**
+ * Return test number.
+ */
+private function getTestNumber(int $first, int $last) : int {
+	$tnum = 0;
+
+	if (count($this->test) > 0) {
+		for ($i = $first; $i > 0 && $i <= $last; $i++) {
+			if (!isset($this->test[$i - 1])) {
+				throw new Exception("runCompare(...) test $i missing");
+			}
+
+			$tnum += count($this->test[$i - 1]) - 1;
+		}
+
+		return $tnum;
+	}
+
+	$in_out = false;
+
+	for ($i = $first; $i > 0 && $i <= $last; $i++) {
+		$base = 't'.$i;
+		$prefix = 'in/'.$base;
+
+		if (isset($this->test[$i - 1])) {
+		}
+		else if (File::exists($prefix.'.php') || File::exists($prefix.'.tok')) {
+			$tnum++;
+			$in_out = true;
+		}
+		else if (File::exists($prefix.'.json')) {
+			$tnum += count(File::loadJSON($prefix.'.json')) - 1;
+		}
+		else {
+			throw new Exception("no such file $prefix.[php|txt|tok|json]");
+		}
+	}
+
+	if ($in_out) {
+		Dir::exists('in', true);
+		Dir::exists('ok', true);
+	}
 
 	return $tnum;
 }
@@ -834,6 +888,10 @@ public function run(int $first, int $last) : void {
 		else if (File::exists($prefix.'.tok')) {
 			$out = $this->execTok($base);
 			$file = 'in/'.$base.'.tok';
+		}
+		else if (File::exists($prefix.'.json')) {
+			$this->execJSON($prefix.'.json', $tnum);
+			continue;
 		}
 		else {
 			throw new Exception("no such file $prefix.[php|txt|tok]");
@@ -901,6 +959,81 @@ public function runCompare(string $msg, array $out_list, array $ok_list) : void 
 
 
 /**
+ * Return result of $call($args) as string. IF Exception occurs
+ * return 'EXCEPTION'.
+ * 
+ * @example call('rkphplib\DateCalc::sql2num', [ '2020-07-12' ])
+ * @return any
+ */
+private function call(string $call, array $args) {
+	$class = '';
+	$smethod = '';
+
+	if (is_string($call) && ($pos = strpos($call, '::')) !== false) {
+		$class = substr($call, 0, $pos);
+		$smethod = substr($call, $pos + 2);
+	}
+
+	$anum = count($args);
+
+try {
+
+	if (!empty($smethod)) {
+		if ($anum == 1) {
+			$res = $class::$smethod($args[0]);
+		}
+		else if ($anum == 2) {
+			$res = $class::$smethod($args[0], $args[1]);
+		}
+		else if ($anum == 3) {
+			$res = $class::$smethod($args[0], $args[1], $args[2]);
+		}
+		else if ($pnum == 4) {
+			$res = $class::$method($x[0], $x[1], $x[2], $x[3]);
+		}
+		else {
+			throw new Exception("$class::$smethod(...) has more than 4 arguments");
+		}
+	}
+	else {
+		throw new Exception('ToDo');
+	}
+
+}
+catch (\Exception $e) {
+	return 'EXCEPTION';
+}
+
+	return self::res2str($res);
+}
+
+
+/**
+ *
+ */
+private function execJSON(string $file, int $tnum) : void {
+	$test = File::loadJSON($file);
+	$call = array_shift($test);
+
+	for ($i = 0; $i < count($test); $i++) {
+		$ok = array_pop($test[$i]);
+		$args = $test[$i];
+
+		$this->_tc['num']++;
+
+		$out = $this->call($call, $args);
+		$cmp = $ok === $out;
+
+		$this->logRun($call.' '.($i + 1), $cmp, $tnum);
+
+		if (!$cmp) {
+			$this->error_vim($call.'_'.($i + 1), $out, $ok, $args);
+		}
+	}
+}
+
+
+/**
  * Run test[$n] comparisons.
  */
 private function execCompare(int $n, int $tnum) : void {
@@ -932,13 +1065,30 @@ private function execCompare(int $n, int $tnum) : void {
 		$this->logRun("$label $i", $cmp, $tnum);
 
 		if (!$cmp) {
-			$base = "out/{$label}_{$i}";
-			File::save($base.'.out', '['.print_r($out, true).']');
-			File::save($base.'.ok', '['.print_r($ok, true).']');
-			File::save($base.'.vim', "e $base.out\nsplit\ne $base.ok");
-			array_push($this->_tc['vim'], "vim -S $base.vim");
+			$this->error_vim("{$label}_{$i}", $out, $ok);
 		}
 	}
+}
+
+
+/**
+ * Create out/$base.[out|ok|vim].
+ */
+private function error_vim($base, $out, $ok, $in = null) : void {
+	$base = dirname($base).'/'.preg_replace('/[^a-zA-Z0-9_\-\.]/', '', basename($base));
+
+	File::save($base.'.out', '['.print_r($out, true).']');
+	File::save($base.'.ok', '['.print_r($ok, true).']');
+
+	if (!is_null($in)) {
+		File::save($base.'.in', '['.print_r($in, true).']');
+		File::save($base.'.vim', "e $base.in\nsplit\ne $base.out\nvsplit\ne $base.ok");
+	}
+	else {
+		File::save($base.'.vim', "e $base.out\nvsplit\ne $base.ok");
+	}
+
+	array_push($this->_tc['vim'], "vim -S $base.vim");
 }
 
 
