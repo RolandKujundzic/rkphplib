@@ -1,4 +1,6 @@
-T
-F
-T
-F
+{tf:in_arr:a:b:c}c{:tf}{t:}T{:t}{f:}F{:f} = [T]
+{tf:in_arr:a:b:c}x{:tf}{t:}T{:t}{f:}F{:f} = [F]
+{tf:in_arr}a|#|b|#|c|#|c{:tf}{t:}T{:t}{f:}F{:f} = [T]
+{tf:in_arr}|#|c{:tf}{t:}T{:t}{f:}F{:f} = [F]
+
+

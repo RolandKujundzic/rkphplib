@@ -1,3 +1,5 @@
-T
-F
-T
+{tf:in:a,b,c}a{:tf}{t:}T{:t}{f:}F{:f} = [T]
+{tf:in:a,b,c}x{:tf}{t:}T{:t}{f:}F{:f} = [F]
+{tf:in:}{:tf}{t:}T{:t}{f:}F{:f} = [T]
+
+

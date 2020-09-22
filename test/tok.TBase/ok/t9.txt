@@ -1,3 +1,5 @@
-T
-F
-T
+{tf:in_set:a}a,b,c{:tf}{t:}T{:t}{f:}F{:f} = [T]
+{tf:in_set:x}a,b,c{:tf}{t:}T{:t}{f:}F{:f} = [F]
+{tf:in_set:}{:tf}{t:}T{:t}{f:}F{:f} = [T]
+
+

@@ -1,5 +1,6 @@
-Ta
-T1
-F0
-F
+{tf:}a{:tf}{t:}Ta{:t}{f:}Fa{:f} = [Ta]
+{tf:}1{:tf}{t:}T1{:t}{f:}F1{:f} = [T1]
+{tf:}0{:tf}{t:}T0{:t}{f:}F0{:f} = [F0]
+{tf:}{:tf}{t:}T{:t}{f:}F{:f} = [F]
+
 

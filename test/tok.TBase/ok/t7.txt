@@ -1,3 +1,5 @@
-TaTb
-TbTx
-Tb343
+{tf:set:a:b:c}{:tf}{t:a}Ta{:t}{t:b}Tb{:t}{t:}T{:t}{f:}F{:f}{t:x}Tx{:t} = [TaTb]
+{tf:set:b:c}x{:tf}{t:b}Tb{:t}{t:x}Tx{:t} = [TbTx]
+{tf:set}a|#|b343 mk|#|c{:tf}{t:x}Tx{:t}{t:b343 mk}Tb343{:t} = [Tb343]
+
+

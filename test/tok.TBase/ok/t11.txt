@@ -1,6 +1,8 @@
-F
-T
-F
-T
-F
-T
+{tf:and}{:tf}{t:}T{:t}{f:}F{:f} = [F]
+{tf:and}a{:tf}{t:}T{:t}{f:}F{:f} = [T]
+{tf:and}0|#|1{:tf}{t:}T{:t}{f:}F{:f} = [F]
+{tf:and}xyz|#|1{:tf}{t:}T{:t}{f:}F{:f} = [T]
+{tf:and}|#|0|#|x{:tf}{t:}T{:t}{f:}F{:f} = [F]
+{tf:and}1|#|00|#|x{:tf}{t:}T{:t}{f:}F{:f} = [T]
+
+

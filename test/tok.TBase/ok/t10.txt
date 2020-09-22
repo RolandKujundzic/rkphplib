@@ -1,5 +1,7 @@
-F
-F
-T
-F
-T
+{tf:or}{:tf}{t:}T{:t}{f:}F{:f} = [F]
+{tf:or}0|#|0{:tf}{t:}T{:t}{f:}F{:f} = [F]
+{tf:or}0|#|0|#|1{:tf}{t:}T{:t}{f:}F{:f} = [T]
+{tf:or}|#|0|#|{:tf}{t:}T{:t}{f:}F{:f} = [F]
+{tf:or}|#|0|#|x{:tf}{t:}T{:t}{f:}F{:f} = [T]
+
+

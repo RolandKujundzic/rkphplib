@@ -1,4 +1,6 @@
-F
-T
-F
-T
+{tf:cmp_and}a|#|b{:tf}{t:}T{:t}{f:}F{:f} = [F]
+{tf:cmp_and}b|#|b{:tf}{t:}T{:t}{f:}F{:f} = [T]
+{tf:cmp_and}b|#|b|#|c|#|{:tf}{t:}T{:t}{f:}F{:f} = [F]
+{tf:cmp_and}b|#|b|#|c|#|c{:tf}{t:}T{:t}{f:}F{:f} = [T]
+
+

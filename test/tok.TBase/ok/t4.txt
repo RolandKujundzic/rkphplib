@@ -1,6 +1,10 @@
-1: T
-2: F
-3: T
-4: F
-5: T
-6: F
+{tf:cmp:}{:tf}{t:}T{:t}{f:}F{:f} = [T]
+{tf:cmp:aVE}aVe{:tf}{t:}T{:t}{f:}F{:f} = [F]
+{tf:cmp:ave}ave{:tf}{t:}T{:t}{f:}F{:f} = [T]
+{tf:cmp:2}2.0{:tf}{t:}T{:t}{f:}F{:f} = [F]
+{tf:cmp}37x|#|37x{:tf}{t:}T{:t}{f:}F{:f} = [T]
+{tf:cmp}abc|#|uvw{:tf}{t:}T{:t}{f:}F{:f} = [F]
+{switch:1,0}1|#|A|#|B|#|C{:switch} = [A]
+{switch:1,0}0|#|A|#|B|#|C{:switch} = [B]
+{switch:1,0}|#|A|#|B|#|C{:switch} = [C]
+
