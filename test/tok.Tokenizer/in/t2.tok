@@ -1,0 +1,4 @@
+{output_header:}{x:}{:output_header}
+{output:header2}{x:}{:output}
+{output_loop:}{x:}{:output_loop}
+{output_footer:}{x:}{:output_footer}
