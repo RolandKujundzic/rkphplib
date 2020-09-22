@@ -7,6 +7,6 @@ require_once '../settings.php';
  * M A I N
  */
 
-$th->useTokPlugin([ 'TMath' ]);
+$th->useTokPlugin([ 'TBase', 'TMath' ]);
 $th->run(1, 6);
 
