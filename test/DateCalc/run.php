@@ -1,13 +1,13 @@
 <?php
 
-global $th;
+require_once '../settings.php';
 
-if (!isset($th)) {
-	require_once dirname(dirname(__DIR__)).'/src/TestHelper.class.php';
-	$th = new rkphplib\TestHelper();
-}
+/*
+ * M A I N
+ */
 
-$th->load('src/DateCalc.class.php');
+
+$th->run(1, 1);load('src/DateCalc.class.php');
 
 $th->runFuncTest('sql2num');
 $th->runFuncTest('max');
