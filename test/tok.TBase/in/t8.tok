@@ -1,3 +1,6 @@
+{test_helper:show_value}
 {tf:in:a,b,c}a{:tf}{t:}T{:t}{f:}F{:f}
 {tf:in:a,b,c}x{:tf}{t:}T{:t}{f:}F{:f}
 {tf:in:}{:tf}{t:}T{:t}{f:}F{:f}
+{:test_helper}
+

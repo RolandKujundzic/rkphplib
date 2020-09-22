@@ -1,5 +1,8 @@
+{test_helper:show_value}
 {tf:or}{:tf}{t:}T{:t}{f:}F{:f}
 {tf:or}0|#|0{:tf}{t:}T{:t}{f:}F{:f}
 {tf:or}0|#|0|#|1{:tf}{t:}T{:t}{f:}F{:f}
 {tf:or}|#|0|#|{:tf}{t:}T{:t}{f:}F{:f}
 {tf:or}|#|0|#|x{:tf}{t:}T{:t}{f:}F{:f}
+{:test_helper}
+

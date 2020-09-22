@@ -1,1 +1,10 @@
-{tf:}a{:tf}{t:}1{tf:}b{:tf}{t:}b{:t}{:t} - {t:}2{:t}
+{test_helper:show_value}
+{row:6,6}a|#|" b "{:row}
+{row:3,6}a|#| b {:row}
+{row:2,10}a|#|b{:row}
+{row:1,11}a|#|b{:row}
+{row:11,1}a|#|b{:row}
+{row:12}a{:row}
+{row:7}{:row}
+{:test_helper}
+

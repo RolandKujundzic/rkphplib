@@ -1,6 +1,9 @@
+{test_helper:show_value}
 {tf:and}{:tf}{t:}T{:t}{f:}F{:f}
 {tf:and}a{:tf}{t:}T{:t}{f:}F{:f}
 {tf:and}0|#|1{:tf}{t:}T{:t}{f:}F{:f}
 {tf:and}xyz|#|1{:tf}{t:}T{:t}{f:}F{:f}
 {tf:and}|#|0|#|x{:tf}{t:}T{:t}{f:}F{:f}
 {tf:and}1|#|00|#|x{:tf}{t:}T{:t}{f:}F{:f}
+{:test_helper}
+

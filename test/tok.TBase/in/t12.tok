@@ -1,4 +1,7 @@
+{test_helper:show_value}
 {tf:cmp_or}a|#|b{:tf}{t:}T{:t}{f:}F{:f}
 {tf:cmp_or}b|#|b{:tf}{t:}T{:t}{f:}F{:f}
 {tf:cmp_or}b|#|x|#|c|#|{:tf}{t:}T{:t}{f:}F{:f}
 {tf:cmp_or}b|#|b|#|x|#|c{:tf}{t:}T{:t}{f:}F{:f}
+{:test_helper}
+
