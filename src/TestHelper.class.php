@@ -31,6 +31,7 @@ require_once __DIR__.'/Dir.class.php';
 use rkphplib\tok\Tokenizer;
 use rkphplib\tok\TokPlugin;
 
+
 /**
  * Test suite class.
  *
@@ -41,6 +42,9 @@ class TestHelper implements TokPlugin {
 
 // @var Tokenizer $tok
 private $tok = null;
+
+// @var array $test ([ [name, [out,ok], ... ], ... ])
+private $test = [];
 
 // @var hash $_tc test counter hash
 private $_tc = [];
@@ -56,20 +60,28 @@ public $profiler = null;
  * Constructor. Initialize test counter hash.
  */
 public function __construct() {
-	$this->_tc['path'] = '';
-	$this->_tc['overview'] = [];
-
-	// counter for current test
-	$this->_tc['num'] = 0;
-	$this->_tc['ok'] = 0;
-	$this->_tc['error'] = 0;
-
 	// overall counter
 	$this->_tc['t_ok'] = 0;
 	$this->_tc['t_error'] = 0;
 	$this->_tc['t_num'] = 0;
 	$this->_tc['t_pass'] = 0;
 	$this->_tc['t_fail'] = 0;
+
+	$this->_tc['path'] = '';
+	$this->_tc['overview'] = [];
+
+	$this->reset();
+}
+
+
+/**
+ * Reset local test counter.
+ */
+public function reset() {
+	$this->_tc['num'] = 0;
+	$this->_tc['ok'] = 0;
+	$this->_tc['error'] = 0;
+	$this->_tc['vim'] = [];
 }
 
 
@@ -289,9 +301,7 @@ public function runTest(string $run_php) : void {
 	FSEntry::isFile($run_php);
 	$script_dir = dirname($run_php);
 
-	$this->_tc['num'] = 0;
-	$this->_tc['ok'] = 0;
-	$this->_tc['error'] = 0;
+	$this->reset();
 	$this->_tc['path'] = $script_dir;
 
 	$this->_log('START: '.$script_dir.' Tests', 15);
@@ -714,17 +724,22 @@ private function _test_dir() : array {
  * 
  * @example useTokPlugin([ 'TBase', 'TMath' ]);
  */
-public function useTokPlugin(array $plugin_list) : void {
+public function useTokPlugin(array $plugin_list, int $tok_flag = Tokenizer::TOK_DEBUG) : void {
 	list ($tdir, $rel_tdir) = $this->_test_dir();
 
 	$this->load_src('tok/Tokenizer');
-	$this->tok = new Tokenizer(Tokenizer::TOK_DEBUG);
+	$this->tok = new Tokenizer($tok_flag);
 	$this->tok->register($this);
 
 	for ($i = 0; $i < count($plugin_list); $i++) {
-		$this->load_src('tok/'.$plugin_list[$i]);
-		$plugin = 'rkphplib\\tok\\'.$plugin_list[$i];
-		$this->tok->register(new $plugin());
+		if (is_string($plugin_list[$i])) {
+			$this->load_src('tok/'.$plugin_list[$i]);
+			$plugin = 'rkphplib\\tok\\'.$plugin_list[$i];
+			$this->tok->register(new $plugin());
+		}
+		else {
+			$this->tok->register($plugin_list[$i]);
+		}
 	}
 }
 
@@ -751,9 +766,9 @@ private function load_src(string $cpath = '') : void {
 
 
 /**
- * @example run(1, 6)
+ * Initialize run().
  */
-public function run(int $first, int $last) : void {
+private function prepareRun(int $first, int $last) : int {
 	Dir::exists('in', true);
 	Dir::exists('ok', true);
 
@@ -761,35 +776,58 @@ public function run(int $first, int $last) : void {
 		Dir::create('out');
 	}
 
+	$tnum = $last - $first + 1;
 	$this->load_src();
 
 	$cname = basename(getcwd());
-	$tnum = $last - $first + 1;
 
 	if ($tnum < 0) {
 		throw new Exception("invalid call run($first, $last)");
 	}
 	else if ($first == 0) {
 		$this->_log($cname.':  no tests', 3);
+		return 0;
 	}
-	else if ($tnum == 1) {
+
+	if (isset($this->test[$first - 1]) && isset($this->test[$last - 1])) {
+		$tnum = 0;
+		for ($i = $first; $i <= $last; $i++) {
+			$tnum += count($this->test[$i - 1]) - 1;
+		}
+	}
+
+	if ($tnum == 1) {
 		$this->_log([ $cname.':', '1 test' ], 11);
 	}
 	else {
 		$this->_log([ $cname.':', $tnum.' tests' ], 11);
 	}
 
-	$this->_tc['ok'] = 0;
-	$this->_tc['num'] = 0;
-	$this->_tc['vim'] = [];
-	$this->_tc['error'] = 0;
+	$this->reset();
+
+	return $tnum;
+}
+
+
+/**
+ * @example run(1, 6)
+ */
+public function run(int $first, int $last) : void {
+
+	if (($tnum = $this->prepareRun($first, $last)) == 0) {
+		return;
+	}
 
 	for ($i = $first; $i > 0 && $i <= $last; $i++) {
 		$base = 't'.$i;
 		$prefix = 'in/'.$base;
 		$this->_tc['num']++;
 
-		if (File::exists($prefix.'.php')) {
+		if (isset($this->test[$i - 1])) {
+			$this->execCompare($i - 1, $tnum);
+			continue;
+		}
+		else if (File::exists($prefix.'.php')) {
 			$out = $this->execPHP($base);
 			$file = 'in/'.$base.'.php';
 		}
@@ -801,35 +839,105 @@ public function run(int $first, int $last) : void {
 			throw new Exception("no such file $prefix.[php|txt|tok]");
 		}
 
-		$ok = File::load("ok/{$base}.txt");
-		if ($ok == $out) {
-			$this->_log([ $file, "{$this->_tc['num']}/$tnum \x1b[0;32mOK\x1b[0m" ], 1);
-			$this->_tc['ok']++;
-		}
-		else {
-			$this->_log([ $file, "{$this->_tc['num']}/$tnum \x1b[0;31mERROR\x1b[0m" ], 1);
-			$this->_tc['error']++;
+		$cmp = $out == File::load("ok/{$base}.txt");
+		$this->logRun($file, $cmp, $tnum);
 
+		if (!$cmp) {
 			$vim = "out/e$i.vim";
 			File::save($vim, "e $file\nsplit\ne out/t$i.txt\nvsplit\ne ok/t$i.txt");
 			array_push($this->_tc['vim'], 'vim -S '.$vim);
 		}
 	}
 
-	$this->_log_result();
+	$this->logResult();
+}
+
+
+/**
+ * Print ok or error message.
+ */
+private function logRun(string $label, bool $ok, int $tnum) : void {
+	if ($ok) {
+		$this->_log([ $label, "{$this->_tc['num']}/$tnum \x1b[0;32mOK\x1b[0m" ], 1);
+		$this->_tc['ok']++;
+	}
+	else {
+		$this->_log([ $label, "{$this->_tc['num']}/$tnum \x1b[0;31mERROR\x1b[0m" ], 1);
+		$this->_tc['error']++;
+	}
 }
 
 
 /**
  *
  */
-private function _log_result() {
+private function logResult() {
 	if ($this->_tc['error'] == 0) {
 		$this->_log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - 0 ERROR",  "\x1b[0;32mPASS\x1b[0m" ], 5);
 	}
 	else {
 		$this->_log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - {$this->_tc['error']} ERROR",  "\x1b[0;31mFAIL\x1b[0m" ], 5);
 		$this->_log("VIEW ERROR: ".join('; ', $this->_tc['vim']).' (exit with :qa)');
+	}
+
+	$this->test = [];
+}
+
+
+/**
+ * Compare output $out_list with expected result $ok_list. Result vector may contain less keys than output (e.g. ignore date values).
+ */
+public function runCompare(string $msg, array $out_list, array $ok_list) : void {
+	$n = count($ok_list);
+	$test = [ $msg ];
+
+	for ($i = 0; $i < $n; $i++) {
+		$ok = $this->getResult($ok_list[$i]);
+		array_push($test, [ $out_list[$i], $ok ]);
+	}
+
+	array_push($this->test, $test);
+}
+
+
+/**
+ * Run test[$n] comparisons.
+ */
+private function execCompare(int $n, int $tnum) : void {
+	$test = $this->test[$n];
+	$label = $test[0];
+	$this->_tc['num']--;
+
+	for ($i = 1; $i < count($test); $i++) {
+		$this->_tc['num']++;
+
+		$out = $test[$i][0];
+		$ok = $test[$i][1];
+		$cmp = false;
+
+		if ((is_string($out) && is_string($ok)) || (is_numeric($out) && is_numeric($ok)) || (is_bool($out) && is_bool($ok))) {
+			$cmp = $out === $ok;
+		}
+		else if (is_array($out) && is_array($ok) && count($out) >= count($ok)) {
+			$cmp = true;
+
+			foreach ($ok as $key => $value) {
+				if (!array_key_exists($key, $out) || $value != $out[$key]) {
+					$cmp = false;
+					break;
+				}
+			}
+		}
+
+		$this->logRun("$label $i", $cmp, $tnum);
+
+		if (!$cmp) {
+			$base = "out/{$label}_{$i}";
+			File::save($base.'.out', '['.print_r($out, true).']');
+			File::save($base.'.ok', '['.print_r($ok, true).']');
+			File::save($base.'.vim', "e $base.out\nsplit\ne $base.ok");
+			array_push($this->_tc['vim'], "vim -S $base.vim");
+		}
 	}
 }
 
