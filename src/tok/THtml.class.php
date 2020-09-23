@@ -47,8 +47,10 @@ public function getPlugins(Tokenizer $tok) : array {
 /**
  * Replace <br/> with ' '.
  */
-public static function tok_nobr(string $txt) : string {
-	return str_replace( [ '<br>', '<br/>' ], [ ' ', ' ' ], $txt);
+public static function tok_html_nobr(string $txt) : string {
+	$res = str_replace( [ '<br>', '<br/>' ], [ ' ', ' ' ], $txt);
+	\rkphplib\lib\log_debug([ "THtml.tok_html_nobr(<1>) = [<2>]", $txt, $res ]);
+	return $res;
 }
 
 
