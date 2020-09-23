@@ -44,9 +44,6 @@ class TestHelper implements TokPlugin {
 // @var Tokenizer $tok
 private $tok = null;
 
-// @var array $test ([ [name, [out,ok], ... ], ... ])
-private $test = [];
-
 // @var hash $_tc test counter hash
 private $_tc = [];
 
@@ -821,29 +818,14 @@ private function prepareRun(int $first, int $last) : int {
  * Return test number.
  */
 private function getTestNumber(int $first, int $last) : int {
-	$tnum = 0;
-
-	if (count($this->test) > 0) {
-		for ($i = $first; $i > 0 && $i <= $last; $i++) {
-			if (!isset($this->test[$i - 1])) {
-				throw new Exception("runCompare(...) test $i missing");
-			}
-
-			$tnum += count($this->test[$i - 1]) - 1;
-		}
-
-		return $tnum;
-	}
-
 	$in_out = false;
+	$tnum = 0;
 
 	for ($i = $first; $i > 0 && $i <= $last; $i++) {
 		$base = 't'.$i;
 		$prefix = 'in/'.$base;
 
-		if (isset($this->test[$i - 1])) {
-		}
-		else if (File::exists($prefix.'.php') || File::exists($prefix.'.tok')) {
+		if (File::exists($prefix.'.php') || File::exists($prefix.'.tok')) {
 			$tnum++;
 			$in_out = true;
 		}
@@ -882,11 +864,7 @@ public function run(int $first, int $last) : void {
 		$prefix = 'in/'.$base;
 		$this->_tc['num']++;
 
-		if (isset($this->test[$i - 1])) {
-			$this->execCompare($i - 1, $tnum);
-			continue;
-		}
-		else if (File::exists($prefix.'.php')) {
+		if (File::exists($prefix.'.php')) {
 			$out = $this->execPHP($base);
 			$file = 'in/'.$base.'.php';
 		}
@@ -946,24 +924,6 @@ private function logResult() {
 		$this->_log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - {$this->_tc['error']} ERROR",  "\x1b[0;31mFAIL\x1b[0m" ], 5);
 		$this->_log("VIEW ERROR: ".join('; ', $this->_tc['vim']).' (exit with :qa)');
 	}
-
-	$this->test = [];
-}
-
-
-/**
- * Compare output $out_list with expected result $ok_list. Result vector may contain less keys than output (e.g. ignore date values).
- */
-public function runCompare(string $msg, array $out_list, array $ok_list) : void {
-	$n = count($ok_list);
-	$test = [ $msg ];
-
-	for ($i = 0; $i < $n; $i++) {
-		$ok = $this->getResult($ok_list[$i]);
-		array_push($test, [ $out_list[$i], $ok ]);
-	}
-
-	array_push($this->test, $test);
 }
 
 
@@ -1014,6 +974,10 @@ private function execJSON(string $file, int $tnum) : void {
 	$this->_tc['num']--;
 
 	for ($i = 0; $i < count($test); $i++) {
+		if (count($test[$i]) < 2) {
+			throw new Exception("less than two arguments in $call $i", print_r($test[$i], true));
+		}
+
 		$ok = array_pop($test[$i]);
 		$args = $test[$i];
 
@@ -1022,52 +986,27 @@ private function execJSON(string $file, int $tnum) : void {
 		}
 
 		$this->_tc['num']++;
+		$label = '';
 
-		$out = $this->call($call, $args);
+		if (substr($call, 0, 8) == 'compare,') {
+			if (count($args) != 1) {
+				throw new Exception("more than two arguments in $call $i", print_r($args, true));
+			}
+
+			$label = substr($call, 8).' '.($i + 1);
+			$out = $args[0];
+		}
+		else {
+			$out = $this->call($call, $args);
+			$label = $call.' '.($i + 1);
+		}
+
 		$cmp = $ok === $out;
 
-		$this->logRun($call.' '.($i + 1), $cmp, $tnum);
+		$this->logRun($label, $cmp, $tnum);
 
 		if (!$cmp) {
 			$this->error_vim($call.'_'.($i + 1), $out, $ok, $args);
-		}
-	}
-}
-
-
-/**
- * Run test[$n] comparisons.
- */
-private function execCompare(int $n, int $tnum) : void {
-	$test = $this->test[$n];
-	$label = $test[0];
-	$this->_tc['num']--;
-
-	for ($i = 1; $i < count($test); $i++) {
-		$this->_tc['num']++;
-
-		$out = $test[$i][0];
-		$ok = $test[$i][1];
-		$cmp = false;
-
-		if ((is_string($out) && is_string($ok)) || (is_numeric($out) && is_numeric($ok)) || (is_bool($out) && is_bool($ok))) {
-			$cmp = $out === $ok;
-		}
-		else if (is_array($out) && is_array($ok) && count($out) >= count($ok)) {
-			$cmp = true;
-
-			foreach ($ok as $key => $value) {
-				if (!array_key_exists($key, $out) || $value != $out[$key]) {
-					$cmp = false;
-					break;
-				}
-			}
-		}
-
-		$this->logRun("$label $i", $cmp, $tnum);
-
-		if (!$cmp) {
-			$this->error_vim("{$label}_{$i}", $out, $ok);
 		}
 	}
 }
