@@ -208,7 +208,7 @@ function _ask {
 
 		if test -n "$ASK_DEFAULT"; then
 			default="$ASK_DEFAULT"
-			label="$label [$default]"
+			label="$label [$default]  "
 			ASK_DEFAULT=
 		fi
 	else 
@@ -326,29 +326,24 @@ function _chmod {
 
 
 function _composer {
-	local action global_comp local_comp cmd
-	global_comp=$(command -v composer)
+	local action cmd
 	action="$1"
 
-	test -f 'composer.phar' && local_comp=composer.phar
-
-	if [[ -z "$global_comp" && -z "$local_comp" ]]; then
+	if [[ ! -f 'composer.phar' && ! -f '/usr/local/bin/composer' ]]; then
 		_composer_install
 		test "$action" = 'q' && return
 	fi
+
+	cmd=$(command -v composer)
+	test -z "$cmd" && cmd='php composer.phar'
 
 	if test -z "$action"; then
 		_composer_ask
 		test "$action" = 'q' && return
 	fi
 
-	if test -n "$local_comp"; then
-		cmd='php composer.phar'
-	elif test -n "$global_comp"; then
-		cmd='composer'
-	fi
-
-	$cmd validate --no-check-all --strict
+	$cmd validate --no-check-publish 2>/dev/null || \
+		_abort "$cmd validate --no-check-publish"
 
 	if test -f composer.json; then
 		if test "$action" = 'i'; then
