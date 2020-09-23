@@ -20,7 +20,7 @@ use rkphplib\Exception;
  * @$res = any
  */
 function call(string $name, array $arg = []) {
-	\rkphplib\lib\log_debug([ "call:23> call $name(<1>)", $arg ]);
+	// \rkphplib\lib\log_debug([ "call:23> call $name(<1>)", $arg ]);
 	$anum = count($arg);
 	$res = null;
 
@@ -102,7 +102,7 @@ function call(string $name, array $arg = []) {
 		}
 	}
 
-	\rkphplib\lib\log_debug([ "call:90> $res = [<1>]", $res ]);
+	// \rkphplib\lib\log_debug([ "call:90> $res = [<1>]", $res ]);
 	return $res;
 }
 
