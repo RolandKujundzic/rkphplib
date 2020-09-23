@@ -2,6 +2,7 @@
 
 require_once __DIR__.'/settings.php';
 
+$th->test('lib.conf2kv');
 $th->test('DateCalc');
 $th->test('XMLParser');
 $th->test('tok.Tokenizer');
@@ -15,7 +16,6 @@ $res = ob_get_contents();
 ob_end_clean();
 print $res;
 
-$th->runTest('lib_conf2kv/run.php');
 $th->runTest('lib_csv2kv/run.php');
 $th->runTest('lib_kv2conf/run.php');
 $th->runTest('lib_split_str/run.php');
