@@ -3,6 +3,7 @@
 namespace rkphplib\tok;
 
 require_once __DIR__.'/TokPlugin.iface.php';
+require_once dirname(__DIR__).'/lib/call.php';
 
 use rkphplib\Exception;
 
@@ -33,67 +34,39 @@ public function getPlugins(Tokenizer $tok) : array {
  * Execute php function or method. Up to 4 arguments (arg1, ..., arg4).
  * @example {eval:call}function=session_start{:eval}
  * @example {eval:call}class=Test|#|[static_]method=sum|#|arg1=5|#|arg2=3{:eval)
+ * @example {eval:call}class=Foo|#|method=bar|#|height=7|#|width=12{:eval}
  */
-public static function tok_eval_call($p) : string {
+public static function tok_eval_call(array $p) : string {
 	if (!empty($p['function'])) {
-		if (!isset($p['arg1'])) {
-			return $p['function']();
-		}
-		else if (!isset($p['arg2'])) {
-			return $p['function']($p['arg1']);
-		}
-		else if (!isset($p['arg3'])) {
-			return $p['function']($p['arg1'], $p['arg2']);
-		}
-		else if (!isset($p['arg4'])) {
-			return $p['function']($p['arg1'], $p['arg2'], $p['arg3']);
-		}
-		else if (!isset($p['arg5'])) {
-			return $p['function']($p['arg1'], $p['arg2'], $p['arg3'], $p['arg4']);
-		}
+		$name = $p['function'];
+		unset($p['function']);
 	}
 	else if (!empty($p['class']) && !empty($p['method'])) {
-		$obj = new $p['class']();
-		$func = $p['method'];
-
-		if (!isset($p['arg1'])) {
-			return $obj->$func();
-		}
-		else if (!isset($p['arg2'])) {
-			return $obj->$func($p['arg1']);
-		}
-		else if (!isset($p['arg3'])) {
-			return $obj->$func($p['arg1'], $p['arg2']);
-		}
-		else if (!isset($p['arg4'])) {
-			return $obj->$func($p['arg1'], $p['arg2'], $p['arg3']);
-		}
-		else if (!isset($p['arg5'])) {
-			return $obj->$func($p['arg1'], $p['arg2'], $p['arg3'], $p['arg4']);
-		}
+		$name = $p['class'].'.'.$p['method'];
+		unset($p['class']);
+		unset($p['method']);
 	}
 	else if (!empty($p['class']) && !empty($p['static_method'])) {
-		$func = $p['static_method'];
-
-		if (!isset($p['arg1'])) {
-			return $p['class']::$func->$func();
-		}
-		else if (!isset($p['arg2'])) {
-			return $p['class']::$func($p['arg1']);
-		}
-		else if (!isset($p['arg3'])) {
-			return $p['class']::$func($p['arg1'], $p['arg2']);
-		}
-		else if (!isset($p['arg4'])) {
-			return $p['class']::$func($p['arg1'], $p['arg2'], $p['arg3']);
-		}
-		else if (!isset($p['arg5'])) {
-			return $p['class']::$func($p['arg1'], $p['arg2'], $p['arg3'], $p['arg4']);
-		}
+		$name = $p['class'].'::'.$p['static_method'];
+		unset($p['class']);
+		unset($p['static_method']);
 	}
 	else {
 		throw new Exception('missing function or class and ([static_]method) parameter', print_r($p, true));
 	}
+
+	$arg = [];
+	for ($i = 1; $i <= 4; $i++) {
+		if (isset($p['arg'.$i])) {
+			$arg[$i - 1] = $p['arg'.$i];
+		}
+	}
+
+	if (count($arg) == 0) {
+		$arg = $p;
+	}
+
+	return \rkphplib\lib\call($name, $arg);
 }
 
 
