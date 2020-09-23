@@ -2,10 +2,6 @@
 
 require_once '../settings.php';
 
-
-/**
- *
- */
 function xml_tag(string $tag, string $text, array $attrib, string $path) {
 	$text = strlen($text) > 0 ? ">$text</$tag>" : '/>';
 
@@ -17,10 +13,6 @@ function xml_tag(string $tag, string $text, array $attrib, string $path) {
 	print "<$tag$attrib_str$text\n";
 }
 
-
-/*
- * M A I N
- */
 
 global $th;
 
