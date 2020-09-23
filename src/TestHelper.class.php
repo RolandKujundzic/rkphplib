@@ -825,7 +825,7 @@ private function getTestNumber(int $first, int $last) : int {
 		$base = 't'.$i;
 		$prefix = 'in/'.$base;
 
-		if (File::exists($prefix.'.php') || File::exists($prefix.'.tok')) {
+		if (File::exists($prefix.'.php') || File::exists($prefix.'.tok') || File::exists($prefix.'.txt')) {
 			$tnum++;
 			$in_out = true;
 		}
@@ -866,11 +866,15 @@ public function run(int $first, int $last) : void {
 
 		if (File::exists($prefix.'.php')) {
 			$out = $this->execPHP($base);
-			$file = 'in/'.$base.'.php';
+			$file = $prefix.'.php';
 		}
 		else if (File::exists($prefix.'.tok')) {
 			$out = $this->execTok($base);
-			$file = 'in/'.$base.'.tok';
+			$file = $prefix.'.tok';
+		}
+		else if (File::exists($prefix.'.txt')) {
+			$out = $this->execTxt($base);
+			$file = $prefix.'.txt';
 		}
 		else if (File::exists($prefix.'.json')) {
 			$this->execJSON($prefix.'.json', $tnum);
@@ -1034,14 +1038,33 @@ private function error_vim($base, $out, $ok, $in = null) : void {
 
 
 /**
- * Execute (include) $base.php, save output as out/$base.txt
- * and compare with ok/$base.txt. Log _tc.num|err.ok and print message.
+ * Execute first_lines(rest_of_file).
+ * Save output as out/$base.txt.
+ */
+private function execTxt(string $base) : string {
+	$lines = File::loadLines("in/$base.txt");
+	$call = trim(array_shift($lines));
+
+	if (substr($call, -2) != '()') {
+		throw new Exception("invalid first line '$call' in $prefix.txt - should be: call()");
+	}
+
+	$call = substr($call, 0, -2);
+	$out = self::res2str(\rkphplib\lib\call($call, [ join('', $lines) ]));
+	File::save("out/$base.txt", $out);
+	return $out;
+}
+
+
+/**
+ * Execute (include) $base.php and save as out/$base.txt
  */
 private function execPHP(string $base) : string {
 	ob_start();
 	include "in/$base.php";
 	$out = ob_get_contents();
 	ob_end_clean();
+
 	File::save("out/$base.txt", $out);
 	return $out;
 }
@@ -1064,8 +1087,7 @@ private function execTok(string $base) : string {
 	}
 
 	File::save('out/'.$base.'.txt', $out);
-
-	return $out;
+	$out;
 }
 
 
