@@ -1009,15 +1009,27 @@ catch (\Exception $e) {
 
 
 /**
- *
+ * @example …
+ * [ 
+ *   "rkphplib\\Class::method",
+ *   [ "parameter 1", "parameter 2", "expected result" ],
+ *   [ [ 1, 2 ], 17.3, "EXCEPTION" ],
+ *   [ "NOW()", "<?= time()" ]
+ * ]
+ * @EOF
  */
 private function execJSON(string $file, int $tnum) : void {
 	$test = File::loadJSON($file);
 	$call = array_shift($test);
+	$this->_tc['num']--;
 
 	for ($i = 0; $i < count($test); $i++) {
 		$ok = array_pop($test[$i]);
 		$args = $test[$i];
+
+		if (substr($ok, 0, 4) == '<?= ') {
+			eval('$ok = '.substr($ok, 4).';');
+		}
 
 		$this->_tc['num']++;
 
@@ -1075,7 +1087,7 @@ private function execCompare(int $n, int $tnum) : void {
  * Create out/$base.[out|ok|vim].
  */
 private function error_vim($base, $out, $ok, $in = null) : void {
-	$base = dirname($base).'/'.preg_replace('/[^a-zA-Z0-9_\-\.]/', '', basename($base));
+	$base = 'out/'.preg_replace('/[^a-zA-Z0-9_\-\.]/', '', basename($base));
 
 	File::save($base.'.out', '['.print_r($out, true).']');
 	File::save($base.'.ok', '['.print_r($ok, true).']');
