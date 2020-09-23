@@ -29,6 +29,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['html:tidy'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:xml'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
 	$plugin['html:uglify'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY | TokPlugin::POSTPROCESS;
+	$plugin['html:nobr'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['html'] = 0;
 
 	$plugin['text2html'] = 0;
@@ -40,6 +41,14 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['user_agent'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST;
 
   return $plugin;
+}
+
+
+/**
+ * Replace <br/> with ' '.
+ */
+public static function tok_nobr(string $txt) : string {
+	return str_replace( [ '<br>', '<br/>' ], [ ' ', ' ' ], $txt);
 }
 
 
