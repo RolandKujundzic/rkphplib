@@ -2,6 +2,7 @@
 
 require_once __DIR__.'/settings.php';
 
+$th->test('DateCalc');
 $th->test('XMLParser');
 $th->test('tok.Tokenizer');
 
