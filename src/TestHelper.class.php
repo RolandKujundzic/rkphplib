@@ -1087,7 +1087,7 @@ private function execTok(string $base) : string {
 	}
 
 	File::save('out/'.$base.'.txt', $out);
-	$out;
+	return $out;
 }
 
 
