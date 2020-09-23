@@ -1,0 +1,8 @@
+[
+	"rkphplib\\DateCalc::formatDateTimeStr",
+	["%d.%m.%Y %H:%i:%s", "now(+10)", "now", "<?= date('d.m.Y H:i:s', time() + 10)"],
+	["d.m.Y H:i:s", "now(+10)", "now", "<?= date('d.m.Y H:i:s', time() + 10)"],
+	["%Y-%m-%d %H:%i:%s", "now(-10)", "unix", "<?= date('Y-m-d H:i:s', time() - 10)"],
+	["%d %B, %Y", "23.10.2016", "de", "23 Oktober, 2016"]
+]
+

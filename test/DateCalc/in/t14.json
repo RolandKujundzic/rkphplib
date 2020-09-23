@@ -1,0 +1,9 @@
+[
+	"rkphplib\\DateCalc::nowstr2time",
+	["wrong", 0, 0],
+	["now()", "<?= time()"],
+	["now(-60)", "<?= time() - 60"],
+	["now(+60)", "<?= time() + 60"],
+	["now(+3600)", "<?= time() + 3600"]
+]
+

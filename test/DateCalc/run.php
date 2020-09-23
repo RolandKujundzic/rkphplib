@@ -7,5 +7,5 @@ require_once '../settings.php';
  * M A I N
  */
 
-$th->run(1, 2);
+$th->run(1, 20);
 
