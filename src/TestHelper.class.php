@@ -17,6 +17,7 @@ if (!defined('DOCROOT')) {
 define('TEST_MYSQL', 'mysqli://unit_test:magic123@tcp+localhost/unit_test');
 define('TEST_SQLITE', 'sqlite://magic123@./unit_test.sqlite');
 
+require_once __DIR__.'/lib/call.php';
 require_once __DIR__.'/lib/config.php';
 require_once __DIR__.'/tok/Tokenizer.class.php';
 require_once __DIR__.'/tok/TokPlugin.iface.php';
@@ -846,6 +847,10 @@ private function getTestNumber(int $first, int $last) : int {
 			$tnum++;
 			$in_out = true;
 		}
+		else if (File::exists($prefix.'.json.php')) {
+			include($prefix.'.json.php');
+			$tnum += count($test) - 1;
+		}
 		else if (File::exists($prefix.'.json')) {
 			$tnum += count(File::loadJSON($prefix.'.json')) - 1;
 		}
@@ -891,6 +896,10 @@ public function run(int $first, int $last) : void {
 		}
 		else if (File::exists($prefix.'.json')) {
 			$this->execJSON($prefix.'.json', $tnum);
+			continue;
+		}
+ 		else if (File::exists($prefix.'.json.php')) {
+			$this->execJSON($prefix.'.json.php', $tnum);
 			continue;
 		}
 		else {
@@ -966,49 +975,20 @@ public function runCompare(string $msg, array $out_list, array $ok_list) : void 
  * @return any
  */
 private function call(string $call, array $args) {
-	$class = '';
-	$smethod = '';
-
-	if (is_string($call) && ($pos = strpos($call, '::')) !== false) {
-		$class = substr($call, 0, $pos);
-		$smethod = substr($call, $pos + 2);
+	try {
+		$res = \rkphplib\lib\call($call, $args);
 	}
-
-	$anum = count($args);
-
-try {
-
-	if (!empty($smethod)) {
-		if ($anum == 1) {
-			$res = $class::$smethod($args[0]);
-		}
-		else if ($anum == 2) {
-			$res = $class::$smethod($args[0], $args[1]);
-		}
-		else if ($anum == 3) {
-			$res = $class::$smethod($args[0], $args[1], $args[2]);
-		}
-		else if ($pnum == 4) {
-			$res = $class::$method($x[0], $x[1], $x[2], $x[3]);
-		}
-		else {
-			throw new Exception("$class::$smethod(...) has more than 4 arguments");
-		}
+	catch (\Exception $e) {
+		return 'EXCEPTION';
 	}
-	else {
-		throw new Exception('ToDo');
-	}
-
-}
-catch (\Exception $e) {
-	return 'EXCEPTION';
-}
 
 	return self::res2str($res);
 }
 
 
 /**
+ * File is either *.json or *.json.php (with $test = [ ... ]).
+ *
  * @example …
  * [ 
  *   "rkphplib\\Class::method",
@@ -1017,9 +997,19 @@ catch (\Exception $e) {
  *   [ "NOW()", "<?= time()" ]
  * ]
  * @EOF
+ * 
+ * @example …
+ * <?php $text = [ 'lib\split_str', [ ',', '"a","b","c"', ['a','b','c']], ... ]
+ * @EOF
  */
 private function execJSON(string $file, int $tnum) : void {
-	$test = File::loadJSON($file);
+	if (substr($file, -4) == '.php') {
+		include $file;
+	}
+	else {
+		$test = File::loadJSON($file);
+	}
+
 	$call = array_shift($test);
 	$this->_tc['num']--;
 
