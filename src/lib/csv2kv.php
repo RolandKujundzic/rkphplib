@@ -13,6 +13,8 @@ if (!defined('HASH_DELIMITER')) {
 
 
 /**
+ * Same as conf2kv but csv based implementation.
+ *
  * Split text into key value hash or string. Use csv quote escape (broken if quotes are wrong).
  * Quoted delimiter $d2 is escaped. Keys must not start with "@@", "@N" or "@_". 
  * Split text with csv_explode($text, $d2, ...) into columns. Split column at first $d1 (=) into key value.
@@ -24,6 +26,8 @@ if (!defined('HASH_DELIMITER')) {
  * Unescape entity($d2).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
+ *
+ * @beware broken if uneven number of quotes
  */
 function csv2kv(?string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, array $ikv = []) : array {
 	$ld1 = mb_strlen($d1);
