@@ -983,6 +983,10 @@ private function execJSON(string $file, int $tnum) : void {
 		}
 
 		$ok = array_pop($test[$i]);
+		if (substr($ok, 0, 3) == 'ok/') {
+			$ok = File::load($ok);
+		}
+
 		$args = $test[$i];
 
 		if (substr($ok, 0, 4) == '<?= ') {
