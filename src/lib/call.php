@@ -102,7 +102,7 @@ function call(string $name, array $arg = []) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug([ "call:90> $res = [<1>]", $res ]);
+	// \rkphplib\lib\log_debug([ "call:105> $res = [<1>]", $res ]);
 	return $res;
 }
 
