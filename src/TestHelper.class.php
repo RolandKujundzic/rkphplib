@@ -64,6 +64,7 @@ public function __construct() {
 	$this->_tc['t_num'] = 0;
 	$this->_tc['t_pass'] = 0;
 	$this->_tc['t_fail'] = 0;
+	$this->_tc['t_vim'] = [];
 
 	$this->_tc['path'] = '';
 	$this->_tc['overview'] = [];
@@ -279,15 +280,24 @@ public function load(string $file) : void {
  * Print overall result.
  */
 public function result() : void {
-
-	if (count($this->_tc['overview']) == 0) {
+	if ($this->_tc['t_num'] == 0) {
 		return;
 	}
 
-	$overall = "Overall result of ".count($this->_tc['overview'])." Class/Function Tests:";
-	$msg = sprintf("%s\n%'=".mb_strlen($overall)."s\n", $overall, '');
-	$this->_log($msg, 2);
-	$this->_log(join("\n", $this->_tc['overview'])."\n\n");
+	$tnum = $this->_tc['t_num'];
+
+	if ($this->_tc['t_error'] == 0) {
+		$overall = "\x1b[0;32m{$this->_tc['t_ok']} OK, 0 ERROR - PASS\x1b[0m";
+	}
+	else {
+		$overall = "\x1b[0;31m{$this->_tc['t_ok']} OK, {$this->_tc['t_error']} ERROR - FAIL\x1b[0m";
+	}
+
+	$this->_log([ "DONE: {$this->_tc['t_num']} Tests", $overall ], 15);
+
+	if ($this->_tc['t_error'] > 0) {
+		$this->_log(join("\n", $this->_tc['t_vim']), 2);
+	}
 }
 
 
@@ -923,11 +933,18 @@ private function logRun(string $label, bool $ok, int $tnum) : void {
 private function logResult() {
 	if ($this->_tc['error'] == 0) {
 		$this->_log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - 0 ERROR",  "\x1b[0;32mPASS\x1b[0m" ], 5);
+		$this->_tc['t_ok'] += $this->_tc['ok'];
+		$this->_tc['t_pass']++;
 	}
 	else {
 		$this->_log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - {$this->_tc['error']} ERROR",  "\x1b[0;31mFAIL\x1b[0m" ], 5);
-		$this->_log("VIEW ERROR: ".join('; ', $this->_tc['vim']).' (exit with :qa)');
+		$this->_log("VIEW ERROR: ".join("\n", $this->_tc['vim']));
+		$this->_tc['t_error'] += $this->_tc['error'];
+		$this->_tc['t_fail']++;
+		$this->_tc['t_vim'] = array_merge($this->_tc['t_vim'], $this->_tc['vim']);
 	}
+
+	$this->_tc['t_num'] += $this->_tc['num'];
 }
 
 
@@ -963,7 +980,7 @@ private function call(string $call, array $args) {
  * @EOF
  * 
  * @example …
- * <?php $text = [ 'lib\split_str', [ ',', '"a","b","c"', ['a','b','c']], ... ]
+ * <?php $text = [ 'lib\split_str', [ [ ',', '"a","b","c"' ], 'ok/t1_1.txt' ], ... ]
  * @EOF
  */
 private function execJSON(string $file, int $tnum) : void {
@@ -988,7 +1005,6 @@ private function execJSON(string $file, int $tnum) : void {
 		}
 
 		$args = $test[$i];
-
 		if (substr($ok, 0, 4) == '<?= ') {
 			eval('$ok = '.substr($ok, 4).';');
 		}
