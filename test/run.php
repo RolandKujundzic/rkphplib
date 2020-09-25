@@ -8,6 +8,7 @@ $th->test('lib.kv2conf');
 $th->test('DateCalc');
 $th->test('XMLParser');
 $th->test('tok.Tokenizer');
+$th->result();
 
 exit(0);
 
@@ -30,7 +31,6 @@ $th->runTest('Dir/run.php');
 $th->runTest('tok_Tokenizer/run.php');
 $th->runTest('tok_TFileSystem/run.php');
 $th->runTest('tok_TBase/run.php');
-$th->result();
 
 // ToDo ...
 // run_test('MysqlDatabase/run.php');
