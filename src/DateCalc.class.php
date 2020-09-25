@@ -121,7 +121,8 @@ public static function max(string $d1, string $d2, bool $force_date = false) : s
  */
 public static function sqlTS(string $date, int $day = 0) : int {
 
-	if (empty($date) || mb_substr($date, 0, 10) == '0000-00-00' || $date == '0000-00-00 00:00:00') {
+	if (empty($date) || mb_substr($date, 0, 10) == '0000-00-00' || 
+			$date == '0000-00-00 00:00:00' || $date == '0000-00-00 00:00') {
 		return 0;
 	}
 
@@ -138,18 +139,33 @@ public static function sqlTS(string $date, int $day = 0) : int {
 
 	$m = intval(mb_substr($date, 5, 2));
 	$y = mb_substr($date, 0, 4);
+	$len = mb_strlen($date);
 
-	if (mb_strlen($date) == 10) {
+	if ($len == 10) {
 		$res = mktime(0, 0, 0, $m, $day, $y);
 	}
-	else if (mb_strlen($date) == 19) {
+	else if ($len == 16 || $len == 19) {
 		$h = intval(mb_substr($date, 11, 2));
 		$i = intval(mb_substr($date, 14, 2));
-		$s = intval(mb_substr($date, 17, 2));
+		$s = $len == 19 ? intval(mb_substr($date, 17, 2)) : 0;
 		$res = mktime($h, $i, $s, $m, $day, $y);
 	}
 
 	return $res;
+}
+
+
+/**
+ * Return difference between $start and $end (same if switched) in
+ * s (m, h, d, w).
+ */
+public static function sqlDiff(string $start, string $end, string $format = 's') : float {
+	$start = self::sqlTS($start);
+	$end = self::sqlTS($end);
+
+	$sec = max($start, $end) - min($start, $end);
+	$map = [ 's' => 1, 'm' => 60, 'h' => 3600, 'd' => 3600 * 24, 'w' => 3600 * 24 * 7 ];
+	return $sec / $map[$format];
 }
 
 
