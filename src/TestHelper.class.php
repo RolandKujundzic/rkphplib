@@ -1001,7 +1001,7 @@ private function execJSON(string $file, int $tnum) : void {
 			throw new Exception("less than two arguments in $call $i", print_r($test[$i], true));
 		}
 
-		$ok = (string)array_pop($test[$i]);
+		$ok = self::res2str(array_pop($test[$i]));
 		if (substr($ok, 0, 3) == 'ok/') {
 			$ok = File::load($ok);
 		}
