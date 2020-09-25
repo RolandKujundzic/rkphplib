@@ -21,6 +21,7 @@ $th->test('lib.split_table');
 $th->test('lib.translate');
 */
 
+$th->test('FSEntry');
 $th->test('DateCalc');
 $th->test('XMLParser');
 
