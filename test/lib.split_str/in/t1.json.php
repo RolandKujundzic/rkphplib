@@ -1,8 +1,7 @@
 <?php
 
-$func = 'rkphplib\lib\split_str';
-
 $test = [
+	'rkphplib\lib\split_str',
 	[',', '" a ", b ', '[" a ","b"]'],
 	[',', 'a\\,b,c\\, d', '["a,b","c, d"]'],
 	[':', 'a:b:" c "::d: e', '["a","b"," c ","","d","e"]'],
