@@ -1,8 +1,7 @@
 <?php
 
-$func = 'rkphplib\lib\csv_explode';
-
 $test = [
+	'rkphplib\lib\csv_explode',
 	['"a","b"', '["a","b"]'],
 	['"""a"""', '["\\"a\\""]'],
 	['"""a""",b,",c,","""d"""', '["\\"a\\"","b",",c,","\\"d\\""]'],

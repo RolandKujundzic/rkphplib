@@ -7,6 +7,7 @@ $th->test('lib.csv2kv');
 $th->test('lib.kv2conf');
 $th->test('lib.split_str');
 $th->test('lib.array_join');
+$th->test('lib.csv_explode');
 
 $th->test('DateCalc');
 $th->test('XMLParser');
@@ -24,7 +25,6 @@ $res = ob_get_contents();
 ob_end_clean();
 print $res;
 
-$th->runTest('lib_csv_explode/run.php');
 $th->runTest('lib_replace_tags/run.php');
 $th->runTest('lib_log_debug/run.php');
 $th->runTest('ArrayHelper/run.php');
