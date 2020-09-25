@@ -1,6 +1,12 @@
 <?php
 
-require_once(dirname(dirname(__DIR__)).'/src/lib/log_error.php');
+require_once '../settings.php';
+
+
+global $th;
+
+$GLOBALS['SETTINGS']['LOG_DEBUG'] = __DIR__.'/out/t1.txt';
+$th->run(1,1);
 
 function a() {
 	\rkphplib\lib\log_error('error in a()');
