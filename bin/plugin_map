@@ -28,20 +28,15 @@ private $_plugins = [];
 /**
  * Scan src/tok for *.class.php. Execute register for every class.
  */
-public function scan(string $dir = 'src/tok') : void {
+public function scan(string $dir) : void {
 	Dir::exists($dir);
-	$php_files = Dir::scanTree($dir, [ '.class.php' ]);
-	$ignore = [ 'AMenu.class.php', 'Tokenizer.class.php' ];
+	$php_files = Dir::scanTree($dir, [ '.php', '!AMenu.class.php', '!Tokenizer.class.php', '!.iface.php', '!.trait.php' ]);
 	$obj = [];
 	$n = 0;
 
 	foreach ($php_files as $file) {
-		if (in_array(basename($file), $ignore)) {
-			continue;
-		}
-
 		require_once $file;
-		$cname = '\\rkphplib'.substr(str_replace('/', '\\', $file), 3, -10);
+		$cname = '\\rkphplib\\'.str_replace([ 'src/', '/', '.class.php', '.php' ], [ '', '\\', '', '' ], $file);
 
 		// skip abstract class ...
 		if (substr($cname, 0, 15) == '\rkphplib\tok\A') {
@@ -132,5 +127,5 @@ if (!syntax([], "scan src/tok directory and update Tokenizer.tryPluginMap if nec
 }
 
 $collector = new Collector();
-$collector->scan();
+$collector->scan('src/tok');
 $collector->createMap();
