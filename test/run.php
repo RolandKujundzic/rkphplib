@@ -5,9 +5,14 @@ require_once __DIR__.'/settings.php';
 $th->test('lib.conf2kv');
 $th->test('lib.csv2kv');
 $th->test('lib.kv2conf');
+$th->test('lib.split_str');
+$th->test('lib.array_join');
+
 $th->test('DateCalc');
 $th->test('XMLParser');
+
 $th->test('tok.Tokenizer');
+
 $th->result();
 
 exit(0);
@@ -19,8 +24,6 @@ $res = ob_get_contents();
 ob_end_clean();
 print $res;
 
-$th->runTest('lib_split_str/run.php');
-$th->runTest('lib_array_join/run.php');
 $th->runTest('lib_csv_explode/run.php');
 $th->runTest('lib_replace_tags/run.php');
 $th->runTest('lib_log_debug/run.php');
