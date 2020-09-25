@@ -805,9 +805,11 @@ private function prepareRun(int $first, int $last) : int {
 
 	$this->load_src();
 
-	if (!Dir::exists('out')) {
-		Dir::create('out');
+	if (Dir::exists('out')) {
+		Dir::remove('out');
 	}
+
+	Dir::create('out');
 
 	$tnum = $this->getTestNumber($first, $last);
 
@@ -1085,7 +1087,14 @@ private function execPHP(string $base) : string {
 	$out = ob_get_contents();
 	ob_end_clean();
 
-	File::save("out/$base.txt", $out);
+	$save_as = "out/$base.txt";
+	if (empty($out) && File::exists($save_as)) {
+		$out = File::load($save_as);
+	}
+	else {
+		File::save($save_as, $out);
+	}
+
 	return $out;
 }
 
