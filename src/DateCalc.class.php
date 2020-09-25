@@ -669,7 +669,7 @@ public static function formatDateStr(string $format_out, string $date_str, strin
  * strftime = use strftime($format_out, time)
  */
 public static function formatDateTimeStr(string $format_out, string $date_str, string $format_in = '') : string {
-	// \rkphplib\lib\log_debug("DateCalc::formatDateTimeStr:656> ('$format_out', '$date_str', '$format_in')"); 
+	// \rkphplib\lib\log_debug("DateCalc::formatDateTimeStr:672> ('$format_out', '$date_str', '$format_in')"); 
 	if ($format_in == 'unix' && mb_substr($date_str, 0, 4) == 'now(') {
 		$format_in = 'now';
 	}
