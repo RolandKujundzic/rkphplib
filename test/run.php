@@ -11,10 +11,32 @@ $th->test('lib.csv_explode');
 $th->test('lib.replace_tags');
 $th->test('lib.log_debug');
 
+/*
+$th->test('lib.cli_input');
+$th->test('lib.log_error');
+$th->test('lib.mysql_password');
+$th->test('lib.resolvPath');
+$th->test('lib.sitemap_xml');
+$th->test('lib.split_table');
+$th->test('lib.translate');
+*/
+
 $th->test('DateCalc');
 $th->test('XMLParser');
 
+/*
+$th->runTest('ArrayHelper/run.php');
+$th->runTest('StringHelper/run.php');
+$th->runTest('Dir/run.php');
+*/
+
 $th->test('tok.Tokenizer');
+
+/*
+$th->runTest('tok_Tokenizer/run.php');
+$th->runTest('tok_TFileSystem/run.php');
+$th->runTest('tok_TBase/run.php');
+*/
 
 $th->result();
 
@@ -26,13 +48,6 @@ $th->runTest('Session/run.php');
 $res = ob_get_contents();
 ob_end_clean();
 print $res;
-
-$th->runTest('ArrayHelper/run.php');
-$th->runTest('StringHelper/run.php');
-$th->runTest('Dir/run.php');
-$th->runTest('tok_Tokenizer/run.php');
-$th->runTest('tok_TFileSystem/run.php');
-$th->runTest('tok_TBase/run.php');
 
 // ToDo ...
 // run_test('MysqlDatabase/run.php');
