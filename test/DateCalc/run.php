@@ -4,5 +4,5 @@ require_once '../settings.php';
 
 global $th;
 
-$th->run(1, 20);
+$th->run(1, 21);
 
