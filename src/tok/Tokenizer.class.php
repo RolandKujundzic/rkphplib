@@ -1246,6 +1246,7 @@ private function tryPluginMap(string $name) : void {
 		'TMailer' => [ 'mail:init', 'mail:html', 'mail:txt', 'mail:send', 'mail:attach', 'mail' ],
 		'TMath' => [ 'nf', 'number_format', 'intval', 'floatval', 'rand', 'math', 'md5' ],
 		'TMenu' => [ 'menu', 'menu:add', 'menu:conf' ],
+		'TMisc' => [ 'sleep' ],
 		'TOutput' => [ 'output:set', 'output:get', 'output:conf', 'output:init', 'output:loop', 'output:json', 'output:header', 'output:footer', 'output:empty', 'output', 'sort', 'search' ],
 		'TPicture' => [ 'picture:init', 'picture:src', 'picture:list', 'picture' ],
 		'TSQL' => [ 'sql', 'sql:col', 'sql:change', 'sql:dsn', 'sql:getId', 'sql:hasTable', 'sql:import', 'sql:in', 'sql:json', 'sql:loop', 'sql:name', 'sql:nextId', 'sql:options', 'sql:password', 'sql:qkey', 'sql:query', 'null' ],
