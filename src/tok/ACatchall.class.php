@@ -148,12 +148,11 @@ public function scan(string $directory, array $suffix_list = [ 'inc.html' ]) : v
 /**
  * Copy $source_dir content to $target_dir. Process files with suffix in $parse_suffix_list.
  */
-public function copy(string $source_dir, string $target_dir, array $parse_suffix_list = [ 'inc.html', 'js', 'conf' ], int $slen = 0) : void {
+public function copy(string $source_dir, string $target_dir, array $parse_suffix_list = [ '.inc.html', '.js', '.conf' ], int $slen = 0) : void {
 	$entries = Dir::entries($source_dir);
 
 	if (!$slen) {
 		$this->log("copy $source_dir/ to $target_dir/");
-		Dir::fixSuffixList($parse_suffix_list);
 		$slen = strlen($source_dir);
 	}
 
