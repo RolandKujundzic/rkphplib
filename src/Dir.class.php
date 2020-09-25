@@ -320,58 +320,18 @@ public static function scan(string $path, int $sort = SCANDIR_SORT_ASCENDING) : 
 
 
 /**
- * Remove leading dot [.] from suffix list entries and change to lower. Variable $suffix_list is changed.
- */
-public static function fixSuffixList(array &$suffix_list) : void {
-  for ($i = 0; $i < count($suffix_list); $i++) {
-		$s = $suffix_list[$i];
-
-		if (mb_substr($s, 0, 1) == '.') {
-			$s = mb_substr($s, 1);
-		}
-
-		$suffix_list[$i] = mb_strtolower($s);
-	}
-}
-
-
-/**
- * True if $file suffix is in suffix list. True if $suffix_list is empty.
- * Suffix comparsion is context insensitive.
- */
-private static function _has_suffix(string $file, array $suffix_list) : bool {
-
-	if (count($suffix_list) == 0) {
-		return true;
-	}
-
-	$file = mb_strtolower($file);
-	$l = mb_strlen($file);
-
-	foreach ($suffix_list as $suffix) {
-		$suffix = mb_strtolower($suffix);
-
-		if (($pos = mb_strrpos($file, $suffix)) !== false && ($l - $pos == mb_strlen($suffix))) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-
-/**
  * Return files in directory with suffix in suffix_list (e.g [jpg, png] or [.jpg, .png]). 
  * If $rel_dir is set remove $rel_dir in every entry.
+ * @see FSEntry::fixSuffixList
  */
 public static function scanDir(string $path, array $suffix_list = array(), string $rel_dir = '') : array {
-	self::fixSuffixList($suffix_list);
+	$suffix_list = FSEntry::fixSuffixList($suffix_list);
 
 	$entries = Dir::entries($path);
 	$found = array();
 
 	foreach ($entries as $entry) {
-		if (FSEntry::isFile($entry, false) && self::_has_suffix($entry, $suffix_list)) {
+		if (FSEntry::isFile($entry, false) && FSEntry::hasSuffix($entry, $suffix_list)) {
 			if ($rel_dir) {
 				array_push($found, str_replace($rel_dir, '', $entry));
 			}
@@ -388,11 +348,12 @@ public static function scanDir(string $path, array $suffix_list = array(), strin
 /**
  * Return files from directory tree with suffix in suffix_list ([jpg, png] or [.jpg, .png]). 
  * Exclude directories found in exclude_dir list (use relative path).
+ * @see FSEntry::fixSuffixList
  */
 public static function scanTree(string $path, array $suffix_list = array(), array $exclude_dir = array(), bool $_recursion = false) : array {
 
 	if (!$_recursion) {
-		self::fixSuffixList($suffix_list);
+		$suffix_list = FSEntry::fixSuffixList($suffix_list);
 
 		// prepend path to exclude_dir ...
 		for ($i = 0; $i < count($exclude_dir); $i++) {
@@ -419,7 +380,7 @@ public static function scanTree(string $path, array $suffix_list = array(), arra
 				$tree = array_merge($tree, Dir::scanTree($entry, $suffix_list, $exclude_dir, true));
 			}
 		}
-		else if (FSEntry::isFile($entry, false) && self::_has_suffix($entry, $suffix_list)) {
+		else if (FSEntry::isFile($entry, false) && FSEntry::hasSuffix($entry, $suffix_list)) {
 			array_push($tree, $entry);
 		}
 	}

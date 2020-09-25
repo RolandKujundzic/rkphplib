@@ -25,6 +25,124 @@ class FSEntry {
 public static $CHMOD_ABORT = true;
 
 
+/**
+ * Return advanced suffix search. Use leading '!' to ignore suffix.
+ * Use leading '~' for reqular expression match and '!~' for inverse match.
+ * Throw exception if simple suffix list has no leading dot.
+ *
+ * @example …
+ * $suffix = fixSuffixList([ '!Interface.php', '.php', '!~^A[A-Z]' ]);  
+ * // $suffix = [ 'ignore' => [ 'Interface.php' ], 'unlike' => [ '^A[A-Z]' ] , 'like' => [], 'require' => [ '.php' ] ]
+ * @EOL
+ *
+ * @example …
+ * $suffix = fixSuffixList([ '.jpg', '.jpeg', '.png' ]);  
+ * // $suffix = [ '.jpg', '.jpeg', '.png' ]
+ * @EOL
+ *
+ */
+public static function fixSuffixList(array $suffix_list) : array {
+	$ignore = [];
+	$like = [];
+	$unlike = [];
+	$require = [];
+	$simple = true;
+	$no_dot = '';
+
+  for ($i = 0; $i < count($suffix_list); $i++) {
+		$s = $suffix_list[$i];
+
+		if (mb_substr($s, 0, 1) == '!') {
+			array_push($ignore, mb_substr($s, 1));
+			$simple = false;
+		}
+		else if (mb_substr($s, 0, 1) == '~') {
+			array_push($like, mb_substr($s, 1));
+			$simple = false;
+		}
+		else if (mb_substr($s, 0, 2) == '!~') {
+			array_push($unlike, mb_substr($s, 2));
+			$simple = false;
+		}
+		else {
+			if (mb_substr($s, 0, 1) != '.') {
+				$no_dot = $s;
+			}
+
+			array_push($require, $s);
+		}
+	}
+
+	if ($simple) {
+		if ($no_dot != '') {
+			throw new Exception("use .$no_dot (leading dot missing)");
+		}
+	}
+	
+	return $simple ? $require : [ 'ignore' => $ignore, 'like' => $like, 'unlike' => $unlike, 'require' => $require ];
+}
+
+
+/**
+ * True if $file suffix matches suffix_list entry.
+ * If suffix_list = fixSuffixList([ ... ]) advanced matching is possible.
+ * True if suffix_list is empty. Match is case insensitive.
+ *
+ * @example FSEntry::hasSuffix('file.inc.php', FSEntry::fixSuffixList([ '.php', '!inc.php' ]); // false
+ * @example FSEntry::hasSuffix('pic.jpeg', FSEntry::fixSuffixList([ '~jpe?g$' ])); // true
+ * @example FSEntry::hasSuffix('pic.jpeg', [ '.gif', '.png', '.jpg' ])); // false
+ * @example FSEntry::hasSuffix('pic.jpeg', [ '.gif', '.png', '.jpg', '.jpeg' ])); // true
+ * @see fixSuffixList
+ */
+public static function hasSuffix(string $file, array $suffix_list) : bool {
+	$l = mb_strlen($file);
+
+	if (!isset($suffix_list['require']) || count($suffix_list) != 4) {
+		// simple match ...
+		if (count($suffix_list) == 0) {
+			return true;
+		}
+
+		foreach ($suffix_list as $suffix) {
+			if (($pos = mb_strripos($file, $suffix)) !== false && ($l - $pos == mb_strlen($suffix))) {
+				return true;
+			}
+		}
+	
+		return false;	
+	}
+
+	for ($i = 0; $i < count($suffix_list['ignore']); $i++) {
+		$suffix = $suffix_list['ignore'][$i];
+		if (($pos = mb_strripos($file, $suffix)) !== false && ($l - $pos == mb_strlen($suffix))) {
+			return false;
+		}
+	}
+
+	for ($i = 0; $i < count($suffix_list['unlike']); $i++) {
+		$suffix = $suffix_list['unlike'][$i];
+		if (preg_match('/'.$suffix.'/i', $file)) {
+			return false;
+		}
+	}
+
+	for ($i = 0; $i < count($suffix_list['like']); $i++) {
+		$suffix = $suffix_list['like'][$i];
+		if (preg_match('/'.$suffix.'/i', $file)) {
+			return false;
+		}
+	}
+
+	for ($i = 0; $i < count($suffix_list['require']); $i++) {
+		$suffix = $suffix_list['require'][$i];
+		if (($pos = mb_strripos($file, $suffix)) !== false && ($l - $pos == mb_strlen($suffix))) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 
 /**
  * Create symlink. It is ok if target does not exist. Link directory must exist. 
