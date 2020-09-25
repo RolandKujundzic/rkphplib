@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace rkphplib;
 
@@ -1001,7 +1001,7 @@ private function execJSON(string $file, int $tnum) : void {
 			throw new Exception("less than two arguments in $call $i", print_r($test[$i], true));
 		}
 
-		$ok = array_pop($test[$i]);
+		$ok = (string)array_pop($test[$i]);
 		if (substr($ok, 0, 3) == 'ok/') {
 			$ok = File::load($ok);
 		}
