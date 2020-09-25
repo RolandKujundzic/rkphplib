@@ -1637,6 +1637,18 @@ function _syntax_help {
 
 function _syntax_check_php {
 	local a php_files php_bin
+
+	if test "$1" = 'test'; then
+		_require_file 'test/run.sh'
+		_cd test
+		_msg "Running test/run.sh ... " -n
+		if ! ./run.sh >/dev/null; then
+			_abort 'test failed - see test/run.log'
+		fi
+		_msg "OK"
+		return
+	fi
+
 	php_files=$(find "$1" -type f -name '*.php')
 	php_bin=$(grep -R -E '^#\!/usr/bin/php' "bin" | grep -v 'php -c skip_syntax_check' | sed -E 's/\:\#\!.+//')
 
@@ -1780,10 +1792,11 @@ function build {
 	"$PATH_PHPLIB/bin/toggle" src log_debug on
 	"$PATH_PHPLIB/bin/toggle" src log_debug off
 
+	bin/plugin_map
+
 	_syntax_check_php 'src' 'syntax_check_src.php' 1
 	_syntax_check_php 'bin' 'syntax_check_bin.php' 1
-
-	bin/plugin_map
+	_syntax_check_php 'test'
 
 	_git_status
 }

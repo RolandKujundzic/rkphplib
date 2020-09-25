@@ -14,10 +14,11 @@ function build {
 	"$PATH_PHPLIB/bin/toggle" src log_debug on
 	"$PATH_PHPLIB/bin/toggle" src log_debug off
 
+	bin/plugin_map
+
 	_syntax_check_php 'src' 'syntax_check_src.php' 1
 	_syntax_check_php 'bin' 'syntax_check_bin.php' 1
-
-	bin/plugin_map
+	_syntax_check_php 'test'
 
 	_git_status
 }
