@@ -8,6 +8,7 @@ $th->test('lib.kv2conf');
 $th->test('lib.split_str');
 $th->test('lib.array_join');
 $th->test('lib.csv_explode');
+$th->test('lib.replace_tags');
 
 $th->test('DateCalc');
 $th->test('XMLParser');
@@ -25,11 +26,9 @@ $res = ob_get_contents();
 ob_end_clean();
 print $res;
 
-$th->runTest('lib_replace_tags/run.php');
 $th->runTest('lib_log_debug/run.php');
 $th->runTest('ArrayHelper/run.php');
 $th->runTest('StringHelper/run.php');
-$th->runTest('DateTime/run.php');
 $th->runTest('Dir/run.php');
 $th->runTest('tok_Tokenizer/run.php');
 $th->runTest('tok_TFileSystem/run.php');
