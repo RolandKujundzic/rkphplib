@@ -900,7 +900,7 @@ public function run(int $first, int $last) : void {
 			throw new Exception("no such file $prefix.[php|txt|tok]");
 		}
 
-		$cmp = $out == File::load("ok/{$base}.txt");
+		$cmp = $this->cmp(File::load("ok/{$base}.txt"), $out);
 		$this->logRun($file, $cmp, $tnum);
 
 		if (!$cmp) {
@@ -1027,14 +1027,27 @@ private function execJSON(string $file, int $tnum) : void {
 			$label = $call.' '.($i + 1);
 		}
 
-		$cmp = $ok === $out;
-
+		$cmp = $this->cmp($out, $ok);
 		$this->logRun($label, $cmp, $tnum);
 
 		if (!$cmp) {
 			$this->error_vim($call.'_'.($i + 1), $out, $ok, $args);
 		}
 	}
+}
+
+
+/**
+ * Return comparion of $out and $ok.
+ */
+private function cmp($out, $ok) : bool {
+	$cmp = $ok === $out;
+
+	if (!$cmp && is_numeric($ok) && is_numeric($out)) {
+		$cmp = "$ok" === "$out";
+	}
+
+	return $cmp;
 }
 
 
