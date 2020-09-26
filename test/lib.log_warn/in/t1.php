@@ -1,6 +1,6 @@
 <?php
 
-require_once PATH_RKPHPLIB.'/lib/log_warn.php';
+require_once PATH_RKPHPLIB.'lib/log_warn.php';
 
 function a() {
 	\rkphplib\lib\log_warn('error in a()');
