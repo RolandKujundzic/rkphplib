@@ -1,0 +1,2 @@
+WARNING: error in a()
+WARNING: error in B::_x()
