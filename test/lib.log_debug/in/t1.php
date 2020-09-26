@@ -1,5 +1,7 @@
 <?php
 
+namespace test\log_debug;
+
 function a() {
 	\rkphplib\lib\log_debug('in a()');
 }

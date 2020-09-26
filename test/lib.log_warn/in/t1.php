@@ -1,5 +1,7 @@
 <?php
 
+namespace test\log_warn;
+
 require_once PATH_RKPHPLIB.'lib/log_warn.php';
 
 function a() {
@@ -12,7 +14,7 @@ class B {
 	}
 
 	private function _x() {
-		rkphplib\lib\log_warn('error in B::_x()');
+		\rkphplib\lib\log_warn('error in B::_x()');
 	}
 }
 
