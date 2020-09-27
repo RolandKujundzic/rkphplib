@@ -14,9 +14,9 @@ $th->test('lib.cli_input');
 $th->test('lib.log_warn');
 $th->test('lib.mysql_password');
 $th->test('lib.resolvPath');
+$th->test('lib.sitemap_xml');
 
 /*
-$th->test('lib.sitemap_xml');
 $th->test('lib.split_table');
 $th->test('lib.translate');
 */
