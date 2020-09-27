@@ -1,0 +1,15 @@
+[
+	"rkphplib\\lib\\sitemap_xml",
+	[
+		[ 
+			"https://koeln.panorama.community/portfolio_virtueller-rundgang_koeln.html",
+			"https://koeln.panorama.community/impressum_panorama.html",
+			"https://koeln.panorama.community/index.html",
+			"https://koeln.panorama.community/leistungen_panoramafotograf_koeln.html",
+			"https://koeln.panorama.community/datenschutz_rundgang.html"
+		],
+		"out/t1_1.xml",
+		"ok/t1_1.xml"
+	]
+]
+
