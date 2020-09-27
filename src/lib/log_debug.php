@@ -126,7 +126,8 @@ function log_debug_msg($msg) : string {
 			$res = mb_strlen($msg) > 130 ? mb_substr($msg, 0, 130).'…' : mb_substr($msg, 0, -1);
 		}
 	}
-	else if (is_array($msg) && !empty($msg[0]) && ($len = count($msg)) > 1 && mb_strpos($msg[0], '<'.($len - 1).'>') !== false) {
+	else if (is_array($msg) && !empty($msg[0]) && ($len = count($msg)) > 1 &&
+						is_string($msg[0]) && mb_strpos($msg[0], '<'.($len - 1).'>') !== false) {
 		$res = $msg[0];
 		for ($i = 1; $i < $len; $i++) {
 			$res = str_replace("<$i>", log_debug_msg($msg[$i]), $res);
