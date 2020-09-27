@@ -1006,10 +1006,11 @@ private function execJSON(string $file, int $tnum) : void {
 			$ok = File::load($ok);
 		}
 
-		$args = $test[$i];
 		if (substr($ok, 0, 4) == '<?= ') {
 			eval('$ok = '.substr($ok, 4).';');
 		}
+
+		$args = $test[$i];
 
 		$this->_tc['num']++;
 		$label = '';
@@ -1021,9 +1022,15 @@ private function execJSON(string $file, int $tnum) : void {
 
 			$label = substr($call, 8).' '.($i + 1);
 			$out = $args[0];
+			// \rkphplib\lib\log_debug([ "TestHelper.execJSON:1025> <1>) label: [<3>]", $this->_tc['num'], $label, $out ]);
 		}
 		else {
+			// \rkphplib\lib\log_debug([ "TestHelper.execJSON:1028> <1>) <2>(<3>)", $this->_tc['num'], $call, $args ]);
 			$out = $this->call($call, $args);
+			if ($out == 'null' && is_string(end($args)) && substr(end($args), 0, 4) == 'out/') {
+				$out = File::load(end($args));
+			}
+
 			$label = $call.' '.($i + 1);
 		}
 
