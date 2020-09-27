@@ -1259,7 +1259,7 @@ private function tryPluginMap(string $name) : void {
 
 	foreach ($map as $cname => $list) {
 		if (in_array($name, $list)) {
-			require_once(__DIR__.'/'.$cname.'.class.php');
+			require_once __DIR__.'/'.$cname.'.class.php';
 			$cname = '\\rkphplib\\tok\\'.$cname;
 			$obj = new $cname();
 			$this->register($obj);
