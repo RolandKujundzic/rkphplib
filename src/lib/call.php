@@ -20,7 +20,6 @@ use rkphplib\Exception;
  * @$res = any
  */
 function call(string $name, array $arg = []) {
-	// \rkphplib\lib\log_debug([ "call:23> call $name(<1>)", $arg ]);
 	$anum = count($arg);
 	$res = null;
 
@@ -35,6 +34,7 @@ function call(string $name, array $arg = []) {
 		throw new Exception('more than 4 arguments', "$name: ".print_r($arg, true));
 	}
 
+	// \rkphplib\lib\log_debug([ "call:37> anum=<1> call $name(<2>)", $anum, $arg ]);
 	if (($pos = strpos($name, '.')) > 0) {
 		$obj = substr($name, 0, $pos);
 		$func = substr($name, $pos + 1);
