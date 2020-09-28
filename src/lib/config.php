@@ -180,7 +180,7 @@ define('RKPHPLIB_VERSION', 'v1.0.3');
  * 
  * @param Exception $e
  */
-function exception_handler($e) {
+set_exception_handler(function ($e) {
 	$msg = "\n\nABORT: ".$e->getMessage();
 	$trace = $e->getFile()." on line ".$e->getLine()."\n".$e->getTraceAsString();
 	$internal = property_exists($e, 'internal_message') ? "INFO: ".$e->internal_message : '';
@@ -193,7 +193,8 @@ function exception_handler($e) {
 		if (!empty($_REQUEST['ajax']) || (!empty($_REQUEST[SETTINGS_REQ_DIR]) && strpos($_REQUEST[SETTINGS_REQ_DIR], 'ajax/') !== false)) {
 			http_response_code(400);
 			header('Content-Type: application/json');
-			print '{ "error": "1", "error_message": "'.$e->getMessage().'", "error_code": "'.$e->getCode().'" }';
+			$trace = substr($_SERVER['HTTP_HOST'], -3) == '.xx' ? ', "trace": '.json_encode(explode("\n", $trace)) : '';
+			print '{ "error": "1", "error_message": '.json_encode($e->getMessage()).', "error_code": "'.$e->getCode().'"'.$trace.' }';
 			exit(1);
 		}
 		else if (defined('ABORT_DIR') && class_exists('\rkphplib\tok\Tokenizer') && class_exists('\rkphplib\tok\TBase')) {
@@ -228,9 +229,7 @@ function exception_handler($e) {
 	}
 
 	die("$msg\n$internal\n\n$trace\n\n");
-}
-
-set_exception_handler('\rkphplib\lib\exception_handler');
+});
 
 
 /**
@@ -243,7 +242,7 @@ set_exception_handler('\rkphplib\lib\exception_handler');
  * @param string $errFile
  * @param int $errLine
  */
-function error_handler($errNo, $errStr, $errFile, $errLine) {
+set_error_handler(function ($errNo, $errStr, $errFile, $errLine) {
 
 	if (error_reporting() == 0) {
 		// @ suppression used, ignore it
@@ -251,7 +250,5 @@ function error_handler($errNo, $errStr, $errFile, $errLine) {
 	}
 
 	throw new \ErrorException($errStr, 0, $errNo, $errFile, $errLine);
-}
-
-set_error_handler('\rkphplib\lib\error_handler', error_reporting());
+}, error_reporting());
 
