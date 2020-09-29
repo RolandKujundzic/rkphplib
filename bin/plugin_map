@@ -92,7 +92,7 @@ public function createMap() {
 	$code = mb_substr($code, 0, -4)."\n\t];\n\n\t".
 		'foreach ($map as $cname => $list) {'."\n\t\t".
 		'if (in_array($name, $list)) {'."\n\t\t\t".
-		'require_once(__DIR__.\'/\'.$cname.\'.class.php\');'."\n\t\t\t".
+		'require_once __DIR__.\'/\'.$cname.\'.class.php\';'."\n\t\t\t".
 		"\$cname = '\\\\rkphplib\\\\tok\\\\'.\$cname;\n\t\t\t".
 		'$obj = new $cname();'."\n\t\t\t".
 		'$this->register($obj);'."\n\t\t\t".
