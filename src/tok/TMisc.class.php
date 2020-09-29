@@ -21,23 +21,34 @@ class TMisc implements TokPlugin {
  */
 public function getPlugins(Tokenizer $tok) : array {
 	$plugin = [];
-	$plugin['sleep'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+	$plugin['sleep'] = 0;
 	return $plugin;
 }
 
 
 /**
  * Sleep for $wait seconds.
+ *
+ * @tok {sleep:2}
+ * @tok {sleep:0.5}
+ * @tok {sleep:}{get:ms}{:sleep}
  */
-public function tok_sleep(float $wait) : void {
-	// \rkphplib\lib\log_debug("TMisc.tok_sleep:33> wait $wait s");
-	if ($wait >= 1) {
-		sleep((int)$wait);
+public function tok_sleep(string $pwait = '', string $await = '') : void {
+	$wait = empty($pwait) ? (float) $await : (float) $pwait;
+	$start = microtime(true);
+
+	\rkphplib\lib\log_debug([ "TMisc.tok_sleep:39> wait $wait s\nGET: <1>\nPOST: <2>", $_GET, $_POST ]);
+	if ($wait > 600 || $wait < 0.001) {
+		throw new Exception('invalid sleep time use [0.001, 600]', "pwait=[$pwait] await=[$wait] wait=[$wait]");
+	}
+	else if (is_int($wait)) {
+		sleep($wait);
 	}
 	else {
-		usleep((int)(1000000 * $wait));
+		usleep(1000000 * $wait);
 	}
-	// \rkphplib\lib\log_debug("TMisc.tok_sleep:40> return");
+
+	\rkphplib\lib\log_debug("TMisc.tok_sleep:46> return after ".(microtime(true) - $start).' sec');
 }
 
 }
