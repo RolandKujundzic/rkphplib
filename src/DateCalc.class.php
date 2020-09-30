@@ -106,6 +106,28 @@ public static function sql2num(string $sql_date, int $day = 0) {
 
 
 /**
+ * Return day name. Format (default = num): 
+ * - num: 1, 2, 3, 4, 5, 6, 7
+ * - de: Mo, Di, Mi, Do, Fr, Sa, So
+ * - en: Mo, Tu, We, Th, Fr, Sa, Su
+ * - de_long: Montag, Dienstag, Mittwoch, Donnestart, Freitag, Samstag, Sonntag
+ * - en_long: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday(ber)|de (german name)|en (english Name) of sql date yyyy-mm-dd.
+ */
+public static function dayName(string $sql_date, string $format = 'num') : string {
+	$map = [
+		'num' => [ '7', '1', '2', '3', '4', '5', '6' ],  
+		'de' => [ 'So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa' ],
+		'en' => [ 'Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa' ],
+		'de_long' => [ 'Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag' ],
+		'en_long' => [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday' ]
+	];
+
+	$num = date('S', mktime(0, 0, 0, substr($sql_date, -2), substr($sql_date, 5, 2), substr($sql_date, 0, 4)));
+	return $map[$format][$num];
+}
+
+
+/**
  * Return max sql date|datetime (sql format).
  */
 public static function max(string $d1, string $d2, bool $force_date = false) : string {
