@@ -122,7 +122,14 @@ public static function dayName(string $sql_date, string $format = 'num') : strin
 		'en_long' => [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday' ]
 	];
 
-	$num = date('S', mktime(0, 0, 0, substr($sql_date, -2), substr($sql_date, 5, 2), substr($sql_date, 0, 4)));
+	if (!preg_match('/^[0-9]{4}\-[0-9]{2}\-[0-9]{2}$/', $sql_date)) {
+		throw new Exception("invalid sql date [$sql_date]");
+	}
+
+	$d = substr($sql_date, -2);
+	$m = substr($sql_date, 5, 2);
+	$y = substr($sql_date, 0, 4);
+	$num = date('w', mktime(0, 0, 0, $m, $d, $y));
 	return $map[$format][$num];
 }
 
@@ -691,7 +698,7 @@ public static function formatDateStr(string $format_out, string $date_str, strin
  * strftime = use strftime($format_out, time)
  */
 public static function formatDateTimeStr(string $format_out, string $date_str, string $format_in = '') : string {
-	// \rkphplib\lib\log_debug("DateCalc::formatDateTimeStr:672> ('$format_out', '$date_str', '$format_in')"); 
+	// \rkphplib\lib\log_debug("DateCalc::formatDateTimeStr:701> ('$format_out', '$date_str', '$format_in')"); 
 	if ($format_in == 'unix' && mb_substr($date_str, 0, 4) == 'now(') {
 		$format_in = 'now';
 	}
