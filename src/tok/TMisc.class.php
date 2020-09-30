@@ -37,7 +37,7 @@ public function tok_sleep(string $pwait = '', string $await = '') : void {
 	$wait = empty($pwait) ? (float) $await : (float) $pwait;
 	$start = microtime(true);
 
-	\rkphplib\lib\log_debug([ "TMisc.tok_sleep:39> wait $wait s\nGET: <1>\nPOST: <2>", $_GET, $_POST ]);
+	// \rkphplib\lib\log_debug([ "TMisc.tok_sleep:40> wait $wait s\nGET: <1>\nPOST: <2>", $_GET, $_POST ]);
 	if ($wait > 600 || $wait < 0.001) {
 		throw new Exception('invalid sleep time use [0.001, 600]', "pwait=[$pwait] await=[$wait] wait=[$wait]");
 	}
@@ -48,7 +48,7 @@ public function tok_sleep(string $pwait = '', string $await = '') : void {
 		usleep(1000000 * $wait);
 	}
 
-	\rkphplib\lib\log_debug("TMisc.tok_sleep:46> return after ".(microtime(true) - $start).' sec');
+	// \rkphplib\lib\log_debug("TMisc.tok_sleep:51> return after ".(microtime(true) - $start).' sec');
 }
 
 }
