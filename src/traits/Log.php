@@ -27,7 +27,7 @@ namespace rkphplib\traits;
 trait Log {
 
 // @var array $log_conf [ prefix => '', 'to' => php://STDOUT ]
-private $log_conf = [ 'prefix' => '', 'to' => 'php://STDOUT' ];
+private $log_conf = [ 'prefix' => '', 'to' => 'php://STDOUT', 'last_flag' => 0 ];
 
 
 /**
@@ -52,11 +52,16 @@ private function log(string $msg, int $flag = 1) : void {
 	if ($flag & 4) {
 		$msg .= "\033[0K\r";
 	}
-	else if ($flag & 1) {
+	else if ($this->log_conf['last_flag'] & 4) {
+		$msg = "\n".$msg;
+	}
+
+	if ($flag & 1) {
 		$msg .= "\n";
 	}
 
 	error_log($msg, 3, $this->log_conf['to']);
+	$this->log_conf['last_flag'] = $flag;
 }
 
 
