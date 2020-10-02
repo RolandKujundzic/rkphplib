@@ -243,13 +243,20 @@ public function tok_html_meta(string $name, string $value, string $html) : strin
  * @tok {html:append:head}<!-- insert appendHtml before </head> -->{:html}
  */
 public function tok_html_append(string $tag, string $appendHtml, string $html) : string {
-	$tag_end = mb_stripos($html, '</'.$tag.'>');
+	$etag = '</'.$tag.'>';
+	$etl = strlen($etag);
+	$tag_end = mb_stripos($html, $etag);
+	$appendHtml = trim($appendHtml);
+
+	if (strpos($appendHtml, '<'.$tag.'>') === 0 && substr($appendHtml, -1 * $etl) == $etag) {
+		$appendHtml = trim(substr($appendHtml, $etl - 1, -1 * $etl));
+	}
 
 	if ($tag_end > 0) {
-		$res = mb_substr($html, 0, $tag_end)."\n".trim($appendHtml)."\n".mb_substr($html, $tag_end);
+		$res = mb_substr($html, 0, $tag_end)."\n".$appendHtml."\n".mb_substr($html, $tag_end);
 	}
   else {
-    throw new Exception('failed to find tag end', "search=[</$tag>] tag_end=$tag_end");
+    throw new Exception('failed to find tag end', "search=[</$tag>] tag_end=$tag_end html=[".substr($html, 0, 80).' …]');
   }
 
 	return $res;
