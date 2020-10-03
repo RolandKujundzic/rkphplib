@@ -382,6 +382,29 @@ public function getCustomQuery(string $qkey, array $replace) {
 
 
 /**
+ * Return table name from query (empty if not found)
+ */
+public function getQueryTable(string $query) : string {
+	$table = '';
+
+	if (preg_match('/^(SELECT|DELETE).* FROM ([a-z0-9_]+) ?/i', $query, $match)) {
+		$table = $match[2];
+	}
+	else if (preg_match('/^(INSERT|REPLACE) INTO ([a-z0-9_]+?)/i', $query, $match)) {
+		$table = $match[2];
+	}
+	else if (preg_match('/^UPDATE ([a-z0-9_]+?)/i', $query, $match)) {
+		$table = $match[1];
+	}
+	else if (preg_match('/^(ALTER|CREATE) TABLE ([a-z0-9_]+?)/i', $query, $match)) {
+		$table = $match[2];
+	}
+
+	return $table;
+}
+
+
+/**
  * Return (prepared) query defined via setQuery($qkey, '...').
  * Allow custom query if $qkey matches /^SELECT|INSERT|UPDATE|REPLACE /i.
  */
@@ -496,7 +519,7 @@ public function hasQuery(string $qkey, string $query = '') : bool {
  * all queries must be same.
  */
 public function hasQueries(array $query_map) : bool {
-	// \rkphplib\lib\log_debug("ADatabase.hasQueries:499> query_map: ".print_r($query_map, true));
+	// \rkphplib\lib\log_debug("ADatabase.hasQueries:522> query_map: ".print_r($query_map, true));
 	if (!is_array($query_map)) {
 		return false;
 	}
@@ -1089,15 +1112,29 @@ public function createTable(array $conf, bool $drop_existing = false) : int {
 	}
 
 	$query = self::createTableQuery($conf);
+	$res = 0;
 
 	if (strpos($query, '-- @multiQuery') !== false) {
 		$this->multiQuery($query);
-		return 2;
+		$res = 2;
 	}
 	else {
-		$this->execute($query);
-		return 1;
+		if (!$this->execute($query)) {
+			return 0;
+		}
+
+		$res = 1;
 	}
+
+	if (!$this->hasTable($tname)) {
+		// hdd may lag ... wait and try again
+		usleep(500);
+		if (!$this->hasTable($tname)) {
+			throw new Exception("create table failed", $query); 
+		}
+	}
+	
+	return $res;
 }
 
 
@@ -1484,7 +1521,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 
 	$add_default = empty($kv['@add_default']) ? false : true;
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1487> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1524> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
 
 	foreach ($p as $col => $cinfo) {
 		$val = false;
@@ -1509,17 +1546,17 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			}
 		}
 
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1512> col=$col, val=$val");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1549> col=$col, val=$val");
 
 		if ($val !== false) {
 			array_push($key_list, self::escape_name($col));
 			array_push($val_list, $val);
-			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1517> table=$table, type=$type, col=$col, val=$val");
+			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1554> table=$table, type=$type, col=$col, val=$val");
 		}
 	}
 
 	if (count($key_list) == 0) {
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1522> empty key_list - return");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1559> empty key_list - return");
 		return '';
 	}
 
@@ -1545,7 +1582,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1548> table=$table, type=$type, res=$res");
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1585> table=$table, type=$type, res=$res");
 	return $res;
 }
 
