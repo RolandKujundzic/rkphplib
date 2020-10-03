@@ -38,6 +38,25 @@ private function error(string $msg, string $internal, int $flag = 0) : ?bool {
 
 
 /**
+ * Add (unique|primary) index to $table.$column.
+ * Return false if index already exists.
+ */
+public function addIndex(string $table, string $column, string $type = '') : bool {
+	throw new Exception('');
+	return false;
+}
+
+
+/**
+ * Return true if index on $table.$column exists.
+ */
+public function hasIndex(string $table, string $column, string $type = '') : bool {
+	throw new Exception('ToDo');
+	return false;
+}
+
+
+/**
  *
  */
 public function getId() : string {

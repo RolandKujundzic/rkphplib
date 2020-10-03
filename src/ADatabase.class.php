@@ -148,7 +148,7 @@ public function setDSN(string $dsn = '') : void {
 	if (!$dsn) {
 		throw new Exception('empty database source name');
 	}
-  
+
 	if (!empty($this->_dsn) && $this->_dsn != $dsn) {
 		throw new Exception('close connection first');
 	}
@@ -237,6 +237,19 @@ public static function splitDSN(string $dsn) : array {
 
 	return $db;
 }
+
+
+/**
+ * Add (unique|primary) index to $table.$column.
+ * Return false if index already exists.
+ */
+abstract public function addIndex(string $table, string $column, string $type = '') : bool;
+
+
+/**
+ * Return true if index on $table.$column exists.
+ */
+abstract public function hasIndex(string $table, string $column, string $type = '') : bool;
 
 
 /**
@@ -522,7 +535,7 @@ public function hasQuery(string $qkey, string $query = '') : bool {
  * all queries must be same.
  */
 public function hasQueries(array $query_map) : bool {
-	// \rkphplib\lib\log_debug("ADatabase.hasQueries:525> query_map: ".print_r($query_map, true));
+	// \rkphplib\lib\log_debug("ADatabase.hasQueries:538> query_map: ".print_r($query_map, true));
 	if (!is_array($query_map)) {
 		return false;
 	}
@@ -1099,9 +1112,9 @@ public static function createTableQuery(array $conf) : string {
 public function createTable(array $conf, bool $drop_existing = false) : int {
 
 	if (empty($conf['@table'])) {
-    throw new Exception('missing tablename', 'empty @table');
-  }
- 
+		throw new Exception('missing tablename', 'empty @table');
+	}
+
 	$tname = self::escape_name($conf['@table']);
 
 	if ($this->hasTable($tname)) {
@@ -1155,23 +1168,23 @@ public function createTable(array $conf, bool $drop_existing = false) : int {
 public static function parseCreateTableConf(array $conf) : array {
 
 	if (empty($conf['@table'])) {
-    throw new Exception('missing tablename', 'empty @table');
-  }
- 
+		throw new Exception('missing tablename', 'empty @table');
+	}
+
 	$conf['@table'] = self::escape_name($conf['@table']);
 
-  $shortcut = [
-    '@id' => [
-      '1' => [ 'id', 'int:::291' ],
-      '2' => [ 'id', 'int:::35' ],
-      '3' => [ 'id', 'varchar:30::3' ]],
-    '@status' => [
+	$shortcut = [
+		'@id' => [
+			'1' => [ 'id', 'int:::291' ],
+			'2' => [ 'id', 'int:::35' ],
+			'3' => [ 'id', 'varchar:30::3' ]],
+		'@status' => [
 			'1' => [ 'status', 'tinyint:::9' ]],
-    '@timestamp' => [ 
-      '1' => [ 'since', 'datetime::NOW():1' ],
-      '2' => [ 'lchange', 'datetime::NOW():1' ],
-      '3' => [ 'since', 'datetime::NOW():1', 'lchange', 'datetime::NOW():1' ]]
-  ];
+		'@timestamp' => [ 
+			'1' => [ 'since', 'datetime::NOW():1' ],
+			'2' => [ 'lchange', 'datetime::NOW():1' ],
+			'3' => [ 'since', 'datetime::NOW():1', 'lchange', 'datetime::NOW():1' ]]
+	];
 
 	// resolve multilanguage
 	if (!empty($conf['@language']) && !empty($conf['@multilang'])) {
@@ -1524,7 +1537,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 
 	$add_default = empty($kv['@add_default']) ? false : true;
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1527> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1540> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
 
 	foreach ($p as $col => $cinfo) {
 		$val = false;
@@ -1549,17 +1562,17 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			}
 		}
 
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1552> col=$col, val=$val");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1565> col=$col, val=$val");
 
 		if ($val !== false) {
 			array_push($key_list, self::escape_name($col));
 			array_push($val_list, $val);
-			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1557> table=$table, type=$type, col=$col, val=$val");
+			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1570> table=$table, type=$type, col=$col, val=$val");
 		}
 	}
 
 	if (count($key_list) == 0) {
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1562> empty key_list - return");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1575> empty key_list - return");
 		return '';
 	}
 
@@ -1585,7 +1598,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1588> table=$table, type=$type, res=$res");
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1601> table=$table, type=$type, res=$res");
 	return $res;
 }
 

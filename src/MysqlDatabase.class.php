@@ -58,6 +58,55 @@ public function loadMyCnf(string $path) : void {
 
 
 /**
+ * Add (unique|primary) index to $table.$column.
+ * Return false if index already exists.
+ */
+public function addIndex(string $table, string $column, string $type = '') : bool {
+	if ($this->hasIndex($table, $column, $type)) {
+		return false;
+	}
+
+	if ($type == 'primary') {
+		$index = 'PRIMARY KEY';
+	}
+	else if ($type == 'unique') {
+		$index = 'UNIQUE';
+	}
+	else if (empty($type)) {
+		$index = 'INDEX';
+	}
+	else {
+		throw new Exception("invalid index type '$type' use primary|unique");
+	}
+
+	$this->execute('ALTER TABLE '.self::escape_name($table).' ADD '.$index.'('.$this->esc($column).')');
+}
+
+
+/**
+ * Return true if index on $table.$column exists.
+ */
+public function hasIndex(string $table, string $column, string $type = '') : bool {
+	if ($type == 'primary') {
+		$itype = " AND Key_name='PRIMARY'";
+	}
+	else if ($type == 'unique') {
+		$itype = " AND Non_unique=0";
+	}
+	else if (empty($type)) {
+		$itype = '';
+	}
+	else {
+		throw new Exception("invalid index type '$type' use primary|unique");
+	}
+
+
+	$dbres = $this->select("SHOW INDEX FROM ".self::escape_name($table)." WHERE Column_name='".$this->esc($column)."'".$itype);
+	return count($dbres) > 0;
+}
+
+
+/**
  * Load mysql configuration file (my.cnf) from $dsn if dsn starts with "/" or "mysqli:///".
  * If dsn is empty try SETTINGS_DSN.
  */
@@ -158,7 +207,7 @@ public function connect() : bool {
 
 	if (is_object($this->_db)) {
 		if ($this->_conn_ttl < time() && !$this->_db->ping()) {
-			// \rkphplib\lib\log_debug('MysqlDatabase.connect:161> close expired connection '.$this->getId());
+			// \rkphplib\lib\log_debug('MysqlDatabase.connect:210> close expired connection '.$this->getId());
 			$this->close();
 		}
 		else {
@@ -202,7 +251,7 @@ public function connect() : bool {
 		$res = $this->execute("SET time_zone = '".self::escape($this->time_zone)."'");
 	}
 	
-	// \rkphplib\lib\log_debug('MysqlDatabase.connect:205> login@host='.$dsn['login'].'@'.$dsn['host'].', name='.$dsn['name'].', id='.$this->getId());
+	// \rkphplib\lib\log_debug('MysqlDatabase.connect:254> login@host='.$dsn['login'].'@'.$dsn['host'].', name='.$dsn['name'].', id='.$this->getId());
 	$this->_conn_ttl = time() + 5 * 60; // re-check connection in 5 minutes ...
 	return $res;
 }
@@ -455,7 +504,7 @@ public function dropTable(string $table) : void {
  *
  */
 public function execute($query, bool $use_result = false) : bool {
-	// \rkphplib\lib\log_debug("MysqlDatabase.execute:458> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
+	// \rkphplib\lib\log_debug("MysqlDatabase.execute:507> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
 	if (is_array($query)) {
 		if ($use_result) {
 			if (($stmt = $this->_exec_stmt($query)) === null) {
@@ -513,7 +562,7 @@ private function error(string $msg, string $internal = '', int $flag = 0) : ?boo
 	}
 
 	if ($flag & 4) {
-		// \rkphplib\lib\log_debug("MysqlDatabase.error:516> $msg (flag=$flag internal=$internal)");
+		// \rkphplib\lib\log_debug("MysqlDatabase.error:565> $msg (flag=$flag internal=$internal)");
 	}
 	else {
 		\rkphplib\lib\log_warn("MysqlDatabase.error> $msg (flag=$flag internal=$internal)");
@@ -1143,7 +1192,7 @@ public function getTableDesc(string $table) : array {
  *
  */
 public function getInsertId() : int {
-	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1146> id=".$this->getId().", insert_id=".$this->_db->insert_id);
+	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1195> id=".$this->getId().", insert_id=".$this->_db->insert_id);
 	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) === 0) {
 		return intval($this->error('no_id', $this->_db->insert_id, 2));
 	}
