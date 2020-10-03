@@ -244,7 +244,7 @@ public function log2json(string $js_var = '') : string {
 	for ($i = 0; $i < count($this->_log); $i++) {
 		$log = $this->_log[$i];
 
-		$time = ($log['time'] > 0.01) ? round($log['time'], 2).' s' : round($log['time'] * 1000, 2).' ms';
+		$time = ($log['time'] > 1) ? round($log['time'], 2).' s' : round($log['time'] * 1000, 2).' ms';
 		$mem = ($log['memory'] > 1024) ? round($log['memory'] / 1024, 2).' kb' : $log['memory'].' b';
 		$elapsed_time += $log['time'];
 
