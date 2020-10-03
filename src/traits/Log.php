@@ -104,7 +104,10 @@ private function log(string $msg, int $flag = 1) : void {
 
 	error_log($msg, 3, $this->log_conf['to']);
 	$this->log_conf['_last_flag'] = $flag;
-	$this->log_conf['_lchange'] = microtime(true);
+
+	if (0 == $flag & 4 && 0 == $flag & 2) {
+		$this->log_conf['_lchange'] = microtime(true);
+	}
 }
 
 
