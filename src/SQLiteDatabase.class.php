@@ -38,6 +38,22 @@ private function error(string $msg, string $internal, int $flag = 0) : ?bool {
 
 
 /**
+ *
+ */
+public function disableKeys(array $table_list = []) : void {
+	throw new Exception('ToDo');
+}
+
+
+/**
+ *
+ */
+public function enableKeys(array $table_list = []) : void {
+	throw new Exception('ToDo');
+}
+
+
+/**
  * Add (unique|primary) index to $table.$column.
  * Return false if index already exists.
  */

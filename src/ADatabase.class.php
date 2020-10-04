@@ -93,15 +93,23 @@ public function __destruct() {
 /**
  * Save all execute queries to this file.
  */
-public function saveTo(string $file) : void {
+public function saveTo(string $file, array $table_list = []) : void {
 	if ($file == '') {
+		if (count($table_list) == 0 && isset($this->_query['@key_tables'])) {
+			$table_list = $this->_query['@key_tables'];
+			unset($this->_query['@key_tables']);
+		}
+
+		$this->enableKeys($table_list);
 		File::close($this->_query['@fh']);
 		unset($this->_query['@save_to']);
 		unset($this->_query['@fh']);
 	}
 	else {
 		$this->_query['@save_to'] = $file;
+		$this->_query['@key_tables'] = $table_list;
 		$this->_query['@fh'] = File::open($file, 'wb');
+		$this->disableKeys($table_list);
 	}
 }
 
@@ -149,6 +157,18 @@ public static function getMapId(array $p, array $exclude = []) : string {
 
 	return $id;
 }
+
+
+/**
+ * Speed up import
+ */
+abstract public function disableKeys(array $table_list = []) : void;
+
+
+/**
+ * Force key creation after import
+ */
+abstract public function enableKeys(array $table_list = []) : void;
 
 
 /**
@@ -560,7 +580,7 @@ public function hasQuery(string $qkey, string $query = '') : bool {
  * all queries must be same.
  */
 public function hasQueries(array $query_map) : bool {
-	// \rkphplib\lib\log_debug("ADatabase.hasQueries:563> query_map: ".print_r($query_map, true));
+	// \rkphplib\lib\log_debug("ADatabase.hasQueries:577> query_map: ".print_r($query_map, true));
 	if (!is_array($query_map)) {
 		return false;
 	}
@@ -1562,7 +1582,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 
 	$add_default = empty($kv['@add_default']) ? false : true;
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1565> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1579> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
 
 	foreach ($p as $col => $cinfo) {
 		$val = false;
@@ -1587,17 +1607,17 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			}
 		}
 
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1590> col=$col, val=$val");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1604> col=$col, val=$val");
 
 		if ($val !== false) {
 			array_push($key_list, self::escape_name($col));
 			array_push($val_list, $val);
-			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1595> table=$table, type=$type, col=$col, val=$val");
+			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1609> table=$table, type=$type, col=$col, val=$val");
 		}
 	}
 
 	if (count($key_list) == 0) {
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1600> empty key_list - return");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1614> empty key_list - return");
 		return '';
 	}
 
@@ -1623,7 +1643,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1626> table=$table, type=$type, res=$res");
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1640> table=$table, type=$type, res=$res");
 	return $res;
 }
 

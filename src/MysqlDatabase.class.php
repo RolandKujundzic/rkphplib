@@ -37,6 +37,34 @@ public function __construct(array $options = []) {
 
 
 /**
+ *
+ */
+public function disableKeys(array $table_list = []) : void {
+	foreach ($table_list as $table) {
+		$this->execute('ALTER TABLE '.self::escape_name($table).' DISABLE KEYS');
+	}
+
+	$this->execute('SET FOREIGN_KEY_CHECKS = 0');
+	$this->execute('SET UNIQUE_CHECKS = 0');
+	$this->execute('SET AUTOCOMMIT = 0');
+}
+
+
+/**
+ * Force key creation after import
+ */
+public function enableKeys(array $table_list = []) : void {
+	foreach ($table_list as $table) {
+		$this->execute('ALTER TABLE '.self::escape_name($table).' ENABLE KEYS');
+	}
+
+	$this->execute('SET FOREIGN_KEY_CHECKS = 1');
+	$this->execute('SET UNIQUE_CHECKS = 1');
+	$this->execute('SET AUTOCOMMIT = 1');
+}
+
+
+/**
  * Load mysql host, user and password from $path (my.cnf) and define DB_HOST|USER|PASS.
  */
 public function loadMyCnf(string $path) : void {
@@ -208,7 +236,7 @@ public function connect() : bool {
 
 	if (is_object($this->_db)) {
 		if ($this->_conn_ttl < time() && !$this->_db->ping()) {
-			// \rkphplib\lib\log_debug('MysqlDatabase.connect:211> close expired connection '.$this->getId());
+			// \rkphplib\lib\log_debug('MysqlDatabase.connect:239> close expired connection '.$this->getId());
 			$this->close();
 		}
 		else {
@@ -252,7 +280,7 @@ public function connect() : bool {
 		$res = $this->execute("SET time_zone = '".self::escape($this->time_zone)."'");
 	}
 	
-	// \rkphplib\lib\log_debug('MysqlDatabase.connect:255> login@host='.$dsn['login'].'@'.$dsn['host'].', name='.$dsn['name'].', id='.$this->getId());
+	// \rkphplib\lib\log_debug('MysqlDatabase.connect:283> login@host='.$dsn['login'].'@'.$dsn['host'].', name='.$dsn['name'].', id='.$this->getId());
 	$this->_conn_ttl = time() + 5 * 60; // re-check connection in 5 minutes ...
 	return $res;
 }
@@ -504,7 +532,7 @@ public function dropTable(string $table) : void {
  *
  */
 public function execute($query, bool $use_result = false) : bool {
-	// \rkphplib\lib\log_debug("MysqlDatabase.execute:507> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
+	// \rkphplib\lib\log_debug("MysqlDatabase.execute:535> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
 	if (is_array($query)) {
 		if ($use_result) {
 			if (($stmt = $this->_exec_stmt($query)) === null) {
@@ -569,7 +597,7 @@ private function error(string $msg, string $internal = '', int $flag = 0) : ?boo
 	}
 
 	if ($flag & 4) {
-		// \rkphplib\lib\log_debug("MysqlDatabase.error:572> $msg (flag=$flag internal=$internal)");
+		// \rkphplib\lib\log_debug("MysqlDatabase.error:600> $msg (flag=$flag internal=$internal)");
 	}
 	else {
 		\rkphplib\lib\log_warn("MysqlDatabase.error> $msg (flag=$flag internal=$internal)");
@@ -1199,7 +1227,7 @@ public function getTableDesc(string $table) : array {
  *
  */
 public function getInsertId() : int {
-	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1202> id=".$this->getId().", insert_id=".$this->_db->insert_id);
+	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1230> id=".$this->getId().", insert_id=".$this->_db->insert_id);
 	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) === 0) {
 		return intval($this->error('no_id', $this->_db->insert_id, 2));
 	}

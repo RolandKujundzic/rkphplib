@@ -14,6 +14,23 @@ require_once __DIR__.'/ADatabase.class.php';
  */
 class PDODatabase extends ADatabase {
 
+
+/**
+ *
+ */
+public function disableKeys(array $table_list = []) : void {
+	throw new Exception('ToDo');
+}
+
+
+/**
+ *
+ */
+public function enableKeys(array $table_list = []) : void {
+	throw new Exception('ToDo');
+}
+
+
 /**
  * Add (unique|primary) index to $table.$column.
  * Return false if index already exists.
