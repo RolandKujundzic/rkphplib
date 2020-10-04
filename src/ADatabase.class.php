@@ -93,7 +93,7 @@ public function __destruct() {
 /**
  * Save all execute queries to this file.
  */
-public static function saveTo(string $file) : void {
+public function saveTo(string $file) : void {
 	if ($file == '') {
 		File::close($this->_query['@fh']);
 		unset($this->_query['@save_to']);
