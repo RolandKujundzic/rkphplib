@@ -81,20 +81,14 @@ protected $_qinfo = [];
 
 
 /**
- *
+ * Save all execute queries to this file. Always call saveAs() to close file.
  */
-public function __destruct() {
-	if (isset($this->_query['@fh'])) {
-		File::close($this->_query['@fh']);
-	}
-}
-
-
-/**
- * Save all execute queries to this file.
- */
-public function saveTo(string $file, array $table_list = []) : void {
+public function saveAs(string $file = '', array $table_list = []) : void {
 	if ($file == '') {
+		if (!isset($this->_query['@fh'])) {
+			throw new Exception('saveAs file was not opened or already closed');
+		}
+
 		if (count($table_list) == 0 && isset($this->_query['@key_tables'])) {
 			$table_list = $this->_query['@key_tables'];
 			unset($this->_query['@key_tables']);
