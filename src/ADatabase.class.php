@@ -80,6 +80,31 @@ protected $_query = [];
 protected $_qinfo = [];
 
 
+/**
+ *
+ */
+public function __destruct() {
+	if (isset($this->_query['@fh'])) {
+		File::close($this->_query['@fh']);
+	}
+}
+
+
+/**
+ * Save all execute queries to this file.
+ */
+public static function saveTo(string $file) : void {
+	if ($file == '') {
+		File::close($this->_query['@fh']);
+		unset($this->_query['@save_to']);
+		unset($this->_query['@fh']);
+	}
+	else {
+		$this->_query['@save_to'] = $file;
+		$this->_query['@fh'] = File::open($file, 'wb');
+	}
+}
+
 
 /**
  * Return md5 hash based on dsn and $query_map (see setQueryMap).
@@ -535,7 +560,7 @@ public function hasQuery(string $qkey, string $query = '') : bool {
  * all queries must be same.
  */
 public function hasQueries(array $query_map) : bool {
-	// \rkphplib\lib\log_debug("ADatabase.hasQueries:538> query_map: ".print_r($query_map, true));
+	// \rkphplib\lib\log_debug("ADatabase.hasQueries:563> query_map: ".print_r($query_map, true));
 	if (!is_array($query_map)) {
 		return false;
 	}
@@ -1537,7 +1562,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 
 	$add_default = empty($kv['@add_default']) ? false : true;
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1540> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1565> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
 
 	foreach ($p as $col => $cinfo) {
 		$val = false;
@@ -1562,17 +1587,17 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			}
 		}
 
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1565> col=$col, val=$val");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1590> col=$col, val=$val");
 
 		if ($val !== false) {
 			array_push($key_list, self::escape_name($col));
 			array_push($val_list, $val);
-			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1570> table=$table, type=$type, col=$col, val=$val");
+			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1595> table=$table, type=$type, col=$col, val=$val");
 		}
 	}
 
 	if (count($key_list) == 0) {
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1575> empty key_list - return");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1600> empty key_list - return");
 		return '';
 	}
 
@@ -1598,7 +1623,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1601> table=$table, type=$type, res=$res");
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1626> table=$table, type=$type, res=$res");
 	return $res;
 }
 

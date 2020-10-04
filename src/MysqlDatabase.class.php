@@ -444,7 +444,6 @@ public function saveTableDump(array $opt) : void {
  *
  */
 public function loadDump(string $file, int $flags = 0) : void {
-
 	if (!File::size($file)) {
 		return;
 	}
@@ -505,7 +504,7 @@ public function dropTable(string $table) : void {
  *
  */
 public function execute($query, bool $use_result = false) : bool {
-	// \rkphplib\lib\log_debug("MysqlDatabase.execute:508> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
+	// \rkphplib\lib\log_debug("MysqlDatabase.execute:507> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
 	if (is_array($query)) {
 		if ($use_result) {
 			if (($stmt = $this->_exec_stmt($query)) === null) {
@@ -513,7 +512,10 @@ public function execute($query, bool $use_result = false) : bool {
 			}
 		}
 		else {
-			if (($stmt = $this->_exec_stmt($query)) === null) {
+			if (!empty($this->_query['@fh']) && !$use_result) {
+				throw new Exception('saveTo() does not work in prepared mode');
+			}
+			else if (($stmt = $this->_exec_stmt($query)) === null) {
 				return false;
 			}
 
@@ -525,7 +527,11 @@ public function execute($query, bool $use_result = false) : bool {
 			return false;
 		}
 
-		if ($this->_db->real_query($query) === false) {
+		if (!empty($this->_query['@fh']) && !$use_result) {
+			File::write($this->_query['@fh'], $query.";\n");
+			return true;
+		}
+		else if ($this->_db->real_query($query) === false) {
 			return $this->error('failed to execute sql query', $query);
 		}
 
@@ -563,7 +569,7 @@ private function error(string $msg, string $internal = '', int $flag = 0) : ?boo
 	}
 
 	if ($flag & 4) {
-		// \rkphplib\lib\log_debug("MysqlDatabase.error:566> $msg (flag=$flag internal=$internal)");
+		// \rkphplib\lib\log_debug("MysqlDatabase.error:572> $msg (flag=$flag internal=$internal)");
 	}
 	else {
 		\rkphplib\lib\log_warn("MysqlDatabase.error> $msg (flag=$flag internal=$internal)");
@@ -1193,7 +1199,7 @@ public function getTableDesc(string $table) : array {
  *
  */
 public function getInsertId() : int {
-	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1196> id=".$this->getId().", insert_id=".$this->_db->insert_id);
+	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1202> id=".$this->getId().", insert_id=".$this->_db->insert_id);
 	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) === 0) {
 		return intval($this->error('no_id', $this->_db->insert_id, 2));
 	}
