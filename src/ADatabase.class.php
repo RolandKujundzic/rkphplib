@@ -1182,7 +1182,7 @@ public function createTable(array $conf, bool $drop_existing = false) : int {
 	}
 
 	if (!$this->hasTable($tname)) {
-		// hdd may lag ... wait and try again
+		\rkphplib\lib\log_warn("createTable($table) failed try again");
 		usleep(500);
 		if (!$this->hasTable($tname)) {
 			throw new Exception("create table failed", $query); 
