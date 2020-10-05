@@ -654,22 +654,22 @@ public function setQueryHash(array $conf_hash, array $require_keys = []) : void 
 
 
 /**
- * Escape table or column name with `col name`.
+ * Trim and Escape table or column name with `col name`.
  * If abort is true abort if name doesn't match [a-zA-Z0-9_\.]+.
  */
 public static function escape_name(string $name, bool $abort = false) : string {
-	$res = $name;
+	$res = trim($name);
 
-	if (!preg_match("/^[a-zA-Z0-9_\.]+$/", $name)) {
+	if (!preg_match("/^[a-zA-Z0-9_\.]+$/", $res)) {
 		if ($abort) {
-			throw new Exception('invalid sql name', $name);
+			throw new Exception('invalid sql name', "[$name]");
 		}
 
 		if (mb_strpos($name, '`') !== false) {
-			throw new Exception('invalid sql name', $name);
+			throw new Exception('invalid sql name', "[$name]");
 		}
 
-		$res = '`'.$name.'`';
+		$res = '`'.$res.'`';
 	}
 
 	return $res;
@@ -1513,7 +1513,8 @@ public function query(string $name, array $replace = null, $opt = '') {
 
 
 /**
- * Escape ' with ''. Append \ to trailing uneven number of \. 
+ * Escape ' with ''. Replace ` with '.
+ * Append \ to trailing uneven number of \. 
  */
 public static function escape(string $txt) : string {
 
@@ -1526,7 +1527,7 @@ public static function escape(string $txt) : string {
 			$n--;
 		}
 
-		if ($n % 2 === 0) {
+		if ($n % 2 !== 0) {
 			$txt .= '\\';
 		}
 	}
@@ -1539,8 +1540,12 @@ public static function escape(string $txt) : string {
 
 
 /**
- * Return comma separted list of columns. Example:
- * self::columnList(['a', 'b', 'c'], 'l') = 'l.a AS l_a, l.b AS l_b, l.c AS l_c'. 
+ * Return comma separted list of columns.
+ *
+ * @example columnList(['a x', 'b-y', ' c ', 'p.age', 'p.last name' ]) == …
+ *   '`a x`, `b-y`, c, p.age AS p_age, `p.last name`' AS `p_last name`@EOF
+ * @example columnList(['a', 'b', 'x.c', 'üöä' ], 'l') == …
+ *   'l.a AS l_a, l.b AS l_b, x.c AS x_c, `l.üöä` AS `l_üöü`' @EOF
  */
 public static function columnList(array $cols, string $prefix = '') : string {
 	$cnames = [];
@@ -1549,15 +1554,23 @@ public static function columnList(array $cols, string $prefix = '') : string {
 		throw new Exception('invalid column list', "prefix=$prefix cols: ".print_r($cols, true));
 	} 
 
-	if (empty($prefix)) {
-		foreach ($cols as $name) {
-			array_push($cnames, self::escape_name($name));
+	foreach ($cols as $name) {
+		$tprefix = '';
+		if (strpos($name, '.') > 0) {
+			list ($tprefix, $name) = explode('.', $name);
 		}
-	}
-	else {
-		foreach ($cols as $name) {
-			array_push($cnames, self::escape_name($prefix.'.'.$name).' AS '.self::escape_name($prefix.'_'.$name));
+
+		if (empty($prefix)) {
+			$col = empty($tprefix) ? self::escape_name($name) :
+				self::escape_name($tprefix.'.'.$name).' AS '.self::escape_name($tprefix.'_'.$name);
 		}
+		else {
+			$col = empty($tprefix) ?
+				self::escape_name($prefix.'.'.$name).' AS '.self::escape_name($prefix.'_'.$name) :
+				self::escape_name($tprefix.'.'.$name).' AS '.self::escape_name($tprefix.'_'.$name);
+		}
+
+		array_push($cnames, $col);
 	}
 
 	return join(', ', $cnames);
