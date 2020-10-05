@@ -1,0 +1,5 @@
+root,,Shop,1,2,4
+h,root,Hosen,2,2,2
+h-h,h,Herren,3,0,0
+h-d,h,Damen,3,0,0
+z,root,Zubehör,1,0,0

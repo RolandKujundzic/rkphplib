@@ -1,0 +1,13 @@
+<ul id="main_menu" class="menu">
+	<li id="root" class="branch level1" data-ds="2" data-ts="4">Shop
+		<ul>
+			<li id="h" class="branch level2" data-ds="2" data-ts="2">Hosen
+				<ul>
+					<li id="h-h" class="leaf level3">Herren</a>
+					<li id="h-d" class="leaf level3">Herren</a>
+				</ul>
+			</li>
+		</ul>
+	</li>
+	<li id="z" class="leaf level2">Zubehör</li>
+</ul>
