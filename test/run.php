@@ -24,6 +24,9 @@ $th->test('lib.translate');
 $th->test('FSEntry');
 $th->test('DateCalc');
 $th->test('XMLParser');
+$th->test('ADatabase');
+// $th->test('MysqlDatabase');
+// $th->test('Catalog');
 
 /*
 $th->runTest('ArrayHelper/run.php');
@@ -51,6 +54,5 @@ ob_end_clean();
 print $res;
 
 // ToDo ...
-// run_test('MysqlDatabase/run.php');
 // run_test('tok_TOutput/run.php');
 
