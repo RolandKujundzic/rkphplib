@@ -1022,7 +1022,14 @@ public function loadDump(string $file, int $flags) : void {
  * 
  * - 'colA:colB:colC' => 208: FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE
  * - 'colA:colB' => 4: UNIQUE ('colA', 'colB')
- * 
+ *
+ * @example createTableConf([ '@table' => 'test', 'color': 'varchar:30:transparent:8' ])
+ * @example createTableConf([ [ '@table', 'test' ], [ 'color', 'varchar', 30, 'transparent', 'blue' ] ])
+ * @example …
+ * createTableConf([ "@table" => 'test',
+ *   [ "name" => "color", "type" => "blob", "flag" => "1" ]
+ * @EOL
+ *
  * @example int:11:1:33 = int(11) UNSIGNED NOT NULL DEFAULT 1
  * @example varchar:80:admin:9 = varchar(80) NOT NULL DEFAULT 'admin', KEY (colname(20))
  * @example varbinary:1024::5 = varbinary(1024) NOT NULL, UNIQUE (colname(20))
