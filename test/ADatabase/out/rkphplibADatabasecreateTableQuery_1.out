@@ -1,8 +1,0 @@
-[CREATE TABLE cms_session (
-id binary(16) NOT NULL,
-until datetime NOT NULL,
-data blob NOT NULL,
-lchange datetime NOT NULL DEFAULT NOW(),
-PRIMARY KEY (id),
-INDEX (until)
-)]
