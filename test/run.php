@@ -22,6 +22,8 @@ $th->test('lib.translate');
 */
 
 $th->test('FSEntry');
+$th->test('File');
+$th->test('JSON');
 $th->test('DateCalc');
 $th->test('XMLParser');
 $th->test('ADatabase');

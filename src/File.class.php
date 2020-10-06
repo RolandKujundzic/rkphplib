@@ -27,13 +27,17 @@ public static $USE_FLOCK = false;
 
 
 /**
- * Load table data. If uri is file|http|https|binary://. Example options:
- * 
- *  File::loadTable('csv:file://test.csv', [ ',', '"' ])
- *  File::loadTable('unserialize:file://test.ser')
- *  File::loadTable('json:https://download.here/test.json')
- *  File::loadTable('split:string://a|&|b|@|c|&|d', [ '|&|', '|@|' ]) 
- *  File::loadTable('split:string://a=1|&|b=2|@|c=3|&|d=4', [ '|&|', '|@|', '=' ]) 
+ * Load table data. If uri is file|http|https|binary://.
+ * CSV Options are [ ',', '"' ]
+ * JSON Options are hash name[:default] list (if not set only vector input is allowed)
+ * SPLIT Options are [ '|&|', '|@|' ]
+ *
+ * @example File::loadTable('csv:file://test.csv', [ ',', '"' ])
+ * @example File::loadTable('unserialize:file://test.ser')
+ * @example File::loadTable('json:https://download.here/test.json')
+ * @example File::loadTable('json:https://download.here/test2.json', [ 'id', 'name', 'age', 'gender:male' ])
+ * @example File::loadTable('split:string://a|&|b|@|c|&|d', [ '|&|', '|@|' ]) 
+ * @example File::loadTable('split:string://a=1|&|b=2|@|c=3|&|d=4', [ '|&|', '|@|', '=' ])
  */
 public static function loadTable(string $uri, array $options = []) : array {
 
@@ -72,7 +76,7 @@ public static function loadTable(string $uri, array $options = []) : array {
 		$table = unserialize($data);
 	}
 	else if ($type == 'json') {
-		$table = JSON::decode($data);
+		$table = JSON::toTable($data, $options);
 	}
 	else if ($type == 'split') {
 		require_once __DIR__.'/lib/split_table.php';
