@@ -19,6 +19,66 @@ class JSON {
 
 
 /**
+ * Convert json to vector|hash table.
+ *
+ * @example …
+ * $table = [
+ *   [ "1", "John", "32", "male" ],
+ *   { "id": "2", "age": 18, "name": "Frank" }
+ * ];
+ *
+ * JSON::toTable($table, [ 'id', 'name', 'age', 'gender:male' ])) == …
+ * [
+ *   [ "1", "John", "32", "male" ],
+ *   [ "2", "Frank", "18", "male" ]
+ * ]
+ * @EOL
+ *
+ * @param string|array $table
+ */
+public static function toTable($table, array $cols = [], $hash_table = false) : array {
+	if (is_string($table)) {
+		$table = JSON::decode($table);
+	}
+
+	if (!is_array($table)) {
+		throw new Exception('invalid table use either array or json string', "$hash_table=[$hash_table], cols: ".
+			print_r($cols, true)."table: ".print_r($table, true));
+	}
+
+	if (!count($cols)) {
+		return $table;
+	}
+
+	for ($i = 0; $i < count($table); $i++) {
+		$new_row = [];
+
+		for ($j = 0; !$hash_table && !isset($table[$i][0]) && $j < count($cols); $j++) {
+			$tmp = explode(':', $cols[$j]);
+			$default = count($tmp) == 2 ? $tmp[1] : null;
+			$col = $tmp[0];
+
+			if (isset($table[$i][$col])) {
+				array_push($new_row, $table[$i][$col]);
+			}
+			else {
+				array_push($new_row, $default);
+			}
+		}
+
+		if (count($new_row)) {
+			$table[$i] = $new_row;
+		}
+		else if (!$hash_table && !count($cols) && !isset($table[$i][0])) {
+			throw new Exception('invalid row '.$i.' (parameter 2 = column name list missing)', print_r($table[$i], true));
+		}
+	}
+
+	return $table;
+}
+
+
+/**
  * Return last error message for encode/decode.
  */
 private static function _error_msg(int $err_no) : string {
