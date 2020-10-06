@@ -1,0 +1,13 @@
+[Array
+(
+    [0] => Array
+        (
+            [@table] => cms_session
+            [@timestamp] => 2
+            [id] => binary:16::3
+            [until] => datetime:::9
+            [data] => blob:::1
+        )
+
+)
+]

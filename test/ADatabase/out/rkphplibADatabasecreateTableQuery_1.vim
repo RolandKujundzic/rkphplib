@@ -1,0 +1,5 @@
+e out/rkphplibADatabasecreateTableQuery_1.in
+split
+e out/rkphplibADatabasecreateTableQuery_1.out
+vsplit
+e out/rkphplibADatabasecreateTableQuery_1.ok
