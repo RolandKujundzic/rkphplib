@@ -1,6 +1,0 @@
-<?php
-
-$test = [
-	'rkphplib\loadTable',
-];
-
