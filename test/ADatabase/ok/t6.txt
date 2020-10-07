@@ -1,0 +1,9 @@
+CREATE TABLE language (
+id binary(16) NOT NULL,
+until datetime NOT NULL,
+descr varchar(1024) DEFAULT '-',
+since datetime NOT NULL DEFAULT NOW(),
+lchange datetime NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+PRIMARY KEY (id),
+INDEX (until)
+)

@@ -1,12 +1,12 @@
 [
 	"rkphplib\\ADatabase::createTableQuery",
 	[
-		{
+		{ 
 			"@table": "language",
-			[ "@timestamp",  3 ],
-			"id": { "type": "binary", "size": "16", "flag": "3" },
-			[ "until", "datetime", "", "", "9" ],
- 	 		{ "name": "data", "type": "blob", "flag": "1" }
+			"@timestamp": 3,
+			"id": [ "binary", "16", "", "3" ],
+			"until": { "type": "datetime", "flag": "9" },
+ 	 		"descr": { "type": "varchar", "size": "1024", "default": "-" }
 		},
 		"ok/t6.txt"
 	]

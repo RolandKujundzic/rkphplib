@@ -1059,11 +1059,28 @@ public static function createTableQuery(array $conf) : string {
 	$keys = [];
 
 	foreach ($conf as $name => $value) {
-		if (mb_substr($value, 0, 1) === '@') {
-			throw new Exception('invalid column description', "$name=$value");
+		if (is_array($value)) {
+			if (!empty($value[0])) {
+				$opt = $value;
+			}
+			else if (!empty($value['type'])) {
+				$opt = [ $value['type'] ];
+				foreach ([ 'size', 'default', 'flag' ] as $key) {
+					if (isset($value[$key])) {
+						array_push($opt, $value[$key]);
+					}
+					else {
+						array_push($opt, '');
+					}
+				}
+			}
+			else {
+				throw new Exception("invalid $tname.$name description", print_r($conf, true)); 
+			}
 		}
-
-		$opt = explode(':', $value);
+		else {
+			$opt = explode(':', $value);
+		}
 
 		if (count($opt) === 4) {
 			// e.g. "colname => varchar:30:admin:9" = "colname varchar(30) NOT NULL DEFAULT 'admin', INDEX (colname(20))"
@@ -1208,8 +1225,10 @@ public function createTable(array $conf, bool $drop_existing = false) : int {
  * "@multilang": e.g. name, desc = name_de, name_en, desc_de, desc_en
  * "@id": 1=[id, int:::291 ], 2=[id, int:::35], 3=[id, varchar:30::3]
  * "@status": 1=[status, tinyint:::9]
- * "@timestamp": 1=[since, datetime::NOW():1], 2=[lchange, datetime::NOW():1], 
- *   3=[since, datetime::NOW():1, lchange, datetime::NOW():1]
+ * "@timestamp":
+ *   1=[since, datetime::NOW():1]
+ *   2=[lchange, datetime::NOW() ON UPDATE NOW():1], 
+ *   3=[since, datetime::NOW():1, lchange, datetime::NOW() ON UPDATE NOW():1]
  */
 public static function parseCreateTableConf(array $conf) : array {
 
@@ -1228,8 +1247,9 @@ public static function parseCreateTableConf(array $conf) : array {
 			'1' => [ 'status', 'tinyint:::9' ]],
 		'@timestamp' => [ 
 			'1' => [ 'since', 'datetime::NOW():1' ],
-			'2' => [ 'lchange', 'datetime::NOW():1' ],
-			'3' => [ 'since', 'datetime::NOW():1', 'lchange', 'datetime::NOW():1' ]]
+			'2' => [ 'lchange', 'datetime::NOW() ON UPDATE NOW():1' ],
+			'3' => [ 'since', 'datetime::NOW():1',
+				'lchange', 'datetime::NOW() ON UPDATE NOW():1' ]]
 	];
 
 	// resolve multilanguage
