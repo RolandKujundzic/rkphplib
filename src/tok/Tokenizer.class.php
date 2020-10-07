@@ -868,7 +868,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 		}
 
 		$flag = is_array($args) ? 3 : 0;
-		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:873> return this._call_plugin($name, $func, $args, $flag)");
+		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:871> return this._call_plugin($name, $func, $args, $flag)");
 		return $this->_call_plugin($name, $func, $args, $flag);
 	}
 
@@ -876,7 +876,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 		throw new Exception("no such plugin method $name.".$func);
 	}
 
-	// \rkphplib\lib\log_debug([ "Tokenizer.callPlugin:881> name=$name, func=$func, args: [<1>]", $args ]);
+	// \rkphplib\lib\log_debug([ "Tokenizer.callPlugin:879> name=$name, func=$func, args: [<1>]", $args ]);
 	if (count($args) == 0) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func));
 	}
@@ -960,7 +960,7 @@ private function _call_plugin(string $name, string $param, $arg = null, int $fla
 		$old_tok = $this->_tok;
 		$old_endpos = $this->_endpos;
 
-		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:1011> redo=[$res]");
+		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:963> redo=[$res]");
 		$this->setText($res);
 		$res = $this->_join_tok(0, count($this->_tok));
 
@@ -1246,7 +1246,7 @@ public function getTag(string $name) : string {
 private function tryPluginMap(string $name) : void {
 	static $map = [
 		'TArray' => [ 'array', 'array:set', 'array:get', 'array:shift', 'array:unshift', 'array:pop', 'array:push', 'array:join', 'array:length', 'array:split' ],
-		'TBase' => [ 'row:init', 'row', 'tpl_set', 'tpl', 'tf', 't', 'true', 'f', 'false', 'find', 'filter', 'plugin', 'escape:tok', 'escape', 'unescape', 'encode', 'decode', 'get', 'const', 'include', 'include_if', 'view', 'clear', 'ignore', 'if', 'switch', 'keep', 'load', 'link', 'redo', 'toupper', 'tolower', 'hidden', 'trim', 'join', 'set_default', 'set', 'redirect', 'var', 'esc', 'log', 'shorten', 'strlen', 'json:exit', 'json', 'log_debug' ],
+		'TBase' => [ 'row:init', 'row', 'tpl_set', 'tpl', 'tf', 't', 'true', 'f', 'false', 'find', 'filter', 'plugin', 'escape:tok', 'escape', 'unescape', 'encode', 'decode', 'get', 'const', 'include', 'include_if', 'view', 'clear', 'ignore', 'if', 'switch', 'keep', 'load', 'loadJSON', 'link', 'redo', 'toupper', 'tolower', 'hidden', 'trim', 'join', 'set_default', 'set', 'redirect', 'var', 'esc', 'log', 'shorten', 'strlen', 'json:exit', 'json', 'log_debug' ],
 		'TConf' => [ 'conf', 'conf:id', 'conf:var', 'conf:get', 'conf:get_path', 'conf:set', 'conf:set_path', 'conf:set_default', 'conf:append' ],
 		'TDate' => [ 'date' ],
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval:call', 'eval' ],
