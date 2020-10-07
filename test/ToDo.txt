@@ -1,8 +1,0 @@
-add createTableQuery to test/ADatabase, Examples:
-@see vim src/DatabaseSessionHandler.class.php src/tok/TLanguage.class.php src/tok/TLogin.class.php src/tok/TSetup.class.php
-
-add test/MysqlDatabase
-
-update Category, add tests 
-update ../phplib/CategoryAdmin, ../phplib/tok/TCategory[Admin]
-@see see load.vim
