@@ -1,6 +1,6 @@
 <?php
 
-require '../settings.php';
+require_once '../settings.php';
 
 global $th;
 
