@@ -141,6 +141,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['switch'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['keep'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['load'] = TokPlugin::REQUIRE_BODY;
+	$plugin['loadJSON'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
 	$plugin['link'] = TokPlugin::PARAM_CSLIST | TokPlugin::KV_BODY;
 	$plugin['redo'] = TokPlugin::NO_PARAM | TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
 	$plugin['toupper'] = TokPlugin::NO_PARAM;
@@ -918,6 +919,42 @@ public function tok_include_if(string $param, array $a) : string {
 	}
 
 	return File::load($file);
+}
+
+
+/**
+ * Execute plugins in $file. Replace $p first.
+ * 
+ * @tok {loadJSON:data/config/.shop.json}login.id={login:id?}|#|login.type={login:type?}{:loadJSON} …
+ * {
+ *   "plugin": "PHPLIB:TShop",
+ *   "name": [ "param", "arg" ],
+ *   "shop:init": { "login.id": "{:=login.id}", "login.type": "{:=login.type}" }
+ * }
+ * @EOL
+ */
+public function tok_loadJSON(string $file, array $p) : void {
+	$json = File::loadJSON($file);
+
+	foreach ($json as $plugin => $arg) {
+		$param = '';
+
+		if (is_array($arg) && !empty($arg[0])) {
+			$param = array_shift($arg);
+		}
+
+		if (is_string($arg)) {
+			$arg = $this->_tok->replaceTags($arg, $p);
+		}
+		else {
+			foreach ($arg as $key => $value) {
+				$arg[$key] = $this->_tok->replaceTags($value, $p);
+			}
+		}
+
+		\rkphplib\lib\log_debug([ "TBase.tok_loadJSON:955> callPlugin(<1>, <2>, <3>)", $plugin, $param, $arg ]);
+		$this->_tok->callPlugin($plugin, $param, $arg);
+	}
 }
 
 
