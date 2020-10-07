@@ -861,17 +861,15 @@ public function callPlugin(string $name, string $func, $args = []) {
 		if (is_null($args) || (is_array($args) && count($args) == 0)) {
 			$args = '';
 		}
-		else if (!is_string($args)) {
-			throw new Exception('invalid args string', "name=$name func=$func args: ".print_r($args, true));
-		}
 
 		if (isset($this->_plugin[$name.':'.$func])) {
 			$name = $name.':'.$func;
 			$func = '';
 		}
 
-		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:873> return this._call_plugin($name, $func, $args)");
-		return $this->_call_plugin($name, $func, $args);
+		$flag = is_array($args) ? 3 : 0;
+		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:873> return this._call_plugin($name, $func, $args, $flag)");
+		return $this->_call_plugin($name, $func, $args, $flag);
 	}
 
 	if (!method_exists($this->_plugin[$name][0], $func)) {
@@ -905,8 +903,11 @@ public function callPlugin(string $name, string $func, $args = []) {
  *
  * Convert param into vector and arg into map if plugin $name is configured with
  * TokPlugin::KV_BODY | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::REQUIRE_PARAM 
+ * 
+ * @param null|string|array $arg
+ * @param int $flag (1 = no postprocess, 2 = keep arg
  */
-private function _call_plugin(string $name, string $param, ?string $arg = null) : ?string {
+private function _call_plugin(string $name, string $param, $arg = null, int $flag = 0) : ?string {
 
 	$csl = count($this->_callstack);
 	if ($csl > 0) {
@@ -918,25 +919,66 @@ private function _call_plugin(string $name, string $param, ?string $arg = null) 
 	}
 
 	if ($this->_plugin[$name][1] & TokPlugin::POSTPROCESS) {
+		if ($flag & 1) {
+			throw new Exception('no postprocess plugins allowed in '.$name);
+		}
+
 		array_push($this->_postprocess, [ array($this->_plugin[$name][0], 'tok_'.str_replace(':', '_', $name)), 
 			$param, $arg, $this->_plugin[$name][1] ]);
 		return '';
 	}
 
-	$func = 'tok_'.$name;
-	$pconf = $this->_plugin[$name][1];
-	$plen = strlen($param);
-
 	if (is_array($arg)) {
-		throw new Exception("call plugin [$name:$param] argument is array", print_r($arg, true));
+		if (($flag & 2) != 2) {
+			throw new Exception("call plugin [$name:$param] argument is array", print_r($arg, true));
+		}
+	}
+	else {
+		$this->_prepare_call($name, $param, $arg);
 	}
 
-	$alen = strlen($arg);
-
+	$func = 'tok_'.$name;
 	if (($pos = mb_strpos($name, $this->rx[2])) > 0) {
 		// tok_name_param callback !
 		$func = 'tok_'.str_replace($this->rx[2], '_', $name);
 	}
+
+	$pconf = $this->_plugin[$name][1];
+	$res = '';
+
+	if ($pconf & TokPlugin::NO_PARAM) {
+		$res = call_user_func(array($this->_plugin[$name][0], $func), $arg);
+	}
+	else if (($pconf & TokPlugin::NO_BODY) || ($pconf & TokPlugin::ONE_PARAM)) {
+		$res = call_user_func(array($this->_plugin[$name][0], $func), $param);
+	}
+	else {
+		$res = call_user_func(array($this->_plugin[$name][0], $func), $param, $arg);
+	}
+
+	if ($this->_plugin[$name][1] & TokPlugin::REDO) {
+		$old_tok = $this->_tok;
+		$old_endpos = $this->_endpos;
+
+		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:1011> redo=[$res]");
+		$this->setText($res);
+		$res = $this->_join_tok(0, count($this->_tok));
+
+		$this->_tok = $old_tok;
+		$this->_endpos = $old_endpos;
+	}
+
+	return $res;
+}
+
+
+/**
+ *
+ */
+private function _prepare_call(string $name, string &$param, ?string &$arg) : void {
+	$pconf = $this->_plugin[$name][1];
+	$plen = strlen($param);
+	$alen = strlen($arg);
 
 	if (($pconf & TokPlugin::REQUIRE_PARAM) && $plen == 0) {
 		throw new Exception('missing parameter in plugin '.$this->getPluginTxt("$name:$param"), 
@@ -991,32 +1033,6 @@ private function _call_plugin(string $name, string $param, ?string $arg = null) 
 		require_once $src_dir.'/XML.class.php';	
 		$arg = \rkphplib\XML::toMap($arg);
 	}
-
-	$res = '';
-
-	if ($pconf & TokPlugin::NO_PARAM) {
-		$res = call_user_func(array($this->_plugin[$name][0], $func), $arg);
-	}
-	else if (($pconf & TokPlugin::NO_BODY) || ($pconf & TokPlugin::ONE_PARAM)) {
-		$res = call_user_func(array($this->_plugin[$name][0], $func), $param);
-	}
-	else {
-		$res = call_user_func(array($this->_plugin[$name][0], $func), $param, $arg);
-	}
-
-	if ($this->_plugin[$name][1] & TokPlugin::REDO) {
-		$old_tok = $this->_tok;
-		$old_endpos = $this->_endpos;
-
-		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:1011> redo=[$res]");
-		$this->setText($res);
-		$res = $this->_join_tok(0, count($this->_tok));
-
-		$this->_tok = $old_tok;
-		$this->_endpos = $old_endpos;
-	}
-
-	return $res;
 }
 
 
