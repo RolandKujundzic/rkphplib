@@ -6,7 +6,7 @@ namespace rkphplib\traits;
 /**
  * Trait for this.log()
  * 
- * @code:
+ * @code …
  * require_once(PATH_RKPHPLIB.'traits/Log.php');
  *
  * class SomeClass {
@@ -19,7 +19,7 @@ namespace rkphplib\traits;
  * public function example() {
  *    $this->log($message);
  * }
- * @:
+ * @EOL
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @copyright 2020 Roland Kujundzic

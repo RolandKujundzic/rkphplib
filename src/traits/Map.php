@@ -10,12 +10,12 @@ use rkphplib\Exception;
 /**
  * Trait with Map methods.
  * 
- * @code:
- * require_once(PATH_RKPHPLIB.'trait/Map.trait.php');
+ * @code …
+ * require_once(PATH_RKPHPLIB.'traits/Map.php');
  *
  * class SomeClass {
- * use Map;
- * @:
+ * use \rkphplib\traits\Map;
+ * @EOL
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @copyright 2018 Roland Kujundzic
