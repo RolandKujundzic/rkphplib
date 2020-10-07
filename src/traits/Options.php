@@ -6,15 +6,15 @@ namespace rkphplib\traits;
 /**
  * Trait for __construct($options = []).
  * 
- * @code:
+ * @code …
  * require_once(PATH_RKPHPLIB.'traits/Options.php');
  *
  * class SomeClass {
- * use \rkphplib\Options;
+ * use \rkphplib\traits\Options;
  * public function __construct($options = []) {
  *    $this->setOptions($options);
  * }
- * @:
+ * @EOL
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @copyright 2020 Roland Kujundzic
