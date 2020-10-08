@@ -2,22 +2,24 @@
 
 namespace rkphplib;
 
-require_once __DIR__.'/ADatabase.class.php';
+require_once __DIR__.'/Database.class.php';
 require_once __DIR__.'/Exception.class.php';
 
+use rkphplib\ADatabase;
+use rkphplib\Database;
+use rkphplib\Exception;
 
 
 /**
  * Category table.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- *
+ * @copyright 2020 Roland Kujundzic
  */
 class Category {
 
 // @var ADatabase $db (default = null)
 protected $db = null;
-
 
 
 /**
