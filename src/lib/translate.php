@@ -2,39 +2,81 @@
 
 namespace rkphplib\lib;
 
+require_once __DIR__.'/../File.class.php';
+
+use rkphplib\File;
 
 /**
- * Return translation from translation.$lang.php (e.g. translation.de.php).
- * Adjust SETTINGS_LANGUAGE (default = de) and load __DIR__/translation.$lang.php, 
+ * Return translation of $msg. If translation target (@to:xx)
+ * is not set or $msg is not translatet return $msg.
+ * Use php (return [ 'txt' => 'en', ... ];) or json ({ 'txt': 'en', ... })
+ * input file LANGUAGE.php|json.
+ * If replace list is set replace $pNx with $plist[N-1].
+ * Use @p1x:1 to return '' if $plist[0] == ''.
  *
- * // Example language file (@[0] = default if language doesn't exist)
- * static $translation_map = ['@' => ['de', 'de', 'fr', ... ], 'msg_1' => ['Nachricht', 'Message', ... ], ... ] 
+ * @example translate('@php:path/to/translation');
+ * @example translate('@json:load/translation');
+ * @example translate('@to:fr')
  *
- * // Example call: 
- * \rkphplib\lib\translate("variable p1x < p2x", [ 'age', 18 ]) -> return "Variable age < 18".
+ * @code translation/de.php …
+ * return [ 'min_age' => 'Sie müssen mindestens $p1x Jahre alt sein!', ... ];
+ * @EOL
+ *
+ * @code test.php …
+ * define('SETTINGS_TRANSLATIONS', 'php/src/translation');
+ * translate('@de');
+ * translate('min_age', [ 18 ]) // 'Sie müssen mindestens 18 Jahre alt sein!'
+ * @EOL
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
+ * @copyright 2017-2020 Roland Kujundzic
  */
 function translate(string $msg, array $plist = []) : string {
+	static $translation = [];
 
-	if (!defined('SETTINGS_LANGUAGE')) {
-		define('SETTINGS_LANGUAGE', 'de');
+	if (!isset($translation['@'])) {
+		$translation['@'] = [];
 	}
 
-	$map_file = __DIR__.'/translation.'.SETTINGS_LANGUAGE.'php';
+	if ($msg[0] == '@') {
+		list ($cmd, $value) = explode(':', $msg);
+		$translation[$cmd] = $value;
+		return '';
+	}
 
-	if (file_exists($map_file)) {
-		include_once $map_file;
+	if (!isset($translation['@to'])) {
+		throw new \Exception("call translate('@to:en|fr|...') first");
+	}
 
-		if (is_array($translation_map) && is_array($translation_map['@']) && is_array($translation_map[$msg])) {
-			$lpos = array_search(SETTINGS_LANGUAGE, $translation_map['@']);
-			$msg = $translation_map[$msg][$lpos];
+	$lang = $translation['@to'];
+
+	if (!empty($lang) && !isset($translation[$lang])) {
+		if (!empty($translation['@json'])) {
+			$translation[$lang] = File::loadJSON($translation['@json']."/$lang.json");
 		}
+		else if (!empty($translation['@php'])) {
+			$translation[$lang] = include $translation['@php']."/$lang.php";
+		}
+		else {
+			throw new \Exception('call translate("@json|php:path/to/translation") first');
+		}
+
+		print "load [$lang]: ".print_r($translation, true);
+	}
+	
+	if (isset($translation[$lang][$msg])) {
+		$msg = $translation[$lang][$msg];
 	}
 
 	for ($i = 0; $i < count($plist); $i++) {
-		$msg = str_replace('p'.($i + 1).'x', $plist[$i], $msg);
+		if ($i == 0 && empty($plist[0]) && !empty($translation['@p1x'])) {
+			$msg = '';
+		}
+		else {
+			$msg = str_replace('$p'.($i + 1).'x', $plist[$i], $msg);
+		}
 	}
 
 	return $msg;
 }
+
