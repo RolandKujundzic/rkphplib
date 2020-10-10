@@ -160,6 +160,37 @@ public function auth(string $url) : void {
 
 
 /**
+ * Return true if HEAD request to $url result code matches $ok_rx.
+ * Default ok result: 20[0-8], 30[0-8], 401 (unauthorized), 403 (forbidden), 404 (not found).
+ */
+public static function check(string $url, int $timeout = 10, string $ok_rx = '[23]0[0-8]|40[134]') : bool {
+	$ch = curl_init($url);
+
+	curl_setopt_array($ch, array(
+		CURLOPT_FOLLOWLOCATION => true,
+		CURLOPT_NOBODY => true,
+		CURLOPT_TIMEOUT => $timeout,
+		CURLOPT_USERAGENT => 'check/1.0'
+	));
+
+	\rkphplib\lib\log_debug("Curl.alive:175> call $url");
+	curl_exec($ch);
+
+	if (curl_errno($ch)) {
+		curl_close($ch);
+		\rkphplib\lib\log_warn('HEAD query failed: '.$url);
+		return false;
+	}
+
+	$code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+	curl_close($ch);
+
+	\rkphplib\lib\log_debug("Curl.alive:185> $code");
+  return preg_match('/^('.$ok_rx.')$/', $code);
+}
+
+
+/**
  * Download file from url.
  * Use setCache('download', 3600 * 4) to keep download valid for 4 h.
  */
