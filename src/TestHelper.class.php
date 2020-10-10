@@ -332,7 +332,7 @@ public function result() : void {
 	}
 
 	$this->_log([ "DONE: {$this->_tc['t_num']} Tests", $overall ], 15);
-	$this->_log($this->_tc['t_todo'].' missing '.$this->_tc['t_skip'].' skipped');
+	$this->_log($this->_tc['t_file'].' files '.$this->_tc['t_todo'].' missing '.$this->_tc['t_skip'].' skipped');
 
 	if ($this->_tc['t_error'] > 0) {
 		$this->_log(join("\n", $this->_tc['t_vim']), 2);
@@ -399,6 +399,7 @@ public function getTests(string $src_dir, array $skip = []) : array {
 		}
 	}
 
+	$this->_tc['t_file'] = count($test);
 	return $test;
 }
 
