@@ -14,18 +14,22 @@ if (!defined('DOCROOT')) {
 	}
 }
 
+define('TEST_HOST', 'localhost:15081');
 define('TEST_MYSQL', 'mysqli://unit_test:magic123@tcp+localhost/unit_test');
 define('TEST_SQLITE', 'sqlite://magic123@./unit_test.sqlite');
 
 require_once __DIR__.'/lib/call.php';
 require_once __DIR__.'/lib/config.php';
+require_once __DIR__.'/lib/execute.php';
 require_once __DIR__.'/tok/Tokenizer.class.php';
 require_once __DIR__.'/tok/TokPlugin.iface.php';
+require_once __DIR__.'/MysqlDatabase.class.php';
 require_once __DIR__.'/FSEntry.class.php';
 require_once __DIR__.'/PhpCode.class.php';
 require_once __DIR__.'/Profiler.class.php';
 require_once __DIR__.'/PhpCode.class.php';
 require_once __DIR__.'/JSON.class.php';
+require_once __DIR__.'/Curl.class.php';
 require_once __DIR__.'/File.class.php';
 require_once __DIR__.'/Dir.class.php';
 
@@ -70,6 +74,40 @@ public function __construct() {
 	$this->_tc['overview'] = [];
 
 	$this->reset();
+}
+
+
+/**
+ *  Check if database TEST_MYSQL is avaiable and if TEST_HOST is up.
+ */
+public function prepare() : void {
+	// create database if necessary ...
+	$db = new \rkphplib\MysqlDatabase([ 'abort' => false ]);
+	$db->setDSN(TEST_MYSQL);
+
+	$dsn_info = \rkphplib\ADatabase::splitDSN(TEST_MYSQL);
+	if (!$db->hasDatabase($dsn_info['name'])) {
+		if (!$db->createDatabase()) {
+			print "create database ${dsn_info['name']} failed try:\n";
+			print "sudo rks-db account --name=${dsn_info['name']} --password=${dsn_info['password']}\n";
+			exit(1);
+		}
+	}
+
+	$db->abort = true;
+
+	if (!Curl::check(TEST_HOST)) {
+		list ($host, $port) = explode(':', TEST_HOST);
+		$cmd = dirname(PATH_RKPHPLIB).'/run.sh php server --q1=y --port='.$port;
+		print TEST_HOST." down, trying:\n$cmd\n";
+		\rkphplib\lib\execute($cmd);
+		if (!Curl::check(TEST_HOST)) {
+			print "FAIL - try manually\n";
+			exit(1);
+		}
+
+		print ' OK '.TEST_HOST." up and running\n";
+	}
 }
 
 
@@ -294,6 +332,7 @@ public function result() : void {
 	}
 
 	$this->_log([ "DONE: {$this->_tc['t_num']} Tests", $overall ], 15);
+	$this->_log($this->_tc['t_todo'].' missing '.$this->_tc['t_skip'].' skipped');
 
 	if ($this->_tc['t_error'] > 0) {
 		$this->_log(join("\n", $this->_tc['t_vim']), 2);
@@ -305,14 +344,62 @@ public function result() : void {
  * Execute $dir/run.php.
  */
 public function test(string $dir) : void {
-	File::exists($dir.'/run.php');
+	File::exists($dir.'/run.php', true);
+
+	$opt = [];
+	if (File::exists($dir.'/run.json')) {
+		$opt = File::loadJSON($dir.'/run.json');
+	}
 
 	if (!chdir($dir)) {
 		throw new Exception("chdir $dir");
 	}
 
-	include 'run.php';
+	if (!empty($opt['ob_wrap'])) {
+		ob_start();
+		include 'run.php';
+		$res = ob_get_contents();
+		ob_end_clean();
+		print $res;
+	}
+	else {
+		include 'run.php';
+	}
+
 	chdir('..');
+}
+
+
+/**
+ * Return all tests in $src_dir (all *.php files except *.iface.php).
+ * Skip if test/run.php is missing or test is in $skip list.
+ * Set missing and skip count.
+ */
+public function getTests(string $src_dir, array $skip = []) : array {
+	$files = Dir::scanTree($src_dir, [ '.php', '!~\.iface\.php$' ]);
+
+	$this->_tc['t_todo'] = 0;
+	$this->_tc['t_skip'] = 0;
+	$test = [];
+	
+	foreach ($files as $file) {
+		$tdir = str_replace([ $src_dir.'/', '.class.php', '.trait.php', '.php', '/' ],
+			[ '', '', '', '', '.'], $file);
+
+		if (in_array($tdir, $skip)) {
+			$this->_tc['t_skip']++;
+			continue;
+		}
+
+		if (File::exists($tdir.'/run.php')) {
+			array_push($test, $tdir);
+		}
+		else {
+			$this->_tc['t_todo']++;
+		}
+	}
+
+	return $test;
 }
 
 
@@ -1102,10 +1189,15 @@ private function execTxt(string $base) : string {
  * Execute (include) $base.php and save as out/$base.txt
  */
 private function execPHP(string $base) : string {
-	ob_start();
-	include "in/$base.php";
-	$out = ob_get_contents();
-	ob_end_clean();
+	try {
+		ob_start();
+		include "in/$base.php";
+		$out = ob_get_contents();
+		ob_end_clean();
+	}
+	catch (\Exception $e) {
+		throw new Exception(getcwd()."\n".$e->getMessage());
+	}
 
 	$save_as = "out/$base.txt";
 	if (empty($out) && File::exists($save_as)) {
