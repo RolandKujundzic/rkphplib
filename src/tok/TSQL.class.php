@@ -458,7 +458,7 @@ public function tok_sql_change($p) {
  * @return ''
  */
 public function tok_sql_query($qkey, $query) {
-	\rkphplib\lib\log_debug([ "TSQL.tok_sql_query:461> <1>: <2>", $qkey, $query ]);
+	// \rkphplib\lib\log_debug([ "TSQL.tok_sql_query:461> <1>: <2>", $qkey, $query ]);
 	$is_hash = false;
 
 	if ($qkey == '@hash') {
@@ -480,7 +480,7 @@ public function tok_sql_query($qkey, $query) {
 
 	if ($is_hash) {
 		$this->first_row = $this->db->selectHash($query, 'name', 'value', true);
-		\rkphplib\lib\log_debug([ "TSQL.tok_sql_query:475> return <1>", $this->first_row ]);
+		// \rkphplib\lib\log_debug([ "TSQL.tok_sql_query:483> return <1>", $this->first_row ]);
 		return;
 	}
 
