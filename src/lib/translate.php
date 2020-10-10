@@ -60,8 +60,6 @@ function translate(string $msg, array $plist = []) : string {
 		else {
 			throw new \Exception('call translate("@json|php:path/to/translation") first');
 		}
-
-		print "load [$lang]: ".print_r($translation, true);
 	}
 	
 	if (isset($translation[$lang][$msg])) {

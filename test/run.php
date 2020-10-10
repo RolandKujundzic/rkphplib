@@ -8,6 +8,7 @@ require_once __DIR__.'/settings.php';
  * repair all skipped tests
  * refactor tok_*
  * update File, tok.TBase
+ * allow localhost:15081/run.php (html output)
  * add all missing
  * check if public function tests are missing
  */
