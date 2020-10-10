@@ -2,10 +2,7 @@
 
 require_once '../settings.php';
 
-
-/*
- * M A I N
- */
+global $th;
 
 $th->useTokPlugin([ 'TBase', 'TMath' ]);
 $th->run(1, 6);

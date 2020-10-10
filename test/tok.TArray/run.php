@@ -2,10 +2,7 @@
 
 require_once '../settings.php';
 
-
-/*
- * M A I N
- */
+global $th;
 
 $th->useTokPlugin([ 'TArray' ]);
 $th->run(1, 2);

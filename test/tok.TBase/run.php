@@ -2,10 +2,6 @@
 
 require_once '../settings.php';
 
-
-/** 
- *
- */
 function _de_en_codeHash($map) {
 	global $th;
 
@@ -14,12 +10,9 @@ function _de_en_codeHash($map) {
 	$th->compare('(de|en)codeHash', [ \rkphplib\lib\kv2conf($dec) ], [ \rkphplib\lib\kv2conf($map) ]);
 }
 
-
-/*
- * M A I N
- */
-
 // $th->tokCheck(PATH_RKPHPLIB.'tok/TBase.class.php'); exit(0);
+
+global $th;
 
 $th->useTokPlugin([ 'TBase' ]);
 $th->run(1, 16);
