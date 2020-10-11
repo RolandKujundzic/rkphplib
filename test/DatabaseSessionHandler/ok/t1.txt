@@ -1,0 +1,2 @@
+has(abc)=1
+get(abc)=3
