@@ -57,6 +57,9 @@ public $output = '';
 // @var Profiler $profiler
 public $profiler = null;
 
+// @var array options
+public $options = [];
+
 
 /**
  * Constructor. Initialize test counter hash.
@@ -251,7 +254,7 @@ private function _error_cmp(string $msg, $out, $ok) : void {
  *
  * @param string|array $msg
  */
-private function _log($msg, int $cn = 1) : void {
+private function log($msg, int $cn = 1) : void {
 	if ($cn & 2) {
 		print "\n";
 	}
@@ -331,31 +334,33 @@ public function result() : void {
 		$overall = "\x1b[0;31m{$this->_tc['t_ok']} OK, {$this->_tc['t_error']} ERROR - FAIL\x1b[0m";
 	}
 
-	$this->_log([ "DONE: {$this->_tc['t_num']} Tests", $overall ], 15);
-	$this->_log($this->_tc['t_file'].' files '.$this->_tc['t_todo'].' missing '.$this->_tc['t_skip'].' skipped');
+	$this->log([ "DONE: {$this->_tc['t_num']} Tests", $overall ], 15);
+	$this->log($this->_tc['t_file'].' files '.$this->_tc['t_todo'].' missing '.$this->_tc['t_skip'].' skipped');
 
 	if ($this->_tc['t_error'] > 0) {
-		$this->_log(join("\n", $this->_tc['t_vim']), 2);
+		$this->log(join("\n", $this->_tc['t_vim']), 2);
 	}
 }
 
 
 /**
- * Execute $dir/run.php.
+ * Execute $dir/run.php. Optional options in run.json:
+ * - ob_wrap: 0|1 (1 = wrap run.php in ob_*
+ * - http: 0|1 (1 = call http://TEST_HOST/TEST/run.php)
  */
 public function test(string $dir) : void {
 	File::exists($dir.'/run.php', true);
 
-	$opt = [];
+	$this->options = [];
 	if (File::exists($dir.'/run.json')) {
-		$opt = File::loadJSON($dir.'/run.json');
+		$this->options = File::loadJSON($dir.'/run.json');
 	}
 
 	if (!chdir($dir)) {
 		throw new Exception("chdir $dir");
 	}
 
-	if (!empty($opt['ob_wrap'])) {
+	if (!empty($this->options['ob_wrap'])) {
 		ob_start();
 		include 'run.php';
 		$res = ob_get_contents();
@@ -405,175 +410,10 @@ public function getTests(string $src_dir, array $skip = []) : array {
 
 
 /**
- * Run test script.
- */
-public function runTest(string $run_php) : void {
-
-	FSEntry::isFile($run_php);
-	$script_dir = dirname($run_php);
-
-	$this->reset();
-	$this->_tc['path'] = $script_dir;
-
-	$this->_log('START: '.$script_dir.' Tests', 15);
-
-	// execute tests ...
-	include $run_php;
-
-	$result = '';
-	$this->_tc['t_num'] += $this->_tc['num'];
-
-	if ($this->_tc['error'] == 0 && $this->_tc['ok'] > 0) {
-		$this->_tc['t_ok'] += $this->_tc['ok'];
-		$this->_tc['t_pass']++;
-		$result = 'PASS';
-	}
- 	else {
-		$this->_tc['t_error'] += $this->_tc['error'];
-		$this->_tc['t_fail']++;
-		$result = 'FAIL';
-	}
-
-	$this->_log('RESULT: '.$this->_tc['ok'].'/'.$this->_tc['num'].' OK - '.$this->_tc['error']." ERROR \t".$result, 31);
-
-	$overview = sprintf("%16s: %3d/%-3d ok - %3d errors", dirname($run_php), $this->_tc['ok'], $this->_tc['num'], $this->_tc['error']);
-	array_push($this->_tc['overview'], $overview);
-}
-
-
-/**
- * Call function and compare result. Load $test (list of function calls - parameterlist + result) and $func (function name) from $path.fc.php.
- */
-public function runFuncTest(string $path) : void {
-	// execute test
-	$php_file = empty($this->_tc['path']) ? $path.'.fc.php' : $this->_tc['path'].'/'.$path.'.fc.php';
-	$this->_log('runFuncTest: loading '.$php_file.' ... ', 2);
-	require_once $php_file;
-
-	if (!isset($func)) {
-		throw new Exception('$func is undefined in '.$php_file); 
-	}
-
-	if (!isset($test)) {
-		throw new Exception('$test is undefined in '.$php_file); 
-	}
-
-	$csm = false;
-	if (is_string($func) && ($pos = strpos($func, '::')) !== false) {
-		$class = substr($func, 0, $pos);
-		$method = substr($func, $pos + 2);
-		$csm = true;
-	}
-
-	$this->_tc['num']++;
-
-	$n_err = 0;
-	$n_ok = 0;
-
-	$this->_log('executing '.count($test).' tests', 9);
-	foreach ($test as $x) {
-		$ok = array_pop($x);
-		$res = null;
-
-		if ($csm) {
-			$res = $this->_fc_static_method($class, $method, $x);
-		}
-		else if (is_string($func)) {
-			$res = $this->_fc_function($func, $x);
-		}
-		else {
-			if (empty($this->output)) {
-				$res = $func();
-			}
-			else {
-				File::remove($this->output, false);
-				$func();
-				$res = File::load($this->output);
-			}
-		}
-
-		if ($ok === '@file') {
-			$ok = File::load(dirname($php_file).'/'.File::basename($php_file, true).'.ok');
-		}
-
-		$res = self::res2str($res);
-		$msg = 'ok';
-
-		if ($res !== $ok) {
-			$msg = ' != '.$ok.' - ERROR!';
-	
-			if (empty($ok) || strlen($res) > 40) {
-				$save_ok = sys_get_temp_dir().'/res.out';
-				File::save($save_ok, $res);
-				$msg .= ' (see: '.$save_ok.')';
-			}
-
-			$n_err++;
-		}
-		else if (!empty($this->output)) {
-			File::remove($this->output, false);
-		}
-
-		if (is_numeric($res) || is_bool($res)) {
-			$this->_log("$res ... $msg");
-		}
-		else {
-			$this->_log("'$res' ... $msg");
-		}
-	}
-
-	if (!$n_err) {
-		 $this->_tc['ok']++;
-	}
-	else {
-	  $this->_tc['error']++;
-		throw new Exception("Test failed: runFuncTest($path)");
-	}
-}
-
-
-/**
- * Call test function $func($arg). Return vector [ NAME, 1, 1, 0, 1, ... ] with 1 = OK and 0 = ERR.
- * 
- * @param mixed $arg
- */
-public function callTest(callable $func, $arg, array $result) : void {
-  $this->_tc['num']++;
-
-  $this->_log(array_shift($result).": ", 0);
-
-	// execute test
-  $r = $func($arg);
-
-	$n = count($r);
-	$ok = 0;
-	$err = 0;
-
-	for ($i = 0; $i < count($result); $i++) {
- 		if ($r[$i] != $result[$i]) {
-			$err++;
-		}
-		else {
-			$ok++;
-		}
-	}
-
-  if ($err == 0 && $ok == $n) {
-    $this->_log("$n/$n OK");
-  	$this->_tc['ok']++;
-  }
-  else {
-    $this->_log("$ok/$n OK and $err ERROR");
-  	$this->_tc['error']++;
-  }
-}
-
-
-/**
  * Compare output $out_list with expected result $ok_list. Result vector may contain less keys than output (e.g. ignore date values).
  */
 public function compare(string $msg, array $out_list, array $ok_list) : void {
-	$this->_log($msg.": ", 0);
+	$this->log($msg.": ", 0);
 	$this->_tc['num']++;
 
 	$n = count($ok_list);
@@ -614,11 +454,11 @@ public function compare(string $msg, array $out_list, array $ok_list) : void {
 	}
 
 	if ($err == 0 && $ok == $n) {
-		$this->_log("$n/$n OK");
+		$this->log("$n/$n OK");
 		$this->_tc['ok']++;
 	}
 	else {
-		$this->_log("$ok/$n OK and $err ERROR");
+		$this->log("$ok/$n OK and $err ERROR");
 		$this->_tc['error']++;
 	}
 }
@@ -628,7 +468,7 @@ public function compare(string $msg, array $out_list, array $ok_list) : void {
  * Compare hash output with expected result. Result hash may contain lass keys than output (e.g. ignore date values).
  */
 public function compareHash(string $msg, array $out, array $ok) : void {
-	$this->_log($msg.": ", 0);
+	$this->log($msg.": ", 0);
 	$this->_tc['num']++;
 	$err = 0;
 
@@ -655,11 +495,11 @@ public function compareHash(string $msg, array $out, array $ok) : void {
 	$n = count($ok);
 
 	if ($err) {
-		$this->_log(($n - $err)."/$n OK and $err ERROR");
+		$this->log(($n - $err)."/$n OK and $err ERROR");
   		$this->_tc['error']++;
 	}
 	else {
-		$this->_log("$n/$n OK");
+		$this->log("$n/$n OK");
 		$this->_tc['ok']++;
 	}
 }
@@ -693,96 +533,6 @@ private function getResult($value) {
 	}
 
 	return $value;
-}
-
-
-/**
- * Return _fc_function|_fc_static_method call.
- *
- * @param mixed $x
- */
-private function _fc_log(string $call, $x) : string {
-	$y = array();
-	$prefix = '';
-	$suffix = '';
-
-	if (is_array($x)) {
-		foreach ($x as $key => $value) {
-			if (is_numeric($key)) {
-				array_push($y, $this->_fc_log('', $value));
-			}
-			else {
-				array_push($y, $key.' => '.$this->_fc_log('', $value));
-			}
-		}
-
-		$prefix = '[';
-		$suffix = ']';
-	}
-	else if (is_string($x)) {
-		array_push($y, $x);
-		$prefix = "'";
-		$suffix = "'";
-	}
-	else {
-		array_push($y, $x);
-	}
-
-	return $call ? $call.'('.join(', ', $y).') = ' : $prefix.join(', ', $y).$suffix;
-}
-
-
-/**
- * Return result (any) of $func($x[0], $x[1], ...) callback.
- *
- * @return mixed
- */
-private function _fc_function(string $func, array $x) {
-
-	$this->_log($this->_fc_log("$func", $x), 0);
-	$pnum = count($x);
-
-	if ($pnum == 1) {
-		$res = $func($x[0]);
-	}
-	else if ($pnum == 2) {
-		$res = $func($x[0], $x[1]);
-	}
-	else if ($pnum == 3) {
-		$res = $func($x[0], $x[1], $x[2]);
-	}
-	else if ($pnum == 4) {
-		$res = $func($x[0], $x[1], $x[2], $x[3]);
-	}
-
-	return $res;
-}
-
-
-/**
- * Return result (any) of $class::$method($x[0], $x[1], ...) callback.
- * 
- * @return mixed
- */
-private function _fc_static_method(string $class, string $method, array $x) {
-
-	$this->_log($this->_fc_log("$class::$method", $x), 0);
-	$pnum = count($x);
-
-	if ($pnum == 1) {
-		$res = $class::$method($x[0]);
-	}
-	else if ($pnum == 2) {
-		$res = $class::$method($x[0], $x[1]);
-	}
-	else if ($pnum == 3) {
-		$res = $class::$method($x[0], $x[1], $x[2]);
-	}
-	else if ($pnum == 4) {
-		$res = $class::$method($x[0], $x[1], $x[2], $x[3]);
-	}
-
-	return $res;
 }
 
 
@@ -877,9 +627,25 @@ private function load_src(string $cpath = '') : void {
 
 
 /**
- * Initialize run(). Calculate Test number.
+ * Initialize run(). Calculate Test number. If HTTP call and 
+ * n = _GET[test] is print result of execPHP(tN.php).
  */
 private function prepareRun(int $first, int $last) : int {
+
+	if (!count($this->options) && File::exists('run.json')) {
+		$this->options = File::loadJSON('run.json');
+	}
+
+	if (!empty($this->options['http'])) {
+		$GLOBALS['SETTINGS']['LOG_DEBUG'] = dirname(SETTINGS_LOG_ERROR).'/php.log';
+	}
+
+	if (!empty($_SERVER['HTTP_HOST']) && !empty($_GET['test'])) {
+		\rkphplib\lib\log_debug("TestHelper.run:711> http call test ".$_GET['test']);
+		print $this->execPHP('t'.intval($_GET['test']));
+		exit(0);
+	}
+
 	$tnum = $last - $first + 1;
 	$cname = basename(getcwd());
 
@@ -887,7 +653,7 @@ private function prepareRun(int $first, int $last) : int {
 		throw new Exception("invalid call run($first, $last)");
 	}
 	else if ($first == 0) {
-		$this->_log($cname.':  no tests', 3);
+		$this->log($cname.':  no tests', 3);
 		return 0;
 	}
 
@@ -902,10 +668,10 @@ private function prepareRun(int $first, int $last) : int {
 	$tnum = $this->getTestNumber($first, $last);
 
 	if ($tnum == 1) {
-		$this->_log([ $cname.':', '1 test' ], 11);
+		$this->log([ $cname.':', '1 test' ], 11);
 	}
 	else {
-		$this->_log([ $cname.':', $tnum.' tests' ], 11);
+		$this->log([ $cname.':', $tnum.' tests' ], 11);
 	}
 
 	$this->reset();
@@ -951,6 +717,9 @@ private function getTestNumber(int $first, int $last) : int {
 
 
 /**
+ * Run test in/tFIRST ... in/tLAST. Suffix is .php, .json, 
+ * .json.php, .tok or .txt.
+ *
  * @example run(1, 6)
  */
 public function run(int $first, int $last) : void {
@@ -964,7 +733,14 @@ public function run(int $first, int $last) : void {
 		$prefix = 'in/'.$base;
 		$this->_tc['num']++;
 
-		if (File::exists($prefix.'.php')) {
+		if (!empty($this->options['http'])) {
+			$url = TEST_HOST.'/'.basename(getcwd()).'/run.php?test='.$i;
+			\rkphplib\lib\log_debug("TestHelper.run:726> fromURL($url)");
+			$curl = new Curl([ 'cookiejar' => 'out/cookiejar'.$i.'.curl' ]);
+			$out = $curl->get($url);
+			$file = $prefix.'.php';
+		}
+		else if (File::exists($prefix.'.php')) {
 			$out = $this->execPHP($base);
 			$file = $prefix.'.php';
 		}
@@ -999,6 +775,7 @@ public function run(int $first, int $last) : void {
 	}
 
 	$this->logResult();
+	unset($GLOBALS['SETTINGS']['LOG_DEBUG']);
 }
 
 
@@ -1007,11 +784,11 @@ public function run(int $first, int $last) : void {
  */
 private function logRun(string $label, bool $ok, int $tnum) : void {
 	if ($ok) {
-		$this->_log([ $label, "{$this->_tc['num']}/$tnum \x1b[0;32mOK\x1b[0m" ], 1);
+		$this->log([ $label, "{$this->_tc['num']}/$tnum \x1b[0;32mOK\x1b[0m" ], 1);
 		$this->_tc['ok']++;
 	}
 	else {
-		$this->_log([ $label, "{$this->_tc['num']}/$tnum \x1b[0;31mERROR\x1b[0m" ], 1);
+		$this->log([ $label, "{$this->_tc['num']}/$tnum \x1b[0;31mERROR\x1b[0m" ], 1);
 		$this->_tc['error']++;
 	}
 }
@@ -1022,13 +799,13 @@ private function logRun(string $label, bool $ok, int $tnum) : void {
  */
 private function logResult() {
 	if ($this->_tc['error'] == 0) {
-		$this->_log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - 0 ERROR",  "\x1b[0;32mPASS\x1b[0m" ], 5);
+		$this->log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - 0 ERROR",  "\x1b[0;32mPASS\x1b[0m" ], 5);
 		$this->_tc['t_ok'] += $this->_tc['ok'];
 		$this->_tc['t_pass']++;
 	}
 	else {
-		$this->_log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - {$this->_tc['error']} ERROR",  "\x1b[0;31mFAIL\x1b[0m" ], 5);
-		$this->_log("VIEW ERROR: ".join("\n", $this->_tc['vim']));
+		$this->log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - {$this->_tc['error']} ERROR",  "\x1b[0;31mFAIL\x1b[0m" ], 5);
+		$this->log("VIEW ERROR: ".join("\n", $this->_tc['vim']));
 		$this->_tc['t_error'] += $this->_tc['error'];
 		$this->_tc['t_fail']++;
 		$this->_tc['t_vim'] = array_merge($this->_tc['t_vim'], $this->_tc['vim']);
@@ -1192,6 +969,7 @@ private function execTxt(string $base) : string {
 private function execPHP(string $base) : string {
 	try {
 		ob_start();
+		\rkphplib\lib\log_debug("TestHelper.execPHP:961> execPHP($base)");
 		include "in/$base.php";
 		$out = ob_get_contents();
 		ob_end_clean();
@@ -1242,7 +1020,7 @@ public function tokCheck_new(string $php_source) : void {
 	$pclass = $php->getClass('path');
 	define('CLI_NO_EXIT', 1);
 
-	$this->_log("\nrun @tok ... tests in $pclass");
+	$this->log("\nrun @tok ... tests in $pclass");
 	exit(1);
 
 	for (; $i < count($code_lines); $i++) {
@@ -1289,10 +1067,10 @@ public function tokCheck_new(string $php_source) : void {
 
 		$this->_tc['num']++;
 		if ($linebreak) {
-			$this->_log("$plugin\n\t$result\n\t... ", 0);
+			$this->log("$plugin\n\t$result\n\t... ", 0);
 		}
 		else {
-			$this->_log("$plugin ? $result ... ", 0);
+			$this->log("$plugin ? $result ... ", 0);
 		}
 
 		$tok->setText($plugin);
@@ -1311,11 +1089,11 @@ public function tokCheck_new(string $php_source) : void {
 		}
 
 		if ($res === $result) {
-			$this->_log('ok');
+			$this->log('ok');
 			$this->_tc['ok']++;				
 		}
 		else {
-			$this->_log(" != $res - ERROR!");
+			$this->log(" != $res - ERROR!");
 			$this->_tc['error']++;
 		}
 	}
@@ -1353,7 +1131,7 @@ public function tokCheck(string $php_source) : void {
 		throw new Exception('failed to find plugin class in '.$php_source);
 	}
 
-	$this->_log("\nrun @tok ... tests in $pclass");
+	$this->log("\nrun @tok ... tests in $pclass");
 
 	for (; $i < count($code_lines); $i++) {
 		$line = trim($code_lines[$i]);
@@ -1399,10 +1177,10 @@ public function tokCheck(string $php_source) : void {
 
 		$this->_tc['num']++;
 		if ($linebreak) {
-			$this->_log("$plugin\n\t$result\n\t... ", 0);
+			$this->log("$plugin\n\t$result\n\t... ", 0);
 		}
 		else {
-			$this->_log("$plugin ? $result ... ", 0);
+			$this->log("$plugin ? $result ... ", 0);
 		}
 
 		$tok->setText($plugin);
@@ -1421,11 +1199,11 @@ public function tokCheck(string $php_source) : void {
 		}
 
 		if ($res === $result) {
-			$this->_log('ok');
+			$this->log('ok');
 			$this->_tc['ok']++;				
 		}
 		else {
-			$this->_log(" != $res - ERROR!");
+			$this->log(" != $res - ERROR!");
 			$this->_tc['error']++;
 		}
 	}
@@ -1452,7 +1230,7 @@ public function runTokenizer($num, array $plugin_list) : void {
 	$test_files = array();
 
 	if (is_string($num)) {
-		$this->_log("runTokenizer: $rel_tdir/$num", 11);
+		$this->log("runTokenizer: $rel_tdir/$num", 11);
 		array_push($test_files, $tdir.'/'.$num);
 	}
 	else if (is_array($num)) {
@@ -1462,10 +1240,10 @@ public function runTokenizer($num, array $plugin_list) : void {
 	}
 	else {
 		if ($num > 1) {
-			$this->_log("runTokenizer: $rel_tdir/t1.txt ... $rel_tdir/t$num.txt", 11);
+			$this->log("runTokenizer: $rel_tdir/t1.txt ... $rel_tdir/t$num.txt", 11);
 		}
 		else {
-			$this->_log("runTokenizer: $rel_tdir/t$num.txt", 11);
+			$this->log("runTokenizer: $rel_tdir/t$num.txt", 11);
 		}
 
 		for ($i = 1; $i <= $num; $i++) {
@@ -1490,22 +1268,22 @@ public function runTokenizer($num, array $plugin_list) : void {
 		}
 
 		$this->_tc['num']++;
-		$this->_log("Test $i ... ", 0);
+		$this->log("Test $i ... ", 0);
 
 		if ($out != $ok) {
 			if (mb_strlen($out) > 40 || strpos($out, "\n") !== false) {
-				$this->_log("ERROR! (see $f_out)");
+				$this->log("ERROR! (see $f_out)");
 				File::save($f_out, $out);
 			}
 			else {
-				$this->_log("$out != $ok - ERROR!");
+				$this->log("$out != $ok - ERROR!");
 			}
 
 			$this->_tc['error']++;
 		}
 		else {
 			$this->_tc['ok']++;
-			$this->_log("ok");
+			$this->log("ok");
 		}
 	}
 }
