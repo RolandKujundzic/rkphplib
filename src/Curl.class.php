@@ -191,6 +191,24 @@ public static function check(string $url, int $timeout = 10, string $ok_rx = '[2
 
 
 /**
+ * Return url content.
+ */
+public function get(string $url) : string {
+	if (!empty($this->cookiejar)) {
+		if (File::exists($this->cookiejar)) {
+			$this->opt['COOKIEFILE'] = $this->cookiejar;
+		}
+		else {
+			$this->opt['COOKIEJAR'] = $this->cookiejar;
+		}
+	}
+
+	$this->opt['BINARYTRANSFER'] = true;
+	return $this->call_curl($url);
+}
+
+
+/**
  * Download file from url.
  * Use setCache('download', 3600 * 4) to keep download valid for 4 h.
  */
@@ -201,8 +219,12 @@ public function download(string $url, string $save_as) : void {
 	}
 
 	if (!empty($this->cookiejar)) {
-		File::exists($this->cookiejar, true);
-		$this->opt['COOKIEFILE'] = $this->cookiejar;
+		if (File::exists($this->cookiejar)) {
+			$this->opt['COOKIEFILE'] = $this->cookiejar;
+		}
+		else {
+			$this->opt['COOKIEJAR'] = $this->cookiejar;
+		}
 	}
 
 	$this->opt['BINARYTRANSFER'] = true;
