@@ -262,7 +262,7 @@ private function cacheOk(string $name, string $file) : bool {
 	}
 	
 	$res = File::lastModified($file) > time() - $this->cache[$name];
-	// \rkphplib\lib\log_debug("Curl.cacheOk:243> $file: ".intval($res));
+	// \rkphplib\lib\log_debug("Curl.cacheOk:265> $file: ".intval($res));
 	return $res;
 }
 
@@ -296,7 +296,7 @@ private function call_curl(string $url) : string {
 		curl_setopt($ch, constant('CURLOPT_'.$key), $value);
 	}
 
-	// \rkphplib\lib\log_debug('Curl.call_curl:277> '.print_r($this->opt, true));
+	// \rkphplib\lib\log_debug('Curl.call_curl:299> '.print_r($this->opt, true));
 	$res = curl_exec($ch);
 
 	$info = curl_getinfo($ch);
