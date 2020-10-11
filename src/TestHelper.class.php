@@ -641,7 +641,7 @@ private function prepareRun(int $first, int $last) : int {
 	}
 
 	if (!empty($_SERVER['HTTP_HOST']) && !empty($_GET['test'])) {
-		\rkphplib\lib\log_debug("TestHelper.run:711> http call test ".$_GET['test']);
+		// \rkphplib\lib\log_debug("TestHelper.run:644> http call test ".$_GET['test']);
 		print $this->execPHP('t'.intval($_GET['test']));
 		exit(0);
 	}
@@ -735,7 +735,7 @@ public function run(int $first, int $last) : void {
 
 		if (!empty($this->options['http'])) {
 			$url = TEST_HOST.'/'.basename(getcwd()).'/run.php?test='.$i;
-			\rkphplib\lib\log_debug("TestHelper.run:726> fromURL($url)");
+			// \rkphplib\lib\log_debug("TestHelper.run:738> fromURL($url)");
 			$curl = new Curl([ 'cookiejar' => 'out/cookiejar'.$i.'.curl' ]);
 			$out = $curl->get($url);
 			$file = $prefix.'.php';
@@ -887,10 +887,10 @@ private function execJSON(string $file, int $tnum) : void {
 
 			$label = substr($call, 8).' '.($i + 1);
 			$out = $args[0];
-			// \rkphplib\lib\log_debug([ "TestHelper.execJSON:1025> <1>) label: [<3>]", $this->_tc['num'], $label, $out ]);
+			// \rkphplib\lib\log_debug([ "TestHelper.execJSON:890> <1>) label: [<3>]", $this->_tc['num'], $label, $out ]);
 		}
 		else {
-			// \rkphplib\lib\log_debug([ "TestHelper.execJSON:1028> <1>) <2>(<3>)", $this->_tc['num'], $call, $args ]);
+			// \rkphplib\lib\log_debug([ "TestHelper.execJSON:893> <1>) <2>(<3>)", $this->_tc['num'], $call, $args ]);
 			$out = $this->call($call, $args);
 			if ($out == 'null' && is_string(end($args)) && substr(end($args), 0, 4) == 'out/') {
 				$out = File::load(end($args));
@@ -969,7 +969,7 @@ private function execTxt(string $base) : string {
 private function execPHP(string $base) : string {
 	try {
 		ob_start();
-		\rkphplib\lib\log_debug("TestHelper.execPHP:961> execPHP($base)");
+		// \rkphplib\lib\log_debug("TestHelper.execPHP:972> execPHP($base)");
 		include "in/$base.php";
 		$out = ob_get_contents();
 		ob_end_clean();
