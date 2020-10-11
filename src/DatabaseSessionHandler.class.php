@@ -5,16 +5,12 @@ namespace rkphplib;
 require_once __DIR__.'/Database.class.php';
 require_once __DIR__.'/lib/dec2n.php';
 
-use rkphplib\ADatabase;
-use rkphplib\Database;
-use rkphplib\Exception;
-
 
 /**
- * Database session handler.
+ * Database session handler. Use 16 digit base 62 number as session id. 
  * 
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @phpVersionLt 7.0 class DatabaseSession implements SessionHandlerInterface {
+ * @phpVersionLt 7.0 class DatabaseSessionHandler implements \SessionHandlerInterface {
  */
 class DatabaseSessionHandler implements \SessionHandlerInterface, \SessionIdInterface, \SessionUpdateTimestampHandlerInterface {
 
