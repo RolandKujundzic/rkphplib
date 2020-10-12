@@ -1,0 +1,5 @@
+[
+	"XCrypt.encodeArray",
+	[ { "oid": 4, "item": 12 }, "12|4" ],
+	[ { "item": 12, "oid": 4 }, "12|4" ]
+]
