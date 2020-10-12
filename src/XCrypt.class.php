@@ -63,12 +63,10 @@ public function decodeArray(string $text, array $keys = []) : array {
 
 	$tmp = split_str('|', $atext);
 	$res = [];
-	$n = 0;
 
-	foreach($keys as $key) {
-		$key = isset($keys[$n]) ? $keys[$n] : $n;
-		$res[$key] = $tmp[$n];
-		$n++;
+	for ($i = 0; $i < count($tmp); $i++) {
+		$key = isset($keys[$i]) ? $keys[$i] : $i;
+		$res[$key] = $tmp[$i];
 	}
 
 	return $res;

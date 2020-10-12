@@ -1,5 +1,5 @@
 [
-	"XCrypt.decodeArray",
-	[ "12|4", "[12,4]" ],
-	[ "12|4", [ "item", "oid" ], "{\"item\":\"12\",\"oid\":\"4\"}" ]
+	"rkphplib\\XCrypt.decodeArray",
+	[ "QlcfRg--", "[\"12\",\"4\"]" ],
+	[ "QlcfRg--", [ "item", "oid" ], "{\"item\":\"12\",\"oid\":\"4\"}" ]
 ]

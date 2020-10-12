@@ -1,5 +1,5 @@
 [
-	"XCrypt.decode",
+	"rkphplib\\XCrypt.decode",
 	[ "HAwHT1EIGhEGH1hFQQ--", "oid=4|item=12" ],
 	[ "QlcfRg--", "12|4" ]
 ]
