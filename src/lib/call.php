@@ -36,7 +36,8 @@ function call(string $name, array $arg = []) {
 
 	// \rkphplib\lib\log_debug([ "call:37> anum=<1> call $name(<2>)", $anum, $arg ]);
 	if (($pos = strpos($name, '.')) > 0) {
-		$obj = substr($name, 0, $pos);
+		$oname = substr($name, 0, $pos);
+		$obj = new $oname();
 		$func = substr($name, $pos + 1);
 
 		if ($anum == 0) {
