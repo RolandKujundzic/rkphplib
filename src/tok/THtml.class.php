@@ -53,7 +53,7 @@ public function getPlugins(Tokenizer $tok) : array {
  */
 public static function tok_html_nobr(string $txt) : string {
 	$res = str_replace( [ '<br>', '<br/>' ], [ ' ', ' ' ], $txt);
-	// \rkphplib\lib\log_debug([ "THtml::tok_html_nobr:52> THtml.tok_html_nobr(<1>) = [<2>]", $txt, $res ]);
+	// \rkphplib\lib\log_debug([ "THtml::tok_html_nobr:56> THtml.tok_html_nobr(<1>) = [<2>]", $txt, $res ]);
 	return $res;
 }
 

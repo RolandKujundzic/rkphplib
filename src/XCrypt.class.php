@@ -27,13 +27,13 @@ private $secret = '';
  */
 public static function updateRequest() : void {
 	if (empty($_REQUEST[SETTINGS_XCRYPT_RKEY])) {
-		\rkphplib\lib\log_debug("XCrypt::updateRequest:30> empty _REQUEST.".SETTINGS_XCRYPT_RKEY);
+		// \rkphplib\lib\log_debug("XCrypt::updateRequest:30> empty _REQUEST.".SETTINGS_XCRYPT_RKEY);
 		return;
 	}
 
 	$xcr = new XCrypt(SETTINGS_XCRYPT_SECRET);
 	$req = $xcr->decodeArray($_REQUEST[SETTINGS_XCRYPT_RKEY]);
-	\rkphplib\lib\log_debug([ "XCrypt::updateRequest:36> <1>", $req ]);
+	// \rkphplib\lib\log_debug([ "XCrypt::updateRequest:36> <1>", $req ]);
 	$_REQUEST = array_merge($_REQUEST, $req);
 }
 
