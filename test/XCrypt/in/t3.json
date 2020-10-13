@@ -1,5 +1,7 @@
 [
 	"rkphplib\\XCrypt.encodeArray",
 	[ { "oid": 4, "item": 12 }, "QlcfRg--" ],
-	[ [ 12, 4 ], "QlcfRg--" ]
+	[ [ 12, 4 ], "QlcfRg--" ],
+	[ { "oid": 4, "item": 12 }, 1, "QlcfRhkdBwAODgodFxleQA--" ],
+	[ { "a": "A", "ab": "A B", "x_y": "X|Y" }, 1, "MhkiUicIKzkfKxkVDwQBDh0rChleQQ--" ]
 ]

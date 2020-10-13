@@ -47,10 +47,18 @@ public function decode(string $text) : string {
 
 
 /**
- * Return encoded string.
+ * Return encoded string (value1|value2|...). If $append_keys is true
+ * encode value1|...|valueN|key1|...|keyN|=N.
  */
-public function encodeArray(array $kv) : string {
+public function encodeArray(array $kv, bool $append_keys = false) : string {
 	$text = array_join('|', $kv);
+
+	if ($append_keys) {
+		$keys = array_keys($kv);
+		sort($keys);
+		$text .= '|'.join('|', $keys).'|='.count($keys);
+	}
+
 	return strtr(base64_encode(self::sxor($text, $this->secret)), '+/=', '._-');
 }
 
@@ -64,7 +72,14 @@ public function decodeArray(string $text, array $keys = []) : array {
 	$tmp = split_str('|', $atext);
 	$res = [];
 
-	for ($i = 0; $i < count($tmp); $i++) {
+	$tlen = count($tmp);
+	$klen = ($tlen - 1) / 2;
+	if (count($keys) == 0 && $tmp[$tlen-1] == '='.$klen) {
+		$keys = array_slice($tmp, $klen, $klen);
+		$tlen = $klen;
+	}
+
+	for ($i = 0; $i < $tlen; $i++) {
 		$key = isset($keys[$i]) ? $keys[$i] : $i;
 		$res[$key] = $tmp[$i];
 	}
