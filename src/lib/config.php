@@ -28,6 +28,9 @@ namespace rkphplib\lib;
  *
  * Register exception_handler and error_handler.
  *
+ * Update _REQUEST (add decoded _REQUEST[SETTINGS_XCRYPT_RKEY] values) if
+ * SETTINGS_XCRYPT_SECRET and SETTINGS_XCRYPT_RKEY isset.
+ *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 
@@ -169,6 +172,11 @@ if (!defined('FILE_DEFAULT_MODE') && !defined('DIR_DEFAULT_MODE')) {
 		define('FILE_DEFAULT_MODE', 0660);
 		define('DIR_DEFAULT_MODE', 0770);
 	}
+}
+
+if (defined('SETTINGS_XCRYPT_SECRET') && defined('SETTINGS_XCRYPT_RKEY')) {
+	require_once __DIR__.'/../XCrypt.class.php';
+	\rkphplib\XCrypt::updateRequest();
 }
 
 define('RKPHPLIB_VERSION', 'v1.0.3');
