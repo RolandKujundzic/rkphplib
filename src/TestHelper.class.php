@@ -999,6 +999,7 @@ private function execTok(string $base) : string {
 	}
 
 	$in = File::load('in/'.$base.'.tok');
+	$this->tok->reset();
 	$this->tok->setText($in);
 	$out = $this->tok->toString();
 
