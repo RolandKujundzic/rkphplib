@@ -3,8 +3,11 @@
 namespace rkphplib\tok;
 
 require_once __DIR__.'/TokPlugin.iface.php';
+require_once __DIR__.'/../XCrypt.class.php';
 
 use rkphplib\Exception;
+
+use rkphplib\XCrypt;
 
 
 /**
@@ -36,6 +39,7 @@ public function getPlugins(Tokenizer $tok) : array {
 
 	$plugin['input:checkbox'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
 	$plugin['input:radio'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
+	$plugin['input:xcrypt'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['input'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::KV_BODY;
 
 	$plugin['user_agent'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST;
@@ -165,6 +169,27 @@ public function tok_input(array $type_name, array $attrib) : string {
   }
 
   return $html.'/>';
+}
+
+
+/**
+ * Return hidden input with xcrypt encoded data.
+ *
+ * @global SETTINGS_XCRYPT_SECRET SETTINGS_XCRYPT_RKEY
+ *
+ * @code settings.php …
+ * define('SETTINGS_XCRYPT_SECRET', 'abc123');
+ * define('SETTINGS_XCRYPT_RKEY', 'xcr'); 
+ * @EOL
+ *
+ * @tok  {input:xcrypt}login=joe|#|password=xyz{:input} == …
+ *   <input type="hidden" name="xcr" value="Cw0GTUpKGx4PXlVaDx4TUEFAFg0RVU4OUw--" />
+ * @EOL
+ */
+public function tok_input_xcrypt(array $p) : string {
+	$xcr = new XCrypt(SETTINGS_XCRYPT_SECRET);
+	return '<input type="hidden" name="'.SETTINGS_XCRYPT_RKEY.'" value="'.
+		$xcr->encodeArray($p, true).'"/>';
 }
 
 
