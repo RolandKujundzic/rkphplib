@@ -100,6 +100,19 @@ public function __construct(int $flag = 16) {
 
 
 /**
+ * Call before setText to remove var and postprocess settings.
+ */
+public function reset() {
+	$this->last = [];
+	$this->vmap = [];
+	$this->_tok = [];
+	$this->_endpos = [];
+	$this->_callstack = [];
+	$this->_postprocess = [];
+}
+
+
+/**
  * Load Profiler.
  */
 public function useProfiler() {
