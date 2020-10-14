@@ -271,8 +271,10 @@ public static function toMap(string $xml, bool $keep_root = false) : array {
  *
  *  XML::fromMap(['A', 'B', 'C']) =  <root><vector>A</vector><vector>B</vector><vector>C</vector></root> 
  *  XML::fromMap(['names' => ['A', 'B', 'C']]) = <root><names>A</names>...</root>
+ *
+ * @param string|array $data
  */
-public static function fromMap(array $data, string $root = 'root') : string {
+public static function fromMap($data, string $root = 'root') : string {
 	/**
 	 *  Convert array to DOMElement (recursive).
 	 * @param mixed $data array|string
