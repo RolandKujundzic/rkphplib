@@ -14,6 +14,6 @@ $xml_str = <<<XML
 	</s>
 </doc>
 XML;
-print "Simple example:\n$xml_str\n";
-print "toMap: ".print_r(\rkphplib\XML::toMap($xml_str), true)."\n";
+
+print_r(\rkphplib\XML::toMap($xml_str));
 

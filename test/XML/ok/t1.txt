@@ -1,17 +1,4 @@
-Simple example:
-<doc
-	language="en">
-	<t>t1</t>
-	<br/>
-	<t>t2</t>
-	<br/>
-	<s>
-		<sa>sa</sa>
-		<sb x="xx" t="true" />
-		sval
-	</s>
-</doc>
-toMap: Array
+Array
 (
     [@] => Array
         (
@@ -39,4 +26,3 @@ toMap: Array
         )
 
 )
-

@@ -15,7 +15,6 @@ $xml_str = <<<XML
 </doc>
 XML;
 
-print $xml_str."\n";
 $xml = new \rkphplib\XML($xml_str);
 print_r($xml->get('doc'));
 

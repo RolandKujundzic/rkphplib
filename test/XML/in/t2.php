@@ -11,6 +11,6 @@ $xml_str = <<<XML
 	</person>
 </people>
 XML;
-print "\nNamespace example:\n$xml_str\n";
-print "toMap (keep root): ".print_r(\rkphplib\XML::toMap($xml_str, true), true)."\n";
+
+print_r(\rkphplib\XML::toMap($xml_str, true));
 

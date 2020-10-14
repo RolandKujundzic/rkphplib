@@ -1,15 +1,4 @@
-
-Namespace example:
-<people xmlns:xsi="a" xsi:schemaLocation="http://..." xmlns:l="b" xmlns="c"> 
-	<person>
-		<name>Marcus</name>
-		<language>
-			<l:primary>XML</l:primary>
-			<xsi:secondary>HTML</xsi:secondary>
-		</language>
-	</person>
-</people>
-toMap (keep root): Array
+Array
 (
     [people] => Array
         (
@@ -27,4 +16,3 @@ toMap (keep root): Array
         )
 
 )
-
