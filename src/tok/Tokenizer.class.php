@@ -226,7 +226,7 @@ public function setVar(string $name, $value, int $flags = 0) : void {
 
 		if (count($path) == 0) {
 			if (isset($map[$key]) && ($flags & self::VAR_MUST_NOT_EXIST)) {
-				throw new Exception('setVar('.$name.', ...) ({var:='.$name.'}) already exists', $value);
+				throw new Exception('setVar('.$name.', ...) ({var:='.$name.'}) already exists', print_r($value, true));
 			}
 
 			if ($flags & self::VAR_APPEND) {
