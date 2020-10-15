@@ -2039,6 +2039,7 @@ public function tok_tf(array $p, string $arg) : void {
 	$ta = trim($arg);
 	$do = '';
 
+	\rkphplib\lib\log_debug([ "TBase.tok_tf:2042> ta=<1> p: <2>", $ta, $p ]);
 	if (count($p) == 1) {
 		if ($p[0] === '') {
 			$tf = !empty($ta);
@@ -2081,6 +2082,7 @@ public function tok_tf(array $p, string $arg) : void {
 		$ap = array_merge($p, split_str(HASH_DELIMITER, $arg));
 	}
 
+	\rkphplib\lib\log_debug([ "TBase.tok_tf:2084> do=<1> tf=<2> ap: <3>", $do, $tf, $ap ]);
 	if (empty($do)) {
 		$this->_tok->setCallStack('tf', $tf);
 		return;
@@ -2159,6 +2161,7 @@ public function tok_tf(array $p, string $arg) : void {
 			$set = split_str(',', $ap[1]);
 			$tf = in_array($ap[0], $set);
 		}
+		\rkphplib\lib\log_debug([ "TBase.tok_tf:2163> tf=<1> set: <2>", $tf, $set ]);
 	}
 	else if ($do == 'and' || $do == 'or') {
 		$apn = count($ap);
