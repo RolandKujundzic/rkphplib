@@ -23,28 +23,34 @@ function uuid($type = '') {
 		$data = file_get_contents('/dev/urandom', NULL, NULL, 0, 16);
 	}
 
-	if (substr($type, 0, 1) == 'o') {
-		list($usec, $sec) = explode(' ', microtime());
-		$data = dechex($sec).dechex(substr($usec, 2)).$data;
-		$type = substr($type, 1);
-	}
-
 	if ($type == 'rfc4122') {
 		$data[6] = chr(ord($data[6]) & 0x0f | 0x40);
 		$data[8] = chr(ord($data[8]) & 0x3f | 0x80);
-		$res = vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+		$data = bin2hex($data);
 	}
-	else if ($type == '16') {
-		$res = substr(bin2hex($data), 0, 16);
-	}
-	else if ($type == '20') {
-		$res = substr(bin2hex($data), 0, 20);
-	}
-	else if ($type == '32') {
-		$res = substr(bin2hex($data), 0, 32);
+	else if (substr($type, 0, 1) == 'o') {
+		list($usec, $sec) = explode(' ', microtime());
+		$data = dechex($sec).dechex(substr($usec, 2)).bin2hex($data);
+		$type = substr($type, 1);
 	}
 	else {
-		$res = vsprintf('%s-%s-%s-%s', str_split(bin2hex($data), 4));
+		$data = bin2hex($data);
+	}
+
+	if ($type == 'rfc4122') {
+		$res = vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split($data, 4));
+	}
+	else if ($type == '16') {
+		$res = substr($data, 0, 16);
+	}
+	else if ($type == '20') {
+		$res = substr($data, 0, 20);
+	}
+	else if ($type == '32') {
+		$res = substr($data, 0, 32);
+	}
+	else {
+		$res = vsprintf('%s-%s-%s-%s', str_split($data, 4));
 	}
 
 	return $res;
