@@ -900,7 +900,7 @@ private function execJSON(string $file, int $tnum) : void {
 			$label = $call.' '.($i + 1);
 		}
 
-		if (substr($ok, 0, 3) == '<? ') {
+		if (substr("$ok", 0, 3) == '<? ') {
 			eval('$cmp = '.substr($ok, 3).';');
 		}
 		else {
