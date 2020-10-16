@@ -842,7 +842,8 @@ private function call(string $call, array $args) {
  *   "rkphplib\\Class::method",
  *   [ "parameter 1", "parameter 2", "expected result" ],
  *   [ [ 1, 2 ], 17.3, "EXCEPTION" ],
- *   [ "NOW()", "<?= time()" ]
+ *   [ "NOW()", "<?= time()" ],
+ *   [ "rand(16)", "<? strlen($out) == 16" ]
  * ]
  * @EOF
  * 
@@ -899,7 +900,13 @@ private function execJSON(string $file, int $tnum) : void {
 			$label = $call.' '.($i + 1);
 		}
 
-		$cmp = $this->cmp($out, $ok);
+		if (substr($ok, 0, 3) == '<? ') {
+			eval('$cmp = '.substr($ok, 3).';');
+		}
+		else {
+			$cmp = $this->cmp($out, $ok);
+		}
+
 		$this->logRun($label, $cmp, $tnum);
 
 		if (!$cmp) {
