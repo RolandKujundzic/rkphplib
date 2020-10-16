@@ -28,10 +28,10 @@ function uuid($type = '') {
 		$res = vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
 	}
 	else if ($type == '16') {
-		$res = vsprintf('%s%s%s%s', str_split(bin2hex($data), 4));
+		$res = substr(bin2hex($data), 0, 16);
 	}
 	else if ($type == '32') {
-		$res = vsprintf('%s%s%s%s%s%s%s%s', str_split(bin2hex($data), 4));
+		$res = bin2hex($data);
 	}
 	else {
 		$res = vsprintf('%s-%s-%s-%s', str_split(bin2hex($data), 4));
