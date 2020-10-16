@@ -1,0 +1,9 @@
+[
+	"rkphplib\\lib\\uuid64",
+	[ 16, 0, "<? strlen($out) == 16" ],
+	[ 20, 0, "<? strlen($out) == 20" ],
+	[ 36, 0, "<? strlen($out) == 36" ],
+	[ 16, 1, "<? strlen($out) == 16" ],
+	[ 24, 1, "<? strlen($out) == 24" ],
+	[ 32, 1, "<? strlen($out) == 32" ]
+]
