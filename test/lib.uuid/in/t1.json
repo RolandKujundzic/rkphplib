@@ -1,0 +1,7 @@
+[
+	"rkphplib\\lib\\uuid",
+	[ "", "<? strlen($out) == 19" ],
+	[ "16", "<? strlen($out) == 16" ],
+	[ "32", "<? strlen($out) == 32" ],
+	[ "rfc4122", "<? strlen($out) == 36" ]
+]
