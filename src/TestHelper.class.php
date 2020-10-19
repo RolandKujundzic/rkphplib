@@ -71,6 +71,7 @@ public function __construct() {
 	$this->_tc['t_num'] = 0;
 	$this->_tc['t_pass'] = 0;
 	$this->_tc['t_fail'] = 0;
+	$this->_tc['t_subskip'] = 0;
 	$this->_tc['t_vim'] = [];
 
 	$this->_tc['path'] = '';
@@ -121,6 +122,7 @@ public function reset() {
 	$this->_tc['num'] = 0;
 	$this->_tc['ok'] = 0;
 	$this->_tc['error'] = 0;
+	$this->_tc['skip'] = 0;
 	$this->_tc['vim'] = [];
 }
 
@@ -334,8 +336,12 @@ public function result() : void {
 		$overall = "\x1b[0;31m{$this->_tc['t_ok']} OK, {$this->_tc['t_error']} ERROR - FAIL\x1b[0m";
 	}
 
+	$skip = $this->_tc['t_subskip'] ? 
+		$this->_tc['t_skip'].'/'.$this->_tc['t_subskip'].' skipped' : 
+		$this->_tc['t_skip'].' skipped';
+
 	$this->log([ "DONE: {$this->_tc['t_num']} Tests", $overall ], 15);
-	$this->log($this->_tc['t_file'].' files '.$this->_tc['t_todo'].' missing '.$this->_tc['t_skip'].' skipped');
+	$this->log($this->_tc['t_file'].' files '.$this->_tc['t_todo'].' missing '.$skip);
 
 	if ($this->_tc['t_error'] > 0) {
 		$this->log(join("\n", $this->_tc['t_vim']), 2);
@@ -764,7 +770,7 @@ public function run(int $first, int $last) : void {
 			throw new Exception("no such file $prefix.[php|txt|tok]");
 		}
 
-		$cmp = $this->cmp(File::load("ok/{$base}.txt"), $out);
+		$cmp = $this->cmp($out, File::load("ok/{$base}.txt"));
 		$this->logRun($file, $cmp, $tnum);
 
 		if (!$cmp) {
@@ -798,13 +804,16 @@ private function logRun(string $label, bool $ok, int $tnum) : void {
  *
  */
 private function logResult() {
+	$skip = $this->_tc['skip'] ? $this->_tc['skip'].' SKIPPED ' : '';
+	$this->_tc['t_subskip'] += $this->_tc['skip'];
+
 	if ($this->_tc['error'] == 0) {
-		$this->log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - 0 ERROR",  "\x1b[0;32mPASS\x1b[0m" ], 5);
+		$this->log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - 0 ERROR",  "$skip\x1b[0;32mPASS\x1b[0m" ], 5);
 		$this->_tc['t_ok'] += $this->_tc['ok'];
 		$this->_tc['t_pass']++;
 	}
 	else {
-		$this->log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - {$this->_tc['error']} ERROR",  "\x1b[0;31mFAIL\x1b[0m" ], 5);
+		$this->log([ "RESULT: {$this->_tc['ok']}/{$this->_tc['num']} OK - {$this->_tc['error']} ERROR",  "$skip\x1b[0;31mFAIL\x1b[0m" ], 5);
 		$this->log("VIEW ERROR: ".join("\n", $this->_tc['vim']));
 		$this->_tc['t_error'] += $this->_tc['error'];
 		$this->_tc['t_fail']++;
@@ -920,6 +929,11 @@ private function execJSON(string $file, int $tnum) : void {
  * Return comparion of $out and $ok.
  */
 private function cmp($out, $ok) : bool {
+	if (is_string($out) && $out == 'SKIP_TEST') {
+		$this->_tc['skip']++;
+		return true;
+	}
+
 	$cmp = $ok === $out;
 
 	if (!$cmp && is_numeric($ok) && is_numeric($out)) {
