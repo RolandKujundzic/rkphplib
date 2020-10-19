@@ -1,9 +1,20 @@
 toMap: Array
 (
-    [person] => John Peter Smith
+    [person] => Array
+        (
+            [@] => Array
+                (
+                    [firstname] => John
+                    [middlename] => Peter
+                    [lastname] => Smith
+                )
+
+            [=] => John Peter Smith
+        )
+
     [attrib-only] => Array
         (
-            [@attributes] => Array
+            [@] => Array
                 (
                     [k1] => v1
                     [k2] => v2
@@ -17,10 +28,21 @@ toMap(keep_root): Array
 (
     [doc] => Array
         (
-            [person] => John Peter Smith
+            [person] => Array
+                (
+                    [@] => Array
+                        (
+                            [firstname] => John
+                            [middlename] => Peter
+                            [lastname] => Smith
+                        )
+
+                    [=] => John Peter Smith
+                )
+
             [attrib-only] => Array
                 (
-                    [@attributes] => Array
+                    [@] => Array
                         (
                             [k1] => v1
                             [k2] => v2
@@ -52,38 +74,6 @@ toArray: Array
                 (
                     [k1] => v1
                     [k2] => v2
-                )
-
-            [=] => 
-        )
-
-)
-
-string2array(keep_root): Array
-(
-    [doc] => Array
-        (
-            [person] => Array
-                (
-                    [@] => Array
-                        (
-                            [firstname] => John
-                            [middlename] => Peter
-                            [lastname] => Smith
-                        )
-
-                    [=] => John Peter Smith
-                )
-
-            [attrib-only] => Array
-                (
-                    [@] => Array
-                        (
-                            [k1] => v1
-                            [k2] => v2
-                        )
-
-                    [=] => 
                 )
 
         )

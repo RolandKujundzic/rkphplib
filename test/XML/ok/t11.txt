@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<json2xml a="1">
+  <names.0 n="2">a</names.0>
+  <names.1>b</names.1>
+  <names.2>c</names.2>
+  <id.0 x="x">a</id.0>
+  <id.1>b</id.1>
+  <id.2>c</id.2>
+</json2xml>
+
+Array
+(
+    [@] => Array
+        (
+            [a] => 1
+        )
+
+    [names.0] => Array
+        (
+            [@] => Array
+                (
+                    [n] => 2
+                )
+
+            [=] => a
+        )
+
+    [names.1] => b
+    [names.2] => c
+    [id.0] => Array
+        (
+            [@] => Array
+                (
+                    [x] => x
+                )
+
+            [=] => a
+        )
+
+    [id.1] => b
+    [id.2] => c
+)
+<?xml version="1.0" encoding="UTF-8"?>
+<json2xml a="1">
+  <names.0 n="2">a</names.0>
+  <names.1>b</names.1>
+  <names.2>c</names.2>
+  <id.0 x="x">a</id.0>
+  <id.1>b</id.1>
+  <id.2>c</id.2>
+</json2xml>

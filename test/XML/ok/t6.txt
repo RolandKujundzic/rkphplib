@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>Hallo</root>
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <Hallo/>
+  <Welt/>
+</root>
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <Liste>Roland</Liste>
+  <Liste>Peter</Liste>
+  <Liste>Mario</Liste>
+  <Liste2>A</Liste2>
+  <Liste2>B</Liste2>
+  <Liste2>C</Liste2>
+</root>
