@@ -14,7 +14,6 @@ $xml_str = <<<XML
 XML;
 
 $xml = new \rkphplib\XML($xml_str);
-print 'get(/doc): '.print_r($xml->get('/doc'), true);
 print $xml->get('//person').$xml->get('//person/@no-such-attribute')."\n";
 print $xml->get('//person/@firstname').' '.$xml->get('/doc/person/@middlename').' '.$xml->get('/doc/person/@lastname')."\n";
 print $xml->get('//age').' years old, born '.$xml->get('/doc/age/@data-born')."\n";
@@ -27,14 +26,4 @@ try {
 catch (\Exception $e) {
 	print "ignore missing /doc/required\n";
 }
-
-
-$xml_str  = '<?xml version="1.0" encoding="utf-8"?>';
-$xml_str .= <<<XML
-<doc
-	language="en">
-	<title>Keep doc</title>
-</doc>
-XML;
-print "toArray(fromMap): ".print_r(\rkphplib\XML::string2array($xml_str, true), true)."\n";
 

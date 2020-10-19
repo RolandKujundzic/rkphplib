@@ -22,7 +22,6 @@ $xml_str .= <<<END
 </rss>
 END;
 
-print \rkphplib\XML::fromMap(\rkphplib\XML::toMap($xml_str));
 $xml = new \rkphplib\XML($xml_str);
 print "\n\n".$xml;
 

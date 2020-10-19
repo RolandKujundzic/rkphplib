@@ -19,13 +19,10 @@ print $xml->get('doc.person@firstname').' '.$xml->get('doc.person@middlename').'
 print $xml->get('doc.age').' years old, born '.$xml->get('doc.age@data-born')."\n";
 print $xml->get('doc.address.street').' in '.$xml->get('doc.address.city')."\n";
 
-print_r($xml->get('doc'));
-
 try {
 	print $xml->get('doc.required', true);
 }
 catch (\Exception $e) {
 	print "ignore missing doc.required\n";
 }
-
 

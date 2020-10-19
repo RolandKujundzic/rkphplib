@@ -1,17 +1,8 @@
 <?php
 
-$src = dirname(dirname(__DIR__)).'/src/';
-require_once $src.'XML.class.php';
+require_once '../settings.php';
+require_once PATH_RKPHPLIB.'XML.class.php';
 
 global $th;
-if (!isset($th)) {
-	require_once $src.'TestHelper.class.php';
-	$th = new \rkphplib\TestHelper();
-}
 
-$n = 5;
-
-for ($i = 1; $i <= $n; $i++) {
-	$th->execPHP($i);
-}
-
+$th->run(1, 13);

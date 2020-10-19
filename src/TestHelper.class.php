@@ -982,7 +982,7 @@ private function execPHP(string $base) : string {
 		ob_end_clean();
 	}
 	catch (\Exception $e) {
-		throw new Exception(getcwd()."\n".$e->getMessage());
+		$out = 'EXCEPTION';
 	}
 
 	$save_as = "out/$base.txt";

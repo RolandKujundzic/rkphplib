@@ -1,6 +1,5 @@
 <?php
 
-
 // for some reason global $xml is null ???? - use $get instead
 // function get(string $path) : void {
 //	 global $xml;
@@ -35,7 +34,6 @@ $xml_str = <<<XML
 </doc>
 XML;
 
-print "$xml_str\n";
 $xml->load($xml_str);
 
 $get('doc.person');

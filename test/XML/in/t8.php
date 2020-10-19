@@ -1,8 +1,4 @@
-<?php declare(strict_types=1);
-
-require_once(dirname(dirname(__DIR__)).'/src/XML.class.php');
-  
-use rkphplib\XML;
+<?php
 
 $xml = <<< XML
 <?xml version='1.0' standalone='yes'?>
@@ -14,4 +10,3 @@ $xml = <<< XML
 XML;
 
 $xml = new \rkphplib\XML($xml);
-

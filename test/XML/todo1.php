@@ -12,5 +12,6 @@ $xml = <<<XML
 </a>
 XML;
 
-print_r(\rkphplib\XML::string2array($xml, true));
+$xml = new \rkphplib\XML($xml_str);
+print $xml;
 
