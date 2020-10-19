@@ -11,3 +11,4 @@ define('SETTINGS_SMTP_PORT', '587');
 define('SETTINGS_SMTP_USER', '');
 define('SETTINGS_SMTP_PASS', '');
 
+define('TEST_MAIL_TO', '');
