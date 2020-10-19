@@ -2,26 +2,30 @@
 
 namespace rkphplib;
 
-require_once dirname(__DIR__).'/other/PHPMailer/Exception.php';
-require_once dirname(__DIR__).'/other/PHPMailer/PHPMailer.php';
+if (!defined('PATH_PHPMAILER')) {
+	define('PATH_PHPMAILER', dirname(__DIR__).'/other/PHPMailer/');
+}
+
+// @define SETTINGS_NO_SMTP 0 (force local mailer if 1)
+defined('SETTINGS_NO_SMTP') || define('SETTINGS_NO_SMTP', 0);
 
 require_once __DIR__.'/Dir.class.php';
 require_once __DIR__.'/lib/resolvPath.php';
 
+require_once PATH_PHPMAILER.'Exception.php';
+require_once PATH_PHPMAILER.'PHPMailer.php';
+require_once PATH_PHPMAILER.'SMTP.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 
 use function rkphplib\lib\resolvPath;
 
 
-// @define SETTINGS_NO_SMTP 0 (force local mailer if 1)
-defined('SETTINGS_NO_SMTP') || define('SETTINGS_NO_SMTP', 0);
-
-
 /**
  * Mailer.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
+ * @copyright 2016-2020 Roland Kujundzic
  */
 class Mailer {
 
@@ -41,13 +45,48 @@ private $_mailer = null;
 private $type_email = [ 'recipient' => [] ];
 
 
-
 /**
  * Use PHPMailer with exceptions in utf-8 mode.
  */
 public function __construct() {
   $this->_mailer = new PHPMailer(true);
 	$this->_mailer->CharSet = 'utf-8';
+	$this->_mailer->Timeout = 10;
+	$this->setDefault();
+}
+
+
+/**
+ * Use global SETTINGS_* constants:
+ * SETTINGS_SMTP_[HOST|POST|USER|PASS] (if user+pass always use tls)
+ * SETTINGS_MAIL_[FROM|REPLY_TO]
+ */
+private function setDefault() {
+	if (defined('SETTINGS_SMTP_HOST')) {
+		$smtp = SETTINGS_SMTP_HOST;
+		if (defined('SETTINGS_SMTP_USER') && defined('SETTINGS_SMTP_PASS')) {
+			$smtp = [
+				'host' => SETTINGS_SMTP_HOST,
+				'user' => SETTINGS_SMTP_USER,
+				'pass' => SETTINGS_SMTP_PASS,
+				'auto_tls' => true
+			];
+
+			if (defined('SETTINGS_SMTP_PORT')) {
+				$smtp['port'] = SETTINGS_SMTP_PORT;
+			}
+		}
+
+		$this->useSMTP($smtp);
+	}
+
+	if (defined('SETTINGS_MAIL_FROM')) {
+		$this->setFrom(SETTINGS_MAIL_FROM);
+	}
+
+	if (defined('SETTINGS_MAIL_REPLY_TO')) {
+		$this->setReplyTo(SETTINGS_MAIL_REPLY_TO);
+	}
 }
 
 
@@ -166,6 +205,89 @@ public function setHeader(string $key, string $value) : void {
 
 
 /**
+ * Send Test mail
+ */
+public function testMail(string $to, bool $verbose = false) : void {
+	print "Send Testmail\n";
+
+	if ($verbose) {
+		$this->_mailer->SMTPDebug = SMTP::DEBUG_SERVER;
+	}
+
+	$now = date('d.m.Y H:i:s', time());
+	$this->setTo($to);
+	$this->setSubject('Mailer Test '.$now);
+	$this->setHtmlBody('<h3>Mailer Test</h3><p>'.$now.'</p>');
+	$this->setTxtBody('Mailer Test '.$now);
+
+	if (defined('SETTINGS_SMTP_USER') && defined('SETTINGS_SMTP_PASS') &&
+			!empty(SETTINGS_SMTP_USER) && !empty(SETTINGS_SMTP_PASS)) {
+		$this->send();
+		print "Message has been send\n";
+	}
+	else {
+		print "Skip send message - define SETTINGS_SMTP_USER|PASS\n";
+	}
+}
+
+
+/**
+ * Test SMTP Server defined via SETTINGS_SMTP_*.
+ */
+public static function testSMTP(bool $verbose = false) : void {
+	$smtp = new \PHPMailer\PHPMailer\SMTP();
+	$smtp->Timeout = 5;
+
+	if ($verbose) {
+		$smtp->do_debug = \PHPMailer\PHPMailer\SMTP::DEBUG_CONNECTION;
+	}
+
+	print "Connect\n";
+	if (!$smtp->connect(SETTINGS_SMTP_HOST, SETTINGS_SMTP_PORT)) {
+		throw new Exception('Connect failed');
+	}
+
+	print "hello\n";
+	if (!$smtp->hello(gethostname())) {
+		throw new Exception('EHLO failed: '.$smtp->getError()['error']);
+	}
+
+	$e = $smtp->getServerExtList();
+	if (is_array($e) && array_key_exists('STARTTLS', $e)) {
+		print "TLS Login\n";
+		$tlsok = $smtp->startTLS();
+		if (!$tlsok) {
+			throw new Exception('Failed to start encryption: ' . $smtp->getError()['error']);
+		}
+
+		print "hello\n";
+		if (!$smtp->hello(gethostname())) {
+			throw new Exception('EHLO (2) failed: ' . $smtp->getError()['error']);
+		}
+
+		$e = $smtp->getServerExtList();
+	}
+
+	if (defined('SETTINGS_SMTP_USER') && defined('SETTINGS_SMTP_PASS') &&
+			!empty(SETTINGS_SMTP_USER) && !empty(SETTINGS_SMTP_PASS)) {
+		print "Authenticate\n";
+		if ($smtp->authenticate(SETTINGS_SMTP_USER, SETTINGS_SMTP_PASS)) {
+			print "Connected ok!\n";
+		}
+		else {
+			throw new Exception('Authentication failed: ' . $smtp->getError()['error']);
+		}
+	}
+	else {
+		print "Skip Authentication - define SETTINGS_SMTP_USER|PASS\n";
+	}
+
+	print "quit\n";
+	$smtp->quit();
+}
+
+
+/**
  * Send mail via SMTP. Convert string to [ 'host' => parameter ]. 
  * Parameter is string (=host) or hash. SMTP Parameter are:
  * 
@@ -180,15 +302,21 @@ public function setHeader(string $key, string $value) : void {
  * hostname=
  */
 public function useSMTP($smtp) : void {
-	require_once dirname(__DIR__).'/other/PHPMailer/SMTP.php';
-
 	if (is_string($smtp) && !empty($smtp)) {
 		$smtp = [ 'host' => $smtp ];
 	}
 
-  if (defined('SETTINGS_NO_SMTP') || count($smtp) == 0 || empty($smtp['host'])) {
+  if (count($smtp) == 0 || empty($smtp['host'])) {
     return;
   }
+
+	if (SETTINGS_NO_SMTP) {
+		if (defined('SETTINGS_SMTP_USER') && SETTINGS_SMTP_USER) {
+			\rkphplib\lib\warn('SETTINGS_NO_SMTP and SETTINGS_SMTP_USER are both set');
+		}
+
+		return;
+	}
 
 	if (getHostByName(getHostName())== getHostByName($smtp['host'])) {
 		// smtp.host = localhost: use mail method
@@ -224,7 +352,7 @@ public function useSMTP($smtp) : void {
 	  $this->_mailer->SMTPKeepAlive = $smtp['persist'];
 	}
 
-	if (!empty($smpt['port'])) {
+	if (!empty($smtp['port'])) {
 		$this->_mailer->Port = $smtp['port'];
 	}
 
