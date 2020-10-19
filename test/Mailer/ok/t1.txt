@@ -1,0 +1,7 @@
+Connect
+hello
+TLS Login
+hello
+Authenticate
+Connected ok!
+quit
