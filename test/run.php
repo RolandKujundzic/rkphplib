@@ -20,7 +20,6 @@ $tests = $th->getTests('../src', [
 	'DatabaseSessionHandler',
 	'FileSessionHandler',
 	'Session',
-	'XML',
 	'Dir',
 	'MysqlDatabase',
 	'Database',

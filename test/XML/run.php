@@ -5,4 +5,5 @@ require_once PATH_RKPHPLIB.'XML.class.php';
 
 global $th;
 
-$th->run(1, 13);
+// fix: todo1.php (in/t13.php)
+$th->run(1, 12);
