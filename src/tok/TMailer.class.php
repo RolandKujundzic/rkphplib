@@ -13,10 +13,10 @@ use rkphplib\Mailer;
 
 
 /**
- * Mailer plugin. Wrapper for Mailer.
+ * Mailer plugin.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- *
+ * @copyright 2018-2020 Roland Kujundzic 
  */
 class TMailer implements TokPlugin {
 use TokHelper;
@@ -48,7 +48,8 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
- * Initialize Mailer. Example:
+ * Initialize Mailer. Use smtp=SETTINGS_SMTP_ to define smtp.[host|user|pass|...] 
+ * with SETTINGS_SMTP_[HOST|USER|PASS|...].
  *
  * @tok 
  * {mail:init}
@@ -65,6 +66,7 @@ public function getPlugins(Tokenizer $tok) : array {
  * reply_to= |#|
  * reply_to.name= |#|
  * basedir= |#|
+ * smtp= SETTINGS_SMTP_|#|
  * smtp.host= mail.smtp-server.tld|#|
  * smtp.port= |#|
  * smtp.secure= |#|
@@ -87,6 +89,20 @@ public function getPlugins(Tokenizer $tok) : array {
  */
 public function tok_mail_init($conf) {
 	$this->conf = $conf;
+
+	if (!empty($this->conf['smtp'])) {
+		$prefix = $this->conf['smtp'];
+		unset($this->conf['smtp']);
+ 		$skey = [ 'host', 'user',  'pass', 'hostname', 'port', 
+			'secure', 'auto_tls', 'auth', 'persist' ];
+
+		foreach ($skey as $key) {
+			$sconst = $prefix.strtoupper($key);
+			if (defined($sconst)) {
+				$this->$conf['smtp.'.$key] = constant($sconst);
+			}
+		}
+	}
 
 	$this->mail = new Mailer();
 	
@@ -127,17 +143,6 @@ public function tok_mail_init($conf) {
 	if (!empty($conf['smtp.host'])) {
 		$this->mail->useSMTP($conf['smtp.host']);
 	}
-
-	/*
-	$smtp = $this->getMapKeys('smtp', $conf);
-	print "<pre>SMTP: ".print_r($smtp, true)."<br>\nconf: ".print_r($conf, true)."</pre>"; exit(1);
-	if (is_array($smtp) && count($smtp) > 0) {
-		$this->mail->useSMTP($smtp);
-	}
-	else {
-		throw new Exception('you must use SMTP [mail:init]smtp.host=...');
-	}
-	*/
 
 	$header = $this->getMapKeys('header', $conf);
 	if (is_array($header)) {
