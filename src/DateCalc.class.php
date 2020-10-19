@@ -9,10 +9,9 @@ use rkphplib\Exception;
 
 /**
  * Date calculation helper class. All methods are static.
- * Define SETTINGS_TIMEZONE = CET and SETTINGS_LANGUAGE = de if unset.
- * Set date_default_timezone_set(SETTINGS_TIMEZONE) if unset.
  *
  * @author Roland Kujundzic <roland@inkoeln.com>
+ * @copyright 2016-2020 Roland Kujundzic
  */
 class DateCalc {
 
