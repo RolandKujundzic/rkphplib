@@ -2,14 +2,12 @@
 
 namespace rkphplib\tok;
 
-$parent_dir = dirname(__DIR__);
 require_once __DIR__.'/TokPlugin.iface.php';
 require_once __DIR__.'/TokHelper.trait.php';
-require_once $parent_dir.'/Mailer.class.php';
+require_once __DIR__.'/../Mailer.class.php';
 
 use rkphplib\Exception;
 use rkphplib\Mailer;
-
 
 
 /**
@@ -48,10 +46,10 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
- * Initialize Mailer. Use smtp=SETTINGS_SMTP_ to define smtp.[host|user|pass|...] 
- * with SETTINGS_SMTP_[HOST|USER|PASS|...].
+ * Initialize Mailer.
+ * Use constants SETTINGS_SMTP_* and SETTINGS_MAIL_*.
  *
- * @tok 
+ * @tok … 
  * {mail:init}
  * subject= Subject|#| 
  * from= sender@domain.tld|#|
@@ -66,7 +64,6 @@ public function getPlugins(Tokenizer $tok) : array {
  * reply_to= |#|
  * reply_to.name= |#|
  * basedir= |#|
- * smtp= SETTINGS_SMTP_|#|
  * smtp.host= mail.smtp-server.tld|#|
  * smtp.port= |#|
  * smtp.secure= |#|
@@ -81,28 +78,12 @@ public function getPlugins(Tokenizer $tok) : array {
  * save= 0|#|
  * save_dir= |#|
  * {:mail}
- * @:
+ * @EOL
  *
- * @see Mailer.set[From|Subject|To|Cc|Bcc|ReplyTo], Mailer.useSMTP and Mailer.setHeader
- * @param map $conf
- * @return ''
+ * @see Mailer
  */
-public function tok_mail_init($conf) {
+public function tok_mail_init(array $conf) : void {
 	$this->conf = $conf;
-
-	if (!empty($this->conf['smtp'])) {
-		$prefix = $this->conf['smtp'];
-		unset($this->conf['smtp']);
- 		$skey = [ 'host', 'user',  'pass', 'hostname', 'port', 
-			'secure', 'auto_tls', 'auth', 'persist' ];
-
-		foreach ($skey as $key) {
-			$sconst = $prefix.strtoupper($key);
-			if (defined($sconst)) {
-				$this->$conf['smtp.'.$key] = constant($sconst);
-			}
-		}
-	}
 
 	$this->mail = new Mailer();
 	
@@ -140,15 +121,40 @@ public function tok_mail_init($conf) {
 		}
 	}
 
-	if (!empty($conf['smtp.host'])) {
-		$this->mail->useSMTP($conf['smtp.host']);
-	}
+	$this->setSMTP();
 
 	$header = $this->getMapKeys('header', $conf);
 	if (is_array($header)) {
 		foreach ($header as $key => $value) {
 			$this->mail->setHeader($key, $value);
 		}
+	}
+}
+
+
+/**
+ * Configure smtp if this.conf[smtp.*] is set.
+ */
+private function setSMTP() : void {
+	if (empty($this->conf['smtp.host'])) {
+		return;
+	}
+
+	$smtp = [];
+	$keys = [ 'host', 'port', 'user', 'pass', 'auto_tls',
+		'auth', 'secure', 'persist', 'hostname' ];
+
+	foreach ($keys as $key) {
+		if (isset($this->conf['smtp.'.$key])) {
+			$smtp[$key] = $this->conf['smtp.'.$key];
+		}
+	}
+
+	if (count($smtp) == 1) {
+		$this->mail->useSMTP($this->conf['smtp.host']);
+	}
+	else {
+		$this->mail->useSMTP($smtp);
 	}
 }
 
