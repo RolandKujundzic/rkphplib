@@ -57,6 +57,8 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['login_account'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_check'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_auth'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
+	$plugin['login_auth:basic'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
+	$plugin['login_auth:digest'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['login_access'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['login_update'] = TokPlugin::KV_BODY;
 	$plugin['login_clear'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
@@ -66,17 +68,105 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
- * Check login access. 
+ * Send basic auth request if not authenticated.
+ *
+ * @tok {login_account:}login=admin|#|password=secret{:login_account}
+ * @tok {login_auth:basic} …
+ * realm= Administration|#|
+ * message= Bitte geben Sie Ihre Zugangsdaten ein
+ * {:login_basic_auth}
+ * @EOL
+ */
+public function tok_login_auth_basic(array $p) : void {
+	$default = [
+		'realm' => 'Administration',
+		'message' => 'Bitte geben Sie Ihre Zugangsdaten ein'
+	];
+
+	$conf = array_merge($default, $p);
+
+	if (is_null($this->sess)) {
+		throw new Exception('call login_check: first');
+	}
+
+	$ok = empty($_SERVER['PHP_AUTH_USER']) ? -2 : -1;
+	for ($i = 0; $ok == -1 && $i < count($this->account); $i++) {
+		if ($_SERVER['PHP_AUTH_USER'] == $this->account[$i]['login'] &&
+				$_SERVER['PHP_AUTH_PW'] == $this->account[$i]['password']) {
+			$ok = $i;
+		}
+	}
+
+	if ($ok < 0) {
+		header('WWW-Authenticate: Basic realm="'.$conf['realm'].'"');
+		header('HTTP/1.0 401 Unauthorized');
+		print $conf['message'];
+		exit;
+	}
+
+	$this->sess->setHash($this->account[$ok]);
+}
+
+
+/**
+ * @tok …
+ * {login_auth:digest}
+ * realm=Administration|#|
+ * abort=Authentifizierung abgebrochen|#|
+ * invalid=Falsche Zugangsdaten
+ * {:login_auth}
+ * @EOL
+ */
+public function tok_login_auth_digest(array $p) : void {
+	$default = [
+		'realm' => 'Administration',
+		'abort' => 'Authentifizierung abgebrochen',
+		'invalid' => 'Falsche Zugangsdaten'
+	];
+
+	$conf = array_merge($default, $p);
+
+	if (is_null($this->sess)) {
+		throw new Exception('call login_check: first');
+	}
+
+	if (empty($_SERVER['PHP_AUTH_DIGEST'])) {
+		header('WWW-Authenticate: Digest realm="'.$conf['realm'].'",qop="auth",nonce="'.
+			uniqid().'",opaque="'.md5($conf['realm']).'"');
+		header('HTTP/1.1 401 Unauthorized');
+		die($conf['message.abort']);
+	}
+
+	$auth = http_digest_parse($_SERVER['PHP_AUTH_DIGEST']);
+	$ok = -1;
+
+	for ($i = 0; is_array($auth) && $ok == -1 && $i < count($this->account); $i++) {
+		if ($this->account[$i]['login'] == $auth['username']) {
+			$ok = $i;
+		}
+	}
+
+	if ($ok == -1) {
+		die($conf['message.invalid']);
+	}
+
+	// see: https://www.php.net/manual/de/features.http-auth.php
+	throw new Exception('ToDo ...');
+
+	$this->sess->setHash($this->account[$ok]);
+}
+
+
+/**
+ * Check login access. Return ''|1. 
  *
  * @tok {login_access:}redirect={link:}@=login/access_denied{:link}|#|allow={:=super}{:login_access} = redirect to login/access_denied if no super priv
  * @tok {login_access:}privilege={:=super}{:login_access} = 1
  * @tok {login_access:}type=seller{:login_access} -> redirect if login.type != seller
  *
  * @redirect login/access_denied or p.redirect
- * @param map $p
- * @return 1|''
  */
-public function tok_login_access($p) {
+public function tok_login_access(array $p) : string {
 	$redir_url = empty($p['redirect_access_denied']) ? 'login/access_denied' : $p['redirect_access_denied'];
 	$res = '';
 
@@ -97,12 +187,8 @@ public function tok_login_access($p) {
 /**
  * Return 1|'' if privileges do (not) exist. Check sess.priv for 2^N privileges.
  * Value of 2^N privileges: super=1, ToDo=2. Check sess.role.app for app privileges.
- *
- * @param string $require_priv boolean expression e.g (priv1 | priv2) & !priv3 
- * @param boolean $ignore_super (default = false)
- * @return 1|''
  */
-public function hasPrivileges($require_priv, $ignore_super = false) {
+public function hasPrivileges(string $require_priv, bool $ignore_super = false) : string {
 
 	if (strlen(trim($require_priv)) == 0) {
 		return 1;
@@ -118,7 +204,7 @@ public function hasPrivileges($require_priv, $ignore_super = false) {
 	$tmp = \rkphplib\lib\conf2kv($this->tok_login('conf.role?'));
 	$privileges = str_replace('=,', '', join(',', $tmp)); // app1.priv1,app1.priv2,app2.priv1,...
 
-	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:121> require_priv=[$require_priv] priv=[$priv] privileges=[$privileges]");
+	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:207> require_priv=[$require_priv] priv=[$priv] privileges=[$privileges]");
 	$priv_list  = explode(',', $privileges);
 	$priv_expr  = $require_priv;
 
@@ -126,14 +212,14 @@ public function hasPrivileges($require_priv, $ignore_super = false) {
 		$priv_expr = str_replace($this->tok->getTag($pname), '1', $priv_expr);
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:129> priv=[$priv] priv_expr=[$priv_expr] after @privileges");
+	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:215> priv=[$priv] priv_expr=[$priv_expr] after @privileges");
 	$priv_map = [ 'super' => 1, 'ToDo' => 2 ];
 	foreach ($priv_map as $pname => $pval) {
 		$pval = ($priv & $pval) ? 1 : 0;
 		$priv_expr = str_replace($this->tok->getTag($pname), $pval, $priv_expr);
   }
 
-	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:136> priv_expr=[$priv_expr] after @priv");
+	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:222> priv_expr=[$priv_expr] after @priv");
 	$priv_expr = $this->tok->removeTags($priv_expr, '0');
   $priv_expr = str_replace(' ', '', $priv_expr);
 
@@ -143,7 +229,7 @@ public function hasPrivileges($require_priv, $ignore_super = false) {
   }
 
   $res = eval('return '.$priv_expr.';');
-  // \rkphplib\lib\log_debug("TLogin.hasPrivileges:146> res=[$res] priv_expr=[$priv_expr]");
+  // \rkphplib\lib\log_debug("TLogin.hasPrivileges:232> res=[$res] priv_expr=[$priv_expr]");
   return $res;
 }
 
@@ -151,10 +237,9 @@ public function hasPrivileges($require_priv, $ignore_super = false) {
 /**
  * Set session key value.
  *
- * @param string $key
  * @param any $value
  */
-public function set($key, $value) {
+public function set(string $key, $value) : void {
 	$this->sess->set($key, $value);
 }
 
@@ -168,7 +253,7 @@ public function set($key, $value) {
  * @param hash $p
  * @return ''
  */
-public function tok_login_clear($p) {
+public function tok_login_clear(array $p) : void {
 	if ($this->sess) {
 		$this->setLoginHistory('LOGOUT');
 		$this->sess->destroy();
@@ -178,18 +263,13 @@ public function tok_login_clear($p) {
 	if (!empty($p['redirect'])) {
 		redirect($p['redirect']);
 	}
-
-	return '';
 }
 
 
 /**
  * Insert entry into login history table.
- *
- * @param string $info
- * @param string $data (default = null)
  */
-private function setLoginHistory($info, $data = null) {
+private function setLoginHistory(string $info, string $data = null) : void {
 	if (!$this->sess || !$this->sess->has('id') || !$this->sess->has('login_history_table')) {
 		return;
 	}
@@ -215,12 +295,8 @@ private function setLoginHistory($info, $data = null) {
 
 /**
  * Add account. Required id, login, password and type.
- *
- * @throws
- * @param array $p
- * @return ''
  */
-public function tok_login_account($p) {
+public function tok_login_account(array $p) : void {
 	$required = [ 'id', 'type', 'login', 'password' ];
 	foreach ($required as $key) {
 		if (!isset($p[$key])) {
@@ -229,7 +305,6 @@ public function tok_login_account($p) {
 	}
 
 	array_push($this->account, $p);
-	return '';
 }
 
 
@@ -240,11 +315,8 @@ public function tok_login_account($p) {
  * {login_check:}refresh=login/ajax/refresh.php|#|...{:}
  *
  * @see Session::init
- * @param string $param [|init]
- * @param map<string:string> $p
- * @return string javascript-login-refresh
  */
-public function tok_login_check($p) {
+public function tok_login_check(array $p) : string {
 	$this->sess = new Session([ 'required' => [ 'id', 'type' ], 'allow_dir' => [ 'login' ] ]);
 	$this->sess->init($p);
 
@@ -261,10 +333,8 @@ public function tok_login_check($p) {
 
 /**
  * Set db variable.
- *
- * @param string table name
  */
-private function setDBVariable($table) {
+private function setDBVariable(string $table) : void {
 	$table = ADatabase::escape($table);
 
 	$query_map = [
@@ -292,24 +362,19 @@ private function setDBVariable($table) {
  * @tok {login_update:}type=admin|#|...{:login_update} -> throw exception if previous type != 'admin'
  * @tok {login_update:}@allow_cols= login, password, ...|#|{sql:password}|#|@where= WHERE id={esc:id}{:login_update}
  *
- * Overwrite default table with @table=custom_table  
- * 
- * @throws
- * @param string $do reload|no_db
- * @param map $p (optional)
- * @return ''
+ * Overwrite default table with @table=custom_table 
  */
-public function tok_login_update($do, $p) {
+public function tok_login_update(string $do, array $p) : void {
 	$table = $this->sess->getConf('table');
 	$sess = $this->sess->getHash();
 	$kv = [];
 
 	if (isset($p['if']) && empty($p['if'])) {
-		return '';
+		return;
 	}
 
 	if (is_string($p) && strlen(trim($p)) == 0) {
-		return '';
+		return;
 	}
 
 	if (!empty($p['@table'])) {
@@ -347,14 +412,14 @@ public function tok_login_update($do, $p) {
 		unset($p['@request_keys']);
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.tok_login_update:350> table=$table, kv ".print_r($kv, true)."\np ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TLogin.tok_login_update:415> table=$table, kv ".print_r($kv, true)."\np ".print_r($p, true));
 	$where = empty($kv['@where']) ? '' : $kv['@where'];
 
 	// only add (key,value) to kv where value has changed
 	foreach ($sess as $key => $value) {
 		if (isset($_REQUEST[$key]) && $value != $_REQUEST[$key]) {
 			$kv[$key] = $_REQUEST[$key];
-			// \rkphplib\lib\log_debug("TLogin.tok_login_update:357> kv (sess + request) - $key=".$_REQUEST[$key]);
+			// \rkphplib\lib\log_debug("TLogin.tok_login_update:422> kv (sess + request) - $key=".$_REQUEST[$key]);
 		}
 	}
 
@@ -362,7 +427,7 @@ public function tok_login_update($do, $p) {
 		// e.g. !isset(kv['password'])
 		if (substr($key, 0, 1) != '@' && (!isset($kv[$key]) || $kv[$key] != $value)) {
 			$kv[$key] = $value;
-			// \rkphplib\lib\log_debug("TLogin.tok_login_update:365> kv (p) - $key=$value");
+			// \rkphplib\lib\log_debug("TLogin.tok_login_update:430> kv (p) - $key=$value");
 		}
 	}
 
@@ -381,7 +446,7 @@ public function tok_login_update($do, $p) {
 
 		foreach ($has_cols as $col) {
 			if (!in_array($col, $allow_cols)) {
-				// \rkphplib\lib\log_debug("TLogin.tok_login_update:384> unset forbidden column $col");
+				// \rkphplib\lib\log_debug("TLogin.tok_login_update:449> unset forbidden column $col");
 				unset($kv[$col]);
 			}
 		}
@@ -400,7 +465,7 @@ public function tok_login_update($do, $p) {
 
 			if ($id && is_numeric($id)) {
 				$where = "WHERE id='".intval($id)."'";
-				// \rkphplib\lib\log_debug("TLogin.tok_login_update:403> id=$id where=$where");
+				// \rkphplib\lib\log_debug("TLogin.tok_login_update:468> id=$id where=$where");
 			}
 		}
 
@@ -408,7 +473,7 @@ public function tok_login_update($do, $p) {
 			throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
 		}
 
-		// \rkphplib\lib\log_debug("TLogin.tok_login_update:411> do=$do, table=$table, where=$where, kv: ".print_r($kv, true));
+		// \rkphplib\lib\log_debug("TLogin.tok_login_update:476> do=$do, table=$table, where=$where, kv: ".print_r($kv, true));
 		if (count($kv) > 0 && !empty($table) && $do != 'no_db') {
 			$kv['@where'] = $where;
 
@@ -416,7 +481,7 @@ public function tok_login_update($do, $p) {
 
 			$query = (count($dbres) == 1) ? $this->db->buildQuery($table, 'update', $kv) : $this->db->buildQuery($table, 'insert', $kv);
 
-			// \rkphplib\lib\log_debug("TLogin.tok_login_update:419> query=$query");
+			// \rkphplib\lib\log_debug("TLogin.tok_login_update:484> query=$query");
 			if (!empty($query)) {
 				$this->db->execute($query);
 			}
@@ -430,15 +495,13 @@ public function tok_login_update($do, $p) {
 	}
 
 	if (count($session_cols) > 0) {
-		// \rkphplib\lib\log_debug("TLogin.tok_login_update:433> use session_cols: ".print_r($session_cols, true));
+		// \rkphplib\lib\log_debug("TLogin.tok_login_update:498> use session_cols: ".print_r($session_cols, true));
 		$this->sess->setHash($session_cols, true);
 	}
 	else if (count($kv) > 0) {
-		// \rkphplib\lib\log_debug("TLogin.tok_login_update:437> #kv=".(count($kv))." update session: ".print_r($kv, true));
+		// \rkphplib\lib\log_debug("TLogin.tok_login_update:502> #kv=".(count($kv))." update session: ".print_r($kv, true));
 		$this->sess->setHash($kv, true);
 	}
-
-	return '';
 }
 
 
@@ -472,14 +535,12 @@ public function tok_login_update($do, $p) {
  *          WHERE customer={:=id} AND start <= NOW() and end > NOW()|#|
  * 				select_bag= SELECT * FROM shop_bag WHERE customer={:=id} ORDER BY id DESC LIMIT 1{:login_auth}
  *
- * @param map $p
  * @redirect if $p[redirect], $p[redirect.$user[type]] or $user[redirect]
- * @return ''
  */
-public function tok_login_auth($p) {
+public function tok_login_auth(array $p) : void {
 
-	if (!$this->sess) {
-		return;
+	if (is_null($this->sess)) {
+		throw new Exception('call login_check: first');
 	}
 
 	if ($this->sess->has('id')) {
@@ -524,7 +585,7 @@ public function tok_login_auth($p) {
 		$this->sess->set('table', $p['table'], 'meta');
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.tok_login_auth:527> p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TLogin.tok_login_auth:588> p: ".print_r($p, true));
 
 	if (!is_null($this->db)) {
 		if (!empty($p['multi_table'])) {
@@ -593,12 +654,8 @@ public function tok_login_auth($p) {
 
 /**
  * Log successfull authentication in table.
- *
- * @throws
- * @param string $table
- * @param map $user
  */
-private function logAuth($table, $user) {
+private function logAuth(string $table, array $user) : void {
 	$fingerprint = '';
 
 	foreach (getallheaders() as $key => $value) {
@@ -614,11 +671,8 @@ private function logAuth($table, $user) {
 
 /**
  * Select user from account. Parameter: login, password.
- *
- * @param array $p
- * @return array|null
  */
-private function selectFromAccount($p) {
+private function selectFromAccount(array $p) : ?array {
 	$found = false;
 
 	if (count($this->account) == 0) {
@@ -656,14 +710,8 @@ private function selectFromAccount($p) {
 
 /**
  * Select extra data from database. Query is p[qkey].
- *
- * @throws 
- * @param string $qkey
- * @param hash $p
- * @param hash $replace
- * @return hash
  */
-private function selectExtraData($qkey, $p, $replace) {
+private function selectExtraData(string $qkey, array $p, array $replace) : array {
 
 	$this->db->setQuery('extra_data', $p[$qkey]);
 	$dbres = $this->db->select($this->db->getQuery('extra_data', $replace));
@@ -680,7 +728,7 @@ private function selectExtraData($qkey, $p, $replace) {
 		$res[$key] = $value;
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.selectExtraData:683> qkey=$qkey, return ".print_r($res, true));
+	// \rkphplib\lib\log_debug("TLogin.selectExtraData:731> qkey=$qkey, return ".print_r($res, true));
 	return $res;
 }
 
@@ -694,8 +742,7 @@ private function selectExtraData($qkey, $p, $replace) {
  * @param hash $p
  * @return hash|null
  */
-private function selectFromDatabase($p) {
-
+private function selectFromDatabase(array $p) : ?array {
 	$admin2user = false;
 
 	if (!empty($p['admin2user']) && ($pos = mb_strpos($p['login'], ':=')) > 0) {
@@ -706,20 +753,20 @@ private function selectFromDatabase($p) {
 
 	$query = $this->db->getCustomQuery('select_login', $p);
 	$dbres = $this->db->select($query);
-	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:709> query=$query - ".print_r($dbres, true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:756> query=$query - ".print_r($dbres, true));
 	if (count($dbres) == 0) {
 		$this->tok->setVar('login_error', 'invalid');
 		return null;
 	}
 
-	// \rkphplib\lib\log_debug('TLogin.selectFromDatabase:715> use master_password = PASSWORD('.$p['password'].') = '.$dbres[0]['password_input']);
+	// \rkphplib\lib\log_debug('TLogin.selectFromDatabase:762> use master_password = PASSWORD('.$p['password'].') = '.$dbres[0]['password_input']);
 	if (!empty($p['master_password']) && $dbres[0]['password_input'] == $p['master_password']) {
 		$dbres[0]['password'] = $p['master_password'];
 	}
 
  	if (count($dbres) != 1 || empty($dbres[0]['password']) || $dbres[0]['password'] != $dbres[0]['password_input']) {
 		$this->tok->setVar('password_error', 'invalid');
-		return;
+		return null;
 	}
 
 	if ($admin2user !== false) {
@@ -749,7 +796,7 @@ private function selectFromDatabase($p) {
 
 	if ($dbres[0]['status'] == 'registered') {
 		$query = $this->db->getCustomQuery('registered2active', $dbres[0]);
-		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:752> auto-activate user: ".$query);
+		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:799> auto-activate user: ".$query);
 		$this->db->execute($query);
 	}
 
@@ -757,7 +804,7 @@ private function selectFromDatabase($p) {
 	unset($dbres[0]['password_input']);
 	unset($dbres[0]['password']);
 
-	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:760> return user: ".print_r($dbres[0], true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:807> return user: ".print_r($dbres[0], true));
 	return $dbres[0];
 }
 
@@ -778,13 +825,8 @@ private function selectFromDatabase($p) {
  * @tok {login:@[name|table]} -> show configuration value
  * @tok {login:@since} -> date('d.m.Y H:i:s', @start)
  * @tok {login:@lchange} -> date('d.m.Y H:i:s', @last)
- *
- * @throws if key does not exist (append ? to key to prevent)
- * @param string $key
- * @param string $alt_key (use body key)
- * @return string
  */
-public function tok_login($key, $alt_key = '') {
+public function tok_login(string $key, string $alt_key = '') : string {
 	$res = '';
 
 	if (strlen($key) == 0 && strlen($alt_key) > 0) {
@@ -854,10 +896,8 @@ public function tok_login($key, $alt_key = '') {
 
 /**
  * Create login table. Create admin user admin|admin (id=1).
- *
- * @param string $table
  */
-public function createTable($table) {
+public function createTable(string $table) : void {
 	$tconf = [];
 	$tconf['@table'] = $table;
 	$tconf['@id'] = 1;
