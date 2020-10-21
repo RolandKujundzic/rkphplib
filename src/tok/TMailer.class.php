@@ -46,7 +46,7 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
- * Initialize Mailer.
+ * Initialize Mailer. If to is empty do nothing.
  * Use constants SETTINGS_SMTP_* and SETTINGS_MAIL_*.
  *
  * @tok … 
@@ -84,6 +84,10 @@ public function getPlugins(Tokenizer $tok) : array {
  */
 public function tok_mail_init(array $conf) : void {
 	$this->conf = $conf;
+
+	if (empty($conf['to'])) {
+		return;
+	}
 
 	$this->mail = new Mailer();
 	
@@ -169,7 +173,10 @@ private function setSMTP() : void {
  * @param string $body
  * @return ''
  */
-public function tok_mail_html($body) {
+public function tok_mail_html($body) : void {
+	if (is_null($this->mail)) {
+		return;
+	}
 
 	if (mb_stripos($body, '<html ') === false && mb_stripos($body, '</html>') === false) {
 		$body = "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\" />\n</head>\n<body>\n".
@@ -190,8 +197,10 @@ public function tok_mail_html($body) {
  * @param string $body
  * @return ''
  */
-public function tok_mail_txt($body) {
-	$this->mail->setTxtBody($body);
+public function tok_mail_txt($body) : void {
+	if (!is_null($this->mail)) {
+		$this->mail->setTxtBody($body);
+	}
 }
 
 
@@ -205,8 +214,10 @@ public function tok_mail_txt($body) {
  * @return ''
  */
 public function tok_mail_attach($p) {
-	$mime = isset($p['mime']) ? $p['mime'] : 'application/octet-stream';
-	$this->mail->attach($p['file'], $mime);
+	if (!is_null($this->mail)) {
+		$mime = isset($p['mime']) ? $p['mime'] : 'application/octet-stream';
+		$this->mail->attach($p['file'], $mime);
+	}
 }
 
 
@@ -218,6 +229,10 @@ public function tok_mail_attach($p) {
  * @return string 
  */
 public function tok_mail_send() {
+	if (is_null($this->mail)) {
+		return;
+	}
+
 	$opt = [];
 
 	if (isset($this->conf['send'])) {
