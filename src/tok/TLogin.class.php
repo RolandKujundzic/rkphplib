@@ -74,7 +74,7 @@ public function getPlugins(Tokenizer $tok) : array {
  * @tok {login_auth:basic} …
  * realm= Administration|#|
  * message= Bitte geben Sie Ihre Zugangsdaten ein
- * {:login_basic_auth}
+ * {:login_auth}
  * @EOL
  */
 public function tok_login_auth_basic(array $p) : void {
@@ -85,9 +85,7 @@ public function tok_login_auth_basic(array $p) : void {
 
 	$conf = array_merge($default, $p);
 
-	if (is_null($this->sess)) {
-		throw new Exception('call login_check: first');
-	}
+	$this->prepareAuth($conf);
 
 	$ok = empty($_SERVER['PHP_AUTH_USER']) ? -2 : -1;
 	for ($i = 0; $ok == -1 && $i < count($this->account); $i++) {
@@ -104,11 +102,14 @@ public function tok_login_auth_basic(array $p) : void {
 		exit;
 	}
 
-	$this->sess->setHash($this->account[$ok]);
+	$this->authOk($p, $this->account[$ok]);
 }
 
 
 /**
+ * Send digest auth request if not authenticated.
+ *
+ * @ToDo
  * @tok …
  * {login_auth:digest}
  * realm=Administration|#|
@@ -126,9 +127,7 @@ public function tok_login_auth_digest(array $p) : void {
 
 	$conf = array_merge($default, $p);
 
-	if (is_null($this->sess)) {
-		throw new Exception('call login_check: first');
-	}
+	$this->prepareAuth($conf);
 
 	if (empty($_SERVER['PHP_AUTH_DIGEST'])) {
 		header('WWW-Authenticate: Digest realm="'.$conf['realm'].'",qop="auth",nonce="'.
@@ -153,7 +152,7 @@ public function tok_login_auth_digest(array $p) : void {
 	// see: https://www.php.net/manual/de/features.http-auth.php
 	throw new Exception('ToDo ...');
 
-	$this->sess->setHash($this->account[$ok]);
+	$this->authOk($p, $this->account[$ok]);
 }
 
 
@@ -204,7 +203,7 @@ public function hasPrivileges(string $require_priv, bool $ignore_super = false) 
 	$tmp = \rkphplib\lib\conf2kv($this->tok_login('conf.role?'));
 	$privileges = str_replace('=,', '', join(',', $tmp)); // app1.priv1,app1.priv2,app2.priv1,...
 
-	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:207> require_priv=[$require_priv] priv=[$priv] privileges=[$privileges]");
+	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:206> require_priv=[$require_priv] priv=[$priv] privileges=[$privileges]");
 	$priv_list  = explode(',', $privileges);
 	$priv_expr  = $require_priv;
 
@@ -212,14 +211,14 @@ public function hasPrivileges(string $require_priv, bool $ignore_super = false) 
 		$priv_expr = str_replace($this->tok->getTag($pname), '1', $priv_expr);
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:215> priv=[$priv] priv_expr=[$priv_expr] after @privileges");
+	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:214> priv=[$priv] priv_expr=[$priv_expr] after @privileges");
 	$priv_map = [ 'super' => 1, 'ToDo' => 2 ];
 	foreach ($priv_map as $pname => $pval) {
 		$pval = ($priv & $pval) ? 1 : 0;
 		$priv_expr = str_replace($this->tok->getTag($pname), $pval, $priv_expr);
   }
 
-	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:222> priv_expr=[$priv_expr] after @priv");
+	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:221> priv_expr=[$priv_expr] after @priv");
 	$priv_expr = $this->tok->removeTags($priv_expr, '0');
   $priv_expr = str_replace(' ', '', $priv_expr);
 
@@ -229,7 +228,7 @@ public function hasPrivileges(string $require_priv, bool $ignore_super = false) 
   }
 
   $res = eval('return '.$priv_expr.';');
-  // \rkphplib\lib\log_debug("TLogin.hasPrivileges:232> res=[$res] priv_expr=[$priv_expr]");
+  // \rkphplib\lib\log_debug("TLogin.hasPrivileges:231> res=[$res] priv_expr=[$priv_expr]");
   return $res;
 }
 
@@ -412,14 +411,14 @@ public function tok_login_update(string $do, array $p) : void {
 		unset($p['@request_keys']);
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.tok_login_update:415> table=$table, kv ".print_r($kv, true)."\np ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TLogin.tok_login_update:414> table=$table, kv ".print_r($kv, true)."\np ".print_r($p, true));
 	$where = empty($kv['@where']) ? '' : $kv['@where'];
 
 	// only add (key,value) to kv where value has changed
 	foreach ($sess as $key => $value) {
 		if (isset($_REQUEST[$key]) && $value != $_REQUEST[$key]) {
 			$kv[$key] = $_REQUEST[$key];
-			// \rkphplib\lib\log_debug("TLogin.tok_login_update:422> kv (sess + request) - $key=".$_REQUEST[$key]);
+			// \rkphplib\lib\log_debug("TLogin.tok_login_update:421> kv (sess + request) - $key=".$_REQUEST[$key]);
 		}
 	}
 
@@ -427,7 +426,7 @@ public function tok_login_update(string $do, array $p) : void {
 		// e.g. !isset(kv['password'])
 		if (substr($key, 0, 1) != '@' && (!isset($kv[$key]) || $kv[$key] != $value)) {
 			$kv[$key] = $value;
-			// \rkphplib\lib\log_debug("TLogin.tok_login_update:430> kv (p) - $key=$value");
+			// \rkphplib\lib\log_debug("TLogin.tok_login_update:429> kv (p) - $key=$value");
 		}
 	}
 
@@ -446,7 +445,7 @@ public function tok_login_update(string $do, array $p) : void {
 
 		foreach ($has_cols as $col) {
 			if (!in_array($col, $allow_cols)) {
-				// \rkphplib\lib\log_debug("TLogin.tok_login_update:449> unset forbidden column $col");
+				// \rkphplib\lib\log_debug("TLogin.tok_login_update:448> unset forbidden column $col");
 				unset($kv[$col]);
 			}
 		}
@@ -465,7 +464,7 @@ public function tok_login_update(string $do, array $p) : void {
 
 			if ($id && is_numeric($id)) {
 				$where = "WHERE id='".intval($id)."'";
-				// \rkphplib\lib\log_debug("TLogin.tok_login_update:468> id=$id where=$where");
+				// \rkphplib\lib\log_debug("TLogin.tok_login_update:467> id=$id where=$where");
 			}
 		}
 
@@ -473,7 +472,7 @@ public function tok_login_update(string $do, array $p) : void {
 			throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
 		}
 
-		// \rkphplib\lib\log_debug("TLogin.tok_login_update:476> do=$do, table=$table, where=$where, kv: ".print_r($kv, true));
+		// \rkphplib\lib\log_debug("TLogin.tok_login_update:475> do=$do, table=$table, where=$where, kv: ".print_r($kv, true));
 		if (count($kv) > 0 && !empty($table) && $do != 'no_db') {
 			$kv['@where'] = $where;
 
@@ -481,7 +480,7 @@ public function tok_login_update(string $do, array $p) : void {
 
 			$query = (count($dbres) == 1) ? $this->db->buildQuery($table, 'update', $kv) : $this->db->buildQuery($table, 'insert', $kv);
 
-			// \rkphplib\lib\log_debug("TLogin.tok_login_update:484> query=$query");
+			// \rkphplib\lib\log_debug("TLogin.tok_login_update:483> query=$query");
 			if (!empty($query)) {
 				$this->db->execute($query);
 			}
@@ -495,11 +494,11 @@ public function tok_login_update(string $do, array $p) : void {
 	}
 
 	if (count($session_cols) > 0) {
-		// \rkphplib\lib\log_debug("TLogin.tok_login_update:498> use session_cols: ".print_r($session_cols, true));
+		// \rkphplib\lib\log_debug("TLogin.tok_login_update:497> use session_cols: ".print_r($session_cols, true));
 		$this->sess->setHash($session_cols, true);
 	}
 	else if (count($kv) > 0) {
-		// \rkphplib\lib\log_debug("TLogin.tok_login_update:502> #kv=".(count($kv))." update session: ".print_r($kv, true));
+		// \rkphplib\lib\log_debug("TLogin.tok_login_update:501> #kv=".(count($kv))." update session: ".print_r($kv, true));
 		$this->sess->setHash($kv, true);
 	}
 }
@@ -525,35 +524,25 @@ public function tok_login_update(string $do, array $p) : void {
  * If redirect is set - redirect after successfull login or if still logged in.
  * If user.redirect is set - redirect after successfull login or if still logged in.
  * If log_table is set - insert log entry into log table. 
- *
- * @tok <pre>{login:*}</pre> = id=...|#|login=...|#|type=...|#|priv=...|#|language=...
- * 
  * If select_list=a,b is set execute p.select_a and p.select_b (replace {:=id}).
  *
- * @tok {login_auth:}login={get:login}|#|password={get:password}|#|select_list=contract,bag|#|
- * 				select_contract= SELECT sum(item_num) AS `contract.item_num` FROM shop_contract 
- *          WHERE customer={:=id} AND start <= NOW() and end > NOW()|#|
- * 				select_bag= SELECT * FROM shop_bag WHERE customer={:=id} ORDER BY id DESC LIMIT 1{:login_auth}
- *
+ * @tok …
+ * {login_auth:}
+ * login={get:login}|#|
+ * password={get:password}|#|
+ * select_list=contract,bag|#|
+ * select_contract= SELECT sum(item_num) AS `contract.item_num` FROM shop_contract 
+ *   WHERE customer={:=id} AND start <= NOW() and end > NOW()|#|
+ * select_bag= SELECT * FROM shop_bag WHERE customer={:=id} ORDER BY id DESC LIMIT 1
+ * {:login_auth}
+ * <pre>{login:*}</pre> = id=...|#|login=...|#|type=...|#|priv=...|#|language=...
+ * @EOL
+ * 
  * @redirect if $p[redirect], $p[redirect.$user[type]] or $user[redirect]
  */
 public function tok_login_auth(array $p) : void {
 
-	if (is_null($this->sess)) {
-		throw new Exception('call login_check: first');
-	}
-
-	if ($this->sess->has('id')) {
-		if (($type = $this->sess->has('type'))) {
-			if (!empty($p['redirect_'.$type])) {
-				redirect($p['redirect_'.$type]);
-			}
-		}
-		
-		if (!empty($p['redirect'])) {
-			redirect($p['redirect']);
-		}
-	}
+	$this->prepareAuth($p);
 
 	if (empty($p['login'])) {
 		if (!is_null($this->db)) {
@@ -585,45 +574,54 @@ public function tok_login_auth(array $p) : void {
 		$this->sess->set('table', $p['table'], 'meta');
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.tok_login_auth:588> p: ".print_r($p, true));
-
+	// \rkphplib\lib\log_debug("TLogin.tok_login_auth:577> p: ".print_r($p, true));
 	if (!is_null($this->db)) {
-		if (!empty($p['multi_table'])) {
-			if (!is_null($this->db) && !empty($p['login']) && !empty($p['password'])) {
-				$list = split_str(',', $p['multi_table']);
-				$user = null;
-
-				for ($i = 0; is_null($user) && $i < count($list); $i++) {
-					$p['table'] = $list[$i];
-					$table = ADatabase::escape_name($p['table']);
-					$p['select_login'] = !empty($p['select_login_'.$p['table']]) ? $p['select_login_'.$p['table']] : 
-						"SELECT *, PASSWORD({:=password}) AS password_input FROM $table ".
-						"WHERE login={:=login} AND (status='active' OR status='registered')";
-					$p['registered2active'] = "UPDATE $table SET status='active' WHERE id={:=id}";
-					$user = $this->selectFromDatabase($p);
-				}
-			}
-		}
-		else {
-			$user = $this->selectFromDatabase($p);
-		}
-
-		if (!is_null($user) && !empty($p['select_list'])) {
-			$list = split_str(',', $p['select_list']);
-			$r = $user;
-
-			foreach ($list as $prefix) {
-				$user = array_merge($user, $this->selectExtraData('select_'.$prefix, $p, $r));
-			}
-		}
+		$user = $this->selectFromDb($p);
 	}
 	else {
 		$user = $this->selectFromAccount($p);
 	}
 
+	$this->authOk($p, $user);
+}
+
+
+/**
+ * Call login_check: if session is not set.
+ * Redirect if session.id and p.redirect or p.redirect_$session[type].
+ */
+private function prepareAuth(array $p) : void {
+
+	if (is_null($this->sess)) {
+		$this->tok_login_check($p);
+	}
+
+	if ($this->sess->has('id')) {
+		if (($type = $this->sess->has('type'))) {
+			if (!empty($p['redirect_'.$type])) {
+				redirect($p['redirect_'.$type]);
+			}
+		}
+		
+		if (!empty($p['redirect'])) {
+			redirect($p['redirect']);
+		}
+	}
+}
+
+
+/**
+ * Save $user (except password) to session. 
+ * If $p[log_table] call setLoginHistory.
+ * Redirect if $p[redirect], $user[redirect] or $p[redirect_$user[type]].
+ * Execute plugin call if callback= plugin, method, arg.
+ */
+private function authOk(array $p, ?array $user) : void {
 	if (is_null($user)) {
 		return;
 	}
+
+	unset($user['password']);
 
 	$this->sess->setHash($user);
 
@@ -635,37 +633,67 @@ public function tok_login_auth(array $p) : void {
 	}
 
 	if (!empty($p['log_table'])) {
-		$this->logAuth($p['log_table'], $user);
+		$fingerprint = '';
+		foreach (getallheaders() as $key => $value) {
+  		$fingerprint = md5("$fingerprint:$key=$value");
+		}
+
+		$this->sess->set('login_history_table', $p['log_table']);
+		$this->sess->set('fingerprint', $fingerprint);
+		$this->setLoginHistory('LOGIN');
 	}
 
 	if (!empty($user['redirect'])) {
 		$redirect_to = $this->tok->replaceTags($user['redirect'], $user);
-		redirect($redirect_to);
 	}
 	else if (!empty($user['type']) && !empty($p['redirect_'.$user['type']])) {
-		redirect($p['redirect_'.$user['type']]);
+		$redirect_to = $p['redirect_'.$user['type']];
 	}
 	else if (!empty($p['redirect'])) {
 		$redirect_to = $this->tok->replaceTags($p['redirect'], $user);
+	}
+
+	if ($redirect_to) {
 		redirect($redirect_to);
 	}
 }
 
 
 /**
- * Log successfull authentication in table.
+ * Select user from database
  */
-private function logAuth(string $table, array $user) : void {
-	$fingerprint = '';
+private function selectFromDb(array $p) : ?array {
+	$user = null;
 
-	foreach (getallheaders() as $key => $value) {
-  	$fingerprint = md5("$fingerprint:$key=$value");
+	if (!empty($p['multi_table'])) {
+		if (!is_null($this->db) && !empty($p['login']) && !empty($p['password'])) {
+			$list = split_str(',', $p['multi_table']);
+
+			for ($i = 0; is_null($user) && $i < count($list); $i++) {
+				$p['table'] = $list[$i];
+				$table = ADatabase::escape_name($p['table']);
+				$p['select_login'] = !empty($p['select_login_'.$p['table']]) ? $p['select_login_'.$p['table']] : 
+					"SELECT *, PASSWORD({:=password}) AS password_input FROM $table ".
+					"WHERE login={:=login} AND (status='active' OR status='registered')";
+				$p['registered2active'] = "UPDATE $table SET status='active' WHERE id={:=id}";
+				$user = $this->selectFromDatabase($p);
+			}
+		}
+	}
+	else {
+		$user = $this->selectFromDatabase($p);
 	}
 
-	$this->sess->set('login_history_table', $table);
-	$this->sess->set('fingerprint', $fingerprint);
+	if (!is_null($user) && !empty($p['select_list'])) {
+		$list = split_str(',', $p['select_list']);
+		$r = $user;
 
-	$this->setLoginHistory('LOGIN');
+		foreach ($list as $prefix) {
+			$user = array_merge($user, $this->selectExtraData('select_'.$prefix, $p, $r));
+		}
+	}
+
+	return $user;
 }
 
 
@@ -728,7 +756,7 @@ private function selectExtraData(string $qkey, array $p, array $replace) : array
 		$res[$key] = $value;
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.selectExtraData:731> qkey=$qkey, return ".print_r($res, true));
+	// \rkphplib\lib\log_debug("TLogin.selectExtraData:759> qkey=$qkey, return ".print_r($res, true));
 	return $res;
 }
 
@@ -753,13 +781,13 @@ private function selectFromDatabase(array $p) : ?array {
 
 	$query = $this->db->getCustomQuery('select_login', $p);
 	$dbres = $this->db->select($query);
-	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:756> query=$query - ".print_r($dbres, true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:784> query=$query - ".print_r($dbres, true));
 	if (count($dbres) == 0) {
 		$this->tok->setVar('login_error', 'invalid');
 		return null;
 	}
 
-	// \rkphplib\lib\log_debug('TLogin.selectFromDatabase:762> use master_password = PASSWORD('.$p['password'].') = '.$dbres[0]['password_input']);
+	// \rkphplib\lib\log_debug('TLogin.selectFromDatabase:790> use master_password = PASSWORD('.$p['password'].') = '.$dbres[0]['password_input']);
 	if (!empty($p['master_password']) && $dbres[0]['password_input'] == $p['master_password']) {
 		$dbres[0]['password'] = $p['master_password'];
 	}
@@ -796,7 +824,7 @@ private function selectFromDatabase(array $p) : ?array {
 
 	if ($dbres[0]['status'] == 'registered') {
 		$query = $this->db->getCustomQuery('registered2active', $dbres[0]);
-		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:799> auto-activate user: ".$query);
+		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:827> auto-activate user: ".$query);
 		$this->db->execute($query);
 	}
 
@@ -804,7 +832,7 @@ private function selectFromDatabase(array $p) : ?array {
 	unset($dbres[0]['password_input']);
 	unset($dbres[0]['password']);
 
-	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:807> return user: ".print_r($dbres[0], true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:835> return user: ".print_r($dbres[0], true));
 	return $dbres[0];
 }
 
