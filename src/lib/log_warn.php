@@ -24,10 +24,10 @@ function log_warn(string $msg) : void {
 		return;
 	}
 
-  if (php_sapi_name() == 'cli') {
-    print "WARNING: $msg\n";  
+	if (php_sapi_name() == 'cli') {
+		print "WARNING: $msg\n";  
 		return;
-  }
+	}
 
 	list($msec, $ts) = explode(" ", microtime());
 	$log = '['.date('YmdHis', $ts).'.'.(1000 * round((float)$msec, 3));
