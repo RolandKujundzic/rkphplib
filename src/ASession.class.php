@@ -114,7 +114,7 @@ public function getConf(string $key) {
  * Set session configuration. Use $conf = [] to initialize. Required Parameter:
  *
  * name|table: Session Name - required
- * handler: files[|Database] - required
+ * handler: files[|Database]
  * scope: file|dir|subdir|host|docroot (default = docroot)
  * cross_site: 1 (default = allow cross site cookies - works only on ssl)
  * inactive: seconds of inactivity. Session expires after lchange + inactive. Range [1-21600] (default = 7200 = 2 h)
