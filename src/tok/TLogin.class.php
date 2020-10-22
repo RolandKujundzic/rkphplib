@@ -70,8 +70,9 @@ public function getPlugins(Tokenizer $tok) : array {
 /**
  * Send basic auth request if not authenticated.
  *
- * @tok {login_account:}login=admin|#|password=secret{:login_account}
- * @tok {login_auth:basic} …
+ * @tok …
+ * {login_account:}id=1|#|type=admin|#|login=admin|#|password=secret{:login_account}
+ * {login_auth:basic} …
  * realm= Administration|#|
  * message= Bitte geben Sie Ihre Zugangsdaten ein
  * {:login_auth}
@@ -111,6 +112,7 @@ public function tok_login_auth_basic(array $p) : void {
  *
  * @ToDo
  * @tok …
+ * {login_account:}id=1|#|type=admin|#|login=admin|#|password=secret{:login_account}
  * {login_auth:digest}
  * realm=Administration|#|
  * abort=Authentifizierung abgebrochen|#|
@@ -316,6 +318,10 @@ public function tok_login_account(array $p) : void {
  * @see Session::init
  */
 public function tok_login_check(array $p) : string {
+	if (empty($p['name'])) {
+		$p['name'] = empty($_REQUEST['dir']) ? 'login' : array_shift(explode('/', $_REQUEST['dir']));
+	}
+
 	$this->sess = new Session([ 'required' => [ 'id', 'type' ], 'allow_dir' => [ 'login' ] ]);
 	$this->sess->init($p);
 
