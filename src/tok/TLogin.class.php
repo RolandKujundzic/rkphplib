@@ -875,7 +875,8 @@ private function selectFromDatabase(array $p) : ?array {
  * @tok {login:@since} -> date('d.m.Y H:i:s', @start)
  * @tok {login:@lchange} -> date('d.m.Y H:i:s', @last)
  */
-public function tok_login(string $key, string $alt_key = '') : string {
+public function tok_login(string $key, ?string $alt_key = '') : string {
+	\rkphplib\lib\log_debug("TLogin.tok_login:897> key=$key alt_key=$alt_key");
 	$res = '';
 
 	if (strlen($key) == 0 && strlen($alt_key) > 0) {
@@ -939,6 +940,7 @@ public function tok_login(string $key, string $alt_key = '') : string {
 		$res = kv2conf($res);
 	}
 
+	\rkphplib\lib\log_debug("TLogin.tok_login:897> res=[$res]");
 	return $res;
 }
 
