@@ -39,28 +39,62 @@ public function __construct(array $options = []) {
 /**
  *
  */
-public function disableKeys(array $table_list = []) : void {
+public function disableKeys(array $table_list = [], bool $as_string = false) : string {
+	$res = '';
+
 	foreach ($table_list as $table) {
-		$this->execute('ALTER TABLE '.self::escape_name($table).' DISABLE KEYS');
+		$query = 'ALTER TABLE '.self::escape_name($table).' DISABLE KEYS';
+		if ($as_string) {
+			$res .= $query.";\n";
+		}
+		else {
+			$this->execute($query);
+		}
 	}
 
-	$this->execute('SET FOREIGN_KEY_CHECKS = 0');
-	$this->execute('SET UNIQUE_CHECKS = 0');
-	$this->execute('SET AUTOCOMMIT = 0');
+	if ($as_string) {
+		$res .= "SET FOREIGN_KEY_CHECKS = 0;\n".
+			"SET UNIQUE_CHECKS = 0;\n".
+			"SET AUTOCOMMIT = 0;\n";
+	}
+	else {
+		$this->execute('SET FOREIGN_KEY_CHECKS = 0');
+		$this->execute('SET UNIQUE_CHECKS = 0');
+		$this->execute('SET AUTOCOMMIT = 0');
+	}
+
+	return $res;
 }
 
 
 /**
  * Force key creation after import
  */
-public function enableKeys(array $table_list = []) : void {
+public function enableKeys(array $table_list = [], bool $as_string = false) : string {
+	$res = '';
+
 	foreach ($table_list as $table) {
-		$this->execute('ALTER TABLE '.self::escape_name($table).' ENABLE KEYS');
+		$query = 'ALTER TABLE '.self::escape_name($table).' ENABLE KEYS';
+		if ($as_string) {
+			$res .= $query.";\n";
+		}
+		else {
+			$this->execute($query);
+		}
 	}
 
-	$this->execute('SET FOREIGN_KEY_CHECKS = 1');
-	$this->execute('SET UNIQUE_CHECKS = 1');
-	$this->execute('SET AUTOCOMMIT = 1');
+	if ($as_string) {
+		$res .= "SET FOREIGN_KEY_CHECKS = 1;\n".
+			"SET UNIQUE_CHECKS = 1;\n".
+			"SET AUTOCOMMIT = 1;\n";
+	}
+	else {
+		$this->execute('SET FOREIGN_KEY_CHECKS = 1');
+		$this->execute('SET UNIQUE_CHECKS = 1');
+		$this->execute('SET AUTOCOMMIT = 1');
+	}
+
+	return $res;
 }
 
 
@@ -236,7 +270,7 @@ public function connect() : bool {
 
 	if (is_object($this->_db)) {
 		if ($this->_conn_ttl < time() && !$this->_db->ping()) {
-			// \rkphplib\lib\log_debug('MysqlDatabase.connect:239> close expired connection '.$this->getId());
+			// \rkphplib\lib\log_debug('MysqlDatabase.connect:273> close expired connection '.$this->getId());
 			$this->close();
 		}
 		else {
@@ -280,7 +314,7 @@ public function connect() : bool {
 		$res = $this->execute("SET time_zone = '".self::escape($this->time_zone)."'");
 	}
 	
-	// \rkphplib\lib\log_debug('MysqlDatabase.connect:283> login@host='.$dsn['login'].'@'.$dsn['host'].', name='.$dsn['name'].', id='.$this->getId());
+	// \rkphplib\lib\log_debug('MysqlDatabase.connect:317> login@host='.$dsn['login'].'@'.$dsn['host'].', name='.$dsn['name'].', id='.$this->getId());
 	$this->_conn_ttl = time() + 5 * 60; // re-check connection in 5 minutes ...
 	return $res;
 }
@@ -426,7 +460,7 @@ public function saveTableDump(array $opt) : void {
 	$fh = File::open($opt['save_as'], 'wb');
 
 	if (!empty($opt['ignore_foreign_keys'])) {
-		File::write($fh, "SET FOREIGN_KEY_CHECKS=0;\n");
+		File::write($fh, $this->disableKeys([], true));
 	}
 
 	if (empty($opt['delete_query']) && !empty($opt['delete_entries'])) {
@@ -461,7 +495,7 @@ public function saveTableDump(array $opt) : void {
 	}
 
 	if (!empty($opt['ignore_foreign_keys'])) {
-		File::write($fh, "SET FOREIGN_KEY_CHECKS=1;\n");
+		File::write($fh, $this->enableKeys([], true));
 	}
 
 	File::close($fh);
@@ -471,51 +505,29 @@ public function saveTableDump(array $opt) : void {
 /**
  *
  */
-public function loadDump(string $file, int $flags = 0) : void {
-	if (!File::size($file)) {
-		return;
+public function loadDumpShell(string $file, int $flags = 0) : void {
+	$dsn = self::splitDSN($this->_dsn);
+	$mysql = new PipeExecute('mysql -h {:=host} -u {:=login} -p{:=password} {:=name}', $dsn);
+
+	if ($flags & self::LOAD_DUMP_IGNORE_KEYS) {
+		$mysql->write($this->disableKeys([], true));
 	}
 
-	if (class_exists('\\rkphplib\\tok\\Tokenizer', false)) {
-		\rkphplib\tok\Tokenizer::log([ 'label' => 'load sql dump', 'message' => $file ], 'log.sql_import');
+	if ($flags & self::LOAD_DUMP_ADD_DROP_TABLE) {
+		$table = File::basename($file, true);
+		$mysql->write("DROP TABLE IF EXISTS $table;");
 	}
 
-	$table = self::escape_name(File::basename($file, true));
+	$mysql->load($file);
 
-	if ($flags & self::LOAD_DUMP_USE_SHELL) {
-		$dsn = self::splitDSN($this->_dsn);
-		$mysql = new PipeExecute('mysql -h {:=host} -u {:=login} -p{:=password} {:=name}', $dsn);
-
-		if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
-			$mysql->write("SET FOREIGN_KEY_CHECKS=0;");
-		}
-
-		if ($flags & self::LOAD_DUMP_ADD_DROP_TABLE) {
-			$mysql->write("DROP TABLE IF EXISTS $table;");
-		}
-
-		$mysql->load($file);
-
-		if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
-			$mysql->write("SET FOREIGN_KEY_CHECKS=1; -- $file");
-		}
-
-		list ($retval, $error, $output) = $mysql->close();
-
-		if ($error || $retval !== 0) {
-			throw new Exception("loadDump($file, $flags) failed: ".$error, "retval=[$retval] output=[$output]");
-		}
+	if ($flags & self::LOAD_DUMP_IGNORE_KEYS) {
+		$mysql->write($this->enableKeys([], true));
 	}
-	else {
-		if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
-    	$this->db->execute("SET FOREIGN_KEY_CHECKS=0");
-  	}
 
-		parent::loadDump($file, $flags);
+	list ($retval, $error, $output) = $mysql->close();
 
-		if ($flags & self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS) {
-    	$this->db->execute("SET FOREIGN_KEY_CHECKS=1");
-  	}
+	if ($error || $retval !== 0) {
+		throw new Exception("loadDumpShell($file, $flags) failed: ".$error, "retval=[$retval] output=[$output]");
 	}
 }
 
@@ -532,7 +544,7 @@ public function dropTable(string $table) : void {
  *
  */
 public function execute($query, bool $use_result = false) : bool {
-	// \rkphplib\lib\log_debug("MysqlDatabase.execute:535> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
+	// \rkphplib\lib\log_debug("MysqlDatabase.execute:547> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
 	if (is_array($query)) {
 		if ($use_result) {
 			if (($stmt = $this->_exec_stmt($query)) === null) {
@@ -597,7 +609,7 @@ private function error(string $msg, string $internal = '', int $flag = 0) : ?boo
 	}
 
 	if ($flag & 4) {
-		// \rkphplib\lib\log_debug("MysqlDatabase.error:600> $msg (flag=$flag internal=$internal)");
+		// \rkphplib\lib\log_debug("MysqlDatabase.error:612> $msg (flag=$flag internal=$internal)");
 	}
 	else {
 		\rkphplib\lib\log_warn("MysqlDatabase.error> $msg (flag=$flag internal=$internal)");
@@ -1227,7 +1239,7 @@ public function getTableDesc(string $table) : array {
  *
  */
 public function getInsertId() : int {
-	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1230> id=".$this->getId().", insert_id=".$this->_db->insert_id);
+	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1242> id=".$this->getId().", insert_id=".$this->_db->insert_id);
 	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) === 0) {
 		return intval($this->error('no_id', $this->_db->insert_id, 2));
 	}
