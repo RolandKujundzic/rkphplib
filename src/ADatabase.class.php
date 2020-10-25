@@ -23,11 +23,11 @@ abstract class ADatabase {
 // @const int LOAD_DUMP_USE_SHELL
 const LOAD_DUMP_USE_SHELL = 1;
 
-// @const int LOAD_DUMP_ADD_DROP_TABLE
-const LOAD_DUMP_ADD_DROP_TABLE = 2;
+// @const int LOAD_DUMP_DROP_TABLE
+const LOAD_DUMP_DROP_TABLE = 2;
 
-// @const int LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS
-const LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS = 4;
+// @const int LOAD_DUMP_IGNORE_KEYS
+const LOAD_DUMP_IGNORE_KEYS = 4;
 
 // @const int NOT_NULL = NOT NULL column 
 const NOT_NULL = 1;
@@ -154,15 +154,16 @@ public static function getMapId(array $p, array $exclude = []) : string {
 
 
 /**
- * Speed up import
+ * Speed up import. If $as_string = true return command as string.
  */
-abstract public function disableKeys(array $table_list = []) : void;
+abstract public function disableKeys(array $table_list = [], bool $as_string = false) : string;
 
 
 /**
- * Force key creation after import
+ * Force key creation after import. If $as_string = true return
+ * command as string.
  */
-abstract public function enableKeys(array $table_list = []) : void;
+abstract public function enableKeys(array $table_list = [], bool $as_string = false) : string;
 
 
 /**
@@ -574,7 +575,7 @@ public function hasQuery(string $qkey, string $query = '') : bool {
  * all queries must be same.
  */
 public function hasQueries(array $query_map) : bool {
-	// \rkphplib\lib\log_debug("ADatabase.hasQueries:577> query_map: ".print_r($query_map, true));
+	// \rkphplib\lib\log_debug("ADatabase.hasQueries:578> query_map: ".print_r($query_map, true));
 	if (!is_array($query_map)) {
 		return false;
 	}
@@ -944,27 +945,45 @@ abstract public function saveDump(array $opt) : void;
  */
 abstract public function saveTableDump(array $opt) : void;
 
+
+/**
+ * Load dump via external shell command
+ */
+abstract public function loadDumpShell(string $file, int $flags) : void;
+
  
 /**
  * Import database dump. Basename $file (without .sql suffix) must be tablename. Flags are 2^n: 
  *
- * self::LOAD_DUMP_USE_SHELL | self::LOAD_DUMP_ADD_DROP_TABLE | self::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS
+ * self::LOAD_DUMP_USE_SHELL | self::LOAD_DUMP_DROP_TABLE | self::LOAD_DUMP_IGNORE_KEYS
  */
 public function loadDump(string $file, int $flags) : void {
 
-	if ($flags & self::LOAD_DUMP_USE_SHELL) {
-		throw new Exception('implement loadDump() for LOAD_DUMP_USE_SHELL');
+	if (!File::size($file)) {
+		return;
 	}
 
-	throw new Exception("ToDo: still buggy use native version loadDump($file, 1)");
+	if (class_exists('\\rkphplib\\tok\\Tokenizer', false)) {
+		\rkphplib\tok\Tokenizer::log([ 'label' => 'load sql dump', 'message' => $file ], 'log.sql_import');
+	}
+
+	$table = self::escape_name(File::basename($file, true));
+
+	if ($flags & self::LOAD_DUMP_USE_SHELL) {
+		$this->loadDumpShell($file, $flags);
+		return;
+	}
 
 	if (!($fh = fopen($file, "rb"))) {
 		throw new Exception('Could not read '.$file);
 	}
 
-	$table = File::basename($file, true);
+	if ($flags & self::LOAD_DUMP_IGNORE_KEYS) {
+		$this->disableKeys();
+	}
 
-	if ($flags & self::LOAD_DUMP_ADD_DROP_TABLE) {
+	if ($flags & self::LOAD_DUMP_DROP_TABLE) {
+		$table = File::basename($file, true);
 		$this->db->dropTable($table);
 	}
 
@@ -1006,6 +1025,10 @@ public function loadDump(string $file, int $flags) : void {
 	}
 
 	fclose($fh);
+
+	if ($flags & self::LOAD_DUMP_IGNORE_KEYS) {
+		$this->enableKeys();
+	}
 }
 
 
@@ -1616,7 +1639,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 
 	$add_default = empty($kv['@add_default']) ? false : true;
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1619> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1642> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
 
 	foreach ($p as $col => $cinfo) {
 		$val = false;
@@ -1641,17 +1664,17 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			}
 		}
 
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1644> col=$col, val=$val");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1667> col=$col, val=$val");
 
 		if ($val !== false) {
 			array_push($key_list, self::escape_name($col));
 			array_push($val_list, $val);
-			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1649> table=$table, type=$type, col=$col, val=$val");
+			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1672> table=$table, type=$type, col=$col, val=$val");
 		}
 	}
 
 	if (count($key_list) == 0) {
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1654> empty key_list - return");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1677> empty key_list - return");
 		return '';
 	}
 
@@ -1677,7 +1700,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1680> table=$table, type=$type, res=$res");
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1703> table=$table, type=$type, res=$res");
 	return $res;
 }
 
@@ -1731,8 +1754,8 @@ public function backupTable(string $table, string $sql_dump) : void {
 	$fh = File::open($sql_dump, 'wb');
 	$tname = self::escape_name($table);
 
+	File::write($fh, $this->disableKeys([ $tname ], true));
 	File::write($fh, "LOCK TABLES $tname WRITE;\n");
-	File::write($fh, "SET FOREIGN_KEY_CHECKS=0;\n");
 	File::write($fh, "DELETE FROM $tname;\n");
 
 	$this->execute("SELECT * FROM $table", true);
