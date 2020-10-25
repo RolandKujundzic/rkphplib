@@ -138,11 +138,11 @@ public function tok_sql_import($p) {
 			$flags = 0;
 
 			if (!empty($p['drop_table'])) {
-				$flags = $flags | ADatabase::LOAD_DUMP_ADD_DROP_TABLE;
+				$flags = $flags | ADatabase::LOAD_DUMP_DROP_TABLE;
 			}
 
 			if (!empty($p['ignore_foreign_keys'])) {
-				$flags = $flags | ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS;
+				$flags = $flags | ADatabase::LOAD_DUMP_IGNORE_KEYS;
 			}
 
 			$flags = $flags | ADatabase::LOAD_DUMP_USE_SHELL;
@@ -178,14 +178,14 @@ public function tok_sql_import($p) {
 	foreach ($files as $file) {
 		$base = basename($file);
 
-		$flags = ADatabase::LOAD_DUMP_ADD_DROP_TABLE | ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS | ADatabase::LOAD_DUMP_USE_SHELL;
+		$flags = ADatabase::LOAD_DUMP_DROP_TABLE | ADatabase::LOAD_DUMP_IGNORE_KEYS | ADatabase::LOAD_DUMP_USE_SHELL;
 
 		$file = $p['directory'].'/'.$base.'.sql';
 		if (File::exists($file)) {
 			$this->db->loadDump($file, $flags);
 		}
 
-		$flags = ADatabase::LOAD_DUMP_ADD_IGNORE_FOREIGN_KEYS | ADatabase::LOAD_DUMP_USE_SHELL;
+		$flags = ADatabase::LOAD_DUMP_IGNORE_KEYS | ADatabase::LOAD_DUMP_USE_SHELL;
 
 		$file = $p['directory'].'/alter/'.$base.'.sql';	
 		if (File::exists($file)) {
