@@ -40,7 +40,7 @@ private function error(string $msg, string $internal, int $flag = 0) : ?bool {
 /**
  *
  */
-public function disableKeys(array $table_list = []) : void {
+public function disableKeys(array $table_list = [], bool $as_string = false) : string {
 	throw new Exception('ToDo');
 }
 
@@ -48,7 +48,7 @@ public function disableKeys(array $table_list = []) : void {
 /**
  *
  */
-public function enableKeys(array $table_list = []) : void {
+public function enableKeys(array $table_list = [], bool $as_string = false) : string {
 	throw new Exception('ToDo');
 }
 
@@ -597,7 +597,7 @@ public function saveTableDump(array $opt) : void {
 /**
  *
  */
-public function loadDump(string $file, int $flags) : void {
+public function loadDumpShell(string $file, int $flags) : void {
 	throw new Exception('ToDo ...');
 }
 
