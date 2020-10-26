@@ -107,11 +107,26 @@ public static function loadTable(string $uri, array $options = []) : array {
  * Return file info. Autocreate/Update json file $file.nfo. 
  * Keys for comparison are size, md5, width, height other keys
  * are file, name (basename without suffix), mime and 
- * suffix (with leading dot).
+ * suffix (with leading dot). If file suffix is '.nfo' save only
+ * name and lastModified.
  */
 public static function nfo(string $file, string $source = '') : array {
-	File::exists($file, true);
 
+	if (substr($file, -4) == '.nfo') {
+		if (File::exists($file)) {
+			$json = JSON::decode(File::load($file));
+		}
+		else {
+			$json = [];
+			$json['name'] = File::basename($file, true);
+			$json['lastModified'] = time();
+		}
+
+		File::save_rw($file, JSON::encode($json));
+		return $json;
+	}
+
+	File::exists($file, true);
 	$nfo = $file.'.nfo';
 
 	if (File::exists($nfo) && File::lastModified($file) <= File::lastModified($nfo)) {

@@ -836,6 +836,8 @@ private function call(string $call, array $args) {
 		$res = \rkphplib\lib\call($call, $args);
 	}
 	catch (\Exception $e) {
+		File::save('out/call.err', $call.print_r($args, true).
+			$e->getMessage()."\n".str_replace(PATH_RKPHPLIB, '', $e->getTraceAsString()));
 		return 'EXCEPTION';
 	}
 
@@ -996,6 +998,7 @@ private function execPHP(string $base) : string {
 		ob_end_clean();
 	}
 	catch (\Exception $e) {
+		File::save("out/$base.err", $e->getMessage()."\n".str_replace(PATH_RKPHPLIB, '', $e->getTraceAsString()));
 		$out = 'EXCEPTION';
 	}
 
