@@ -1,6 +1,7 @@
 <?php
 
-$x = \rkphplib\File::nfo('out/t2.nfo');
+$x = \rkphplib\File::nfo('out/t2.nfo', 'run.php');
 
-print $x['name'];
+$x['lastModified'] = 'unset';
+print_r($x);
 

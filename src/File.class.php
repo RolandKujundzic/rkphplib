@@ -107,67 +107,45 @@ public static function loadTable(string $uri, array $options = []) : array {
  * Return file info. Autocreate/Update json file $file.nfo. 
  * Keys for comparison are size, md5, width, height other keys
  * are file, name (basename without suffix), mime and 
- * suffix (with leading dot). If file suffix is '.nfo' save only
- * name and lastModified.
+ * suffix (with leading dot). If source is set use $file as $nfo 
+ * path (default = $file.nfo) and $source as $file path.
+ * If $nfo is older than $file recreate $nfo.
  */
 public static function nfo(string $file, string $source = '') : array {
-
-	if (substr($file, -4) == '.nfo') {
-		if (File::exists($file)) {
-			$json = JSON::decode(File::load($file));
-		}
-		else {
-			$json = [];
-			$json['name'] = File::basename($file, true);
-			$json['lastModified'] = time();
-		}
-
-		File::save_rw($file, JSON::encode($json));
-		return $json;
+	if (!empty($source)) {
+		$nfo = $file;
+		$file = $source;
+	}
+	else {
+		$nfo = $file.'.nfo';
 	}
 
 	File::exists($file, true);
-	$nfo = $file.'.nfo';
 
 	if (File::exists($nfo) && File::lastModified($file) <= File::lastModified($nfo)) {
-		$json = JSON::decode(File::load($nfo));
-
-		if (!empty($source) && (empty($json['source_file']) || $json['source_file'] != $source)) {
-			$source_json = File::nfo($source);
-			foreach ($source_json as $key => $value) {
-				$json['source_'.$key] = $value;
-			}
-		}
+		return JSON::decode(File::load($nfo));
 	}
-	else {
-		$json = [];
-		$json['file'] = $file;
-		$json['name'] = File::basename($file, true);
-		$json['size'] = File::size($file);
 
-		if ($json['size'] == 0) {
-			throw new Exception($file.' has zero size');
-		}
+	$json = [];
+	$json['file'] = $file;
+	$json['name'] = File::basename($file, true);
+	$json['size'] = File::size($file);
 
-		$json['mime'] = File::mime($file);
-		$json['suffix'] = File::suffix($file, true);
-		$json['lastModified'] = File::lastModified($file);
-		$json['md5'] = File::md5($file);
+	if ($json['size'] == 0) {
+		throw new Exception($file.' has zero size');
+	}
+
+	$json['mime'] = File::mime($file);
+	$json['suffix'] = File::suffix($file, true);
+	$json['lastModified'] = File::lastModified($file);
+	$json['md5'] = File::md5($file);
 	
-		if (substr($json['mime'], 0, 6) == 'image/') {
-			$ii = File::imageInfo($file);
-			$json = array_merge($json, $ii);
-		}
-
-		if (!empty($source)) {
-			$source_json = File::nfo($source);
-			foreach ($source_json as $key => $value) {
-				$json['source_'.$key] = $value;
-			}
-		}
-
-		File::save_rw($nfo, JSON::encode($json));
+	if (substr($json['mime'], 0, 6) == 'image/') {
+		$ii = File::imageInfo($file);
+		$json = array_merge($json, $ii);
 	}
+
+	File::save_rw($nfo, JSON::encode($json));
 
 	return $json;
 }

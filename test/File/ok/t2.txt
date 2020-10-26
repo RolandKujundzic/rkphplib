@@ -1,1 +1,10 @@
-t2
+Array
+(
+    [file] => run.php
+    [name] => run
+    [size] => 70
+    [mime] => text/x-php
+    [suffix] => .php
+    [lastModified] => unset
+    [md5] => be8fa8ff40a8eaac2e82c038ece71cc8
+)
