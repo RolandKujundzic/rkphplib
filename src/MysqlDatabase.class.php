@@ -547,7 +547,7 @@ public function dropTable(string $table) : void {
  *
  */
 public function execute($query, bool $use_result = false) : bool {
-	// \rkphplib\lib\log_debug("MysqlDatabase.execute:547> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
+	// \rkphplib\lib\log_debug("MysqlDatabase.execute:550> id=".$this->getId().", use_result=$use_result, query: ".print_r($query, true));
 	if (is_array($query)) {
 		if ($use_result) {
 			if (($stmt = $this->_exec_stmt($query)) === null) {
@@ -612,7 +612,7 @@ private function error(string $msg, string $internal = '', int $flag = 0) : ?boo
 	}
 
 	if ($flag & 4) {
-		// \rkphplib\lib\log_debug("MysqlDatabase.error:612> $msg (flag=$flag internal=$internal)");
+		// \rkphplib\lib\log_debug("MysqlDatabase.error:615> $msg (flag=$flag internal=$internal)");
 	}
 	else {
 		\rkphplib\lib\log_warn("MysqlDatabase.error> $msg (flag=$flag internal=$internal)");
@@ -1242,7 +1242,7 @@ public function getTableDesc(string $table) : array {
  *
  */
 public function getInsertId() : int {
-	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1242> id=".$this->getId().", insert_id=".$this->_db->insert_id);
+	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1245> id=".$this->getId().", insert_id=".$this->_db->insert_id);
 	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) === 0) {
 		return intval($this->error('no_id', $this->_db->insert_id, 2));
 	}
