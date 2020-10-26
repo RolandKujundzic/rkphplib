@@ -80,7 +80,7 @@ private function log(string $msg, int $flag = 1) : void {
 			$prefix .= ' ('.round($elapsed / 60, 2).' min)';
 		}
 		else if ($elapsed > 1) {
-			$prefix .= '( '.round($elapsed, 2).' s)';
+			$prefix .= ' ('.round($elapsed, 2).' s)';
 		}
 		else {
 			$prefix .= ' ('.round($elapsed * 1000, 2).' ms)';

@@ -505,23 +505,26 @@ public function saveTableDump(array $opt) : void {
 /**
  *
  */
-public function loadDumpShell(string $file, int $flags = 0) : void {
+public function loadDumpShell(string $file, int $flags = self::LOAD_DUMP_IGNORE_KEYS, array $tables = []) : void {
 	$dsn = self::splitDSN($this->_dsn);
 	$mysql = new PipeExecute('mysql -h {:=host} -u {:=login} -p{:=password} {:=name}', $dsn);
 
+	$tkeys = ($flags & self::LOAD_DUMP_DROP_TABLES) ? [] : $tables;
+
 	if ($flags & self::LOAD_DUMP_IGNORE_KEYS) {
-		$mysql->write($this->disableKeys([], true));
+		$mysql->write($this->disableKeys($tkeys, true));
 	}
 
-	if ($flags & self::LOAD_DUMP_ADD_DROP_TABLE) {
-		$table = File::basename($file, true);
-		$mysql->write("DROP TABLE IF EXISTS $table;");
+	if ($flags & self::LOAD_DUMP_DROP_TABLES) {
+		foreach ($tables as $table) {
+			$mysql->write("DROP TABLE IF EXISTS $table;\n");
+		}
 	}
 
 	$mysql->load($file);
 
 	if ($flags & self::LOAD_DUMP_IGNORE_KEYS) {
-		$mysql->write($this->enableKeys([], true));
+		$mysql->write($this->enableKeys($tkeys, true));
 	}
 
 	list ($retval, $error, $output) = $mysql->close();

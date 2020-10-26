@@ -597,7 +597,7 @@ public function saveTableDump(array $opt) : void {
 /**
  *
  */
-public function loadDumpShell(string $file, int $flags) : void {
+public function loadDumpShell(string $file, int $flags = self::LOAD_DUMP_IGNORE_KEYS, array $tables = []) : void {
 	throw new Exception('ToDo ...');
 }
 

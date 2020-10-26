@@ -949,28 +949,32 @@ abstract public function saveTableDump(array $opt) : void;
 /**
  * Load dump via external shell command
  */
-abstract public function loadDumpShell(string $file, int $flags) : void;
+abstract public function loadDumpShell(string $file, int $flags = self::LOAD_DUMP_IGNORE_KEYS, array $tables = []) : void;
 
  
 /**
- * Import database dump. Basename $file (without .sql suffix) must be tablename. Flags are 2^n: 
- *
+ * Import database dump. Flags (2^n):
  * self::LOAD_DUMP_USE_SHELL | self::LOAD_DUMP_DROP_TABLE | self::LOAD_DUMP_IGNORE_KEYS
+ * If $tables is empty and and LOAD_DUMP_DROP_TABLE flag is set assume $file = TABLE.sql.
  */
-public function loadDump(string $file, int $flags) : void {
-
+public function loadDump(string $file, int $flags = self::LOAD_DUMP_IGNORE_KEYS, array $tables = []) : void {
 	if (!File::size($file)) {
 		return;
 	}
+
+	$drop = $flags & self::LOAD_DUMP_DROP_TABLE;
+	$tkeys = $drop ? [] : $tables;
 
 	if (class_exists('\\rkphplib\\tok\\Tokenizer', false)) {
 		\rkphplib\tok\Tokenizer::log([ 'label' => 'load sql dump', 'message' => $file ], 'log.sql_import');
 	}
 
-	$table = self::escape_name(File::basename($file, true));
+	if (count($tables) == 0 && $drop) {
+		$tables = [ self::escape_name(File::basename($file, true)) ];
+	}
 
 	if ($flags & self::LOAD_DUMP_USE_SHELL) {
-		$this->loadDumpShell($file, $flags);
+		$this->loadDumpShell($file, $flags, $tables);
 		return;
 	}
 
@@ -979,55 +983,30 @@ public function loadDump(string $file, int $flags) : void {
 	}
 
 	if ($flags & self::LOAD_DUMP_IGNORE_KEYS) {
-		$this->disableKeys();
+		$this->disableKeys($tkeys);
 	}
 
-	if ($flags & self::LOAD_DUMP_DROP_TABLE) {
-		$table = File::basename($file, true);
-		$this->db->dropTable($table);
-	}
-
-	$left = '';
-
-	while (!feof($fh)) { 
-		$temp = fread($fh, 1024);  // up to 1 MB buffer  
-		$lines = explode("\n", $temp);
-		$lines[0] = $left.$lines[0];
-		$query = '';
-
-		if (!feof($fh)) {
-			$left = array_pop($lines);
-		} 
-
-		foreach ($lines as $line){
-			$line .= "\n";
-
-			if (substr($line, 0, 2) == '--' || $line == '') {
-				continue;
-			}
-
-			$query .= $line;
-
-			if (substr(trim($line), -1) == ';') { // every query ends with ";"
-				$this->execute($query);
-				$query = '';
-			}
+	if ($drop) {
+		foreach ($tables as $table) {
+			$this->dropTable($table);
 		}
+	}
 
-		// we might have super long insert line: INSERT INTO ... VALUES (...),(...), ... (...);
-		while (!empty($left) && substr($left, 0, 12) == 'INSERT INTO ' && ($start = strpos($left, ' VALUES (')) !== false &&  
-					($end = strpos($left, '),(', $start + 1)) !== false) {
-			$insert = substr($left, 0, $end + 1).';';
-			$left = substr($left, 0, $start + 9).substr($left, $end + 3);
-			$start = 0;
-			$end = 0;
+	$query = '';
+	while (!feof($fh)) { 
+		$line = fgets($fh);
+		$query .= $line;
+
+		if (substr(rtrim($line), -1) == ';') { // every query ends with ";"
+			$this->execute($query);
+			$query = '';
 		}
 	}
 
 	fclose($fh);
 
 	if ($flags & self::LOAD_DUMP_IGNORE_KEYS) {
-		$this->enableKeys();
+		$this->enableKeys($tkeys);
 	}
 }
 
@@ -1229,7 +1208,7 @@ public function createTable(array $conf, bool $drop_existing = false) : int {
 	}
 
 	if (!$this->hasTable($tname)) {
-		\rkphplib\lib\log_warn("createTable($table) failed try again");
+		\rkphplib\lib\log_warn("createTable($tname) failed try again");
 		usleep(500);
 		if (!$this->hasTable($tname)) {
 			throw new Exception("create table failed", $query); 
