@@ -939,8 +939,9 @@ public function tok_loadJSON(string $file, array $p) : void {
 	foreach ($json as $plugin => $arg) {
 		$param = '';
 
-		if (is_array($arg) && !empty($arg[0])) {
-			$param = array_shift($arg);
+		if (is_array($arg) && count($arg) == 2 && isset($arg[0]) && isset($arg[1])) {
+			$param = $arg[0];
+			$arg = $arg[1];
 		}
 
 		if (is_string($arg)) {
@@ -948,7 +949,9 @@ public function tok_loadJSON(string $file, array $p) : void {
 		}
 		else {
 			foreach ($arg as $key => $value) {
-				$arg[$key] = $this->_tok->replaceTags($value, $p);
+				if (is_string($value)) {
+					$arg[$key] = $this->_tok->replaceTags($value, $p);
+				}
 			}
 		}
 
