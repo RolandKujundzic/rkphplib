@@ -209,6 +209,7 @@ public function loadLock(array $allow_status = []) : array {
 
 /**
  * Update job information in $nfo. Always add lastModified.
+ * Use data[ttl] = #seconds to force since update.
  * Set name = File::basename($nfo, true) if empty.
  * If $nfo file existed result has since key.
  */
@@ -217,7 +218,8 @@ public static function nfo(string $nfo, array $data = []) : array {
 	if (File::exists($nfo)) {
 		$json = array_merge(JSON::decode(File::load($nfo)), $data);
 
-		if (!isset($json['since'])) {
+		if (empty($json['since']) || (!empty($data['ttl']) &&
+				time() > $json['since'] + $data['ttl'])) {
 			$json['since'] = $json['lastModified'];
 		}
 	}
