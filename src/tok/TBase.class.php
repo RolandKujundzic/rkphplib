@@ -994,13 +994,14 @@ public function tok_load(string $param, string $file) : string {
  * Return encoded link parameter (e.g. "_=index.php|#|dir=test|#|a=5" -> index.php?cx=ie84PGh3284).
  * If parameter "_" is missing assume "_" = index.php.
  *
- * {link:}dir=a/b/c|#|t=382{:link} -> index.php?cx=eiEveLHO83821
- * {link:}dir=a/b/c|#|t=382{:link} -> index.php?dir=a/b/c&t=382 (falls SETTINGS_REQ_CRYPT = '')
- * {link:}_=a/b/c|#|t=382{:link} -> ?eiEveLHO83821
- * {link:}@=a/b/c|#|t=382{:link} -> ?eiEveLHO83821 (append s_*, search if _REQUEST is set)
+ * @tok {link:}dir=a/b/c|#|t=382{:link} = index.php?cx=eiEveLHO83821
+ * @tok {link:}dir=a/b/c|#|t=382{:link} = index.php?dir=a/b/c&t=382 (falls SETTINGS_REQ_CRYPT = '')
+ * @tok {link:}_=a/b/c|#|t=382{:link} = ?eiEveLHO83821
+ * @tok {link:}@=a/b/c|#|t=382{:link} = ?eiEveLHO83821 (append s_*, search if _REQUEST is set)
  *
- * {link:@,t} -> {link:}@={get:dir}|#|t={get:t}{:link}
- * {link:_,t} -> {link:}_={get:dir}|#|t={get:t}{:link}
+ * @tok {link:} = link:}_={get:dir}{:link}
+ * @tok {link:_,t} = {link:}_={get:dir}|#|t={get:t}{:link}
+ * @tok {link:@,t} = {link:}@={get:dir}|#|t={get:t}{:link}
  *
  * Use parameter @ to enable keep (_, dir = no keep mode).
  *
@@ -1010,10 +1011,14 @@ public function tok_load(string $param, string $file) : string {
  * If SETTINGS_REQ_CRYPT is empty do not encode link.
  */
 public function tok_link(array $name_list, array $p) : string {
-	// \rkphplib\lib\log_debug("TBase.tok_link:1013> name_list: ".print_r($name_list, true)."\np: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TBase.tok_link:1014> name_list: ".print_r($name_list, true)."\np: ".print_r($p, true));
 	$res = 'index.php?'.SETTINGS_REQ_CRYPT.'=';
 	$keep = false;
 	$seo = '';
+
+	if (count($name_list) == 0 && count($p) == 0) {
+		$name_list = [ '_' ];
+	}
 
 	foreach ($name_list as $name) {
 		if ($name == '@' || $name == '_') {
@@ -1109,7 +1114,7 @@ public function tok_link(array $name_list, array $p) : string {
 		$res .= self::encodeHash($p);
 	}
 
-	// \rkphplib\lib\log_debug("TBase.tok_link:1112> return $res");
+	// \rkphplib\lib\log_debug("TBase.tok_link:1117> return $res");
 	return $res;
 }
 
@@ -1199,7 +1204,7 @@ public static function decodeHash(string $data, bool $export_into_req = false) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TBase::decodeHash:1202> return ".print_r($res, true));
+	// \rkphplib\lib\log_debug("TBase::decodeHash:1207> return ".print_r($res, true));
 	return $res;
 }
 
@@ -1493,7 +1498,7 @@ public function tok_filter(string $tag, array $filter_list) : void {
  * @see tag_filter
  */
 private function applyFilter(string $tag, string $value) : string {
-	// \rkphplib\lib\log_debug("TBase.applyFilter:1496> tag=$tag value=[$value]");
+	// \rkphplib\lib\log_debug("TBase.applyFilter:1501> tag=$tag value=[$value]");
 	if (!isset($this->_conf['filter.'.$tag])) {
 		throw new Exception('no filter', "tag=$tag value=[$value] _conf: ".print_r($this->_conf, true));
 	}
@@ -1520,7 +1525,7 @@ private function applyFilter(string $tag, string $value) : string {
 			throw new Exception('invalid filter', "tag=$tag filter=$filter value=[$value]");
 		}
 
-		// \rkphplib\lib\log_debug("TBase.applyFilter:1523> filter=$filter value=[$value]");
+		// \rkphplib\lib\log_debug("TBase.applyFilter:1528> filter=$filter value=[$value]");
 	}
 
 	return $value;
@@ -1556,7 +1561,7 @@ public function tok_esc(string $param, ?string $arg) : ?string {
 	}
 
 	if (is_null($arg) || $arg === 'null' || $arg === 'NULL') {
-		// \rkphplib\lib\log_debug("TBase.tok_esc:1559> return NULL");
+		// \rkphplib\lib\log_debug("TBase.tok_esc:1564> return NULL");
 		return 'NULL';
 	}
 
@@ -1566,7 +1571,7 @@ public function tok_esc(string $param, ?string $arg) : ?string {
 
 	$arg = $this->applyFilter('esc', $arg);
 
-	// \rkphplib\lib\log_debug("TBase.tok_esc:1569> return [$arg]");
+	// \rkphplib\lib\log_debug("TBase.tok_esc:1574> return [$arg]");
 	return $arg;
 }
 
@@ -1915,7 +1920,7 @@ public function tok_plugin(string $ns, array $p) : void {
 		$cpath = File::exists($path.'.class.php') ? $path.'.class.php' : $path.'.php';
 		File::exists($cpath, true);
 
-		// \rkphplib\lib\log_debug("TBase.tok_plugin:1918> require_once '$cpath'; new $obj();");
+		// \rkphplib\lib\log_debug("TBase.tok_plugin:1923> require_once '$cpath'; new $obj();");
 		require_once $cpath;
 		$this->_tok->register(new $obj());
 	}
@@ -2041,7 +2046,7 @@ public function tok_tf(array $p, string $arg) : void {
 	$ta = trim($arg);
 	$do = '';
 
-	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2044> ta=<1> p: <2>", $ta, $p ]);
+	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2049> ta=<1> p: <2>", $ta, $p ]);
 	if (count($p) == 1) {
 		if ($p[0] === '') {
 			$tf = !empty($ta);
@@ -2084,7 +2089,7 @@ public function tok_tf(array $p, string $arg) : void {
 		$ap = array_merge($p, split_str(HASH_DELIMITER, $arg));
 	}
 
-	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2087> do=<1> tf=<2> ap: <3>", $do, $tf, $ap ]);
+	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2092> do=<1> tf=<2> ap: <3>", $do, $tf, $ap ]);
 	if (empty($do)) {
 		$this->_tok->setCallStack('tf', $tf);
 		return;
@@ -2163,7 +2168,7 @@ public function tok_tf(array $p, string $arg) : void {
 			$set = split_str(',', $ap[1]);
 			$tf = in_array($ap[0], $set);
 		}
-		// \rkphplib\lib\log_debug([ "TBase.tok_tf:2166> tf=<1> set: <2>", $tf, $set ]);
+		// \rkphplib\lib\log_debug([ "TBase.tok_tf:2171> tf=<1> set: <2>", $tf, $set ]);
 	}
 	else if ($do == 'and' || $do == 'or') {
 		$apn = count($ap);
@@ -2233,7 +2238,7 @@ public function tok_true(string $val, string $out) : string {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('TBase.tok_true:2236> val='.print_r($val, true).' tf='.print_r($tf, true));
+	// \rkphplib\lib\log_debug('TBase.tok_true:2241> val='.print_r($val, true).' tf='.print_r($tf, true));
 	return ((is_bool($tf) && $tf) || (is_array($val) && in_array($tf, $val)) || (is_string($tf) && $tf === $val) || 
 		(is_array($tf) && !empty($val) && in_array($val, $tf))) ? $out : '';
 }
@@ -2261,7 +2266,7 @@ public function tok_false(string $out) : string {
  * Write message via log_debug.
  */
 public function tok_log(string $txt) : void {
-	\rkphplib\lib\log_debug("TBase.tok_log:2264> $txt"); // @keep
+	\rkphplib\lib\log_debug("TBase.tok_log:2269> $txt"); // @keep
 }
 
 
