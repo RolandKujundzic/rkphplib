@@ -4,14 +4,15 @@ namespace rkphplib\tok;
 
 require_once __DIR__.'/TokPlugin.iface.php';
 require_once __DIR__.'/../Exception.class.php';
+require_once __DIR__.'/../lib/conf2kv.php';
 require_once __DIR__.'/../lib/split_str.php';
 require_once __DIR__.'/../lib/redirect.php';
 
 use rkphplib\Exception;
 
-use function rkphplib\lib\split_str;
+use function rkphplib\lib\conf2kv;
 use function rkphplib\lib\redirect;
-
+use function rkphplib\lib\split_str;
 
 
 /**
@@ -54,14 +55,20 @@ public function getPlugins(Tokenizer $tok) : array {
  * Set menu configuration. Use {menu:conf:*} to reset.
  *
  * @tok {menu:conf:*}
+ * @tok {menu:conf:*}KEY=...|#|KEY=...{:menu}
  * @tok {menu:conf:custom}CUSTOM{:menu}
- * @tok {menu:add:1}_tpl=custom|#|...{:menu}
  */
 public function tok_menu_conf(string $name, ?string $value) : void {
 
-	if ($name == '*' && empty($value)) {
+	if ($name == '*') {
 		$this->conf = [];
 		$this->node = [];
+
+		if (!empty($value)) {
+			$this->conf = conf2kv($value);
+		}
+
+		return;
 	}
 
 	if (mb_strpos($name, 'level_') === 0 && !empty($this->conf['level_6'])) {
