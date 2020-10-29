@@ -251,12 +251,17 @@ public function set(string $key, $value) : void {
  * Logout. Example:
  *
  * @tok {login_clear:}
- * @tok {login_clear:}redirect=login/byebye{:login_clear}
+ * @tok {login_clear:}if={get:logout}|#|redirect=login/byebye{:login_clear}
  *
  * @param hash $p
  * @return ''
  */
 public function tok_login_clear(array $p) : void {
+	// \rkphplib\lib\log_debug([ "TLogin.tok_login_clear:260> <1>", $p ]);
+	if (isset($p['if']) && empty($p['if'])) {
+		return;
+	}
+
 	if ($this->sess) {
 		$this->setLoginHistory('LOGOUT');
 		$this->sess->destroy();
@@ -875,7 +880,7 @@ private function selectFromDatabase(array $p) : ?array {
  * @tok {login:@since} -> date('d.m.Y H:i:s', @start)
  * @tok {login:@lchange} -> date('d.m.Y H:i:s', @last)
  */
-public function tok_login(string $key, ?string $alt_key = '') : string {
+public function tok_login(string $key, ?string $alt_key = '') : ?string {
 	// \rkphplib\lib\log_debug("TLogin.tok_login:879> key=$key alt_key=$alt_key");
 	$res = '';
 
