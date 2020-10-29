@@ -1186,10 +1186,10 @@ public function createTable(array $conf) : int {
 	$tname = self::escape_name($conf['@table']);
 
 	if ($this->hasTable($tname)) {
-		if ($conf['@keep_existing']) {
+		if (!empty($conf['@keep_existing'])) {
 			return 1;
 		}
-		else if ($conf['@drop_existing']) {
+		else if (!empty($conf['@drop_existing'])) {
 			$this->dropTable($tname);
 		}
 		else {
