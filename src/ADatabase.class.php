@@ -1272,9 +1272,11 @@ public static function parseCreateTableConf(array $conf) : array {
 		}
 	}
 
+	$skip = [ '@table', '@if_not', '@keep_existing', '@drop_existing' ];
+
 	// resolve @... shortcuts
 	foreach ($conf as $key => $value) {
-		if ($key === '@table' || mb_substr($key, 0, 1) !== '@') {
+		if (in_array($key, $skip) || mb_substr($key, 0, 1) !== '@') {
 			continue;
 		}
 
@@ -1616,7 +1618,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 
 	$add_default = empty($kv['@add_default']) ? false : true;
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1619> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1621> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
 
 	foreach ($p as $col => $cinfo) {
 		$val = false;
@@ -1641,17 +1643,17 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			}
 		}
 
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1644> col=$col, val=$val");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1646> col=$col, val=$val");
 
 		if ($val !== false) {
 			array_push($key_list, self::escape_name($col));
 			array_push($val_list, $val);
-			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1649> table=$table, type=$type, col=$col, val=$val");
+			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1651> table=$table, type=$type, col=$col, val=$val");
 		}
 	}
 
 	if (count($key_list) == 0) {
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1654> empty key_list - return");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1656> empty key_list - return");
 		return '';
 	}
 
@@ -1677,7 +1679,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1680> table=$table, type=$type, res=$res");
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1682> table=$table, type=$type, res=$res");
 	return $res;
 }
 
