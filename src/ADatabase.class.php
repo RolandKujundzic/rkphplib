@@ -1039,7 +1039,7 @@ public function loadDump(string $file, int $flags = self::LOAD_DUMP_IGNORE_KEYS,
  * @example set:'','a','b','c'::1 = set('', 'a', 'b', '') NOT NULL
  *
  */
-public static function createTableQuery(array $conf) : string {
+public static function createTableQuery(array $conf, bool $keep_existing = false) : string {
 
 	$tname = $conf['@table'];
 
@@ -1158,7 +1158,8 @@ public static function createTableQuery(array $conf) : string {
 		}
 	}
 
-	$query = "CREATE TABLE $tname (\n".join(",\n", $cols);
+	$create = empty($conf['@if_not']) ? 'CREATE TABLE ' : 'CREATE TABLE IF NOT EXISTS ';  
+	$query = $create.$tname." (\n".join(",\n", $cols);
 
 	if (count($keys) > 0) {
 		$query .= ",\n".join(",\n", $keys);
@@ -1171,10 +1172,11 @@ public static function createTableQuery(array $conf) : string {
 
 
 /**
- * Return true if table was created. Create only if table does not exists or drop_existing = true.
+ * Return true if table was created. Create only if table does not exists or @drop_existing = true.
+ * Use @keep_existing to keep existing table.
  * Return value 0=error, 1=create table ok, 2=multi query ok = create table + insert ok.
  */
-public function createTable(array $conf, bool $drop_existing = false) : int {
+public function createTable(array $conf) : int {
 
 	if (empty($conf['@table'])) {
 		throw new Exception('missing tablename', 'empty @table');
@@ -1183,7 +1185,10 @@ public function createTable(array $conf, bool $drop_existing = false) : int {
 	$tname = self::escape_name($conf['@table']);
 
 	if ($this->hasTable($tname)) {
-		if ($drop_existing) {
+		if ($conf['@keep_existing']) {
+			return 1;
+		}
+		else if ($conf['@drop_existing']) {
 			$this->dropTable($tname);
 		}
 		else {
@@ -1207,14 +1212,6 @@ public function createTable(array $conf, bool $drop_existing = false) : int {
 		$res = 1;
 	}
 
-	if (!$this->hasTable($tname)) {
-		\rkphplib\lib\log_warn("createTable($tname) failed try again");
-		usleep(500);
-		if (!$this->hasTable($tname)) {
-			throw new Exception("create table failed", $query); 
-		}
-	}
-	
 	return $res;
 }
 
