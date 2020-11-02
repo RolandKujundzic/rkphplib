@@ -13,16 +13,19 @@ namespace rkphplib\lib;
 
 /**
  * Convert decimal to base len (default = 36, len in [2,65]).
- * If len=36 use 0-9a-zA-Z, if len=10 use 0-9 (decimal), if len=16 use 0-9a-f (hexadecimal).
+ * If len=36 use 0-9a-z, if len=10 use 0-9 (decimal), if len=16 use 0-9a-f (hexadecimal).
  * If len=62 use 0-9a-zA-Z. Maximum len is 65 (add -_.).
  * @example dec2n(65535, 16) == 'ffff'
  */
 function dec2n(int $n, int $len = 36) : string {
-	$a = [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b',
-		'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
-		'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C',
-		'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-		'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '-', '_', '.' ];
+	$a = [
+		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+		'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+		'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+		'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D',
+		'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+		'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+		'Y', 'Z', '-', '_', '.' ];
 
 	$s = '';
 	$m = 0;
