@@ -72,6 +72,14 @@ private function checkMap(string $plugin_param, array &$map, array $key_def) : v
 
 
 /**
+ * Return html error message <div class="tok_error">$msg</div>
+ */
+private function tokErrorMsg(string $msg) : string {
+	return '<div class="tok_error">'.$msg.'</div>';
+}
+
+
+/**
  * Throw Exception. Resolve ref as function call or plugin call and replace {:=ref} in $error.
  */
 private function tokError(string $error, ?array $ref = null) : void {
@@ -122,7 +130,7 @@ private function getMapKeys(string $path_str, array $map) {
 	$fkey = '';
 	$pkey = '';
 
-	// \rkphplib\lib\log_debug("TokHelper.getMapKeys:125> path_str=[$path_str] path=[".join('|', $path)."] map: ".print_r($map, true));
+	// \rkphplib\lib\log_debug("TokHelper.getMapKeys:133> path_str=[$path_str] path=[".join('|', $path)."] map: ".print_r($map, true));
 	while (count($path) > 0) {
 		$pkey = array_shift($path);
 
@@ -141,7 +149,7 @@ private function getMapKeys(string $path_str, array $map) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TokHelper.getMapKeys:144> found=[$found] fkey=[$fkey] pkey=[$pkey] is_array=[$is_array] map: ".print_r($map, true));
+	// \rkphplib\lib\log_debug("TokHelper.getMapKeys:152> found=[$found] fkey=[$fkey] pkey=[$pkey] is_array=[$is_array] map: ".print_r($map, true));
 	if (isset($map[$fkey])) {
 		$path_str = $fkey;
 		$found = false;
@@ -162,7 +170,7 @@ private function getMapKeys(string $path_str, array $map) {
 				$key = mb_substr($mkey, $len + 1);
 				$res[$key] = $value;
 			}
-			// \rkphplib\lib\log_debug("TokHelper.getMapKeys:165> path_str=[$path_str] mkey=[$mkey] value=[$value] res: ".print_r($res, true));
+			// \rkphplib\lib\log_debug("TokHelper.getMapKeys:173> path_str=[$path_str] mkey=[$mkey] value=[$value] res: ".print_r($res, true));
 		}
 
 		if (count($res) == 1) {
