@@ -436,14 +436,14 @@ public function tok_login_update(string $do, array $p) : void {
 		unset($p['@request_keys']);
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.tok_login_update:434> table=$table, kv ".print_r($kv, true)."\np ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TLogin.tok_login_update:439> table=$table, kv ".print_r($kv, true)."\np ".print_r($p, true));
 	$where = empty($kv['@where']) ? '' : $kv['@where'];
 
 	// only add (key,value) to kv where value has changed
 	foreach ($sess as $key => $value) {
 		if (isset($_REQUEST[$key]) && $value != $_REQUEST[$key]) {
 			$kv[$key] = $_REQUEST[$key];
-			// \rkphplib\lib\log_debug("TLogin.tok_login_update:441> kv (sess + request) - $key=".$_REQUEST[$key]);
+			// \rkphplib\lib\log_debug("TLogin.tok_login_update:446> kv (sess + request) - $key=".$_REQUEST[$key]);
 		}
 	}
 
@@ -451,7 +451,7 @@ public function tok_login_update(string $do, array $p) : void {
 		// e.g. !isset(kv['password'])
 		if (substr($key, 0, 1) != '@' && (!isset($kv[$key]) || $kv[$key] != $value)) {
 			$kv[$key] = $value;
-			// \rkphplib\lib\log_debug("TLogin.tok_login_update:449> kv (p) - $key=$value");
+			// \rkphplib\lib\log_debug("TLogin.tok_login_update:454> kv (p) - $key=$value");
 		}
 	}
 
@@ -470,7 +470,7 @@ public function tok_login_update(string $do, array $p) : void {
 
 		foreach ($has_cols as $col) {
 			if (!in_array($col, $allow_cols)) {
-				// \rkphplib\lib\log_debug("TLogin.tok_login_update:468> unset forbidden column $col");
+				// \rkphplib\lib\log_debug("TLogin.tok_login_update:473> unset forbidden column $col");
 				unset($kv[$col]);
 			}
 		}
@@ -489,7 +489,7 @@ public function tok_login_update(string $do, array $p) : void {
 
 			if ($id && is_numeric($id)) {
 				$where = "WHERE id='".intval($id)."'";
-				// \rkphplib\lib\log_debug("TLogin.tok_login_update:487> id=$id where=$where");
+				// \rkphplib\lib\log_debug("TLogin.tok_login_update:492> id=$id where=$where");
 			}
 		}
 
@@ -497,7 +497,7 @@ public function tok_login_update(string $do, array $p) : void {
 			throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
 		}
 
-		// \rkphplib\lib\log_debug("TLogin.tok_login_update:495> do=$do, table=$table, where=$where, kv: ".print_r($kv, true));
+		// \rkphplib\lib\log_debug("TLogin.tok_login_update:500> do=$do, table=$table, where=$where, kv: ".print_r($kv, true));
 		if (count($kv) > 0 && !empty($table) && $do != 'no_db') {
 			$kv['@where'] = $where;
 
@@ -505,7 +505,7 @@ public function tok_login_update(string $do, array $p) : void {
 
 			$query = (count($dbres) == 1) ? $this->db->buildQuery($table, 'update', $kv) : $this->db->buildQuery($table, 'insert', $kv);
 
-			// \rkphplib\lib\log_debug("TLogin.tok_login_update:503> query=$query");
+			// \rkphplib\lib\log_debug("TLogin.tok_login_update:508> query=$query");
 			if (!empty($query)) {
 				$this->db->execute($query);
 			}
@@ -519,11 +519,11 @@ public function tok_login_update(string $do, array $p) : void {
 	}
 
 	if (count($session_cols) > 0) {
-		// \rkphplib\lib\log_debug("TLogin.tok_login_update:517> use session_cols: ".print_r($session_cols, true));
+		// \rkphplib\lib\log_debug("TLogin.tok_login_update:522> use session_cols: ".print_r($session_cols, true));
 		$this->sess->setHash($session_cols, true);
 	}
 	else if (count($kv) > 0) {
-		// \rkphplib\lib\log_debug("TLogin.tok_login_update:521> #kv=".(count($kv))." update session: ".print_r($kv, true));
+		// \rkphplib\lib\log_debug("TLogin.tok_login_update:526> #kv=".(count($kv))." update session: ".print_r($kv, true));
 		$this->sess->setHash($kv, true);
 	}
 }
@@ -599,7 +599,7 @@ public function tok_login_auth(array $p) : void {
 		$this->sess->set('table', $p['table'], 'meta');
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.tok_login_auth:597> p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TLogin.tok_login_auth:602> p: ".print_r($p, true));
 	if (!is_null($this->db)) {
 		$user = $this->selectFromDb($p);
 	}
@@ -782,7 +782,7 @@ private function selectExtraData(string $qkey, array $p, array $replace) : array
 		$res[$key] = $value;
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.selectExtraData:780> qkey=$qkey, return ".print_r($res, true));
+	// \rkphplib\lib\log_debug("TLogin.selectExtraData:785> qkey=$qkey, return ".print_r($res, true));
 	return $res;
 }
 
@@ -807,13 +807,13 @@ private function selectFromDatabase(array $p) : ?array {
 
 	$query = $this->db->getCustomQuery('select_login', $p);
 	$dbres = $this->db->select($query);
-	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:805> query=$query - ".print_r($dbres, true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:810> query=$query - ".print_r($dbres, true));
 	if (count($dbres) == 0) {
 		$this->tok->setVar('login_error', 'invalid');
 		return null;
 	}
 
-	// \rkphplib\lib\log_debug('TLogin.selectFromDatabase:811> use master_password = PASSWORD('.$p['password'].') = '.$dbres[0]['password_input']);
+	// \rkphplib\lib\log_debug('TLogin.selectFromDatabase:816> use master_password = PASSWORD('.$p['password'].') = '.$dbres[0]['password_input']);
 	if (!empty($p['master_password']) && $dbres[0]['password_input'] == $p['master_password']) {
 		$dbres[0]['password'] = $p['master_password'];
 	}
@@ -850,7 +850,7 @@ private function selectFromDatabase(array $p) : ?array {
 
 	if ($dbres[0]['status'] == 'registered') {
 		$query = $this->db->getCustomQuery('registered2active', $dbres[0]);
-		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:848> auto-activate user: ".$query);
+		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:853> auto-activate user: ".$query);
 		$this->db->execute($query);
 	}
 
@@ -858,7 +858,7 @@ private function selectFromDatabase(array $p) : ?array {
 	unset($dbres[0]['password_input']);
 	unset($dbres[0]['password']);
 
-	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:856> return user: ".print_r($dbres[0], true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:861> return user: ".print_r($dbres[0], true));
 	return $dbres[0];
 }
 
@@ -881,7 +881,7 @@ private function selectFromDatabase(array $p) : ?array {
  * @tok {login:@lchange} -> date('d.m.Y H:i:s', @last)
  */
 public function tok_login(string $key, ?string $alt_key = '') : ?string {
-	// \rkphplib\lib\log_debug("TLogin.tok_login:879> key=$key alt_key=$alt_key");
+	// \rkphplib\lib\log_debug("TLogin.tok_login:884> key=$key alt_key=$alt_key");
 	$res = '';
 
 	if (strlen($key) == 0 && strlen($alt_key) > 0) {
@@ -945,7 +945,7 @@ public function tok_login(string $key, ?string $alt_key = '') : ?string {
 		$res = kv2conf($res);
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.tok_login:943> res=[$res]");
+	// \rkphplib\lib\log_debug("TLogin.tok_login:948> res=[$res]");
 	return $res;
 }
 
