@@ -27,6 +27,45 @@ public static $USE_FLOCK = false;
 
 
 /**
+ * Print last $lnum lines
+ */
+public static function tail(string $file, int $lnum = 5, int $maxLen = 250) : void {
+	$fp = self::open($file);
+
+	$data = fseek($fp, -($lnum * $maxLen), SEEK_END);
+
+	$lines = array();
+	while (!feof($fp)) {
+  	$lines[] = fgets($fp);
+	}
+
+	$c = count($lines);
+	$i = $c >= $lnum ? $c - $lnum : 0;
+	for (; $i < $c; $i++) {
+		print $lines[$i];
+	}
+
+	self::close($fp);
+}
+
+
+/**
+ * Print first $lnum lines
+ */
+public static function head(string $file, int $lnum = 5) : void {
+	$fp = self::open($file);
+	$n = 0;
+
+	while ($n < $lnum && !feof($fp)) {
+  	print fgets($fp);
+		$n++;
+	}
+
+	self::close($fp);
+}
+
+
+/**
  * Load table data. If uri is file|http|https|binary://.
  * CSV Options are [ ',', '"' ]
  * JSON Options are hash name[:default] list (if not set only vector input is allowed)
