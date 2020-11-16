@@ -382,31 +382,38 @@ public function setQuery(string $qkey, string $query, array $info = []) : void {
 	$tok = preg_split("/('?\\".TAG_PREFIX."[a-zA-Z0-9_\^]+\\".TAG_SUFFIX."'?)/s", $query, -1, PREG_SPLIT_DELIM_CAPTURE);
 	// value is: bind, escape, escape2, escape_name, keep
 	$map = array('bind' => array());
+	$pl = mb_strlen(TAG_PREFIX);
+	$sl = mb_strlen(TAG_SUFFIX);
 
 	for ($i = 1; $i < count($tok) - 1; $i += 2) {
 		$m = $tok[$i];
 
-		if (mb_substr($m, 0, 1) === "'" && mb_substr($m, -1) === "'" && mb_substr($m, 4, 1) !== '^') {
+		if (mb_substr($m, 0, 1) === "'" && mb_substr($m, -1) === "'" && mb_substr($m, $pl + 1, 1) !== '^') {
 			if ($this->use_prepared) {
-				array_push($map['bind'], mb_substr($m, 4, -2));
+				array_push($map['bind'], mb_substr($m, $pl + 1, -$sl - 1));
 				$tok[$i] = '?';
 			}
 			else {
-				$key = mb_substr($m, 4, -2);
+				$key = mb_substr($m, $pl + 1, -$sl - 1);
 				$tok[$i] = substr($tok[$i], 1, -1);
 				$map[$key] = 'escape';
 			}
 		}
-		else if (mb_substr($m, 3, 1) === '_') {
-			$key = mb_substr($m, 3, -1);
-			$map[$key] = 'keep';
+		else if (mb_substr($m, $pl, 1) === '_') {
+			$key = mb_substr($m, $pl, -$sl);
+			if (substr($tok[$i - 1], -5) == ' IN (' && substr($tok[$i + 1], 0, 1) == ')') {
+				$map[$key] = 'in';
+			}
+			else {
+				$map[$key] = 'keep';
+			}
 		}
-		else if (mb_substr($m, 3, 1) === '^') {
-			$key = mb_substr($m, 4, -1);
+		else if (mb_substr($m, $pl, 1) === '^') {
+			$key = mb_substr($m, $pl + 1, -$sl);
 			$map[$key] = 'escape_name';
 		}
 		else {
-			$key = mb_substr($m, 3, -1);
+			$key = mb_substr($m, $pl, -$sl);
 			$map[$key] = 'escape';
 		}
 	}
@@ -526,7 +533,15 @@ public function getQuery(string $qkey, array $replace = null) {
 		else if ($do === 'escape_name') {
 			$query = str_replace(TAG_PREFIX.'^'.$key.TAG_SUFFIX, self::escape_name($replace[$key]), $query);
 		}
-		else if ($do === 'keep') {
+		else if ($do === 'in' && is_array($replace[$key])) {
+			$tmp = [];
+			foreach ($replace[$key] as $val) {
+				array_push($tmp, $this->esc($val));
+			}
+
+			$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, "'".join("', '", $tmp)."'", $query);
+		}
+		else if ($do === 'keep' || $do === 'in') {
 			$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, $replace[$key], $query);
 		}
 		else {
