@@ -80,9 +80,8 @@ public function getPlugins(Tokenizer $tok) : array {
  * reset: 1 
  *
  * @param array[string]string $p
- * @return ''
  */
-public function tok_picture_init($p) {
+public function tok_picture_init(array $p) : void {
 
 	if (!isset($p['reset'])) {
 		$p['reset'] = 1;
@@ -129,7 +128,7 @@ public function tok_picture_init($p) {
 		$this->conf[$key] = $value;
 	}
 
-	// \rkphplib\lib\log_debug('TPicture.tok_picture_init:132> this.conf: '.print_r($this->conf, true));
+	// \rkphplib\lib\log_debug([ "TPicture.tok_picture_init:132> this.conf: <1>\n<2>", $this->conf, $p ]);
 }
 
 
@@ -166,10 +165,8 @@ private function checkConf($p) {
  * @tok {picture:list}names={:=names}{:picture} - apply {picture:src}names={:=names}|#|num=N{:picture}
  *
  * @see tok_picture_src
- * @param hash $p
- * @return string
  */
-public function tok_picture_list($p) {
+public function tok_picture_list(array $p) : string {
 	if (empty($p['names'])) {
 		throw new Exception('missing parameter names');
 	}
@@ -205,11 +202,8 @@ public function tok_picture_list($p) {
  *
  * Every parameter from picture:init can be (temporary) overwritten.
  * Fallback is picture_dir/default or no-picture if conf.ignore_missing=1.
- *
- * @param array[string]string $p
- * @return string|empty
  */
-public function tok_picture_src($p) {
+public function tok_picture_src(array $p) : string {
 	$conf = $this->conf;
 
 	$this->checkConf($p);
