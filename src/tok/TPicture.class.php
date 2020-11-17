@@ -50,10 +50,12 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
- * Set configuration hash. Default parameter:
+ * Set configuration hash. If $p[picture_dir] is set, basename($p[picture_dir]) == 'img'
+ * and $p[preview_dir] is empty use dirname($p['picture_dir']).'/preview' as preview_dir.
+ * Default parameter:
  *
  * picture_dir: data/picture/upload
- * preview_dir: data/picture/preview
+ * preview_dir: data/picture/preview 
  * convert.resize: _input,_sRGB,_geometry,_target
  * convert.center: _input,_sRGB,_geometry,_box,_target
  * convert.box: _input,_sRGB,_strip,_trim,_thumbnail,_boxw,_target
@@ -93,12 +95,11 @@ public function tok_picture_init(array $p) : void {
 	}
 
 	if (count($this->conf) == 0 || !empty($p['reset'])) {
-	  $default['picture_dir'] = 'data/picture/upload';
-  	$default['preview_dir'] = 'data/picture/preview';
- 		$default['convert.resize'] = '_input,_sRGB,_geometry,_target';
+		$default['picture_dir'] = 'data/picture/upload';
+		$default['convert.resize'] = '_input,_sRGB,_geometry,_target';
 		$default['convert.center'] = '_input,_sRGB,_geometry,_box,_target';
- 		$default['convert.box'] = '_input,_sRGB,_strip,_trim,_thumbnail,_boxw,_target';
- 		$default['convert.box_png'] = '_input,_sRGB,_strip,_trim,_thumbnail,_boxt,_target_png';
+		$default['convert.box'] = '_input,_sRGB,_strip,_trim,_thumbnail,_boxw,_target';
+		$default['convert.box_png'] = '_input,_sRGB,_strip,_trim,_thumbnail,_boxt,_target_png';
 		$default['convert.cover'] = '_input,_sRGB,_crop,_geometry,_target';
 		$default['convert._input'] = 'convert '.$tok->getTag('source');
 		$default['convert._resize'] = '-resize '.$tok->getTag('resize');
@@ -121,6 +122,13 @@ public function tok_picture_init(array $p) : void {
 		$default['transparent_tbn'] = 1;
 		$default['reset'] = 1;
 
+		if (empty($p['preview_dir']) && !empty($p['picture_dir']) && basename($p['picture_dir']) == 'img') {
+			$default['preview_dir'] = dirname($p['picture_dir']).'/preview';
+		}
+		else {
+			$default['preview_dir'] = 'data/picture/preview';
+		}
+
 		$this->conf = $default;
 	}
 
@@ -128,7 +136,7 @@ public function tok_picture_init(array $p) : void {
 		$this->conf[$key] = $value;
 	}
 
-	// \rkphplib\lib\log_debug([ "TPicture.tok_picture_init:132> this.conf: <1>\n<2>", $this->conf, $p ]);
+	\rkphplib\lib\log_debug([ "TPicture.tok_picture_init:132> this.conf: <1>\n<2>", $this->conf, $p ]);
 }
 
 
