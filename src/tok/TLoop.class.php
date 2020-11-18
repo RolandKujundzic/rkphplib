@@ -4,9 +4,11 @@ namespace rkphplib\tok;
 
 require_once __DIR__.'/TokPlugin.iface.php';
 require_once __DIR__.'/../Exception.class.php';
+require_once __DIR__.'/../JSON.class.php';
 require_once __DIR__.'/../lib/split_str.php';
 
 use rkphplib\Exception;
+use rkphplib\JSON;
 
 use function rkphplib\lib\split_str;
 
@@ -36,6 +38,7 @@ public function getPlugins(Tokenizer $tok) : array {
   $plugin = [];
   $plugin['loop:var'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
   $plugin['loop:list'] = TokPlugin::PARAM_LIST;
+  $plugin['loop:json'] = TokPlugin::NO_PARAM;
   $plugin['loop:hash'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
   $plugin['loop:show'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
   $plugin['loop:join'] = TokPlugin::NO_PARAM | TokPlugin::LIST_BODY | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
@@ -47,17 +50,13 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
- * Set loop to Tokenizer.vmap[$name]. Example:
+ * Set loop to Tokenizer.vmap[$name]. Use suffix semicolon to abort
+ * if variable was not found.
  *
- * PHP: tok->vmap[test] = [ ... ]; tok->vmap['a']['b']['c'] = $x;
- * TEMPLATE: {loop:var}test!{:loop} {loop:var}a.b.c{:loop}
- *
- * Use suffix semicolon to abort if variable was not found.
- *
- * @param string $name
- * @return ''
+ * @tok {loop:var}test!{:loop}
+ * @tok {loop:var}a.b.c{:loop}
  */
-public function tok_loop_var($name) {
+public function tok_loop_var(string $name) : void {
 	$res = $this->tok->getVar($name);
 
 	if (!is_array($res)) {
@@ -69,21 +68,19 @@ public function tok_loop_var($name) {
 
 
 /**
- * Loop data is list. If delimiter is empty use comma. Ignore empty entries. Example:
- * 
- *  {loop:list}a,b,c{:loop}
- *  {loop:list:;}a;b;c{:loop}
- *  {loop:list:|#|}a|#|b|#|c{:loop}
- *  {loop:list:\n}a
- *  b
- *  ...
- *  {:loop}
+ * Loop data is list. If delimiter is empty use comma. Ignore empty entries.
  *
- * @param array $p
- * @param string $txt
- * @return ''
+ * @tok {loop:list}a,b,c{:loop}
+ * @tok {loop:list:;}a;b;c{:loop}
+ * @tok {loop:list:|#|}a|#|b|#|c{:loop}
+ * @tok …
+ * {loop:list:\n}a
+ * b
+ * ...
+ * {:loop}
+ * @EOL
  */
-public function tok_loop_list($p, $txt) {
+public function tok_loop_list(array $p, string $txt) : void {
 	$delimiter = ',';
 
 	if (count($p) > 0 && strlen($p[0]) > 0) {
@@ -97,13 +94,20 @@ public function tok_loop_list($p, $txt) {
 /**
  * Loop data is hash.
  * 
- *  {loop:hash}a=x|#|b=" y "|#|c=z{:loop} -> { a: "x", b: " y ", c: "z" }
- *
- * @param array $kv
- * @return ''
+ * @tok {loop:hash}a=x|#|b=" y "|#|c=z{:loop} = { a: "x", b: " y ", c: "z" }
  */
-public function tok_loop_hash($kv) {
+public function tok_loop_hash(array $kv) : void {
 	$this->loop = $kv;
+}
+
+
+/**
+ * Loop data is json.
+ * 
+ * @tok {loop:json}{ "a": "x", "b": "y", "c": "z" }{:loop}
+ */
+public function tok_loop_json(string $json_str) {
+	$this->loop = JSON::decode($json_str);
 }
 
 
@@ -111,13 +115,9 @@ public function tok_loop_hash($kv) {
  * Show joined loop data. Use $p[0] as delimiter. Default delimiter is comma. 
  * Replace {:=loop} in $p[1]. Default $p[1] is "{:=loop}". Example:
  *
- * {loop:list}a.jpg,b.jpg{:loop}
- * var x = [ '{loop:join}', '|#|<img src="{:=loop}">{:loop} ] -> x = [ '<img src="a.jpg">', '<img src="b.jpg">' ]
- * 
- * @param array $p
- * @return string
+ * @tok {loop:list}a.jpg,b.jpg{:loop}
  */
-public function tok_loop_join($p) {
+public function tok_loop_join(array $p) : string {
 	$delimiter = array_shift($p);
 	$tpl = array_shift($p);
 	
@@ -151,19 +151,18 @@ public function tok_loop_join($p) {
 
 
 /**
- * Show loop data. Example:
+ * Show loop data. Template $tpl may contain loop|loop_pos|loop_value|loop_key tags.
  *
- *  {loop:list}a,b,c{:loop}
- *  {loop:show}{:=loop}<br>{:loop} -> a<br>b<br>c<br>
- *  {loop:show}{:=loop_pos}){:=loop} {:=loop} -> 1)a 2)b 3)c
+ * @tok …
+ * {loop:list}a,b,c{:loop}
+ * {loop:show}{:=loop}<br>{:loop} -> a<br>b<br>c<br>
+ * {loop:show}{:=loop_pos}){:=loop} {:=loop} -> 1)a 2)b 3)c
  *
- *  {loop:hash}a=x|#|b=y{:loop}
- *  { {loop:show}"{:=loop_key}": "{:=loop_value}"{:loop}, } -> { "a": "x", "b": "y", }
- *
- * @param string $txt
- * @return string
+ * {loop:hash}a=x|#|b=y{:loop}
+ * { {loop:show}"{:=loop_key}": "{:=loop_value}"{:loop}, } -> { "a": "x", "b": "y", }
+ * @EOF
  */
-public function tok_loop_show($txt) {
+public function tok_loop_show(string $tpl) : string {
 	$tag_loop = $this->tok->getTag('loop');
 	$tag_loop_n = $this->tok->getTag('loop_n');
 	$tag_loop_pos = $this->tok->getTag('loop_pos');
@@ -173,7 +172,7 @@ public function tok_loop_show($txt) {
 	$n = 0;
 
 	foreach ($this->loop as $key => $value) {
-		$tpl = trim($txt);
+		$entry = trim($tpl);
 
 		if ($key === $n) {
 			if (is_array($value)) {
@@ -187,11 +186,11 @@ public function tok_loop_show($txt) {
 						$tag = $this->tok->getTag($subkey);
 					}
 
-					if (mb_strpos($tpl, $tag) !== false) {
+					if (mb_strpos($entry, $tag) !== false) {
 						if (is_array($subvalue)) {
 						}
 						else {
-							$tpl = str_replace($tag, $subvalue, $tpl);
+							$entry = str_replace($tag, $subvalue, $entry);
 						}
 					}
 
@@ -199,14 +198,14 @@ public function tok_loop_show($txt) {
 				}
 			}
 			else {
-				$tpl = str_replace($tag_loop, $value, $tpl);
+				$entry = str_replace($tag_loop, $value, $entry);
 			}
 		}
 		else {
-			$tpl = str_replace([ $tag_loop_key, $tag_loop_value ], [ $key, $value ], $tpl);
+			$entry = str_replace([ $tag_loop_key, $tag_loop_value ], [ $key, $value ], $entry);
 		}
 
-		array_push($out, str_replace([ $tag_loop_n, $tag_loop_pos ], [ $n, $n + 1 ], $tpl));
+		array_push($out, str_replace([ $tag_loop_n, $tag_loop_pos ], [ $n, $n + 1 ], $entry));
 		$n++;
 	}
 
@@ -216,10 +215,8 @@ public function tok_loop_show($txt) {
 
 /**
  * Return loop length.
- * 
- * @return int
  */
-public function tok_loop_count() {
+public function tok_loop_count() : string {
 	return count($this->loop);
 }
 
