@@ -45,5 +45,5 @@ global $th;
 
 $t_output = new TOutput();
 $th->useTokPlugin([ $t_output ]);
-$th->run(1, 7);
+$th->run(1, 8);
 
