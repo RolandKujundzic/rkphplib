@@ -444,17 +444,19 @@ public function tok_tpl(array $p, ?string $arg) : string {
 /**
  * Retrieve (or set) Tokenizer.vmap value. Examples:
  *
- * @tok set a=17: {var:=a}17{:var}
- * @tok set default: {var:=a?}5{:var} - set a=5 if unset
- * @tok set hash: {var:=#b}x=5|#|y=12|#|...{:var} (error if hash b exists)
- * @tok overwrite hash keys:  {var:=#b!}x=5|#|y=12|#|...{:var} (overwrite existing keys)
- * @tok set vector: {var:+=b}x{:var}, {var:+=b},y{:var} - {var:b} = x,y
- * @tok get optional a: {var:a} or {var:}a{:var}
- * @tok get required a: {var:a!} (abort if not found)
- * @tok set multi-map: {var:=person.age}42{:var}
- * @tok get multi-map: {var:person.age} or {var:person.}age{:var}
+ * @tok {var:=a}17{:var} // set a=17
+ * @tok {var:=a?}5{:var} // set a=5 if unset
+ * @tok {var:=#b}x=5|#|y=12|#|...{:var} // set hash, error if exists
+ * @tok {var:=#b!}x=5|#|y=12|#|...{:var} // set hash, overwrite existing
+ * @tok {var:+=b}x{:var}, {var:+=b},y{:var} // append to set vector - {var:b} = x,y
+ * @tok {var:a} or {var:}a{:var} // get optional a
+ * @tok {var:a!} // get required a, abort if not found
+ * @tok {var:=person.age}42{:var} // set multi-map
+ * @tok {var:person.age}, {var:person.}age{:var} // get multi-map
+ *
+ * @param string|array|null $value
  */
-public function tok_var(string $name, ?string $value) : string {
+public function tok_var(string $name, $value) : string {
 
 	if (substr($name, 0, 1) == '=' && substr($name, -1) == '?') {
 		$name = substr($name, 0, -1); // name is now =abc or =#abc
@@ -472,7 +474,8 @@ public function tok_var(string $name, ?string $value) : string {
 		$name = substr($name, 1);
 
 		if (substr($name, 0, 1) == '#') {
-			$this->setVarHash(substr($name, 1), conf2kv($value));
+			$kv = is_array($value) ? $value : conf2kv($value);
+			$this->setVarHash(substr($name, 1), $kv);
 		}
 		else {
 			$this->setVar($name, $value);
@@ -489,7 +492,7 @@ public function tok_var(string $name, ?string $value) : string {
 /**
  * Set variable $name = $value. If $flag = Tokenizer::VAR_APPEND append to existing value.
  */
-public function setVar(string $name, string $value, int $flag = 0) : void {
+public function setVar(string $name, ?string $value, int $flag = 0) : void {
 	$this->_tok->setVar($name, $value, $flag);
 }
 
