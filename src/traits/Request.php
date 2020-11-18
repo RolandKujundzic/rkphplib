@@ -30,46 +30,88 @@ private $plugin_conf = [];
 /**
  * Set|Update this.plugin_conf default values. 
  * Set $group to overwerite group configuration.
+ * Use GROUP/NAME as key to define $group.
  */
 private function setPConf(array $p, string $group = '') : void {
+	$path = empty($group) ? [] : explode('/', $group);
+
+	$conf =& $this->plugin_conf;
+	foreach ($path as $name) {
+		if (!isset($conf[$name])) {
+			$conf[$name] = [];
+		}
+
+		$conf =& $conf[$name];
+	}
+
 	foreach ($p as $key => $value) {
-		$gkey = $group;
+		$kconf =& $conf;
 
-		if (!$gkey && strpos($key, '/') !== false) {
-			list ($gkey, $key) = explode('/', $key);
-		}
+		if (strpos($key, '/') !== false) {
+			$kpath = explode('/', $key);
+			$key = array_pop($kpath);
 
-		if ($gkey) {
-			if (!isset($this->plugin_conf[$gkey])) {
-				$this->plugin_conf[$gkey] = [];
+			foreach ($kpath as $name) {
+				if (!isset($conf[$name])) {
+					$kconf[$name] = [];
+				}
+
+				$kconf =& $kconf[$name];
 			}
+		}
 
-			$this->plugin_conf[$gkey][$key] = $value;
-		}
-		else {
-			$this->plugin_conf[$key] = $value;
-		}
+		$kconf[$key] = $value;
 	}
 }
 
 
 /**
  * Return default plugin_conf[$name] value[s]. Return array if $name = 'block/'.
+ * Use 'NAME?' for optional parameter.
+ *
  * @return string|array
  */
 private function getPConf(string $name) {
-	if (substr($name, -1) == '/') {
-		$name = substr($name, 0, -1);
-		if (!is_array($this->plugin_conf[$name])) {
-			throw new \Exception('no such plugin option block '.$name);
+	if ($name == '/') {
+		return $this->plugin_conf;
+	}
+
+	$error = 'no such plugin option '.$name;
+	$conf =& $this->plugin_conf;
+
+	if (strpos($name, '/') !== false) {
+		$path = explode('/', $name);
+		$name = array_pop($path);
+
+		foreach ($path as $key) {
+			if (!isset($conf[$key])) {
+				throw new \Exception($error);
+			}
+
+			$conf =& $conf[$key];
 		}
 	}
 
-	if (!isset($this->plugin_conf[$name])) {
-		throw new \Exception('no such plugin option '.$name);
+	if ($name == '') {
+		return $conf;
 	}
 
-	return $this->plugin_conf[$name];
+	$required = true;
+	$res = '';
+
+	if (substr($name, -1) == '?') {
+		$name = substr($name, 0, -1);
+		$required = false;
+	}
+
+	if (isset($conf[$name])) {
+		$res = $conf[$name];
+	}
+	else if ($required) {
+		throw new \Exception($error);
+	}
+
+	return $res;
 }
 
 
