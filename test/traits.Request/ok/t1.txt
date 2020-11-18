@@ -1,0 +1,17 @@
+Array
+(
+    [item] => Array
+        (
+            [color.weiß] => white
+            [color.königsblau] => #4169e1
+            [color.schwarz] => black
+            [color.marineblau] => #000080
+            [color.grau] => #888
+            [color.grün] => #008800
+            [color.orange] => #ffa500
+            [color.gelb] => #f5ff00
+            [color.rot] => #880000
+            [color.khaki] => #bdb76b
+        )
+
+)
