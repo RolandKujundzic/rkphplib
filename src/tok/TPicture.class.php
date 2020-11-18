@@ -50,9 +50,7 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
- * Set configuration hash. If $p[picture_dir] is set, basename($p[picture_dir]) == 'img'
- * and $p[preview_dir] is empty use dirname($p['picture_dir']).'/preview' as preview_dir.
- * Default parameter:
+ * Set configuration hash. Default parameter:
  *
  * picture_dir: data/picture/upload
  * preview_dir: data/picture/preview 
@@ -79,16 +77,11 @@ public function getPlugins(Tokenizer $tok) : array {
  * ignore_missing: 1
  * transparent_tbn: 1
  * default: default.jpg
- * reset: 1 
+ * reset: 0
  *
  * @param array[string]string $p
  */
 public function tok_picture_init(array $p) : void {
-
-	if (!isset($p['reset'])) {
-		$p['reset'] = 1;
-	}
-
 	$tok = is_null($this->tok) ? Tokenizer::$site : $this->tok;
 	if (is_null($tok)) {
 		$tok = new Tokenizer();
@@ -96,6 +89,7 @@ public function tok_picture_init(array $p) : void {
 
 	if (count($this->conf) == 0 || !empty($p['reset'])) {
 		$default['picture_dir'] = 'data/picture/upload';
+		$default['preview_dir'] = 'data/picture/preview';
 		$default['convert.resize'] = '_input,_sRGB,_geometry,_target';
 		$default['convert.center'] = '_input,_sRGB,_geometry,_box,_target';
 		$default['convert.box'] = '_input,_sRGB,_strip,_trim,_thumbnail,_boxw,_target';
@@ -120,14 +114,6 @@ public function tok_picture_init(array $p) : void {
 		$default['use_cache'] = 1;
 		$default['resize'] = '';
 		$default['transparent_tbn'] = 1;
-		$default['reset'] = 1;
-
-		if (empty($p['preview_dir']) && !empty($p['picture_dir']) && basename($p['picture_dir']) == 'img') {
-			$default['preview_dir'] = dirname($p['picture_dir']).'/preview';
-		}
-		else {
-			$default['preview_dir'] = 'data/picture/preview';
-		}
 
 		$this->conf = $default;
 	}
@@ -136,7 +122,7 @@ public function tok_picture_init(array $p) : void {
 		$this->conf[$key] = $value;
 	}
 
-	\rkphplib\lib\log_debug([ "TPicture.tok_picture_init:132> this.conf: <1>\n<2>", $this->conf, $p ]);
+	\rkphplib\lib\log_debug([ "TPicture.tok_picture_init:125> this.conf: <1>\n<2>", $this->conf, $p ]);
 }
 
 
@@ -217,7 +203,7 @@ public function tok_picture_src(array $p) : string {
 	$this->checkConf($p);
 	$this->computeImgSource();
 
-	// \rkphplib\lib\log_debug('TPicture.tok_picture_src:218> this.conf: '.print_r($this->conf, true));
+	// \rkphplib\lib\log_debug('TPicture.tok_picture_src:206> this.conf: '.print_r($this->conf, true));
 	if (empty($this->conf['source'])) {
 		return '';
 	}
@@ -378,17 +364,17 @@ private function runConvertCmd($p) {
 	if (File::exists($this->conf['target']) && !empty($this->conf['use_cache'])) {
 		if ($this->conf['use_cache'] == 'check_time') {
 			if (File::lastModified($this->conf['source']) <= File::lastModified($this->conf['target'])) {
-				// \rkphplib\lib\log_debug('TPicture.runConvertCmd:379> check_time - use cache '.$this->conf['target'].': '.print_r($p, true));
+				// \rkphplib\lib\log_debug([ "TPicture.runConvertCmd:367> check_time - use cache <1>: <2>", $this->conf['target'], $p ]);
 				return $this->conf['target'];
 			}
 		}
 		else {
-			// \rkphplib\lib\log_debug('TPicture.runConvertCmd:384> use cache '.$this->conf['target'].': '.print_r($p, true));
+			// \rkphplib\lib\log_debug([ "TPicture.runConvertCmd:372> use cache <1>: <2>", $this->conf['target'], $p ]);
 			return $this->conf['target'];
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TPicture.runConvertCmd:389> $cmd\n".print_r($p, true));
+	// \rkphplib\lib\log_debug([ "TPicture.runConvertCmd:377> $cmd\n<1>", $p ]);
 	execute($cmd, $p); 
 
 	if (!FSEntry::isFile($p['target'], false)) {
