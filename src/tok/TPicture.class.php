@@ -122,7 +122,7 @@ public function tok_picture_init(array $p) : void {
 		$this->conf[$key] = $value;
 	}
 
-	\rkphplib\lib\log_debug([ "TPicture.tok_picture_init:125> this.conf: <1>\n<2>", $this->conf, $p ]);
+	// \rkphplib\lib\log_debug([ "TPicture.tok_picture_init:125> this.conf: <1>\n<2>", $this->conf, $p ]);
 }
 
 

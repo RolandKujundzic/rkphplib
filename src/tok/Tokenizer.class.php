@@ -1271,7 +1271,7 @@ private function tryPluginMap(string $name) : void {
 		'TJob' => [ 'job' ],
 		'TLanguage' => [ 'language:init', 'language:get', 'language:script', 'language', 'txt:js', 'txt', 't', 'ptxt' ],
 		'TLogin' => [ 'login', 'login_account', 'login_check', 'login_auth', 'login_auth:basic', 'login_auth:digest', 'login_access', 'login_update', 'login_clear' ],
-		'TLoop' => [ 'loop:var', 'loop:list', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
+		'TLoop' => [ 'loop:var', 'loop:list', 'loop:json', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
 		'TMailer' => [ 'mail:init', 'mail:html', 'mail:txt', 'mail:send', 'mail:attach', 'mail' ],
 		'TMath' => [ 'nf', 'number_format', 'intval', 'floatval', 'rand', 'math', 'md5' ],
 		'TMenu' => [ 'menu', 'menu:add', 'menu:conf' ],
