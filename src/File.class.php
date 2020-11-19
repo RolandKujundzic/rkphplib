@@ -913,7 +913,8 @@ public static function readLine($fh) {
 /**
  * Save data as json in file. If json conversion fails, save
  * print_r(data, true) as .$base.dump and (if $flag & 2 serialized version 
- * as $base.ser). Return false instead of Exception if $flag & 1.
+ * as $base.ser). If file is 'data=path/to/file.js' save 'var data = JSON;'.
+ * Return false instead of Exception if $flag & 1.
  */
 public static function saveJSON(string $file, $data, int $flag = 0) : bool {
   $json = json_encode($data, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);
@@ -932,6 +933,11 @@ public static function saveJSON(string $file, $data, int $flag = 0) : bool {
 		else {
 			throw new Exception('invalid json', "save_as=$file see: .$base.dump");
 		}
+	}
+	else if (substr($file, -3) == '.js' && ($pos = strpos($file, '=')) !== false) {
+		$jsvar = substr($file, 0, $pos);
+		$file = substr($file, $pos + 1);
+		File::save($file, "var $jsvar = $json;\n");
 	}
 	else {
 		File::save($file, $json);
