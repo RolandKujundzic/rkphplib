@@ -1488,6 +1488,14 @@ abstract public function close() : bool;
 
 
 /**
+ * Alias for execute(getQuery($qname, $replace))
+ */
+public function exec(string $qname, ?array $replace = null) {
+	$this->execute($this->getQuery($qname, $replace));
+}
+
+
+/**
  * Shortcut for select[One|Column|Hash|Row](getQuery(name, r), n).
  * If n == -1 return false if there is no result otherwise if there is
  * one result return map and throw exception if there is more than one result.
@@ -1500,49 +1508,18 @@ abstract public function close() : bool;
  *  - name:hash = $this->selectHash($this->getQuery($name, $replace), 
  *      $opt[0], $opt[1], false) ($opt == '' == [name, value ])
  *  - name:row = $this->selectRow($this->getQuery($name, $replace), intval($opt)) 
+ *
+ * @param false|int|string|array $opt
  */
 public function query(string $name, array $replace = null, $opt = '') {
-
 	if (($pos = mb_strpos($name, ':')) > 0) {
-		// selectDo ...
-		$do = mb_substr($name, $pos + 1);
-		$name = mb_substr($name, 0, $pos);
-
-		if ($do === 'exec') {
-			return $this->execute($this->getQuery($name, $replace), false);
-		}
-		else if ($do === 'one') {
-			return $this->selectOne($this->getQuery($name, $replace), $opt);
-		}
-		else if ($do === 'column') {
-			if ($opt === '') {
-				$opt = 'col';
-			}
-
-			return $this->selectColumn($this->getQuery($name, $replace), $opt);
-		}
-		else if ($do === 'hash') {
-			if ($opt === '') {
-				$opt = [ 'name', 'value' ];
-			}
-			else if (!is_array($opt) || count($opt) !== 2) {
-				throw new Exception('invalid option', "name=$name opt: ".print_r($opt, true));
-			} 
-
-			return $this->selectHash($this->getQuery($name, $replace), $opt[0], $opt[1], false);
-		}
-		else if ($do === 'row') {
-			return $this->selectRow($this->getQuery($name, $replace), intval($opt));
-		}
-		else {
-			throw new Exception('invalid option', "name=$name opt: ".print_r($opt, true));
-		}
+		return $this->queryDo(mb_substr($name, $pos + 1), mb_substr($name, 0, $pos), $opt);
 	}
 
-	// select ...
 	$opt = intval($opt);
 
 	if ($opt > -1) {
+		// select $opt rows (default = all rows)
 		return $this->select($this->getQuery($name, $replace), $opt);
 	}
 
@@ -1553,6 +1530,47 @@ public function query(string $name, array $replace = null, $opt = '') {
 	}
 
 	return (count($dbres) === 1) ? $dbres[0] : false;
+}
+
+
+/**
+ * Return select $do = exec|one|column|hash|row result  
+ * @param int|string|array $opt 
+ */
+private function queryDo(string $do, string $qname, $opt) : ?array {
+	$res = null;
+
+	if ($do === 'exec') {
+		$this->execute($this->getQuery($qname, $replace), false);
+	}
+	else if ($do === 'one') {
+		$res = $this->selectOne($this->getQuery($qname, $replace), $opt);
+	}
+	else if ($do === 'column') {
+		if ($opt === '') {
+			$opt = 'col';
+		}
+
+		$res = $this->selectColumn($this->getQuery($qname, $replace), $opt);
+	}
+	else if ($do === 'hash') {
+		if ($opt === '') {
+			$opt = [ 'name', 'value' ];
+		}
+		else if (!is_array($opt) || count($opt) !== 2) {
+			throw new Exception('invalid option', "qname=$qname opt: ".print_r($opt, true));
+		} 
+
+		$res = $this->selectHash($this->getQuery($qname, $replace), $opt[0], $opt[1], false);
+	}
+	else if ($do === 'row') {
+		$res = $this->selectRow($this->getQuery($qname, $replace), intval($opt));
+	}
+	else {
+		throw new Exception('invalid option', "name=$qname opt: ".print_r($opt, true));
+	}
+
+	return $res;
 }
 
 
