@@ -77,6 +77,7 @@ public function getPlugins(Tokenizer $tok) : array {
  * ignore_missing: 1
  * transparent_tbn: 1
  * default: default.jpg
+ * save_as: path/to/target[.jpg] (append suffix, trailing / = use source path)
  * reset: 0
  *
  * @param array[string]string $p
@@ -122,7 +123,7 @@ public function tok_picture_init(array $p) : void {
 		$this->conf[$key] = $value;
 	}
 
-	// \rkphplib\lib\log_debug([ "TPicture.tok_picture_init:125> this.conf: <1>\n<2>", $this->conf, $p ]);
+	// \rkphplib\lib\log_debug([ "TPicture.tok_picture_init:126> this.conf: <1>\n<2>", $this->conf, $p ]);
 }
 
 
@@ -203,7 +204,7 @@ public function tok_picture_src(array $p) : string {
 	$this->checkConf($p);
 	$this->computeImgSource();
 
-	// \rkphplib\lib\log_debug('TPicture.tok_picture_src:206> this.conf: '.print_r($this->conf, true));
+	// \rkphplib\lib\log_debug('TPicture.tok_picture_src:207> this.conf: '.print_r($this->conf, true));
 	if (empty($this->conf['source'])) {
 		return '';
 	}
@@ -310,11 +311,9 @@ private function convertCover($exec_param) {
 
 /**
  * Run convert command $p['cmd'] with parameters from $p inserted.
- *
  * @param hash $p
  */
 private function runConvertCmd($p) {
-
 	if (empty($p['cmd']) || empty($this->conf['convert.'.$p['cmd']])) {
 		throw new Exception('invalid convert command', print_r($p, true));
 	}
@@ -349,32 +348,46 @@ private function runConvertCmd($p) {
 		}
 	}
 
-	$target_dir = dirname($this->conf['target']).'/'.$resize_dir;
-	$this->conf['target'] = $target_dir.'/'.basename($this->conf['target']);
-	$p['target'] = $this->conf['target'];
+	if (!empty($this->conf['save_as'])) {
+		$save_as = $this->conf['save_as'];
+		if (substr($save_as, -1) == '/') {
+			$save_as .= str_replace($this->conf['picture_dir'].'/', '', $p['source']);
+		}
 
-	if ($is_png) {
-		$p['target_png'] = $target_dir.'/'.File::basename($p['target'], true).'.png';
-		$this->conf['target'] = $p['target_png'];
-		$p['target'] = $p['target_png'];
+		$target_dir = dirname($save_as);
+		$suffix = File::suffix($p['source'], true);
+		$this->conf['target'] = empty($suffix) ? $save_as.$suffix : $save_as;
+		$p['target'] = $this->conf['target'];
+	}
+	else {
+		$target_dir = dirname($this->conf['target']).'/'.$resize_dir;
+		$this->conf['target'] = $target_dir.'/'.basename($this->conf['target']);
+		$p['target'] = $this->conf['target'];
+
+		if ($is_png) {
+			$p['target_png'] = $target_dir.'/'.File::basename($p['target'], true).'.png';
+			$this->conf['target'] = $p['target_png'];
+			$p['target'] = $p['target_png'];
+		}
 	}
 	
   Dir::create($target_dir, 0777, true);
 
+	// \rkphplib\lib\log_debug([ "TPicture.runConvertCmd:376> <1>", $p ]);
 	if (File::exists($this->conf['target']) && !empty($this->conf['use_cache'])) {
 		if ($this->conf['use_cache'] == 'check_time') {
 			if (File::lastModified($this->conf['source']) <= File::lastModified($this->conf['target'])) {
-				// \rkphplib\lib\log_debug([ "TPicture.runConvertCmd:367> check_time - use cache <1>: <2>", $this->conf['target'], $p ]);
+				// \rkphplib\lib\log_debug("TPicture.runConvertCmd:380> check_time - use cache: ".$this->conf['target']);
 				return $this->conf['target'];
 			}
 		}
 		else {
-			// \rkphplib\lib\log_debug([ "TPicture.runConvertCmd:372> use cache <1>: <2>", $this->conf['target'], $p ]);
+			// \rkphplib\lib\log_debug("TPicture.runConvertCmd:385> use cache: ".$this->conf['target']);
 			return $this->conf['target'];
 		}
 	}
 
-	// \rkphplib\lib\log_debug([ "TPicture.runConvertCmd:377> $cmd\n<1>", $p ]);
+	// \rkphplib\lib\log_debug("TPicture.runConvertCmd:390> $cmd");
 	execute($cmd, $p); 
 
 	if (!FSEntry::isFile($p['target'], false)) {
