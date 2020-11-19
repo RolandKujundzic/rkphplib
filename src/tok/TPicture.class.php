@@ -83,6 +83,10 @@ public function getPlugins(Tokenizer $tok) : array {
  * @param array[string]string $p
  */
 public function tok_picture_init(array $p) : void {
+	if (!class_exists('Tokenizer')) {
+		require_once __DIR__.'/Tokenizer.class.php';
+	}
+
 	$tok = is_null($this->tok) ? Tokenizer::$site : $this->tok;
 	if (is_null($tok)) {
 		$tok = new Tokenizer();
