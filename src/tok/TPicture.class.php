@@ -392,7 +392,7 @@ private function runConvertCmd($p) {
 	}
 
 	// \rkphplib\lib\log_debug("TPicture.runConvertCmd:390> $cmd");
-	execute($cmd, $p); 
+	execute($cmd.' 2>/dev/null', $p); 
 
 	if (!FSEntry::isFile($p['target'], false)) {
 		throw new Exception('convert '.$p['source'].' to '.$p['target'].' failed', "cmd: $cmd\np: ".print_r($p, true));
