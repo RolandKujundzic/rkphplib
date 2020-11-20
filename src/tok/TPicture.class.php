@@ -44,8 +44,30 @@ public function getPlugins(Tokenizer $tok) : array {
   $plugin['picture:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['picture:src'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY; 
 	$plugin['picture:list'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['picture:tbn'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::CSLIST_BODY;
   $plugin['picture'] = 0;
   return $plugin;
+}
+
+
+/**
+ * @tok …
+ * {picture:tbn}1.jpg,2.jpg,3.jpg{:picture}
+ * <div class="thumbnail_strip">
+ *   <img src="data/shop/tbn/1.jpg">
+ *   <img src="data/shop/tbn/2.jpg">
+ *   <img src="data/shop/tbn/3.jpg">
+ * </div>
+ * @EOL
+ */
+public function tok_picture_tbn(array $images) : string {
+	$html = '<div class="thumbnail_strip">';
+	for ($i = 0;$i < count($images); $i++) {
+		$html .= "\n".'<img src="data/shop/tbn/'.$images[$i].'">';
+	}
+	
+	$html .= "\n</div>";
+	return $html;
 }
 
 
