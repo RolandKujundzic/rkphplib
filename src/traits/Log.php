@@ -27,7 +27,7 @@ namespace rkphplib\traits;
 trait Log {
 
 // @var array $log_conf [ prefix => '', 'to' => php://STDOUT ]
-private $log_conf = [ 'prefix' => '', 'to' => 'php://STDOUT' ];
+protected $log_conf = [ 'prefix' => '', 'to' => 'php://STDOUT' ];
 
 
 /**
@@ -42,7 +42,7 @@ private $log_conf = [ 'prefix' => '', 'to' => 'php://STDOUT' ];
  * - to: default 'to:php://STDOUT'
  * - prefix: @example log('prefix:run', 2); // long_conf[prefix] = 'run> '
  */
-private function log(string $msg, int $flag = 1) : void {
+protected function log(string $msg, int $flag = 1) : void {
 	if ($flag & 2) {
 		if (!preg_match('/^(prefix|to):.+/', $msg)) {
 			throw new \Exception("invalid log('$msg') (use prefix:)");
