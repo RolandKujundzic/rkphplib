@@ -44,15 +44,16 @@ public function getPlugins(Tokenizer $tok) : array {
   $plugin['picture:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['picture:src'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY; 
 	$plugin['picture:list'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
-	$plugin['picture:tbn'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::CSLIST_BODY;
+	$plugin['picture:tbn'] = TokPlugin::CSLIST_BODY;
   $plugin['picture'] = 0;
   return $plugin;
 }
 
 
 /**
+ * @tok {picture:tbn}1.jpg,2.jpg{:picture} = data/shop/tbn/1.jpg
  * @tok …
- * {picture:tbn}1.jpg,2.jpg,3.jpg{:picture}
+ * {picture:tbn:strip}1.jpg,2.jpg,3.jpg{:picture}
  * <div class="thumbnail_strip">
  *   <img src="data/shop/tbn/1.jpg">
  *   <img src="data/shop/tbn/2.jpg">
@@ -60,14 +61,24 @@ public function getPlugins(Tokenizer $tok) : array {
  * </div>
  * @EOL
  */
-public function tok_picture_tbn(array $images) : string {
-	$html = '<div class="thumbnail_strip">';
-	for ($i = 0;$i < count($images); $i++) {
-		$html .= "\n".'<img src="data/shop/tbn/'.$images[$i].'">';
+public function tok_picture_tbn(string $param, array $images) : string {
+	$tbn_dir = 'data/shop/tbn';
+	$res = '';
+
+	if (empty($param)) {
+		$res = count($images) == 0 || empty($images[0]) ? $tbn_dir.'/default.jpg' : $tbn_dir.'/'.$images[0];
 	}
+	else if ($param == 'strip') {
+		$res = '<div class="thumbnail_strip">';
+
+		for ($i = 0;$i < count($images); $i++) {
+			$res .= "\n".'<img src="'.$tbn_dir.'/'.$images[$i].'">';
+		}
 	
-	$html .= "\n</div>";
-	return $html;
+		$res .= "\n</div>";
+	}
+
+	return $res;
 }
 
 
@@ -396,7 +407,7 @@ private function runConvertCmd($p) {
 			$p['target'] = $p['target_png'];
 		}
 	}
-	
+
   Dir::create($target_dir, 0777, true);
 
 	// \rkphplib\lib\log_debug([ "TPicture.runConvertCmd:402> <1>", $p ]);
