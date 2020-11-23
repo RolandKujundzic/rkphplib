@@ -160,7 +160,7 @@ public function tok_picture_init(array $p) : void {
 		$this->conf[$key] = $value;
 	}
 
-	// \rkphplib\lib\log_debug([ "TPicture.tok_picture_init:152> this.conf: <1>\n<2>", $this->conf, $p ]);
+	// \rkphplib\lib\log_debug([ "TPicture.tok_picture_init:163> this.conf: <1>\n<2>", $this->conf, $p ]);
 }
 
 
@@ -241,7 +241,7 @@ public function tok_picture_src(array $p) : string {
 	$this->checkConf($p);
 	$this->computeImgSource();
 
-	// \rkphplib\lib\log_debug('TPicture.tok_picture_src:233> this.conf: '.print_r($this->conf, true));
+	// \rkphplib\lib\log_debug('TPicture.tok_picture_src:244> this.conf: '.print_r($this->conf, true));
 	if (empty($this->conf['source'])) {
 		return '';
 	}
@@ -410,21 +410,21 @@ private function runConvertCmd($p) {
 
   Dir::create($target_dir, 0777, true);
 
-	// \rkphplib\lib\log_debug([ "TPicture.runConvertCmd:402> <1>", $p ]);
+	// \rkphplib\lib\log_debug([ "TPicture.runConvertCmd:413> <1>", $p ]);
 	if (File::exists($this->conf['target']) && !empty($this->conf['use_cache'])) {
 		if ($this->conf['use_cache'] == 'check_time') {
 			if (File::lastModified($this->conf['source']) <= File::lastModified($this->conf['target'])) {
-				// \rkphplib\lib\log_debug("TPicture.runConvertCmd:406> check_time - use cache: ".$this->conf['target']);
+				// \rkphplib\lib\log_debug("TPicture.runConvertCmd:417> check_time - use cache: ".$this->conf['target']);
 				return $this->conf['target'];
 			}
 		}
 		else {
-			// \rkphplib\lib\log_debug("TPicture.runConvertCmd:411> use cache: ".$this->conf['target']);
+			// \rkphplib\lib\log_debug("TPicture.runConvertCmd:422> use cache: ".$this->conf['target']);
 			return $this->conf['target'];
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TPicture.runConvertCmd:416> $cmd");
+	// \rkphplib\lib\log_debug("TPicture.runConvertCmd:427> $cmd");
 	execute($cmd.' 2>/dev/null', $p); 
 
 	if (!FSEntry::isFile($p['target'], false)) {
