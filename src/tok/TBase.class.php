@@ -945,7 +945,7 @@ public function tok_include_if(string $param, array $a) : string {
  * }
  * @EOL
  */
-public function tok_loadJSON(string $file, array $p) : void {
+public function tok_loadJSON(string $file, array $p = []) : void {
 	$json = File::loadJSON($file);
 
 	foreach ($json as $plugin => $arg) {
