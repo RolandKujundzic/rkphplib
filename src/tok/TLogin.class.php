@@ -89,15 +89,21 @@ public function tok_login_auth_basic(array $p) : void {
 
 	$this->prepareAuth($conf);
 
+	if (count($this->account) == 0) {
+		\rkphplib\lib\log_warn('empty account list');
+	}
+
 	$ok = empty($_SERVER['PHP_AUTH_USER']) ? -2 : -1;
 	for ($i = 0; $ok == -1 && $i < count($this->account); $i++) {
 		if ($_SERVER['PHP_AUTH_USER'] == $this->account[$i]['login'] &&
 				$_SERVER['PHP_AUTH_PW'] == $this->account[$i]['password']) {
 			$ok = $i;
 		}
+		\rkphplib\lib\log_debug("TLogin.tok_login_auth_basic:98> $i: compare '{$_SERVER['PHP_AUTH_USER']}' with '{$this->account[$i]['login']}' ($ok)"); 
 	}
 
 	if ($ok < 0) {
+		\rkphplib\lib\log_debug("TLogin.tok_login_auth_basic:102> Send basic auth request, realm=".$conf['realm']);
 		header('WWW-Authenticate: Basic realm="'.$conf['realm'].'"');
 		header('HTTP/1.0 401 Unauthorized');
 		print $conf['message'];
