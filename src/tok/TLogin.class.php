@@ -99,11 +99,11 @@ public function tok_login_auth_basic(array $p) : void {
 				$_SERVER['PHP_AUTH_PW'] == $this->account[$i]['password']) {
 			$ok = $i;
 		}
-		\rkphplib\lib\log_debug("TLogin.tok_login_auth_basic:98> $i: compare '{$_SERVER['PHP_AUTH_USER']}' with '{$this->account[$i]['login']}' ($ok)"); 
+		// \rkphplib\lib\log_debug("TLogin.tok_login_auth_basic:102> $i: compare '{$_SERVER['PHP_AUTH_USER']}' with '{$this->account[$i]['login']}' ($ok)"); 
 	}
 
 	if ($ok < 0) {
-		\rkphplib\lib\log_debug("TLogin.tok_login_auth_basic:102> Send basic auth request, realm=".$conf['realm']);
+		// \rkphplib\lib\log_debug("TLogin.tok_login_auth_basic:106> Send basic auth request, realm=".$conf['realm']);
 		header('WWW-Authenticate: Basic realm="'.$conf['realm'].'"');
 		header('HTTP/1.0 401 Unauthorized');
 		print $conf['message'];
@@ -213,7 +213,7 @@ public function hasPrivileges(string $require_priv, bool $ignore_super = false) 
 	$tmp = \rkphplib\lib\conf2kv($this->tok_login('conf.role?'));
 	$privileges = str_replace('=,', '', join(',', $tmp)); // app1.priv1,app1.priv2,app2.priv1,...
 
-	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:210> require_priv=[$require_priv] priv=[$priv] privileges=[$privileges]");
+	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:216> require_priv=[$require_priv] priv=[$priv] privileges=[$privileges]");
 	$priv_list  = explode(',', $privileges);
 	$priv_expr  = $require_priv;
 
@@ -221,14 +221,14 @@ public function hasPrivileges(string $require_priv, bool $ignore_super = false) 
 		$priv_expr = str_replace($this->tok->getTag($pname), '1', $priv_expr);
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:218> priv=[$priv] priv_expr=[$priv_expr] after @privileges");
+	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:224> priv=[$priv] priv_expr=[$priv_expr] after @privileges");
 	$priv_map = [ 'super' => 1, 'ToDo' => 2 ];
 	foreach ($priv_map as $pname => $pval) {
 		$pval = ($priv & $pval) ? 1 : 0;
 		$priv_expr = str_replace($this->tok->getTag($pname), $pval, $priv_expr);
   }
 
-	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:225> priv_expr=[$priv_expr] after @priv");
+	// \rkphplib\lib\log_debug("TLogin.hasPrivileges:231> priv_expr=[$priv_expr] after @priv");
 	$priv_expr = $this->tok->removeTags($priv_expr, '0');
   $priv_expr = str_replace(' ', '', $priv_expr);
 
@@ -238,7 +238,7 @@ public function hasPrivileges(string $require_priv, bool $ignore_super = false) 
   }
 
   $res = eval('return '.$priv_expr.';');
-  // \rkphplib\lib\log_debug("TLogin.hasPrivileges:235> res=[$res] priv_expr=[$priv_expr]");
+  // \rkphplib\lib\log_debug("TLogin.hasPrivileges:241> res=[$res] priv_expr=[$priv_expr]");
   return $res;
 }
 
@@ -263,7 +263,7 @@ public function set(string $key, $value) : void {
  * @return ''
  */
 public function tok_login_clear(array $p) : void {
-	// \rkphplib\lib\log_debug([ "TLogin.tok_login_clear:260> <1>", $p ]);
+	// \rkphplib\lib\log_debug([ "TLogin.tok_login_clear:266> <1>", $p ]);
 	if (isset($p['if']) && empty($p['if'])) {
 		return;
 	}
@@ -442,14 +442,14 @@ public function tok_login_update(string $do, array $p) : void {
 		unset($p['@request_keys']);
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.tok_login_update:439> table=$table, kv ".print_r($kv, true)."\np ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TLogin.tok_login_update:445> table=$table, kv ".print_r($kv, true)."\np ".print_r($p, true));
 	$where = empty($kv['@where']) ? '' : $kv['@where'];
 
 	// only add (key,value) to kv where value has changed
 	foreach ($sess as $key => $value) {
 		if (isset($_REQUEST[$key]) && $value != $_REQUEST[$key]) {
 			$kv[$key] = $_REQUEST[$key];
-			// \rkphplib\lib\log_debug("TLogin.tok_login_update:446> kv (sess + request) - $key=".$_REQUEST[$key]);
+			// \rkphplib\lib\log_debug("TLogin.tok_login_update:452> kv (sess + request) - $key=".$_REQUEST[$key]);
 		}
 	}
 
@@ -457,7 +457,7 @@ public function tok_login_update(string $do, array $p) : void {
 		// e.g. !isset(kv['password'])
 		if (substr($key, 0, 1) != '@' && (!isset($kv[$key]) || $kv[$key] != $value)) {
 			$kv[$key] = $value;
-			// \rkphplib\lib\log_debug("TLogin.tok_login_update:454> kv (p) - $key=$value");
+			// \rkphplib\lib\log_debug("TLogin.tok_login_update:460> kv (p) - $key=$value");
 		}
 	}
 
@@ -476,7 +476,7 @@ public function tok_login_update(string $do, array $p) : void {
 
 		foreach ($has_cols as $col) {
 			if (!in_array($col, $allow_cols)) {
-				// \rkphplib\lib\log_debug("TLogin.tok_login_update:473> unset forbidden column $col");
+				// \rkphplib\lib\log_debug("TLogin.tok_login_update:479> unset forbidden column $col");
 				unset($kv[$col]);
 			}
 		}
@@ -495,7 +495,7 @@ public function tok_login_update(string $do, array $p) : void {
 
 			if ($id && is_numeric($id)) {
 				$where = "WHERE id='".intval($id)."'";
-				// \rkphplib\lib\log_debug("TLogin.tok_login_update:492> id=$id where=$where");
+				// \rkphplib\lib\log_debug("TLogin.tok_login_update:498> id=$id where=$where");
 			}
 		}
 
@@ -503,7 +503,7 @@ public function tok_login_update(string $do, array $p) : void {
 			throw new Exception('missing @where parameter (= WHERE primary_key_of_'.$table."= '...')");
 		}
 
-		// \rkphplib\lib\log_debug("TLogin.tok_login_update:500> do=$do, table=$table, where=$where, kv: ".print_r($kv, true));
+		// \rkphplib\lib\log_debug("TLogin.tok_login_update:506> do=$do, table=$table, where=$where, kv: ".print_r($kv, true));
 		if (count($kv) > 0 && !empty($table) && $do != 'no_db') {
 			$kv['@where'] = $where;
 
@@ -511,7 +511,7 @@ public function tok_login_update(string $do, array $p) : void {
 
 			$query = (count($dbres) == 1) ? $this->db->buildQuery($table, 'update', $kv) : $this->db->buildQuery($table, 'insert', $kv);
 
-			// \rkphplib\lib\log_debug("TLogin.tok_login_update:508> query=$query");
+			// \rkphplib\lib\log_debug("TLogin.tok_login_update:514> query=$query");
 			if (!empty($query)) {
 				$this->db->execute($query);
 			}
@@ -525,11 +525,11 @@ public function tok_login_update(string $do, array $p) : void {
 	}
 
 	if (count($session_cols) > 0) {
-		// \rkphplib\lib\log_debug("TLogin.tok_login_update:522> use session_cols: ".print_r($session_cols, true));
+		// \rkphplib\lib\log_debug("TLogin.tok_login_update:528> use session_cols: ".print_r($session_cols, true));
 		$this->sess->setHash($session_cols, true);
 	}
 	else if (count($kv) > 0) {
-		// \rkphplib\lib\log_debug("TLogin.tok_login_update:526> #kv=".(count($kv))." update session: ".print_r($kv, true));
+		// \rkphplib\lib\log_debug("TLogin.tok_login_update:532> #kv=".(count($kv))." update session: ".print_r($kv, true));
 		$this->sess->setHash($kv, true);
 	}
 }
@@ -605,7 +605,7 @@ public function tok_login_auth(array $p) : void {
 		$this->sess->set('table', $p['table'], 'meta');
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.tok_login_auth:602> p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TLogin.tok_login_auth:608> p: ".print_r($p, true));
 	if (!is_null($this->db)) {
 		$user = $this->selectFromDb($p);
 	}
@@ -788,7 +788,7 @@ private function selectExtraData(string $qkey, array $p, array $replace) : array
 		$res[$key] = $value;
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.selectExtraData:785> qkey=$qkey, return ".print_r($res, true));
+	// \rkphplib\lib\log_debug("TLogin.selectExtraData:791> qkey=$qkey, return ".print_r($res, true));
 	return $res;
 }
 
@@ -813,13 +813,13 @@ private function selectFromDatabase(array $p) : ?array {
 
 	$query = $this->db->getCustomQuery('select_login', $p);
 	$dbres = $this->db->select($query);
-	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:810> query=$query - ".print_r($dbres, true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:816> query=$query - ".print_r($dbres, true));
 	if (count($dbres) == 0) {
 		$this->tok->setVar('login_error', 'invalid');
 		return null;
 	}
 
-	// \rkphplib\lib\log_debug('TLogin.selectFromDatabase:816> use master_password = PASSWORD('.$p['password'].') = '.$dbres[0]['password_input']);
+	// \rkphplib\lib\log_debug('TLogin.selectFromDatabase:822> use master_password = PASSWORD('.$p['password'].') = '.$dbres[0]['password_input']);
 	if (!empty($p['master_password']) && $dbres[0]['password_input'] == $p['master_password']) {
 		$dbres[0]['password'] = $p['master_password'];
 	}
@@ -856,7 +856,7 @@ private function selectFromDatabase(array $p) : ?array {
 
 	if ($dbres[0]['status'] == 'registered') {
 		$query = $this->db->getCustomQuery('registered2active', $dbres[0]);
-		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:853> auto-activate user: ".$query);
+		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:859> auto-activate user: ".$query);
 		$this->db->execute($query);
 	}
 
@@ -864,7 +864,7 @@ private function selectFromDatabase(array $p) : ?array {
 	unset($dbres[0]['password_input']);
 	unset($dbres[0]['password']);
 
-	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:861> return user: ".print_r($dbres[0], true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:867> return user: ".print_r($dbres[0], true));
 	return $dbres[0];
 }
 
@@ -887,7 +887,7 @@ private function selectFromDatabase(array $p) : ?array {
  * @tok {login:@lchange} -> date('d.m.Y H:i:s', @last)
  */
 public function tok_login(string $key, ?string $alt_key = '') : ?string {
-	// \rkphplib\lib\log_debug("TLogin.tok_login:884> key=$key alt_key=$alt_key");
+	// \rkphplib\lib\log_debug("TLogin.tok_login:890> key=$key alt_key=$alt_key");
 	$res = '';
 
 	if (strlen($key) == 0 && strlen($alt_key) > 0) {
@@ -951,7 +951,7 @@ public function tok_login(string $key, ?string $alt_key = '') : ?string {
 		$res = kv2conf($res);
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.tok_login:948> res=[$res]");
+	// \rkphplib\lib\log_debug("TLogin.tok_login:954> res=[$res]");
 	return $res;
 }
 
