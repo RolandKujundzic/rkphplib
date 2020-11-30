@@ -5,5 +5,6 @@
 	[ 36, 0, "<? strlen($out) == 36" ],
 	[ 16, 1, "<? strlen($out) == 16" ],
 	[ 24, 1, "<? strlen($out) == 24" ],
-	[ 32, 1, "<? strlen($out) == 32" ]
+	[ 32, 1, "<? strlen($out) == 32" ],
+	[ 16, 2, "<? \\rkphplib\\lib\\valid_uuid64($out)" ]
 ]

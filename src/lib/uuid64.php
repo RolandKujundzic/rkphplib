@@ -2,14 +2,19 @@
 
 namespace rkphplib\lib;
 
+require_once __DIR__.'/dec2n.php';
+
+
 /**
- * Create base64 uuid instead of hex (len [16,36]). 
- * If ordered it true prepend microtime.
+ * Create base64 uuid instead of hex (len [16,36]).
+ * Use ordered=2 to prepend hex62(date(YmdHis).usec[3]) and
+ * use valid_uuid64() to validate.
+ * Use ordered=1 to prepend microtime.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  * @see https://stackoverflow.com/questions/2040240/php-function-to-generate-v4-uuid
  */
-function uuid64($len = 16, $ordered = false) {
+function uuid64($len = 16, $ordered = 0) {
 	if ($len < 16 || $len > 36) {
 		throw new \Exception("invalid uuid64 length $len use [16,36]"); 
 	}
@@ -24,8 +29,7 @@ function uuid64($len = 16, $ordered = false) {
 		$data = file_get_contents('/dev/urandom', NULL, NULL, 0, 32);
 	}
 
-	if ($ordered) {
-		list($usec, $sec) = explode(' ', microtime());
+	if ($ordered == 1) {
 		$hts = dechex($sec).dechex(substr($usec, 2));
 
 		if (strlen($hts) % 2 == 1) {
@@ -33,9 +37,28 @@ function uuid64($len = 16, $ordered = false) {
 		}
 
 		$data = hex2bin($hts).$data;
+		$data = str_replace([ '+', '/', '=' ], [ '', '', '' ], base64_encode($data));
+	}
+	else if ($ordered == 2) {
+		$data = str_replace([ '+', '/', '=' ], [ '', '', '' ], base64_encode($data));
+		list($usec, $sec) = explode(' ', microtime());
+		$hex62_ymd = dec2n(date('Ymd'), 62);
+		$hex62_hisu = dec2n(date('His').substr($usec, 2, 3), 62);
+		$data = $hex62_ymd.$hex62_hisu.$data;
+	}
+	else {
+		$data = str_replace([ '+', '/', '=' ], [ '', '', '' ], base64_encode($data));
 	}
 
-	$data = str_replace([ '+', '/', '=' ], [ '', '', '' ], base64_encode($data));
 	return substr($data, 0, $len);
+}
+
+
+/**
+ * Return true if uuid64 is valid (created with uuid64(N, 2))
+ */
+function valid_uuid64(string $uuid64) : bool {
+	$hex62_ymd = substr($uuid64, 0, 5);	
+	return strpos(\rkphplib\lib\n2dec($hex62_ymd, 62), date('Ymd', time())) === 0;	
 }
 
