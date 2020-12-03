@@ -56,3 +56,21 @@ function uuid($type = '') {
 	return $res;
 }
 
+
+/**
+ * Return 8|16 character long random int (with or without hyphen delimiter). Flags:
+ * 2^0: hyphen delimiter (default = no delimiter)
+ * 2^1: 8 digits (default 16 digits)
+ */
+function uuid_int(int $flag = 0) : string {
+	$d = ($flag & 1) ? '-' : '';
+	$l = ($flag & 2) ? 2 : 4;
+	$res = '';
+
+	for ($i = 0; $i < $l; $i++) {
+		$res .= $d.random_int(1000, 9999);
+	}
+
+	return substr($res, 1);
+}
+

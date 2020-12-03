@@ -409,6 +409,8 @@ public function tok_tpl_set(array $p, string $arg) : void {
  * 
  * @tok {tpl_set:map}Hello {:=firstname} {:=lastname}{:tpl_set} // if arg counter > 0 place args first
  * @tok {tpl:map}firstname=John|#|lastname=Doe{:tpl} = Hello John Doe
+ * @tok {tpl:map} = Hello {:=firstname} {:=lastname}
+ * @tok {tpl:map}*={:tpl} = Hello
  *
  * @tok {tpl_set:toc:0:1}Page {:=arg1} ... {:=title}{:tpl_set}
  * @tok {tpl:toc}1|#|title=Overview{:tpl} = Page 1 ... Overview 
@@ -424,23 +426,29 @@ public function tok_tpl(array $p, ?string $arg) : string {
 	$anum = $this->_tpl[$key]['anum'];
 	$tnum = $this->_tpl[$key]['tnum'];
 	$tpl = $this->_tpl[$key]['tpl'];
+	$r = conf2kv($arg);
 
 	for ($i = 0; $i < $pnum; $i++) {
-		$value = isset($p[$i]) ? $p[$i] : '';
-		$tpl = str_replace(TAG_PREFIX.'param'.($i + 1).TAG_SUFFIX, $value, $tpl);
+		$key ='param'.($i + 1);
+		$r[$key] = isset($p[$i]) ? $p[$i] : '';
+		$tnum++;
 	}
 
 	if ($anum > 0) {
 		$list = split_str(HASH_DELIMITER, $arg);
 
 		for ($i = 0; $i < $anum; $i++) {
-			$value = isset($list[$i]) ? $list[$i] : '';
-			$tpl = str_replace(TAG_PREFIX.'arg'.($i + 1).TAG_SUFFIX, $value, $tpl);
+			$key = 'arg'.($i + 1);
+			$r[$key] = isset($list[$i]) ? $list[$i] : '';
+			$tnum++;
 		}
 	}
 
 	if ($tnum > 0) {
-		$tpl = $this->_tok->replaceTags($tpl, conf2kv($arg));
+		$tpl = $this->_tok->replaceTags($tpl, $r);
+		if (isset($r['*'])) {
+			$tpl = $this->_tok->removeTags($tpl);
+		}
 	}
 
 	// \rkphplib\lib\log_debug("TBase.tok_tpl:446> return $tpl"); 

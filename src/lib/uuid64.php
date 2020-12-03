@@ -8,7 +8,7 @@ require_once __DIR__.'/dec2n.php';
 /**
  * Create base64 uuid instead of hex (len [16,36]).
  * Use ordered=2 to prepend hex62(date(YmdHis).usec[3]) and
- * use valid_uuid64() to validate.
+ * Use valid_uuid64() to validate uuid64(N, 2).
  * Use ordered=1 to prepend microtime.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
@@ -29,17 +29,7 @@ function uuid64($len = 16, $ordered = 0) {
 		$data = file_get_contents('/dev/urandom', NULL, NULL, 0, 32);
 	}
 
-	if ($ordered == 1) {
-		$hts = dechex($sec).dechex(substr($usec, 2));
-
-		if (strlen($hts) % 2 == 1) {
-			$hts .= '0';
-		}
-
-		$data = hex2bin($hts).$data;
-		$data = str_replace([ '+', '/', '=' ], [ '', '', '' ], base64_encode($data));
-	}
-	else if ($ordered == 2) {
+	if ($ordered == 2) {
 		$data = str_replace([ '+', '/', '=' ], [ '', '', '' ], base64_encode($data));
 		list($usec, $sec) = explode(' ', microtime());
 		$hex62_ymd = dec2n(date('Ymd'), 62);
@@ -47,6 +37,16 @@ function uuid64($len = 16, $ordered = 0) {
 		$data = $hex62_ymd.$hex62_hisu.$data;
 	}
 	else {
+		if ($ordered == 1) {
+			$hts = dechex($sec).dechex(substr($usec, 2));
+
+			if (strlen($hts) % 2 == 1) {
+				$hts .= '0';
+			}
+	
+			$hts = hex2bin($hts).$data;
+		}
+
 		$data = str_replace([ '+', '/', '=' ], [ '', '', '' ], base64_encode($data));
 	}
 
