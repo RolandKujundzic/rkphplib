@@ -1,0 +1,16 @@
+[
+	"rkphplib\\ADatabase::createTableQuery",
+	[
+		{ 
+			"@table": "test",
+			"@id": 1,
+			"@timestamp": 3,
+			"name": "varchar:::NOT_NULL",
+			"born": "date:::NOT_NULL",
+ 	 		"age": "smallint:::UNSIGNED|NOT_NULL",
+			"weight": "smallint:::UNSIGNED"
+		},
+		"ok/t7.txt"
+	]
+]
+

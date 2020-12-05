@@ -1,0 +1,10 @@
+CREATE TABLE test (
+id int UNSIGNED NOT NULL AUTO_INCREMENT,
+since datetime NOT NULL DEFAULT NOW(),
+lchange datetime NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+name varchar NOT NULL,
+born date NOT NULL,
+age smallint UNSIGNED NOT NULL,
+weight smallint UNSIGNED,
+PRIMARY KEY (id)
+)
