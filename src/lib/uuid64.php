@@ -29,9 +29,10 @@ function uuid64($len = 16, $ordered = 0) {
 		$data = file_get_contents('/dev/urandom', NULL, NULL, 0, 32);
 	}
 
+	list($usec, $sec) = explode(' ', microtime());
+
 	if ($ordered == 2) {
 		$data = str_replace([ '+', '/', '=' ], [ '', '', '' ], base64_encode($data));
-		list($usec, $sec) = explode(' ', microtime());
 		$hex62_ymd = dec2n(date('Ymd'), 62);
 		$hex62_hisu = dec2n(date('His').substr($usec, 2, 3), 62);
 		$data = $hex62_ymd.$hex62_hisu.$data;
