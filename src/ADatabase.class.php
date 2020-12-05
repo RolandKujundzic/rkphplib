@@ -1038,7 +1038,7 @@ public function loadDump(string $file, int $flags = self::LOAD_DUMP_IGNORE_KEYS,
  * - TYPE: int, bigint, float, varchar, varbinary, enum, set, date, datetime, text, blog, ...
  * - EXTRA: NOT_NULL|INDEX, NOT_NULL|UNIQUE, INDEX, ...
  * 
- * - 'colA:colB:colC' => 208: FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE
+ * - 'colA:tableB:colB' => 208: FOREIGN KEY (colA) REFERENCES tableB(colB) ON DELETE CASCADE ON UPDATE CASCADE
  * - 'colA:colB' => 4: UNIQUE ('colA', 'colB')
  *
  * @example createTableConf([ '@table' => 'test', 'color': 'varchar:30:transparent:8' ])
@@ -1048,6 +1048,8 @@ public function loadDump(string $file, int $flags = self::LOAD_DUMP_IGNORE_KEYS,
  *   [ "name" => "color", "type" => "blob", "flag" => "1" ]
  * @EOL
  *
+ * @example int@NOT_NULL|UNSIGNED = int:11::NOT_NULL|UNSIGNED
+ * @example varchar@NOT_NULL = int:11::NOT_NULL
  * @example int:11:1:33 = int(11) UNSIGNED NOT NULL DEFAULT 1
  * @example varchar:80:admin:9 = varchar(80) NOT NULL DEFAULT 'admin', KEY (colname(20))
  * @example varbinary:1024::5 = varbinary(1024) NOT NULL, UNIQUE (colname(20))
@@ -1056,7 +1058,6 @@ public function loadDump(string $file, int $flags = self::LOAD_DUMP_IGNORE_KEYS,
  *
  */
 public static function createTableQuery(array $conf) : string {
-
 	$tname = $conf['@table'];
 
 	if (File::exists('setup/sql/'.$tname.'.sql')) {
@@ -1072,7 +1073,6 @@ public static function createTableQuery(array $conf) : string {
 	$conf = self::parseCreateTableConf($conf);
 
 	unset($conf['@table']);
-
 	$cols = [];
 	$keys = [];
 
@@ -1115,19 +1115,7 @@ public static function createTableQuery(array $conf) : string {
 				}
 			}
 
-			$o = empty($opt[3]) ? 0 : intval($opt[3]);
-
-			if ($o & self::UNSIGNED) {
-				$sql .= ' UNSIGNED';
-			}
-
-			if ($o & self::NOT_NULL) {
-				$sql .= ' NOT NULL';
-			}
-
-			if ($o & self::AUTO_INCREMENT) {
-				$sql .= ' AUTO_INCREMENT';
-			}
+			$sql .= self::tableColFlag(self::getTableFlag($opt[3]));
 
 			if (!empty($opt[2])) {
 				if (is_numeric($opt[2]) || mb_strpos($opt[2], '()') !== false) {
@@ -1139,22 +1127,11 @@ public static function createTableQuery(array $conf) : string {
 			}
 
 			array_push($cols, $sql);
-
-			if ($o & self::PRIMARY) {
-				array_push($keys, 'PRIMARY KEY ('.$index.')');
-			}
-
-			if ($o & self::UNIQUE) {
-				array_push($keys, 'UNIQUE ('.$index.')');
-			}
-
-			if ($o & self::INDEX) {
-				array_push($keys, 'INDEX ('.$index.')');
-			}
+			self::tableFlag($keys, $index, self::getTableFlag($opt[3]));
 		}
 		else if (count($opt) === 1) {
 			if ($opt[0] & self::FOREIGN) {
-				// e.g. "colA:colB:colC" => 208" = "FOREIGN KEY (colA) REFERENCES colB(colC) ON DELETE CASCADE ON UPDATE CASCADE"
+				// e.g. "colA:tableB:colB" => 208" = "FOREIGN KEY (colA) REFERENCES tableB(colB) ON DELETE CASCADE ON UPDATE CASCADE"
 				list ($ca, $tb, $cb) = explode(':', $name);
 				$sql = 'FOREIGN KEY ('.$ca.') REFERENCES '.$tb.'('.$cb.')';
 
@@ -1188,9 +1165,89 @@ public static function createTableQuery(array $conf) : string {
 
 
 /**
+ * Push flag definition to $keys. Flag $o is 2^n: PRIMARY, UNIQUE and INDEX.
+ */
+private static function tableFlag(array &$keys, string $index, int $o) : void {
+	if ($o === 0) {
+		return;
+	}
+
+	if ($o & self::PRIMARY) {
+		array_push($keys, 'PRIMARY KEY ('.$index.')');
+	}
+
+	if ($o & self::UNIQUE) {
+		array_push($keys, 'UNIQUE ('.$index.')');
+	}
+
+	if ($o & self::INDEX) {
+		array_push($keys, 'INDEX ('.$index.')');
+	}
+}
+
+
+/**
+ * Return table flag.
+ * @example …
+ * getTableFlag(ADatabase::UNIQUE)
+ * getTableFlag('NOT_NULL|UNSIGNED')
+ * getTableFlag(1)
+ * @EOF
+ */
+private function getTableFlag(string $flag) : int {
+	if (empty($flag)) {
+		return 0;
+	}
+
+	$sql = '';
+	$o = intval($flag);
+
+	if ($o == 0) {
+		$cflag = explode('|', $flag);
+		foreach ($cflag as $flag) {
+			$o += constant('\rkphplib\ADatabase::'.$flag);
+		}
+	}
+
+	return $o;
+}
+
+
+/**
+ * Return column definition. Flag $o is 2^n: UNSIGNED, NOT_NULL and AUTO_INCREMENT
+ * @example … 
+ * tableColFlag(33) = ' UNSIGNED NOT NULL'
+ * tableColFlag('UNSIGNED|NOT_NULL|AUTO_INCREMENT') = ' UNSIGNED NOT NULL AUTO_INCREMENT'
+ * @EOF
+ */
+private static function tableColFlag(int $o) : string {
+	if ($o === 0) {
+		return '';
+	}
+
+	$sql = '';
+
+	if ($o & self::UNSIGNED) {
+		$sql .= ' UNSIGNED';
+	}
+
+	if ($o & self::NOT_NULL) {
+		$sql .= ' NOT NULL';
+	}
+
+	if ($o & self::AUTO_INCREMENT) {
+		$sql .= ' AUTO_INCREMENT';
+	}
+
+	return $sql;
+}
+
+
+/**
  * Return true if table was created. Create only if table does not exists or @drop_existing = true.
  * Use @keep_existing to keep existing table.
  * Return value 0=error, 1=create table ok, 2=multi query ok = create table + insert ok.
+ * @see createTableQuery
  */
 public function createTable(array $conf) : int {
 
@@ -1233,25 +1290,30 @@ public function createTable(array $conf) : int {
 
 
 /**
- * Return map with resolved shortcuts (@...). Only "@table" is kept. Example:
+ * Return map with resolved shortcuts (@...). Only "@table" is kept.
  *
+ * @example …
  * "@table": table name, required, replace with escaped tablename 
  * "@language": e.g. de, en, ...
  * "@multilang": e.g. name, desc = name_de, name_en, desc_de, desc_en
- * "@id": 1=[id, int:::291 ], 2=[id, int:::35], 3=[id, varchar:30::3]
+ * "@id":
+ *   1=[id, int:::291 ]
+ *   2=[id, int:::35]
+ *   3=[id, varchar:30::3]
  * "@status": 1=[status, tinyint:::9]
  * "@timestamp":
  *   1=[since, datetime::NOW():1]
  *   2=[lchange, datetime::NOW() ON UPDATE NOW():1], 
  *   3=[since, datetime::NOW():1, lchange, datetime::NOW() ON UPDATE NOW():1]
+ * @EOF
  */
 public static function parseCreateTableConf(array $conf) : array {
-
 	if (empty($conf['@table'])) {
 		throw new Exception('missing tablename', 'empty @table');
 	}
 
 	$conf['@table'] = self::escape_name($conf['@table']);
+	$res = [];
 
 	$shortcut = [
 		'@id' => [
@@ -1267,12 +1329,25 @@ public static function parseCreateTableConf(array $conf) : array {
 				'lchange', 'datetime::NOW() ON UPDATE NOW():1' ]]
 	];
 
+	// resolve @... keys
+	foreach ($conf as $key => $value) {
+		if (isset($shortcut[$key])) {
+			$add_cols = $shortcut[$key][$value];
+
+			for ($i = 0; $i < count($add_cols); $i = $i + 2) {
+				$col = $add_cols[$i];
+				$res[$col] = $add_cols[$i + 1];
+			}
+		}
+		else {
+			$res[$key] = $value;
+		}
+	}
+
 	// resolve multilanguage
 	if (!empty($conf['@language']) && !empty($conf['@multilang'])) {
 		$lang_suffix = split_str(',', $conf['@language']);
 		$lang_cols = split_str(',', $conf['@multilang']);
-		unset($conf['@language']);
-		unset($conf['@multilang']);
 
 		foreach ($lang_cols as $col) {
 			if (empty($conf[$col])) {
@@ -1280,36 +1355,12 @@ public static function parseCreateTableConf(array $conf) : array {
 			}
 
 			foreach ($lang_suffix as $suffix) {
-				$conf[$col.'_'.$suffix] = $conf[$col];
+				$res[$col.'_'.$suffix] = $conf[$col];
 			}
-
-			unset($conf[$col]);
 		}
 	}
 
-	$skip = [ '@table', '@if_not', '@keep_existing', '@drop_existing' ];
-
-	// resolve @... shortcuts
-	foreach ($conf as $key => $value) {
-		if (in_array($key, $skip) || mb_substr($key, 0, 1) !== '@') {
-			continue;
-		}
-
-		if (!isset($shortcut[$key]) || !isset($shortcut[$key][$value])) {
-			throw new Exception('invalid createTable shortcut', "$key=$value");
-		}
-		
-		$add_cols = $shortcut[$key][$value];
-
-		for ($i = 0; $i < count($add_cols); $i = $i + 2) {
-			$col = $add_cols[$i];
-			$conf[$col] = $add_cols[$i + 1];
-		}
-
-		unset($conf[$key]);
-	}
-
-	return $conf;
+	return $res;
 }
 
 
@@ -1651,7 +1702,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 
 	$add_default = empty($kv['@add_default']) ? false : true;
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1654> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1705> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
 
 	foreach ($p as $col => $cinfo) {
 		$val = false;
@@ -1676,17 +1727,17 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			}
 		}
 
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1679> col=$col, val=$val");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1730> col=$col, val=$val");
 
 		if ($val !== false) {
 			array_push($key_list, self::escape_name($col));
 			array_push($val_list, $val);
-			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1684> table=$table, type=$type, col=$col, val=$val");
+			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1735> table=$table, type=$type, col=$col, val=$val");
 		}
 	}
 
 	if (count($key_list) == 0) {
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1689> empty key_list - return");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1740> empty key_list - return");
 		return '';
 	}
 
@@ -1712,7 +1763,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1715> table=$table, type=$type, res=$res");
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1766> table=$table, type=$type, res=$res");
 	return $res;
 }
 
