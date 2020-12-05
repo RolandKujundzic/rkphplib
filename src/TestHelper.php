@@ -84,7 +84,7 @@ public function __construct() {
 /**
  *  Check if database TEST_MYSQL is avaiable and if TEST_HOST is up.
  */
-public function prepare() : void {
+public static function prepare() : void {
 	// create database if necessary ...
 	$db = new \rkphplib\MysqlDatabase([ 'abort' => false ]);
 	$db->setDSN(TEST_MYSQL);
