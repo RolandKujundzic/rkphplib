@@ -6,12 +6,12 @@ define('ADMIN_DSN', 'mysqli://sql:admin@tcp+localhost/');
 global $th;
 
 if (!isset($th)) {
-	require_once(dirname(dirname(__DIR__)).'/src/TestHelper.class.php');
+	require_once(dirname(dirname(__DIR__)).'/src/TestHelper.php');
 	$th = new rkphplib\TestHelper();
 }
 
 $th->load('Database.class.php');
-$th->load('TestHelper.class.php');
+$th->load('TestHelper.php');
 $th->load('lib/log_debug.php');
 $th->load('lib/config.php');
 

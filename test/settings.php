@@ -10,7 +10,7 @@ if (file_exists($_SERVER['HOME'].'/.config/rkphplib.settings.php')) {
 	require_once $_SERVER['HOME'].'/.config/rkphplib.settings.php';
 }
 
-require_once PATH_RKPHPLIB.'TestHelper.class.php';
+require_once PATH_RKPHPLIB.'TestHelper.php';
 
 $th = new rkphplib\TestHelper();
 

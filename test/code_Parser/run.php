@@ -5,7 +5,7 @@ global $th;
 $src_dir = dirname(dirname(__DIR__)).'/src/';
 
 if (!isset($th)) {
-	require_once $src_dir.'TestHelper.class.php';
+	require_once $src_dir.'TestHelper.php';
 	$th = new rkphplib\TestHelper();
 }
 
