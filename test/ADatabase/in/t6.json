@@ -3,8 +3,8 @@
 	[
 		{ 
 			"@table": "language",
-			"@timestamp": 3,
 			"id": [ "binary", "16", "", "3" ],
+			"@timestamp": 3,
 			"until": { "type": "datetime", "flag": "9" },
  	 		"descr": { "type": "varchar", "size": "1024", "default": "-" }
 		},
