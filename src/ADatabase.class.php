@@ -1028,34 +1028,38 @@ public function loadDump(string $file, int $flags = self::LOAD_DUMP_IGNORE_KEYS,
 
 /**
  * Return create table query. If setup/sql/TABLE.sql (TABLE = conf[@table]) exists use this.
- * If setup/sql/insert/TABLE.sql exists execute this query too.
- *
- * Parameter examples:
+ * If setup/sql/insert/TABLE.sql exists execute this query too. Parameter:
  * 
- * - @table|language|multilang|id|status|timestamp: see parseCreateTableConf
+ * - @table: table name
+ * - @language: e.g. de, en, ...
+ * - @multilang: e.g. name, descr, ...
+ * - @id: 1|2|3
+ * - @status: 1 = tinyint, NOT NULL, INDEX 
+ * - @timestamp: 1|2|3
  * - @if_not: use CREATE TABLE IF NOT EXISTS (keep existing) 
- * - colname: TYPE:SIZE:DEFAULT:EXTRA
- * - TYPE: int, bigint, float, varchar, varbinary, enum, set, date, datetime, text, blog, ...
- * - EXTRA: NOT_NULL|INDEX, NOT_NULL|UNIQUE, INDEX, ...
+ * - @foreign[N]: e.g. @foreign1= col:ftable:fcol:208, @foreign2 = col:ftable:fcol:colname:DELETE_CASCADE|UPDATE_CASCADE
+ *   FOREIGN KEY (colA) REFERENCES tableB(colB) ON DELETE CASCADE ON UPDATE CASCADE
+ * - @unique[N]: e.g. @unique= colA, @unique2= colA:colB
+ * - @index[N]: e.g. @index= colX:colY:colZ
  * 
- * - 'colA:tableB:colB' => 208: FOREIGN KEY (colA) REFERENCES tableB(colB) ON DELETE CASCADE ON UPDATE CASCADE
- * - 'colA:colB' => 4: UNIQUE ('colA', 'colB')
+ * - colname: TYPE:SIZE:DEFAULT:EXTRA
+ *   TYPE: int, bigint, float, varchar, varbinary, enum, set, date, datetime, text, blog, ...
+ *   EXTRA: NOT_NULL|INDEX, NOT_NULL|UNIQUE, INDEX, ...
+ * 
+ * @example createTableQuery([ '@table' => 'test', 'color' => 'varchar:30:transparent:8' ])
+ * @example createTableQuery([ "@table" => 'test', 'image' => [ 'type' => 'blob', 'flag' => 1 ]])
  *
- * @example createTableConf([ '@table' => 'test', 'color': 'varchar:30:transparent:8' ])
- * @example createTableConf([ [ '@table', 'test' ], [ 'color', 'varchar', 30, 'transparent', 'blue' ] ])
- * @example …
- * createTableConf([ "@table" => 'test',
- *   [ "name" => "color", "type" => "blob", "flag" => "1" ]
- * @EOL
+ * @example Column values (string) …
+ * int:11:1:33 = int(11) UNSIGNED NOT NULL DEFAULT 1
+ * varchar:80:admin:9 = varchar(80) NOT NULL DEFAULT 'admin', KEY (colname(20))
+ * varbinary:1024::5 = varbinary(1024) NOT NULL, UNIQUE (colname(20))
+ * enum:'a','b'::1" = enum('a', 'b') NOT NULL
+ * set:'','a','b','c'::1 = set('', 'a', 'b', '') NOT NULL
+ * int@NOT_NULL|UNSIGNED = int:11::NOT_NULL|UNSIGNED
+ * varchar@NOT_NULL = int:11::NOT_NULL
+ * @eol
  *
- * @example int@NOT_NULL|UNSIGNED = int:11::NOT_NULL|UNSIGNED
- * @example varchar@NOT_NULL = int:11::NOT_NULL
- * @example int:11:1:33 = int(11) UNSIGNED NOT NULL DEFAULT 1
- * @example varchar:80:admin:9 = varchar(80) NOT NULL DEFAULT 'admin', KEY (colname(20))
- * @example varbinary:1024::5 = varbinary(1024) NOT NULL, UNIQUE (colname(20))
- * @example enum:'a','b'::1" = enum('a', 'b') NOT NULL
- * @example set:'','a','b','c'::1 = set('', 'a', 'b', '') NOT NULL
- *
+ * @see parseCreateTableConf
  */
 public static function createTableQuery(array $conf) : string {
 	$tname = $conf['@table'];
@@ -1071,83 +1075,60 @@ public static function createTableQuery(array $conf) : string {
 	}
 
 	$conf = self::parseCreateTableConf($conf);
-
-	unset($conf['@table']);
 	$cols = [];
 	$keys = [];
 
-	foreach ($conf as $name => $value) {
-		if (is_array($value)) {
-			if (!empty($value[0])) {
-				$opt = $value;
+	foreach ($conf as $name => $opt) {
+		if (substr($name, 0, 1) == '@') {
+			$tkey = 0;
+
+			if (substr($name, 0, 8) == '@foreign') {
+				$tkey = empty($opt[3]) ? self::FOREIGN : self::getTableFlag($opt[3]) | self::FOREIGN;
 			}
-			else if (!empty($value['type'])) {
-				$opt = [ $value['type'] ];
-				foreach ([ 'size', 'default', 'flag' ] as $key) {
-					if (isset($value[$key])) {
-						array_push($opt, $value[$key]);
-					}
-					else {
-						array_push($opt, '');
-					}
-				}
+			else if (substr($name, 0, 6) == '@index') {
+				$tkey = self::INDEX;
+			}
+			else if (substr($name, 0, 7) == '@unique') {
+				$tkey = self::UNIQUE;
+			}
+
+			if ($tkey > 0) {
+				self::tableKey($keys, $opt, $tkey);
+			}
+
+			continue;
+		}
+
+		$sql = $name.' '.$opt[0];
+		$index = $name;
+
+		if (!empty($opt[1])) {
+			if (($pos = mb_strpos($opt[1], '|')) !== false) {
+				$sql .= '('.mb_substr($opt[1], $pos).')';
+				$index = $name.'('.mb_substr($opt[1], $pos + 1).')';
 			}
 			else {
-				throw new Exception("invalid $tname.$name description", print_r($conf, true)); 
+				$sql .= '('.$opt[1].')';
 			}
 		}
-		else {
-			$opt = explode(':', $value);
-		}
 
-		if (count($opt) === 4) {
-			// e.g. "colname => varchar:30:admin:9" = "colname varchar(30) NOT NULL DEFAULT 'admin', INDEX (colname(20))"
-			$sql = $name.' '.$opt[0];
-			$index = $name;
-
-			if (!empty($opt[1])) {
-				if (($pos = mb_strpos($opt[1], '|')) !== false) {
-					$sql .= '('.mb_substr($opt[1], $pos).')';
-					$index = $name.'('.mb_substr($opt[1], $pos + 1).')';
-				}
-				else {
-					$sql .= '('.$opt[1].')';
-				}
-			}
-
+		if (!empty($opt[3])) {
 			$sql .= self::tableColFlag(self::getTableFlag($opt[3]));
-
-			if (!empty($opt[2])) {
-				if (is_numeric($opt[2]) || mb_strpos($opt[2], '()') !== false) {
-					$sql .= " DEFAULT ".$opt[2];
-				}
-				else {
-					$sql .= " DEFAULT '".self::escape($opt[2])."'";
-				}
-			}
-
-			array_push($cols, $sql);
-			self::tableFlag($keys, $index, self::getTableFlag($opt[3]));
 		}
-		else if (count($opt) === 1) {
-			if ($opt[0] & self::FOREIGN) {
-				// e.g. "colA:tableB:colB" => 208" = "FOREIGN KEY (colA) REFERENCES tableB(colB) ON DELETE CASCADE ON UPDATE CASCADE"
-				list ($ca, $tb, $cb) = explode(':', $name);
-				$sql = 'FOREIGN KEY ('.$ca.') REFERENCES '.$tb.'('.$cb.')';
 
-				if ($opt[0] & self::DELETE_CASCADE) {
-					$sql .= 'ON DELETE CASCADE';
-				}
-
-				if ($opt[0] & self::UPDATE_CASCADE) {
-					$sql .= 'ON UPDATE CASCADE';
-				}
-
-				array_push($keys, $sql);
+		if (!empty($opt[2])) {
+			if (is_numeric($opt[2]) || mb_strpos($opt[2], '()') !== false) {
+				$sql .= " DEFAULT ".$opt[2];
 			}
-			else if (count($opt) === 1 && $opt[0] === 'unique') {
-				array_push($keys, 'UNIQUE ('.join(',', explode(':', $name)).')');
+			else {
+				$sql .= " DEFAULT '".self::escape($opt[2])."'";
 			}
+		}
+
+		array_push($cols, $sql);
+
+		if (!empty($opt[3])) {
+			self::tableKey($keys, [ $index ], self::getTableFlag($opt[3]));
 		}
 	}
 
@@ -1165,23 +1146,30 @@ public static function createTableQuery(array $conf) : string {
 
 
 /**
- * Push flag definition to $keys. Flag $o is 2^n: PRIMARY, UNIQUE and INDEX.
+ * Push foreign|index|unique to $keys ($o = self::PRIMARY|UNIQUE|INDEX|FOREIGN).
  */
-private static function tableFlag(array &$keys, string $index, int $o) : void {
-	if ($o === 0) {
-		return;
-	}
-
+private static function tableKey(array &$keys, array $opt, int $o) : void {
 	if ($o & self::PRIMARY) {
-		array_push($keys, 'PRIMARY KEY ('.$index.')');
+		array_push($keys, 'PRIMARY KEY ('.$opt[0].')');
 	}
-
-	if ($o & self::UNIQUE) {
-		array_push($keys, 'UNIQUE ('.$index.')');
+	else if ($o & self::UNIQUE) {
+		array_push($keys, 'UNIQUE ('.join(', ', $opt).')');
 	}
+	else if ($o & self::INDEX) {
+		array_push($keys, 'INDEX ('.$opt[0].')');
+	}
+	else if ($o & self::FOREIGN) {
+		$sql = 'FOREIGN KEY ('.$opt[0].') REFERENCES '.$opt[1].'('.$opt[2].')';
 
-	if ($o & self::INDEX) {
-		array_push($keys, 'INDEX ('.$index.')');
+		if ($o & self::DELETE_CASCADE) {
+			$sql .= ' ON DELETE CASCADE';
+		}
+
+		if ($o & self::UPDATE_CASCADE) {
+			$sql .= ' ON UPDATE CASCADE';
+		}
+
+		array_push($keys, $sql);
 	}
 }
 
@@ -1192,14 +1180,9 @@ private static function tableFlag(array &$keys, string $index, int $o) : void {
  * getTableFlag(ADatabase::UNIQUE)
  * getTableFlag('NOT_NULL|UNSIGNED')
  * getTableFlag(1)
- * @EOF
+ * @eof
  */
 private function getTableFlag(string $flag) : int {
-	if (empty($flag)) {
-		return 0;
-	}
-
-	$sql = '';
 	$o = intval($flag);
 
 	if ($o == 0) {
@@ -1218,7 +1201,7 @@ private function getTableFlag(string $flag) : int {
  * @example … 
  * tableColFlag(33) = ' UNSIGNED NOT NULL'
  * tableColFlag('UNSIGNED|NOT_NULL|AUTO_INCREMENT') = ' UNSIGNED NOT NULL AUTO_INCREMENT'
- * @EOF
+ * @eof
  */
 private static function tableColFlag(int $o) : string {
 	if ($o === 0) {
@@ -1250,7 +1233,6 @@ private static function tableColFlag(int $o) : string {
  * @see createTableQuery
  */
 public function createTable(array $conf) : int {
-
 	if (empty($conf['@table'])) {
 		throw new Exception('missing tablename', 'empty @table');
 	}
@@ -1290,7 +1272,7 @@ public function createTable(array $conf) : int {
 
 
 /**
- * Return map with resolved shortcuts (@...). Only "@table" is kept.
+ * Return map with resolved shortcuts (@...).
  *
  * @example …
  * "@table": table name, required, replace with escaped tablename 
@@ -1305,15 +1287,15 @@ public function createTable(array $conf) : int {
  *   1=[since, datetime::NOW():1]
  *   2=[lchange, datetime::NOW() ON UPDATE NOW():1], 
  *   3=[since, datetime::NOW():1, lchange, datetime::NOW() ON UPDATE NOW():1]
- * @EOF
+ * @eof
  */
-public static function parseCreateTableConf(array $conf) : array {
+private static function parseCreateTableConf(array $conf) : array {
 	if (empty($conf['@table'])) {
 		throw new Exception('missing tablename', 'empty @table');
 	}
 
-	$conf['@table'] = self::escape_name($conf['@table']);
 	$res = [];
+	$res['@table'] = self::escape_name($conf['@table']);
 
 	$shortcut = [
 		'@id' => [
@@ -1329,7 +1311,6 @@ public static function parseCreateTableConf(array $conf) : array {
 				'lchange', 'datetime::NOW() ON UPDATE NOW():1' ]]
 	];
 
-	// resolve @... keys
 	foreach ($conf as $key => $value) {
 		if (isset($shortcut[$key])) {
 			$add_cols = $shortcut[$key][$value];
@@ -1360,7 +1341,52 @@ public static function parseCreateTableConf(array $conf) : array {
 		}
 	}
 
+	self::splitCreateConf($res);
 	return $res;
+}
+
+
+/**
+ * Split if key hash, @[index|unqiue|foreign]… or 'type:size:default:flag'.
+ */
+private static function splitCreateConf(array &$conf) : void {
+	foreach ($conf as $key => $value) {
+		if (substr($key, 0, 1) == '@') {
+			if (preg_match('/^@(index|unique|foreign)/', $key)) {
+				$conf[$key] = explode(':', $value);
+			}
+
+			continue;
+		}
+
+		if (is_string($value)) {
+			$conf[$key] = explode(':', $value);
+		}
+		else if (!empty($value[0])) {
+			// ok
+		}
+		else if (!empty($value['type'])) {
+			$opt = [ $value['type'] ];
+
+			foreach ([ 'size', 'default', 'flag' ] as $vkey) {
+				if (isset($value[$vkey])) {
+					array_push($opt, $value[$vkey]);
+				}
+				else {
+					array_push($opt, '');
+				}
+			}
+
+			if (!empty($value['comment'])) {
+				$conf['@comment_'.$key] = $value['comment'];
+			}
+
+			$conf[$key] = $opt;
+		}
+		else {
+			throw new Exception("invalid column $key options", print_r($conf, true)); 
+		}
+	}
 }
 
 
@@ -1656,9 +1682,9 @@ public static function escape(string $txt) : string {
  * Return comma separted list of columns.
  *
  * @example columnList(['a x', 'b-y', ' c ', 'p.age', 'p.last name' ]) == …
- *   '`a x`, `b-y`, c, p.age AS p_age, `p.last name`' AS `p_last name`@EOF
+ *   '`a x`, `b-y`, c, p.age AS p_age, `p.last name`' AS `p_last name`@eof
  * @example columnList(['a', 'b', 'x.c', 'üöä' ], 'l') == …
- *   'l.a AS l_a, l.b AS l_b, x.c AS x_c, `l.üöä` AS `l_üöü`' @EOF
+ *   'l.a AS l_a, l.b AS l_b, x.c AS x_c, `l.üöä` AS `l_üöü`'@eof
  */
 public static function columnList(array $cols, string $prefix = '') : string {
 	$cnames = [];
@@ -1702,7 +1728,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 
 	$add_default = empty($kv['@add_default']) ? false : true;
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1705> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1731> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
 
 	foreach ($p as $col => $cinfo) {
 		$val = false;
@@ -1727,17 +1753,17 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			}
 		}
 
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1730> col=$col, val=$val");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1756> col=$col, val=$val");
 
 		if ($val !== false) {
 			array_push($key_list, self::escape_name($col));
 			array_push($val_list, $val);
-			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1735> table=$table, type=$type, col=$col, val=$val");
+			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1761> table=$table, type=$type, col=$col, val=$val");
 		}
 	}
 
 	if (count($key_list) == 0) {
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1740> empty key_list - return");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1766> empty key_list - return");
 		return '';
 	}
 
@@ -1763,7 +1789,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1766> table=$table, type=$type, res=$res");
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1792> table=$table, type=$type, res=$res");
 	return $res;
 }
 

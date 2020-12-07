@@ -90,11 +90,10 @@ public function setDSN($dsn = SETTINGS_DSN, $opt = [ 'table' => 'language', 'use
  * @param vector<string[2]> $language_list (default = [ de, en ])
  */
 public function createTable($table = 'language', $language_list = [ 'de', 'en' ]) {
-
 	$tconf = [];
 	$tconf['@table'] = $table;
-	$tconf['@timestamp'] = 2;
 	$tconf['id'] = 'varbinary:50::3';
+	$tconf['@timestamp'] = 2;
 	$tconf['dir'] = 'varbinary:255::8';
 	$tconf['txt'] = 'text:::1';
 
@@ -144,7 +143,7 @@ public function initSession($p) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TLanguage.initSession:147> res=[$res] p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TLanguage.initSession:146> res=[$res] p: ".print_r($p, true));
 	return $res;
 }
 
@@ -184,7 +183,7 @@ public function tok_language_init($p) {
 	$this->setDSN($p['dsn'], $p);
 	$this->conf = $p;
 
-	// \rkphplib\lib\log_debug("TLanguage.tok_language_init:187> conf=".print_r($p, true));
+	// \rkphplib\lib\log_debug("TLanguage.tok_language_init:186> conf=".print_r($p, true));
 	return '';
 }
 
@@ -315,7 +314,7 @@ public function tok_t($param, $txt) {
  * @return string
  */
 public function tok_txt($param, $txt) {
-	// \rkphplib\lib\log_debug("TLanguage.tok_txt:318> param=$param txt=$txt is_null(this->db)=".is_null($this->db));
+	// \rkphplib\lib\log_debug("TLanguage.tok_txt:317> param=$param txt=$txt is_null(this->db)=".is_null($this->db));
 	if (is_null($txt)) {
 		$txt = '';
 	}
