@@ -1,0 +1,22 @@
+[
+	"rkphplib\\ADatabase::createTableQuery",
+	[
+		{ 
+			"@table": "test",
+			"@id": 1,
+			"@timestamp": 3,
+			"uid": "int:::UNSIGNED",
+			"name": { "type": "varchar", "flag": "NOT_NULL" },
+			"born": { "type": "date", "flag": "NOT_NULL" },
+ 	 		"age": { "type": "smallint", "flag": "UNSIGNED|NOT_NULL" },
+			"weight": "smallint:::UNSIGNED",
+			"phone": "varchar:30",
+			"@unique": "name:phone",
+			"@index": "born",
+			"@index2": "age",
+			"@foreign": "uid:login:id:DELETE_CASCADE|UPDATE_CASCADE"
+		},
+		"ok/t8.txt"
+	]
+]
+

@@ -1,0 +1,16 @@
+CREATE TABLE test (
+id int UNSIGNED NOT NULL AUTO_INCREMENT,
+since datetime NOT NULL DEFAULT NOW(),
+lchange datetime NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+uid int UNSIGNED,
+name varchar NOT NULL,
+born date NOT NULL,
+age smallint UNSIGNED NOT NULL,
+weight smallint UNSIGNED,
+phone varchar(30),
+PRIMARY KEY (id),
+UNIQUE (name, phone),
+INDEX (born),
+INDEX (age),
+FOREIGN KEY (uid) REFERENCES login(id) ON DELETE CASCADE ON UPDATE CASCADE
+)
