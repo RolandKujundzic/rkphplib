@@ -41,7 +41,7 @@ function redirect(string $url, array $p = []) : void {
 
 		$url = \rkphplib\tok\Tokenizer::$site->callPlugin('link', 'tok_link', [ [], $p ]);
 	}
-	else {
+	else if (strpos($url, 'http') !== 0) {
 		// append parameter _ld for loop detection
 		$url .= mb_strpos($url, '?') ? '&_ld='.$md5 : '?_ld='.$md5;
 
@@ -51,10 +51,16 @@ function redirect(string $url, array $p = []) : void {
 		}
 	}
 
-	// header('P3P: CP="CAO PSA OUR"'); // IE will not accept Frameset SESSIONS without this header 
 	// \rkphplib\lib\log_debug('redirect:55> exit redirect: Location '.$url);
 	session_write_close(); // avoid redirect delay 
-	header('Location: '.$url);
+
+	if (php_sapi_name() === 'cli') {
+		print "Redirect to $url\n";
+	}
+	else {
+		header('Location: '.$url);
+	}
+
 	exit();
 }
 
