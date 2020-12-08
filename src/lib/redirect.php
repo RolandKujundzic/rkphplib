@@ -51,7 +51,7 @@ function redirect(string $url, array $p = []) : void {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('redirect:55> exit redirect: Location '.$url);
+	// \rkphplib\lib\log_debug('redirect:54> exit redirect: Location '.$url);
 	session_write_close(); // avoid redirect delay 
 
 	if (php_sapi_name() === 'cli') {
