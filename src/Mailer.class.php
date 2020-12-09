@@ -320,7 +320,7 @@ public function useSMTP($smtp) : void {
 
 	if (getHostByName(getHostName())== getHostByName($smtp['host'])) {
 		// smtp.host = localhost: use mail method
-		$this->_mail->IsMail();
+		$this->_mailer->IsMail();
 		return;
 	}
 
@@ -330,10 +330,10 @@ public function useSMTP($smtp) : void {
   if (isset($smtp['hostname'])) {
     $this->_mailer->Hostname = $smtp['hostname'];
   }
-	else if (!empty($this->type_email['from']) && empty($this->_mail->Hostname) && empty($_SERVER['SERVER_NAME'])) {
+	else if (!empty($this->type_email['from']) && empty($this->_mailer->Hostname) && empty($_SERVER['SERVER_NAME'])) {
 		// don't use localhost.localdomain
 		list ($email_from_name, $email_from_host) = explode('@', $this->type_email['from'], 2);
-		$this->_mail->Hostname = mb_strtolower($email_from_host);
+		$this->_mailer->Hostname = mb_strtolower($email_from_host);
 	}
 
 	if (isset($smtp['secure']) && in_array($smtp['secure'], [ '', 'ssl', 'tls' ])) {
