@@ -67,7 +67,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['output:json']   = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 	$plugin['output:header'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
 	$plugin['output:footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO;
-	$plugin['output:empty'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['output:empty'] = TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
 	$plugin['output'] = 0; // no callback for base plugin
 	$plugin['sort'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['search'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
@@ -85,11 +85,11 @@ public function getPlugins(Tokenizer $tok) : array {
  *   <option value="1">{txt:}active{:txt}</option>
  *   ...
  * </select>
- * @EOL
+ * @eol
  *
  * @tok {search:name}width=5{:search} …
  * <input type="text" name="s_name" value="{get:s_name}" style="width:$WIDTHch" onkeypress="rkphplib.searchOutput(this)">
- * @EOL
+ * @eol
  *
  * @tok {search:name}overlay=1|#|sort=1|#|label=NAME|#| ...{:search} = NAME
  */
@@ -305,11 +305,19 @@ private function get_search_col_options() : string {
 
 
 /**
- * Show if table is empty.
+ * Show if table is (not) empty.
+ * @tok {output:empty}no output{:output}
+ * @tok {output:empty:no}found output{:output}
+ * @tok {output:empty:yes}no output{:output}
  */
-public function tok_output_empty(string $tpl) : string {
-	if (!$this->isEmpty()) {
-		return '';
+public function tok_output_empty(string $if, string $tpl) : string {
+	$res = '';
+
+	if (($if == 'yes' || $if == '') && $this->isEmpty()) {
+		$res = $tpl;
+	}
+	else if ($if == 'no' && !$this->isEmpty()) {
+		$res = $tpl;
 	}
 
 	return $tpl;
@@ -396,7 +404,7 @@ protected function getHeaderLabel() : string {
  * column_label= id:ID, name:NAME|#|
  * template.header_label= <td nowrap align="center"$suffix>$txt_label$sort</td>|#|
  * {:output}
- * @EOL
+ * @eol
  *
  * @tok {output:header}{:=header_label}{:output} = <table>
  */
@@ -1393,6 +1401,7 @@ public function fillTable(?array $table_data = null) : void {
 	if (!is_null($table_data)) {
 		$this->table = $table_data;
 		$this->env['total'] = count($this->table);		
+		\rkphplib\lib\log_debug("TOutput.fillTable:1405> env.total=".$this->env['total']);
 		return;
 	}
 
