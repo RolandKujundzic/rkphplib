@@ -10,9 +10,11 @@ function build {
 
 	_composer
 
+	_mkdir "$RKBASH_DIR" >/dev/null
 	_require_dir "$PATH_PHPLIB"
-	"$PATH_PHPLIB/bin/toggle" src log_debug on
-	"$PATH_PHPLIB/bin/toggle" src log_debug off
+	"$PATH_PHPLIB/bin/toggle" src log_debug on  >"$RKBASH_DIR/log_debug_on.log"
+	echo -e "bin/toggle src log_debug off\nsee: $RKBASH_DIR/log_debug_off.log"
+	"$PATH_PHPLIB/bin/toggle" src log_debug off >"$RKBASH_DIR/log_debug_off.log"
 
 	bin/plugin_map
 

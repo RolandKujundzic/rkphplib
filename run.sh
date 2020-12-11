@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2016 - 2020 Roland Kujundzic <roland@kujundzic.de>
 #
-# shellcheck disable=SC1091,SC1001,SC2009,SC2012,SC2016,SC2024,SC2028,SC2034,SC2044,SC2046,SC2048,SC2068,SC2086,SC2119,SC2120,SC2153,SC2183,SC2206
+# shellcheck disable=SC1091,SC1001,SC2009,SC2012,SC2016,SC2024,SC2028,SC2033,SC2034,SC2044,SC2046,SC2048,SC2068,SC2086,SC2119,SC2120,SC2153,SC2183,SC2206
 #
 
 
@@ -224,7 +224,7 @@ function _ask {
 
 	msg="\033[0;35m$1\033[0m"
 	if test -z "$ASK_DESC"; then
-		echo -en "$msg$label"
+		echo -en "$msg  $label"
 	else
 		echo -en "$msg\n\n$ASK_DESC\n\n$label"
 	fi
@@ -1390,7 +1390,6 @@ function _rks_app {
 		fi
 	fi
 
-	test -z "$APP_DESC" && _abort "APP_DESC is empty"
 	test -z "${#SYNTAX_CMD[@]}" && _abort "SYNTAX_CMD is empty"
 	test -z "${#SYNTAX_HELP[@]}" && _abort "SYNTAX_HELP is empty"
 
@@ -1636,7 +1635,7 @@ function _syntax_help {
 
 
 function _syntax_check_php {
-	local a php_files php_bin
+	local a php_files fnum
 
 	if test "$1" = 'test'; then
 		_require_file 'test/run.sh'
@@ -1649,8 +1648,15 @@ function _syntax_check_php {
 		return
 	fi
 
-	php_files=$(find "$1" -type f -name '*.php')
-	php_bin=$(grep -R -E '^#\!/usr/bin/php' "bin" | grep -v 'php -c skip_syntax_check' | sed -E 's/\:\#\!.+//')
+	php_files=$(grep -R -E '^#\!/usr/bin/php' "$1" | sed -E 's/\:\#\!.+//')
+	fnum=$(echo "$php_files" | xargs -n1 | wc -l)
+	_msg "Syntax check $fnum executable php files in $1"
+	for a in $php_files
+	do
+		if ! php -l "$a" >/dev/null; then
+			_abort "syntax error in $a"
+		fi
+	done
 
 	_require_global PATH_RKPHPLIB
 
@@ -1661,16 +1667,25 @@ function _syntax_check_php {
 		echo -e "\n}\n"
 	} >"$2"
 
-	for a in $php_files $php_bin
+	php_files=$(find "$1" -type f -name '*.php')
+	fnum=$(echo "$php_files" | xargs -n1 | wc -l)
+	_msg "Syntax check $fnum php files in $1"
+	for a in $php_files
 	do
-		if test -z "$(head -1 "$a" | grep 'php -c skip_syntax_check')"; then
+		if ! php -l "$a" >/dev/null; then
+			_abort "syntax error in $a"
+		fi
+
+		if test -z "$(head -1 "$a" | grep -E '^#\!/usr/bin/php')"; then
 			echo "_syntax_test('$a');" >> "$2"
 		fi
 	done
 
 	if test "$3" = '1'; then
-		php "$2" || _abort "php $2"
+		_msg "Execute $2"
+		php "$2" > "$2.log" || _abort "php $2  # see $2.log"
 		_rm "$2"
+		_rm "$2.log"
 	fi
 }
 
@@ -1733,6 +1748,11 @@ function _wget {
 
 	save_as=${2:-$(basename "$1")}
 	if test -s "$save_as"; then
+		if test "$WGET_KEEP" = '1'; then
+			_msg "keep existing $save_as"
+			return
+		fi
+
 		_confirm "Overwrite $save_as" 1
 		if test "$CONFIRM" != "y"; then
 			_msg "keep $save_as - skip wget '$1'"
@@ -1788,9 +1808,11 @@ function build {
 
 	_composer
 
+	_mkdir "$RKBASH_DIR" >/dev/null
 	_require_dir "$PATH_PHPLIB"
-	"$PATH_PHPLIB/bin/toggle" src log_debug on
-	"$PATH_PHPLIB/bin/toggle" src log_debug off
+	"$PATH_PHPLIB/bin/toggle" src log_debug on  >"$RKBASH_DIR/log_debug_on.log"
+	echo -e "bin/toggle src log_debug off\nsee: $RKBASH_DIR/log_debug_off.log"
+	"$PATH_PHPLIB/bin/toggle" src log_debug off >"$RKBASH_DIR/log_debug_off.log"
 
 	bin/plugin_map
 
