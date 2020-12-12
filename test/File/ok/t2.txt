@@ -2,9 +2,9 @@ Array
 (
     [file] => run.php
     [name] => run
-    [size] => 70
+    [size] => 256
     [mime] => text/x-php
     [suffix] => .php
     [lastModified] => unset
-    [md5] => be8fa8ff40a8eaac2e82c038ece71cc8
+    [md5] => b863dea51afb985307db9a6420660805
 )

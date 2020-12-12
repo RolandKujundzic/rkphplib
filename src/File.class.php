@@ -595,6 +595,32 @@ public static function formatSize(int $bytes) : string {
 
 
 /**
+ * Return realpath of file.
+ * @enum $flag …
+ * 1: must exist
+ * 2: parent directory must exist
+ * @eol
+ * @throws if $required and neither $file nor dirname($file) exists
+ */
+public static function realpath(string $file, int $flag = 1) : string {
+	$path = realpath($file);
+
+	if ($path == '' && ($flag & 2)) {
+		$path = realpath(dirname($file));
+		if ($path) {
+			$path .= '/'.basename($file);
+		}
+	}
+
+	if ($path == '' && ($flag & 1)) {
+		throw new Exception('invalid path', $file);
+	}
+
+  return $path;
+}
+
+
+/**
  * Check if file exists.
  */
 public static function exists(string $file, bool $required = false) : bool {
