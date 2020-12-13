@@ -163,7 +163,7 @@ public function auth(string $url) : void {
  * Return true if HEAD request to $url result code matches $ok_rx.
  * Default ok result: 20[0-8], 30[0-8], 401 (unauthorized), 403 (forbidden), 404 (not found).
  */
-public static function check(string $url, int $timeout = 10, string $ok_rx = '[23]0[0-8]|40[134]') : bool {
+public static function check(string $url, int $timeout = 3, string $ok_rx = '[23]0[0-8]|40[134]') : bool {
 	$ch = curl_init($url);
 
 	curl_setopt_array($ch, array(
