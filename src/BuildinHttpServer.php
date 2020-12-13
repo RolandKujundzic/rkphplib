@@ -4,7 +4,9 @@ namespace rkphplib;
 
 require_once __DIR__.'/File.class.php';
 require_once __DIR__.'/Curl.class.php';
-require_once __DIR__.'/execute.php';
+require_once __DIR__.'/lib/execute.php';
+
+use function rkphplib\lib\execute;
 
 
 /**
@@ -82,6 +84,14 @@ public function stop() : void {
 		sleep(1);
 		if (is_dir('/proc/'.$pid)) {
 			throw new Exception('kill php_server failed', 'kill -9 '.$pid);
+		}
+	}
+
+	if (!empty($this->conf['log_dir'])) {
+		$server = $this->conf['host'].':'.$this->conf['port'];
+		foreach ( [ '.log', '.json' ] as $suffix) {
+			$file = $this->conf['log_dir'].'/'.$server.$suffix;
+			File::remove($file, false);
 		}
 	}
 }

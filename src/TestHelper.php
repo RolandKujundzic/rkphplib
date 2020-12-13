@@ -14,10 +14,6 @@ if (!defined('DOCROOT')) {
 	}
 }
 
-define('TEST_HOST', 'localhost:15081');
-define('TEST_MYSQL', 'mysqli://unit_test:magic123@tcp+localhost/unit_test');
-define('TEST_SQLITE', 'sqlite://magic123@./unit_test.sqlite');
-
 require_once __DIR__.'/lib/call.php';
 require_once __DIR__.'/lib/config.php';
 require_once __DIR__.'/lib/execute.php';
@@ -26,6 +22,7 @@ require_once __DIR__.'/tok/TokPlugin.iface.php';
 require_once __DIR__.'/MysqlDatabase.class.php';
 require_once __DIR__.'/FSEntry.class.php';
 require_once __DIR__.'/PhpCode.class.php';
+require_once __DIR__.'/BuildinHttpServer.php';
 require_once __DIR__.'/Profiler.class.php';
 require_once __DIR__.'/PhpCode.class.php';
 require_once __DIR__.'/JSON.class.php';
@@ -35,6 +32,17 @@ require_once __DIR__.'/Dir.class.php';
 
 use rkphplib\tok\Tokenizer;
 use rkphplib\tok\TokPlugin;
+use rkphplib\lib\php_server;
+use rkphplib\BuildinHttpServer;
+
+
+define('TEST_HOST', 'localhost:15081');
+define('TEST_MYSQL', 'mysqli://unit_test:magic123@tcp+localhost/unit_test');
+define('TEST_SQLITE', 'sqlite://magic123@./unit_test.sqlite');
+
+if (!defined('TEST_TMP')) {
+	define('TEST_TMP', dirname(__DIR__).'/tmp');
+}
 
 
 /**
@@ -100,18 +108,14 @@ public static function prepare() : void {
 
 	$db->abort = true;
 
-	if (!Curl::check(TEST_HOST)) {
-		list ($host, $port) = explode(':', TEST_HOST);
-		$cmd = dirname(PATH_RKPHPLIB).'/run.sh php server --q1=y --port='.$port;
-		print TEST_HOST." down, trying:\n$cmd\n";
-		\rkphplib\lib\execute($cmd);
-		if (!Curl::check(TEST_HOST)) {
-			print "FAIL - try manually\n";
-			exit(1);
-		}
+	Dir::create(TEST_TMP);
 
-		print ' OK '.TEST_HOST." up and running\n";
-	}
+	$php_server = new BuildinHttpServer(TEST_HOST, [
+		'docroot' => TEST_TMP,
+		'log_dir' => TEST_TMP 
+		]);
+
+	$php_server->start(false);
 }
 
 
@@ -836,8 +840,7 @@ private function call(string $call, array $args) {
 		$res = \rkphplib\lib\call($call, $args);
 	}
 	catch (\Exception $e) {
-		File::save('out/call.err', $call.print_r($args, true).
-			$e->getMessage()."\n".str_replace(PATH_RKPHPLIB, '', $e->getTraceAsString()));
+		File::saveException($e, 'out/call.err', $call.print_r($args, true));
 		return 'EXCEPTION';
 	}
 
@@ -998,7 +1001,7 @@ private function execPHP(string $base) : string {
 		ob_end_clean();
 	}
 	catch (\Exception $e) {
-		File::save("out/$base.err", $e->getMessage()."\n".str_replace(PATH_RKPHPLIB, '', $e->getTraceAsString()));
+		File::saveException($e, "out/$base.err");
 		$out = 'EXCEPTION';
 	}
 
