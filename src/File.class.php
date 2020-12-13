@@ -593,6 +593,28 @@ public static function formatSize(int $bytes) : string {
 	return $res;
 }
 
+/**
+ * Save Exception information to file.
+ */
+public static function saveException(\Exception $e, ?string $log_file = null, string $append = '') : void {
+	if (is_null($log_file)) {
+		$log_file = SETTINGS_LOG_WARN;
+	}
+
+	$msg  = $e->getMessage()."\n";
+	$msg .= str_replace(PATH_RKPHPLIB, '', $e->getTraceAsString())."\n";
+
+	if (property_exists($e, 'internal_message')) {
+		$msg .=  $e->internal_message."\n";
+	}
+
+	if ($append) {
+		$msg .= $append."\n";
+	}
+
+	error_log($msg, 3, $log_file);
+}
+
 
 /**
  * Return realpath of file.
