@@ -603,6 +603,14 @@ public static function formatSize(int $bytes) : string {
  * @throws if $required and neither $file nor dirname($file) exists
  */
 public static function realpath(string $file, int $flag = 1) : string {
+	if (strlen($file) == 0) {
+		if ($flag & 1) {
+			throw new Exception('empty file path');
+		}
+
+		return '';
+	}
+
 	$path = realpath($file);
 
 	if ($path == '' && ($flag & 2)) {
