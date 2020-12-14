@@ -62,6 +62,19 @@ public function __construct(string $host = '0.0.0.0', array $opt = []) {
 
 
 /**
+ * Update configuration key script|docroot
+ */
+public function set(string $key, string $value) : void {
+	$allow = [ 'script', 'docroot' ];
+	if (!in_array($key, $allow)) {
+		throw new Exception("invalid key '$key' - use ".join('|', $allow));
+	}
+
+	$this->conf[$key] = $value;
+}
+
+
+/**
  * Return true if server is running
  */
 public function check() : bool {
@@ -89,7 +102,7 @@ public function stop() : void {
 
 	if (!empty($this->conf['log_dir'])) {
 		$server = $this->conf['host'].':'.$this->conf['port'];
-		foreach ( [ '.log', '.json' ] as $suffix) {
+		foreach ( [ '.log', '.json', '.pid' ] as $suffix) {
 			$file = $this->conf['log_dir'].'/'.$server.$suffix;
 			File::remove($file, false);
 		}
@@ -135,24 +148,13 @@ public function start(bool $restart = true) : void {
  */
 public function getPid(int $wait = 0) : int {
 	$server = $this->conf['host'].':'.$this->conf['port'];
-	$config = empty($this->conf['log_dir']) ? '' : 
-		$this->conf['log_dir'].'/'.$server.'.json';
+	$pid_file = empty($this->conf['log_dir']) ? '' :
+		$pid_file = $this->conf['log_dir'].'/'.$server.'.pid';
 
-	$pid = 0;
-	if (File::exists($config)) {
-		$json = File::loadJSON($config);
-
-		if ($server == $json['host'].':'.$json['port']) {
-			if (empty($json['pid'])) {
-				throw new Exception('invalid pid in configuration file', $config);
-			}
-
-			$pid = $json['pid'];
-		}
-	}
-
+	$pid = File::exists($pid_file) ? intval(File::load($pid_file)) : 0;
+	
 	if ($pid) {
-		$has_pid =  posix_getpgid($pid);
+		$has_pid = posix_getpgid($pid);
 
 		if (!$has_pid) {
 			clearstatcache(true, '/proc/'.$pid);
@@ -164,12 +166,16 @@ public function getPid(int $wait = 0) : int {
 			$has_pid = file_exists('/proc/'.$pid);
 		}
 
-		return $has_pid;
+		return ($has_pid && $pid > 79) ? $pid : 0;
 	}
 
 	// find pid in process list
-	system("ps aux | grep 'php -S $server' | grep -v grep", $pid);
-	return intval($pid) > 79;
+	$ps = execute("ps aux | grep 'php -S $server' | grep -v grep", null, 0);
+	if (preg_match('/^.+? +([0-9]+) +/', $ps, $match)) {
+		$pid = intval($match[1]);
+	}
+
+	return (intval($pid) > 79) ? $pid : 0;
 }
 
 
@@ -179,7 +185,7 @@ public function getPid(int $wait = 0) : int {
 private function run() : void {
 	$root = realpath($this->conf['docroot']); 
 	$cwd = $root == getcwd() ? '' : "cd '$root' && ";
-	$script = empty($this->conf['script']) ? '' : " '{$this->conf['script']}'";
+	$script = empty($this->conf['script']) ? '' : " '".$this->conf['script']."'";
 	$server = $this->conf['host'].':'.$this->conf['port'];
 	$log = '';
 	$pid = '';
@@ -187,7 +193,7 @@ private function run() : void {
 	if (!empty($this->conf['log_dir'])) {
 		$log_file = $this->conf['log_dir'].'/php_server.log';
 		$log = " 2>$log_file >$log_file";
-		$pid = ' & echo $! >'."'{$conf['pid']}'";
+		$pid = ' & echo $! >'."'".$this->conf['log_dir']."/$server.pid'";
 	}
 
 	$cmd = $cwd.'php -S '.$server.$script.$log.$pid;
