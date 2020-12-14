@@ -1286,7 +1286,6 @@ public function tok_switch(array $set, array $p) : string {
  */
 public function tok_if(string $param, array $p) : string {
 	$has_empty_param = false;
-	
 	if (!empty($param)) {
 		$tmp = split_str(':', $param);
 		$do = $tmp[0];
@@ -1298,6 +1297,7 @@ public function tok_if(string $param, array $p) : string {
 	}
 
 	$p_num = count($p);
+	$res = '';
 
 	if ($p_num < 2) {
 		throw new Exception('invalid if', "do=$do param=$param p=".print_r($p, true));
