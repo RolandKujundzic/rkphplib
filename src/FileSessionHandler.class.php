@@ -128,7 +128,6 @@ public function create_sid() {
   $id = '';
 
   for ($i = 0; $i < 4; $i++) {
-    $n = mt_rand(4096, 65535);
     $id .= dec2n(mt_rand(4096, 65535), 16);
   }
 
