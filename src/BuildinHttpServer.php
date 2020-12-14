@@ -25,7 +25,7 @@ private $conf = [];
  * script: optional (required for start)
  * port: required unless $host=HOST:PORT
  * docroot: required for start if empty use dirname(script)
- * log_dir: optional, if set create log_dir/php_server.[port.json|err|log]
+ * log_dir: optional, if set create log_dir/HOST:PORT.[port.json|err|log]
  * ssl: 0, > 0 = run stunnel from ssl to port
  * @eol
  */
@@ -92,17 +92,18 @@ public function stop() : void {
 
 	execute('kill -9 '.$pid);
 
+	$server = $this->conf['host'].':'.$this->conf['port'];
+
 	if (is_dir('/proc/'.$pid)) {
 		clearstatcache(true, '/proc/'.$pid);
 		sleep(1);
 		if (is_dir('/proc/'.$pid)) {
-			throw new Exception('kill php_server failed', 'kill -9 '.$pid);
+			throw new Exception("kill $server failed", 'kill -9 '.$pid);
 		}
 	}
 
 	if (!empty($this->conf['log_dir'])) {
-		$server = $this->conf['host'].':'.$this->conf['port'];
-		foreach ( [ '.log', '.json', '.pid' ] as $suffix) {
+		foreach ([ '.log', '.json', '.pid' ] as $suffix) {
 			$file = $this->conf['log_dir'].'/'.$server.$suffix;
 			File::remove($file, false);
 		}
@@ -191,7 +192,7 @@ private function run() : void {
 	$pid = '';
 
 	if (!empty($this->conf['log_dir'])) {
-		$log_file = $this->conf['log_dir'].'/php_server.log';
+		$log_file = $this->conf['log_dir'].'/'.$server.'.log';
 		$log = " 2>$log_file >$log_file";
 		$pid = ' & echo $! >'."'".$this->conf['log_dir']."/$server.pid'";
 	}

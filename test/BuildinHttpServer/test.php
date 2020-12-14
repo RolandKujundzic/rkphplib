@@ -25,6 +25,9 @@ else if ($do == 'pid') {
 else if ($do == 'start') {
 	$php_server->start(false);
 }
+else if ($do == 'restart') {
+	$php_server->start();
+}
 else if ($do == 'alive') {
 	$php_server->set('script', 'alive.php'); 
 	$php_server->start();
@@ -33,6 +36,6 @@ else if ($do == 'stop') {
 	$php_server->stop();
 }
 else {
-	die("\nSYNTAX: {$_SERVER['argv'][0]} alive|check|pid|start|stop\n\n");
+	die("\nSYNTAX: {$_SERVER['argv'][0]} alive|check|pid|restart|start|stop\n\n");
 }
 
