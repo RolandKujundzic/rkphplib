@@ -178,7 +178,6 @@ public static function check(string $url, int $timeout = 3, string $ok_rx = '[23
 
 	if (curl_errno($ch)) {
 		curl_close($ch);
-		\rkphplib\lib\log_warn('HEAD query failed: '.$url);
 		return false;
 	}
 

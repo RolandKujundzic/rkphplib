@@ -62,6 +62,27 @@ public function __construct(string $host = '0.0.0.0', array $opt = []) {
 
 
 /**
+ * Return configuration value
+ */
+public function get(string $key) : string {
+	if (!isset($this->conf[$key])) {
+		throw new Exception("invalid configuration $key");
+	}
+
+  $server = $this->conf['host'].':'.$this->conf['port'];
+	$cfile = $this->conf['log_dir']."/$server.json";
+
+	if (!empty($this->conf[$key]) || empty($this->conf['log_dir']) || !File::exists($cfile)) {
+		return $this->conf[$key];
+	}
+
+  $config = File::loadJSON($cfile);
+	$this->conf[$key] = $config[$key];
+	return $this->conf[$key];
+}
+
+
+/**
  * Update configuration key script|docroot
  */
 public function set(string $key, string $value) : void {
@@ -77,8 +98,42 @@ public function set(string $key, string $value) : void {
 /**
  * Return true if server is running
  */
-public function check() : bool {
-	return Curl::check($this->conf['url']);
+public function check(int $ttl = 0) : bool {
+	if ($ttl > 0 && !empty($this->conf['last_check']) && time() - $this->conf['last_check'] < $ttl) {
+		return true;
+	}
+
+	$res = Curl::check($this->conf['url']);
+
+	if ($res) {
+		$this->conf['_last_check'] = time();
+	}
+
+	return $res;
+}
+
+
+/**
+ * Return true if sever is running and configuration is same
+ */
+public function alive() : bool {
+	if (!$this->check(2) || !($pid = $this->getPid())) {
+		return false;
+	}
+
+	if (empty($this->conf['log_dir'])) {
+		return true;
+	}
+
+	$server = $this->conf['host'].':'.$this->conf['port'];
+	$config_file = $this->conf['log_dir']."/$server.json";
+	if (!File::exists($config_file)) {
+		return false;
+	}
+
+	$config = File::loadJSON($config_file);
+	return $config['pid'] == $pid && (empty($this->conf['script']) ||
+		$this->conf['script'] == $config['script']);
 }
 
 
@@ -133,6 +188,10 @@ public function start(bool $restart = true) : void {
 	}
 
 	if (Curl::check($this->conf['url'])) {
+		if ($this->alive()) {
+			return;
+		}
+
 		if (!$restart) {
 			throw new Exception('php_server is already running', "pid=".$this->getPid());
 		}
@@ -185,7 +244,6 @@ public function getPid(int $wait = 0) : int {
  */
 private function run() : void {
 	$root = realpath($this->conf['docroot']); 
-	$cwd = $root == getcwd() ? '' : "cd '$root' && ";
 	$script = empty($this->conf['script']) ? '' : " '".$this->conf['script']."'";
 	$server = $this->conf['host'].':'.$this->conf['port'];
 	$log = '';
@@ -197,7 +255,7 @@ private function run() : void {
 		$pid = ' & echo $! >'."'".$this->conf['log_dir']."/$server.pid'";
 	}
 
-	$cmd = $cwd.'php -S '.$server.$script.$log.$pid;
+	$cmd = "php -t '$root' -S ".$server.$script.$log.$pid;
 	execute($cmd);
 
 	if (!empty($this->conf['ssl'])) {

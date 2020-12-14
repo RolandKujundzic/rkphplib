@@ -36,20 +36,10 @@ use rkphplib\lib\php_server;
 use rkphplib\BuildinHttpServer;
 
 
-define('TEST_HOST', 'localhost:15081');
-define('TEST_MYSQL', 'mysqli://unit_test:magic123@tcp+localhost/unit_test');
-define('TEST_SQLITE', 'sqlite://magic123@./unit_test.sqlite');
-
-if (!defined('TEST_TMP')) {
-	define('TEST_TMP', dirname(__DIR__).'/tmp');
-}
-
-
 /**
  * Test suite class.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- *
  */
 class TestHelper implements TokPlugin {
 
@@ -86,13 +76,39 @@ public function __construct() {
 	$this->_tc['overview'] = [];
 
 	$this->reset();
+	$this->prepare();
 }
 
 
 /**
- *  Check if database TEST_MYSQL is avaiable and if TEST_HOST is up.
+ * Check if database opt.mysql (TEST_MYSQL) is avaiable
+ * and if opt.host (TEST_HOST) is up.
+ * @hash $opt …
+ * host: localhost:15081
+ * mysql: mysqli://unit_test:magic123@tcp+localhost/unit_test
+ * sqlite: sqlite://magic123@./unit_test.sqlite
+ * tmp: __DIR__/../tmp
+ * docroot: __DIR__/../test 
+ * @eol
+ * @define TEST_$opt.KEY if not set
  */
-public static function prepare() : void {
+public static function prepare(array $opt = []) : void {
+	$default = [
+		'host' => 'localhost:15081',
+		'mysql' => 'mysqli://unit_test:magic123@tcp+localhost/unit_test',
+		'sqlite' => 'sqlite://magic123@./unit_test.sqlite',
+		'docroot' => dirname(__DIR__).'/test',
+		'tmp' => dirname(__DIR__).'/tmp'
+		];
+
+	$conf = array_merge($default, $opt);
+	foreach ($conf as $key => $value) {
+		$ckey = 'TEST_'.strtoupper($key);
+		if (!defined($ckey)) {
+			define($ckey, $value);
+		}
+	}
+
 	// create database if necessary ...
 	$db = new \rkphplib\MysqlDatabase([ 'abort' => false ]);
 	$db->setDSN(TEST_MYSQL);
@@ -111,11 +127,11 @@ public static function prepare() : void {
 	Dir::create(TEST_TMP);
 
 	$php_server = new BuildinHttpServer(TEST_HOST, [
-		'docroot' => TEST_TMP,
+		'docroot' => TEST_DOCROOT,
 		'log_dir' => TEST_TMP 
 		]);
 
-	$php_server->start(false);
+	$php_server->start();
 }
 
 
