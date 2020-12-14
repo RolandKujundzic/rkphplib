@@ -320,7 +320,7 @@ public function tok_output_empty(string $if, string $tpl) : string {
 		$res = $tpl;
 	}
 
-	return $tpl;
+	return $res;
 }
 
 
@@ -328,7 +328,6 @@ public function tok_output_empty(string $if, string $tpl) : string {
  * Return true if table is empty.
  */
 private function isEmpty() : bool {
-
 	if (is_null($this->table)) {
 		$p = (count($this->conf) > 0) ? [ 'reset' => 0 ] : [];
 		$this->tok_output_init($p);
