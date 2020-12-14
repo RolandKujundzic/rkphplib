@@ -1,6 +1,9 @@
 <?php
 
-global $conf;
+global $php_server;
 
-rkphplib\lib\php_server(array_merge($conf, [ 'running' => 'stop' ]));
-print "done";
+$php_server->stop();
+
+if (!$php_server->check()) {
+	print "done";
+}

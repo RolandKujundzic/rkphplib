@@ -1,6 +1,9 @@
 <?php
 
-global $conf;
+global $php_server;
 
-\rkphplib\lib\php_server($conf);
-print "done";
+$php_server->start();
+
+if ($php_server->check()) {
+	print 'done';
+}
