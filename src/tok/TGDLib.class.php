@@ -31,7 +31,7 @@ public function getPlugins(Tokenizer $tok) : array {
   $plugin['gdlib:font'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
   $plugin['gdlib:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
   $plugin['gdlib:load'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
-  $plugin['gdlib:new'] = TokPlugin::NO_PARAM | TokPlugin::BODY_CSLIST;
+  $plugin['gdlib:new'] = TokPlugin::NO_PARAM | TokPlugin::CSLIST_BODY;
   $plugin['gdlib'] = 0;
   return $plugin;
 }
