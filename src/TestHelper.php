@@ -126,7 +126,8 @@ public static function prepare(array $opt = []) : void {
 
 	Dir::create(TEST_TMP);
 
-	$php_server = new BuildinHttpServer(TEST_HOST, [
+	$php_server = new BuildinHttpServer([
+		'host' => TEST_HOST,
 		'docroot' => TEST_DOCROOT,
 		'log_dir' => TEST_TMP 
 		]);

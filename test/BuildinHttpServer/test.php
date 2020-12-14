@@ -20,7 +20,7 @@ if (!empty($_SERVER['argv'][2]) && in_array($do, [ 'start', 'alive_php', 'restar
 }
 
 if ($do == 'check') {
-	if ($php_server->check()) {
+	if ($php_server->checkHttp()) {
 		print "$host is up\n";
 	}
 	else {

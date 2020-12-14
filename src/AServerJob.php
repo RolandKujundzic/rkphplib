@@ -129,7 +129,7 @@ final public function checkProcess(string $pname) : int {
 	$pid = 0;
 
 	$ps = execute("ps aux | grep '$pname' | grep -v grep", null, 0);
-	if (!preg_match('/^(.+?) +([0-9]+) +/', $ps, $match)) {
+	if (preg_match('/^(.+?)\s+([0-9]+)\s+/', $ps, $match)) {
 		$pid = intval($match[2]);
 		$found['user'] = $match[1];
 		$found['match'] = $match[0];
