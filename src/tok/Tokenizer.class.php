@@ -594,16 +594,13 @@ public function getPluginFeatures(string $name) : ?int {
 private function _join_tok_plugin(int &$i) : ?string {
 	$tok = $this->_tok[$i];
 
-	// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:597> i=$i, tok=".mb_substr($tok, 0, 60));
-
-	// call plugin if registered ...
+	// \rkphplib\lib\log_debug([ "Tokenizer._join_tok_plugin:597> tok.$i=<1>", $tok ]);
 	$d  = $this->rx[2];
 	$dl = mb_strlen($d);
 	$pos = mb_strpos($tok, $d);
 	$name = trim(mb_substr($tok, 0, $pos));
 	$param = trim(mb_substr($tok, $pos + $dl));
 	$buildin = '';
-	$check_np = 0;
 	$tp = 0;
 
 	array_push($this->last, [ $name, $param ]);
@@ -617,48 +614,7 @@ private function _join_tok_plugin(int &$i) : ?string {
 		$this->tryPluginMap($name);
 	}
 
-	if (isset($this->_plugin[$name])) {
-		$tp = $this->_plugin[$name][1];
-
-		if ($tp & TokPlugin::TOKCALL) {
-			if (!method_exists($this->_plugin[$name][0], 'tokCall')) {
-				throw new Exception('invalid plugin', "$name has no tokCall() method");
-			}
-		}
-		else if (!method_exists($this->_plugin[$name][0], 'tok_'.$name)) {
-			$check_np = 1;
-		}
-		else {
-			$check_np = 2;
-		}
-
-		if ($check_np) {
-			if (isset($this->_plugin[$name.$d.$param]) && method_exists($this->_plugin[$name.$d.$param][0], 'tok_'.$name.'_'.$param)) {
-				// allow name:param -> tok_name_param() if tok_name does not exist
-				$name = $name.$d.$param;
-				$tp = $this->_plugin[$name][1];  // update plugin flag
-				$param = '';
-			}
-			else if (($pos = mb_strpos($param, $d)) > 0) {
-				$n2 = $name.$d.mb_substr($param, 0, $pos);
-				$p2 = mb_substr($param, $pos + 1);
-
-				if (isset($this->_plugin[$n2]) && method_exists($this->_plugin[$n2][0], 'tok_'.$name.'_'.mb_substr($param, 0, $pos))) {
-					// allow name:param1:param2 -> tok_name_param1(param2) even if tok_name exists
-					$name = $n2;
-					$param = $p2;
-					$tp = $this->_plugin[$name][1]; // update plugin flag
-				}
-				else if ($check_np === 1) {
-					throw new Exception('invalid plugin '.$this->getPluginTxt("$name:$param"), "no tok_$name() callback method");
-				}
-			}
-			else if ($check_np === 1) {
-				throw new Exception('invalid plugin '.$this->getPluginTxt("$name:$param"), "no tok_$name() callback method");
-			}
-		}
-	}
-	else {
+	if (!isset($this->_plugin[$name])) {
 		// no such plugin - check for buildin ignore mode
 		if ($this->_config & self::TOK_IGNORE) {
 			$buildin = 'ignore';
@@ -671,6 +627,27 @@ private function _join_tok_plugin(int &$i) : ?string {
 		}
 		else {
 			throw new Exception('invalid plugin '.$name, "$name:$param is undefined - config=".$this->_config);
+		}
+	}
+	else {
+		$tp = $this->_plugin[$name][1];
+		$tmp = explode($d, $param);
+		$sub = $name.$d.$tmp[0];
+
+		if ($tp & TokPlugin::TOKCALL) {
+			if (!method_exists($this->_plugin[$name][0], 'tokCall')) {
+				throw new Exception('invalid plugin', "$name has no tokCall() method");
+			}
+		}
+		else if (isset($this->_plugin[$sub]) && method_exists($this->_plugin[$sub][0], 'tok_'.$name.'_'.$tmp[0])) {
+			// allow name:param -> tok_name_param()
+			$tp = $this->_plugin[$sub][1];
+			$name = $sub;
+			array_shift($tmp);
+			$param = join($d, $tmp);
+		}
+		else if (!method_exists($this->_plugin[$name][0], 'tok_'.$name)) {
+			throw new Exception('invalid plugin '.$this->getPluginTxt("$name:$param"), "no tok_$name() callback method");
 		}
 	}
 
