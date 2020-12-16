@@ -7,6 +7,7 @@ require_once __DIR__.'/TokPlugin.iface.php';
 require_once $parent_dir.'/Exception.class.php';
 require_once $parent_dir.'/File.class.php';
 require_once $parent_dir.'/JSON.class.php';
+require_once $parent_dir.'/traits/Request.php';
 require_once $parent_dir.'/lib/htmlescape.php';
 require_once $parent_dir.'/lib/split_str.php';
 require_once $parent_dir.'/lib/redirect.php';
@@ -61,16 +62,13 @@ if (!defined('SETTINGS_CRYPT_SECRET')) {
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 class TBase implements TokPlugin {
+use \rkphplib\traits\Request;
 
 // @var Tokenizer $_tok
 private $_tok = null;
 
 // @var Hash $_tpl
 private $_tpl = [];
-
-// @var Hash $_conf
-private $_conf = [];
-
 
 
 /** 
@@ -91,6 +89,17 @@ public function __construct() {
 			}
 		}
 	}
+
+	$esc = [ 'trim', 'escape_html', 'escape_tok', 'escape_arg', 'escape_db' ];
+	$get = [ 'trim', 'escape_html', 'escape_tok', 'escape_arg' ];
+	$this->plugin_conf['filter'] = [ 
+		'esc_default' => $esc,
+		'get_default' => $get,
+		'esc_off' => [ 'escape_db' ],
+		'get_off' => [ ],
+		'esc' => $esc,
+		'get' => $get
+		];
 }
 
 
@@ -579,7 +588,7 @@ public function setVarHash(string $name, array $p) : void {
  */
 public function tok_row_init(array $p) : void {
 	$default = [ 'mode' => 'bootstrap4', 'colnum' => 2, 'rownum' => 1, 'border' => 0, 'cellpadding' => 0, 'cellspacing' => 0 ];
-	$this->_conf['row'] = array_merge($default, $p);
+	$this->plugin_conf['row'] = array_merge($default, $p);
 }
 
 
@@ -590,18 +599,19 @@ public function tok_row_init(array $p) : void {
  * @tok {row:6,6}1-6|#|7-12{:row} -> <div class="row"><div class="col-6">1-6</div><div class="col-6">7-12</div></div>
  */
 public function tok_row(array $cols, array $p) : string {
-
-	if (!isset($this->_conf['row']) || empty($this->_conf['row']['mode'])) {
+	if (!isset($this->plugin_conf['row']['mode'])) {
 		$this->tok_row_init([ 'mode' => 'bootstrap4' ]);
 	}
 
-	if ($this->_conf['row']['mode'] == 'bootstrap4' || $this->_conf['row']['mode'] == 'bootstrap3') {
+	$rc =& $this->plugin_conf['row'];
+
+	if ($rc['mode'] == 'bootstrap4' || $rc['mode'] == 'bootstrap3') {
 		return $this->bootstrapRow($cols, $p);
 	}
-	else if ($this->_conf['row']['mode'] == 'material') {
+	else if ($rc['mode'] == 'material') {
 		return $this->materialRow($cols, $p);
 	}
-	else if ($this->_conf['row']['mode'] == 'table') {
+	else if ($rc['mode'] == 'table') {
 		return $this->tableRow($cols, $p);
 	}
 	else {
@@ -631,7 +641,7 @@ private function tableRow(array $cols, array $p) : string {
 		$colnum += $cols[$i];
 	}
 
-	$conf = $this->_conf['row'];
+	$conf =& $this->plugin_conf['row'];
 
 	if ($colnum != $conf['colnum']) {
 		throw new Exception('[row:'.join(',', $cols).']... - colnum (='.$colnum.') != '.$conf['colnum'], join(HASH_DELIMITER, $p));
@@ -641,11 +651,11 @@ private function tableRow(array $cols, array $p) : string {
 
 	if (!empty($conf['rownum'])) {
 		if (!isset($conf['current'])) {
-			$this->_conf['row']['current'] = 1;
+			$conf['current'] = 1;
 			$res = '<table border="'.$conf['border'].'" cellpadding="'.$conf['cellpadding'].'" cellspacing="'.$conf['cellspacing'].'">'."\n";
 		}
 		else {
-			$this->_conf['row']['current']++;
+			$conf['current']++;
 		}
 	}
 
@@ -660,8 +670,8 @@ private function tableRow(array $cols, array $p) : string {
 
 	$res .= "</tr>\n";
 
-	if (!empty($conf['rownum']) && $this->_conf['row']['current'] == $conf['rownum']) {
-		unset($this->_conf['row']['current']);
+	if (!empty($conf['rownum']) && $conf['current'] == $conf['rownum']) {
+		unset($conf['current']);
 		$res .= "</table>\n";
 	}
 
@@ -945,9 +955,10 @@ public function tok_include_if(string $param, array $a) : string {
 /**
  * Execute plugins in $file. Replace $p first.
  * 
- * @tok {loadJSON:data/config/.shop.json}login.id={login:id?}|#|login.type={login:type?}{:loadJSON} …
+ * @tok {loadJSON:data/configuration/shop.json}login.id={login:id?}|#|login.type={login:type?}{:loadJSON} …
  * {
  *   "plugin": "PHPLIB:TShop",
+ *   "\\phplib\\tok\\TShop": { },
  *   "name": [ "param", "arg" ],
  *   "shop:init": { "login.id": "{:=login.id}", "login.type": "{:=login.type}" }
  * }
@@ -955,6 +966,14 @@ public function tok_include_if(string $param, array $a) : string {
  */
 public function tok_loadJSON(string $file, array $p = []) : void {
 	$json = File::loadJSON($file);
+
+	foreach ($json as $name => $value) {
+		if (substr($name, 0, 1) == '\\') {
+			\rkphplib\lib\log_debug([ "TBase.tok_loadJSON:976> plugin_conf[$name]= <1>", $value ]);
+			$this->plugin_conf[$name] = $value;
+			unset($json[$name]);
+		}
+	}
 
 	foreach ($json as $plugin => $arg) {
 		$param = '';
@@ -974,8 +993,8 @@ public function tok_loadJSON(string $file, array $p = []) : void {
 				}
 			}
 		}
-
-		// \rkphplib\lib\log_debug([ "TBase.tok_loadJSON:978> callPlugin(<1>, <2>, <3>)", $plugin, $param, $arg ]);
+		
+		// \rkphplib\lib\log_debug([ "TBase.tok_loadJSON:988> callPlugin(<1>, <2>, <3>)", $plugin, $param, $arg ]);
 		$this->_tok->callPlugin($plugin, $param, $arg);
 	}
 }
@@ -1450,63 +1469,47 @@ public function tok_if(string $param, array $p) : string {
  *
  * trim: trim(' abc ') = 'abc'
  * escape_html: escape_html('&<>"\'') = '&amp;&lt;&gt;&quot;&#39;'
- * default: reset tag filter to default value
  * escape_db: escape_db("a'b") = 'a''b'
  * escape_tok: escape_tok('{x:}') = '&#123;x&#58;&#125;'
  * escape_arg: escape_arg('a|#|b') = 'a&#124;&#35;&#124;b'
- * off: reset tag filter to required value
+ * default: reset to default
+ * off: reset to required
  *
- * Available tags: get and esc
- *
- * get.default = escape_html,escape_tok,escape_arg
- * get.required = 
- *
- * esc.default = trim,escape_html,escape_tok,escape_arg,escape_db
- * esc.required = escape_db
+ * @hash plugin_conf.filter …
+ * esc_default: [ trim, escape_html, escape_tok, escape_arg, escape_db ]
+ * get_default: [ escape_html, escape_tok, escape_arg ]
+ * esc_off: [ escape_db ]
+ * get_off: [ ]
+ * @eol
  *
  * @tok {filter:get}off{:filter} = no filter
  * @tok {filter:get}default{:filter} = use default filter
  * @tok {filter:esc}trim{:filter} = use trim and escape_db filter
  */
-public function tok_filter(string $tag, array $filter_list) : void {
+public function tok_filter(string $tag, array $filter) : void {
+	$fl =& $this->plugin_conf['filter'];
+	$fl_tag = array_keys($fl);
 
-	$allow_tag = [ 'esc', 'get' ];
-	if (!in_array($tag, $allow_tag)) {
-		throw new Exception('no filter available for tag '.$tag);
+	if (!in_array($tag, $fl_tag) || empty($filter[0])) {
+		throw new Exception("invalid filter list $tag: ", print_r($filter, true));
 	}
 
-	if (empty($filter_list[0])) {
-		throw new Exception('invalid filter list', 'tag='.$tag.' filter_list='.join('|', $filter_list));
-	}
+	$fkey = $tag.'_'.$filter[0];
 
-	$allow_filter['esc'] = [ 'trim', 'escape_html', 'escape_tok', 'escape_arg', 'escape_db' ]; 
-	$allow_filter['get'] = [ 'trim', 'escape_html', 'escape_tok', 'escape_arg' ];
-
-	if ($filter_list[0] == 'default') {
-		$default_filter['esc'] = [ 'trim', 'escape_html', 'escape_tok', 'escape_arg', 'escape_db' ];
-		$default_filter['get'] = [ 'escape_html', 'escape_tok', 'escape_arg' ];
-
-		$this->_conf['filter.'.$tag] = $default_filter[$tag];
-	}
-	else if ($filter_list[0] == 'off') {
-		$required_filter['esc'] = [ 'escape_db' ];
-		$required_filter['get'] = [ ];
-
-		$this->_conf['filter.'.$tag] = $required_filter[$tag];
-	}
-	else if (in_array($filter_list[0], $allow_filter[$tag])) {
-		$this->_conf['filter.'.$tag] = $filter_list[0];
+	if (in_array($fkey, $fl_tag)) {
+		$fl[$tag] = $fl[$fkey];
 	}
 	else {
-		throw new Exception('invalid filter', 'i=0 tag='.$tag.' filter_list='.join('|', $filter_list));
-	}
+		$allow = array_keys($fl[$tag.'_default']);
+		$fl[$tag] = $fl[$tag.'_off'];
 
-	for ($i = 1; $i < count($filter_list); $i++) {
-		if (in_array($filter_list[$i], $allow_filter[$tag])) {
-			$this->_conf['filter.'.$tag] .= ','.$filter_list[$i];
-		}
-		else {
-			throw new Exception('invalid filter', "i=$i tag=$tag filter_list=".join('|', $filter_list));
+		for ($i = 0; $i < count($filter); $i++) {
+			if (in_array($filter[$i], $allow)) {
+				array_push($fl[$tag], $filter[$i]);
+			}
+			else {
+				throw new Exception("invalid $tag filter", join('|', $filter));
+			}
 		}
 	}
 }
@@ -1519,12 +1522,8 @@ public function tok_filter(string $tag, array $filter_list) : void {
  */
 private function applyFilter(string $tag, string $value) : string {
 	// \rkphplib\lib\log_debug("TBase.applyFilter:1521> tag=$tag value=[$value]");
-	if (!isset($this->_conf['filter.'.$tag])) {
-		throw new Exception('no filter', "tag=$tag value=[$value] _conf: ".print_r($this->_conf, true));
-	}
-
-	foreach ($this->_conf['filter.'.$tag] as $filter) {
-
+	$filter_list = $this->getPConf("filter.$tag");
+	foreach ($filter_list as $filter) {
 		if ($filter == 'trim') {
 			$value = trim($value);
 		}
@@ -1540,11 +1539,10 @@ private function applyFilter(string $tag, string $value) : string {
 		else if ($filter == 'escape_db') {
 			require_once __DIR__.'/../ADatabase.class.php';
 			$value = "'".\rkphplib\ADatabase::escape($value)."'";
-		}	
+		}
 		else {
 			throw new Exception('invalid filter', "tag=$tag filter=$filter value=[$value]");
 		}
-
 		// \rkphplib\lib\log_debug("TBase.applyFilter:1548> filter=$filter value=[$value]");
 	}
 
@@ -1583,10 +1581,6 @@ public function tok_esc(string $param, ?string $arg) : ?string {
 	if (is_null($arg) || $arg === 'null' || $arg === 'NULL') {
 		// \rkphplib\lib\log_debug("TBase.tok_esc:1584> return NULL");
 		return 'NULL';
-	}
-
-	if (!isset($this->_conf['filter.esc'])) {
-		$this->tok_filter('esc', [ 'default' ]);
 	}
 
 	$arg = $this->applyFilter('esc', $arg);
@@ -1735,10 +1729,6 @@ public function tok_get(string $param, ?string $arg) : string {
 
 		$res = kv2conf($found);
 	}
-
-  if (!isset($this->_conf['filter.get'])) {
-    $this->tok_filter('get', [ 'default' ]);
-  }
 
 	if (is_string($res)) {
   	$res = $this->applyFilter('get', $res);
@@ -1940,9 +1930,15 @@ public function tok_plugin(string $ns, array $p) : void {
 		$cpath = File::exists($path.'.class.php') ? $path.'.class.php' : $path.'.php';
 		File::exists($cpath, true);
 
-		// \rkphplib\lib\log_debug("TBase.tok_plugin:1943> require_once '$cpath'; new $obj();");
 		require_once $cpath;
-		$this->_tok->register(new $obj());
+		if (isset($this->plugin_conf[$obj])) {
+			\rkphplib\lib\log_debug([ "TBase.tok_plugin:1956> register new $obj(<1>);", $this->plugin_conf[$obj] ]);
+			$this->_tok->register(new $obj($this->plugin_conf[$obj]));
+		}
+		else {
+			\rkphplib\lib\log_debug([ "TBase.tok_plugin:1960> register new $obj(<1>);", $this->plugin_conf ]);
+			$this->_tok->register(new $obj());
+		}
 	}
 }
 
