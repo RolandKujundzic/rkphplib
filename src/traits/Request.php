@@ -29,7 +29,7 @@ private $plugin_conf = [];
 
 /**
  * Set|Update this.plugin_conf default values. 
- * Set $group to overwerite group configuration.
+ * Set $group to overwrite group configuration.
  * Use GROUP/NAME as key to define $group.
  */
 private function setPConf(array $p, string $group = '') : void {
