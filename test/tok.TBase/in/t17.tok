@@ -1,0 +1,4 @@
+{set:a}{debug:a}{debug:b}{:}{:} <a href="xyz">{:set}
+a=[{get:a}] 
+{filter:get}off{:filter} a=[{get:a}]
+{filter:get}default{:filter} a=[{get:a}]
