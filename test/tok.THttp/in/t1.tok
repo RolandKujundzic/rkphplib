@@ -1,0 +1,5 @@
+cookie.abc={cookie:abc}
+set cookie abc=1 {cookie:abc}value=1|#|expire=+7 day{:cook}
+cookie.abc={cookie:abc}
+expire coolie abc {cookie:abc}expire=-1 hour{:cookie}
+cookie.abc={cookie:abc}
