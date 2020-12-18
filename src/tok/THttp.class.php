@@ -31,8 +31,32 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['http'] = 0;
 	$plugin['domain:idn'] =  TokPlugin::NO_PARAM;
 	$plugin['domain:utf8'] =  TokPlugin::NO_PARAM;
+	$plugin['cookie'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
 	$plugin['domain'] = 0;
   return $plugin;
+}
+
+
+/**
+ * Get|Set cookie. Cookie does not expire unless expire is set.
+ * Use strtotime for expire, e.g. +1 day|week|hour or 1 month 2 hour.
+ * 
+ * @tok {cookie:abc}value=1|#|expire=+1 week{:cookie} …
+ * Set cookie abc=1 (expires in one week)
+ * @eol
+ * @tok {cookie:abc} = 1
+ * @tok {cookie:abc}expire=-1 hour{:cookie}
+ * 
+ */
+public static function tok_cookie(string $name, ?array $p) : ?string {
+	if (is_null($p)) {
+		return isset($_COOKIE[$name]) ? $_COOKIE[$param] : '';
+	}
+
+	$value = empty($p['value']) ? '' : $p['value'];
+	$expire = empty($p['expire']) ? 0 : strtotime($p['expire']);
+	setcookie($param, $value, $expire);
+  return null;
 }
 
 
