@@ -15,7 +15,7 @@ function _de_en_codeHash($map) {
 global $th;
 
 $th->useTokPlugin([ 'TBase' ]);
-$th->run(1, 16);
+$th->run(1, 17);
 
 /*
 _de_en_codeHash([ 'dir' => 'company/contact', 'id' => 3872 ]);
