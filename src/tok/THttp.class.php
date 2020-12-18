@@ -55,7 +55,7 @@ public static function tok_cookie(string $name, ?array $p) : ?string {
 
 	$value = empty($p['value']) ? '' : $p['value'];
 	$expire = empty($p['expire']) ? 0 : strtotime($p['expire']);
-	setcookie($param, $value, $expire);
+	setcookie($name, $value, $expire);
   return null;
 }
 
