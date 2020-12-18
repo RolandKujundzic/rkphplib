@@ -1522,7 +1522,7 @@ public function tok_filter(string $tag, array $filter) : void {
  */
 private function applyFilter(string $tag, string $value) : string {
 	// \rkphplib\lib\log_debug("TBase.applyFilter:1521> tag=$tag value=[$value]");
-	$filter_list = $this->getPConf("filter.$tag");
+	$filter_list = $this->plugin_conf['filter'][$tag];
 	foreach ($filter_list as $filter) {
 		if ($filter == 'trim') {
 			$value = trim($value);
@@ -1932,11 +1932,11 @@ public function tok_plugin(string $ns, array $p) : void {
 
 		require_once $cpath;
 		if (isset($this->plugin_conf[$obj])) {
-			\rkphplib\lib\log_debug([ "TBase.tok_plugin:1956> register new $obj(<1>);", $this->plugin_conf[$obj] ]);
+			// \rkphplib\lib\log_debug([ "TBase.tok_plugin:1935> register new $obj(<1>);", $this->plugin_conf[$obj] ]);
 			$this->_tok->register(new $obj($this->plugin_conf[$obj]));
 		}
 		else {
-			\rkphplib\lib\log_debug([ "TBase.tok_plugin:1960> register new $obj(<1>);", $this->plugin_conf ]);
+			// \rkphplib\lib\log_debug([ "TBase.tok_plugin:1939> register new $obj(<1>);", $this->plugin_conf ]);
 			$this->_tok->register(new $obj());
 		}
 	}
