@@ -320,7 +320,7 @@ public static function scan(string $path, int $sort = SCANDIR_SORT_ASCENDING) : 
 
 
 /**
- * Return files in directory with suffix in suffix_list (e.g [jpg, png] or [.jpg, .png]). 
+ * Return files in directory with suffix in suffix_list (e.g [.jpg, .png]). 
  * If $rel_dir is set remove $rel_dir in every entry.
  * @see FSEntry::fixSuffixList
  */
@@ -346,7 +346,7 @@ public static function scanDir(string $path, array $suffix_list = array(), strin
 
 
 /**
- * Return files from directory tree with suffix in suffix_list ([jpg, png] or [.jpg, .png]). 
+ * Return files from directory tree with suffix in suffix_list ([.jpg, .png]). 
  * Exclude directories found in exclude_dir list (use relative path).
  * @see FSEntry::fixSuffixList
  */
