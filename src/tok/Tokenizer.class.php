@@ -211,7 +211,7 @@ public function setVar(string $name, $value, int $flags = 0) : void {
 
 	if (empty($name)) {
 		if (is_array($value)) {
-			$this->vmap = $value;
+			$this->vmap = array_merge($this->vmap, $value);
 		}
 		else {
 			throw new Exception('empty vmap name');
