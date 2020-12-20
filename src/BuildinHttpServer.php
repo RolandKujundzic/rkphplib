@@ -4,6 +4,8 @@ namespace rkphplib;
 
 require_once __DIR__.'/AServerJob.php';
 
+use function rkphplib\lib\execute;
+
 
 /**
  * Start|Stop|Check Buildin PHP Http Server
@@ -56,20 +58,24 @@ public function __construct(array $opt = []) {
 		$this->conf['port'] = $this->conf['ssl'];
 	}
 
-	$this->prepare();
-}
-
-
-/**
- * Update configuration key script|docroot
- */
-public function set(string $key, string $value) : void {
-	$allow = [ 'script', 'docroot' ];
-	if (!in_array($key, $allow)) {
-		throw new Exception("invalid key '$key' - use ".join('|', $allow));
+	if (!empty($conf['script'])) {
+		$this->conf['script'] = File::realpath($this->conf['script']);
 	}
 
-	$this->conf[$key] = $value;
+	if (empty($this->conf['docroot']) && !empty($this->conf['script'])) {
+		$this->conf['docroot'] = dirname($this->conf['script']);
+	}
+
+	if (empty($this->conf['docroot'])) {
+		throw new Exception('empty docroot');
+	}
+
+	$this->conf['docroot'] = realpath($this->conf['docroot']);
+	Dir::exists($this->conf['docroot'], true);
+
+	$this->conf['process'] = 'php -t '.$this->conf['docroot'].' -S '.$this->conf['server'];
+
+	$this->prepare();
 }
 
 
@@ -77,21 +83,15 @@ public function set(string $key, string $value) : void {
  * Return true if sever is running and configuration is same
  */
 public function alive() : bool {
+	if (!File::exists($this->env['file']['json'])) {
+		return false;
+	}
+
 	if (!$this->checkHttp(2) || !($pid = $this->getPid())) {
 		return false;
 	}
 
-	if (empty($this->conf['log_dir'])) {
-		return true;
-	}
-
-	$server = $this->conf['host'].':'.$this->conf['port'];
-	$config_file = $this->conf['log_dir']."/$server.json";
-	if (!File::exists($config_file)) {
-		return false;
-	}
-
-	$config = File::loadJSON($config_file);
+	$config = File::loadJSON($this->env['file']['json']);
 	return $config['pid'] == $pid && (empty($this->conf['script']) ||
 		$this->conf['script'] == $config['script']);
 }
@@ -107,21 +107,16 @@ public function stop() : void {
 
 	execute('kill -9 '.$pid);
 
-	$server = $this->conf['host'].':'.$this->conf['port'];
-
 	if (is_dir('/proc/'.$pid)) {
 		clearstatcache(true, '/proc/'.$pid);
 		sleep(1);
 		if (is_dir('/proc/'.$pid)) {
-			throw new Exception("kill $server failed", 'kill -9 '.$pid);
+			throw new Exception('kill '.$this->conf['process'].' failed', 'kill -9 '.$pid);
 		}
 	}
 
-	if (!empty($this->conf['log_dir'])) {
-		foreach ([ '.log', '.json', '.pid' ] as $suffix) {
-			$file = $this->conf['log_dir'].'/'.$server.$suffix;
-			File::remove($file, false);
-		}
+	foreach ($this->env['file'] as $log) {
+		File::remove($log, false);
 	}
 }
 
@@ -130,39 +125,17 @@ public function stop() : void {
  * Start server
  */
 public function start(bool $restart = true) : void {
-	if (empty($this->conf['docroot']) && !empty($this->conf['script'])) {
-		$this->conf['docroot'] = dirname($this->conf['script']);
-	}
-
-	if (empty($this->conf['docroot'])) {
-		throw new Exception('empty  docroot');
-	}
-
-	$this->conf['docroot'] = realpath($this->conf['docroot']);
-	if (!is_dir($this->conf['docroot'])) {
-		throw new Exception('no such directory '.$this->conf['docroot']);
-	}
-
-	if (!empty($conf['script'])) {
-		$this->conf['script'] = File::realpath($this->conf['script']);
-	}
-
-	$process = 'php -t /home/rk/workspace/php/rkphplib/test -S 0.0.0.0:15081';
-	if (!$this->checkProcess($process)) {
-		throw new Exception('run: '.$process);
-	}
-	else {
+	if ($this->checkProcess() && !$restart) {
 		return;
 	}
 
-	// ToDo: 
 	if ($this->checkHttp()) {
 		if ($this->alive()) {
 			return;
 		}
 
 		if (!$restart) {
-			throw new Exception('php_server is already running', "pid=".$this->getPid());
+			throw new Exception($this->conf['process'].' is already running', 'pid='.$this->getPid());
 		}
 
 		$this->stop();
@@ -176,19 +149,12 @@ public function start(bool $restart = true) : void {
  *
  */
 private function run() : void {
-	$root = realpath($this->conf['docroot']); 
 	$script = empty($this->conf['script']) ? '' : " '".$this->conf['script']."'";
-	$server = $this->conf['host'].':'.$this->conf['port'];
-	$log = '';
-	$pid = '';
+	$log_file = "'".$this->env['file']['log']."'";
+	$log = " 2>$log_file >$log_file";
+	$pid = ' & echo $! >'."'".$this->env['file']['pid']."'";
 
-	if (!empty($this->conf['log_dir'])) {
-		$log_file = $this->conf['log_dir'].'/'.$server.'.log';
-		$log = " 2>$log_file >$log_file";
-		$pid = ' & echo $! >'."'".$this->conf['log_dir']."/$server.pid'";
-	}
-
-	$cmd = "php -t '$root' -S ".$server.$script.$log.$pid;
+	$cmd = $this->conf['process'].$script.$log.$pid;
 	execute($cmd);
 
 	if (!empty($this->conf['ssl'])) {
@@ -200,11 +166,9 @@ private function run() : void {
 		throw new Exception('empty pid', $cmd);
 	}
 
-	if (!empty($this->conf['log_dir'])) {
-		$this->conf['cmd'] = $cmd;
-		$this->conf['pid'] = $pid;
-		File::saveJSON($this->conf['log_dir'].'/'.$server.'.json', $this->conf);
-	}
+	$this->conf['cmd'] = $cmd;
+	$this->conf['pid'] = $pid;
+	File::saveJSON($this->env['file']['json'], $this->conf);
 }
 
 }

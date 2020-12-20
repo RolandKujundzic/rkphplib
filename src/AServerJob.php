@@ -24,8 +24,6 @@ protected $env = [];
 
 /**
  * Call in constructor
- * @require this.conf log_dir, server
- * @set this.env.file json, pid, log
  */
 final protected function prepare() : void {
 	foreach ([ 'log_dir', 'server' ] as $key) {
@@ -51,7 +49,7 @@ final protected function prepare() : void {
 
 /**
  * Return configuration value. Keys:
- * log_dir, conf.KEY, ps.KEY, …
+ * log_dir, conf.KEY, ps.KEY, file.log|pid|json, …
  */
 final public function get(string $key, $required = true) : ?string {
 	$skey = '';
@@ -123,12 +121,13 @@ final public function checkPid(int $pid = 0, int $wait = 0) : int {
 
 /**
  * Return pid or 0 and set env.ps.pid|user|match.
+ * Grep conf.process in ps aux output.
  */
-final public function checkProcess(string $pname) : int {	
+final public function checkProcess() : int {	
 	$found = [];
 	$pid = 0;
 
-	$ps = execute("ps aux | grep '$pname' | grep -v grep", null, 0);
+	$ps = execute("ps aux | grep '".$this->conf['process']."' | grep -v grep", null, 0);
 	if (preg_match('/^(.+?)\s+([0-9]+)\s+/', $ps, $match)) {
 		$pid = intval($match[2]);
 		$found['user'] = $match[1];
@@ -145,16 +144,12 @@ final public function checkProcess(string $pname) : int {
  * Return pid or 0
  */
 final public function getPid(int $wait = 0) : int {
-	$server = $this->conf['host'].':'.$this->conf['port'];
-	$pid_file = empty($this->conf['log_dir']) ? '' :
-		$pid_file = $this->conf['log_dir'].'/'.$server.'.pid';
-
 	$pid = File::exists($this->env['file']['pid']) ? intval(File::load($this->env['file']['pid'])) : 0;
 	if (($pid = $this->checkPid($pid, $wait)) > 0) {
 		return $pid;
 	}
 
-	list ($pid, $pname) = $this->checkProcess('php -t '.$this->conf['docroot'].' -S '.$server);
+	list ($pid, $pname) = $this->checkProcess();
 	return (intval($pid) > 79) ? $pid : 0;
 }
 
