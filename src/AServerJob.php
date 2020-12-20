@@ -96,12 +96,11 @@ final public function checkHttp(int $ttl = 0) : bool {
 
 
 /**
- * Return pid or 0
- * @example checkPid(get('ps.pid'))
+ * @example hasPid(get('ps.pid'))
  */
-final public function checkPid(int $pid = 0, int $wait = 0) : int {
+final public function hasPid(int $pid = 0, int $wait = 0) : bool {
 	if ($pid < 1) {
-		return 0;
+		return false;
 	}
 
 	$has_pid = posix_getpgid($pid);
@@ -115,7 +114,7 @@ final public function checkPid(int $pid = 0, int $wait = 0) : int {
 		$has_pid = file_exists('/proc/'.$pid);
 	}
 
-	return $pid;
+	return $has_pid;
 }
 
 
@@ -145,11 +144,11 @@ final public function checkProcess() : int {
  */
 final public function getPid(int $wait = 0) : int {
 	$pid = File::exists($this->env['file']['pid']) ? intval(File::load($this->env['file']['pid'])) : 0;
-	if (($pid = $this->checkPid($pid, $wait)) > 0) {
+	if ($this->hasPid($pid, $wait)) {
 		return $pid;
 	}
 
-	list ($pid, $pname) = $this->checkProcess();
+	$pid = $this->checkProcess();
 	return (intval($pid) > 79) ? $pid : 0;
 }
 

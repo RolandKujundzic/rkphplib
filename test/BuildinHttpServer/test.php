@@ -3,16 +3,31 @@
 require_once '../../src/BuildinHttpServer.php';
 
 $do = empty($_SERVER['argv'][1]) ? '' : $_SERVER['argv'][1];
-$port = empty($_SERVER['argv'][2]) ? 7777 : intval($_SERVER['argv'][2]);
+$port = empty($_SERVER['argv'][2]) ? 7777 : $_SERVER['argv'][2];
 $script = ($do == 'alive_php') ? 'alive.php' : '';
 
-$php_server = new \rkphplib\BuildinHttpServer([
-	'host' => 'localhost',
-	'docroot' => '.',
-	'script' => $script, 
-	'port' => $port,
-	'log_dir' => 'out'
+if ($do == 'test') {
+	$php_server = new \rkphplib\BuildinHttpServer([
+	  'host' => 'localhost:15081',
+	  'docroot' => '..',
+	  'log_dir' => '../../tmp'
 	]);
+
+	$do = $port;
+	if (empty($do)) {
+		die("\nSYNTAX: {$_SERVER['argv'][0]} test ".
+			"alive|check|get=NAME|pid|restart|start|stop\n\n");
+	}
+}
+else {
+	$php_server = new \rkphplib\BuildinHttpServer([
+		'host' => 'localhost',
+		'docroot' => '.',
+		'script' => $script, 
+		'port' => $port,
+		'log_dir' => 'out'
+		]);
+}
 
 $server = $php_server->get('server');
 
@@ -53,6 +68,6 @@ else if ($do == 'stop') {
 	$php_server->stop();
 }
 else {
-	die("\nSYNTAX: {$_SERVER['argv'][0]} alive|alive_php|check|get=NAME|pid|restart|start|stop [PORT=7777]\n\n");
+	die("\nSYNTAX: {$_SERVER['argv'][0]} alive|alive_php|check|get=NAME|pid|restart|start|stop|test [PORT=7777]\n\n");
 }
 

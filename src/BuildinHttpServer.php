@@ -122,9 +122,10 @@ public function stop() : void {
 
 
 /**
- * Start server
+ * Start server. Wait until server is reachable,
+ * abort after 3 sec.
  */
-public function start(bool $restart = true) : void {
+public function start(bool $restart = true, $wait = 3) : void {
 	if ($this->checkProcess() && !$restart) {
 		return;
 	}
@@ -142,6 +143,19 @@ public function start(bool $restart = true) : void {
 	}
 
 	$this->run();
+
+	$alive = $this->checkHttp();
+	$n = 0;
+
+	while ($wait > 0 && $n < $wait && !$alive) {
+		$alive = $this->checkHttp();
+		sleep(1);
+		$n++;
+	}
+
+	if (!$alive) {
+		throw new Exception($this->conf['server'].' no response');
+	}
 }
 
 

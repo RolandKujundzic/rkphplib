@@ -184,7 +184,7 @@ public static function check(string $url, int $timeout = 3, string $ok_rx = '[23
 	$code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 	curl_close($ch);
 
-	// \rkphplib\lib\log_debug("Curl::check:188> $code");
+	// \rkphplib\lib\log_debug("Curl::check:187> $code");
   return preg_match('/^('.$ok_rx.')$/', $code);
 }
 

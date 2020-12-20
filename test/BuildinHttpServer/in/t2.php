@@ -2,8 +2,15 @@
 
 global $php_server;
 
-$php_server->start();
+if (!$php_server->alive()) {
+	print "server is down\n";
+}
+
+$php_server->start(false);
 
 if ($php_server->checkHttp()) {
-	print 'done';
+	print "server is up\n";
+}
+else {
+	print "server is down\n";
 }

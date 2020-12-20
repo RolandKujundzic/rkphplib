@@ -7,12 +7,12 @@ global $th;
 
 $php_server = new \rkphplib\BuildinHttpServer([
 	'host' => 'localhost:15081',
-	'script' => __DIR__.'/alive.php',
+	'docroot' => dirname(__DIR__),
 	'log_dir' => TEST_TMP
 ]);
 
-$th->run(0, 0);
+$th->run(1, 2);
 
 // restart default php_server
-$th->prepare();
+// $th->prepare();
 
