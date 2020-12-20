@@ -3,28 +3,23 @@
 require_once '../../src/BuildinHttpServer.php';
 
 $do = empty($_SERVER['argv'][1]) ? '' : $_SERVER['argv'][1];
-$host = 'localhost';
-$port = 7777;
+$port = empty($_SERVER['argv'][2]) ? 7777 : intval($_SERVER['argv'][2]);
 
-$conf = [ 'port' => $port, 'docroot' => '.', 'log_dir' => 'out' ];
+$php_server = new \rkphplib\BuildinHttpServer([
+	'host' => 'localhost',
+	'port' => $port,
+	'docroot' => '.',
+	'log_dir' => 'out'
+	]);
 
-$php_server = new \rkphplib\BuildinHttpServer($host, $conf);
-
-if (!empty($_SERVER['argv'][2]) && in_array($do, [ 'start', 'alive_php', 'restart'])) {
-	$php_server = new \rkphplib\BuildinHttpServer($host, [ 
-		'docroot' => $php_server->get('docroot'),
-		'log_dir' => $php_server->get('log_dir'),
-		'script' => $php_server->get('script'),
-		'port' => $_SERVER['argv'][2]
-		]);
-}
+$server = $php_server->get('server');
 
 if ($do == 'check') {
 	if ($php_server->checkHttp()) {
-		print "$host is up\n";
+		print "$server is up\n";
 	}
 	else {
-		print "$host is down\n";
+		print "$server is down\n";
 	}
 }
 else if ($do == 'pid') {
@@ -42,10 +37,10 @@ else if ($do == 'restart') {
 else if ($do == 'alive') {
 	$script = $php_server->get('script');
 	if ($php_server->alive()) {
-		print "$host ($script) is up\n";
+		print "$server ($script) is up\n";
 	}
 	else {
-		print "$host ($script) is down\n";
+		print "$server ($script) is down\n";
 	}
 }
 else if ($do == 'alive_php') {
