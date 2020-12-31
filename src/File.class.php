@@ -27,6 +27,14 @@ public static $USE_FLOCK = false;
 
 
 /**
+ * Return url encoded path
+ */
+public static function url(string $path) : string {
+	return implode("/", array_map("rawurlencode", explode("/", $path)));
+}
+
+
+/**
  * Print last $lnum lines
  */
 public static function tail(string $file, int $lnum = 5, int $maxLen = 250) : void {
