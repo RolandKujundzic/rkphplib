@@ -11,13 +11,20 @@ if (!defined('HASH_DELIMITER')) {
 
 
 /**
- * Split text into key value hash or string. 
+ * Split text into key value hash. Unescape entity($d2).
+ * Split text at $d2 (|#|) into lines. Split lines at first $d1 (=) into key value. 
+ *
+ * @code conf2kv('k1=v1|#|k2=v2') == [ 'k1' => 'v1', 'k2' => 'v2' ] 
+ *
+ * Use [@@="=","\n\n"\n] to switch to $d1 = '=' and $d2 = "\n\n" (escape empty line with leading space).
+ * Use .= to append value to last key if $d2 ="\n".
  * 
- * Keys must not start with "@@" or "@N". Split text at $d2 (|#|) into lines. 
- * Split lines at first $d1 (=) into key value. If key is not found return $text or use array index (0, 1, 2, ... ).
- * If key already exists rename to key.N (N = 1, 2, ...). If value starts with "@N" use conf[@@N]="sd1","sd2" and 
- * set value = conf2kv(value, sd1, sd2). Default values are [@@1="",","], [@@2=$d1,$d2] and [@@3="=","|:|". 
- * All keys and values are trimmed. Use leading and traing quote character (") to preserve whitespace and delimiter.
+ * Keys must not start with "@@" or "@N". 
+ * If key is not found return $text or use array index (0, 1, 2, ... ).
+ * If key already exists rename to key.N (N = 1, 2, ...).
+ * If value starts with "@N" use conf[@@N]="sd1","sd2" and set value = conf2kv(value, sd1, sd2).
+ * Default values are [@@1="",","], [@@2=$d1,$d2] and [@@3="=","|:|"]. 
+ * All keys and values are trimmed. Use leading and trailing quote character (") to preserve whitespace and delimiter.
  * If $d1 is empty return array with $d2 as delimiter. If text is empty return empty array. Unescape entity($d2).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
@@ -26,6 +33,12 @@ function conf2kv(?string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, a
 
 	if (strlen(trim($text)) == 0) {
 		return [];
+	}
+
+	if (preg_match('/^@@="(.*)","(.*)"\n/', $text, $match)) {
+		$text = substr($text, strlen($match[0]));
+		$d1 = $match[1];
+		$d2 = str_replace('\\n', "\n", $match[2]);
 	}
 
 	$lines = explode($d2, $text);
