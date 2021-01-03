@@ -996,7 +996,7 @@ private function execTxt(string $base) : string {
 	$call = trim(array_shift($lines));
 
 	if (substr($call, -2) != '()') {
-		throw new Exception("invalid first line '$call' in $prefix.txt - should be: call()");
+		throw new Exception("invalid first line '$call' in in/$base.txt - should be: call()");
 	}
 
 	$call = substr($call, 0, -2);
