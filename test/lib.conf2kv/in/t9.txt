@@ -1,0 +1,29 @@
+rkphplib\lib\conf2kv()
+@@="=","\n"
+= @prefix item_csv.
+ignore_first_line= 1
+split_cols_delimiter= ;
+
+= @prefix category_query.
+delete= DELETE FROM shopimport_cat_item
+delete= DELETE FROM shopimport_category
+
+insert_category= INSERT INTO shopimport_category (id, cid, parent, level, status,
+.=  since, lchange, name, url) VALUES ({esc:}{cat:id}{:esc}, {esc:}{cat:cid}{:esc},
+.=  {esc:}{cat:parent}{:esc}, {esc:}{cat:level}{:esc}, 1, now(), now(), 
+.=  {esc:}{col:2}{:esc}, {esc:}{url_alias:}{col:2}{:url_alias}{:esc})
+
+sync= LOCK TABLES shopimport_category WRITE,
+.=  shop_category WRITE, shop_category AS sc WRITE,
+.=  shopedit_category WRITE, shopedit_category AS ec WRITE
+
+sync= DELETE FROM shop_category
+sync= INSERT INTO shop_category SELECT * FROM shopimport_category
+
+= @prefix item_query.
+delete= DELETE FROM shopimport_cat_item
+delete= DELETE FROM shopimport_item
+
+insert_cat_item= INSERT INTO shopimport_cat_item (cat, cid, item)
+.= VALUES ({esc:}{cat:id}{:esc}, {esc:}{cat:cid}{:esc}, {esc:}{item:id}{:esc})
+
