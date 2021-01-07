@@ -1012,6 +1012,16 @@ public static function saveJSON(string $file, $data, int $flag = 0) : bool {
 
 
 /**
+ * Return file conf file content
+ * @see conf2kv
+ */
+public static function loadConf(string $file) : array {
+	require_once __DIR__.'/../lib/conf2kv.php';
+	return \rkphplib\lib\conf2kv(File::load($file));
+}
+
+
+/**
  * Return file content converted from json.
  * @see JSON::decode 
  * @return any
