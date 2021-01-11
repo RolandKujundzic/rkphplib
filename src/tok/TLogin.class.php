@@ -957,6 +957,18 @@ public function tok_login(string $key, ?string $alt_key = '') : ?string {
 
 
 /**
+ * 
+ */
+public function getSession(string $name) : \rkphplib\ASession {
+	if (empty($name) || $this->sess->getConf('name') != $name) {
+		throw new Exception('invalid session '.$name);
+	}
+
+	return $this->sess;
+}
+
+
+/**
  * Create login table. Create admin user admin|admin (id=1).
  */
 public function createTable(string $table) : void {

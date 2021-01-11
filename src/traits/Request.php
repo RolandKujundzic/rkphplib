@@ -140,11 +140,11 @@ private function getReq(string $name) : string {
 
 
 /**
- * Return true if request key exists.
+ * Return true if request key exists (0 = true, '' = false).
  */
 private function hasReq(string $name) : bool {
 	$name = $this->getPCRKey($name);
-  return !empty($_REQUEST[$name]);
+  return isset($_REQUEST[$name]) && strlen($_REQUEST[$name]) > 0;
 }
 
 

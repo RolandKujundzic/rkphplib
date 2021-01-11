@@ -470,8 +470,9 @@ public function getQueryTable(string $query) : string {
 /**
  * Return (prepared) query defined via setQuery($qkey, '...').
  * Allow custom query if $qkey matches /^SELECT|INSERT|UPDATE|REPLACE /i.
+ * @return array|string
  */
-public function getQuery(string $qkey, array $replace = null) {
+public function getQuery(string $qkey, ?array $replace = null) {
 	if (!isset($this->_query[$qkey])) {
 		if (preg_match('/^SELECT|INSERT|UPDATE|REPLACE /i', $qkey)) {
 			$qkey_md5 = md5($qkey);
@@ -1567,8 +1568,8 @@ abstract public function close() : bool;
 /**
  * Alias for execute(getQuery($qname, $replace))
  */
-public function exec(string $qname, ?array $replace = null) {
-	$this->execute($this->getQuery($qname, $replace));
+public function exec(string $qname, ?array $replace = null) : bool {
+	return $this->execute($this->getQuery($qname, $replace));
 }
 
 
