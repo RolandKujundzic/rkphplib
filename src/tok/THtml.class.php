@@ -172,7 +172,11 @@ public function tok_input_select(string $name, array $p) : string {
 	}
 
 	$res = $this->getInputHtml($p).'>';
-	$value = isset($_REQUEST[$p['name']]) ? $_REQUEST[$p['name']] : '';
+
+	$value = isset($p['value']) ? $p['value'] : '';
+	if ($value && isset($_REQUEST[$p['name']])) {
+		$value = $_REQUEST[$p['name']];
+	}
 
 	if (isset($p['empty'])) {
 		$res .= "\n".'<option value="">'.$p['empty'].'</option>';	

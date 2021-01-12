@@ -265,11 +265,10 @@ public function tok_json_exit(string $code, array $kv) : void {
 /**
  * Return hidden input. Use @keep_empty to keep values.
  *
- * @tok:request { "a": "7", "b": "8", "c": "test" }
+ * @tokRequest { "a": "7", "b": "8", "c": "test" }
+ * @tokResult tok_hidden
  * @tok {hidden:a,b,c}
- * @tok:result tok_hidden
- * @tok {hidden:}a, b, c{:hidden}
- * @tok:result tok_hidden
+ * @tok {hidden:}dir, allow=1{:hidden}
  * @tok {hidden:a,b,c}@log_change,@keep_empty{:hidden}
  */
 public function tok_hidden(array $param, array $arg) : string {
@@ -281,7 +280,13 @@ public function tok_hidden(array $param, array $arg) : string {
 
 	foreach ($list as $key) {
 		if (substr($key, 0, 1) != '@') {
-			$value = isset($_REQUEST[$key]) ? $_REQUEST[$key] : '';
+			if (($pos = strpos($key, '=')) > 0) {
+				$key = substr($key, 0, $pos);
+				$value = substr($key, $pos + 1);
+			}
+			else {
+				$value = isset($_REQUEST[$key]) ? $_REQUEST[$key] : '';
+			}
 
 			if ($keep_empty || strlen($value) > 0) {
 				$res .= '<input type="hidden" name="'.$key.'" value="'.htmlescape($value).'"'.$on_change.'>'."\n";

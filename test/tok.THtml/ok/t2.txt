@@ -6,7 +6,7 @@
 <input name="accept" type="checkbox" value="1" checked/>
 <select name="num1010" size="1" title="Number" required>
 <option>0</option>
-<option>1</option>
+<option selected>1</option>
 <option>2</option>
 <option>3</option>
 <option>4</option>
