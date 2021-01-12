@@ -24,7 +24,7 @@ if (!defined('HASH_DELIMITER')) {
  * Use [@@="=","\n\n"\n] to switch to $d1 = '=' and $d2 = "\n\n" (escape empty line with leading space).
  * Use .= to append value to last key. Use '@@N="d1","d2"' to defined value split '@N'.
  * If value starts with '@N' use '@@N' value split (value = conf2kv(value, d1, d2)).
- * Predefined value split: '@@1="",","', '@@2=$d1,$d2' and '@@3="=","|:|"'.
+ * Predefined value split: '@@1="",","', '@@2=":",";"' and '@@3="=","|:|"'.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
@@ -55,7 +55,7 @@ function conf2kv(?string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, a
 		$key = trim($tmp[0]);
 
 		if (count($tmp) == 1) {
-			if ($key !== '') {
+			if ($key !== '' || $d1_len == 0) {
 				$value = $tmp[0];
 				$key = $n;
 				$n++;
@@ -117,7 +117,7 @@ function conf2kv(?string $text, string $d1 = '=', string $d2 = HASH_DELIMITER, a
          	$env['@1'] = array('', ',');
 				}
 				else if ($sf == '@2') {
-					$env['@2'] = array($d1, $d2);
+					$env['@2'] = array(':', ';');
 				}
 				else if ($sf == '@3') {
 					$env['@3'] = array('=', '|:|');
