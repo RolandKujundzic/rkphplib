@@ -2,13 +2,11 @@
 
 test -f run.php || exit 1
 
-if php run.php | tee run.log; then
-	RESULT=PASS
-else
-	RESULT=FAIL
-fi
+php run.php | tee run.log
 
-if test "$RESULT" = 'PASS'; then
+if grep 'ERROR - FAIL' 'run.log' >/dev/null; then
+	exit 1
+else
 	rm run.log
 	rm -rf -- */out
 fi

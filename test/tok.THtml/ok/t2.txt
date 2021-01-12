@@ -2,6 +2,9 @@
 <input type="hidden" name="xcr" value="Cw0GTUpKGx4PXlVaDx4TUEFAFg0RVU4OUw--"/>
 <input name="age" type="number" value="17" size="3" style="border:none" required/>
 <select name="gender" size="1" class="sbox">
+<option value="">choose</option>
+<option value="m">Male</option>
+<option value="f">Female</option>
 </select>
 <input name="accept" type="checkbox" value="1" checked/>
 <select name="num1010" size="1" title="Number" required>

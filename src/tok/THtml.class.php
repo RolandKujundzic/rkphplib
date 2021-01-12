@@ -188,7 +188,11 @@ public function tok_input_select(string $name, array $p) : string {
 			$res .= "\n<option$selected>".$i.'</option>'; 
 		}
 	}
-	else if (isset($p['option']) && is_array($p['option'])) {
+	else if (isset($p['option'])) {
+		if (!is_array($p['option'])) {
+			throw new Exception('use option= @1|@2', print_r($p, true));
+		}
+
 		if (isset($p['option'][0])) {
 			foreach ($opt_list as $opt) {
 				$selected = ($opt === $value) ? ' selected' : '';
@@ -196,9 +200,9 @@ public function tok_input_select(string $name, array $p) : string {
 			}
 		}
 		else {
-			foreach ($p as $key => $val) {
+			foreach ($p['option'] as $val => $label) {
 				$selected = ($val === $value) ? ' selected' : '';
-				$res .= "\n".'<option value="'.$val.'"'.$selected.'>'.$i.'</option>'; 
+				$res .= "\n".'<option value="'.$val.'"'.$selected.'>'.$label.'</option>'; 
 			}
 		}
 	}

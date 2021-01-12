@@ -1,7 +1,7 @@
 {set:age}17{:set} {set:gender}m{:set} {set:accept}1{:set}
 {input:xcrypt}login=joe|#|password=xyz{:input}
 {input:number:age}style=border:none|#|placeholder=21|#|size=3|#|required=1{:input}
-{input:select:gender}class=sbox|#|onclick=change(this){:input}
+{input:select:gender}option= @2 m:Male;f:Female|#|class=sbox|#|onclick=change(this)|#|empty=choose{:input}
 {input:checkbox:accept}
 {input:select}name=num1010|#|min=0|#|max=4|#|value=1|#|required=1|#|title=Number{:input}
 
