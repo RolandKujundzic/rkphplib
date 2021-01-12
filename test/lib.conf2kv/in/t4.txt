@@ -8,4 +8,7 @@ woeifjwe woeifj"
 |#|
 d="yuk==ke=|#|
 e=yuk==ke="|#|
-e=yuk==ke=
+e=yuk==ke= |#|
+v1= @1 a, , c, ,e , d, |#|
+v2= @2 m: M1; k:K:K:K|#|
+v3= @2 ; a; b; c;|#|

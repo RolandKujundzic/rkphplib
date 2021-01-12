@@ -1,1 +1,14 @@
+  
 <input type="hidden" name="xcr" value="Cw0GTUpKGx4PXlVaDx4TUEFAFg0RVU4OUw--"/>
+<input name="age" type="number" value="17" size="3" style="border:none" required/>
+<select name="gender" size="1" class="sbox">
+</select>
+<input name="accept" type="checkbox" value="1" checked/>
+<select name="num1010" size="1" title="Number" required>
+<option>0</option>
+<option>1</option>
+<option>2</option>
+<option>3</option>
+<option>4</option>
+</select>
+
