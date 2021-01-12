@@ -6,7 +6,6 @@ require_once __DIR__.'/TokPlugin.iface.php';
 require_once __DIR__.'/../XCrypt.class.php';
 
 use rkphplib\Exception;
-
 use rkphplib\XCrypt;
 
 
@@ -20,7 +19,7 @@ class THtml implements TokPlugin {
 
 
 /**
- * Return {html:tag|inner|append|meta|meta_og|tidy|xml|uglify}, {text2html:}, {input:checkbox|radio} and {user_agent:} 
+ * Return {html:tag|inner|append|meta|meta_og|tidy|xml|uglify}, {text2html:}, {input:checkbox|radio|select} and {user_agent:} 
  */
 public function getPlugins(Tokenizer $tok) : array {
 	$plugin = [];
@@ -37,8 +36,9 @@ public function getPlugins(Tokenizer $tok) : array {
 
 	$plugin['text2html'] = 0;
 
-	$plugin['input:checkbox'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
-	$plugin['input:radio'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
+	$plugin['input:checkbox'] = TokPlugin::KV_BODY;
+	$plugin['input:radio'] = TokPlugin::KV_BODY;
+	$plugin['input:select'] = TokPlugin::KV_BODY;
 	$plugin['input:xcrypt'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['input'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::KV_BODY;
 
@@ -108,27 +108,23 @@ public function tok_text2html(string $param, string $text) : string {
 /**
  * Return checkbox input html.
  *
- * @tok  {input:checkbox:agb}class=form-control{:checkbox} + $_REQUEST[agb]=1
+ * @tok  {input:checkbox:agb}class=form-control|#|checked=1{:checkbox} + $_REQUEST[agb]=1
  *   <input type="checkbox" name="agb" value="1" class="form-control" checked/>
  */
-public function tok_input_checkbox(string $name, array $attrib) : string {
-  $html = '<input name="'.$name.'"';
+public function tok_input_checkbox(string $name, array $p) : string {
+	if ($name) {
+		$p['name'] = $name;
+	}
 
-  if (empty($attrib['type'])) {
-    $attrib['type'] = 'checkbox';
+  if (empty($p['type'])) {
+    $p['type'] = 'checkbox';
   }
 
-  if (!isset($attrib['value'])) {
-    $attrib['value'] = 1;
+  if (!isset($p['value'])) {
+    $p['value'] = 1;
   }
 
-  foreach ($attrib as $key => $value) {
-    $html .= ' '.$key.'="'.str_replace('"', '\"', $value).'"';
-  }
-
-  if (!empty($_REQUEST[$name]) && $_REQUEST[$name] == $attrib['value']) {
-    $html .= ' checked';
-  }
+  $html = $this->getInputHtml($p);
 
   return $html.'/>';
 }
@@ -140,9 +136,115 @@ public function tok_input_checkbox(string $name, array $attrib) : string {
  * @tok  {input:radio:of_age} + $_REQUEST[of_age]=1
  *   <input type="radio" name="of_age" value="1" checked />
  */
-public function tok_input_radio(string $name, array $attrib) : string {
-	$attrib['type'] = 'radio';
-	return $this->tok_input_checkbox($name, $attrib);
+public function tok_input_radio(string $name, array $p) : string {
+	$p['type'] = 'radio';
+	return $this->tok_input_checkbox($name, $p);
+}
+
+
+/**
+ * Return select input html.
+ *
+ * @tok  {input:select:}name=num{:=item}|#|min=0|#|max=99|#|value={:=num}|#|onchange="…"{:input} …
+ * <select name="num1001" onchange="…">
+ *   <option>0</option><option selected>1</option> … <option>99</option>
+ * </select>
+ * @eol
+ * 
+ * @tok {input:select:test}option= @1 ,a,b{:input} …
+ * <select name="test"><option></option><option>a</option><option>b</option></select>
+ * @eol
+ * 
+ * @tok {input:select:test}option= @2 m:Male; f:Female|#|empty=…{:input} …
+ * <select name="test"><option value="">…</option>
+ *   <option value="m">Male</option><option value="f">Female</option></select>
+ * @eol
+ */
+public function tok_input_select(string $name, array $p) : string {
+	$p['tag'] = 'select';
+
+	if (!isset($p['size'])) {
+		$p['size'] = '1';
+	}
+
+	if ($name) {
+		$p['name'] = $name;
+	}
+
+	$res = $this->getInputHtml($p).'>';
+	$value = isset($_REQUEST[$p['name']]) ? $_REQUEST[$p['name']] : '';
+
+	if (isset($p['empty'])) {
+		$res .= "\n".'<option value="">'.$p['empty'].'</option>';	
+	}
+
+	if (isset($p['min']) && isset($p['max'])) {
+		for ($i = $p['min']; $i <= $p['max']; $i++) {
+			$selected = ("$i" === $value) ? ' selected' : '';
+			$res .= "\n<option$selected>".$i.'</option>'; 
+		}
+	}
+	else if (isset($p['option']) && is_array($p['option'])) {
+		if (isset($p['option'][0])) {
+			foreach ($opt_list as $opt) {
+				$selected = ($opt === $value) ? ' selected' : '';
+				$res .= "\n<option$selected>".$opt.'</option>'; 
+			}
+		}
+		else {
+			foreach ($p as $key => $val) {
+				$selected = ($val === $value) ? ' selected' : '';
+				$res .= "\n".'<option value="'.$val.'"'.$selected.'>'.$i.'</option>'; 
+			}
+		}
+	}
+
+	return $res."\n</select>";
+}
+
+
+/**
+ * Return tag html
+ */
+private function getInputHtml(array $p) : string {
+	if (!isset($p['tag'])) {
+		$p['tag'] = 'input';
+	}
+
+	$res = '<'.$p['tag'];
+
+	if ($p['tag'] == 'input') {
+		if ($p['type'] == 'checkbox') {
+	  	if (!empty($p['name']) && isset($p['value']) && isset($_REQUEST[$p['name']]) && 
+					$_REQUEST[$p['name']] == $p['value']) {
+    		$p['checked'] = 1;
+			}
+		}
+
+		if (!isset($p['value']) && !empty($p['name']) && isset($_REQUEST[$p['name']])) {
+			$p['value'] = $_REQUEST[$p['name']];
+		}
+	}
+	else if (isset($p['value'])) {
+		unset($p['value']);
+	}
+
+	$attrib_list = [ 'name', 'type', 'value', 'preset', 'size', 'id', 'onchange', 'class',
+		'style', 'title' ];
+	foreach ($attrib_list as $attr) {
+		if (isset($p[$attr])) {
+			$res .= ' '.$attr.'="'.str_replace('"', '\\"', $p[$attr]).'"';
+		}
+	}
+
+	$single_attr = [ 'checked', 'required', 'disabled' ];
+	foreach ($single_attr as $attr) {
+		if (!empty($p[$attr])) {
+			$res .= ' '.$attr;
+		}
+	}
+
+	return $res;
 }
 
 
@@ -152,23 +254,18 @@ public function tok_input_radio(string $name, array $attrib) : string {
  * @tok {input:button}value=Continue{:input} : <input type="button" value="Continue" />
  * @tok {input:text:email} + $_REQUEST[email]='joe@nowhere.com' : <input type="text" name="email" value="joe@nowhere.com" />
  */
-public function tok_input(array $type_name, array $attrib) : string {
-	$html = '<input type="'.$type_name[0].'"';
+public function tok_input(array $type_name, array $p) : string {
+	$p['type'] = $type_name[0];
 
 	if (!empty($type_name[1])) {
-		$name = $type_name[1];
-		$html .= ' name="'.$name.'"';
-
-		if (!isset($attrib['value']) && isset($_REQUEST[$name])) {
-			$attrib['value'] = $_REQUEST[$name];
-		}
+		$p['name'] = $type_name[1];
 	}
 
-  foreach ($attrib as $key => $value) {
-    $html .= ' '.$key.'="'.str_replace('"', '\"', $value).'"';
-  }
+	if (!isset($p['value']) && !empty($p['name']) && isset($_REQUEST[$p['name']])) {
+		$p['value'] = $_REQUEST[$p['name']];
+	}
 
-  return $html.'/>';
+	return $this->getInputHtml($p).'/>';
 }
 
 
