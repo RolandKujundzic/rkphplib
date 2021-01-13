@@ -272,29 +272,31 @@ public function tok_json_exit(string $code, array $kv) : void {
  * @tok {hidden:a,b,c}@log_change,@keep_empty{:hidden}
  */
 public function tok_hidden(array $param, array $arg) : string {
-	$list = (count($param) > 0) ? $param : $arg;
+	$list = empty($param[0]) ? $arg : $param;
 	$res = '';
 
 	$on_change = in_array('@log_change', $arg) ? ' onchange="console.log(this.value)"' : '';
 	$keep_empty = in_array('@keep_empty', $arg);
 
 	foreach ($list as $key) {
-		if (substr($key, 0, 1) != '@') {
-			if (($pos = strpos($key, '=')) > 0) {
-				$key = substr($key, 0, $pos);
-				$value = substr($key, $pos + 1);
-			}
-			else {
-				$value = isset($_REQUEST[$key]) ? $_REQUEST[$key] : '';
-			}
+		if (substr($key, 0, 1) == '@') {
+			continue;
+		}
 
-			if ($keep_empty || strlen($value) > 0) {
-				$res .= '<input type="hidden" name="'.$key.'" value="'.htmlescape($value).'"'.$on_change.'>'."\n";
-			}
+		if (($pos = strpos($key, '=')) > 0) {
+			$value = substr($key, $pos + 1);
+			$key = substr($key, 0, $pos);
+		}
+		else {
+			$value = isset($_REQUEST[$key]) ? $_REQUEST[$key] : '';
+		}
+
+		if ($keep_empty || strlen($value) > 0) {
+			$res .= '<input type="hidden" name="'.$key.'" value="'.htmlescape($value).'"'.$on_change.'>'."\n";
 		}
   }
 
-	// \rkphplib\lib\log_debug("TBase.tok_hidden:283> $res");
+	// \rkphplib\lib\log_debug("TBase.tok_hidden:299> $res");
   return $res;
 }
 
