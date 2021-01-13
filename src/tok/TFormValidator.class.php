@@ -371,7 +371,7 @@ public function tok_fv_preset(string $arg) : string {
 /**
  * Should not be called. Always throw exception.
  */
-public function tok_fv(string $param, string $arg) : string {
+public function tok_fv(?string $param, ?string $arg) : void {
 	throw new Exception("no such plugin [fv:$param]...[:fv]", "param=[$param] arg=[$arg]");
 }
 
