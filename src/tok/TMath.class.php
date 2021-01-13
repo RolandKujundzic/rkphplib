@@ -3,6 +3,7 @@
 namespace rkphplib\tok;
 
 require_once __DIR__.'/TokPlugin.iface.php';
+require_once __DIR__.'/../traits/Number.php';
 
 use rkphplib\Exception;
 
@@ -14,6 +15,8 @@ use rkphplib\Exception;
  *
  */
 class TMath implements TokPlugin {
+use \rkphplib\traits\Number;
+
 
 /**
  * Return {nf:}, {number_format:}, {intval:}, {floatval:}, {rand:}, {math:} and {md5:}
@@ -69,29 +72,6 @@ public function tok_math(string $arg) : string {
 
 
 /**
- * Replace ',' with '.'. Remove '.' from 1.000,83.
- */
-private function removeNumberFormat(string $arg) : string {
-	if (($tmp = explode('.', $arg)) && count($tmp) > 2) {
-		// 2.658.388[,NN] = 2658388[,NN]
-		$arg = join('', $tmp);
-	}
-
-	if (strpos($arg, '.') === false) {
-		// 1382,00 = 1382.00
-		$arg = str_replace(',', '.', $arg);
-	}
-	else if (strpos($arg, ',') !== false) {
-		// 1.003,95 = 1003.95
-		$arg = str_replace('.', '', $arg);
-		$arg = str_replace(',', '.', $arg);
-	}
-
-	return $arg;
-}
-
-
-/**
  * Return inval($arg).
  *
  * @tok {intval:}37.32{:intval} = 37
@@ -99,7 +79,7 @@ private function removeNumberFormat(string $arg) : string {
  * @tok {intval:}abc{:intval) = 0
  */
 public function tok_intval(string $arg) : int {
-	return (int) $this->removeNumberFormat($arg);
+	return (int) $this->fixNumber($arg);
 }
 
 
@@ -112,14 +92,7 @@ public function tok_intval(string $arg) : int {
  * @tok {floatval:}abc{:floatval} = 0
  */
 public function tok_floatval(string $round, string $arg) : string {
-	$value = (float) $this->removeNumberFormat($arg);
-
-	if (strlen($round) > 0 && intval($round).'' == $round) {
-		$value = round($value, $round);
-	}
-
-	$res = str_replace(',', '.', $value);
-	return $res;
+	return str_replace(',', '.', $this->parseFloat($arg, (int)$round).'');
 }
 
 
@@ -164,7 +137,6 @@ public function tok_rand(string $param, array $p) : string {
  * Return random alphanumeric string with $len length. 
  */
 public static function randomString(int $len = 8) : string {
-
 	if ($len == 0) {
 		$len = 8;
 	}
@@ -203,8 +175,8 @@ public static function randomString(int $len = 8) : string {
  *
  * @see tok_number_format
  */
-public function tok_nf(string $param, string $arg) : string {
-	return $this->tok_number_format($param, $arg);
+public function tok_nf(string $dp, string $arg) : string {
+	return $this->round($arg, (int)$dp);
 }
 
 
@@ -216,41 +188,9 @@ public function tok_nf(string $param, string $arg) : string {
  * {number_format:2}2832.8134{:number_format} = 2.832,81
  * {number_format:2}17,329g{:number_format} = 17,33 g
  */
-public function tok_number_format(string $param, string $arg) : string {
-	$suffix = '';
-
-	if (preg_match('/^([\-\+0-9,\.]+)(.*)$/', trim($arg), $match) && strlen($match[2]) > 0) {
-		$fval = $this->tok_floatval('', $match[1]);
-		$suffix = ' '.trim($match[2]);
-	}
-	else {
-		$fval = $this->tok_floatval('', $arg);
-	}
-
-	$res = '';
-
-	if (strlen($param) == 0) {
-		$d0 = number_format($fval, 0, ',', '.');
-		$d1 = number_format($fval, 1, ',', '.');
-		$d2 = number_format($fval, 2, ',', '.');
-  	
-		if ($d0.',00' == $d2) {
-			$res = $d0;
-		}
-		else if ($d1.'0' == $d2) {
-			$res = $d1;
-		}
-		else {
-			$res = $d2;
-		}
-	}
-	else {
-		$res = number_format($fval, intval($param), ',', '.');
-	}
-
-	return $res.$suffix;
+public function tok_number_format(string $dp, string $arg) : string {
+	return $this->round($arg, (int)$dp);
 }
-
 
 }
 
