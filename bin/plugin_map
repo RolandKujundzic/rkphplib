@@ -43,6 +43,11 @@ public function scan(string $dir) : void {
 			continue;
 		}
 
+		if (strpos(File::head($file, 3, false)[2], 'namespace rkphplib\tok;') === false) {
+			print "SKIP $file\n";
+			continue;
+		}
+
 		print "$file: $cname\n";
 		$obj[$n] = new $cname();
 		$this->register($obj[$n], $cname);
