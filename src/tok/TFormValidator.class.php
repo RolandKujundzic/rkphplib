@@ -4,17 +4,19 @@ namespace rkphplib\tok;
 
 $parent_dir = dirname(__DIR__);
 
+require_once __DIR__.'/TFormValidator/Template.php';
 require_once __DIR__.'/TokPlugin.iface.php';
 require_once __DIR__.'/TokHelper.trait.php';
 require_once __DIR__.'/Tokenizer.class.php';
-require_once $parent_dir.'/ValueCheck.class.php';
-require_once $parent_dir.'/lib/htmlescape.php';
-require_once $parent_dir.'/lib/split_str.php';
-require_once $parent_dir.'/lib/conf2kv.php';
-require_once $parent_dir.'/lib/kv2conf.php';
-require_once $parent_dir.'/lib/http_code.php';
+require_once __DIR__.'/../ValueCheck.class.php';
+require_once __DIR__.'/../lib/htmlescape.php';
+require_once __DIR__.'/../lib/split_str.php';
+require_once __DIR__.'/../lib/conf2kv.php';
+require_once __DIR__.'/../lib/kv2conf.php';
+require_once __DIR__.'/../lib/http_code.php';
 
 use rkphplib\Exception;
+use rkphplib\tok\TFormValidator\Template;
 use rkphplib\tok\Tokenizer;
 use rkphplib\ValueCheck;
 
@@ -23,7 +25,6 @@ use function rkphplib\lib\http_code;
 use function rkphplib\lib\split_str;
 use function rkphplib\lib\conf2kv;
 use function rkphplib\lib\kv2conf;
-
 
 
 /**
@@ -277,9 +278,32 @@ public function __construct() {
 			'><span class="mdl-checkbox__label">'.$label.'</span></label>'
 		];
 
-		if (isset($_REQUEST[SETTINGS_REQ_DIR])) {
-			$this->conf['default']['hidden.dir'] = $_REQUEST[SETTINGS_REQ_DIR];
-		}
+	if (isset($_REQUEST[SETTINGS_REQ_DIR])) {
+		$this->conf['default']['hidden.dir'] = $_REQUEST[SETTINGS_REQ_DIR];
+	}
+
+	// ToDo: $this->new_constructor($tok);
+}
+
+
+function debug() {
+	Template::$tok = $tok;
+	$x = [];
+	$x['default'] = Template::conf();
+
+	$keys = array_keys($this->conf['default']);
+	sort($keys);
+
+	$old = [];
+	$new = [];
+	foreach ($keys as $key) {
+		$old[$key] = $this->conf['default'][$key];
+		$new[$key] = $x['default'][$key];
+	}
+
+	$dir = '/home/rk/workspace/php/rkphplib/test/tok.TFormValidator';
+	file_put_contents("$dir/old.txt", print_r($old, true));
+	file_put_contents("$dir/new.txt", print_r($new, true));
 }
 
 
@@ -446,9 +470,15 @@ public function tok_fv_get(string $name) : string {
  * Return configuration as string hash.
  *
  * @tok {fv:get_conf:default} 
+ * @tok {fv:get_conf:*} return all configuration keys
  */
 public function tok_fv_get_conf(string $engine) : string {
 	$conf = (isset($this->conf['current']) && count($this->conf['current']) > 0) ? $this->conf['current'] : $this->conf['default'];
+
+	if ($engine == '*') {
+		return kv2conf($conf);
+	}
+
 	$name_keys = $this->getMapKeys($engine, $conf);
 	$res = [];
 
