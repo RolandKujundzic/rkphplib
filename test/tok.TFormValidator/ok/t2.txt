@@ -1,0 +1,11 @@
+
+
+check=[error]
+
+<span class="label error"></span><select name="gender" class="error"  id="fvin_gender" required><option value="m">Herr</option>
+<option value="f">Frau</option>
+</select><span class="error_message">required</span><br class="fv" />
+<span class="label "></span><input type="text" name="firstname" value="" class=""  id="fvin_firstname"><br class="fv" />
+<span class="label error"></span><input type="text" name="lastname" value="" class="error"  id="fvin_lastname" required><span class="error_message">required</span><br class="fv" />
+<input type="checkbox" name="terms" value="1" class="error"  id="fvin_terms" required><span class="cbox_query error"><div class="label_required">Accept Terms</div></span><br class="fv" />
+

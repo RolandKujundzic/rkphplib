@@ -1,0 +1,16 @@
+{fv:init}
+required= lastname|#|
+
+in.gender= select, m=Herr, f=Frau|#|
+in.firstname= text|#|
+in.lastname= text|#|
+in.terms= checkbox
+{:fv}
+
+check=[{fv:check}]
+
+{fv:in:gender}
+{fv:in:firstname}
+{fv:in:lastname}
+{fv:in:terms}label=Accept Terms{:fv}
+
