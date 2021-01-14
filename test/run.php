@@ -29,8 +29,13 @@ $tests = $th->getTests('../src', [
 	'ValueCheck',
 	'ShellCode',
 	'SQLiteDatabase',
-	'tok.TArray'
+	'tok.TArray',
+	'tok.TFormValidator'
 ]);
+
+// ERROR: TestHelper.php on line 752 - Argument 1 of run() is not integer
+// $th->test('tok.THtml');
+// $th->test('tok.TFormValidator');
 
 foreach ($tests as $test) {
 	$th->test($test);
