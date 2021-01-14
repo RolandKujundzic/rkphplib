@@ -58,18 +58,26 @@ public static function tail(string $file, int $lnum = 5, int $maxLen = 250) : vo
 
 
 /**
- * Print first $lnum lines
+ * Get|Print first $lnum lines
  */
-public static function head(string $file, int $lnum = 5) : void {
+public static function head(string $file, int $lnum = 5, bool $print = true) : array {
 	$fp = self::open($file);
+	$res = [];
 	$n = 0;
 
 	while ($n < $lnum && !feof($fp)) {
-  	print fgets($fp);
+		if ($print) {
+	  	print fgets($fp);
+		}
+		else {
+			array_push($res, fgets($fp)); 
+		}
+
 		$n++;
 	}
 
 	self::close($fp);
+	return $res;
 }
 
 
