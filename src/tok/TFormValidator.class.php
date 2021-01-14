@@ -446,12 +446,26 @@ public function tok_fv_hidden() : string {
 
 /**
  * Return configuration key value.
+ * Use {fv:get:*} to return all request values.
  *
+ * @tok {fv:get:*} = in1=val1|#|…
  * @tok {fv:get:submit} = form_action
  * @tok {fv:get:KEY@ENGINE}
  * @tok {fv:get:REQUIRED_KEY!} throws if not found
  */
 public function tok_fv_get(string $name) : string {
+	if ($name == '*') {
+		$request = [];
+
+		foreach ($this->conf['current'] as $key => $value) {
+			if (substr($key, 0, 3) == 'in.' && ($in = substr($key, 3)) && isset($_REQUEST[$in])) {
+				$request[$in] = $_REQUEST[$in];
+			}
+		}
+
+		return kv2conf($request);
+	}
+
 	$required = substr($name, -1) == '!';
 	if ($required) {
 		$name = substr($name, 0, -1);
