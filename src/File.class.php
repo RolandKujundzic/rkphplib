@@ -239,6 +239,73 @@ public static function equal(string $source, string $target, bool $check_source_
 
 
 /**
+ * Load csv file. Callback argument is row and result is (modified) row.
+ * 
+ * @hash $opt …
+ * trim: 1
+ * quote: "
+ * escape: \
+ * callback: null
+ * ignore_first: 0
+ * skip_empty: 1
+ * @eol
+ */
+public static function loadCSV2(string $file, string $delimiter = ',', array $options = []) : array {
+	$fh = File::open($file, 'rb');
+	$table = [];
+
+	if ($delimiter == '\t') {
+		$delimiter = "\t";
+	}
+
+	$default = [ 'trim' => 1, 'quote' => '"', 'escape' => '\\',
+		'ignore_first' => 0, 'skip_empty' => 1, 'callback' => null ];
+
+	$opt = array_merge($default, $opt);
+
+	$callback = null;
+	if (!is_null($opt['callback'])) {
+		is_callable($opt['callback'], false, $callback);
+	}
+
+	if (!empty($opt['ignore_first'])) {
+		fgets($fh);
+	}
+
+	$n = 1;
+	while (($row = File::readCSV($fh, $delimiter, $opt['quote'], $opt['escape']))) {
+		if (count($row) == 0 || (count($row) == 1 && strlen(trim($row[0])) == 0)) {
+			if (empty($opt['skip_empty'])) {
+				throw new Exception("line $n is empty");
+			}
+
+			continue;
+		}
+
+		if (!empty($opt['trim'])) {
+			for ($i = 0; $i < count($row); $i++) {
+				$row[$i] = trim($row[$i]);
+			}
+		}
+
+		if (!is_null($callback)) {
+			if (($res = $callback($row))) {
+				array_push($table, $row);
+			}
+		}
+		else {
+			array_push($table, $row);
+		}
+
+		$n++;
+	}
+
+	File::close($fh);
+	return $table;
+}
+
+
+/**
  * Load csv file. Ignore empty lines. If last parameter is callback function instead
  * of bool do $trim($row). If callback returns row push row to table.
  * Last parameter $trim is either boolean or callable.
