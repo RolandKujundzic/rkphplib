@@ -9,6 +9,7 @@ require_once __DIR__.'/TokPlugin.iface.php';
 require_once __DIR__.'/TokHelper.trait.php';
 require_once __DIR__.'/Tokenizer.class.php';
 require_once __DIR__.'/../ValueCheck.class.php';
+require_once __DIR__.'/../File.class.php';
 require_once __DIR__.'/../lib/htmlescape.php';
 require_once __DIR__.'/../lib/split_str.php';
 require_once __DIR__.'/../lib/conf2kv.php';
@@ -19,6 +20,7 @@ use rkphplib\Exception;
 use rkphplib\tok\TFormValidator\Template;
 use rkphplib\tok\Tokenizer;
 use rkphplib\ValueCheck;
+use rkphplib\File;
 
 use function rkphplib\lib\htmlescape;
 use function rkphplib\lib\http_code;
@@ -71,6 +73,9 @@ use function rkphplib\lib\kv2conf;
 class TFormValidator implements TokPlugin {
 use TokHelper;
 
+// @var string $conf_file
+public static $conf_file = '';
+
 // @var hash $conf
 protected $conf = [ 'default' => [], 'current' => [] ];
 
@@ -115,6 +120,7 @@ public function getPlugins(Tokenizer $tok) : array {
 
 /**
  * Set default configuration. Configuration Parameter:
+ * Use TFormValidator::$conf_file = path/to/config.[json|conf] to load configuration from file.
  *
  * template.engine= default|bootstrap|material
  * ENGINE.in.[const|input|textarea|select|file|multi_checkbox|multi_radio|fselect] = ...
@@ -122,188 +128,36 @@ public function getPlugins(Tokenizer $tok) : array {
  * Render ENGINE.in.TYPE, label and ERROR_MESSAGE into template.output.TEMPLATE.OUTPUT
  */
 public function __construct() {
-	// TAGS
-	$label = TAG_PREFIX.'label'.TAG_SUFFIX;
-	$label2 = TAG_PREFIX.'label2'.TAG_SUFFIX;
-	$input = TAG_PREFIX.'input'.TAG_SUFFIX;
-	$error = TAG_PREFIX.'error'.TAG_SUFFIX;
-	$error_message = TAG_PREFIX.'error_message'.TAG_SUFFIX;
-	$example = TAG_PREFIX.'example'.TAG_SUFFIX;
-	$id = TAG_PREFIX.'id'.TAG_SUFFIX;
-	$type = TAG_PREFIX.'type'.TAG_SUFFIX;
-	$col = TAG_PREFIX.'col'.TAG_SUFFIX;
-	$form_group = TAG_PREFIX.'form_group'.TAG_SUFFIX; 
-	$fadeout_confirm = TAG_PREFIX.'fadeout_confirm'.TAG_SUFFIX;
-	$name = TAG_PREFIX.'name'.TAG_SUFFIX;
-	$value = TAG_PREFIX.'value'.TAG_SUFFIX;
-	$class = TAG_PREFIX.'class'.TAG_SUFFIX;
-	$method = TAG_PREFIX.'method'.TAG_SUFFIX;
-	$upload = TAG_PREFIX.'upload'.TAG_SUFFIX;
-	$tags = TAG_PREFIX.'tags'.TAG_SUFFIX;
-	$options = TAG_PREFIX.'options'.TAG_SUFFIX;
-	$checked = TAG_PREFIX.'checked'.TAG_SUFFIX;
-	$fselect_input = TAG_PREFIX.'fselect_input'.TAG_SUFFIX;
-
 	$tok = is_null($this->tok) ? Tokenizer::$site : $this->tok;
 	if (is_null($tok)) {
 		$tok = new Tokenizer();
 	}
 
-	// PLUGINS with escaped HASH_DELIMITER
-	$d = HASH_DELIMITER;
-	$pl_get = $tok->getPluginTxt([ 'get', SETTINGS_REQ_DIR ]);
-	$pl_link = $tok->getPluginTxt([ 'link', '' ], '_=');
-	$pl_if_method = $tok->getPluginTxt([ 'if', '' ], $method.$d.$method.$d.'get');
-	$pl_if_upload = $tok->getPluginTxt([ 'if', '' ], $upload.$d.'enctype="multipart/form-data"');
-	$pl_fv_hidden = $tok->getPluginTxt([ 'fv', 'hidden' ], null);
-	$pl_if_label2 = $tok->getPluginTxt([ 'if', '' ], $label2.$d.
-		'<button type="submit" name="form_action" value="2">'.$label2.'</button>');
-	$pl_if_label2_btn = $tok->getPluginTxt([ 'if', '' ], $label2.$d.
-		'<button type="submit" name="form_action" value="2" class="btn">'.$label2.'</button>');
-	$pl_if_yes_fv_check_fadeout = $tok->getPluginTxt([ 'if', 'cmp:yes' ], $tok->getPluginTxt([ 'fv', 'check' ], '').$d.
-		'<h4 style="color:#006600" data-effect="fadeout">'.$fadeout_confirm."</h4><script>".
-		'setTimeout(function() { $('."'h4[data-effect=\"fadeout\"]').fadeOut(); }, 2000);</script>");
-	$pl_if_col = $tok->getPluginTxt([ 'if', '' ], '{:=col}'.$d.$col.$d.'col-md-12');
-
-	$this->conf['default'] = [
-		'submit' 					=> 'form_action',
-		'id_prefix'				=> 'fvin_',
-		'label_required'	=> '<div class="label_required">'.$label.'</div>',
-		'template.engine' => 'default',
-		'option.label_empty'  => '',
-
-		'show_error_message' 	=> 1,
-		'show_error' 					=> 1,
-		'show_example' 				=> 1,
-
-		'default.in.const'    => '<span class="const">'.$value.'</span>',
-		'default.in.input'    => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="'.$class.'" '.$tags.'>',
-		'default.in.textarea' => '<textarea name="'.$name.'" class="'.$class.'" '.$tags.'>'.$value.'</textarea>',
-		'default.in.select'   => '<select name="'.$name.'" class="'.$class.'" '.$tags.'>'.$options.'</select>',
-		'default.in.file_btn'	=> '<div class="file_btn_wrapper"><button class="file_btn" '.$tags.'>'.$label2.'</button>'.
-															'<input type="file" name="'.$name.'" style="opacity:0;position:absolute;right:0;left:0;top:0;bottom:0;" '.
-															'data-value="'.$value.'"></div>',
-		'default.in.file'			=> '<input type="file" name="'.$name.'" class="'.$class.'" data-value="'.$value.'" '.$tags.'>',
-		'default.in.multi_checkbox'	=> '<div class="multi_checkbox_wrapper">'.$input.'</div>',
-		'default.in.multi_checkbox.entry' => '<div class="multi_checkbox"><span>'.$input.'</span><span>'.$label.'</span></div>',
-		'default.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="'.$class.'" '.
-			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
-			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
-		'default.in.check'		=> '<div class="check_wrapper">'.$options.'</div>',
-		'default.in.check.option' => '<label for="'.$id.'"><input id="'.$id.'" type="'.$type.'" name="'.
-			$name.'" class="'.$class.'" value="'.$value.'" '.$checked.'>'.$label.'</label>',
-
-		'default.error.message'					=> '<span class="error_message">'.$error.'</span>',
-		'default.error.message_concat'	=> ', ',
-		'default.error.message_multi'		=> "<i>$name</i>: <tt>$error</tt><br class=\"fv\" />",
-		'default.error.const'						=> 'error',
-
-		'default.output.in'				=> '<span class="label '.$error.'">'.$label.'</span>'.$input.$example.$error_message.'<br class="fv" />',
-
-		'default.output.in.cbox_query' => $input.'<span class="cbox_query '.$error.'">'.$label.'</span><br class="fv" />',		
-
-		'default.output.in.multi'	=> '<span class="label '.$error.'">'.$label."</span>$input".
-			'<div class="example_error_wrapper">'.$example.$error_message."</div>",
-
-		'default.example'	=> '<span class="example">'.$example.'</span>',
-
-		'default.header'	=> '<form class="fv" action="'.$pl_link.'" method="'.$pl_if_method.'" '.$pl_if_upload.
-			' data-key13="prevent" novalidate>'.$pl_fv_hidden,
-
-		'default.form'		=> '<form class="fv {:=class}" action="'.$pl_link.'" method="'.$pl_if_method.'" '.$pl_if_upload.
-			' data-key13="prevent" novalidate>'.$pl_fv_hidden,
-
-		'default.footer'	=> '<button type="submit" class="{:=class}">'.$label.'</button>'.
-			'<div class="label2">'.$pl_if_label2.$pl_if_yes_fv_check_fadeout."</div></form>",
-
-		'default.submit'	=> '<button type="submit" class="{:=class}">'.$label.'</button>',
-
-
-		'bootstrap.in.input'	  => '<input type="'.$type.'" name="'.$name.'" value="'.$value.'" class="form-control '.$class.'" '.$tags.'>',
-		'bootstrap.in.checkbox'	=> '<input type="checkbox" name="'.$name.'" value="'.$value.'" class="form-check-input '.$class.'" '.$tags.'>',
-		'bootstrap.in.radio'	  => '<input type="radio" name="'.$name.'" value="'.$value.'" class="form-check-input '.$class.'" '.$tags.'>',
-		'bootstrap.in.file'     => '<input class="form-control-file '.$class.'" name="'.$name.'" type="file" data-value="'.$value.'" '.$tags.'>',
-		'bootstrap.in.textarea' => '<textarea name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$value.'</textarea>',
-		'bootstrap.in.select'   => '<select name="'.$name.'" class="form-control '.$class.'" '.$tags.'>'.$options.'</select>',
-		'bootstrap.in.multi_checkbox' => '<div class="row">'.$input.'</div>',
-		'bootstrap.in.multi_checkbox.entry'	=> '<div class='.$col.'><label class="form-check-label">'.$input.' '.$label.'</label></div>',
-		'bootstrap.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="form-control '.$class.'" '.
-			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
-			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
-		
-		'bootstrap.in.check'		=> '<div class="form-check-inline">'.$options.'</div>',
-
-		'bootstrap.in.check.option' => '<label class="form-check-label" for="'.$id.'"><input id="'.$id.'" type="'.$type.'" name="'.
-			$name.'" class="form-check-input '.$class.'" value="'.$value.'" '.$checked.'>'.$label.'</label>',
-
-		'bootstrap.error.const'	=> 'is-invalid',
-
-		'bootstrap.output.in'		=> '<div class="form-group {:=class} '.$error.'"><label for="'.$id.'">'.$label.'</label>'.
-			"$example$error_message$input</div>",
-
-		'bootstrap.output.in.multi'		=> '<div class="row"><div class="col-md-3"><label>'.$label.
-			"</label>$example$error_message</div>".'<div class="col-md-9">'.$input.'</div></div>',
-
-		'bootstrap.output.in.multi.2'	=> '<div class="row"><div class="col-md-6"><label>'.$label.'</label></div>'.
-			'<div class="col-md-6">'.$example.$error_message.'</div></div><div class="row"><div class="col-md-12">'.$input.'</div></div>',
-
-		'bootstrap.header'	=> '<div class="container-fluid ml-0 pl-0 {:=class}"><div class="row"><div class="'.$pl_if_col.'">'.
-			'<form class="fv form" method="'.$pl_if_method.'" action="'.$pl_link.'" '.$pl_if_upload.' data-key13="prevent" novalidate>'.
-			$pl_fv_hidden,
-	
-		'bootstrap.footer'	=> '<div class="row"><div class="col-md-4"><button type="submit" class="btn">'.$label.'</button></div>'.
-			'<div class="col-md-8">'.$pl_if_label2_btn.$pl_if_yes_fv_check_fadeout."</div></div></form></div></div></div>",
-
-		'bootstrap.submit'	=> '<button type="submit" class="btn">'.$label.'</button>',
-
-		'bootstrap.example'	=> '<span class="example">'.$example.'</span>',
-
-
-		'material.in.input'	   => '<input type="'.$type.'" name="'.$name.'" value="'.$value.
-			'" class="mdl-textfield__input '.$class.'" '.$tags.'>',
-
-		'material.in.file'     => '<input class="mdl-textfield__input '.$class.'" name="'.$name.'" type="file" data-value="'.
-			$value.'" '.$tags.'>',
-
-		'material.in.textarea' => '<textarea name="'.$name.'" class="mdl-textfield__input '.$class.'" '.$tags.'>'.$value.'</textarea>',
-
-		'material.in.select'   => '<select name="'.$name.'" class="mdl-textfield__input '.$class.'" '.$tags.'>'.$options.'</select>',
-
-		'material.in.fselect'  => '<span id="fselect_list_'.$name.'"><select name="'.$name.'" class="mdl-textfield__input '.$class.'" '.
-			'onchange="rkphplib.fselectInput(this)" '.$tags.'>'.$options.'</select></span>'.
-			'<span id="fselect_input_'.$name.'" style="display:none">'.$fselect_input.'</span>',
-
-		'material.in.checkbox' => '<label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="'.$id.'"><input type="checkbox" '.
-			'id="'.$id.'" name="'.$name.'" value="'.$value.'" class="mdl-checkbox__input mdl-js-ripple-effect '.$class.'" '.$tags.
-			'><span class="mdl-checkbox__label">'.$label.'</span></label>'
-		];
-
-	if (isset($_REQUEST[SETTINGS_REQ_DIR])) {
-		$this->conf['default']['hidden.dir'] = $_REQUEST[SETTINGS_REQ_DIR];
+	if (!empty(self::$conf_file) && File::exists(self::$conf_file)) {
+		if (substr(self::$conf_file, -5) == '.json') {
+			$this->conf['default'] = File::loadJSON(self::$conf_file);
+		}
+		else {
+			$this->conf['default'] = File::loadConf(self::$conf_file);
+		}
 	}
+	else {
+		Template::$tok = $tok;
+		$this->conf['default'] = Template::conf();
 
-	// ToDo: $this->new_constructor($tok);
-}
+		if (isset($_REQUEST[SETTINGS_REQ_DIR])) {
+			$this->conf['default']['hidden.dir'] = $_REQUEST[SETTINGS_REQ_DIR];
+		}
 
-
-function debug() {
-	Template::$tok = $tok;
-	$x = [];
-	$x['default'] = Template::conf();
-
-	$keys = array_keys($this->conf['default']);
-	sort($keys);
-
-	$old = [];
-	$new = [];
-	foreach ($keys as $key) {
-		$old[$key] = $this->conf['default'][$key];
-		$new[$key] = $x['default'][$key];
+		if (!empty(self::$conf_file)) {
+			if (substr(self::$conf_file, -5) == '.json') {
+				File::saveJSON(self::$conf_file, $this->conf['default']);
+			}
+			else if (substr(self::$conf_file, -5) == '.conf') {
+				File::saveConf(self::$conf_file, $this->conf['default'], "\n\n");
+			}
+		}
 	}
-
-	$dir = '/home/rk/workspace/php/rkphplib/test/tok.TFormValidator';
-	file_put_contents("$dir/old.txt", print_r($old, true));
-	file_put_contents("$dir/new.txt", print_r($new, true));
 }
 
 
