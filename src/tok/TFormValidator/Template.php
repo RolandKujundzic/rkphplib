@@ -24,7 +24,7 @@ private static $rval;
  */
 public static function conf() : array {
 	self::$rkey = [ "\n", "\t" ];
-	self::$rval = [ '', '' ];
+	self::$rval = [ ' ', '' ];
 
 	$conf = [];
 
@@ -103,22 +103,23 @@ private static function setPlugins() : void {
 
 	$method = TAG_PREFIX.'method'.TAG_SUFFIX;
 	$label2 = TAG_PREFIX.'label2'.TAG_SUFFIX;
+	$upload = TAG_PREFIX.'upload'.TAG_SUFFIX;
 
 	self::plugin('«pl_link»', 'link', '', '_=');
 
 	self::plugin('«pl_if_method»', 'if', '', $method.$d.$method.$d.'get');
 
-	self::plugin('«pl_if_upload»', 'if', '', `«upload»{$d}enctype="multipart/form-data"`);
+	self::plugin('«pl_if_upload»', 'if', '', $upload.$d.'enctype="multipart/form-data"');
 
 	self::plugin('«pl_fv_hidden»', 'fv', 'hidden', null);
 
 	self::plugin('«pl_if_label2»', 'if', '', 
-		`{$label2}{$d}<button type="submit" name="form_action" value="2">{$label2}</button>`);
+		$label2.$d.'<button type="submit" name="form_action" value="2">'.$label2.'</button>');
 
 	self::plugin('«pl_if_label2_btn»', 'if', '',
-		`{$label2}{$d}<button type="submit" name="form_action" value="2" class="btn">{$label2}</button>`);
+		$label2.$d.'<button type="submit" name="form_action" value="2" class="btn">'.$label2.'</button>');
 
-	self::plugin('«pl_if_col»', 'if', '', `{:=col}{$d}«col»{$d}col-md-12`);
+	self::plugin('«pl_if_col»', 'if', '', "{:=col}{$d}{:=col}{$d}col-md-12");
 }
 
 
@@ -210,7 +211,7 @@ private static function material() : array {
 
 		'textarea' => '<textarea name="«name»" class="mdl-textfield__input «class»" «tags»>«value»</textarea>',
 
-		'select'   => '<select name="«name»" class="mdl-textfield__input «class»" «tags›>«options»</select>',
+		'select'   => '<select name="«name»" class="mdl-textfield__input «class»" «tags»>«options»</select>',
 
 		'fselect'  => '<span id="fselect_list_«name»"><select name="«name»" class="mdl-textfield__input «class»"
 										onchange="rkphplib.fselectInput(this)" «tags»>«options»</select></span>
@@ -266,17 +267,17 @@ private static function default() : array {
 
 		'message_concat'	=> ', ',
 
-		'message_multi'		=> '<i>«name»</i>: <tt>«error»</tt><br class="fv"/>',
+		'message_multi'		=> '<i>«name»</i>: <tt>«error»</tt><br class="fv" />',
 
 		'const'						=> 'error',
 	];
 
 	$conf['output'] = [
-		'in'						=> '<span class="label «error»>«label»</span>«input»«example»«error_message»<br class="fv"/>',
+		'in'						=> '<span class="label «error»">«label»</span>«input»«example»«error_message»<br class="fv" />',
 
-		'in.cbox_query' => '«input»<span class="cbox_query «error»>«label»</span><br class="fv"/>',		
+		'in.cbox_query' => '«input»<span class="cbox_query «error»">«label»</span><br class="fv" />',		
 
-		'in.multi'			=> '<span class="label «error»>«label»</span>«input»
+		'in.multi'			=> '<span class="label «error»">«label»</span>«input»
 													<div class="example_error_wrapper">«example»«error_message»</div>',
 	];
 
