@@ -4,7 +4,6 @@ namespace rkphplib\tok;
 
 $parent_dir = dirname(__DIR__);
 
-require_once __DIR__.'/TFormValidator/Template.php';
 require_once __DIR__.'/TokPlugin.iface.php';
 require_once __DIR__.'/TokHelper.trait.php';
 require_once __DIR__.'/Tokenizer.class.php';
@@ -17,7 +16,6 @@ require_once __DIR__.'/../lib/kv2conf.php';
 require_once __DIR__.'/../lib/http_code.php';
 
 use rkphplib\Exception;
-use rkphplib\tok\TFormValidator\Template;
 use rkphplib\tok\Tokenizer;
 use rkphplib\ValueCheck;
 use rkphplib\File;
@@ -142,8 +140,9 @@ public function __construct() {
 		}
 	}
 	else {
-		Template::$tok = $tok;
-		$this->conf['default'] = Template::conf();
+		require_once __DIR__.'/TFormValidator/Template.php';
+		\rkphplib\tok\TFormValidator\Template::$tok = $tok;
+		$this->conf['default'] = \rkphplib\tok\TFormValidator\Template::conf();
 
 		if (isset($_REQUEST[SETTINGS_REQ_DIR])) {
 			$this->conf['default']['hidden.dir'] = $_REQUEST[SETTINGS_REQ_DIR];
