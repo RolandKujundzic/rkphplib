@@ -8,7 +8,7 @@ require_once __DIR__.'/TFormValidator/Template.php';
 require_once __DIR__.'/TokPlugin.iface.php';
 require_once __DIR__.'/TokHelper.trait.php';
 require_once __DIR__.'/Tokenizer.class.php';
-require_once __DIR__.'/../ValueCheck.class.php';
+require_once __DIR__.'/../ValueCheck.php';
 require_once __DIR__.'/../File.class.php';
 require_once __DIR__.'/../lib/htmlescape.php';
 require_once __DIR__.'/../lib/split_str.php';
