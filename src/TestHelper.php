@@ -1036,11 +1036,14 @@ private function execPHP(string $base) : string {
 
 /**
  * Parse in/$base.tok and save as out/$base.txt.
+ * Reset _REQUEST.
  */
 private function execTok(string $base) : string {
 	if (is_null($this->tok)) {
 		throw new Exception('call useTokPlugin() first');
 	}
+
+	$_REQUEST = [];
 
 	$in = File::load('in/'.$base.'.tok');
 	$this->tok->reset();
