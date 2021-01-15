@@ -964,6 +964,7 @@ public function tok_include_if(string $param, array $a) : string {
  * 
  * @tok {loadJSON:data/configuration/shop.json}login.id={login:id?}|#|login.type={login:type?}{:loadJSON} …
  * {
+ *   "\\rkphplib\\tok\\TFormValidator::$conf_file": "file.conf",
  *   "plugin": "PHPLIB:TShop",
  *   "\\phplib\\tok\\TShop": { },
  *   "name": [ "param", "arg" ],
@@ -975,8 +976,27 @@ public function tok_loadJSON(string $file, array $p = []) : void {
 	$json = File::loadJSON($file);
 
 	foreach ($json as $name => $value) {
-		if (substr($name, 0, 1) == '\\') {
-			\rkphplib\lib\log_debug([ "TBase.tok_loadJSON:976> plugin_conf[$name]= <1>", $value ]);
+		if (substr($name, 0, 1) != '\\') {
+			continue;
+		}
+
+		if (($pos = strpos($name, '::$')) > 0) {
+			$class = substr($name, 0, $pos);
+			$property = substr($name, $pos + 3);
+	
+			$tmp = explode('\\', $class);
+			array_shift($tmp);
+			$path = constant('PATH_'.strtoupper(array_shift($tmp))).join('/', $tmp);
+			$cpath = File::exists($path.'.class.php') ? $path.'.class.php' : $path.'.php';
+			File::exists($cpath, true);
+			require_once $cpath;
+
+			\rkphplib\lib\log_debug("TBase.tok_loadJSON:986> $class::\$$property = '$value'");
+			$class::${$property} = $value;
+			unset($json[$name]);
+		}
+		else {
+			// \rkphplib\lib\log_debug([ "TBase.tok_loadJSON:990> plugin_conf[$name]= <1>", $value ]);
 			$this->plugin_conf[$name] = $value;
 			unset($json[$name]);
 		}
