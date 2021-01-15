@@ -1030,6 +1030,16 @@ public static function loadConf(string $file) : array {
 
 
 /**
+ * Save configuration file.
+ */
+public static function saveConf(string $file, array $conf, string $d2 = HASH_DELIMITER, string $d1 = '=') : void {
+	require_once __DIR__.'/lib/kv2conf.php';
+	$nfo = '@@="'.$d1.'","'.str_replace("\n", '\\n', $d2).'"'."\n";
+	File::save($file, $nfo.\rkphplib\lib\kv2conf($conf, $d1, $d2));
+}
+
+
+/**
  * Return file content converted from json.
  * @see JSON::decode 
  * @return any
