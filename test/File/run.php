@@ -11,5 +11,5 @@ function fix(string $path) : string {
 
 global $th;
 
-$th->run(1, 3);
+$th->run(1, 4);
 
