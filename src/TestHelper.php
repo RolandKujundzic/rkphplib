@@ -958,8 +958,9 @@ private function cmp($out, $ok) : bool {
 
 	$cmp = $ok === $out;
 
-	if (!$cmp && is_numeric($ok) && is_numeric($out)) {
-		$cmp = "$ok" === "$out";
+	if (!$cmp && (empty($ok) || is_bool($ok) || is_numeric($ok)) &&
+			(empty($out) || is_numeric($out) || is_bool($out))) {
+		$cmp = $ok == $out;
 	}
 
 	return $cmp;
