@@ -174,43 +174,54 @@ public static function sqlQuery(string $ignore, string $colnames, string $query)
 
 
 /**
- * @alias isDomain($domain)
+ * Same as isDomain but http[s]:// prefix is required
+ * @code ValueCheck::isURL('HTTP://domain.tld') == false
+ * @code ValueCheck::isURL('https://domain.tld') == true
+ * @code ValueCheck::isURL('x.tld') == false
  */
 public static function isURL(string $domain, int $min_level = 2, int $max_level = 9) : bool {
-	return self::isDomain($domain, $min_level, $max_level);
+	if (!preg_match('/^https?:\/\/(.+)$/', $domain, $match)) {
+		return false;
+	}
+
+	return self::isDomain($match[1], $min_level, $max_level);
 }
 
 
 /**
- * @alias isDomain("$domain.tld")
+ * True if $value is url path. Split $value at first [/] and do isURL check
+ * if prefix is http[s]://.
+ * 
+ * @code ValueCheck::isURLPath('/dir/index.php') == true
+ * @code ValueCheck::isURLPath('/dir/index.php?x=5') == false
+ * @code ValueCheck::isURLPath('/dir/index.php?x=5#7', 1) == true
+ * @code ValueCheck::isURLPath('https://domain.tpl/index.html) == true
  */
-public static function isURLPrefix(string $domain, int $min_level = 1, int $max_level = 8) : bool {
-	return self::isDomain($domain.'.tld', $min_level + 1, $max_level + 1);
-}
+public static function isURLPath(string $value, $is_query = 0) : bool {
+	$is_domain = true;
+	if (preg_match('/https?:\/\/(.+?)\/(.+)$/', $value, $match)) {
+		$is_domain = self::isDomain($match[1]);
+		$value = $match[2];
+	}
 
-
-/**
- * True if $value is url path. Split $value at first [/] and check if prefix isDomain and suffix
- * matches /^[a-z0-9\-\.\%\+\_\,\/]+$/i
- */
-public static function isURLPath(string $value) : bool {
-	list ($domain, $path) = explode('/', $value, 2);
-	return preg_match('/^[a-z0-9\-\.\%\+\_\,\/]+$/i', $path) && self::isDomain($domain);
-}
-
-
-/**
- * @alias isDomain("$domain.tld")
- */
-public static function isSubDomain(string $domain, int $min_level = 1, int $max_level = 8) : bool {
-	return self::isDomain($domain.'.tld', $min_level + 1, $max_level + 1);
+	$srx = $is_query ? '&#%=\?\+' : '';
+	$rx = '/^[a-z0-9_,\/\-\.'.$srx.']+$/i';
+	return ($is_domain && preg_match($rx, $value));
 }
 
 
 /**
  * Return true if $domain is valid domain name. Max level allowed is 9 (a.b.c.d.e.f.g.h.tld).
+ * Use min_level > 2 and max_level >= min_level + 1 for subdomain check.
  * If min_level=0 set min_level=2. If max_level=0 set max_level=9.
  * Export $_REQUEST[xn--$domain] if domain is valid utf8.
+ * 
+ * @code ValueCheck::isDomain('a.b') == true
+ * @code ValueCheck::isDomain('sub.domain.tld', 2, 2) == false (domain check)
+ * @code ValueCheck::isDomain('sub.domain.tld', 3, 3) == true (subdomain check)
+ * @code ValueCheck::isDomain('sub.sub.domain.tld', 4, 4) == true (subsubdomain check)
+ * @code ValueCheck::isDomain('01aa.b-b.cc') == true
+ * @code ValueCheck::isDomain('http://a.b') == false
  */
 public static function isDomain(string $domain, int $min_level = 2, int $max_level = 9) : bool {
 	$_REQUEST['xn--'.$domain] = '';
@@ -234,7 +245,7 @@ public static function isDomain(string $domain, int $min_level = 2, int $max_lev
 		return false;
 	}
 
-	if (!preg_match('/^[a-z0-9-\.]+$/i', $domain)) {
+	if (!preg_match('/^[a-z0-9\-\.]+$/i', $domain)) {
 		// try convert to IDNA ASCII form
 		$xn = idn_to_ascii($domain);
 		if (false === $xn) {
@@ -245,20 +256,9 @@ public static function isDomain(string $domain, int $min_level = 2, int $max_lev
 		$domain = $xn;
 	}
 
-	$res = false;
-	$rx_sub = '([a-z0-9]{1,63}\.|[a-z0-9]+[a-z0-9-]{0,61}[a-z0-9]{1}\.)';
+	$rx_sub = '([a-z0-9]{1,63}\.|[a-z0-9]+[a-z0-9\-]{0,61}[a-z0-9]{1}\.)+';
 	$rx_top = '([a-z]{2,20}|xn--[a-z0-9\-]{1,40})$';
-	if (preg_match('/^'.$rx_sub.$rx_top.'/i', $domain, $match) || preg_match('/^'.$rx_sub.$rx_sub.$rx_top.'/i', $domain, $match) ||
-			preg_match('/^'.$rx_sub.$rx_sub.$rx_sub.$rx_top.'/i', $domain, $match) ||
-			preg_match('/^'.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_top.'/i', $domain, $match) ||
-			preg_match('/^'.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_top.'/i', $domain, $match) ||
-			preg_match('/^'.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_top.'/i', $domain, $match) ||
-			preg_match('/^'.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_top.'/i', $domain, $match) ||
-			preg_match('/^'.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_sub.$rx_top.'/i', $domain, $match)) {
-		return true;
-	}
-
-	return $res;
+	return preg_match('/^'.$rx_sub.$rx_top.'$/i', $domain);
 }
 
 
