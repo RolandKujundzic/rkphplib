@@ -88,6 +88,7 @@ public static function head(string $file, int $lnum = 5, bool $print = true) : a
  * SPLIT Options are [ '|&|', '|@|' ]
  *
  * @example File::loadTable('csv:file://test.csv', [ ',', '"' ])
+ * @example File::loadTable('csv:file://test.csv', [ 'delimiter' => ',', 'quote' => '"', 'ignore_first_line' => true ])
  * @example File::loadTable('unserialize:file://test.ser')
  * @example File::loadTable('json:https://download.here/test.json')
  * @example File::loadTable('json:https://download.here/test2.json', [ 'id', 'name', 'age', 'gender:male' ])
@@ -114,7 +115,12 @@ public static function loadTable(string $uri, array $options = []) : array {
 			$options[1] = '"';
 		}
 
-		$table = File::loadCSV($uri, $options[0], $options[1]);
+		if (!empty($options['delimiter'])) {
+			$table = File::loadCSV($uri, $options['delimiter'], $options);
+		}
+		else {
+			$table = File::loadCSV($uri, $options[0], [ 'quote' => $options[1] ]);
+		}
 	}
 	else if ($match[2] == 'file') {
 		$data = File::load($uri);
@@ -250,7 +256,7 @@ public static function equal(string $source, string $target, bool $check_source_
  * skip_empty: 1
  * @eol
  */
-public static function loadCSV2(string $file, string $delimiter = ',', array $options = []) : array {
+public static function loadCSV(string $file, string $delimiter = ',', array $options = []) : array {
 	$fh = File::open($file, 'rb');
 	$table = [];
 
@@ -261,7 +267,7 @@ public static function loadCSV2(string $file, string $delimiter = ',', array $op
 	$default = [ 'trim' => 1, 'quote' => '"', 'escape' => '\\',
 		'ignore_first' => 0, 'skip_empty' => 1, 'callback' => null ];
 
-	$opt = array_merge($default, $opt);
+	$opt = array_merge($default, $options);
 
 	$callback = null;
 	if (!is_null($opt['callback'])) {
@@ -298,48 +304,6 @@ public static function loadCSV2(string $file, string $delimiter = ',', array $op
 		}
 
 		$n++;
-	}
-
-	File::close($fh);
-	return $table;
-}
-
-
-/**
- * Load csv file. Ignore empty lines. If last parameter is callback function instead
- * of bool do $trim($row). If callback returns row push row to table.
- * Last parameter $trim is either boolean or callable.
- */
-public static function loadCSV(string $file, string $delimiter = ',', string $quote = '"', $trim = true) : array {
-	$fh = File::open($file, 'rb');
-	$table = [];
-
-	if ($delimiter == '\t') {
-		$delimiter = "\t";
-	}
-
-	$callback = (!is_bool($trim) && is_callable($trim)) ? $trim : null;
-
-	while (($row = File::readCSV($fh, $delimiter, $quote))) {
-		if (count($row) == 0 || (count($row) == 1 && strlen(trim($row[0])) == 0)) {
-			continue;
-		}
-
-		if (!is_null($callback)) {
-			$res = $callback($row);
-
-			if ($res) {
-				array_push($table, $row);
-			}
-
-			continue;
-		}
-
-		for ($i = 0; $trim && $i < count($row); $i++) {
-			$row[$i] = trim($row[$i]);
-		}
-
-		array_push($table, $row);
 	}
 
 	File::close($fh);
