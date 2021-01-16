@@ -26,7 +26,6 @@ $tests = $th->getTests('../src', [
 	'Catalog',
 	'ArrayHelper',
 	'StringHelper',
-	'ValueCheck',
 	'ShellCode',
 	'SQLiteDatabase',
 	'tok.TArray'
