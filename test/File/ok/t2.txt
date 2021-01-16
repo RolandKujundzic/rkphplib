@@ -6,5 +6,5 @@ Array
     [mime] => text/x-php
     [suffix] => .php
     [lastModified] => unset
-    [md5] => b863dea51afb985307db9a6420660805
+    [md5] => a87adedbc69c3cacabaa410cc6eec2e8
 )

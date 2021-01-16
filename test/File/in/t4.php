@@ -18,5 +18,5 @@ print_r($csv);
 \rkphplib\File::loadCSV('in/t4.csv', "\t", [ 'callback' => 'parseRow' ]);
 
 $parser = new Parser();
-// \rkphplib\File::loadCSV('in/t4.csv', '\\t', '"', array($parser, 'row'));
+\rkphplib\File::loadCSV('in/t4.csv', '\\t', [ 'quote' => '"', 'callback' => array($parser, 'row') ]);
 

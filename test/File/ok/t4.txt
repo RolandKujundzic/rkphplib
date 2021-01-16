@@ -15,3 +15,7 @@ Array
         )
 
 )
+parseRow: [a|b|c]
+parseRow: [A A|B'B|C"C]
+Parser.row: [a|b|c]
+Parser.row: [A A|B'B|C"C]
