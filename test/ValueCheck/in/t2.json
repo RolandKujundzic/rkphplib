@@ -1,0 +1,11 @@
+[
+	"rkphplib\\ValueCheck::isDomain",
+	["x.de", true],
+	["x.d", false],
+	["-.de", false],
+	["1-.de", false],
+	["1-x.de", true],
+	["abc.de", true],
+	["xn--182.abc.de", true]
+]
+

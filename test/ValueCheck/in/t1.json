@@ -1,0 +1,9 @@
+[
+	"rkphplib\\ValueCheck::isURL",
+	["abd.de", false],
+	["http://www.abc.de", 2, 3, true],
+	["https://x1.09.de", 2, 2, false],
+	["https://www.a-09.de", 3, 3, true],
+	["https://sub.sub.abc.de", 4, 4, true]
+]
+
