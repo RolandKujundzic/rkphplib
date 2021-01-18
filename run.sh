@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2016 - 2020 Roland Kujundzic <roland@kujundzic.de>
+# Copyright (c) 2016 - 2021 Roland Kujundzic <roland@kujundzic.de>
 #
 # shellcheck disable=SC1091,SC1001,SC2009,SC2012,SC2016,SC2024,SC2028,SC2033,SC2034,SC2044,SC2046,SC2048,SC2068,SC2086,SC2119,SC2120,SC2153,SC2183,SC2206
 #
@@ -1120,9 +1120,72 @@ function _phpdocumentor {
 }
 
 function _php_server {
+	test -z "${ARG[0]}" && _abort 'call _rks_app "$@" or _parse_arg "$@" first'
+	test -z "${ARG[port]}" && ARG[port]=15080
+
+	if test "${ARG[list]}" = '1'; then
+		ps aux | grep -Po '[p]hp .*\-S .+'
+		return
+	fi
+
+	local server_pid	
+
+	if test "${ARG[stop]}" = '1'; then
+		server_pid=$(ps aux | grep -P '[p]hp .*\-S .+:'"${ARG[port]}"'.*' | awk '{print $2}')
+		if test "$server_pid" -ge 80; then
+			_confirm "Stop buildin php webserver (port ${ARG[port]}, pid $server_pid)" 1
+			test "$CONFIRM" = 'y' && kill -9 "$server_pid"
+		fi
+
+		return
+	fi
+
 	_require_program php
 	_mkdir "$RKBASH_DIR"
 
+	test -z "${ARG[script]}" && _php_server_script
+	test -z "${ARG[docroot]}" && ARG[docroot]="$PWD"
+	test -z "${ARG[host]}" && ARG[host]="0.0.0.0"
+
+	if _is_running "port:${ARG[port]}"; then
+		server_pid=$(ps aux | grep -P '[p]hp .*\-S .+:'"${ARG[port]}"'.*' | awk '{print $2}')
+		if test -z "$server_pid"; then
+			_abort "Port ${ARG[port]} is already used"
+		else
+			_abort "PHP Server is already running on ${ARG[host]}:${ARG[port]}\n\nStop PHP Server: kill [-9] $server_pid"
+		fi
+	fi
+
+	_confirm "Start buildin PHP standalone Webserver" 1
+	test "$CONFIRM" = "y" && _php_server_start
+}
+
+
+function _php_server_start {
+	local log server_pid
+
+	log="$RKBASH_DIR/php_server.log"
+
+	if test -z "${ARG[user]}"; then
+		php -t "${ARG[docroot]}" -S ${ARG[host]}:${ARG[port]} "${ARG[script]}" >"$log" 2>&1 &
+	else
+		sudo -H -u ${ARG[user]} bash -c "php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$log' 2>&1" &
+		sleep 1
+	fi
+
+	server_pid=$(ps aux | grep -P '[p]hp .*\-S .+:'"${ARG[port]}"'.*' | awk '{print $2}')
+	test -z "$server_pid" && _abort "Could not determine Server PID"
+
+	echo -e "\nPHP buildin standalone server started"
+	echo "URL: http://${ARG[host]}:${ARG[port]}"
+	echo "LOG: tail -f $log"
+	echo "DOCROOT: ${ARG[docroot]}"
+	echo "CMD: php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$log' 2>&1"
+	echo -e "STOP: kill $server_pid\n"
+}
+
+
+function _php_server_script {
 	local php_code=
 IFS='' read -r -d '' php_code <<'EOF'
 <?php
@@ -1174,50 +1237,8 @@ else {
 }
 EOF
 
-	test -z "${ARG[0]}" && _abort 'call _rks_app "$@" or _parse_arg "@$" first'
-
-	if test -z "${ARG[script]}"; then
-		echo "$php_code" > "$RKBASH_DIR/php_server.php"
-		ARG[script]="$RKBASH_DIR/php_server.php"
-	fi
-
-	test -z "${ARG[port]}" && ARG[port]=15080
-	test -z "${ARG[docroot]}" && ARG[docroot]="$PWD"
-	test -z "${ARG[host]}" && ARG[host]="0.0.0.0"
-
-	local log server_pid
-	log="$RKBASH_DIR/php_server.log"
-
-	if _is_running "port:${ARG[port]}"; then
-		server_pid=$(ps aux | grep -E "[p]hp .+\:${ARG[port]}.+php_server.php" | awk '{print $2}')
-		if test -z "$server_pid"; then
-			_abort "Port ${ARG[port]} is already used"
-		else
-			_abort "PHP Server is already running on ${ARG[host]}:${ARG[port]}\n\nStop PHP Server: kill [-9] $server_pid"
-		fi
-	fi
-
-	_confirm "Start buildin PHP standalone Webserver" 1
-	test "$CONFIRM" = "y" || _abort "user abort"
-
-	if test -z "${ARG[user]}"; then
-		{ php -t "${ARG[docroot]}" -S ${ARG[host]}:${ARG[port]} "${ARG[script]}" >"$log" 2>&1 || \
-			_abort "PHP Server failed - see: $log"; } &
-	else
-		{ sudo -H -u ${ARG[user]} bash -c "php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$log' 2>&1" || \
-			_abort "PHP Server failed - see: $log"; } &
-		sleep 1
-	fi
-
-	server_pid=$(ps aux | grep -E "[p]hp .+\:${ARG[port]}.+php_server.php" | awk '{print $2}')
-	test -z "$server_pid" && _abort "Could not determine Server PID"
-
-	echo -e "\nPHP buildin standalone server started"
-	echo "URL: http://${ARG[host]}:${ARG[port]}"
-	echo "LOG: tail -f $log"
-	echo "DOCROOT: ${ARG[docroot]}"
-	echo "CMD: php -t '${ARG[docroot]}' -S ${ARG[host]}:${ARG[port]} '${ARG[script]}' >'$log' 2>&1"
-	echo -e "STOP: kill $server_pid\n"
+	echo "$php_code" > "$RKBASH_DIR/php_server.php"
+	ARG[script]="$RKBASH_DIR/php_server.php"
 }
 
 
@@ -1496,6 +1517,15 @@ function _service {
 }
 
 
+function _sha256 {
+	[[ ! -f "$1" || -z "$2" ]] && return
+	local checksum
+
+	checksum=$(sha256sum "$1" | awk '{print $1}')
+	test "$checksum" = "$2" || _abort "invalid SH256 checksum\n$1\n$checksum != $2"
+}
+
+
 function _sort {
 	echo "$@" | xargs -n1 | sort -u | xargs
 }
@@ -1748,6 +1778,7 @@ function _wget {
 
 	save_as=${2:-$(basename "$1")}
 	if test -s "$save_as"; then
+		_sha256 "$save_as" "$WGET_SHA256"
 		if test "$WGET_KEEP" = '1'; then
 			_msg "keep existing $save_as"
 			return
@@ -1781,6 +1812,8 @@ function _wget {
 	elif ! test -s "$2"; then
 		_abort "Download $2 to $1 failed"
 	fi
+
+	_sha256 "$save_as" "$WGET_SHA256"
 }
 
 
@@ -1810,7 +1843,12 @@ function build {
 
 	_mkdir "$RKBASH_DIR" >/dev/null
 	_require_dir "$PATH_PHPLIB"
-	"$PATH_PHPLIB/bin/toggle" src log_debug on  >"$RKBASH_DIR/log_debug_on.log"
+
+	if ! "$PATH_PHPLIB/bin/toggle" src log_debug on  >"$RKBASH_DIR/log_debug_on.log"; then
+		cat "$RKBASH_DIR/log_debug_on.log"
+		_abort "bin/toggle src log_debug on"
+	fi
+
 	echo -e "bin/toggle src log_debug off\nsee: $RKBASH_DIR/log_debug_off.log"
 	"$PATH_PHPLIB/bin/toggle" src log_debug off >"$RKBASH_DIR/log_debug_off.log"
 

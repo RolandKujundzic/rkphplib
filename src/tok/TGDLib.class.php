@@ -74,7 +74,7 @@ public function tok_gdlib_print(string $p, string $txt) : void {
 	$x = intval($p[0]);
 	$y = intval($p[1]);
 
-	\rkphplib\lib\log_debug("TGDLib.tok_gdlib_print:71> at $x|$y: '$text'");
+	// \rkphplib\lib\log_debug("TGDLib.tok_gdlib_print:77> at $x|$y: '$text'");
 	imagettftext($this->im, $font['size'], 0, $x, $y, $font['color'], $font['file'], $txt);
 }
 
@@ -92,7 +92,7 @@ private function getFont(string $name) : array {
 	list ($r, $g, $b) = $this->getColor($this->conf['font_'.$name.'.color']);
 	$font['color'] = imagecolorallocate($this->im, $r, $g, $b);
 
-	\rkphplib\lib\log_debug([ "TGDLib.getFont:71> $name = <1>", $font ]);
+	// \rkphplib\lib\log_debug([ "TGDLib.getFont:95> $name = <1>", $font ]);
 	return $font;
 }
 
@@ -111,7 +111,7 @@ private function getColor(string $color) : array {
 		throw new Exception("invalid rgb color [$color]");
 	}
 
-	\rkphplib\lib\log_debug([ "TGDLib.getColor:90> <1>", $rgb ]);
+	// \rkphplib\lib\log_debug([ "TGDLib.getColor:114> <1>", $rgb ]);
 	return $rgb;
 }
 
@@ -132,7 +132,7 @@ public function tok_gdlib_font(string $name, array $p) : void {
 		throw new Exception('invalid font size '.$fsize);
 	}
 
-	\rkphplib\lib\log_debug([ "TGDLib.tok_gdlib_font:91> $name = <2>", $p ]);
+	// \rkphplib\lib\log_debug([ "TGDLib.tok_gdlib_font:135> $name = <2>", $p ]);
 	foreach ($p as $name => $value) {
 		$this->conf[$fkey.$name] = $value;
 	}
@@ -163,7 +163,7 @@ public function tok_gdlib_init(array $p) : void {
 	Dir::exists($font_dir, true);
 	putenv('GDFONTPATH='.$font_dir);
 
-	\rkphplib\lib\log_debug([ "TGDLib.tok_gdlib_init:122> <1>", $this->conf ]);	
+	// \rkphplib\lib\log_debug([ "TGDLib.tok_gdlib_init:166> <1>", $this->conf ]);	
 	if (!empty($p['load'])) {
 		$this->tok_gdlib_load($p['load']);
 	}
@@ -181,7 +181,7 @@ public function tok_gdlib_init(array $p) : void {
  * @tok {gdlib:new}200,50,255.255.255{:gdlib}
  */
 private function tok_gdlib_new(array $p = []) : void {
-	\rkphplib\lib\log_debug([ "TGDLib.tok_gdlib_new:140> <1>", $p ]);	
+	// \rkphplib\lib\log_debug([ "TGDLib.tok_gdlib_new:184> <1>", $p ]);	
 	$p = array_merge([ '300', '150', '#ffffff' ], $p); 
 	$this->im = imagecreatetruecolor($p[0], $p[1]);
 	list ($r, $g, $b) = $this->getColor($p[2]);
@@ -202,7 +202,7 @@ private function tok_gdlib_load(string $path) : void {
 		throw new Exception('invalid suffix '.$suffix, $path);
 	}
 
-	\rkphplib\lib\log_debug("TGDLib.tok_gdlib_load:161> {$call[$suffix]}($path)");	
+	// \rkphplib\lib\log_debug("TGDLib.tok_gdlib_load:205> {$call[$suffix]}($path)");	
 	$this->im = @$call[$suffix]($path);
 }
 

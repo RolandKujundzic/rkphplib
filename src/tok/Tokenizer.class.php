@@ -669,9 +669,9 @@ private function _join_tok_plugin(int &$i) : ?string {
 	}
 	else {
 		if ($ep == -1) {
-			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:695> no arg: name=$name param=[$param] i=$i ep=$ep");
+			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:672> no arg: name=$name param=[$param] i=$i ep=$ep");
 			$out = $this->_call_plugin($name, $param);
-			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:697> out: [$out]");
+			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:674> out: [$out]");
 		}
 		else if ($ep > $i) {
 			if ($tp & TokPlugin::TEXT) {
@@ -680,13 +680,13 @@ private function _join_tok_plugin(int &$i) : ?string {
 			}
 			else {
 				// parse argument with recursive _join_tok call ...
-				// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:706> compute arg of $name with recursion: start=$i+1 end=$ep\n");
+				// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:683> compute arg of $name with recursion: start=$i+1 end=$ep\n");
 				$arg = $this->_join_tok($i + 1, $ep);
 			}
  
-			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:710> arg: name=$name param=[$param] arg=[$arg] i=$i ep=$ep");
+			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:687> arg: name=$name param=[$param] arg=[$arg] i=$i ep=$ep");
 			$out = $this->_call_plugin($name, $param, $arg);
- 			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:712> set i=$ep - out: [$out]");
+ 			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:689> set i=$ep - out: [$out]");
 
 			$i = $ep; // modify loop position
 		}
@@ -858,7 +858,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 		}
 
 		$flag = is_array($args) ? 3 : 0;
-		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:884> return this._call_plugin($name, $func, $args, $flag)");
+		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:861> return this._call_plugin($name, $func, $args, $flag)");
 		return $this->_call_plugin($name, $func, $args, $flag);
 	}
 
@@ -866,7 +866,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 		throw new Exception("no such plugin method $name.".$func);
 	}
 
-	// \rkphplib\lib\log_debug([ "Tokenizer.callPlugin:892> name=$name, func=$func, args: [<1>]", $args ]);
+	// \rkphplib\lib\log_debug([ "Tokenizer.callPlugin:869> name=$name, func=$func, args: [<1>]", $args ]);
 	if (count($args) == 0) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func));
 	}
@@ -950,7 +950,7 @@ private function _call_plugin(string $name, string $param, $arg = null, int $fla
 		$old_tok = $this->_tok;
 		$old_endpos = $this->_endpos;
 
-		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:976> redo=[$res]");
+		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:953> redo=[$res]");
 		$this->setText($res);
 		$res = $this->_join_tok(0, count($this->_tok));
 

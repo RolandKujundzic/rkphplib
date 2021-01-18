@@ -51,14 +51,14 @@ public function getPlugins(Tokenizer $tok) : array {
 public static function tok_cookie(string $name, array $p) : ?string {
 	if (count($p) == 0) {
 		$res = isset($_COOKIE[$name]) ? $_COOKIE[$name] : '';
-		\rkphplib\lib\log_debug("THttp.tok_cookie:54> return $name = '$res'");
+		// \rkphplib\lib\log_debug("THttp::tok_cookie:54> return $name = '$res'");
 		return $res;
 	}
 
 	$value = empty($p['value']) ? '' : $p['value'];
 	$expire = empty($p['expire']) ? 0 : strtotime($p['expire']);
 	setcookie($name, $value, $expire);
-	\rkphplib\lib\log_debug("THttp.tok_cookie:60> set $name = '$value' = '{$_COOKIE[$name]}', expire = $expire");
+	// \rkphplib\lib\log_debug("THttp::tok_cookie:61> set $name = '$value' = '{$_COOKIE[$name]}', expire = $expire");
   return null;
 }
 

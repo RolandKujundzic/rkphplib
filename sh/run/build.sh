@@ -12,7 +12,12 @@ function build {
 
 	_mkdir "$RKBASH_DIR" >/dev/null
 	_require_dir "$PATH_PHPLIB"
-	"$PATH_PHPLIB/bin/toggle" src log_debug on  >"$RKBASH_DIR/log_debug_on.log"
+
+	if ! "$PATH_PHPLIB/bin/toggle" src log_debug on  >"$RKBASH_DIR/log_debug_on.log"; then
+		cat "$RKBASH_DIR/log_debug_on.log"
+		_abort "bin/toggle src log_debug on"
+	fi
+
 	echo -e "bin/toggle src log_debug off\nsee: $RKBASH_DIR/log_debug_off.log"
 	"$PATH_PHPLIB/bin/toggle" src log_debug off >"$RKBASH_DIR/log_debug_off.log"
 
