@@ -20,7 +20,7 @@ function latin1_to_utf8(&$data) {
 	}
 	else if (is_array($data)) {
 		foreach ($data as &$value) {
-			latin1_2_utf8($value);
+			latin1_to_utf8($value);
 		}
 
 		unset($value);
