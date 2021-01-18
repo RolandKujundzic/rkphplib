@@ -260,7 +260,7 @@ public static function loadCSV(string $file, string $delimiter = ',', array $opt
 	$fh = File::open($file, 'rb');
 	$table = [];
 
-	if ($delimiter == '\t') {
+	if ($delimiter == '\\t') {
 		$delimiter = "\t";
 	}
 
@@ -268,11 +268,6 @@ public static function loadCSV(string $file, string $delimiter = ',', array $opt
 		'ignore_first' => 0, 'skip_empty' => 1, 'callback' => null ];
 
 	$opt = array_merge($default, $options);
-
-	$callback = null;
-	if (!is_null($opt['callback'])) {
-		is_callable($opt['callback'], false, $callback);
-	}
 
 	if (!empty($opt['ignore_first'])) {
 		fgets($fh);
@@ -294,8 +289,8 @@ public static function loadCSV(string $file, string $delimiter = ',', array $opt
 			}
 		}
 
-		if (!is_null($callback)) {
-			if (($res = $callback($row))) {
+		if (!empty($opt['callback'])) {
+			if (($res = $opt['callback']($row))) {
 				array_push($table, $row);
 			}
 		}
