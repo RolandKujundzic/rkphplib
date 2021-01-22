@@ -73,6 +73,7 @@ private $_tpl = [];
 
 /** 
  * Constructor. Decode crypted query data. Use either ?SETTINGS_REQ_CRYPT=CRYPTED or ?CRYPTED.
+ * Set $_COOKIE[skin] if $_REQUEST[skin] or SETTINGS_SKIN is set.
  */
 public function __construct() {
 	if (!empty($_REQUEST[SETTINGS_REQ_CRYPT])) {
@@ -90,6 +91,17 @@ public function __construct() {
 		}
 	}
 
+	if (defined('SETTINGS_SKIN') && SETTINGS_SKIN) {
+		if (!empty($_REQUEST['skin']) && ($skin = basename($_REQUEST['skin'])) && is_dir('skin/'.$skin)) {
+			setcookie('skin', $skin);
+			$_COOKIE['skin'] = $skin;
+		}
+		else if (empty($_COOKIE['skin'])) {
+			setcookie('skin', SETTINGS_SKIN);
+			$_COOKIE['skin'] = SETTINGS_SKIN;
+		}
+	}
+
 	$esc = [ 'trim', 'escape_html', 'escape_tok', 'escape_arg', 'escape_db' ];
 	$get = [ 'trim', 'escape_html', 'escape_tok', 'escape_arg' ];
 	$this->plugin_conf['filter'] = [ 
@@ -99,76 +111,66 @@ public function __construct() {
 		'get_off' => [ ],
 		'esc' => $esc,
 		'get' => $get
-		];
+	];
 }
 
 
 /**
  * Return Tokenizer plugin list:
- *
- * @plugin row, row:init, tpl_set, tpl, tf, t, f, true, false
- * @plugin find, filter, plugin, escape, escape:tok, unescape
- * @plugin encode, decode, get, const, include, include_if, view, clear
- * @plugin ignore, if, switch, keep, load, link, redo, toupper, tolower
- * @plugin hidden, trim, join, set, set_default, redirect, var, esc, log
- * @plugin shorten, strlen, json, json:exit, log_debug
  */
 public function getPlugins(Tokenizer $tok) : array {
 	$this->_tok = $tok;
 
 	$plugin = [];
-
-	$plugin['row:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY | TokPlugin::IS_STATIC;
-	$plugin['row'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::LIST_BODY | TokPlugin::IS_STATIC;
-
-	$plugin['tpl_set'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::REQUIRE_BODY | 
-		TokPlugin::TEXT | TokPlugin::IS_STATIC;
-
-	$plugin['tpl'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::REDO | TokPlugin::IS_STATIC;
-
-	$plugin['tf'] = TokPlugin::PARAM_LIST; 
-	$plugin['t'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
-	$plugin['true'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO; 
+	$plugin['clear'] = TokPlugin::NO_PARAM;
+	$plugin['const'] = 0;
+	$plugin['decode'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['encode'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['esc'] = 0;
+	$plugin['escape'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['escape:tok'] = TokPlugin::NO_PARAM | TokPlugin::TEXT;
 	$plugin['f'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM; 
 	$plugin['false'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO | TokPlugin::NO_PARAM;
-	$plugin['find'] = TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['filter'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::CSLIST_BODY;
-	$plugin['plugin'] = TokPlugin::REQUIRE_BODY | TokPlugin::CSLIST_BODY;
-	$plugin['escape:tok'] = TokPlugin::NO_PARAM | TokPlugin::TEXT;
-	$plugin['escape'] = TokPlugin::REQUIRE_PARAM;
-	$plugin['unescape'] = TokPlugin::REQUIRE_PARAM;
-	$plugin['encode'] = TokPlugin::REQUIRE_PARAM;
-	$plugin['decode'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['find'] = TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['get'] = 0;
-	$plugin['const'] = 0;
+	$plugin['hidden'] = TokPlugin::PARAM_CSLIST | TokPlugin::CSLIST_BODY;
+	$plugin['if'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
+	$plugin['ignore'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['include'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
 	$plugin['include_if'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
-	$plugin['view'] = TokPlugin::REDO | TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
-	$plugin['clear'] = TokPlugin::NO_PARAM;
-	$plugin['ignore'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
-	$plugin['if'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
-	$plugin['switch'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
+	$plugin['join'] = TokPlugin::LIST_BODY;
+	$plugin['json'] = 0;
+	$plugin['json:exit'] = TokPlugin::KV_BODY;
 	$plugin['keep'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
+	$plugin['link'] = TokPlugin::PARAM_CSLIST | TokPlugin::KV_BODY;
 	$plugin['load'] = TokPlugin::REQUIRE_BODY;
 	$plugin['loadJSON'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
-	$plugin['link'] = TokPlugin::PARAM_CSLIST | TokPlugin::KV_BODY;
-	$plugin['redo'] = TokPlugin::NO_PARAM | TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
-	$plugin['toupper'] = TokPlugin::NO_PARAM;
-	$plugin['tolower'] = TokPlugin::NO_PARAM;
-	$plugin['hidden'] = TokPlugin::PARAM_CSLIST | TokPlugin::CSLIST_BODY;
-	$plugin['trim'] = 0;
-	$plugin['join'] = TokPlugin::LIST_BODY;
-	$plugin['set_default'] =  0;
-	$plugin['set'] =  0;
-	$plugin['redirect'] =  TokPlugin::NO_PARAM;
-	$plugin['var'] = 0;
-	$plugin['esc'] = 0;
 	$plugin['log'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
-	$plugin['shorten'] = TokPlugin::REQUIRE_PARAM;
-	$plugin['strlen'] = TokPlugin::NO_PARAM;
-	$plugin['json:exit'] = TokPlugin::KV_BODY;
-	$plugin['json'] = 0;
 	$plugin['log_debug'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
+	$plugin['plugin'] = TokPlugin::REQUIRE_BODY | TokPlugin::CSLIST_BODY;
+	$plugin['redirect'] =  TokPlugin::NO_PARAM;
+	$plugin['redo'] = TokPlugin::NO_PARAM | TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
+	$plugin['row'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::LIST_BODY | TokPlugin::IS_STATIC;
+	$plugin['row:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY | TokPlugin::IS_STATIC;
+	$plugin['set'] =  0;
+	$plugin['set_default'] =  0;
+	$plugin['shorten'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['skin'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY; 
+	$plugin['strlen'] = TokPlugin::NO_PARAM;
+	$plugin['switch'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
+	$plugin['t'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
+	$plugin['tf'] = TokPlugin::PARAM_LIST; 
+	$plugin['tolower'] = TokPlugin::NO_PARAM;
+	$plugin['toupper'] = TokPlugin::NO_PARAM;
+	$plugin['tpl'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::REDO | TokPlugin::IS_STATIC;
+	$plugin['tpl_set'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_LIST | TokPlugin::REQUIRE_BODY | 
+		TokPlugin::TEXT | TokPlugin::IS_STATIC;
+	$plugin['trim'] = 0;
+	$plugin['true'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO; 
+	$plugin['unescape'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['var'] = 0;
+	$plugin['view'] = TokPlugin::REDO | TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
 
 	return $plugin;
 }
@@ -1052,7 +1054,51 @@ public function tok_load(string $param, string $file) : string {
 		throw new Exception('file missing', $file);
 	}
 
-	return File::load($file);
+	return File::load(self::skinPath($file));
+}
+
+
+/**
+ * Return self::skinPath($path).
+ *
+ * @tok {skin:css/site.css} = skin/default/site.css
+ * @see skinPath
+ */
+public function tok_skin(string $path) : string {
+	return self::skinPath($path);
+}
+
+
+/**
+ * Return skin/$_COOKIE[skin]|SETTINGS_SKIN/$path if found.
+ *
+ * @code …
+ * define('SETTINGS_SKIN', 'default');
+ * TBase::skinPath('.') == 'skin/default'
+ * @eol
+ */
+public static function skinPath(string $path) : string {
+	if (substr($path, 0, 5) == 'skin/' || !defined('SETTINGS_SKIN') || !SETTINGS_SKIN) {
+		\rkphplib\lib\log_debug("TBase.skinPath:1082> $path");
+		return $path;
+	}
+
+	if (!empty($_COOKIE['skin'])) {
+		$skin = 'skin/'.$_COOKIE['skin'];
+	}
+	else {
+		$skin = 'skin/'.SETTINGS_SKIN;
+	}
+
+	if ($path == '.') {
+		$path = $skin;
+	}
+	else if (File::exists($skin.'/'.$path)) {
+		$path = $skin.'/'.$path;
+	}
+
+	\rkphplib\lib\log_debug("TBase.skinPath:1100> $path");
+	return $path;
 }
 
 
@@ -2037,6 +2083,10 @@ public static function findPath(string $file, string $dir = '.') : string {
 
 	$res = '';
 
+	if (substr($dir, 0, 5) !== 'skin/' && substr(($skin_dir = self::skinPath('.')), 0, 5) == 'skin/') {
+		$res = self::findPath($file, $skin_dir);
+	}
+
 	while (!$res && mb_strlen($dir) > 0) {
 		$path = $dir.'/'.$file;
 
@@ -2057,6 +2107,7 @@ public static function findPath(string $file, string $dir = '.') : string {
 		$res = mb_substr($res, 2);
 	}
 
+	\rkphplib\lib\log_debug("TBase.findPath:2109> findPath($file, $dir) = $res");
 	return $res;
 }
 
