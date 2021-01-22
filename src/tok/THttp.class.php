@@ -58,7 +58,8 @@ public static function tok_cookie(string $name, array $p) : ?string {
 	$value = empty($p['value']) ? '' : $p['value'];
 	$expire = empty($p['expire']) ? 0 : strtotime($p['expire']);
 	setcookie($name, $value, $expire);
-	// \rkphplib\lib\log_debug("THttp::tok_cookie:61> set $name = '$value' = '{$_COOKIE[$name]}', expire = $expire");
+	$_COOKIE[$name] = $value;
+	// \rkphplib\lib\log_debug("THttp::tok_cookie:62> set $name = '$value' = '{$_COOKIE[$name]}', expire = $expire");
   return null;
 }
 
