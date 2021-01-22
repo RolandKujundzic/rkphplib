@@ -440,7 +440,9 @@ public function tok_fv_init(string $do, array $p) : void {
  * Return validation result (yes|error|). Call get2NData() if multi_checkbox|radio input exists.
  * If _REQUEST[conf[submit]] is empty do nothing. Apply all conf[check.*] value checks.
  *
- * @tok {fv_check:} -> [|yes|error]
+ * @tok {fv:check:} -> [|yes|error]
+ * @tok {fv:check:0} -> no output
+ * @tok {fv:check:name} -> return {tpl:name} output
  */
 public function tok_fv_check(string $ajax = '') : string {
 	$submit = $this->getConf('submit');
@@ -457,7 +459,7 @@ public function tok_fv_check(string $ajax = '') : string {
 	}
 
 	if (count($this->error) > 0) {
-		return 'error';
+		return $ajax == '0' ? '' : 'error';
 	}
 
 	if (!is_array($this->conf['current']['required'])) {
@@ -542,7 +544,7 @@ public function tok_fv_check(string $ajax = '') : string {
 		$this->ajaxOutput($ajax);
 	}
 
-	return $res;
+	return $ajax == '0' ? '' : $res;
 }
 
 
@@ -1095,7 +1097,7 @@ protected function getInput(string $name, array $ri) : string {
 	}
 
 	if (isset($this->error[$name])) {
-		$ri['class'] = empty($ri['class']) ? $this->getConf('error.const', true) : $ri['class'].' '.$this->getConf('error.const', true);
+		$ri['class'] = trim($ri['class'].' '.$this->getConf('error.const', true));
 	}
 
 	$tpl_in = $conf['template.engine'].'.in';
