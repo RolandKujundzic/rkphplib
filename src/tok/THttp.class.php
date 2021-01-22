@@ -23,7 +23,7 @@ class THttp implements TokPlugin {
 
 
 /**
- * @plugin http:get, domain:idn|utf8
+ *
  */
 public function getPlugins(Tokenizer $tok) : array {
 	$plugin = [];

@@ -37,7 +37,7 @@ private  $ignore_level = 0;
 
 
 /**
- * @plugin menu, menu:add, menu:conf 
+ *
  */
 public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;

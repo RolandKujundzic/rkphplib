@@ -23,7 +23,7 @@ private $env = [ 'format_in' => null, 'format_out' => null, 'format_cut' => '' ]
 
 
 /**
- * @plugin date
+ *
  */
 public function getPlugins(Tokenizer $tok) : array {
   $plugin = [];

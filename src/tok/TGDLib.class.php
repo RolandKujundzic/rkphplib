@@ -23,7 +23,7 @@ private $conf = [];
 
 
 /**
- * @plugin eval:math|logic
+ *
  */
 public function getPlugins(Tokenizer $tok) : array {
   $plugin = [];

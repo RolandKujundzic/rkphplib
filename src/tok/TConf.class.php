@@ -71,7 +71,7 @@ public function __construct(array $options = []) {
 
 
 /**
- * @plugin conf:id|var|get|get_path|set|set_path|set_default|append
+ *
  */
 public function getPlugins(Tokenizer $tok) : array {
   $plugin = [];

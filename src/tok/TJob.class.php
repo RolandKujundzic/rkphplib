@@ -37,7 +37,7 @@ private $conf = [];
 
 	
 /**
- * @plugin job
+ *
  */
 public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;

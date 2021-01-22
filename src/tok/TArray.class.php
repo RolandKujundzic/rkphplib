@@ -40,7 +40,7 @@ protected $array = [];
 
 
 /**
- * @plugin array:set|get|shift|unshift|pop|push|join|length
+ *
  */
 public function getPlugins(Tokenizer $tok) : array {
 	$plugin = [];

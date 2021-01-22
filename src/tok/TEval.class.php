@@ -18,7 +18,7 @@ class TEval implements TokPlugin {
 
 
 /**
- * @plugin eval:math|logic
+ *
  */
 public function getPlugins(Tokenizer $tok) : array {
   $plugin = [];

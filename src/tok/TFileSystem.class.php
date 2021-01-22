@@ -29,7 +29,7 @@ private $csv = [ 'ignore' => 0, 'file' => '', 'fv' => null, 'escape_crlf' => ' '
 
 
 /**
- * @plugin directory:copy|move|create|exists|entries|is, file:size|copy|exists, dirname and basename
+ *
  */
 public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;

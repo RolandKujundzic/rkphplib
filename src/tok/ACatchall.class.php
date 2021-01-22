@@ -69,7 +69,7 @@ public function setLayoutInclude(string $source_dir, string $layout, array $incl
 
 
 /**
- * @plugin catchall
+ *
  */
 public function getPlugins(Tokenizer $tok) : array {
 	$plugin = [];
