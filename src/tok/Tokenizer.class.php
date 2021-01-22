@@ -1236,7 +1236,7 @@ public function getTag(string $name) : string {
 private function tryPluginMap(string $name) : void {
 	static $map = [
 		'TArray' => [ 'array', 'array:set', 'array:get', 'array:shift', 'array:unshift', 'array:pop', 'array:push', 'array:join', 'array:length', 'array:split' ],
-		'TBase' => [ 'row:init', 'row', 'tpl_set', 'tpl', 'tf', 't', 'true', 'f', 'false', 'find', 'filter', 'plugin', 'escape:tok', 'escape', 'unescape', 'encode', 'decode', 'get', 'const', 'include', 'include_if', 'view', 'clear', 'ignore', 'if', 'switch', 'keep', 'load', 'loadJSON', 'link', 'redo', 'toupper', 'tolower', 'hidden', 'trim', 'join', 'set_default', 'set', 'redirect', 'var', 'esc', 'log', 'shorten', 'strlen', 'json:exit', 'json', 'log_debug' ],
+		'TBase' => [ 'clear', 'const', 'decode', 'encode', 'esc', 'escape', 'escape:tok', 'f', 'false', 'filter', 'find', 'get', 'hidden', 'if', 'ignore', 'include', 'include_if', 'join', 'json', 'json:exit', 'keep', 'link', 'load', 'loadJSON', 'log', 'log_debug', 'plugin', 'redirect', 'redo', 'row', 'row:init', 'set', 'set_default', 'shorten', 'skin', 'strlen', 'switch', 't', 'tf', 'tolower', 'toupper', 'tpl', 'tpl_set', 'trim', 'true', 'unescape', 'var', 'view' ],
 		'TConf' => [ 'conf', 'conf:id', 'conf:var', 'conf:get', 'conf:get_path', 'conf:set', 'conf:set_path', 'conf:set_default', 'conf:append' ],
 		'TDate' => [ 'date' ],
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval:call', 'eval' ],
