@@ -2081,10 +2081,12 @@ public static function findPath(string $file, string $dir = '.') : string {
 		throw new Exception('backslash is forbidden in path', $dir.':'.$file);
 	}
 
+	$res_skin = null;
+	$skin_dir = '';
 	$res = '';
 
 	if (substr($dir, 0, 5) !== 'skin/' && substr(($skin_dir = self::skinPath('.')), 0, 5) == 'skin/') {
-		$res = self::findPath($file, $skin_dir);
+		$res_skin = self::findPath($file, $skin_dir); 
 	}
 
 	while (!$res && mb_strlen($dir) > 0) {
@@ -2107,7 +2109,11 @@ public static function findPath(string $file, string $dir = '.') : string {
 		$res = mb_substr($res, 2);
 	}
 
-	// \rkphplib\lib\log_debug("TBase::findPath:2110> findPath($file, $dir) = $res");
+	if (!is_null($res_skin) && strlen($skin_dir.'/'.$res) <= strlen($res_skin)) {
+		$res = $res_skin;
+	}
+
+	\rkphplib\lib\log_debug("TBase::findPath:2116> findPath($file, $dir) = $res");
 	return $res;
 }
 
