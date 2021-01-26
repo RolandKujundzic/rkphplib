@@ -2113,7 +2113,7 @@ public static function findPath(string $file, string $dir = '.') : string {
 		$res = $res_skin;
 	}
 
-	\rkphplib\lib\log_debug("TBase::findPath:2116> findPath($file, $dir) = $res");
+	// \rkphplib\lib\log_debug("TBase::findPath:2116> findPath($file, $dir) = $res");
 	return $res;
 }
 
@@ -2146,7 +2146,7 @@ public function tok_tf(array $p, string $arg) : void {
 	$ta = trim($arg);
 	$do = '';
 
-	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2143> ta=<1> p: <2>", $ta, $p ]);
+	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2149> ta=<1> p: <2>", $ta, $p ]);
 	if (count($p) == 1) {
 		if ($p[0] === '') {
 			$tf = !empty($ta);
@@ -2189,7 +2189,7 @@ public function tok_tf(array $p, string $arg) : void {
 		$ap = array_merge($p, split_str(HASH_DELIMITER, $arg));
 	}
 
-	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2186> do=<1> tf=<2> ap: <3>", $do, $tf, $ap ]);
+	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2192> do=<1> tf=<2> ap: <3>", $do, $tf, $ap ]);
 	if (empty($do)) {
 		$this->_tok->setCallStack('tf', $tf);
 		return;
@@ -2268,7 +2268,7 @@ public function tok_tf(array $p, string $arg) : void {
 			$set = split_str(',', $ap[1]);
 			$tf = in_array($ap[0], $set);
 		}
-		// \rkphplib\lib\log_debug([ "TBase.tok_tf:2265> tf=<1> set: <2>", $tf, $set ]);
+		// \rkphplib\lib\log_debug([ "TBase.tok_tf:2271> tf=<1> set: <2>", $tf, $set ]);
 	}
 	else if ($do == 'and' || $do == 'or') {
 		$apn = count($ap);
@@ -2338,7 +2338,7 @@ public function tok_true(string $val, string $out) : string {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('TBase.tok_true:2335> val='.print_r($val, true).' tf='.print_r($tf, true));
+	// \rkphplib\lib\log_debug('TBase.tok_true:2341> val='.print_r($val, true).' tf='.print_r($tf, true));
 	return ((is_bool($tf) && $tf) || (is_array($val) && in_array($tf, $val)) || (is_string($tf) && $tf === $val) || 
 		(is_array($tf) && !empty($val) && in_array($val, $tf))) ? $out : '';
 }
@@ -2366,7 +2366,7 @@ public function tok_false(string $out) : string {
  * Write message via log_debug.
  */
 public function tok_log(string $txt) : void {
-	\rkphplib\lib\log_debug("TBase.tok_log:2363> $txt"); // @keep
+	\rkphplib\lib\log_debug("TBase.tok_log:2369> $txt"); // @keep
 }
 
 
