@@ -95,11 +95,16 @@ public function tok_login_auth_basic(array $p) : void {
 
 	$ok = empty($_SERVER['PHP_AUTH_USER']) ? -2 : -1;
 	for ($i = 0; $ok == -1 && $i < count($this->account); $i++) {
-		if ($_SERVER['PHP_AUTH_USER'] == $this->account[$i]['login'] &&
-				$_SERVER['PHP_AUTH_PW'] == $this->account[$i]['password']) {
+		$auth = $_SERVER['PHP_AUTH_USER'];
+		$auth_pw = $_SERVER['PHP_AUTH_PW'];
+		$login = $this->account[$i]['login'];
+		$pw = empty($this->account[$i]['password']) ? '' : $this->account[$i]['password'];
+		$pw_md5 = empty($this->account[$i]['password_md5']) ? '' : $this->account[$i]['password_md5'];
+
+		if ($auth == $login && ($auth_pw == $pw || md5($auth_pw) == $pw_md5)) {
 			$ok = $i;
 		}
-		// \rkphplib\lib\log_debug("TLogin.tok_login_auth_basic:102> $i: compare '{$_SERVER['PHP_AUTH_USER']}' with '{$this->account[$i]['login']}' ($ok)"); 
+		\rkphplib\lib\log_debug("TLogin.tok_login_auth_basic:107> $i: '$auth' == '$login' && ('$auth_pw' == '$pw' || md5($auth_pw) == $pw_md5) == $ok");
 	}
 
 	if ($ok < 0) {
@@ -311,11 +316,15 @@ private function setLoginHistory(string $info, string $data = null) : void {
  * Add account. Required id, login, password and type.
  */
 public function tok_login_account(array $p) : void {
-	$required = [ 'id', 'type', 'login', 'password' ];
+	$required = [ 'id', 'type', 'login' ];
 	foreach ($required as $key) {
-		if (!isset($p[$key])) {
+		if (empty($p[$key])) {
 			throw new Exception('[login_account:] missing parameter '.$key);
 		}
+	}
+
+	if (empty($p['password']) && empty($p['password_md5'])) {
+		throw new Exception('[login_account:] missing password[_md5]');
 	}
 
 	array_push($this->account, $p);
@@ -733,26 +742,27 @@ private function selectFromDb(array $p) : ?array {
  * Select user from account. Parameter: login, password.
  */
 private function selectFromAccount(array $p) : ?array {
-	$found = false;
-
 	if (count($this->account) == 0) {
 		throw new Exception('no account defined - use [login_account:]...');
 	}
 
 	$login_ok = false;
 	$password_ok = false;
+	$found = false;
 
-	for  ($i = 0; $found === false && $i < count($this->account); $i++) {
-		if ($this->account[$i]['login'] == $p['login'] && $this->account[$i]['password'] == $p['password']) {
+	for ($i = 0; $found === false && $i < count($this->account); $i++) {
+		$password_ok = !empty($p['password']) && !empty($this->account[$i]['password']) &&
+			$this->account[$i]['password'] == $p['password'];
+
+		if (!$password_ok && !empty($p['password']) && !empty($this->account[$i]['password_md5'])) {
+			$password_ok = $this->account[$i]['password_md5'] == md5($p['password']);
+		}
+
+		$login_ok = !empty($p['login']) && !empty($this->account[$i]['login']) &&
+			$this->account[$i]['login'] == $p['login'];
+
+		if ($login_ok && $password_ok) {
 			$found = $i;
-			$login_ok = true;
-			$password_ok = true;
-		}
-		else if (!$login_ok && $this->account[$i]['login'] == $p['login']) {
-			$login_ok = true;
-		}
-		else if (!$password_ok && $this->account[$i]['password'] == $p['password']) {
-			$password_ok = true;
 		}
 	}
 
