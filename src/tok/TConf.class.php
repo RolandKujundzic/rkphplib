@@ -2,20 +2,20 @@
 
 namespace rkphplib\tok;
 
-$parent_dir = dirname(__DIR__);
 require_once __DIR__.'/TokPlugin.iface.php';
-require_once $parent_dir.'/Database.class.php';
-require_once $parent_dir.'/traits/Map.php';
-require_once $parent_dir.'/lib/conf2kv.php';
-require_once $parent_dir.'/lib/kv2conf.php';
+require_once __DIR__.'/../Database.class.php';
+require_once __DIR__.'/../traits/Map.php';
+require_once __DIR__.'/../File.class.php';
+require_once __DIR__.'/../lib/conf2kv.php';
+require_once __DIR__.'/../lib/kv2conf.php';
 
 use rkphplib\Exception;
 use rkphplib\ADatabase;
 use rkphplib\Database;
+use rkphplib\File;
 
 use function rkphplib\lib\conf2kv;
 use function rkphplib\lib\kv2conf;
-
 
 
 /**
@@ -23,39 +23,45 @@ use function rkphplib\lib\kv2conf;
  * Use cms_conf.lid = cms_login.id for user data.
  * Use lid=0 for system data.
  *
+ * If {conf:load}path/to/configuration.json|conf{:conf} 
+ * is used try configuration value from this file first. 
+ *
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
  */
 class TConf implements TokPlugin {
 use \rkphplib\traits\Map;
 
-// @param ADatabase $db
+// @var ADatabase $db
 private $db = null;
 
-// @param int $lid
+// @var int $lid
 private $lid = null;
 
+// @var array $conf
+private $conf = null;
 
 
 /**
- * Constructor options:
- *
- * - dsn = empty (default = SETTINGS_DSN)
- * - table.conf = cms_conf
- * - table.link = cms_login
+ * @hash $options …
+ * dsn: empty (default = SETTINGS_DSN)
+ * table.conf: cms_conf
+ * table.link: cms_login
+ * @eol
  */
 public function __construct(array $options = []) {
-	$default_options = [
+	$default = [
 		'table.conf' => 'cms_conf',
 		'table.login' => 'cms_login',
+		'json' => '',
 		'dsn' => ''
-		];
+	];
 
-	if (!defined('SETTINGS_DSN')) {
+	if (!defined('SETTINGS_DSN') && empty($options['dsn'])) {
 		return;
 	}
 
-	$opt = array_merge($default_options, $options);
+	$opt = array_merge($default, $options);
   $table = ADatabase::escape($opt['table.conf']);
   $table_login = ADatabase::escape($opt['table.login']);
 
@@ -76,37 +82,66 @@ public function __construct(array $options = []) {
 public function getPlugins(Tokenizer $tok) : array {
   $plugin = [];
 	$plugin['conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REDO;
-	$plugin['conf:id'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
-	$plugin['conf:var'] = TokPlugin::REQUIRE_PARAM;
+	$plugin['conf:append'] = TokPlugin::REQUIRE_PARAM | TokPlugin::TEXT;
 	$plugin['conf:get'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REDO;
 	$plugin['conf:get_path'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY | TokPlugin::REDO;
+	$plugin['conf:id'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['conf:load'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['conf:set'] = TokPlugin::TEXT;
 	$plugin['conf:set_path'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['conf:set_default'] = TokPlugin::TEXT;
-	$plugin['conf:append'] = TokPlugin::REQUIRE_PARAM | TokPlugin::TEXT;
+	$plugin['conf:var'] = TokPlugin::REQUIRE_PARAM;
   return $plugin;
 }
 
 
 /**
- * Return tokenized configuration value. If configuration value is not in database add it tokenized.
+ * Load configuration file (.json|.conf). Set conf[@file] = $file.
+ * If configuration file does not exist it will be auto-created with default values.
+ */
+public function tok_conf_load(string $file) : void {
+	\rkphplib\lib\log_debug("TConf.tok_conf_load:103> $file");
+	if (!File::exists($file)) {
+		$this->conf = [];
+	}
+	else if (substr($file, -5) == '.conf') {
+		$this->conf = File::loadConf($file);
+	}
+	else if (substr($file, -5) == '.json') {
+		$this->conf = File::loadJSON($file);
+	}
+	else {
+		throw new Exception('invalid configuration file suffix (use .conf|.json)', $file);
+	}
+
+	$this->conf['@file'] = $file;
+}
+
+
+/**
+ * Return tokenized configuration value.
+ * If configuration value is not in database add it tokenized.
  * 
  * @tok {conf:since}{date:now}{:conf} - set since=NOW() if not already set
  */
-public function tok_conf(string $key, string $value) : string {
-	$qtype = ($this->lid > 0) ? 'select_user_path' : 'select_system_path';
-	$dbres = $this->db->select($this->db->getQuery($qtype, [ 'lid' => $this->lid, 'path' => $key ]));
-	$current = (count($dbres) == 0) ? null : $dbres[0]['value'];
-
-	if (is_null($current)) {
-		// \rkphplib\lib\log_debug("TConf.tok_conf:102> set [$key]=[$value]");
-		$this->set($key, $value);
+public function tok_conf(string $key, ?string $value) : string {
+	if (!is_null($this->conf)) {
+		$val = isset($this->conf[$key]) ? $this->conf[$key] : null;
 	}
 	else {
-		$value = $this->get($key);
+		$qtype = ($this->lid > 0) ? 'select_user_path' : 'select_system_path';
+		$dbres = $this->db->select($this->db->getQuery($qtype, [ 'lid' => $this->lid, 'path' => $key ]));
+		$val = (count($dbres) == 0) ? null : $dbres[0]['value'];
 	}
 
-	return $value;
+	if (is_null($val)) {
+		\rkphplib\lib\log_debug("TConf.tok_conf:137> set [$key]=[$value]");
+		$this->set($key, $value);
+		$val = is_null($value) ? '' : $value;
+	}
+
+	\rkphplib\lib\log_debug("TConf.tok_conf:142> [$key]=[$val]");
+	return $val;
 }
 
 
@@ -150,7 +185,6 @@ public function tok_conf_set(string $key, string $value) : void {
  * @tok {conf:set_path}spread_sheet.{get:table}|#|column_{get:column}.label|#|{get:label}{:conf}
  */
 public function tok_conf_set_path(string $name, array $p) : void {
-
 	if (empty($name)) {
 		$name = array_shift($p);
 	}
@@ -203,9 +237,13 @@ public function tok_conf_append(string $key, string $value) : void {
 
 
 /**
- * Get raw (untokenized) configuration value.
+ * Get raw (untokenized = no redo on output) configuration value.
  */
 public function tok_conf_var(string $key) : string {
+	if (!is_null($this->conf) && isset($this->conf[$key])) {
+		return $this->conf[$key];
+	}
+
 	return $this->get($key);
 }
 
@@ -214,6 +252,10 @@ public function tok_conf_var(string $key) : string {
  * Return tokenized configuration value.
  */
 public function tok_conf_get(string $key) : string {
+	if (!is_null($this->conf) && isset($this->conf[$key])) {
+		return $this->conf[$key];
+	}
+
 	return $this->get($key);
 }
 
@@ -253,9 +295,34 @@ public function get(string $name) : string {
 
 
 /**
+ *
+ */
+private function updateConfFile() : void {
+	$conf = $this->conf;
+	$file = $conf['@file'];
+	unset($conf['@file']);
+
+	if (substr($file, -5) == '.conf') {
+		File::saveConf($file, $conf);
+	}
+	else {
+		File::saveJSON($file, $conf);
+	}
+}
+
+
+/**
  * Set configuration value, return id. 
  */
-public function set(string $name, string $value) : int {
+public function set(string $name, ?string $value) : int {
+	if (!is_null($this->conf)) {
+		\rkphplib\lib\log_debug("TConf.set:319> [$name]=[$value]");
+		$this->conf[$name] = $value;
+		$this->updateConfFile();
+		return 0;
+	}
+
+	\rkphplib\lib\log_debug("TConf.set:325> [$name]=[$value]");
 	$qtype = ($this->lid > 0) ? 'select_user_path' : 'select_system_path';
 	$path = explode('.', $name);
 
