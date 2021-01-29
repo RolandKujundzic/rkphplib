@@ -2,19 +2,19 @@
 
 namespace rkphplib\tok;
 
-$parent_dir = dirname(__DIR__);
 require_once __DIR__.'/TokPlugin.iface.php';
-require_once $parent_dir.'/Exception.class.php';
-require_once $parent_dir.'/File.class.php';
-require_once $parent_dir.'/JSON.class.php';
-require_once $parent_dir.'/traits/Request.php';
-require_once $parent_dir.'/lib/htmlescape.php';
-require_once $parent_dir.'/lib/split_str.php';
-require_once $parent_dir.'/lib/redirect.php';
-require_once $parent_dir.'/lib/conf2kv.php';
-require_once $parent_dir.'/lib/kv2conf.php';
-require_once $parent_dir.'/lib/entity.php';
-require_once $parent_dir.'/lib/array_join.php';
+require_once __DIR__.'/../Exception.class.php';
+require_once __DIR__.'/../File.class.php';
+require_once __DIR__.'/../JSON.class.php';
+require_once __DIR__.'/../traits/Request.php';
+require_once __DIR__.'/../lib/htmlescape.php';
+require_once __DIR__.'/../lib/split_str.php';
+require_once __DIR__.'/../lib/redirect.php';
+require_once __DIR__.'/../lib/conf2kv.php';
+require_once __DIR__.'/../lib/kv2conf.php';
+require_once __DIR__.'/../lib/entity.php';
+require_once __DIR__.'/../lib/array_join.php';
+require_once __DIR__.'/../lib/cookie.php';
 
 use rkphplib\Exception;
 use rkphplib\File;
@@ -25,12 +25,13 @@ use function rkphplib\lib\array_join;
 use function rkphplib\lib\split_str;
 use function rkphplib\lib\redirect;
 use function rkphplib\lib\conf2kv;
+use function rkphplib\lib\cookie;
 use function rkphplib\lib\kv2conf;
 use function rkphplib\lib\entity;
 
 
 if (php_sapi_name() == 'cli' && !defined('SETTINGS_CLI_INPUT')) {
-	require_once $parent_dir.'/lib/cli_input.php';
+	require_once __DIR__.'/../lib/cli_input.php';
 	\rkphplib\lib\cli_input();
 }
 
@@ -93,12 +94,10 @@ public function __construct() {
 
 	if (defined('SETTINGS_SKIN') && SETTINGS_SKIN) {
 		if (!empty($_REQUEST['skin']) && ($skin = basename($_REQUEST['skin'])) && is_dir('skin/'.$skin)) {
-			setcookie('skin', $skin);
-			$_COOKIE['skin'] = $skin;
+			cookie('skin', $skin);
 		}
 		else if (empty($_COOKIE['skin'])) {
-			setcookie('skin', SETTINGS_SKIN);
-			$_COOKIE['skin'] = SETTINGS_SKIN;
+			cookie('skin', SETTINGS_SKIN);
 		}
 	}
 
@@ -298,7 +297,7 @@ public function tok_hidden(array $param, array $arg) : string {
 		}
   }
 
-	// \rkphplib\lib\log_debug("TBase.tok_hidden:301> $res");
+	// \rkphplib\lib\log_debug("TBase.tok_hidden:300> $res");
   return $res;
 }
 
@@ -469,7 +468,7 @@ public function tok_tpl(array $p, ?string $arg) : string {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TBase.tok_tpl:472> return $tpl"); 
+	// \rkphplib\lib\log_debug("TBase.tok_tpl:471> return $tpl"); 
 	return $tpl;
 }
 
@@ -525,7 +524,7 @@ public function tok_var(string $name, $value) : string {
  * Set variable $name = $value. If $flag = Tokenizer::VAR_APPEND append to existing value.
  */
 public function setVar(string $name, ?string $value, int $flag = 0) : void {
-	// \rkphplib\lib\log_debug([ "TBase.setVar:528> flag=$flag, name=$name value: <1>", $value ]);
+	// \rkphplib\lib\log_debug([ "TBase.setVar:527> flag=$flag, name=$name value: <1>", $value ]);
 	$this->_tok->setVar($name, $value, $flag);
 }
 
@@ -553,7 +552,7 @@ public function getVar(string $name, string $name2 = '') {
 	}
 
 	$res = $this->_tok->getVar($name);
-	// \rkphplib\lib\log_debug([ "TBase.getVar:556> $name: <1>", $res ]);
+	// \rkphplib\lib\log_debug([ "TBase.getVar:555> $name: <1>", $res ]);
 	return $res;
 }
 
@@ -564,7 +563,7 @@ public function getVar(string $name, string $name2 = '') {
  */
 public function setVarHash(string $name, array $p) : void {
 	if (substr($name, -1) != '!') {
-		// \rkphplib\lib\log_debug([ "TBase.setVarHash:567> name=$name p: <1>", $p ]);
+		// \rkphplib\lib\log_debug([ "TBase.setVarHash:566> name=$name p: <1>", $p ]);
 		$this->_tok->setVar($name, $p, Tokenizer::VAR_MUST_NOT_EXIST);
 		return;
 	}
@@ -580,7 +579,7 @@ public function setVarHash(string $name, array $p) : void {
 		$old_p = [ $old_p ];
 	}
 
-	// \rkphplib\lib\log_debug([ "TBase.setVarHash:583> name=$name p: <1>\nold: <2>", $p, $old_p ]);
+	// \rkphplib\lib\log_debug([ "TBase.setVarHash:582> name=$name p: <1>\nold: <2>", $p, $old_p ]);
 	$this->_tok->setVar($name, array_merge($old_p, $p));
 }
 
@@ -684,7 +683,7 @@ private function tableRow(array $cols, array $p) : string {
 		$res .= "</table>\n";
 	}
 
-	// \rkphplib\lib\log_debug("TBase.tableRow:687> return $res");
+	// \rkphplib\lib\log_debug("TBase.tableRow:686> return $res");
 	return $res;
 }
 
@@ -876,7 +875,7 @@ public function tok_clear(string $txt) : string {
  * @tok {keep:}{find:a}{:keep} = {find:a}
  */
 public function tok_keep(string $txt) : string {
-	// \rkphplib\lib\log_debug("TBase.tok_keep:879> return $txt");
+	// \rkphplib\lib\log_debug("TBase.tok_keep:878> return $txt");
 	return $txt;
 }
 
@@ -993,12 +992,12 @@ public function tok_loadJSON(string $file, array $p = []) : void {
 			File::exists($cpath, true);
 			require_once $cpath;
 
-			// \rkphplib\lib\log_debug("TBase.tok_loadJSON:996> $class::\$$property = '$value'");
+			// \rkphplib\lib\log_debug("TBase.tok_loadJSON:995> $class::\$$property = '$value'");
 			$class::${$property} = $value;
 			unset($json[$name]);
 		}
 		else {
-			// \rkphplib\lib\log_debug([ "TBase.tok_loadJSON:1001> plugin_conf[$name]= <1>", $value ]);
+			// \rkphplib\lib\log_debug([ "TBase.tok_loadJSON:1000> plugin_conf[$name]= <1>", $value ]);
 			$this->plugin_conf[$name] = $value;
 			unset($json[$name]);
 		}
@@ -1023,7 +1022,7 @@ public function tok_loadJSON(string $file, array $p = []) : void {
 			}
 		}
 		
-		// \rkphplib\lib\log_debug([ "TBase.tok_loadJSON:1026> callPlugin(<1>, <2>, <3>)", $plugin, $param, $arg ]);
+		// \rkphplib\lib\log_debug([ "TBase.tok_loadJSON:1025> callPlugin(<1>, <2>, <3>)", $plugin, $param, $arg ]);
 		$this->_tok->callPlugin($plugin, $param, $arg);
 	}
 }
@@ -1079,7 +1078,7 @@ public function tok_skin(string $path) : string {
  */
 public static function skinPath(string $path) : string {
 	if (substr($path, 0, 5) == 'skin/' || !defined('SETTINGS_SKIN') || !SETTINGS_SKIN) {
-		// \rkphplib\lib\log_debug("TBase::skinPath:1082> $path");
+		// \rkphplib\lib\log_debug("TBase::skinPath:1081> $path");
 		return $path;
 	}
 
@@ -1097,7 +1096,7 @@ public static function skinPath(string $path) : string {
 		$path = $skin.'/'.$path;
 	}
 
-	// \rkphplib\lib\log_debug("TBase::skinPath:1100> $path");
+	// \rkphplib\lib\log_debug("TBase::skinPath:1099> $path");
 	return $path;
 }
 
@@ -1123,7 +1122,7 @@ public static function skinPath(string $path) : string {
  * If SETTINGS_REQ_CRYPT is empty do not encode link.
  */
 public function tok_link(array $name_list, array $p) : string {
-	// \rkphplib\lib\log_debug("TBase.tok_link:1126> name_list: ".print_r($name_list, true)."\np: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TBase.tok_link:1125> name_list: ".print_r($name_list, true)."\np: ".print_r($p, true));
 	$res = 'index.php?'.SETTINGS_REQ_CRYPT.'=';
 	$keep = false;
 	$seo = '';
@@ -1226,7 +1225,7 @@ public function tok_link(array $name_list, array $p) : string {
 		$res .= self::encodeHash($p);
 	}
 
-	// \rkphplib\lib\log_debug("TBase.tok_link:1229> return $res");
+	// \rkphplib\lib\log_debug("TBase.tok_link:1228> return $res");
 	return $res;
 }
 
@@ -1316,7 +1315,7 @@ public static function decodeHash(string $data, bool $export_into_req = false) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TBase::decodeHash:1319> return ".print_r($res, true));
+	// \rkphplib\lib\log_debug("TBase::decodeHash:1318> return ".print_r($res, true));
 	return $res;
 }
 
@@ -1594,7 +1593,7 @@ public function tok_filter(string $tag, array $filter) : void {
  * @see tag_filter
  */
 private function applyFilter(string $tag, string $value) : string {
-	// \rkphplib\lib\log_debug("TBase.applyFilter:1597> tag=$tag value=[$value]");
+	// \rkphplib\lib\log_debug("TBase.applyFilter:1596> tag=$tag value=[$value]");
 	$filter_list = $this->plugin_conf['filter'][$tag];
 	foreach ($filter_list as $filter) {
 		if ($filter == 'trim') {
@@ -1616,7 +1615,7 @@ private function applyFilter(string $tag, string $value) : string {
 		else {
 			throw new Exception('invalid filter', "tag=$tag filter=$filter value=[$value]");
 		}
-		// \rkphplib\lib\log_debug("TBase.applyFilter:1619> filter=$filter value=[$value]");
+		// \rkphplib\lib\log_debug("TBase.applyFilter:1618> filter=$filter value=[$value]");
 	}
 
 	return $value;
@@ -1652,13 +1651,13 @@ public function tok_esc(string $param, ?string $arg) : ?string {
 	}
 
 	if (is_null($arg) || $arg === 'null' || $arg === 'NULL') {
-		// \rkphplib\lib\log_debug("TBase.tok_esc:1655> return NULL");
+		// \rkphplib\lib\log_debug("TBase.tok_esc:1654> return NULL");
 		return 'NULL';
 	}
 
 	$arg = $this->applyFilter('esc', $arg);
 
-	// \rkphplib\lib\log_debug("TBase.tok_esc:1661> return [$arg]");
+	// \rkphplib\lib\log_debug("TBase.tok_esc:1660> return [$arg]");
 	return $arg;
 }
 
@@ -2005,11 +2004,11 @@ public function tok_plugin(string $ns, array $p) : void {
 
 		require_once $cpath;
 		if (isset($this->plugin_conf[$obj])) {
-			// \rkphplib\lib\log_debug([ "TBase.tok_plugin:2008> register new $obj(<1>);", $this->plugin_conf[$obj] ]);
+			// \rkphplib\lib\log_debug([ "TBase.tok_plugin:2007> register new $obj(<1>);", $this->plugin_conf[$obj] ]);
 			$this->_tok->register(new $obj($this->plugin_conf[$obj]));
 		}
 		else {
-			// \rkphplib\lib\log_debug([ "TBase.tok_plugin:2012> register new $obj(<1>);", $this->plugin_conf ]);
+			// \rkphplib\lib\log_debug([ "TBase.tok_plugin:2011> register new $obj(<1>);", $this->plugin_conf ]);
 			$this->_tok->register(new $obj());
 		}
 	}
@@ -2113,7 +2112,7 @@ public static function findPath(string $file, string $dir = '.') : string {
 		$res = $res_skin;
 	}
 
-	// \rkphplib\lib\log_debug("TBase::findPath:2116> findPath($file, $dir) = $res");
+	// \rkphplib\lib\log_debug("TBase::findPath:2115> findPath($file, $dir) = $res");
 	return $res;
 }
 
@@ -2146,7 +2145,7 @@ public function tok_tf(array $p, string $arg) : void {
 	$ta = trim($arg);
 	$do = '';
 
-	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2149> ta=<1> p: <2>", $ta, $p ]);
+	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2148> ta=<1> p: <2>", $ta, $p ]);
 	if (count($p) == 1) {
 		if ($p[0] === '') {
 			$tf = !empty($ta);
@@ -2189,7 +2188,7 @@ public function tok_tf(array $p, string $arg) : void {
 		$ap = array_merge($p, split_str(HASH_DELIMITER, $arg));
 	}
 
-	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2192> do=<1> tf=<2> ap: <3>", $do, $tf, $ap ]);
+	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2191> do=<1> tf=<2> ap: <3>", $do, $tf, $ap ]);
 	if (empty($do)) {
 		$this->_tok->setCallStack('tf', $tf);
 		return;
@@ -2268,7 +2267,7 @@ public function tok_tf(array $p, string $arg) : void {
 			$set = split_str(',', $ap[1]);
 			$tf = in_array($ap[0], $set);
 		}
-		// \rkphplib\lib\log_debug([ "TBase.tok_tf:2271> tf=<1> set: <2>", $tf, $set ]);
+		// \rkphplib\lib\log_debug([ "TBase.tok_tf:2270> tf=<1> set: <2>", $tf, $set ]);
 	}
 	else if ($do == 'and' || $do == 'or') {
 		$apn = count($ap);
@@ -2338,7 +2337,7 @@ public function tok_true(string $val, string $out) : string {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('TBase.tok_true:2341> val='.print_r($val, true).' tf='.print_r($tf, true));
+	// \rkphplib\lib\log_debug('TBase.tok_true:2340> val='.print_r($val, true).' tf='.print_r($tf, true));
 	return ((is_bool($tf) && $tf) || (is_array($val) && in_array($tf, $val)) || (is_string($tf) && $tf === $val) || 
 		(is_array($tf) && !empty($val) && in_array($val, $tf))) ? $out : '';
 }
@@ -2366,7 +2365,7 @@ public function tok_false(string $out) : string {
  * Write message via log_debug.
  */
 public function tok_log(string $txt) : void {
-	\rkphplib\lib\log_debug("TBase.tok_log:2369> $txt"); // @keep
+	\rkphplib\lib\log_debug("TBase.tok_log:2368> $txt"); // @keep
 }
 
 
