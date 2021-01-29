@@ -2,14 +2,15 @@
 
 namespace rkphplib\tok;
 
-$parent_dir = dirname(__DIR__);
 require_once __DIR__.'/TokPlugin.iface.php';
-require_once $parent_dir.'/Exception.class.php';
-require_once $parent_dir.'/lib/kv2conf.php';
+require_once __DIR__.'/../Exception.class.php';
+require_once __DIR__.'/../lib/kv2conf.php';
+require_once __DIR__.'/../lib/cookie.php';
 
 use rkphplib\Exception;
 
 use function rkphplib\lib\kv2conf;
+use function rkphplib\lib\cookie;
 
 
 
@@ -38,28 +39,34 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
- * Get|Set cookie. Cookie does not expire unless expire is set.
- * Use strtotime for expire, e.g. +1 day|week|hour or 1 month 2 hour.
- * 
- * @tok {cookie:abc}value=1|#|expire=+1 week{:cookie} …
- * Set cookie abc=1 (expires in one week)
- * @eol
- * @tok {cookie:abc} = 1
- * @tok {cookie:abc}expire=-1 hour{:cookie}
+ * Get|Set cookie. Default expires is 12 month.
+ * Use strtotime for expires e.g. +1 day|week|hour or 1 month 2 hour.
+ *
+ * @see lib/cookie
+ * @tok {cookie:name}John{:cookie} - set cookie name=John, 3 month valid
+ * @tok {cookie:abc}value=1|#|expires=+1 week{:cookie} - set cookie abc=1, 1 week valid
+ * @tok {cookie:abc} == 1
+ * @tok {cookie:abc}expires=-1 hour{:cookie} - remove cookie abc
  * 
  */
 public static function tok_cookie(string $name, array $p) : ?string {
 	if (count($p) == 0) {
 		$res = isset($_COOKIE[$name]) ? $_COOKIE[$name] : '';
-		// \rkphplib\lib\log_debug("THttp::tok_cookie:54> return $name = '$res'");
+		// \rkphplib\lib\log_debug("THttp::tok_cookie:55> return $name = '$res'");
 		return $res;
 	}
 
 	$value = empty($p['value']) ? '' : $p['value'];
-	$expire = empty($p['expire']) ? 0 : strtotime($p['expire']);
-	setcookie($name, $value, $expire);
-	$_COOKIE[$name] = $value;
-	// \rkphplib\lib\log_debug("THttp::tok_cookie:62> set $name = '$value' = '{$_COOKIE[$name]}', expire = $expire");
+	if (!$value && isset($p[0])) {
+		$value = $p[0];
+	}
+
+	if (!isset($p['expires'])) {
+		$p['expires'] = '3 month';
+	}
+
+	cookie($name, $value, $p);
+	// \rkphplib\lib\log_debug([ "THttp::tok_cookie:69> set $name = '$value' - <1>", $p ]);
   return null;
 }
 
