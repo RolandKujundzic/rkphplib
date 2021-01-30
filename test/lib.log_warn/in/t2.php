@@ -1,6 +1,6 @@
 <?php
 
-require_once PATH_RKPHPLIB.'/lib/log_warn.php';
+require_once PATH_SRC.'/lib/log_warn.php';
 
 $GLOBALS['SETTINGS']['LOG_WARN'] = dirname(__DIR__).'/out/t2.txt';
 

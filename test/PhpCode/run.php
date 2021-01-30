@@ -10,7 +10,7 @@ if (!isset($th)) {
 $th->load('src/PhpCode.class.php');
 
 $code = new \rkphplib\PhpCode();
-$code->load(PATH_RKPHPLIB.'tok/TBase.class.php');
+$code->load(PATH_SRC.'tok/TBase.class.php');
 
 $namespace = $code->getNamespace(true);
 $th->compare("PhpCode->getNamespace", [ 'rkphplib\tok' ], [ 'rkphplib\tok' ]);

@@ -1,7 +1,7 @@
 <?php
 
 require_once '../settings.php';
-require_once PATH_RKPHPLIB.'traits/Request.php';
+require_once PATH_SRC.'traits/Request.php';
 
 class RTest {
 use \rkphplib\traits\Request;

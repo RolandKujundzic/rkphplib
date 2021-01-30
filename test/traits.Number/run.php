@@ -1,7 +1,7 @@
 <?php
 
 require_once '../settings.php';
-require_once PATH_RKPHPLIB.'traits/Number.php';
+require_once PATH_SRC.'traits/Number.php';
 
 class TraitTest {
 use \rkphplib\traits\Number;
