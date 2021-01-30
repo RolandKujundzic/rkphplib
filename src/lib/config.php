@@ -34,7 +34,13 @@ namespace rkphplib\lib;
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 
-session_set_cookie_params([ 'samesite' => 'Strict', 'httponly' => true, 'secure' => $_SERVER['REQUEST_SCHEME'] == 'https' ]);
+if (isset($_SERVER['REQUEST_SCHEME'])) {
+	session_set_cookie_params([
+		'secure' => $_SERVER['REQUEST_SCHEME'] == 'https', 
+		'samesite' => 'Strict',
+		'httponly' => true
+	]);
+}
 
 if (!defined('DOCROOT')) {
 	if (!empty($_SERVER['CONTEXT_DOCUMENT_ROOT']) && is_dir($_SERVER['CONTEXT_DOCUMENT_ROOT'].'/data/.log')) {
