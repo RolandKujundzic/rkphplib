@@ -155,7 +155,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['set'] =  0;
 	$plugin['set_default'] =  0;
 	$plugin['shorten'] = TokPlugin::REQUIRE_PARAM;
-	$plugin['skin'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY; 
+	$plugin['skin'] = 0; 
 	$plugin['strlen'] = TokPlugin::NO_PARAM;
 	$plugin['switch'] = TokPlugin::REQUIRE_PARAM | TokPlugin::PARAM_CSLIST | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['t'] = TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
@@ -1061,9 +1061,11 @@ public function tok_load(string $param, string $file) : string {
  * Return self::skinPath($path).
  *
  * @tok {skin:css/site.css} = skin/default/site.css
+ * @tok {skin:}css/site.css{:skin} = skin/default/site.css
  * @see skinPath
  */
-public function tok_skin(string $path) : string {
+public function tok_skin(string $param, ?string $arg) : string {
+	$path = is_null($arg) ? $param : $arg;
 	return self::skinPath($path);
 }
 
