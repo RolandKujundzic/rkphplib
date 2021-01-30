@@ -1335,8 +1335,13 @@ public static function move(string $source, string $target, int $mode = 0) : voi
 		throw new Exception('same source and target', "mv [$source] to [$target]");
 	}
 
-	File::copy($source, $target, $mode);
-	File::remove($source);
+	if ($mode == 0) {
+		rename($source, $target);
+	}
+	else {
+		File::copy($source, $target, $mode);
+		File::remove($source);
+	}
 }
 
 
