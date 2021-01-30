@@ -641,14 +641,14 @@ private function load_src(string $cpath = '') : void {
 		$cpath = str_replace('.', '/', basename(getcwd()));
 	}
 
-	if (File::exists(PATH_RKPHPLIB.$cpath.'.php')) {
-		require_once PATH_RKPHPLIB.$cpath.'.php';
+	if (File::exists(PATH_SRC.$cpath.'.php')) {
+		require_once PATH_SRC.$cpath.'.php';
 	}
-	else if (File::exists(PATH_RKPHPLIB.$cpath.'.class.php')) {
-		require_once PATH_RKPHPLIB.$cpath.'.class.php';
+	else if (File::exists(PATH_SRC.$cpath.'.class.php')) {
+		require_once PATH_SRC.$cpath.'.class.php';
 	}
 	else {
-		throw new Exception("missing $cpath.[php|class.php]");
+		throw new Exception('missing '.PATH_SRC.'.[php|class.php]');
 	}
 }
 
