@@ -840,7 +840,20 @@ private function _fv_in_html(string $name, array $r, string $output_in = '') : s
 	}
 
 	$res = $this->tok->removeTags($this->tok->replaceTags($res, $r));
-	// \rkphplib\lib\log_debug("TFormValidator._fv_in_html:843> TFormValidator.tok_fv_in($name, ...)> res=[$res] r: ".print_r($r, true));
+
+	if (!empty($r['nobr']) && !empty($conf['nobr'])) {
+		if (substr($r['nobr'], 0, 1) == '-') {
+			$res = str_replace('" id="', ' nobr'.substr($r['nobr'], 1).'" id="', $res);
+		}
+		else {
+			$res = str_replace([ '<br class="fv" />', '" id="' ], [ '', ' nobr'.$r['nobr'].'" id="' ], $res);
+		}
+	}
+
+	$res = preg_replace('/>\s+</', '><', trim($res));
+	$res = preg_replace('/<span .+?'.'>'.'<\/span>/', '', $res);
+ 
+	\rkphplib\lib\log_debug([ "TFormValidator._fv_in_html:856> name=$name res=[$res] r: <1>", $r ]);
 	return $res;
 }
 
