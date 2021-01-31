@@ -139,26 +139,26 @@ private function bootstrap() : array {
 	$conf = [];
 
 	$conf['in'] = [
-		'input'	  => '<input type="«type»" name="«name»" value="«value»" class="form-control «class»" «tags»>',
+		'input'	  => '<input type="«type»" name="«name»" value="«value»" class="form-control «class»"«tags»>',
 
 		'check'		=> '<div class="form-check-inline">«options»</div>',
 
-		'radio'	  => '<input type="radio" name="«name»" value="«value»" class="form-check-input «class»" «tags»>',
+		'radio'	  => '<input type="radio" name="«name»" value="«value»" class="form-check-input «class»"«tags»>',
 
-		'file'     => '<input class="form-control-file «class»" name="«name»" type="file" data-value="«value»" «tags»>',
+		'file'     => '<input class="form-control-file «class»" name="«name»" type="file" data-value="«value»"«tags»>',
 
-		'textarea' => '<textarea name="«name»" class="form-control «class»" «tags»>«value»</textarea>',
+		'textarea' => '<textarea name="«name»" class="form-control «class»"«tags»>«value»</textarea>',
 
-		'select'   => '<select name="«name»" class="form-control «class»" «tags»>«options»</select>',
+		'select'   => '<select name="«name»" class="form-control «class»"«tags»>«options»</select>',
 
 		'fselect'  => '<span id="fselect_list_«name»"><select name="«name»" class="form-control «class»"
-										onchange="rkphplib.fselectInput(this)" «tags»>«options»</select></span>
+										onchange="rkphplib.fselectInput(this)"«tags»>«options»</select></span>
 										<span id="fselect_input_«name»" style="display:none">«fselect_input»</span>',
 		
 		'check.option'		=> '<label class="form-check-label" for="«id»"><input id="«id»" type="«type»" name="«name»"
 														class="form-check-input «class»" value="«value»" «checked»>«label»</label>',
 
-		'checkbox'				=> '<input type="checkbox" name="«name»" value="«value»" class="form-check-input «class»" «tags»>',
+		'checkbox'				=> '<input type="checkbox" name="«name»" value="«value»" class="form-check-input «class»"«tags»>',
 
 		'multi_checkbox'	=> '<div class="row">«input»</div>',
 
@@ -205,21 +205,21 @@ private static function material() : array {
 	$conf = [];
 
 	$conf['in'] = [
-		'input'	   => '<input type="«type»" name="«name»" value="«value»" class="mdl-textfield__input «class»" «tags»>',
+		'input'	   => '<input type="«type»" name="«name»" value="«value»" class="mdl-textfield__input «class»"«tags»>',
 
-		'file'     => '<input class="mdl-textfield__input «class»" name="«name»" type="file" data-value="«value»" «tags»>',
+		'file'     => '<input class="mdl-textfield__input «class»" name="«name»" type="file" data-value="«value»"«tags»>',
 
-		'textarea' => '<textarea name="«name»" class="mdl-textfield__input «class»" «tags»>«value»</textarea>',
+		'textarea' => '<textarea name="«name»" class="mdl-textfield__input «class»"«tags»>«value»</textarea>',
 
-		'select'   => '<select name="«name»" class="mdl-textfield__input «class»" «tags»>«options»</select>',
+		'select'   => '<select name="«name»" class="mdl-textfield__input «class»"«tags»>«options»</select>',
 
 		'fselect'  => '<span id="fselect_list_«name»"><select name="«name»" class="mdl-textfield__input «class»"
-										onchange="rkphplib.fselectInput(this)" «tags»>«options»</select></span>
+										onchange="rkphplib.fselectInput(this)"«tags»>«options»</select></span>
 										<span id="fselect_input_«name»" style="display:none">«fselect_input»</span>',
 
 		'checkbox' => '<label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="«id»">
 											<input type="checkbox" id="«id»" name="«name»" value="«value»"
-											class="mdl-checkbox__input mdl-js-ripple-effect «class»" «tags»>
+											class="mdl-checkbox__input mdl-js-ripple-effect «class»"«tags»>
 											<span class="mdl-checkbox__label">«label»</span></label>',
 	];
 
@@ -236,21 +236,21 @@ private static function default() : array {
 	$conf['in'] = [
 		'const'		=> '<span class="const">«value»</span>',
 
-		'input'		=> '<input type="«type»" name="«name»" value="«value»" class="«class»" «tags»>',
+		'input'		=> '<input type="«type»" name="«name»" value="«value»" class="«class»"«tags»>',
 
-		'select'	=> '<select name="«name»" class="«class»" «tags»>«options»</select>',
+		'select'	=> '<select name="«name»" class="«class»"«tags»>«options»</select>',
 
 		'check'		=> '<div class="check_wrapper">«options»</div>',
 
 		'fselect'	=> '<span id="fselect_list_«name»"><select name="«name»" class="«class»"
-										onchange="rkphplib.fselectInput(this)" «tags»>«options»</select></span>
+										onchange="rkphplib.fselectInput(this)"«tags»>«options»</select></span>
 										<span id="fselect_input_«name»" style="display:none">«fselect_input»</span>',
 
-		'textarea'	=> '<textarea name="«name»" class="«class»" «tags»>«value»</textarea>',
+		'textarea'	=> '<textarea name="«name»" class="«class»"«tags»>«value»</textarea>',
 
-		'file'			=> '<input type="file" name="«name»" class="«class»" data-value="«value»" «tags»>',
+		'file'			=> '<input type="file" name="«name»" class="«class»" data-value="«value»"«tags»>',
 
-		'file_btn'	=> '<div class="file_btn_wrapper"><button class="file_btn" «tags»>«label2»</button>
+		'file_btn'	=> '<div class="file_btn_wrapper"><button class="file_btn"«tags»>«label2»</button>
 											<input type="file" name="«name»" style="opacity:0;position:absolute;right:0;left:0;top:0;bottom:0;"
 											data-value="«value»"></div>',
 
