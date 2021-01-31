@@ -2,10 +2,8 @@
 
 check=[]
 
-<span class="label "></span><select name="gender" class=""  id="fvin_gender"><option value="m">Herr</option>
-<option value="f">Frau</option>
-</select><br class="fv" />
-<span class="label "></span><input type="text" name="firstname" value="" class=""  id="fvin_firstname"><br class="fv" />
-<span class="label "></span><input type="text" name="lastname" value="" class=""  id="fvin_lastname" required><br class="fv" />
+<select name="gender" class=""  id="fvin_gender"><option value="m">Herr</option><option value="f">Frau</option></select><br class="fv" />
+<input type="text" name="firstname" value="" class=""  id="fvin_firstname"><br class="fv" />
+<input type="text" name="lastname" value="" class=""  id="fvin_lastname" required><br class="fv" />
 <input type="checkbox" name="terms" value="1" class=""  id="fvin_terms"><span class="cbox_query ">Accept Terms</span><br class="fv" />
 
