@@ -853,7 +853,7 @@ private function _fv_in_html(string $name, array $r, string $output_in = '') : s
 	$res = preg_replace('/>\s+</', '><', trim($res));
 	$res = preg_replace('/<span .+?'.'>'.'<\/span>/', '', $res);
  
-	\rkphplib\lib\log_debug([ "TFormValidator._fv_in_html:856> name=$name res=[$res] r: <1>", $r ]);
+	// \rkphplib\lib\log_debug([ "TFormValidator._fv_in_html:856> name=$name res=[$res] r: <1>", $r ]);
 	return $res;
 }
 
@@ -870,7 +870,7 @@ public function tok_fv_in(string $name, array $p) : string {
 	$skey = $conf['submit'];
 	$is_action = !empty($_REQUEST[$skey]);
 
-	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_in:860> TFormValidator.tok_fv_in($name, ...)> key=$skey is_action=$is_action p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_in:873> TFormValidator.tok_fv_in($name, ...)> key=$skey is_action=$is_action p: ".print_r($p, true));
 	if (!$is_action && (isset($p['value']) || isset($_REQUEST[$name])) && $skey != 'form_action' && !isset($_REQUEST['use_'.$skey])) {
 		$p['value'] = '';
 	}
@@ -927,7 +927,7 @@ public function getConf(string $key, string $engine = '', bool $required = true)
 
 	$ckey = $engine.$key;
 
-	// \rkphplib\lib\log_debug("TFormValidator.getConf:917> TFormValidator.getConf($key, $engine, $required)> ckey = $ckey");
+	// \rkphplib\lib\log_debug("TFormValidator.getConf:930> TFormValidator.getConf($key, $engine, $required)> ckey = $ckey");
 	if (!isset($conf[$ckey])) {
 		$res = '';
 
@@ -991,11 +991,11 @@ protected function parseInName(string $name, string $value, array &$p) : void {
 
 	if (!empty($r['multi'])) {
 		$p = array_merge($p, $r);
-		// \rkphplib\lib\log_debug("TFormValidator.parseInName:981> name=$name, value=$value, multi p: ".print_r($p, true));
+		// \rkphplib\lib\log_debug("TFormValidator.parseInName:994> name=$name, value=$value, multi p: ".print_r($p, true));
 		return;
 	}
 
-	// \rkphplib\lib\log_debug("TFormValidator.parseInName:985> name=$name, value=$value, r: ".print_r($r, true)."\np: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TFormValidator.parseInName:998> name=$name, value=$value, r: ".print_r($r, true)."\np: ".print_r($p, true));
 	$html5_input = [ 'text', 'password', 'email', 'date', 'datetime-local', 'color', 'number', 'month', 'range', 'tel', 'time', 'url', 'week' ];
 	$type = $p['type'];
 
@@ -1085,7 +1085,7 @@ protected function parseInName(string $name, string $value, array &$p) : void {
 		$p[$key] = $value;
 	}
 
-	// \rkphplib\lib\log_debug("TFormValidator.parseInName:1075> name=$name, value=$value, p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TFormValidator.parseInName:1088> name=$name, value=$value, p: ".print_r($p, true));
 }
 
 
@@ -1115,7 +1115,7 @@ protected function getInput(string $name, array $ri) : string {
 
 	$tpl_in = $conf['template.engine'].'.in';
 
-	// \rkphplib\lib\log_debug("TFormValidator.getInput:1105> name=$name, tpl_in=[$tpl_in] ri: ".print_r($ri, true));
+	// \rkphplib\lib\log_debug("TFormValidator.getInput:1118> name=$name, tpl_in=[$tpl_in] ri: ".print_r($ri, true));
 	if (empty($ri['type'])) {
 		$use = join(', ', array_keys($this->getMapKeys($tpl_in, $conf)));
 		throw new Exception("missing form validator type for $name (use $use)", print_r($ri, true));
@@ -1123,7 +1123,7 @@ protected function getInput(string $name, array $ri) : string {
 
 	if (!empty($ri['tpl_in'])) {
 		$input = $ri['tpl_in'];
-		// \rkphplib\lib\log_debug("TFormValidator.getInput:1113> name=$name, tpl_in=$tpl_in: $input");
+		// \rkphplib\lib\log_debug("TFormValidator.getInput:1126> name=$name, tpl_in=$tpl_in: $input");
 		unset($ri['tpl_in']);
 	}
 	else if (!empty($conf[$tpl_in.'.'.$ri['type']])) {
@@ -1204,7 +1204,7 @@ protected function getInput(string $name, array $ri) : string {
 
 	$input = $this->tok->replaceTags($input, $ri);
 
-	// \rkphplib\lib\log_debug("TFormValidator.getInput:1194> name=$name, input=[$input] ri: ".print_r($ri, true));
+	// \rkphplib\lib\log_debug("TFormValidator.getInput:1207> name=$name, input=[$input] ri: ".print_r($ri, true));
 	return $input;
 }
 
@@ -1220,7 +1220,7 @@ private function getCheckOptions(array &$p, string $name, string $str_options) :
 
 	$tpl = $this->getConf('in.check.option', true, true);
 
-	// \rkphplib\lib\log_debug("TFormValidator.getCheckOptions:1210> name=[$name] str_options=[$str_options] tpl=[$tpl] p: ".print_r($p, true));
+	// \rkphplib\lib\log_debug("TFormValidator.getCheckOptions:1223> name=[$name] str_options=[$str_options] tpl=[$tpl] p: ".print_r($p, true));
 	foreach ($p as $value => $label) {
 		unset($p[$value]);
 		$r = [ 'name' => $name, 'type' => $type ];
@@ -1238,7 +1238,7 @@ private function getCheckOptions(array &$p, string $name, string $str_options) :
 	$p['class'] = 'check_group';
 	$p['id'] = $conf['id_prefix'].$name;
 
-	// \rkphplib\lib\log_debug("TFormValidator.getCheckOptions:1228> return $html");
+	// \rkphplib\lib\log_debug("TFormValidator.getCheckOptions:1241> return $html");
 	return $html;
 }
 
@@ -1251,7 +1251,7 @@ private function getOptions(array &$p, string $opt_value, string $str_options) :
 	$html = '';
 	$empty_label = null;
 
-	// \rkphplib\lib\log_debug("TFormValidator.getOptions:1241> opt_value=[$opt_value] str_options=[$str_options] p: ".print_r($p, true)); 
+	// \rkphplib\lib\log_debug("TFormValidator.getOptions:1254> opt_value=[$opt_value] str_options=[$str_options] p: ".print_r($p, true)); 
 	if (!empty($p['@_1']) && substr($p['@_1'], 0, 1) == '=') {
 		$empty_label = substr($p['@_1'], 1);
 		unset($p['@_1']);
@@ -1299,7 +1299,7 @@ private function getOptions(array &$p, string $opt_value, string $str_options) :
 
 	$html = preg_replace('/value\=\"@_[0-9]+\"/', '', $html);
 
-	// \rkphplib\lib\log_debug("TFormValidator.getOptions:1289> return $html");
+	// \rkphplib\lib\log_debug("TFormValidator.getOptions:1302> return $html");
 	return $html;
 }
 
