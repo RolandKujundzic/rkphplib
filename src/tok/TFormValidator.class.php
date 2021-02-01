@@ -403,7 +403,7 @@ public function tok_fv_init(string $do, array $p) : void {
 		// do nothing ...
 	}
 	else {
-		// \rkphplib\lib\log_debug([ "TFormValidator.tok_fv_init:408> reset, do=$do p: <1>", $p ]);
+		// \rkphplib\lib\log_debug([ "TFormValidator.tok_fv_init:406> reset, do=$do p: <1>", $p ]);
 		$this->conf['current'] = [];
 		$this->error = [];
 		$this->example = [];
@@ -445,7 +445,7 @@ public function tok_fv_init(string $do, array $p) : void {
 public function tok_fv_check(string $ajax = '') : string {
 	$submit = $this->getConf('submit');
 
-	\rkphplib\lib\log_debug([ "TFormValidator.tok_fv_check:448> submit=$submit _REQUEST: <1>", $_REQUEST ]);
+	// \rkphplib\lib\log_debug([ "TFormValidator.tok_fv_check:448> submit=$submit _REQUEST: <1>", $_REQUEST ]);
 	foreach ($this->conf['current'] as $key => $value) {
 		if (substr($key, 0, 3) == 'in.' && (substr($value, 0, 14) == 'multi_checkbox' || substr($value, 0, 11) == 'multi_radio')) {
 			$this->conf['current'][$key] = $this->get2NData(substr($key, 3), $value);
@@ -495,7 +495,7 @@ public function tok_fv_check(string $ajax = '') : string {
 		if (!empty($this->conf['current']['allow_column'])) {
 			$allow_col = \rkphplib\lib\split_str(',', $this->conf['current']['allow_column']);
 
-			\rkphplib\lib\log_debug([ "TFormValidator.tok_fv_check:498> column=$column allow_col: <1>", $allow_col ]);
+			// \rkphplib\lib\log_debug([ "TFormValidator.tok_fv_check:498> column=$column allow_col: <1>", $allow_col ]);
 			if (!in_array($column, $allow_col)) {
 				$this->error['parameter'] = [ $column.' is immutable' ];
 			}
@@ -513,7 +513,7 @@ public function tok_fv_check(string $ajax = '') : string {
 
 			if (!$is_ok && !empty($req_value) && $req_value != trim($_REQUEST[$name])) {
 				if (ValueCheck::run($name, trim($req_value), $check)) {
-					\rkphplib\lib\log_debug("TFormValidator.tok_fv_check:516> auto-trim $name value [$req_value]");
+					// \rkphplib\lib\log_debug("TFormValidator.tok_fv_check:516> auto-trim $name value [$req_value]");
 					$_REQUEST[$name] = trim($_REQUEST[$name]);
 					$is_ok = true;
 				}
@@ -526,7 +526,7 @@ public function tok_fv_check(string $ajax = '') : string {
 
 				$this->setExample($name, $check);
 				array_push($this->error[$name], $this->getErrorMessage($path));
-				\rkphplib\lib\log_debug([ "TFormValidator.tok_fv_check:529> path=$key name=$name error: <1>", $this->error[$name] ]);
+				// \rkphplib\lib\log_debug([ "TFormValidator.tok_fv_check:529> path=$key name=$name error: <1>", $this->error[$name] ]);
 			}
 		}
 	}
@@ -546,7 +546,7 @@ public function tok_fv_check(string $ajax = '') : string {
 		$res = '';
 	}
 
-	\rkphplib\lib\log_debug("TFormValidator.tok_fv_check:549> res=$res");
+	// \rkphplib\lib\log_debug("TFormValidator.tok_fv_check:549> res=$res");
 	return $res;
 }
 
@@ -557,7 +557,7 @@ public function tok_fv_check(string $ajax = '') : string {
 private function ajaxOutput(string $ajax) : string {
 	try {
 		$output = $this->tok->callPlugin('tpl', $ajax);
-		// \rkphplib\lib\log_debug("TFormValidator.ajaxOutput:557> tpl:$ajax=$output");
+		// \rkphplib\lib\log_debug("TFormValidator.ajaxOutput:560> tpl:$ajax=$output");
 		http_code(200, [ '@output' => $output ]);
 	}
 	catch (\Exception $e) {
