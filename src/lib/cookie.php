@@ -37,16 +37,33 @@ function cookie(string $name, ?string $value, array $opt = []) : void {
 	}
 
 	if (is_null($value)) {
-		if (isset($_COOKIE[$name])) {
-			$copt['expires'] = time() - 3600;
-			// \rkphplib\lib\log_debug([ "cookie:42> remove $name <1>", $copt ]);
-			setcookie($name, '', $copt);
-			unset($_COOKIE[$name]);
+		if (!isset($_COOKIE[$name])) {
+			return;
 		}
+
+		$copt['expires'] = time() - 3600;
+
+		// \rkphplib\lib\log_debug([ "cookie:46> remove $name <1>", $copt ]);
+		if(PHP_VERSION_ID < 70300) {
+			$path = empty($copt['samesite']) ? $copt['path'] : $copt['path'].'; samesite='.$copt['samesite'];
+			setcookie($name, $value, $copt['expires'], $path, $copt['domain'], $copt['secure'], $copt['httponly']);
+		}
+		else {
+			setcookie($name, '', $copt);
+		}
+
+		unset($_COOKIE[$name]);
 	}
 	else {
-		// \rkphplib\lib\log_debug([ "cookie:48> set '$name'='$value' <1>", $copt ]);
-		setcookie($name, $value, $copt);
+		// \rkphplib\lib\log_debug([ "cookie:58> set '$name'='$value' <1>", $copt ]);
+		if (PHP_VERSION_ID < 70300) {
+			$path = empty($copt['samesite']) ? $copt['path'] : $copt['path'].'; samesite='.$copt['samesite'];
+			setcookie($name, $value, $copt['expires'], $path, $copt['domain'], $copt['secure'], $copt['httponly']);
+		}
+		else {
+			setcookie($name, $value, $copt);
+		}
+
 		$_COOKIE[$name] = $value;
 	}
 }
