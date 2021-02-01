@@ -1718,21 +1718,34 @@ public static function columnList(array $cols, string $prefix = '') : string {
 
 
 /**
- * Return insert|update query string. If type=update key '@where' = 'WHERE ...' is required in $kv.
- * Use kv[@add_default] add default columns.
+ * Return insert|update query string. If type=update key either @id=idCol or @where='WHERE ...' is required in $kv.
+ * Use kv[@add_default] add default columns. If @query=qkey is set use getQuery(qkey, $kv).
+ * If @allow=[ col1, … colN ] isset use only this keys in $kv. Use @add_default=col1, … to add default values.
+ *
+ * @code buildQuery('customer', 'insert', [ 'name' => … ]);
+ * @code buildQuery('customer', 'insert', [ '@query' => 'insert' ]);
+ * @code buildQuery('customer', 'update', [ '@id' => 'id', 'id' => 7, 'name' => … ]);
+ * @code buildQuery('customer', 'update', [ '@where' => 'id=7', '@allow' => [ 'email', … ], 'email' => … ]);
  */
 public function buildQuery(string $table, string $type, array $kv = []) : string {
+	if (!empty($kv['@query'])) {
+		return $this->getQuery($kv['@query'], $kv);
+	}
 
 	$p = $this->getTableDesc($table);
 	$key_list = [];
 	$val_list = [];
 
+	$allow_all = empty($kv['@allow']) ? true : false;
 	$add_default = empty($kv['@add_default']) ? false : true;
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1732> table=$table, type=$type, kv: ".print_r($kv, true)."p: ".join('|', array_keys($p)));
-
+	// \rkphplib\lib\log_debug([ "ADatabase.buildQuery:1742> ($table, $type, …) kv: <1>\n<2>", $kv, array_keys($p) ]);
 	foreach ($p as $col => $cinfo) {
 		$val = false;
+
+		if (!$allow_all && !in_array($col, $kv['@allow'])) {
+			continue;
+		}
 
 		if (isset($kv[$col]) && (is_null($kv[$col]) || strtolower($kv[$col]) == 'null' || empty($kv[$col]) && !empty($cinfo['is_null']))) {
 			$val = 'NULL';
@@ -1754,17 +1767,15 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			}
 		}
 
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1757> col=$col, val=$val");
-
 		if ($val !== false) {
+			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1771> $col=[$val]");
 			array_push($key_list, self::escape_name($col));
 			array_push($val_list, $val);
-			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1762> table=$table, type=$type, col=$col, val=$val");
 		}
 	}
 
 	if (count($key_list) == 0) {
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1767> empty key_list - return");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1778> empty key_list - return");
 		return '';
 	}
 
@@ -1780,6 +1791,11 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			}
 		}
 
+		if (!empty($kv['@id'])) {
+			$id_col = $kv['@id']; 
+			$kv['@where'] = 'WHERE '.self::escape_name($id_col)."='".self::escape($kv[$id_col])."'";
+		}
+
 		if (empty($kv['@where']) || mb_substr($kv['@where'], 0, 6) !== 'WHERE ') {
 			throw new Exception('missing @where');
 		}
@@ -1790,7 +1806,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1793> table=$table, type=$type, res=$res");
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1809> $res");
 	return $res;
 }
 
