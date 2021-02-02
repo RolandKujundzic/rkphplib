@@ -2069,7 +2069,6 @@ public static function getReqDir(bool $use_dot_prefix = false) : string {
  * relative or has [../] or [\]. Return found path. 
  */
 public static function findPath(string $file, string $dir = '.') : string {
-
 	if (mb_substr($dir, 0, 1) === '/' || mb_substr($dir, 0, 3) === './/') {
 		throw new Exception('invalid absolute directory path', $dir);
 	}
@@ -2087,25 +2086,27 @@ public static function findPath(string $file, string $dir = '.') : string {
 	$res = '';
 
 	if (substr($dir, 0, 5) !== 'skin/' && substr(($skin_dir = self::skinPath('.')), 0, 5) == 'skin/') {
-		$res_skin = self::findPath($file, $skin_dir); 
+		$res_skin = self::findPath($file, $skin_dir.'/'.$dir); 
 	}
 
-	while (!$res && mb_strlen($dir) > 0) {
-		$path = $dir.'/'.$file;
+	$pdir = $dir;
+	while (!$res && mb_strlen($pdir) > 0) {
+		$path = $pdir.'/'.$file;
 
 		if (file_exists($path) && is_readable($path)) {
 			$res = $path;
 		}
 
-		$pos = mb_strrpos($dir, '/');
+		$pos = mb_strrpos($pdir, '/');
 		if ($pos > 0) {
-			$dir = mb_substr($dir, 0, $pos);
+			$pdir = mb_substr($pdir, 0, $pos);
 		}
 		else {
-			$dir = '';
+			$pdir = '';
 		}
 	}
 
+	$res = str_replace('/./', '/', $res);
 	if (mb_substr($res, 0, 2) == './') {
 		$res = mb_substr($res, 2);
 	}
@@ -2114,7 +2115,7 @@ public static function findPath(string $file, string $dir = '.') : string {
 		$res = $res_skin;
 	}
 
-	// \rkphplib\lib\log_debug("TBase::findPath:2117> findPath($file, $dir) = $res");
+	// \rkphplib\lib\log_debug("TBase::findPath:2118> ($file, $dir) res_skin=$res_skin pdir=$pdir res=$res");
 	return $res;
 }
 
@@ -2147,7 +2148,7 @@ public function tok_tf(array $p, string $arg) : void {
 	$ta = trim($arg);
 	$do = '';
 
-	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2150> ta=<1> p: <2>", $ta, $p ]);
+	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2151> ta=<1> p: <2>", $ta, $p ]);
 	if (count($p) == 1) {
 		if ($p[0] === '') {
 			$tf = !empty($ta);
@@ -2190,7 +2191,7 @@ public function tok_tf(array $p, string $arg) : void {
 		$ap = array_merge($p, split_str(HASH_DELIMITER, $arg));
 	}
 
-	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2193> do=<1> tf=<2> ap: <3>", $do, $tf, $ap ]);
+	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2194> do=<1> tf=<2> ap: <3>", $do, $tf, $ap ]);
 	if (empty($do)) {
 		$this->_tok->setCallStack('tf', $tf);
 		return;
@@ -2269,7 +2270,7 @@ public function tok_tf(array $p, string $arg) : void {
 			$set = split_str(',', $ap[1]);
 			$tf = in_array($ap[0], $set);
 		}
-		// \rkphplib\lib\log_debug([ "TBase.tok_tf:2272> tf=<1> set: <2>", $tf, $set ]);
+		// \rkphplib\lib\log_debug([ "TBase.tok_tf:2273> tf=<1> set: <2>", $tf, $set ]);
 	}
 	else if ($do == 'and' || $do == 'or') {
 		$apn = count($ap);
@@ -2339,7 +2340,7 @@ public function tok_true(string $val, string $out) : string {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('TBase.tok_true:2342> val='.print_r($val, true).' tf='.print_r($tf, true));
+	// \rkphplib\lib\log_debug('TBase.tok_true:2343> val='.print_r($val, true).' tf='.print_r($tf, true));
 	return ((is_bool($tf) && $tf) || (is_array($val) && in_array($tf, $val)) || (is_string($tf) && $tf === $val) || 
 		(is_array($tf) && !empty($val) && in_array($val, $tf))) ? $out : '';
 }
@@ -2367,7 +2368,7 @@ public function tok_false(string $out) : string {
  * Write message via log_debug.
  */
 public function tok_log(string $txt) : void {
-	\rkphplib\lib\log_debug("TBase.tok_log:2370> $txt"); // @keep
+	\rkphplib\lib\log_debug("TBase.tok_log:2371> $txt"); // @keep
 }
 
 
