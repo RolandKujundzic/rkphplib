@@ -1791,9 +1791,8 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			}
 		}
 
-		if (!empty($kv['@id'])) {
-			$id_col = $kv['@id']; 
-			$kv['@where'] = 'WHERE '.self::escape_name($id_col)."='".self::escape($kv[$id_col])."'";
+		if (!empty($kv['@id']) && !empty($kv[$kv['@id']])) {
+			$kv['@where'] = 'WHERE '.self::escape_name($id_col)."='".self::escape($kv[$kv['@id']])."'";
 		}
 
 		if (empty($kv['@where']) || mb_substr($kv['@where'], 0, 6) !== 'WHERE ') {
@@ -1806,7 +1805,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1809> $res");
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1808> $res");
 	return $res;
 }
 
