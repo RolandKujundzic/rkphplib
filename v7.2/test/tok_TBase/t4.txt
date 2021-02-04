@@ -1,6 +1,0 @@
-1: {tf:cmp:}{:tf}{t:}T{:t}{f:}F{:f}
-2: {tf:cmp:aVE}aVe{:tf}{t:}T{:t}{f:}F{:f}
-3: {tf:cmp:ave}ave{:tf}{t:}T{:t}{f:}F{:f}
-4: {tf:cmp:2}2.0{:tf}{t:}T{:t}{f:}F{:f}
-5: {tf:cmp}37x|#|37x{:tf}{t:}T{:t}{f:}F{:f}
-6: {tf:cmp}abc|#|uvw{:tf}{t:}T{:t}{f:}F{:f}

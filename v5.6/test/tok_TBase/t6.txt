@@ -1,4 +1,0 @@
-{tf:in_arr:a:b:c}c{:tf}{t:}T{:t}{f:}F{:f}
-{tf:in_arr:a:b:c}x{:tf}{t:}T{:t}{f:}F{:f}
-{tf:in_arr}a|#|b|#|c|#|c{:tf}{t:}T{:t}{f:}F{:f}
-{tf:in_arr}|#|c{:tf}{t:}T{:t}{f:}F{:f}

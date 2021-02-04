@@ -1,3 +1,0 @@
-{tf:}a{:tf}{f:}F{:f}{t:}x{tf:}{:tf}{f:}tF{:f}y{:t}{f:}F2{:f}
-{tf:}a{:tf}{t:}1{tf:}b{:tf}{t:}2{tf:}c{:tf}{t:}3{:t}{:t}{:t}
-{tf:}a{:tf}{t:}1{tf:}b{:tf}{t:}b{:t}{:t} - {t:}2{:t}

@@ -1,6 +1,0 @@
-{array:test}a|#|b|#|c|#|d{:array}
-shift={array:shift} - array: {array:join}
-unshift(y){array:unshift}y{:array} - array: {array:join}
-pop={array:pop} - array: {array:join}
-push(x){array:push}x{:array} - array: {array:join:,} | {array:join}:{:array}
-length: {array:length}

@@ -1,6 +1,0 @@
-
-shift=a - array: b|c|d
-unshift(y) - array: y|b|c|d
-pop=d - array: y|b|c
-push(x) - array: y,b,c,x | y:b:c:x
-length: 4
