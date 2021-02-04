@@ -180,7 +180,6 @@ public static function readPHPSessionFile(string $file) : array {
 public function init(array $conf) : void {
 	// \rkphplib\lib\log_debug([ 'Session.init:293> <1>', $conf);
 	$this->initConf($conf);
-	$this->checkScope();
 	$this->start();
 
 	$skey = $this->getSessionKey();
@@ -190,12 +189,13 @@ public function init(array $conf) : void {
 
 	$mkey =$this->getSessionKey('meta'); 
 	if (!isset($_SESSION[$mkey]) || !is_array($_SESSION[$mkey])) {
-    $_SESSION[$skey_meta] = [];
+    $_SESSION[$mkey] = [];
   }
 
 	$this->initMeta();
+	$this->checkScope();
 
-	// \rkphplib\lib\log_debug([ "Session.init:295> skey=$skey mkey=$mkey <1>", $this->conf);	
+	// \rkphplib\lib\log_debug([ "Session.init:198> skey=$skey mkey=$mkey <1>", $this->conf);	
 	if (!empty($_REQUEST[SETTINGS_REQ_DIR])) {
 		$dir = $_REQUEST[SETTINGS_REQ_DIR];
 		foreach ($this->conf['allow_dir'] as $allow_dir) {
@@ -225,24 +225,24 @@ public function init(array $conf) : void {
 private function redirectLogin(string $reason, array $p = []) : void {
 	// destroy session
 	$skey = $this->sessKey();
-	$skey_meta = $this->sessKey('meta');
+	$mkey = $this->sessKey('meta');
 
-	if (isset($_SESSION[$skey_meta]['map'])) {
-		foreach ($_SESSION[$skey_meta]['map'] as $map) {
+	if (isset($_SESSION[$mkey]['map'])) {
+		foreach ($_SESSION[$mkey]['map'] as $map) {
 			$mkey = $this->sessKey($map);
 			unset($_SESSION[$mkey]);
 		}
 	}
 
 	unset($_SESSION[$skey]);
-	unset($_SESSION[$skey_meta]);
+	unset($_SESSION[$mkey]);
 
 	if (!empty($this->conf['redirect_login'])) {
-		// \rkphplib\lib\log_debug('Session.redirectLogin:88> redirect '.$this->conf['redirect_login'], $reason);
+		// \rkphplib\lib\log_debug('Session.redirectLogin:241> redirect '.$this->conf['redirect_login'], $reason);
 		redirect($this->conf['redirect_login'], $p);
 	}
 	else {
-		// \rkphplib\lib\log_debug('Session.redirectLogin:88> invalid session', $reason);
+		// \rkphplib\lib\log_debug('Session.redirectLogin:245> invalid session', $reason);
 		throw new Exception($reason);
 	}
 }
@@ -347,7 +347,7 @@ private function checkScope() : void {
 
 	if (!$ok) {
 		if (!empty($this->conf['redirect_forbidden'])) {
-			// \rkphplib\lib\log_debug('Session.init:401> invalid scope, redirect: '.$this->conf['redirect_forbidden']);
+			// \rkphplib\lib\log_debug('Session.checkScope:350> invalid scope, redirect: '.$this->conf['redirect_forbidden']);
 			redirect($this->conf['redirect_forbidden']);
 		}
 		else {
@@ -365,7 +365,7 @@ private function start() {
 		return;
 	}
 
-	// \rkphplib\lib\log_debug('Session.start:318> start session');
+	// \rkphplib\lib\log_debug('Session.start:368> start session');
 	$secure = intval(\rkphplib\lib\is_ssl());
 	$same_site = $secure && $this->conf['cross_site'] ? 'none' : 'strict';
 	$sess_opt = [
@@ -400,7 +400,7 @@ private function start() {
  */
 private function initMeta() : void {
 	if (!empty($this->conf['init_meta'])) {
-		// \rkphplib\lib\log_debug('Session.initMeta:74> use existing'); 
+		// \rkphplib\lib\log_debug('Session.initMeta:403> use existing'); 
 		return;
 	}
 
