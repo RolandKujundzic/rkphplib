@@ -1591,7 +1591,7 @@ public function exec(string $qname, ?array $replace = null) : bool {
  */
 public function query(string $name, array $replace = null, $opt = '') {
 	if (($pos = mb_strpos($name, ':')) > 0) {
-		return $this->queryDo(mb_substr($name, $pos + 1), mb_substr($name, 0, $pos), $opt);
+		return $this->queryDo(mb_substr($name, $pos + 1), mb_substr($name, 0, $pos), $replace, $opt);
 	}
 
 	$opt = intval($opt);
@@ -1615,7 +1615,7 @@ public function query(string $name, array $replace = null, $opt = '') {
  * Return select $do = exec|one|column|hash|row result  
  * @param int|string|array $opt 
  */
-private function queryDo(string $do, string $qname, $opt) : ?array {
+private function queryDo(string $do, string $qname, $replace, $opt) : ?array {
 	$res = null;
 
 	if ($do === 'exec') {
