@@ -1792,7 +1792,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		}
 
 		if (!empty($kv['@id']) && !empty($kv[$kv['@id']])) {
-			$kv['@where'] = 'WHERE '.self::escape_name($id_col)."='".self::escape($kv[$kv['@id']])."'";
+			$kv['@where'] = 'WHERE '.self::escape_name($kv['@id'])."='".self::escape($kv[$kv['@id']])."'";
 		}
 
 		if (empty($kv['@where']) || mb_substr($kv['@where'], 0, 6) !== 'WHERE ') {
