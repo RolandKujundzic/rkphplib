@@ -1354,10 +1354,11 @@ public function tok_switch(array $set, array $p) : string {
  * will be execute before condition comparision - use {tf:} and {true|false:} to
  * avoid this.
  * 
- * @tok {if:|eq|ne|in|in_set|le|lt|ge|gt|and|or|cmp|cmp:or}condition(s)|#|true|#|false{:if}
+ * @tok {if:|eq|ne|not|in|in_set|le|lt|ge|gt|and|or|cmp|cmp:or}condition(s)|#|true|#|false{:if}
  *
  * @tok {if:}abc|#|true|#|false{:if} = true
  * @tok {if:}|#|true|#|false{:if} = false
+ * @tok {if:not}|#|true{:if} = true
  * @tok {if:eq:abc}abc|#|true{:if} = true
  * @tok {if:eq:abc}|#|true{:if} = ""
  * @tok {if:ne:abc}abc|#|true|#|false{:if} = false
@@ -1402,6 +1403,9 @@ public function tok_if(string $param, array $p) : string {
 
 	if ($do === '') {
 		$res = empty($p[0]) ? $p[2] : $p[1];
+	}
+	else if ($do === 'not') {
+		$res = empty($p[0]) ? $p[1] : $p[2];
 	}
 	else if ($do === 'eq') {
 		$res = ($param === $p[0]) ? $p[1] : $p[2];
