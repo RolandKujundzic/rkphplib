@@ -262,7 +262,7 @@ public function tok_fv_preset(string $param, string $arg) : string {
 	}
 	else {
 		$overwrite = $param == '!';
-		$conf = lib_arg2hash($arg);
+		$conf = conf2kv($arg);
 
 		foreach ($conf as $key => $value) {
 			if ($overwrite || !isset($_REQUEST[$key])) {
@@ -1109,8 +1109,8 @@ protected function parseInName(string $name, string $value, array &$p) : void {
 	else if ($type == 'checkbox') {
 		$p['output'] = 'cbox_query';
 		$p['type'] = 'checkbox';
-		$p['value'] = 1;
-		$p['checked'] = !empty($_REQUEST[$name]) && $_REQUEST[$name] == 1;
+		$p['value'] = isset($_REQUEST[$name]) && strlen($_REQUEST[$name]) > 0 ? $_REQUEST[$name] : 1;
+		$p['checked'] = !empty($_REQUEST[$name]) && $_REQUEST[$name] == $p['value'];
 	}
 	else {
 		throw new Exception("ToDo: name=$name type=$type p: ".join('|', $p));
