@@ -44,6 +44,10 @@ private $_mailer = null;
 // @var array $type_email count doubles. Keys: to|cc|bcc|ReplyTo|from|recipient 
 private $type_email = [ 'recipient' => [] ];
 
+// @var string $last_msg_id
+private $last_msg_id = null;
+
+
 
 /**
  * Use PHPMailer with exceptions in utf-8 mode.
@@ -134,8 +138,8 @@ public function getAttachments() : array {
 /**
  * Return last message id.
  */
-public function getLastMessageID() : string {
-	return $this->_mailer->getLastMessageID();
+public function getLastMessageID() : ?string {
+	return $this->last_msg_id;
 }
 
 
@@ -614,27 +618,28 @@ public function send(array $options = []) : bool {
 	$default = [ 'send' => true, 'save' => false, 'save_dir' => 'data/mail/$date(Ym)/$date(dH)/$map(id)' ];
 	$options = array_merge($default, $options);
 
-	\rkphplib\lib\log_debug([ "Mailer.send:617> <1>", $options ]);
+	\rkphplib\lib\log_debug([ "Mailer.send:621> <1>", $options ]);
 	if (!$this->_mailer->preSend()) {
 		throw new Exception('Mailer preSend failed');
 	}
 
+	$this->last_msg_id = null;
+
+	if ($options['send']) {
+		if (!$this->_mailer->postSend()) {
+			throw new Exception('Mailer postSend failed');
+		}
+
+		$this->last_msg_id = $this->_mailer->getLastMessageID();
+		\rkphplib\lib\log_debug("Mailer.send:634> ".$this->last_msg_id);
+	}
+
 	if ($options['save']) {
-		$options['save_dir'] = resolvPath($options['save_dir'], [ 'id' => $this->_mailer->getLastMessageId() ]);
+		$options['save_dir'] = resolvPath($options['save_dir'], [ 'id' => $this->last_msg_id ]);
 		$this->saveMail($options['save_dir']);
 	}
 
-	if (!$options['send']) {
-		\rkphplib\lib\log_debug("Mailer.send:628> dont send");
-		return false;
-	}
-
-	if (!$this->_mailer->postSend()) {
-		throw new Exception('Mailer postSend failed');
-	}
-
-	\rkphplib\lib\log_debug("Mailer.send:635> send ".$this->getLastMessageID());
-	return true;
+	return !is_null($this->last_msg_id);
 }
 
 
