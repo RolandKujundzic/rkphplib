@@ -45,12 +45,12 @@ function resolvPath(string $path, array $map = []) : string {
 			while (count($rpath) > 0) {
 				$name = array_shift($rpath);
 
-				if (isset($rx[$name])) {
-					if (is_string($rx[$name])) {
-						$value = $rx[$name];
+				if (array_key_exists($name, $rx)) {
+					if (is_array($rx[$name])) {
+						$rx = $rx[$name];
 					}
 					else {
-						$rx = $rx[$name];
+						$value = $rx[$name];
 					}
 				}
 				else {
