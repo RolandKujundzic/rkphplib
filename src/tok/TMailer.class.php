@@ -37,7 +37,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['mail:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['mail:html'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['mail:txt'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
-	$plugin['mail:send'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
+	$plugin['mail:send'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
 	$plugin['mail:attach'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['mail'] = 0;
 
@@ -222,33 +222,31 @@ public function tok_mail_attach($p) {
 
 
 /**
- * Send mail. Return message id. Set conf.send|save boolean (=1|0|'')
- * and conf.save_dir (='') if necessary.
+ * Send mail. Return message id if opt[message_id]=1. 
+ * Set [conf|opt].[send|save] and [opt|conf].save_dir if necessary.
+ * Use can use SETTINGS_MAIL_SEND=1|0 to globally toggle mail.
  * 
  * @see Mailer.send
- * @return string 
  */
-public function tok_mail_send() {
+public function tok_mail_send(array $opt) : string {
 	if (is_null($this->mail)) {
-		return;
+		return '';
 	}
 
-	$opt = [];
+	if (!isset($opt['send']) && isset($this->conf['send'])) {
+		$opt['send'] = !empty($this->conf['send']);
+	}
 
-	if (isset($this->conf['send'])) {
+	if (!isset($opt['save']) && isset($this->conf['save'])) {
 		$opt['save'] = !empty($this->conf['save']);
 	}
 
-	if (isset($this->conf['save'])) {
-		$opt['save'] = !empty($this->conf['save']);
-	}
-
-	if (!empty($this->conf['save_dir'])) {
+	if (!isset($opt['save_dir']) && !empty($this->conf['save_dir'])) {
 		$opt['save_dir'] = $this->conf['save_dir'];			
 	}
 
-	$this->mail->send($opt);
-	return $this->mail->getLastMessageID();
+	$ok = $this->mail->send($opt);
+	return $ok && !empty($opt['message_id']) ? $this->mail->getLastMessageID() : '';
 }
 
 
