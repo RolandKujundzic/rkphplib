@@ -585,11 +585,11 @@ private function saveMail(string $dir) : void {
 
 
 /**
- * Send mail.
+ * Send mail. Force global overwrite with SETTINGS_MAIL_[SEND|SAVE].
  *
  * @hash $opt
- * send: true (SETTINGS_MAIL_SEND)
- * save: false (SETTINGS_MAIL_SAVE)
+ * send: true
+ * save: false
  * save_dir: data/mail/$date(Ym)/$date(dH)/$map(id)
  * @eol
  */
@@ -603,11 +603,11 @@ public function send(array $options = []) : bool {
 		$this->useSMTP(self::$smtp);
 	}
 
-	if (!isset($options['send']) && defined('SETTINGS_MAIL_SEND')) {
+	if (defined('SETTINGS_MAIL_SEND')) {
 		$options['send'] = SETTINGS_MAIL_SEND;
 	}
 
-	if (!isset($options['save']) && defined('SETTINGS_MAIL_SAVE')) {
+	if (defined('SETTINGS_MAIL_SAVE')) {
 		$options['save'] = SETTINGS_MAIL_SAVE; 
 	}
 
