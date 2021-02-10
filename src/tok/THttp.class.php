@@ -227,7 +227,7 @@ public static function httpGet(string $name) : string {
 		else if ($name == 'http_url') {
 			$res = 'http://'.getenv('HTTP_HOST');
 
-			if (getenv('SERVER_PORT') != 80) {
+			if (isset($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] === 'http' && getenv('SERVER_PORT') != 80) {
 				$res .= ':'.getenv('SERVER_PORT');
 			}
 
