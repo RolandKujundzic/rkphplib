@@ -114,7 +114,7 @@ public function tok_domain_utf8(string $domain) : string {
  * - host: _SERVER[HTTP_HOST]
  * - script: /admin/index.php?dir=test
  * - port: 80 | 443 | custom
- * - protocoll: https:// | http://
+ * - protocol: https:// | http://
  * - query: 
  * - url: get(host)[:get(port)]get(script)[?get(query)]
  * - abs_url: get(protocol).get(url)
