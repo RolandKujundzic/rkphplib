@@ -625,6 +625,7 @@ public function send(array $options = []) : bool {
 	}
 
 	if (!$options['send']) {
+		\rkphplib\lib\log_debug("Mailer.send:628> dont send");
 		return false;
 	}
 
@@ -632,6 +633,7 @@ public function send(array $options = []) : bool {
 		throw new Exception('Mailer postSend failed');
 	}
 
+	\rkphplib\lib\log_debug("Mailer.send:635> send ".$this->getLastMessageID());
 	return true;
 }
 
