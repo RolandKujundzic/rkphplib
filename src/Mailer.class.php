@@ -585,13 +585,15 @@ private function saveMail(string $dir) : void {
 
 
 /**
- * Send mail. Options: 
+ * Send mail.
  *
- * - send: true
- * - save: false
- * - save_dir: data/mail/$date(Ym)/$date(dH)/$map(id)
+ * @hash $opt
+ * send: true (SETTINGS_MAIL_SEND)
+ * save: false (SETTINGS_MAIL_SAVE)
+ * save_dir: data/mail/$date(Ym)/$date(dH)/$map(id)
+ * @eol
  */
-public function send(array $options = []) : void {
+public function send(array $options = []) : bool {
 
 	if (!isset($this->type_email['to']) || count($this->type_email['to']) == 0) {
 		throw new Exception('call setTo() first');
@@ -601,9 +603,18 @@ public function send(array $options = []) : void {
 		$this->useSMTP(self::$smtp);
 	}
 
+	if (!isset($options['send']) && defined('SETTINGS_MAIL_SEND')) {
+		$options['send'] = SETTINGS_MAIL_SEND;
+	}
+
+	if (!isset($options['save']) && defined('SETTINGS_MAIL_SAVE')) {
+		$options['save'] = SETTINGS_MAIL_SAVE; 
+	}
+
 	$default = [ 'send' => true, 'save' => false, 'save_dir' => 'data/mail/$date(Ym)/$date(dH)/$map(id)' ];
 	$options = array_merge($default, $options);
 
+	\rkphplib\lib\log_debug([ "Mailer.send:617> <1>", $options ]);
 	if (!$this->_mailer->preSend()) {
 		throw new Exception('Mailer preSend failed');
 	}
@@ -614,12 +625,14 @@ public function send(array $options = []) : void {
 	}
 
 	if (!$options['send']) {
-		return;
+		return false;
 	}
 
 	if (!$this->_mailer->postSend()) {
 		throw new Exception('Mailer postSend failed');
 	}
+
+	return true;
 }
 
 
