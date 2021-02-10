@@ -542,8 +542,11 @@ public function getQuery(string $qkey, ?array $replace = null) {
 
 			$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, "'".join("', '", $tmp)."'", $query);
 		}
-		else if ($do === 'keep' || $do === 'in') {
+		else if ($do === 'keep') {
 			$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, $replace[$key], $query);
+		}
+		else if ($do === 'in') {
+			$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, "'".$this->esc($replace[$key])."'", $query);
 		}
 		else {
 			throw new Exception("Unknown replace action", "do=$do query=$query");
