@@ -580,11 +580,15 @@ private function _add_address(string $type, string $email, string $name) : void 
 
 
 /**
- * Save mail in dir.
+ * Save mail in directory $save_in.
  */
-private function saveMail(string $dir) : void {
-	Dir::create($dir, 0, true);
-	throw new Exception('ToDo ...');
+private function saveMail(string $save_in) : void {
+	if (!is_null($this->last_msg_id)) {
+		$save_in .= '/'.substr($this->last_msg_id, 1, -1);
+	}
+
+	Dir::create($save_in, 0, true);
+	throw new Exception('ToDo: save mail in '.$save_in);
 }
 
 
@@ -592,9 +596,9 @@ private function saveMail(string $dir) : void {
  * Send mail. Force global overwrite with SETTINGS_MAIL_[SEND|SAVE].
  *
  * @hash $opt
- * send: true
- * save: false
- * save_dir: data/mail/$date(Ym)/$date(dH)/$map(id)
+ * send: 1
+ * save: 0
+ * save_dir: data/.log/mail/$date(Ym)/$date(dH)/$map(id)
  * @eol
  */
 public function send(array $options = []) : bool {
@@ -607,15 +611,15 @@ public function send(array $options = []) : bool {
 		$this->useSMTP(self::$smtp);
 	}
 
-	if (defined('SETTINGS_MAIL_SEND')) {
+	if (!isset($options['send']) && defined('SETTINGS_MAIL_SEND')) {
 		$options['send'] = SETTINGS_MAIL_SEND;
 	}
 
-	if (defined('SETTINGS_MAIL_SAVE')) {
+	if (!isset($options['save']) && defined('SETTINGS_MAIL_SAVE')) {
 		$options['save'] = SETTINGS_MAIL_SAVE; 
 	}
 
-	$default = [ 'send' => true, 'save' => false, 'save_dir' => 'data/mail/$date(Ym)/$date(dH)/$map(id)' ];
+	$default = [ 'send' => 1, 'save' => 0, 'save_dir' => 'data/.log/mail/$date(Ym)/$date(dH)' ];
 	$options = array_merge($default, $options);
 
 	\rkphplib\lib\log_debug([ "Mailer.send:621> <1>", $options ]);
@@ -625,7 +629,7 @@ public function send(array $options = []) : bool {
 
 	$this->last_msg_id = null;
 
-	if ($options['send']) {
+	if (!empty($options['send'])) {
 		if (!$this->_mailer->postSend()) {
 			throw new Exception('Mailer postSend failed');
 		}
@@ -634,9 +638,8 @@ public function send(array $options = []) : bool {
 		\rkphplib\lib\log_debug("Mailer.send:634> ".$this->last_msg_id);
 	}
 
-	if ($options['save']) {
-		$options['save_dir'] = resolvPath($options['save_dir'], [ 'id' => $this->last_msg_id ]);
-		$this->saveMail($options['save_dir']);
+	if (!empty($options['save'])) {
+		$this->saveMail(resolvPath($options['save_dir']));
 	}
 
 	return !is_null($this->last_msg_id);
