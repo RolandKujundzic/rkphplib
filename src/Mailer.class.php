@@ -622,7 +622,7 @@ public function send(array $options = []) : bool {
 	$default = [ 'send' => 1, 'save' => 0, 'save_dir' => 'data/.log/mail/$date(Ym)/$date(dH)' ];
 	$options = array_merge($default, $options);
 
-	\rkphplib\lib\log_debug([ "Mailer.send:621> <1>", $options ]);
+	// \rkphplib\lib\log_debug([ "Mailer.send:625> <1>", $options ]);
 	if (!$this->_mailer->preSend()) {
 		throw new Exception('Mailer preSend failed');
 	}
@@ -630,12 +630,13 @@ public function send(array $options = []) : bool {
 	$this->last_msg_id = null;
 
 	if (!empty($options['send'])) {
+		// \rkphplib\lib\log_debug([ "Mailer.send:633> <1>", $this->_mailer ]);
 		if (!$this->_mailer->postSend()) {
 			throw new Exception('Mailer postSend failed');
 		}
 
 		$this->last_msg_id = $this->_mailer->getLastMessageID();
-		\rkphplib\lib\log_debug("Mailer.send:634> ".$this->last_msg_id);
+		// \rkphplib\lib\log_debug("Mailer.send:639> ".$this->last_msg_id);
 	}
 
 	if (!empty($options['save'])) {
