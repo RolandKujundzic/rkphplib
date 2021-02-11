@@ -816,14 +816,14 @@ private function selectFromDatabase(array $p) : ?array {
 	$admin2user = false;
 
 	if (!empty($p['admin2user']) && ($pos = mb_strpos($p['login'], ':=')) > 0) {
-		list ($admin_login, $user_login) = explode(':=', $p['login']);
+		$tmp = explode(':=', $p['login']);
 		$admin2user = explode(':', $p['admin2user']);
-		$p['login'] = $admin_login;
+		$p['login'] = $tmp[0];
 	}
 
 	$query = $this->db->getCustomQuery('select_login', $p);
 	$dbres = $this->db->select($query);
-	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:826> query=$query - ".print_r($dbres, true));
+	\rkphplib\lib\log_debug("TLogin.selectFromDatabase:826> query=$query - ".print_r($dbres, true));
 	if (count($dbres) == 0) {
 		$this->tok->setVar('login_error', 'invalid');
 		return null;
@@ -834,47 +834,65 @@ private function selectFromDatabase(array $p) : ?array {
 		$dbres[0]['password'] = $p['master_password'];
 	}
 
- 	if (count($dbres) != 1 || empty($dbres[0]['password']) || $dbres[0]['password'] != $dbres[0]['password_input']) {
+	$found = false;
+	for ($i = 0; $found === false && $i < count($dbres); $i++) {
+	 	if (empty($dbres[0]['password']) || $dbres[0]['password'] != $dbres[0]['password_input']) {
+			$found = $i;
+		}
+	}
+
+	if ($found === false) {
 		$this->tok->setVar('password_error', 'invalid');
 		return null;
 	}
 
-	if ($admin2user !== false) {
-		$admin_type = array_shift($admin2user);
-		$admin = $dbres[0];
-		unset($admin['password_input']);
-		unset($admin['password']);
+	$user = $admin2user === false ? $dbres[$found] :
+		$this->admin2user($admin2user, $dbres[$found], $p);
 
-		if ($admin_type != $admin['type']) {
-			throw new Exception("Only $admin_type can use admin2user mode");
-		}
-
-		$p['login'] = $user_login;
-		$query = $this->db->getCustomQuery('select_login', $p);
-		$dbres = $this->db->select($query);
-		if (count($dbres) != 1) {
-			$this->tok->setVar('login_error', 'invalid');
-			return null;
-		}
-
-		if (!in_array($dbres[0]['type'], $admin2user)) {
-			throw new Exception('admin2user is forbidden for user type '.$dbres[0]['type']);
-		}
-
-		$dbres[0]['admin2user'] = $admin;
+	if (is_null($user)) {
+		return null;
 	}
 
-	if ($dbres[0]['status'] == 'registered') {
-		$query = $this->db->getCustomQuery('registered2active', $dbres[0]);
+	if ($admin2user === false && $user['status'] == 'registered') {
+		$query = $this->db->getCustomQuery('registered2active', $user);
 		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:869> auto-activate user: ".$query);
 		$this->db->execute($query);
 	}
 
 	// login + password ok ... update login session
-	unset($dbres[0]['password_input']);
-	unset($dbres[0]['password']);
+	unset($user['password_input']);
+	unset($user['password']);
 
-	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:877> return user: ".print_r($dbres[0], true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:877> return user: ".print_r($user, true));
+	return $user;
+}
+
+
+/**
+ * Return admin data.
+ */
+private function admin2user(array $admin_type, array $admin, array $p) : ?array {
+	$admin_type = array_shift($admin2user);
+	if ($admin_type != $admin['type']) {
+		throw new Exception("Only $admin_type can use admin2user mode");
+	}
+
+	list ($admin_login, $user_login) = explode(':=', $p['login']);
+	$p['login'] = $user_login;
+
+	$query = $this->db->getCustomQuery('select_login', $p);
+	$dbres = $this->db->select($query);
+	if (count($dbres) != 1) {
+		$this->tok->setVar('login_error', 'invalid');
+		return null;
+	}
+
+	if (!in_array($dbres[0]['type'], $admin2user)) {
+		throw new Exception('admin2user is forbidden for user type '.$dbres[0]['type']);
+	}
+
+	$dbres[0]['admin2user'] = $admin;
+	// \rkphplib\lib\log_debug([ "TLogin.admin2user:895> return admin: <1>", $dbres[0] ]);
 	return $dbres[0];
 }
 
