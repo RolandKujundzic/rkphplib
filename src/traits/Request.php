@@ -67,11 +67,11 @@ private function setPConf(array $p, string $group = '') : void {
 
 /**
  * Return default plugin_conf[$name] value[s]. Return array if $name = 'block/'.
- * Use 'NAME?' for optional parameter.
+ * Use $required = false or 'NAME?' for optional parameter.
  *
  * @return string|array
  */
-private function getPConf(string $name) {
+private function getPConf(string $name, bool $required = true) {
 	if ($name == '/') {
 		return $this->plugin_conf;
 	}
@@ -96,7 +96,6 @@ private function getPConf(string $name) {
 		return $conf;
 	}
 
-	$required = true;
 	$res = '';
 
 	if (substr($name, -1) == '?') {
@@ -155,6 +154,92 @@ private function setReq(string $name, string $value) : void {
 	$name = $this->getPCRKey($name);
   $_REQUEST[$name] = $value;
 }
+
+
+/**
+ * Return submap or value. It does not matter if map is multimap or multimap keys are used. 
+ *
+ * @code
+ * $x = [ 'a' => 7, 'a.b.0' => 18, 'a.b.1' => 19, 'c' => [ 0 => 5, 1 => 6 ], 'd' => [ 'x' => 3, 'y' => 4 ] ];
+ * $this->getPSub('a', $x) == 7;
+ * $this->getPSub('a.b') == [ 18, 19 ];
+ * $this->getPSub('c') == [ 5, 6 ];
+ * $this->getPSub('c.0', $x) == 5;
+ * $this->getPSub('c.x', $x) == 3;
+ * $this->getPSub('d') == [ 'x' => 3, 'y' => 4 ]
+ * @eol
+ *
+ * @return map|string|false
+ */
+private function getPSub(string $path_str, array $map = null) {
+	if (!is_null($map)) {
+		$map = $this->plugin_conf;
+	}
+
+	if (empty($path_str)) {
+		throw new Exception('empty path', 'map: '.print_r($map, true));
+	}
+
+	$path = explode('.', $path_str);
+	$is_array = true;
+	$found = true; 
+	$fkey = '';
+	$pkey = '';
+
+	// \rkphplib\lib\log_debug("Request.getPSub:190> path_str=[$path_str] path=[".join('|', $path)."] map: ".print_r($map, true));
+	while (count($path) > 0) {
+		$pkey = array_shift($path);
+
+		if (isset($map[$pkey]) || array_key_exists($pkey, $map)) {
+			if (is_array($map[$pkey])) {
+				$map = $map[$pkey];
+				$fkey = join('.', $path);
+			}
+			else {
+				$is_array = false;
+			}
+		}
+		else {
+			$found = false;
+			break;
+		}
+	}
+
+	// \rkphplib\lib\log_debug("Request.getPSub:209> found=[$found] fkey=[$fkey] pkey=[$pkey] is_array=[$is_array] map: ".print_r($map, true));
+	if (isset($map[$fkey])) {
+		$path_str = $fkey;
+		$found = false;
+	}
+
+	if (!$found) {
+		// check if we are using multi-map-keys
+		$len = mb_strlen($path_str); 
+		$last_value = false;
+		$res = [];
+
+		foreach ($map as $mkey => $value) {
+			if (mb_strpos($mkey, $path_str) === 0) {
+				if ($mkey == $path_str) {
+					$last_value = $value;
+				}
+				
+				$key = mb_substr($mkey, $len + 1);
+				$res[$key] = $value;
+			}
+			// \rkphplib\lib\log_debug("Request.getPSub:230> path_str=[$path_str] mkey=[$mkey] value=[$value] res: ".print_r($res, true));
+		}
+
+		if (count($res) == 1) {
+			return ($last_value === false && count($res) > 0) ? $res : $last_value;
+		}
+
+		return (count($res) > 0) ? $res : false;
+	}
+	else {
+		return $is_array ? $map : $map[$pkey]; 
+	}
+}
+
 
 }
 
