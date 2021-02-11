@@ -219,6 +219,25 @@ public function init(array $conf) : void {
 }
 
 
+/*
+ *
+ */
+public function destroy() : void {
+	$skey = $this->sessKey();
+	$skey_meta = $this->sessKey('meta');
+
+	if (isset($_SESSION[$skey_meta]['map'])) {
+		foreach ($_SESSION[$skey_meta]['map'] as $map) {
+			$mkey = $this->sessKey($map);
+			unset($_SESSION[$mkey]);
+		}
+	}
+
+	unset($_SESSION[$skey]);
+	unset($_SESSION[$skey_meta]);
+}
+
+
 /**
  * If conf.redirect_login is set redirect otherwise throw exception.
  */
