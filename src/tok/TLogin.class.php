@@ -836,12 +836,13 @@ private function selectFromDatabase(array $p) : ?array {
 
 	$found = false;
 	for ($i = 0; $found === false && $i < count($dbres); $i++) {
-	 	if (empty($dbres[0]['password']) || $dbres[0]['password'] != $dbres[0]['password_input']) {
+	 	if ($dbres[$i]['password'] == $dbres[$i]['password_input']) {
 			$found = $i;
 		}
 	}
 
 	if ($found === false) {
+		\rkphplib\lib\log_debug("TLogin.selectFromDatabase:845> invalid password");
 		$this->tok->setVar('password_error', 'invalid');
 		return null;
 	}
@@ -849,6 +850,7 @@ private function selectFromDatabase(array $p) : ?array {
 	$user = $admin2user === false ? $dbres[$found] :
 		$this->admin2user($admin2user, $dbres[$found], $p);
 
+	\rkphplib\lib\log_debug([ "TLogin.selectFromDatabase:852> found=<1> user: <2>", $found, $user ]);
 	if (is_null($user)) {
 		return null;
 	}
