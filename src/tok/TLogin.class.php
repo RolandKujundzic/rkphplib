@@ -823,7 +823,7 @@ private function selectFromDatabase(array $p) : ?array {
 
 	$query = $this->db->getCustomQuery('select_login', $p);
 	$dbres = $this->db->select($query);
-	\rkphplib\lib\log_debug("TLogin.selectFromDatabase:826> query=$query - ".print_r($dbres, true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:826> query=$query - ".print_r($dbres, true));
 	if (count($dbres) == 0) {
 		$this->tok->setVar('login_error', 'invalid');
 		return null;
@@ -842,7 +842,7 @@ private function selectFromDatabase(array $p) : ?array {
 	}
 
 	if ($found === false) {
-		\rkphplib\lib\log_debug("TLogin.selectFromDatabase:845> invalid password");
+		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:845> invalid password");
 		$this->tok->setVar('password_error', 'invalid');
 		return null;
 	}
@@ -850,14 +850,14 @@ private function selectFromDatabase(array $p) : ?array {
 	$user = $admin2user === false ? $dbres[$found] :
 		$this->admin2user($admin2user, $dbres[$found], $p);
 
-	\rkphplib\lib\log_debug([ "TLogin.selectFromDatabase:852> found=<1> user: <2>", $found, $user ]);
+	// \rkphplib\lib\log_debug([ "TLogin.selectFromDatabase:853> found=<1> user: <2>", $found, $user ]);
 	if (is_null($user)) {
 		return null;
 	}
 
 	if ($admin2user === false && $user['status'] == 'registered') {
 		$query = $this->db->getCustomQuery('registered2active', $user);
-		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:869> auto-activate user: ".$query);
+		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:860> auto-activate user: ".$query);
 		$this->db->execute($query);
 	}
 
@@ -865,7 +865,7 @@ private function selectFromDatabase(array $p) : ?array {
 	unset($user['password_input']);
 	unset($user['password']);
 
-	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:877> return user: ".print_r($user, true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:868> return user: ".print_r($user, true));
 	return $user;
 }
 
@@ -894,7 +894,7 @@ private function admin2user(array $admin_type, array $admin, array $p) : ?array 
 	}
 
 	$dbres[0]['admin2user'] = $admin;
-	// \rkphplib\lib\log_debug([ "TLogin.admin2user:895> return admin: <1>", $dbres[0] ]);
+	// \rkphplib\lib\log_debug([ "TLogin.admin2user:897> return admin: <1>", $dbres[0] ]);
 	return $dbres[0];
 }
 
@@ -917,7 +917,7 @@ private function admin2user(array $admin_type, array $admin, array $p) : ?array 
  * @tok {login:@lchange} -> date('d.m.Y H:i:s', @last)
  */
 public function tok_login(string $key, ?string $alt_key = '') : ?string {
-	// \rkphplib\lib\log_debug("TLogin.tok_login:900> key=$key alt_key=$alt_key");
+	// \rkphplib\lib\log_debug("TLogin.tok_login:920> key=$key alt_key=$alt_key");
 	$res = '';
 
 	if (strlen($key) == 0 && strlen($alt_key) > 0) {
@@ -981,7 +981,7 @@ public function tok_login(string $key, ?string $alt_key = '') : ?string {
 		$res = kv2conf($res);
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.tok_login:964> res=[$res]");
+	// \rkphplib\lib\log_debug("TLogin.tok_login:984> res=[$res]");
 	return $res;
 }
 
