@@ -749,7 +749,7 @@ private function getTestNumber(int $first, int $last) : int {
  *
  * @example run(1, 6)
  */
-public function run(int $first, int $last) : void {
+public function run(int $first, int $last, array $opt = []) : void {
 
 	if (($tnum = $this->prepareRun($first, $last)) == 0) {
 		return;
@@ -791,7 +791,14 @@ public function run(int $first, int $last) : void {
 			throw new Exception("no such file $prefix.[php|txt|tok]");
 		}
 
-		$cmp = $this->cmp($out, File::load("ok/{$base}.txt"));
+		$ok_txt = File::load("ok/{$base}.txt");
+
+		if (!empty($opt['removeWhitespace'])) {
+			$out = preg_replace('/\s+/', '', $out);
+			$ok_txt = preg_replace('/\s+/', '', $ok_txt);
+		}
+
+		$cmp = $this->cmp($out, $ok_txt);
 		$this->logRun($file, $cmp, $tnum);
 
 		if (!$cmp) {
