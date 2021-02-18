@@ -5,7 +5,7 @@ require_once 'src/tok/Tokenizer.class.php';
 require_once 'src/lib/config.php';
 require_once 'src/File.class.php';
 require_once 'src/Dir.class.php';
-require_once 'src/Syntax.php';
+require_once 'src/CLI.php';
 
 use rkphplib\tok\TokPlugin;
 use rkphplib\tok\Tokenizer;
@@ -124,8 +124,8 @@ if (!defined('SETTINGS_DSN')) {
 	define('SETTINGS_DSN', 'mysqli://ignore:ignore@tcp+localhost/ignore');
 }
 
-\rkphplib\Syntax::$desc = 'Scan src/tok directory and update Tokenizer->tryPluginMap';
-if (!\rkphplib\Syntax::check()) {
+\rkphplib\CLI::$desc = 'Scan src/tok directory and update Tokenizer->tryPluginMap';
+if (!\rkphplib\CLI::syntax()) {
 	return;
 }
 
