@@ -7,7 +7,7 @@ if (!defined('PATH_RKPHPLIB')) {
 
 require_once PATH_RKPHPLIB.'lib/config.php';
 require_once PATH_RKPHPLIB.'PhpDoc/PDParser.class.php';
-require_once PATH_RKPHPLIB.'Syntax.php';
+require_once PATH_RKPHPLIB.'CLI.php';
 
 require_once dirname(PATH_RKPHPLIB).'/vendor/autoload.php';
 require_once PATH_RKPHPLIB.'YAML.class.php';
@@ -17,7 +17,7 @@ require_once PATH_RKPHPLIB.'YAML.class.php';
  * M A I N
  */
 
-if (!\rkphplib\Syntax::check([ '@file:path/to/code.php' ])) {
+if (!\rkphplib\CLI::syntax([ '@file:path/to/code.php' ])) {
 	return;
 }
 
