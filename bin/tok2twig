@@ -4,11 +4,11 @@
 require_once __DIR__.'/../src/tok/Tokenizer.class.php';
 require_once __DIR__.'/../src/tok/TTwig.class.php';
 require_once __DIR__.'/../src/File.class.php';
-require_once __DIR__.'/../src/Syntax.php';
+require_once __DIR__.'/../src/CLI.php';
 
 
-\rkphplib\Syntax::$desc = 'Tokenizer to twig converter';
-if (!\rkphplib\Syntax::check([ 'tok-test|tok-file' ])) {
+\rkphplib\CLI::$desc = 'Tokenizer to twig converter';
+if (!\rkphplib\CLI::syntax([ 'tok-test|tok-file' ])) {
 	return;
 }
 
