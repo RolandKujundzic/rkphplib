@@ -293,23 +293,25 @@ private static function or(string $param, string $arg) : string {
 
  * @code …
  * CLI::parse("run.php --name value --k2 v2"); json_encode(CLI::arg) == 
- *   '{"":["run.php","value","v2"],"name":"1","k2":"1"}';
+ *   '{"":["run.php","value","v2"],"name":1,"k2":1}';
  * CLI::parse("run.php -k -n abc"); json_encode(CLI::arg) ==
- *   '{"":["run.php","abc"],"k":"1","n":"1"}';
+ *   '{"":["run.php","abc"],"k":1,"n":1}';
  * CLI::parse("run.php -uvw xyz test"); json_encode(CLI::arg) ==
- *   '{"":["run.php","test"],"u":"1","v":"1","w":"1"}';
- * CLI::parse("run.php --key v1 --key v2 -a -b x -b y"); json_encode(CLI::arg) ==
- *   '{"":["run.php","x","y"],"key":["v1","v2"],"a":"1","b":"1"}';
+ *   '{"":["run.php","xyz","test"],"u":1,"v":1,"w":1}'
+ * CLI::parse("run.php --k1=K1 --k2=K2 --k2=K3 -a -b x -b y"); json_encode(CLI::arg) ==
+ *   '{"":["run.php","x","y"],"k1":"K1","k2":["K2","K3"],"a":1,"b":1}';
  * CLI::parse("run.php k=v -f --g=arg"); json_encode(CLI::arg) ==
- *   '{"":["run.php","k=v"],"f":"1","g":"arg"}';
+ *   '{"":["run.php","k=v"],"f":1,"g":"arg"}';
  *
- * CLI::parse("run.php '@file:=test.json'"); json_encode(CLI::arg) ==
- *   '{"":["run.php"],"file":"test.json","hash":{"a":"aa","b":"bbb"},"list":["a","b"]}';
- * CLI::parse('run.php \'@json:={"k1":"v1","k2":["a","b"]}\''); json_encode(CLI::arg) ==
+ * CLI::parse("run.php '@file=test.json'"); json_encode(CLI::arg) ==
+ *   '{"":["run.php"],"hash":{"a":"aa","b":"bbb"},"list":["a","b"]}';
+ * CLI::parse('run.php @json={"k1":"v1","k2":["a","b"]}'); json_encode(CLI::arg) ==
  *   '{"":["run.php"],"k1":"v1","k2":["a","b"]}';
  * @eol
  */
 public static function parse(?string $arg_str = null) : ?array {
+	self::$arg = [ "" => [] ];
+
 	if (!is_null($arg_str)) {
 		$arg = preg_split('/\s+/', $arg_str);
 	}
@@ -321,33 +323,36 @@ public static function parse(?string $arg_str = null) : ?array {
 		$arg = $_SERVER['argv'];
 	}
 
-	self::$arg = [];
-
 	$no_parse = false;
-	$last_key = '';
-
 	for ($i = 0; $i < count($arg); $i++) {
 		$value = $arg[$i];
-		$key = '';
+		$key = null;
 	
 		if ($no_parse) {
+			// \rkphplib\lib\log_debug("CLI.parse:332> push $value");
 			array_push(self::$arg, $value);
 		}
 		else if ($value == '--') {
 			$no_parse = true;
 		}
-		else if ($value[0] == '@' && ($pos = mb_strpos($value, ':=')) > 2) {
+		else if ($value[0] == '@' && ($pos = mb_strpos($value, '=')) > 2) {
 			$do = mb_substr($value, 1, $pos - 1);	
-			$value = mb_substr($value, $pos + 2);
+			$value = mb_substr($value, $pos + 1);
+			$json = '';
 
-			if ($do == 'file') {
-				$hash = json_decode(file_get_contents($value), true);
+			if ($do == 'file' && file_exists($value)) {
+				$json = trim(file_get_contents($value));
 			}
 			else if ($do == 'json') {
-				$hash = json_decode($value, true);
+				$json = $value;
 			}
 
-			$res = array_merge(self::$arg, $hash);
+			if ((substr($json, 0, 1) == '{' && substr($json, -1) == '}') ||
+						(substr($json, 0, 1) == '[' && substr($json, -1) == ']')) {
+				// \rkphplib\lib\log_debug([ "CLI.parse:349> merge <1>", $hash ]);
+				$hash = json_decode($json, true);
+				self::$arg = array_merge(self::$arg, $hash);
+			}
 		}
 		else if ($value[0] == '-' && $value[1] == '-') {
 			if (($pos = mb_strpos($value, '=')) > 2) {
@@ -355,56 +360,51 @@ public static function parse(?string $arg_str = null) : ?array {
 				$value = mb_substr($value, $pos + 1);
 			}
 			else {
-				$key = mb_substr($value, 2);
-				$value = 1;
+				$akey = substr($value, 2);
+				// \rkphplib\lib\log_debug("CLI.parse:359> $akey=1");
+				self::$arg[$akey] = 1;
 			}
 		}
 		else if ($value[0] == '-') {
 			$plen = strlen($value);
 
 			if ($plen == 2) {
-				$key = $value[1];
-				$value = 1;
+				$akey = $value[1];
+				// \rkphplib\lib\log_debug("CLI.parse:368> $akey=1");
+				self::$arg[$akey] = 1;
 			}
 			else {
 				for ($k = 1; $k < $plen; $k++) {
-					$key = $value[$k];
-					if (ord($key) < 97 || ord($key) > 122) {
-						throw new Exception('invalid flag '.$key, $value);
+					$akey = $value[$k];
+					if (ord($akey) < 97 || ord($akey) > 122) {
+						throw new Exception('invalid flag '.$akey, $value);
 					}
 
-					$res[$key] = '';
+					// \rkphplib\lib\log_debug("CLI.parse:378> $akey=1");
+					self::$arg[$akey] = 1;
 				}
-
-				$last_key = $key;
-				continue;
 			}
-		}
-		else if (preg_match('/^([a-zA-Z0-9_\.\:\[\]]+)=(.+)$/', $value, $match)) {
-			$key = $match[1];
-			$value = $match[2];
-		}
-
-		if ($value != $arg[$i] && !empty($last_key) && isset($res[$last_key]) && $res[$last_key][0] == '@') {
-			$res[$last_key] = '';
-		}
-
-		$last_key = $key;
- 
-		if (isset($res[$key])) {
-			if (!is_array($res[$key])) {
-				$res[$key] = [ $res[$key] ];
-			}
-
-			array_push($res[$key], $value);
 		}
 		else {
-			$res[$key] = $value;
+			$key = '';
+		}
+
+		if (!is_null($key)) {
+			if (isset(self::$arg[$key])) {
+				if (!is_array(self::$arg[$key])) {
+					self::$arg[$key] = [ self::$arg[$key] ];
+				}
+
+				array_push(self::$arg[$key], $value);
+			}
+			else {
+				// \rkphplib\lib\log_debug("CLI.parse:396> $key=$value");
+				self::$arg[$key] = $value;
+			}
 		}
 	}
- 
-	// \rkphplib\lib\log_debug("cli_input:122> ".print_r($arg, true)."\nresult: ".print_r($res, true));
-	return $res;
+
+	return self::$arg;
 }
 
 
