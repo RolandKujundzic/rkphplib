@@ -12,6 +12,7 @@ namespace rkphplib;
  * @code
  * CLI::parse();
  * print_r($CLI::arg);
+ * print_r($CLI::argv);
  * @eol
  *
  * @code
@@ -31,6 +32,8 @@ public static $app = '';
 public static $desc = '';
 
 public static $arg = [];
+
+public static $argv = [];
 
 private static $arg_list = [];
 
@@ -288,6 +291,7 @@ private static function or(string $param, string $arg) : string {
  * Detect -ab or --a --b (a=1, b=1).
  * Use @file:=path/to/file to parse file into result (suffix .ser|.conf|.json).
  * Use @json:={…} to load json string.
+ * Use self::$argv (= $result['']) and self::$arg for later access.
  *
  * @code CLI::parse(); print_r(CLI::arg);
 
@@ -307,10 +311,15 @@ private static function or(string $param, string $arg) : string {
  *   '{"":["run.php"],"hash":{"a":"aa","b":"bbb"},"list":["a","b"]}';
  * CLI::parse('run.php @json={"k1":"v1","k2":["a","b"]}'); json_encode(CLI::arg) ==
  *   '{"":["run.php"],"k1":"v1","k2":["a","b"]}';
+ * CLI::parse('run.php @req:name=value @req:list=v1 @req:list=v2
+ * 	 // set $_REQUEST = [ 'name' => 'value', 'list' => [ 'v1', 'v2'] ];
+ * CLI::parse('run.php @http:host=domain.tld @server:addr=1.2.3.4 @srv:request_method=post
+ *   // set $_SERVER = [ 'HTTP_HOST' => 'domain.tld', 'SERVER_ADDR' => '1.2.3.4', 'REQUEST_METHOD' => 'post' ];
  * @eol
  */
 public static function parse(?string $arg_str = null) : ?array {
 	self::$arg = [ "" => [] ];
+	self::$argv = [];
 
 	if (!is_null($arg_str)) {
 		$arg = preg_split('/\s+/', $arg_str);
@@ -336,23 +345,7 @@ public static function parse(?string $arg_str = null) : ?array {
 			$no_parse = true;
 		}
 		else if ($value[0] == '@' && ($pos = mb_strpos($value, '=')) > 2) {
-			$do = mb_substr($value, 1, $pos - 1);	
-			$value = mb_substr($value, $pos + 1);
-			$json = '';
-
-			if ($do == 'file' && file_exists($value)) {
-				$json = trim(file_get_contents($value));
-			}
-			else if ($do == 'json') {
-				$json = $value;
-			}
-
-			if ((substr($json, 0, 1) == '{' && substr($json, -1) == '}') ||
-						(substr($json, 0, 1) == '[' && substr($json, -1) == ']')) {
-				// \rkphplib\lib\log_debug([ "CLI.parse:349> merge <1>", $hash ]);
-				$hash = json_decode($json, true);
-				self::$arg = array_merge(self::$arg, $hash);
-			}
+			self::parseAction(mb_substr($value, 1, $pos - 1), mb_substr($value, $pos + 1));
 		}
 		else if ($value[0] == '-' && $value[1] == '-') {
 			if (($pos = mb_strpos($value, '=')) > 2) {
@@ -404,62 +397,63 @@ public static function parse(?string $arg_str = null) : ?array {
 		}
 	}
 
-	return self::$arg;
+	$res = self::$arg;
+	self::$argv = self::$arg[''];
+	unset(self::$arg['']);
+
+	return $res;
 }
 
 
 /**
- * Run cli_input and export output into $_REQUEST (prefix req:) and $_SERVER (prefix srv|server|http:).
- *
- * @example run2.php --req:name value --req:list=v1 req:list=v2
- * REQUEST={"name":"value","list":["v1","v2"]}
- * SERVER={}
- *
- * @example run2.php req:a=x --req:b http:host=domain.tld server:addr=1.2.3.4 --srv:request_method post
- * REQUEST={"a":"x","b":1}
- * SERVER={"HTTP_HOST":"domain.tld","SERVER_ADDR":"1.2.3.4","REQUEST_METHOD":"post"}
+ * Action $do is file, json, req:NAME, srv, http or server.
  */
-function cli_http_input(?string $arg_str = null) : void {
-	if (($data = cli_input($arg_str)) === null) {
-		return;
+private static function parseAction(string $do, string $value) : void {
+	$json = '';
+
+	if ($do == 'file' && file_exists($value)) {
+		$json = trim(file_get_contents($value));
 	}
+	else if ($do == 'json') {
+		$json = $value;
+	}
+	else if (substr($do, 0, 4) == 'req:') {
+		$key = substr($do, 4);
+		if (isset($_REQUEST[$key])) {
+			if (!is_array($_REQUEST[$key])) {
+				$_REQUEST[$key] = [ $_REQUEST[$key] ];
+			}
 
-	foreach ($data as $key => $value) {
-		if (empty($key)) {
-			continue;
-		}
-
-		if (empty($value)) {
-			$value = 1;
-		}
-		else if ($value[0] == '@') {
-			$n = intval(substr($value, 1));
-			$value = $data[''][$n];
-		}
-
-		$value_str = is_array($value) ? print_r($value, true) : $value;
-
-		if (substr($key, 0, 4) == 'req:') {
-			$key = substr($key, 4);
-			// \rkphplib\lib\log_debug("cli_http_input:160> set _REQUEST[$key]=[$value_str]");
-			$_REQUEST[$key] = $value;
+			// \rkphplib\lib\log_debug("CLI.parseAction:427> push '$value' to _REQUEST[$key]");
+			array_push($_REQUEST[$key], $value);
 		}
 		else {
-			if (substr($key, 0, 4) == 'srv:') {
-				$key = strtoupper(substr($key, 4));
-			}
-			else if (substr($key, 0, 5) == 'http:') {
-				$key = 'HTTP_'.strtoupper(substr($key, 5));
-			}
-			else if (substr($key, 0, 7) == 'server:') {
-				$key = 'SERVER_'.strtoupper(substr($key, 7));
-			}
-
-			if (!isset($_SERVER[$key])) {
-				// \rkphplib\lib\log_debug("cli_http_input:175> set _SERVER[$key]=[$value_str]");
-				$_SERVER[$key] = $value;
-			}
+			// \rkphplib\lib\log_debug("CLI.parseAction:420> set _REQUEST[$key]='$value'");
+			$_REQUEST[$key] = $value;
 		}
+	}
+	else if (preg_match('/^(srv|http|server):(.+)$/', $do, $match)) {
+		if ($match[1] == 'srv') {
+			$key = strtoupper($match[2]);
+		}
+		else if ($match[1] == 'http') {
+			$key = 'HTTP_'.strtoupper($match[2]);
+		}
+		else if ($match[1] == 'server') {
+			$key = 'SERVER_'.strtoupper($match[2]);
+		}
+
+		if (!isset($_SERVER[$key])) {
+			// \rkphplib\lib\log_debug("CLI.parseAction:435> set _SERVER[$key]='".$match[2].'"");
+			$_SERVER[$key] = $value;
+		}
+	}
+
+	if ($json && ((substr($json, 0, 1) == '{' && substr($json, -1) == '}') ||
+			(substr($json, 0, 1) == '[' && substr($json, -1) == ']'))) {
+		// \rkphplib\lib\log_debug([ "CLI.parseAction:419> merge self::arg with <1>", $hash ]);
+		$hash = json_decode($json, true);
+		self::$arg = array_merge(self::$arg, $hash);
 	}
 }
 
