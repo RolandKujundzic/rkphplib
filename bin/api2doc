@@ -2,11 +2,11 @@
 <?php
 
 require_once __DIR__.'/../src/SwaggerYaml.class.php';
-require_once __DIR__.'/../src/Syntax.php';
+require_once __DIR__.'/../src/CLI.php';
 require_once 'vendor/autoload.php';
 
 
-if (!\rkphplib\Syntax::check([ '@file:path/to/config.json' ])) {
+if (!\rkphplib\CLI::syntax([ '@file:path/to/config.json' ])) {
 	return;
 }
 

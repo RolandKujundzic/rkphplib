@@ -16,7 +16,7 @@ require_once PATH_RKPHPLIB.'tok/Tokenizer.class.php';
 require_once PATH_RKPHPLIB.'FSEntry.class.php';
 require_once PATH_RKPHPLIB.'File.class.php';
 require_once PATH_RKPHPLIB.'Dir.class.php';
-require_once PATH_RKPHPLIB.'Syntax.php';
+require_once PATH_RKPHPLIB.'CLI.php';
 
 use rkphplib\Exception;
 use rkphplib\Database;
@@ -219,7 +219,7 @@ public function link() : void {
  * M A I N
  */
 
-if (!\rkphplib\Syntax::check([ '@docroot' ])) {
+if (!\rkphplib\CLI::syntax([ '@docroot' ])) {
 	return;
 }
 
