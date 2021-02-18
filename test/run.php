@@ -17,6 +17,7 @@ require_once __DIR__.'/settings.php';
 $th->prepare();
 
 $tests = $th->getTests('../src', [
+	'CLI',
 	'DatabaseSessionHandler',
 	'FileSessionHandler',
 	'Session',
