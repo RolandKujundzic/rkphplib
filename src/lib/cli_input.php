@@ -7,7 +7,7 @@ require_once dirname(__DIR__).'/Exception.class.php';
 use rkphplib\Exception;
 
 /**
- * Parse _$SERVER[argv]. Detect --name[=value, | name], -n[ value] and name=value.
+ * Parse $_SERVER[argv]. Detect --name[=value, | name], -n[ value] and name=value.
  * Use key @file=path/to/file to parse file into result (suffix .ser|.conf|.json).
  * Use @file to json file and @json to load json string.
  *
