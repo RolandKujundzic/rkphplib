@@ -1,13 +1,12 @@
 #!/usr/bin/php
 <?php
 
-require_once dirname(__DIR__).'/src/SwaggerYaml.class.php';
-require_once dirname(__DIR__).'/src/lib/syntax.php';
+require_once __DIR__.'/../src/SwaggerYaml.class.php';
+require_once __DIR__.'/../src/Syntax.php';
 require_once 'vendor/autoload.php';
 
 
-
-if (!\rkphplib\lib\syntax([ '@file:path/to/config.json' ], 'description comming soon')) {
+if (!\rkphplib\Syntax::check([ '@file:path/to/config.json' ])) {
 	return;
 }
 

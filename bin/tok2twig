@@ -1,14 +1,14 @@
 #!/usr/bin/php
 <?php
 
-require_once dirname(__DIR__).'/src/tok/Tokenizer.class.php';
-require_once dirname(__DIR__).'/src/tok/TTwig.class.php';
-require_once dirname(__DIR__).'/src/File.class.php';
-require_once dirname(__DIR__).'/src/lib/syntax.php';
+require_once __DIR__.'/../src/tok/Tokenizer.class.php';
+require_once __DIR__.'/../src/tok/TTwig.class.php';
+require_once __DIR__.'/../src/File.class.php';
+require_once __DIR__.'/../src/Syntax.php';
 
 
-
-if (!\rkphplib\lib\syntax([ 'tok-test|tok-file' ], 'Tokenizer to twig converter')) {
+\rkphplib\Syntax::$desc = 'Tokenizer to twig converter';
+if (!\rkphplib\Syntax::check([ 'tok-test|tok-file' ])) {
 	return;
 }
 
@@ -24,3 +24,4 @@ else {
 }
 
 print $tok->toString()."\n";
+
