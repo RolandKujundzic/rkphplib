@@ -1,0 +1,25 @@
+CLI::argv=Array
+(
+    [0] => run.php
+    [1] => test
+)
+CLI::arg=Array
+(
+    [name] => abc
+    [u] => 1
+    [v] => 1
+    [w] => 1
+)
+_REQUEST=Array
+(
+    [name] => value
+    [list] => Array
+        (
+            [0] => v1
+            [1] => v2
+        )
+
+)
+_SERVER[HTTP_HOST]=domain.tld
+_SERVER[SERVER_ADDR]=1.2.3.4
+_SERVER[REQUEST_METHOD]=post
