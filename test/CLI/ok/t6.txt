@@ -29,3 +29,6 @@ App Description
 
 e.g. test.php Poppins 300,300i
 ---
+# cmd=[test.php sss] check=[directory] opt=[@1:dir]
+
+---
