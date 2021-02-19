@@ -15,7 +15,7 @@ namespace rkphplib;
  *
  * @code
  * CLI::$desc = 'App Description';
- * if (!CLI::syntax([ '@file:path/to/config.json' ])) {
+ * if (!CLI::syntax([ 'path/to/config.json' ], [ '@1:file' ])) {
  *   return;
  * }
  * @eol
@@ -40,33 +40,34 @@ public static $argv = [];
 
 /**
  * Abort with syntax error if count($args) != count(self::$argv).
- * Use [@CHECK:][?]PARAMETER as $args entry. Optional argument is ?name.
+ * Use ?name for optional parameter. Use @N:check[:param] to check Nth parameter.
+ * Options list $opts entry is either check (@N:check[:arg] or @check[:arg]) 
+ * or example (#N:example, #2:example value for parameter 2).
+ * Checks are @N:file, @N:dir, @N:suffix[:.jpg:.jpeg], @N:int, @N:enum or @docroot. 
+ *
  * Customize error message with self::$arg (=self::$argv[0]) and self::$desc.
  * Avoid abort if CLI::$abort = false. Define APP_HELP=quiet or
  * set CLI::$abort=false and CLI::$log = null to skip check.
  *
- * @code CLI::syntax([ '@dir:path/to/docroot', '@file:config.json' ]);
- * @code CLI::syntax([ 'fontname', '?parameter' ], [ '@docroot', '@1:Poppins', '@2:'300,300i' ]);
- * @code CLI::syntax([ '@or:on|off' ]);
+ * @code CLI::syntax([ 'path/to/docroot', 'config.json' ], [ '@1:dir', '@2:file' ]);
+ * @code CLI::syntax([ 'fontname', '?parameter' ], [ '@docroot', '#1:Poppins', '#2:300,300i' ]);
+ * @code CLI::syntax([ 'image.jpg' ], [ '@1:file', '@1:suffix:.jpg:.jpeg' ])
+ * @code CLI::syntax([ 'on|off' ], [ '@1:enum' ]);
  * @code
  * CLI::abort = false;
- * if (!CLI::syntax([ '@file:path/to/config.json' ])) {
+ * if (!CLI::syntax([ 'path/to/config.json' ], [ '@1:file' ])) {
  *   return;
  * }
  * @eol
  */
 public static function syntax(array $args = [], array $opts = []) : bool {
-	if (defined('APP_HELP')) {
-		if (count(self::$argv) < 2) {
-			return false;
-		}
-
-		self::$abort = false;
-		self::$log = null;
+	if (count(self::$argv) == 0) {
+		self::parse();
 	}
 
-	if (count(self::$arg) == 0) {
-		self::parse();
+	if (defined('APP_HELP')) {
+		self::$abort = false;
+		self::$log = null;
 	}
 
 	if (php_sapi_name() !== 'cli') {
@@ -80,23 +81,38 @@ public static function syntax(array $args = [], array $opts = []) : bool {
 	$error = [];
 	$plist = [];
 
-	for ($i = count($args) - 1; $i > -1; $i--) {
-		$param = isset(self::$argv[$i + 1]) ? self::$argv[$i + 1] : '';
-		list ($pname, $error_msg) = self::syntaxCheck($args[$i], $param);
-		array_push($plist, $pname);
-		if ($error_msg) {
-			array_push($error, $error_msg);
+	for ($i = 0; $i < count($args); $i++) {
+		$name = substr($args[$i], 0, 1) == '?' ? '['.substr($args[$i], 1).']' : $args[$i];
+		array_push($plist, $name);
+
+		if (!isset(self::$argv[$i + 1]) && substr($args[$i], 0, 1) != '?') {
+			array_push($error, 'missing parameter #'.($i + 1).' '.$args[$i]);
 		}
 	}
 
 	for ($i = 0; $i < count($opts); $i++) {
-		if ($opts[$i] == '@docroot') {
+		$error_msg = null;
+
+		if (preg_match('/@([1-9][0-9]*):(.+)$/', $opts[$i], $match)) {
+			$n = $match[1];
+			$name = substr($args[$n - 1], 0, 1) == '?' ? substr($args[$n - 1], 1) : $args[$n - 1];
+			$value = isset(self::$argv[$n]) ? self::$argv[$n] : '';
+
+			if (isset(self::$argv[$n])) {
+				$error_msg = self::checkParam($name, self::$argv[$n], $match[2]);
+			}
+		}
+		else if ($opts[$i] == '@docroot') {
 			if (!defined('DOCROOT')) {
-				array_push($error, 'DOCROOT is undefined');
+				$error_msg = 'DOCROOT is undefined';
 			}
 			else if (getcwd() != DOCROOT) {
-				array_push($error, 'run in '.DOCROOT);
+				$error_msg = 'run in '.DOCROOT;
 			}
+		}
+
+		if ($error_msg) {
+			array_push($error, $error_msg);
 		}
 	}
 
@@ -112,42 +128,52 @@ public static function syntax(array $args = [], array $opts = []) : bool {
 
 
 /**
- * Return [ parameter, '' ] or [ parameter, error ]
+ *
  */
-private static function syntaxCheck(string $name, string $value) : array {
-	$optional = false;
-	$syntax = '';
-	$error = '';
-	$check = '';
+private static function checkParam(string $name, string $value, string $arg) : ?string {
+	$tmp = explode(':', $arg);
+	$check = array_shift($tmp);
+	$error = null;
 
-	if (substr($name, 0, 1) == '@' && ($pos = strpos($name, ':')) > 2) {
-		$check = substr($name, 1, $pos);
-		$name = substr($name, $pos + 1);
-	}
-
-	if (substr($name, 0, 1) == '?') {
-		$name = substr($name, 1);
-		$optional = true;
-	}
-	else if ($value === '') {
-		$error = 'missing '.$name;
-	}
-
-	$syntax = $optional ? '['.$name.']' : $name;
-
-	if ($check && $value !== '') {
-		if ($check == 'file' && !file_exists($value)) {
-			$error = 'no such file '.$value;
-		}
-		else if ($check == 'dir' && !is_dir($value)) {
-			$error = 'no such directory '.$value;
-		}
-		else if ($check == 'or' && !in_array($name, explode('|', $value))) {
-			$error = 'invalid '.$value;
+	if ($check == 'file') {
+		if (!file_exists($value)) {
+			$error = "no such file '$value'";
 		}
 	}
+	else if ($check == 'dir') {
+		if (!is_dir($value)) {
+			$error = "no such directory '$value'";
+		}
+	}
+	else if ($check == 'enum') {
+		$elist = count($tmp) == 0 ? explode('|', $name) : $tmp;
+		if (!in_array($value, $elist)) {
+			$error = 'invalid enum '.$value;
+		}
+	}
+	else if ($check == 'int') {
+		if (!is_integer($value)) {
+			$error = 'invalid int '.$value;
+		}
+	}
+	else if ($check == 'suffix') {
+		$ok = false;
+		for ($i = 0; !$ok && $i < count($tmp); $i++) {
+			$sl = -1 * strlen($tmp[$i]);
+			if (substr($value, $sl) === $tmp[$i]) {
+				$ok = true;
+			}
+		}
 
-	return [ $syntax, $error ];
+		if (!$ok) {
+			$error = 'invalid suffix in '.$value.' use '.join('|', $tmp);
+		}
+	}
+	else {
+		$error = "invalid check '$check'";
+	}
+
+	return $error;
 }
 
 
@@ -155,18 +181,7 @@ private static function syntaxCheck(string $name, string $value) : array {
  * 
  */
 private static function syntaxError(string $syntax, array $error = [], array $opts = []) : void {
-	$msg = self::$desc ? "\nSYNTAX: $syntax\n\n" : "\nSYNTAX: $syntax\n\n".self::$desc."\n\n";
-
-	$plist = [];
-	for ($i = 0; $i < count($opts); $i++) {
-		if (preg_match('/^@[1-9]:(.+)$/', $opts[$i], $match)) {
-			array_push($plist, $match[1]);
-		}
-	}
-
-	if (count($plist)) {
-		$msg .= $syntax.' '.join(' ', $plist)."\n\n";
-	}
+	$msg = self::$desc === '' ? "\nSYNTAX: $syntax\n\n" : "\nSYNTAX: $syntax\n\n".self::$desc."\n\n";
 
 	if (count($error)) {
 		$msg .= join("\n", $error)."\n\n";
