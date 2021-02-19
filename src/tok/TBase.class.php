@@ -31,7 +31,7 @@ use function rkphplib\lib\entity;
 
 
 if (php_sapi_name() == 'cli') {
-	require_once __DIR__.'/CLI.php';
+	require_once __DIR__.'/../CLI.php';
 	\rkphplib\CLI::parse();
 }
 
