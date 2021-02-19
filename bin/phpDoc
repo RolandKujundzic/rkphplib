@@ -17,7 +17,7 @@ require_once PATH_RKPHPLIB.'YAML.class.php';
  * M A I N
  */
 
-if (!\rkphplib\CLI::syntax([ '@file:path/to/code.php' ])) {
+if (!\rkphplib\CLI::syntax([ 'path/to/code.php' ], [ '@1:file', '@1:suffix:.php' ])) {
 	return;
 }
 

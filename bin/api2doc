@@ -6,7 +6,7 @@ require_once __DIR__.'/../src/CLI.php';
 require_once 'vendor/autoload.php';
 
 
-if (!\rkphplib\CLI::syntax([ '@file:path/to/config.json' ])) {
+if (!\rkphplib\CLI::syntax([ 'path/to/config.json' ], [ '@1:file', '@1:suffix:.json' ])) {
 	return;
 }
 
