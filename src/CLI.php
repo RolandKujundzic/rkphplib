@@ -116,6 +116,11 @@ public static function syntax(array $args = [], array $opts = []) : bool {
 		}
 	}
 
+	if (!empty(self::$arg['help'])) {
+		self::syntaxError(self::$app.' '.join(' ', $plist), [], $opts);
+		return false;
+	}
+
 	$res = true;
 
 	if (count($error)) {
@@ -182,6 +187,17 @@ private static function checkParam(string $name, string $value, string $arg) : ?
  */
 private static function syntaxError(string $syntax, array $error = [], array $opts = []) : void {
 	$msg = self::$desc === '' ? "\nSYNTAX: $syntax\n\n" : "\nSYNTAX: $syntax\n\n".self::$desc."\n\n";
+
+	$example = [];
+	foreach ($opts as $opt) {
+		if (preg_match('/^#([1-9][0-9]*):(.+)$/', $opt, $match)) {
+			$example[$match[1] - 1] = $match[2];
+		}
+	}
+
+	if (count($example) > 0) {
+		$msg .= 'e.g. '.self::$app.' '.join(' ', $example)."\n\n";
+	}
 
 	if (count($error)) {
 		$msg .= join("\n", $error)."\n\n";

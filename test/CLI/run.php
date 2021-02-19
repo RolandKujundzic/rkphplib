@@ -17,4 +17,4 @@ function syntax(string $cmd, array $check, array $opt = []) : void {
 
 global $th;
 
-$th->run(1, 5);
+$th->run(1, 6);
