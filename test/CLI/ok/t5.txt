@@ -1,0 +1,15 @@
+# cmd=[test.php Herr] check=[gender] opt=[@1:enum:Herr:Frau]
+
+---
+# cmd=[test.php Mr divorced] check=[Mr|Mrs|married|single] opt=[@1:enum|@2:enum]
+SYNTAX: test.php Mr|Mrs married|single
+
+invalid enum divorced use married|single
+---
+# cmd=[test.php] check=[] opt=[@docroot]
+SYNTAX: test.php 
+
+App Description
+
+run in /home/rk/workspace
+---
