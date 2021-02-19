@@ -11,10 +11,10 @@ function syntax(string $cmd, array $check, array $opt = []) : void {
 	CLI::$log = &$error;
 	CLI::parse($cmd);
 	CLI::syntax($check, $opt);
-	print 'cmd=['.join(' ', CLI::$argv).'] check=['.join('|', $check).
-		'] opt=['.join('|', $opt)."]\nlog=[".trim(CLI::$log)."]\n---\n";
+	print '# cmd=['.join(' ', CLI::$argv).'] check=['.join('|', $check).
+		'] opt=['.join('|', $opt)."]\n".trim(CLI::$log)."\n---\n";
 }
 
 global $th;
 
-$th->run(1, 4);
+$th->run(1, 5);

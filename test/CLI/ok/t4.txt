@@ -1,22 +1,22 @@
-cmd=[test.php] check=[action] opt=[]
-log=[SYNTAX: test.php action
+# cmd=[test.php] check=[action] opt=[]
+SYNTAX: test.php action
 
-missing parameter #1 action]
+missing parameter #1 action
 ---
-cmd=[test.php abc] check=[action] opt=[]
-log=[]
----
-cmd=[test.php abc] check=[path/to/config.json] opt=[@1:file]
-log=[SYNTAX: test.php path/to/config.json
+# cmd=[test.php abc] check=[action] opt=[]
 
-no such file 'abc']
 ---
-cmd=[check.php run.php] check=[script.php] opt=[@1:file]
-log=[]
+# cmd=[test.php abc] check=[path/to/config.json] opt=[@1:file]
+SYNTAX: test.php path/to/config.json
+
+no such file 'abc'
 ---
-cmd=[convert xyz.png] check=[image.jpg] opt=[@1:file|@1:suffix:.jpg|.jpeg]
-log=[SYNTAX: test.php image.jpg
+# cmd=[check.php run.php] check=[script.php] opt=[@1:file]
+
+---
+# cmd=[convert xyz.png] check=[image.jpg] opt=[@1:file|@1:suffix:.jpg|.jpeg]
+SYNTAX: test.php image.jpg
 
 no such file 'xyz.png'
-invalid suffix in xyz.png use .jpg|.jpeg]
+invalid suffix in xyz.png use .jpg|.jpeg
 ---

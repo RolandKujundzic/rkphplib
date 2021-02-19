@@ -52,7 +52,7 @@ public static $argv = [];
  * @code CLI::syntax([ 'path/to/docroot', 'config.json' ], [ '@1:dir', '@2:file' ]);
  * @code CLI::syntax([ 'fontname', '?parameter' ], [ '@docroot', '#1:Poppins', '#2:300,300i' ]);
  * @code CLI::syntax([ 'image.jpg' ], [ '@1:file', '@1:suffix:.jpg:.jpeg' ])
- * @code CLI::syntax([ 'on|off' ], [ '@1:enum' ]);
+ * @code CLI::syntax([ 'on|off', 'gender' ], [ '@1:enum', '@1:enum:m:f' ]);
  * @code
  * CLI::abort = false;
  * if (!CLI::syntax([ 'path/to/config.json' ], [ '@1:file' ])) {
@@ -148,7 +148,7 @@ private static function checkParam(string $name, string $value, string $arg) : ?
 	else if ($check == 'enum') {
 		$elist = count($tmp) == 0 ? explode('|', $name) : $tmp;
 		if (!in_array($value, $elist)) {
-			$error = 'invalid enum '.$value;
+			$error = 'invalid enum '.$value.' use '.join('|', $elist);
 		}
 	}
 	else if ($check == 'int') {
