@@ -30,9 +30,9 @@ use function rkphplib\lib\kv2conf;
 use function rkphplib\lib\entity;
 
 
-if (php_sapi_name() == 'cli' && !defined('SETTINGS_CLI_INPUT')) {
-	require_once __DIR__.'/../lib/cli_input.php';
-	\rkphplib\lib\cli_input();
+if (php_sapi_name() == 'cli') {
+	require_once __DIR__.'/CLI.php';
+	\rkphplib\CLI::parse();
 }
 
 if (!defined('SETTINGS_REQ_CRYPT')) {
