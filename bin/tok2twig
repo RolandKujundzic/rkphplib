@@ -8,7 +8,7 @@ require_once __DIR__.'/../src/CLI.php';
 
 
 \rkphplib\CLI::$desc = 'Tokenizer to twig converter';
-if (!\rkphplib\CLI::syntax([ 'tok-test|tok-file' ])) {
+if (!\rkphplib\CLI::syntax([ 'tok-string|tok-file' ])) {
 	return;
 }
 
