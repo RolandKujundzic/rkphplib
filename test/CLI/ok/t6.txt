@@ -1,0 +1,31 @@
+# cmd=[test.php sss] check=[directory] opt=[@1:dir]
+SYNTAX: test.php directory
+
+App Description
+
+no such directory 'sss'
+---
+# cmd=[test.php in] check=[directory] opt=[@1:dir]
+
+---
+# cmd=[test.php abc] check=[directory] opt=[@1:dir]
+SYNTAX: test.php directory
+
+App Description
+---
+# cmd=[font.php Arial] check=[fontname|?parameter] opt=[@docroot|#1:Poppins|#2:300,300i]
+SYNTAX: test.php fontname [parameter]
+
+App Description
+
+e.g. test.php Poppins 300,300i
+
+run in /home/rk/workspace
+---
+# cmd=[font.php] check=[fontname|?parameter] opt=[@docroot|#1:Poppins|#2:300,300i]
+SYNTAX: test.php fontname [parameter]
+
+App Description
+
+e.g. test.php Poppins 300,300i
+---
