@@ -2,12 +2,10 @@
 
 namespace rkphplib;
 
+
 /**
  * Command Line Interface Helper. Parse Arguments, run Syntax Check in cli
  * Application.
- *
- * Define APP_HELP=1 to show help syntax and return false.
- * Use APP_HELP=quiet to disable output.
  *
  * @code
  * CLI::parse();
@@ -27,6 +25,10 @@ namespace rkphplib;
  */
 class CLI {
 
+public static $abort = true;
+
+public static $log = STDERR;
+
 public static $app = '';
 
 public static $desc = '';
@@ -35,84 +37,74 @@ public static $arg = [];
 
 public static $argv = [];
 
-private static $arg_list = [];
-
-private static $arg_num = 0;
-
-private static $is_error = false;
-
-private static $example = [];
-
 
 /**
- * Abort if not cli mode and APP_HELP is undefined.
+ * Abort with syntax error if count($args) != count(self::$argv).
+ * Use [@CHECK:][?]PARAMETER as $args entry. Optional argument is ?name.
+ * Customize error message with self::$arg (=self::$argv[0]) and self::$desc.
+ * Avoid abort if CLI::$abort = false. Define APP_HELP=quiet or
+ * set CLI::$abort=false and CLI::$log = null to skip check.
+ *
+ * @code CLI::syntax([ '@dir:path/to/docroot', '@file:config.json' ]);
+ * @code CLI::syntax([ 'fontname', '?parameter' ], [ '@docroot', '@1:Poppins', '@2:'300,300i' ]);
+ * @code CLI::syntax([ '@or:on|off' ]);
+ * @code
+ * CLI::abort = false;
+ * if (!CLI::syntax([ '@file:path/to/config.json' ])) {
+ *   return;
+ * }
+ * @eol
  */
-private static function init() : bool {
-	if (defined('APP_HELP') && !isset($_SERVER['argv'])) {
-		return false;
+public static function syntax(array $args = [], array $opts = []) : bool {
+	if (defined('APP_HELP')) {
+		if (count(self::$argv) < 2) {
+			return false;
+		}
+
+		self::$abort = false;
+		self::$log = null;
+	}
+
+	if (count(self::$arg) == 0) {
+		self::parse();
 	}
 
 	if (php_sapi_name() !== 'cli') {
-		fwrite(STDERR, "\nERROR: run as cli\n\n\n");
-		exit(1);
-	}
-
-	if (empty($_SERVER['argv'][0])) {
-		fwrite(STDERR, "\nERROR: argv[0] missing\n\n\n");
-		exit(1);
+		self::syntaxError('run as cli');
 	}
 
 	if (!self::$app) {
-		self::$app = $_SERVER['argv'][0];
+		self::$app = self::$argv[0];
 	}
 
-	self::$is_error = false;
-	self::$example = [];
-}
+	$error = [];
+	$plist = [];
 
-
-/**
- * Abort with syntax error if count($argv_example) != count($_SERVER['argv']) or if 
- * argv_example check failed. Exit with syntax message if $_SERVER['argv'][1] == '?' or 'help'.
- * Show APP_DESC if defined. Use APP instead of $_SERVER['argv'][0] if defined. 
- * Use '@file:path/to/file' to enable file exists check for parameter.
- * Use '@dir:path/to/directory' to enable directory exists check for parameter.
- * Use '@?:optional' for optional parameter
- * Use '@example:...' for example of previous parameter
- * Use '@or:on|off' to ensure parameter is either 'on' or 'off'.
- * Use '@docroot' for getcwd == DOCROOT check.
- * Use --name=value for optional parameter name - define(PARAMETER_NAME, value).
- */
-public static function check(array $arg_list = []) : bool {
-	self::$arg_list = $arg_list;
-
-	if (!self::init()) {
-		return false;
+	for ($i = count($args) - 1; $i > -1; $i--) {
+		$param = isset(self::$argv[$i + 1]) ? self::$argv[$i + 1] : '';
+		list ($pname, $error_msg) = self::syntaxCheck($args[$i], $param);
+		array_push($plist, $pname);
+		if ($error_msg) {
+			array_push($error, $error_msg);
+		}
 	}
 
-	self::$arg_num = (count(self::$arg_list) > 0) ? count(self::$arg_list) + 1 : 0;
-
-	for ($i = 0; !self::$is_error && $i < count(self::$arg_list); $i++) {
-		self::checkParam(self::arg_list[$i]);
+	for ($i = 0; $i < count($opts); $i++) {
+		if ($opts[$i] == '@docroot') {
+			if (!defined('DOCROOT')) {
+				array_push($error, 'DOCROOT is undefined');
+			}
+			else if (getcwd() != DOCROOT) {
+				array_push($error, 'run in '.DOCROOT);
+			}
+		}
 	}
 
 	$res = true;
-	$app_desc = self::getAppDesc();
 
-	if (defined('APP_HELP')) {
-		if (APP_HELP != 'quiet') {
-			fwrite(STDERR, "\nSYNTAX: $app ".join(' ', $argv_example)."\n$app_desc\n\n");
-		}
-
+	if (count($error)) {
+		self::syntaxError(self::$app.' '.join(' ', $plist), $error, $opts);
 		$res = false;
-	}
-	else if (!empty($_SERVER['argv'][1]) && ('?' == $_SERVER['argv'][1] || 'help' == $_SERVER['argv'][1])) {
-		print "\nSYNTAX: $app ".join(' ', $argv_example)."\n$app_desc\n\n";
-		exit(0);
-	}
-	else if ($is_error || ($arg_num > 0 && $arg_num != count($_SERVER['argv']))) {
-		fwrite(STDERR, "\nSYNTAX: $app ".join(' ', $argv_example)."\n$app_desc\n$error_msg\n");
-		exit(1);
 	}
 
 	return $res;
@@ -120,168 +112,79 @@ public static function check(array $arg_list = []) : bool {
 
 
 /**
+ * Return [ parameter, '' ] or [ parameter, error ]
+ */
+private static function syntaxCheck(string $name, string $value) : array {
+	$optional = false;
+	$syntax = '';
+	$error = '';
+	$check = '';
+
+	if (substr($name, 0, 1) == '@' && ($pos = strpos($name, ':')) > 2) {
+		$check = substr($name, 1, $pos);
+		$name = substr($name, $pos + 1);
+	}
+
+	if (substr($name, 0, 1) == '?') {
+		$name = substr($name, 1);
+		$optional = true;
+	}
+	else if ($value === '') {
+		$error = 'missing '.$name;
+	}
+
+	$syntax = $optional ? '['.$name.']' : $name;
+
+	if ($check && $value !== '') {
+		if ($check == 'file' && !file_exists($value)) {
+			$error = 'no such file '.$value;
+		}
+		else if ($check == 'dir' && !is_dir($value)) {
+			$error = 'no such directory '.$value;
+		}
+		else if ($check == 'or' && !in_array($name, explode('|', $value))) {
+			$error = 'invalid '.$value;
+		}
+	}
+
+	return [ $syntax, $error ];
+}
+
+
+/**
  * 
  */
-private static function getAppDesc() {
-	$desc = self::$desc ? "\n".self::$desc."\n\n".self::$app : self::$app;
+private static function syntaxError(string $syntax, array $error = [], array $opts = []) : void {
+	$msg = self::$desc ? "\nSYNTAX: $syntax\n\n" : "\nSYNTAX: $syntax\n\n".self::$desc."\n\n";
 
-	if (count(self::$example) == 0) {
-		return $desc;
+	$plist = [];
+	for ($i = 0; $i < count($opts); $i++) {
+		if (preg_match('/^@[1-9]:(.+)$/', $opts[$i], $match)) {
+			array_push($plist, $match[1]);
+		}
 	}
 
-	for ($i = 0; $i < count(self::$example); $i++) {
-		$pos = self::$example[$j];
-		$desc .= " '".str_replace("'", "\\'", substr($argv_example[$pos], 9))."'";
-			$arg_num--;
-		}
-
-		for ($j = count($example) - 1; $j >= 0; $j--) {
-			array_splice($argv_example, $example[$j], 1);
-		}
-
-		$app_desc .= "\n\n"; 
+	if (count($plist)) {
+		$msg .= $syntax.' '.join(' ', $plist)."\n\n";
 	}
 
+	if (count($error)) {
+		$msg .= join("\n", $error)."\n\n";
+	}
 
-
-/**
- *
- */
-private static function checkParam(string $param, int $i) : void {
-	$arg = isset($_SERVER['argv'][$i + 1]) ? $_SERVER['argv'][$i + 1] : ''; 
-	$error_msg = '';
-
-	if (substr($param, 0, 1) == '@' && ($pos = strpos($param, ':')) > 2) {
-		$do = substr($param, 1, $pos - 1);
-
-		if ($do == '?') {
-			$error_msg = self::optional(substr($param, $pos), $arg); 
-		}
-		else {
-			$error_msg = self::$do(substr($param, $pos), $arg); 
-		}
-
-		if ($error_msg) {
-			self::$is_error = true;
-		}
-
-		if ($error_msg == '1') {
-			$error_msg = '';
-		}
+	if (is_null(self::$log)) {
+		// no error output
+	}
+	else if (is_string(self::$log)) {
+		self::$log = $msg;
 	}
 	else {
-		$pos = 0;
-		$do = '';
+		fwrite(self::$log, $msg);
 	}
 
-}
-
-
-/**
- *
- */
-private static function ToDo(string $param, string $arg) : string {
-/*
-		else if ($do == '@?') {
-			// optional parameter
-			$argv_example[$i] = '['.substr($param, 3).']';
-			$arg_num--;
-			$pos = 0;
-		}
-		else if ($do == 'req') {
-			$req_keys = explode(',', substr($param, 5));
-			$req_example='';
-			$arg_num--;
-			$pos = 0;
-
-			foreach ($req_keys as $rkey) {
-				if (!isset($_REQUEST[$rkey])) {
-					$req_example .= ' req:'.$rkey.'=…';
-					$is_error = true;
-				}
-				else {
-					$arg_num++;
-				}
-			}
-
-			$argv_example[$i] = ltrim($req_example);
-		}
-		else if ($do == 'srv') {
-			$srv_keys = explode(',', substr($param, 5));
-			$srv_example='';
-			$arg_num--;
-			$pos = 0;
-
-			foreach ($srv_keys as $skey) {
-				if (!isset($_SERVER[$skey])) {
-					$srv_example .= ' srv:'.$skey.'=…';
-					$is_error = true;
-				}
-				else {
-					$arg_num++;
-				}
-			}
-
-			$argv_example[$i] = ltrim($srv_example);
-		}
-		else if ($do == 'example') {
-			array_push($example, $i);
-			$arg_num--;
-			$pos = 0;
-		}
-
-
-		else if ($param == '@docroot') {
-			if (!defined('DOCROOT')) {
-				$error_msg = "DOCROOT is undefined";
-				$is_error = true;
-			}
-			else if (getcwd() != DOCROOT) {
-				$error_msg = 'run in '.DOCROOT;
-				$is_error = true;
-			}
-
-			$arg_num--;
-		}
-		else if (substr($param, 0, 2) == '--' && ($pos = strpos($param, '=')) > 2) {
-			list ($key, $value) = explode('=', substr($param, 2), 2);
-			define('PARAMETER_'.$key, $value);
-			$arg_num--;
-		}
-
-		if ($pos > 0) {
-			$argv_example[$i] = substr($argv_example[$i], $pos);
-		}
-
-		if (!empty($error_msg)) {
-			$error_msg = "ERROR: $error_msg\n\n";
-		}
+	if (self::$abort) {
+		exit(1);
 	}
-*/
-}
-
-
-/**
- *
- */
-private static function file(string $param, string $arg) : string {
-	return ($arg && !file_exists($arg)) ? 'no such file '.$arg : '';
-}
-
-
-/**
- *
- */
-private static function dir(string $param, string $arg) : string {
-	return ($arg && !is_dir($arg)) ? 'no such directory '.$arg : '';
-}
-
-
-/**
- *
- */
-private static function or(string $param, string $arg) : string {
-	return (!$arg || !in_array($arg, explode('|', $param))) ? '1' : '';
 }
 
 
@@ -324,11 +227,10 @@ public static function parse(?string $arg_str = null) : ?array {
 	if (!is_null($arg_str)) {
 		$arg = preg_split('/\s+/', $arg_str);
 	}
-	else {
-		if (php_sapi_name() !== 'cli') {
-			return null;
-		}
-		
+	else if (php_sapi_name() !== 'cli') {
+		return null;
+	}
+	else {	
 		$arg = $_SERVER['argv'];
 	}
 
@@ -370,7 +272,7 @@ public static function parse(?string $arg_str = null) : ?array {
 				for ($k = 1; $k < $plen; $k++) {
 					$akey = $value[$k];
 					if (ord($akey) < 97 || ord($akey) > 122) {
-						throw new Exception('invalid flag '.$akey, $value);
+						throw new \Exception('invalid flag '.$akey, $value);
 					}
 
 					// \rkphplib\lib\log_debug("CLI.parse:378> $akey=1");
