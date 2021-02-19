@@ -1,14 +1,16 @@
 #!/usr/bin/php
 <?php
 
-if (!defined('PATH_RKPHPLIB')) {
-	// assume: APP/php/rkphplib/bin/
-	require_once dirname(dirname(dirname(__DIR__))).'/settings.php';
-}
-else if (!defined('DOCROOT')) {
-	define('DOCROOT', dirname(dirname(PATH_RKPHPLIB)));
+$docroot = getcwd();
+while (is_dir($docroot) && $docroot != '/' && !file_exists($docroot.'/settings.php')) {
+	$docroot = dirname($docroot);
 }
 
+if (!file_exists($docroot.'/settings.php')) {
+	die("\nMissing settings.php\n\n");
+}
+
+require_once $docroot.'/settings.php';
 require_once PATH_RKPHPLIB.'Database.class.php';
 require_once PATH_RKPHPLIB.'tok/TokPlugin.iface.php';
 require_once PATH_RKPHPLIB.'tok/TLanguage.class.php';
@@ -219,7 +221,7 @@ public function link() : void {
  * M A I N
  */
 
-if (!\rkphplib\CLI::syntax([ '@docroot' ])) {
+if (!\rkphplib\CLI::syntax([], [ '@docroot' ])) {
 	return;
 }
 
