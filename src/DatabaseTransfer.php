@@ -3,10 +3,7 @@
 namespace rkphplib;
 
 require_once __DIR__.'/Database.class.php';
-require_once __DIR__.'/lib/latin1_to_utf8.php';
 require_once __DIR__.'/traits/Log.php';
-
-use function rkphplib\lib\latin1_to_utf8;
 
 
 /**
@@ -38,6 +35,10 @@ public function __construct(array $opt = []) {
 	$this->db = Database::getInstance(SETTINGS_DSN);
 	$this->db_in = Database::getInstance($opt['dsn']);
 
+	if (!empty($this->conf['latin1'])) {
+		$this->db_in->charset = 'latin1';
+	}
+
 	$this->qmap= $opt['qmap'];
 	unset($opt['qmap']);
 
@@ -46,26 +47,44 @@ public function __construct(array $opt = []) {
 
 
 /**
- * Run "DELETE * FROM $table", conf[table.select] and conf[table.insert].
+ * Run "DELETE * FROM $table", conf[select.table] and conf[insert.table].
  */
 public function selectInsert(string $table) : void {
-	$this->log("Transfer into $table");
-
 	$this->db->execute("DELETE FROM ".Database::table($table));
 
 	$query = $this->qmap['select.'.$table];
-	$this->log(substr($query, 0, 80).' …', 4);
 	$dbres = $this->db_in->select($query);
 
+	$this->log('Transfer '.count($dbres)." rows to $table");
 	$iqn = 'insert.'.$table;
 	$this->db->setQuery($iqn, $this->qmap[$iqn]);
-	foreach ($dbres as $row) {
-		if (!empty($this->conf['latin1'])) {
-			latin1_to_utf8($row);
-		}
+	for ($i = 0; $i < count($dbres); $i++) {
+		$query = $this->db->getQuery($iqn, $dbres[$i]);
+		$this->log('Insert row '.($i + 1), 4);
+		$this->db->execute($query);
+	}
+}
 
-		$query = $this->db->getQuery($iqn, $row);
-		$this->log(substr($query, 0, 80).' …', 4);
+
+/**
+ * Run conf[select.name] and conf[update.name].
+ */
+public function selectUpdate(string $name, string $desc = '') : void {
+	$query = $this->qmap['select.'.$name];
+	$dbres = $this->db_in->select($query);
+
+	if ($desc) {
+		$this->log($desc.' ('.count($dbres).')');
+	}
+	else {
+		$this->log('Update '.count($dbres)." rows");
+	}
+
+	$uqn = 'update.'.$name;
+	$this->db->setQuery($uqn, $this->qmap[$uqn]);
+	for ($i = 0; $i < count($dbres); $i++) {
+		$query = $this->db->getQuery($uqn, $dbres[$i]);
+		$this->log('Update row '.($i + 1), 4);
 		$this->db->execute($query);
 	}
 }
