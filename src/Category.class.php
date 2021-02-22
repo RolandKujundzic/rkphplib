@@ -5,7 +5,6 @@ namespace rkphplib;
 require_once __DIR__.'/Database.class.php';
 require_once __DIR__.'/Exception.class.php';
 
-use rkphplib\ADatabase;
 use rkphplib\Database;
 use rkphplib\Exception;
 
@@ -29,7 +28,7 @@ public function setDSN(string $dsn, string $table = 'category', array $extra_col
 	$db = new Database();
 	$db->setDSN($dsn);
 
-	$table = ADatabase::escape_name($table);
+	$table = Database::table($table);
 
 	$db->setQuery('drop', "DROP TABLE IF EXISTS $table");
 

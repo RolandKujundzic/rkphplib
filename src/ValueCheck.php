@@ -283,13 +283,13 @@ public static function isUnique(string $value, array $p) : bool {
 
 	if (strpos($p[0], '@') !== false) {
 		list ($table, $owner) = explode('@', $p[0]);
-		$query .= \rkphplib\ADatabase::escape_name($table).' WHERE owner='.intval($owner).' AND ';
+		$query .= \rkphplib\Database::table($table).' WHERE owner='.intval($owner).' AND ';
 	}
 	else {
-		$query .= \rkphplib\ADatabase::escape_name($p[0]).' WHERE ';
+		$query .= \rkphplib\Database::table($p[0]).' WHERE ';
 	}
 
-	$query .= \rkphplib\ADatabase::escape_name($p[1]).' = {:=u_val}';
+	$query .= \rkphplib\Database::table($p[1]).' = {:=u_val}';
 	$id_val = '';
 
 	if (!empty($p[3])) {
@@ -297,7 +297,7 @@ public static function isUnique(string $value, array $p) : bool {
 			$query .= ' '.$p[3];
 		}
 		else if (!empty($p[4])) {
-			$query .= ' AND '.\rkphplib\ADatabase::escape_name($p[3]).' != {:=id_val}';
+			$query .= ' AND '.\rkphplib\Database::table($p[3]).' != {:=id_val}';
 			$id_val = $p[4];
 		}
 	}
