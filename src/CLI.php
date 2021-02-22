@@ -327,7 +327,7 @@ public static function parse(?string $arg_str = null) : ?array {
 		$key = null;
 	
 		if ($no_parse) {
-			// \rkphplib\lib\log_debug("CLI::parse:290> push $value");
+			// \rkphplib\lib\log_debug("CLI::parse:330> push $value");
 			array_push(self::$arg, $value);
 		}
 		else if ($value == '--') {
@@ -343,7 +343,7 @@ public static function parse(?string $arg_str = null) : ?array {
 			}
 			else {
 				$akey = substr($value, 2);
-				// \rkphplib\lib\log_debug("CLI::parse:306> $akey=1");
+				// \rkphplib\lib\log_debug("CLI::parse:346> $akey=1");
 				self::$arg[$akey] = 1;
 			}
 		}
@@ -352,7 +352,7 @@ public static function parse(?string $arg_str = null) : ?array {
 
 			if ($plen == 2) {
 				$akey = $value[1];
-				// \rkphplib\lib\log_debug("CLI::parse:315> $akey=1");
+				// \rkphplib\lib\log_debug("CLI::parse:355> $akey=1");
 				self::$arg[$akey] = 1;
 			}
 			else {
@@ -362,7 +362,7 @@ public static function parse(?string $arg_str = null) : ?array {
 						throw new \Exception('invalid flag '.$akey, $value);
 					}
 
-					// \rkphplib\lib\log_debug("CLI::parse:325> $akey=1");
+					// \rkphplib\lib\log_debug("CLI::parse:365> $akey=1");
 					self::$arg[$akey] = 1;
 				}
 			}
@@ -380,7 +380,7 @@ public static function parse(?string $arg_str = null) : ?array {
 				array_push(self::$arg[$key], $value);
 			}
 			else {
-				// \rkphplib\lib\log_debug("CLI::parse:343> $key=$value");
+				// \rkphplib\lib\log_debug("CLI::parse:383> $key=$value");
 				self::$arg[$key] = $value;
 			}
 		}
@@ -413,11 +413,11 @@ private static function parseAction(string $do, string $value) : void {
 				$_REQUEST[$key] = [ $_REQUEST[$key] ];
 			}
 
-			// \rkphplib\lib\log_debug("CLI::parseAction:376> push '$value' to _REQUEST[$key]");
+			// \rkphplib\lib\log_debug("CLI::parseAction:416> push '$value' to _REQUEST[$key]");
 			array_push($_REQUEST[$key], $value);
 		}
 		else {
-			// \rkphplib\lib\log_debug("CLI::parseAction:380> set _REQUEST[$key]='$value'");
+			// \rkphplib\lib\log_debug("CLI::parseAction:420> set _REQUEST[$key]='$value'");
 			$_REQUEST[$key] = $value;
 		}
 	}
@@ -433,14 +433,14 @@ private static function parseAction(string $do, string $value) : void {
 		}
 
 		if (!isset($_SERVER[$key])) {
-			// \rkphplib\lib\log_debug("CLI::parseAction:396> set _SERVER[$key]='".$match[2].'"");
+			// \rkphplib\lib\log_debug("CLI::parseAction:436> set _SERVER[$key]='".$match[2].'"");
 			$_SERVER[$key] = $value;
 		}
 	}
 
 	if ($json && ((substr($json, 0, 1) == '{' && substr($json, -1) == '}') ||
 			(substr($json, 0, 1) == '[' && substr($json, -1) == ']'))) {
-		// \rkphplib\lib\log_debug([ "CLI::parseAction:403> merge self::arg with <1>", $hash ]);
+		// \rkphplib\lib\log_debug([ "CLI::parseAction:443> merge self::arg with <1>", $hash ]);
 		$hash = json_decode($json, true);
 		self::$arg = array_merge(self::$arg, $hash);
 	}
