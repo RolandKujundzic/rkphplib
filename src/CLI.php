@@ -90,6 +90,7 @@ public static function confirm(string $question, string $default = 'n', bool $ab
 		exit(1);
 	}
 
+	print "\n";
 	return $res;
 }
 
