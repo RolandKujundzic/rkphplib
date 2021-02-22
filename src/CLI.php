@@ -27,15 +27,17 @@ class CLI {
 
 public static $abort = true;
 
-public static $log = STDERR;
-
 public static $app = '';
-
-public static $desc = '';
 
 public static $arg = [];
 
 public static $argv = [];
+
+public static $autoconfirm = false;
+
+public static $desc = '';
+
+public static $log = STDERR;
 
 
 /**
@@ -51,6 +53,44 @@ public static function get(string $name) : string {
  */
 public static function flag(string $name) : bool {
 	return isset(self::$arg[$name]) && self::$arg[$name] == 1;
+}
+
+
+/**
+ * Ask confirmation (y|n). Abort if $opt[abort] = true and Keypress != 'y'.
+ *
+ * @code if (CLI::confirm('Use mailer')) …
+ * @code CLI::autoconfirm = true; if (CLI::confirm('Install', 'y', true)) …
+ */
+public static function confirm(string $question, string $default = 'n', bool $abort = false) : bool {
+	$yn = $default == 'n' ? 'y [n]' : '[y] n';
+	$res = null;
+
+	if (CLI::$autoconfirm) {
+		return $default == 'y';
+	}
+
+	print "\e[0;35m".$question."\e[0m  $yn  ";
+	do {
+		readline_callback_handler_install('', function() {});
+		$char = stream_get_contents(STDIN, 1);
+		readline_callback_handler_remove();
+
+		if ($char == "\n") {
+			$char = $default;
+		}
+
+		if ($char == 'y' || $char == 'n') {
+			$res = $char == 'y';
+		}
+	}
+	while (is_null($res));
+
+	if (!$res && $abort) {
+		exit(1);
+	}
+
+	return $res;
 }
 
 
