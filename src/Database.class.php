@@ -63,6 +63,23 @@ public static function create(string $dsn = '', array $query_map = []) : object 
 
 
 /**
+ * Return escaped table name $table
+ */
+public static function table(string $table) : string {
+	return ADatabase::escape_name($table);
+}
+
+
+/**
+ * Return escaped $value 
+ */
+public static function esc(string $value, bool $quote = false) : string {
+	$res = $quote ? "'".ADatabase::escape($value)."'" : ADatabase::escape($value);
+	return $res;
+}
+
+
+/**
  * Singelton method. Return unused ADatabase object instance with dsn from pool.
  * Use query_map with no prefix. Use SETTINGS_DSN if $dsn is empty (=default). 
  */
