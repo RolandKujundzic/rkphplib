@@ -52,12 +52,20 @@ public function __construct(array $opt = []) {
 public function selectInsert(string $table) : void {
 	$this->db->execute("DELETE FROM ".Database::table($table));
 
-	$query = $this->qmap['select.'.$table];
-	$dbres = $this->db_in->select($query);
-
-	$this->log('Transfer '.count($dbres)." rows to $table");
 	$iqn = 'insert.'.$table;
-	$this->db->setQuery($iqn, $this->qmap[$iqn]);
+	if (isset($this->qmap[$table]) && is_array($this->qmap[$table])) {
+		$query = $this->db->buildQuery($table, 'insert', $this->qmap[$table]);
+		$this->db->setQuery($iqn, $query);
+		$query = $this->db->buildQuery($table, 'select', $this->qmap[$table]);
+	}
+	else {
+		$this->db->setQuery($iqn, $this->qmap[$iqn]);
+		$query = $this->qmap['select.'.$table];
+	}
+
+	$dbres = $this->db_in->select($query);
+	$this->log('Transfer '.count($dbres)." rows to $table");
+
 	for ($i = 0; $i < count($dbres); $i++) {
 		$query = $this->db->getQuery($iqn, $dbres[$i]);
 		$this->log('Insert row '.($i + 1), 4);
