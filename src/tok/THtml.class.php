@@ -34,6 +34,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['html:nobr'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['html'] = 0;
 
+	$plugin['google'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['text2html'] = 0;
 
 	$plugin['input:checkbox'] = TokPlugin::KV_BODY;
@@ -49,11 +50,27 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
+ * Return google-analytics script include.
+ */
+public static function tok_google(string $id) : string {
+	if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $id)) {
+		throw new Exception("invalid google analytics id '$id'");
+	}
+
+	return '<script src="http://www.google-analytics.com/urchin.js" type="text/javascript"></script>
+<script type="text/javascript">
+_uacct = "'.$id.'";
+urchinTracker();
+</script>';
+}
+
+
+/**
  * Replace <br/> with ' '.
  */
 public static function tok_html_nobr(string $txt) : string {
 	$res = str_replace( [ '<br>', '<br/>' ], [ ' ', ' ' ], $txt);
-	// \rkphplib\lib\log_debug([ "THtml::tok_html_nobr:56> THtml.tok_html_nobr(<1>) = [<2>]", $txt, $res ]);
+	// \rkphplib\lib\log_debug([ "THtml::tok_html_nobr:73> THtml.tok_html_nobr(<1>) = [<2>]", $txt, $res ]);
 	return $res;
 }
 
