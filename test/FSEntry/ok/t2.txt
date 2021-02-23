@@ -1,0 +1,10 @@
+
+suffix_list: [".inc.php"]
+match a/main.inc.php
+match main.inc.php
+no match config/settings.php
+
+suffix_list: {"ignore":[],"like":["\/settings.php"],"unlike":[],"require":[]}
+no match a/b.php
+no match settings.php
+match config/settings.php
