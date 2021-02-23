@@ -4,6 +4,7 @@ require_once PATH_SRC.'CLI.php';
 
 use rkphplib\CLI;
 
+$_REQUEST = [];
 CLI::parse('run.php test --name=abc -uvw @req:name=value @req:list=v1 @req:list=v2');
 
 print 'CLI::argv='.print_r(CLI::$argv, true);
