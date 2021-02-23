@@ -1244,7 +1244,7 @@ private function tryPluginMap(string $name) : void {
 		'TFormValidator' => [ 'fv', 'fv:appendjs', 'fv:check', 'fv:conf', 'fv:emsg', 'fv:error', 'fv:error_message', 'fv:get', 'fv:get_conf', 'fv:hidden', 'fv:in', 'fv:init', 'fv:preset', 'fv:set_error_message', 'fv:tpl' ],
 		'TGDLib' => [ 'gdlib:print', 'gdlib:font', 'gdlib:init', 'gdlib:load', 'gdlib:new', 'gdlib' ],
 		'THighlight' => [ 'source:php', 'source:html' ],
-		'THtml' => [ 'html:tag', 'html:inner', 'html:append', 'html:meta', 'html:meta_og', 'html:tidy', 'html:xml', 'html:uglify', 'html:nobr', 'html', 'text2html', 'input:checkbox', 'input:radio', 'input:select', 'input:xcrypt', 'input', 'user_agent' ],
+		'THtml' => [ 'html:tag', 'html:inner', 'html:append', 'html:meta', 'html:meta_og', 'html:tidy', 'html:xml', 'html:uglify', 'html:nobr', 'html', 'google', 'text2html', 'input:checkbox', 'input:radio', 'input:select', 'input:xcrypt', 'input', 'user_agent' ],
 		'THttp' => [ 'http:get', 'http', 'domain:idn', 'domain:utf8', 'cookie', 'domain' ],
 		'TJob' => [ 'job' ],
 		'TLanguage' => [ 'language:init', 'language:get', 'language:script', 'language', 'txt:js', 'txt', 't', 'ptxt' ],
