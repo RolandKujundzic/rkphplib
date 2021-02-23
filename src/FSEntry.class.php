@@ -128,8 +128,8 @@ public static function hasSuffix(string $file, array $suffix_list) : bool {
 
 	for ($i = 0; $i < count($suffix_list['like']); $i++) {
 		$suffix = $suffix_list['like'][$i];
-		if (preg_match('/'.$suffix.'/i', $file)) {
-			return false;
+		if (stripos($file, $suffix) !== false) {
+			return true;
 		}
 	}
 
