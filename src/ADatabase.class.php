@@ -1721,14 +1721,21 @@ public static function columnList(array $cols, string $prefix = '') : string {
 
 
 /**
- * Return insert|update query string. If type=update key either @id=idCol or @where='WHERE ...' is required in $kv.
+ * Return insert|select|update query string. If type=update key either @id=idCol or @where='WHERE ...' is required in $kv.
  * Use kv[@add_default] add default columns. If @query=qkey is set use getQuery(qkey, $kv).
  * If @allow=[ col1, … colN ] isset use only this keys in $kv. Use @add_default=col1, … to add default values.
+ * Use @tag=[ $type ] for {:=column} (use 'CONST' for constant values) instead of 'value' values.
  *
  * @code buildQuery('customer', 'insert', [ 'name' => … ]);
+ * @code buildQuery('customer', 'insert', [ '@tag' => [ 'insert' ], 'name' => … ]);
  * @code buildQuery('customer', 'insert', [ '@query' => 'insert' ]);
  * @code buildQuery('customer', 'update', [ '@id' => 'id', 'id' => 7, 'name' => … ]);
  * @code buildQuery('customer', 'update', [ '@where' => 'id=7', '@allow' => [ 'email', … ], 'email' => … ]);
+ *
+ * @code …
+ *   buildQuery('item', 'select', [ 'name' => 'name', 'status' => "'1'", 'import' => "'test'", 'vk' => price ]) ==
+ *     "SELECT name, '1' AS status, 'test' AS import, vk AS price FROM item";
+ * @eol
  */
 public function buildQuery(string $table, string $type, array $kv = []) : string {
 	if (!empty($kv['@query'])) {
@@ -1739,8 +1746,9 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 	$key_list = [];
 	$val_list = [];
 
-	$allow_all = empty($kv['@allow']) ? true : false;
-	$add_default = empty($kv['@add_default']) ? false : true;
+	$allow_all = empty($kv['@allow']);
+	$add_default = !empty($kv['@add_default']);
+	$use_tag = !empty($kv['@tag']) && in_array($type, $kv['@tag']);
 
 	// \rkphplib\lib\log_debug([ "ADatabase.buildQuery:1745> ($table, $type, …) kv: <1>\n<2>", $kv, array_keys($p) ]);
 	foreach ($p as $col => $cinfo) {
@@ -1756,6 +1764,9 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		else if (isset($kv[$col])) {
 			if (preg_match('/^([a-z][a-z0-9_]*)\((.*)\)$/i', $kv[$col], $match)) {
 				$val = $kv[$col];
+			}
+			else if ($use_tag) {
+				$val = (substr($kv[$col], 0, 1) == "'" && substr($kv[$col], -1) == "'") ? $kv[$col] : TAG_PREFIX.$col.TAG_SUFFIX;
 			}
 			else {
 				$val = "'".self::escape($kv[$col])."'";
@@ -1784,6 +1795,20 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 
 	if ($type === 'insert') {
 		$res = 'INSERT INTO '.self::escape_name($table).' ('.join(', ', $key_list).') VALUES ('.join(', ', $val_list).')';
+	}
+	else if ($type === 'select') {
+		$res = 'SELECT ';
+		foreach ($kv as $key => $value) {
+			if (substr($key, 0, 1) !== '@') {
+				if ($res != 'SELECT ') {
+					$res .= ', ';
+				}
+
+				$res .= ($key == $value) ? $key : $value.' AS '.$key;
+			}
+		}
+
+		$res .= " FROM $table";
 	}
 	else if ($type == 'update') {
 		$res = 'UPDATE '.self::escape_name($table).' SET ';
