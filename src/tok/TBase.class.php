@@ -566,9 +566,8 @@ public function getVar(string $name, string $name2 = '') {
 public function setVarHash(string $name, array $p) : void {
 	// \rkphplib\lib\log_debug([ "TBase.setVarHash:567> name=$name p: <1>", $p ]);
 	if ($name === '') {
-		$flag = $name === '' ? Tokenizer::VAR_MUST_NOT_EXIST : 0;
 		foreach ($p as $key => $value) {
-			$this->_tok->setVar($key, $value, $flag);
+			$this->_tok->setVar($key, $value);
 		}
 	}
 	else if (substr($name, -1) != '!') {
