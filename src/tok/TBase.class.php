@@ -479,8 +479,9 @@ public function tok_tpl(array $p, ?string $arg) : string {
  *
  * @tok {var:=a}17{:var} // set a=17
  * @tok {var:=a?}5{:var} // set a=5 if unset
- * @tok {var:=#b}x=5|#|y=12|#|...{:var} // set hash, error if exists
- * @tok {var:=#b!}x=5|#|y=12|#|...{:var} // set hash, overwrite existing
+ * @tok {var:=#}b=X|#|c=Y{:var} // set c=X and b=Y
+ * @tok {var:=#b}x=5|#|y=12|#|...{:var} // set hash b.*, error if exists
+ * @tok {var:=#b!}x=5|#|y=12|#|...{:var} // update hash b.*, overwrite existing
  * @tok {var:+=b}x{:var}, {var:+=b},y{:var} // append to set vector - {var:b} = x,y
  * @tok {var:a} or {var:}a{:var} // get optional a
  * @tok {var:a!} // get required a, abort if not found
@@ -559,29 +560,34 @@ public function getVar(string $name, string $name2 = '') {
 
 
 /**
- * Set has $name. Abort if hash already exists. Use NAME! to merge existing 
+ * Set hash $name. Abort if hash already exists. Use NAME! to merge existing 
  * key NAME with hash $p.
  */
 public function setVarHash(string $name, array $p) : void {
-	if (substr($name, -1) != '!') {
-		// \rkphplib\lib\log_debug([ "TBase.setVarHash:567> name=$name p: <1>", $p ]);
+	// \rkphplib\lib\log_debug([ "TBase.setVarHash:583> name=$name p: <1>", $p ]);
+	if ($name === '') {
+		$flag = $name === '' ? Tokenizer::VAR_MUST_NOT_EXIST : 0;
+		foreach ($p as $key => $value) {
+			$this->_tok->setVar($key, $value, $flag);
+		}
+	}
+	else if (substr($name, -1) != '!') {
 		$this->_tok->setVar($name, $p, Tokenizer::VAR_MUST_NOT_EXIST);
-		return;
 	}
+	else {
+		// merge old and new hash
+		$name = substr($name, 0, -1);
+		$old_p = $this->_tok->getVar($name);
 
-	// merge old and new hash
-	$name = substr($name, 0, -1);
-	$old_p = $this->_tok->getVar($name);
+		if ($old_p === false) {
+			$old_p = [];
+		}
+		else if (is_string($old_p)) {
+			$old_p = [ $old_p ];
+		}
 
-	if ($old_p === false) {
-		$old_p = [];
+		$this->_tok->setVar($name, array_merge($old_p, $p));
 	}
-	else if (is_string($old_p)) {
-		$old_p = [ $old_p ];
-	}
-
-	// \rkphplib\lib\log_debug([ "TBase.setVarHash:583> name=$name p: <1>\nold: <2>", $p, $old_p ]);
-	$this->_tok->setVar($name, array_merge($old_p, $p));
 }
 
 
@@ -969,6 +975,7 @@ public function tok_include_if(string $param, array $a) : string {
  *   "\\rkphplib\\tok\\TFormValidator::$conf_file": "file.conf",
  *   "plugin": "PHPLIB:TShop",
  *   "\\phplib\\tok\\TShop": { },
+ *   "var::=#": { "form.validate": "novalidate" },
  *   "name": [ "param", "arg" ],
  *   "shop:init": { "login.id": "{:=login.id}", "login.type": "{:=login.type}" }
  * }
@@ -1006,8 +1013,12 @@ public function tok_loadJSON(string $file, array $p = []) : void {
 
 	foreach ($json as $plugin => $arg) {
 		$param = '';
-
-		if (is_array($arg) && count($arg) == 2 && isset($arg[0]) && isset($arg[1])) {
+		if (($pos = strpos($plugin, '::')) > 0) {
+			$param = substr($plugin, $pos + 2);
+			$plugin = substr($plugin, 0, $pos);
+		}
+		
+		if ($param === '' && is_array($arg) && count($arg) == 2 && isset($arg[0]) && isset($arg[1])) {
 			$param = $arg[0];
 			$arg = $arg[1];
 		}
@@ -1022,7 +1033,7 @@ public function tok_loadJSON(string $file, array $p = []) : void {
 				}
 			}
 		}
-		
+
 		// \rkphplib\lib\log_debug([ "TBase.tok_loadJSON:1026> callPlugin(<1>, <2>, <3>)", $plugin, $param, $arg ]);
 		$this->_tok->callPlugin($plugin, $param, $arg);
 	}
