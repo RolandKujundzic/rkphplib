@@ -208,14 +208,8 @@ public static function log($message, string $to) : void {
  * Concatenate with existing value in append mode ($flag = VAR_MUST_NOT_EXIST | VAR_APPEND). 
  */
 public function setVar(string $name, $value, int $flags = 0) : void {
-
 	if (empty($name)) {
-		if (is_array($value)) {
-			$this->vmap = array_merge($this->vmap, $value);
-		}
-		else {
-			throw new Exception('empty vmap name');
-		}
+		throw new Exception('empty vmap name');
 	}
 
 	$path = explode('.', $name);
