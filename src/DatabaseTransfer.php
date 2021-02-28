@@ -48,8 +48,9 @@ public function __construct(array $opt = []) {
 
 /**
  * Run "DELETE * FROM $table", conf[select.table] and conf[insert.table].
+ * Use $func(&$insert_row) to process data before insert.
  */
-public function selectInsert(string $table) : void {
+public function selectInsert(string $table, ?callable $func) : void {
 	$this->db->execute("DELETE FROM ".Database::table($table));
 
 	$iqn = 'insert.'.$table;
@@ -67,6 +68,10 @@ public function selectInsert(string $table) : void {
 	$this->log('Transfer '.count($dbres)." rows to $table");
 
 	for ($i = 0; $i < count($dbres); $i++) {
+		if (!is_null($func)) {
+			$dbres[$i] = call_user_func($func, $dbres[$i]);
+		}
+
 		$query = $this->db->getQuery($iqn, $dbres[$i]);
 		$this->log('Insert row '.($i + 1), 4);
 		$this->db->execute($query);
@@ -97,6 +102,17 @@ public function selectUpdate(string $name, string $desc = '') : void {
 	}
 }
 
+
+/**
+ * Execute query
+ */
+public function exec(string $qkey, ?array $p = null) : void {
+	if (!$this->db->hasQuery($qkey)) {
+		$this->db->setQuery($qkey, $this->qmap[$qkey]);
+	}
+
+	$this->db->exec($qkey, $p);
+}
 
 }
 
