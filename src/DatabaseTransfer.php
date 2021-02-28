@@ -50,7 +50,7 @@ public function __construct(array $opt = []) {
  * Run "DELETE * FROM $table", conf[select.table] and conf[insert.table].
  * Use $func(&$insert_row) to process data before insert.
  */
-public function selectInsert(string $table, ?callable $func) : void {
+public function selectInsert(string $table, ?callable $func = null) : void {
 	$this->db->execute("DELETE FROM ".Database::table($table));
 
 	$iqn = 'insert.'.$table;
