@@ -534,19 +534,25 @@ public function getQuery(string $qkey, ?array $replace = null) {
 		else if ($do === 'escape_name') {
 			$query = str_replace(TAG_PREFIX.'^'.$key.TAG_SUFFIX, self::escape_name($replace[$key]), $query);
 		}
-		else if ($do === 'in' && is_array($replace[$key])) {
-			$tmp = [];
-			foreach ($replace[$key] as $val) {
-				array_push($tmp, $this->esc($val));
+		else if ($do === 'in') {
+			if (is_string($replace[$key]) && strpos($replace[$key], ',') > 0) {
+				$replace[$key] = split_str(',', $replace[$key]);
 			}
 
-			$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, "'".join("', '", $tmp)."'", $query);
+			if (is_string($replace[$key])) {
+				$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, "'".$this->esc($replace[$key])."'", $query);
+			}
+			else {
+				$tmp = [];
+				foreach ($replace[$key] as $val) {
+					array_push($tmp, $this->esc($val));
+				}
+
+				$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, "'".join("', '", $tmp)."'", $query);
+			}
 		}
 		else if ($do === 'keep') {
 			$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, $replace[$key], $query);
-		}
-		else if ($do === 'in') {
-			$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, "'".$this->esc($replace[$key])."'", $query);
 		}
 		else {
 			throw new Exception("Unknown replace action", "do=$do query=$query");
@@ -594,7 +600,7 @@ public function hasQuery(string $qkey, string $query = '') : bool {
  * all queries must be same.
  */
 public function hasQueries(array $query_map) : bool {
-	// \rkphplib\lib\log_debug("ADatabase.hasQueries:597> query_map: ".print_r($query_map, true));
+	// \rkphplib\lib\log_debug("ADatabase.hasQueries:603> query_map: ".print_r($query_map, true));
 	if (!is_array($query_map)) {
 		return false;
 	}
@@ -1750,7 +1756,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 	$add_default = !empty($kv['@add_default']);
 	$use_tag = !empty($kv['@tag']) && in_array($type, $kv['@tag']);
 
-	// \rkphplib\lib\log_debug([ "ADatabase.buildQuery:1753> ($table, $type, …) kv: <1>\n<2>", $kv, array_keys($p) ]);
+	// \rkphplib\lib\log_debug([ "ADatabase.buildQuery:1759> ($table, $type, …) kv: <1>\n<2>", $kv, array_keys($p) ]);
 	foreach ($p as $col => $cinfo) {
 		$val = false;
 
@@ -1782,14 +1788,14 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		}
 
 		if ($val !== false) {
-			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1785> $col=[$val]");
+			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1791> $col=[$val]");
 			array_push($key_list, self::escape_name($col));
 			array_push($val_list, $val);
 		}
 	}
 
 	if (count($key_list) == 0) {
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1792> empty key_list - return");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1798> empty key_list - return");
 		return '';
 	}
 
@@ -1833,7 +1839,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1836> $res");
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1842> $res");
 	return $res;
 }
 
