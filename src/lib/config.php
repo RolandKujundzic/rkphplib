@@ -34,7 +34,7 @@ namespace rkphplib\lib;
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 
-if (isset($_SERVER['REQUEST_SCHEME'])) {
+if (isset($_SERVER['REQUEST_SCHEME']) && PHP_VERSION_ID >= 70300) {
 	session_set_cookie_params([
 		'secure' => $_SERVER['REQUEST_SCHEME'] == 'https', 
 		'samesite' => 'Strict',
