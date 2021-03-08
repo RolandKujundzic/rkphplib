@@ -48,10 +48,9 @@ public function getPlugins(Tokenizer $tok) : array {
  * Convert name to SEO url.
  */
 public static function name2url(string $name) : string {
-
 	$url = str_replace([ 'Ä', 'ä', 'Ü', 'ü', 'Ö', 'ö', 'ß', ' ' ], [ 'Ae', 'ae', 'Ue', 'ue', 'Oe', 'oe', 'ss', '-' ], trim($name));
 	$url = preg_replace('/[^A-Z|a-z|0-9|\-|\_|\%]/', '-', $url);
-	$url = str_replace('--', '-', $url);
+	$url = preg_replace('/\-+/', '-', $url);
 
 	if (substr($url, -1) == '-') {
 		$url = substr($url, 0, -1);
