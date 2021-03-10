@@ -79,6 +79,16 @@ public function tok_picture_tbn(string $param, array $images) : string {
 	if (empty($param)) {
 		$res = count($images) == 0 || empty($images[0]) ? $tbn_dir.'/default.jpg' : $tbn_dir.'/'.$images[0];
 	}
+	else if ($param == 'strip2') {
+		$src = count($images) == 0 || empty($images[0]) ? $tbn_dir.'/default.jpg' : $tbn_dir.'/'.$images[0];
+		$r = [ 'num' => 1, 'src' => $src ]; 
+		$res = replace_tags($this->conf['tpl.strip2'], $r, [ '$', '', '' ]);
+
+		if (count($images) > 1) {
+			$r = [ 'num' => 2, 'src' => $tbn_dir.'/'.$images[1] ]; 
+			$res .= "\n".replace_tags($this->conf['tpl.strip2'], $r, [ '$', '', '' ]);
+		}
+	}
 	else if ($param == 'strip') {
 		$res = $this->conf['tpl.strip_header'];
 
