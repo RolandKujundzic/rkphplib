@@ -11,14 +11,18 @@ use rkphplib\Exception;
 /**
  * Replace {:=key} in $text with $hash.key value. Replace {:=key.subkey} with $hash.key.subkey value.
  * Use "(array)$obj" to convert object into $hash. Use 'prefix' as shortcut for ['{:=', '}', 'prefix' ] ({:=prefix.tag} replace).
- * Default $conf = [ '{:=', '}', '' ].
-
+ * Default $conf = [ '{:=', '}', '' ]. If $conf[1] == '' reverse sort $hash keys to prevent replace errors.
+ *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
 function replace_tags(string $text, array $hash, array $conf = [ TAG_PREFIX, TAG_SUFFIX, '' ]) : string {
 
 	if (is_string($conf)) {
 		$conf = [ TAG_PREFIX, TAG_SUFFIX, $conf ];
+	}
+
+	if ($conf[1] === '') {
+		krsort($hash);
 	}
 
 	foreach ($hash as $key => $value) {
