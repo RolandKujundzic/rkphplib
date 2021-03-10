@@ -7,6 +7,7 @@ require_once __DIR__.'/../Dir.class.php';
 require_once __DIR__.'/../File.class.php';
 require_once __DIR__.'/../lib/execute.php';
 require_once __DIR__.'/../lib/split_str.php';
+require_once __DIR__.'/../lib/replace_tags.php';
 
 use rkphplib\Exception;
 use rkphplib\FSEntry;
@@ -15,14 +16,14 @@ use rkphplib\Dir;
 
 use function rkphplib\lib\execute;
 use function rkphplib\lib\split_str;
-
+use function rkphplib\lib\replace_tags;
 
 
 /**
  * Server side picture handling plugin.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- *
+ * @copyright 2016-2021 Roland Kujundzic
  */
 class TPicture implements TokPlugin {
 
@@ -44,6 +45,7 @@ public function getPlugins(Tokenizer $tok) : array {
   $plugin['picture:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['picture:src'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY; 
 	$plugin['picture:list'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+	$plugin['picture:tpl'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['picture:tbn'] = TokPlugin::CSLIST_BODY;
   $plugin['picture'] = 0;
   return $plugin;
@@ -52,6 +54,7 @@ public function getPlugins(Tokenizer $tok) : array {
 
 /**
  * @tok {picture:tbn}1.jpg,2.jpg{:picture} = data/shop/tbn/1.jpg
+ *
  * @tok …
  * {picture:tbn:strip}1.jpg,2.jpg,3.jpg{:picture}
  * <div class="thumbnail_strip">
@@ -59,7 +62,15 @@ public function getPlugins(Tokenizer $tok) : array {
  *   <img src="data/shop/tbn/2.jpg">
  *   <img src="data/shop/tbn/3.jpg">
  * </div>
- * @EOL
+ * @eol
+ *
+ * @tok …
+ * {picture:tpl:strip_header}{:picture}
+ * {picture:tpl:strip_footer}{:picture}
+ * {picture:tpl:strip}<img class="pic$num" src="$src">{:picture}
+ * {picture:tbn:strip}1.jpg,2.jpg,3.jpg{:picture}
+ * <img class="pic1" src="data/shop/tbn/1.jpg"><img class="pic2" src="data/shop/tbn/2.jpg"><img class="pic3" src="data/shop/tbn/3.jpg">
+ * @eol
  */
 public function tok_picture_tbn(string $param, array $images) : string {
 	$tbn_dir = 'data/shop/tbn';
@@ -69,13 +80,14 @@ public function tok_picture_tbn(string $param, array $images) : string {
 		$res = count($images) == 0 || empty($images[0]) ? $tbn_dir.'/default.jpg' : $tbn_dir.'/'.$images[0];
 	}
 	else if ($param == 'strip') {
-		$res = '<div class="thumbnail_strip">';
+		$res = $this->conf['tpl.strip_header'];
 
 		for ($i = 0;$i < count($images); $i++) {
-			$res .= "\n".'<img src="'.$tbn_dir.'/'.$images[$i].'">';
+			$r = [ 'num' => $i + 1, 'src' => $tbn_dir.'/'.$images[$i] ]; 
+			$res = replace_tags($this->conf['tpl.strip'], $r, [ '$', '', '' ]);
 		}
 	
-		$res .= "\n</div>";
+		$res .= $this->conf['tpl.strip_footer'];
 	}
 
 	return $res;
@@ -85,13 +97,24 @@ public function tok_picture_tbn(string $param, array $images) : string {
 /**
  * Set configuration hash. Default parameter:
  *
+ * @hash $p …
  * picture_dir: data/picture/upload
  * preview_dir: data/picture/preview 
+ * use_cache: 1 | check_time
+ * ignore_missing: 1
+ * transparent_tbn: 1
+ * default: default.jpg
+ * save_as: path/to/target[.jpg] (append suffix, trailing / = use source path)
+ * reset: 0
+ * tpl: { }
+ * convert: convert.resize (or convert.OTHER or "convert ..." - if resize=WxH^ use convert.center)
+ * 
  * convert.resize: _input,_sRGB,_geometry,_target
  * convert.center: _input,_sRGB,_geometry,_box,_target
  * convert.box: _input,_sRGB,_strip,_trim,_thumbnail,_boxw,_target
  * convert.box_png: _input,_sRGB,_strip,_trim,_thumbnail,_boxt,_target_png
  * convert.cover: _input,_sRGB,_geometry,_crop,_target
+ *
  * convert._input: convert {:=source}
  * convert._target: {:=target}
  * convert._target: {:=target_png}
@@ -105,13 +128,11 @@ public function tok_picture_tbn(string $param, array $images) : string {
  * convert._boxw: -gravity center -background white -extent {:=WxH}
  * convert._boxt: -gravity center -background transparent -extent {:=WxH}
  * convert._box: -gravity center -extent {:=WxH}
- * convert: convert.resize (or convert.OTHER or "convert ..." - if resize=WxH^ use convert.center)
- * use_cache: 1 | check_time
- * ignore_missing: 1
- * transparent_tbn: 1
- * default: default.jpg
- * save_as: path/to/target[.jpg] (append suffix, trailing / = use source path)
- * reset: 0
+ *
+ * tpl.strip_header: <div class="thumbnail_strip">
+ * tpl.strip: \n<img src="$src">
+ * tpl.strip_footer: \n</div>
+ * @eol
  *
  * @param array[string]string $p
  */
@@ -126,34 +147,46 @@ public function tok_picture_init(array $p) : void {
 	}
 
 	if (count($this->conf) == 0 || !empty($p['reset'])) {
-		$default['picture_dir'] = 'data/picture/upload';
-		$default['preview_dir'] = 'data/picture/preview';
-		$default['convert.resize'] = '_input,_sRGB,_geometry,_target';
-		$default['convert.center'] = '_input,_sRGB,_geometry,_box,_target';
-		$default['convert.box'] = '_input,_sRGB,_strip,_trim,_thumbnail,_boxw,_target';
-		$default['convert.box_png'] = '_input,_sRGB,_strip,_trim,_thumbnail,_boxt,_target_png';
-		$default['convert.cover'] = '_input,_sRGB,_crop,_geometry,_target';
-		$default['convert._input'] = 'convert '.$tok->getTag('source');
-		$default['convert._resize'] = '-resize '.$tok->getTag('resize');
-		$default['convert._target'] = $tok->getTag('target');
-		$default['convert._target_png'] = $tok->getTag('target_png');
-		$default['convert._thumbnail'] = '-thumbnail '.$tok->getTag('resize');
-		$default['convert._trim'] = '-trim +repage';
-		$default['convert._geometry'] = '-geometry '.$tok->getTag('resize');
-		$default['convert._crop'] = '-crop '.$tok->getTag('crop');
-		$default['convert._sRGB'] = '-colorspace sRGB';
-		$default['convert._strip'] = '-strip -quality 85';
-		$default['convert._box'] = '-gravity center -extent '.$tok->getTag('WxH');
-		$default['convert._boxw'] = '-gravity center -background white -extent '.$tok->getTag('WxH');
-		$default['convert._boxt'] = '-gravity center -background transparent -extent '.$tok->getTag('WxH'); // force _target_png
-		$default['convert'] = 'convert.resize'; 
-		$default['default'] = 'default.jpg';
-		$default['ignore_missing'] = 1;
-		$default['use_cache'] = 1;
-		$default['resize'] = '';
-		$default['transparent_tbn'] = 1;
+		$this->conf = [
+			'picture_dir' => 'data/picture/upload',
+			'preview_dir' => 'data/picture/preview',
+			'default' => 'default.jpg',
+			'convert' => 'convert.resize',
+			'ignore_missing' => 1,
+			'use_cache' => 1,
+			'resize' => '',
+			'transparent_tbn' => 1
+		];
 
-		$this->conf = $default;
+		$convert = [
+			'resize' => '_input,_sRGB,_geometry,_target',
+			'center' => '_input,_sRGB,_geometry,_box,_target',
+			'box' => '_input,_sRGB,_strip,_trim,_thumbnail,_boxw,_target',
+			'box_png' => '_input,_sRGB,_strip,_trim,_thumbnail,_boxt,_target_png',
+			'cover' => '_input,_sRGB,_crop,_geometry,_target',
+
+			'_input' => 'convert '.$tok->getTag('source'),
+			'_resize' => '-resize '.$tok->getTag('resize'),
+			'_target' => $tok->getTag('target'),
+			'_target_png' => $tok->getTag('target_png'),
+			'_thumbnail' => '-thumbnail '.$tok->getTag('resize'),
+			'_trim' => '-trim +repage',
+			'_geometry' => '-geometry '.$tok->getTag('resize'),
+			'_crop' => '-crop '.$tok->getTag('crop'),
+			'_sRGB' => '-colorspace sRGB',
+			'_strip' => '-strip -quality 85',
+			'_box' => '-gravity center -extent '.$tok->getTag('WxH'),
+			'_boxw' => '-gravity center -background white -extent '.$tok->getTag('WxH'),
+			'_boxt' => '-gravity center -background transparent -extent '.$tok->getTag('WxH'),
+		];
+
+		foreach ($convert as $key => $value) {
+			$this->conf['convert.'.$key] = $value;
+		}
+
+		$this->conf['tpl.strip_header'] = '<div class="thumbnail_strip">';
+		$this->conf['tpl.strip'] = "\n<img src=\"\$src\">";
+		$this->conf['tpl.strip_footer'] = "\n</div>";
 	}
 
 	foreach ($p as $key => $value) {
@@ -161,6 +194,14 @@ public function tok_picture_init(array $p) : void {
 	}
 
 	// \rkphplib\lib\log_debug([ "TPicture.tok_picture_init:163> this.conf: <1>\n<2>", $this->conf, $p ]);
+}
+
+
+/**
+ *
+ */
+public function tok_picture_tpl(string $name, string $html) : void {
+	$this->conf['tpl.'.$name] = $html;
 }
 
 
