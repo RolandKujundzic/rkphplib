@@ -68,8 +68,8 @@ public function getPlugins(Tokenizer $tok) : array {
  * {picture:tpl:strip_header}{:picture}
  * {picture:tpl:strip_footer}{:picture}
  * {picture:tpl:strip}<img class="pic$num" src="$src">{:picture}
- * {picture:tbn:strip}1.jpg,2.jpg,3.jpg{:picture}
- * <img class="pic1" src="data/shop/tbn/1.jpg"><img class="pic2" src="data/shop/tbn/2.jpg"><img class="pic3" src="data/shop/tbn/3.jpg">
+ * {picture:tbn:strip}1.jpg{:picture}
+ * <img class="pic0" src="data/shop/tbn/1.jpg">
  * @eol
  */
 public function tok_picture_tbn(string $param, array $images) : string {
@@ -81,7 +81,7 @@ public function tok_picture_tbn(string $param, array $images) : string {
 	}
 	else if ($param == 'strip2') {
 		$src = count($images) == 0 || empty($images[0]) ? $tbn_dir.'/default.jpg' : $tbn_dir.'/'.$images[0];
-		$r = [ 'num' => 1, 'src' => $src ]; 
+		$r = [ 'num' => 0, 'src' => $src ]; 
 		$res = replace_tags($this->conf['tpl.strip2'], $r, [ '$', '', '' ]);
 
 		if (count($images) > 1) {
