@@ -94,7 +94,7 @@ public function tok_picture_tbn(string $param, array $images) : string {
 
 		for ($i = 0;$i < count($images); $i++) {
 			$r = [ 'num' => $i + 1, 'src' => $tbn_dir.'/'.$images[$i] ]; 
-			$res = replace_tags($this->conf['tpl.strip'], $r, [ '$', '', '' ]);
+			$res .= replace_tags($this->conf['tpl.strip'], $r, [ '$', '', '' ]);
 		}
 	
 		$res .= $this->conf['tpl.strip_footer'];
