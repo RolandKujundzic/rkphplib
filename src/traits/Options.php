@@ -7,7 +7,7 @@ namespace rkphplib\traits;
  * Trait for __construct($options = []).
  * 
  * @code …
- * require_once(PATH_RKPHPLIB.'traits/Options.php');
+ * require_once 'traits/Options.php';
  *
  * class SomeClass {
  * use \rkphplib\traits\Options;

@@ -11,7 +11,7 @@ use rkphplib\Exception;
  * Trait with Map methods.
  * 
  * @code …
- * require_once(PATH_RKPHPLIB.'traits/Map.php');
+ * require_once 'traits/Map.php';
  *
  * class SomeClass {
  * use \rkphplib\traits\Map;

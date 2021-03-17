@@ -12,7 +12,7 @@ use rkphplib\Exception;
  * Use this.plugin_conf(req.name) as real name if set in [get|set|has]Req().
  * 
  * @code …
- * require_once(PATH_RKPHPLIB.'traits/Request.php');
+ * require_once 'traits/Request.php';
  *
  * class SomeClass {
  * use \rkphplib\traits\Request;

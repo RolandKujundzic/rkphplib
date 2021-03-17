@@ -644,7 +644,7 @@ public static function saveException(\Exception $e, ?string $log_file = null, st
 	}
 
 	$msg  = $e->getMessage()."\n";
-	$msg .= str_replace(PATH_RKPHPLIB, '', $e->getTraceAsString())."\n";
+	$msg .= str_replace(dirname(__DIR__).'/', '', $e->getTraceAsString())."\n";
 
 	if (property_exists($e, 'internal_message')) {
 		$msg .=  $e->internal_message."\n";

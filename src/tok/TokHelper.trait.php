@@ -11,7 +11,7 @@ use rkphplib\Exception;
  * Trait collection for Tokenizer plugins.
  * 
  * @code 
- * require_once(PATH_RKPHPLIB.'tok/TokHelper.trait.php');
+ * require_once 'tok/TokHelper.trait.php';
  *
  * class SomePlugin {
  * use TokHelper;

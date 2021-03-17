@@ -7,7 +7,7 @@ namespace rkphplib\traits;
  * Trait for this.log()
  * 
  * @code …
- * require_once(PATH_RKPHPLIB.'traits/Log.php');
+ * require_once 'traits/Log.php';
  *
  * class SomeClass {
  * use \rkphplib\traits\Log;

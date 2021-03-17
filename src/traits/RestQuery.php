@@ -16,7 +16,7 @@ use rkphplib\File;
  * Parse Rest Query.
  * 
  * @code …
- * require_once(PATH_RKPHPLIB.'traits/RestQuery.php');
+ * require_once 'traits/RestQuery.php';
  *
  * class SomeClass {
  * use \rkphplib\traits\RestQuery;
