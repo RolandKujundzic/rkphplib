@@ -52,6 +52,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [];
+  $plugin['upload:save'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
   $plugin['upload:init'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
   $plugin['upload:conf'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
   $plugin['upload:formData'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
@@ -210,6 +211,18 @@ public function tok_upload_exists($p) {
 
 
 /**
+ * Same as {upload:init}scan=1{:upload}{get:upload_upload_file}
+ * @see tok_upload_init
+ */
+public function tok_upload_save(string $name, array $p) : string {
+	$p['scan'] = 1;
+	$this->tok_upload_init($name, $p);
+	$rfile = 'upload_'.$this->getUploadName($name, $p).'_file';
+	return empty($_REQUEST[$rfile]) ? '' : $_REQUEST[$rfile];
+}
+
+
+/**
  * Execute upload ([upload:init:name]...[:upload]). Export _REQUEST[upload_name_(saved|file|name)]. Parameter:
  *
  * name: upload (=default) overwrite with $p['upload'] or $name
@@ -240,8 +253,7 @@ public function tok_upload_exists($p) {
  * @param string $name 
  * @param hash $p
  */
-public function tok_upload_init($name, $p) {
-
+public function tok_upload_init(string $name, array $p) : void {
 	$scan = !empty($name) || !empty($p['scan']) || (empty($p['name']) && !empty($p['upload']));
 	unset($p['scan']);
 
@@ -254,7 +266,7 @@ public function tok_upload_init($name, $p) {
 	$_REQUEST['upload_'.$name] = '';
 
 	if ($scan) {
-		$p['save_in'] = empty($p['save_in']) ? 'data/upload/'.$name : $p['save_in'];
+		$p['save_in'] = empty($p['save_in']) ? 'data/.tmp/'.$name : $p['save_in'];
 		$p['save_as'] = empty($p['save_as']) ? '@name' : $p['save_as'];
 		$p['overwrite'] = empty($p['overwrite']) ? 'yes' : $p['overwrite'];
 	}
@@ -270,7 +282,7 @@ public function tok_upload_init($name, $p) {
 		$p['jpeg2jpg'] = 1;
 	}
 
-	// \rkphplib\lib\log_debug("TUpload.tok_upload_init:273> name=[$name], p: ".print_r($p, true));
+	\rkphplib\lib\log_debug([ "TUpload.tok_upload_init:273> name=[$name] <1>", $p ]);
 
 	if (!isset($this->options['_default'])) {
 		$this->options['_default'] = $p;
@@ -411,7 +423,7 @@ public function tok_upload_scan($name = 'upload') {
 	}
 
 	if ($upload_type == 'file') {
-		$this->saveFileUpload($fup);
+		$this->saveFileUpload($name);
 	}
 	else if ($upload_type == 'multiple_files') {
 		$max = empty($this->conf['max']) ? 0 : intval($this->conf['max']);
@@ -658,7 +670,6 @@ private function saveMultipleFileUpload($fup, $max) {
 	// \rkphplib\lib\log_debug("TUpload.saveMultipleFileUpload:658> fup=$fup max=$max conf: ".print_r($this->conf, true));
 	Dir::create($this->conf['save_in'], 0777, true);
 
-	$name = $this->conf['upload'];
 	$file_list = [];
 	$save_list = [];
 	$max = ($max == 0) ? count($_FILES[$fup]['tmp_name']) : min($max, count($_FILES[$fup]['tmp_name']));
@@ -684,16 +695,16 @@ private function saveMultipleFileUpload($fup, $max) {
 	}
 
 	$this->options['@plugin_action'] = 1;
-	$_REQUEST['upload_'.$name.'_file'] = join(',', $save_list);
-	$_REQUEST['upload_'.$name] = join(',', $file_list);
+	$_REQUEST['upload_'.$fup.'_file'] = join(',', $save_list);
+	$_REQUEST['upload_'.$fup] = join(',', $file_list);
 
 	if (count($_FILES[$fup]['tmp_name']) == count($save_list)) {
-		$_REQUEST['upload_'.$name.'_saved'] = 'yes';
-		$_REQUEST['upload_'.$name.'_error'] = '';
+		$_REQUEST['upload_'.$fup.'_saved'] = 'yes';
+		$_REQUEST['upload_'.$fup.'_error'] = '';
 	}
 	else {
-		$_REQUEST['upload_'.$name.'_saved'] = '';
-		$_REQUEST['upload_'.$name.'_error'] = (count($_FILES[$fup]['tmp_name']) - count($save_list)).' missing';
+		$_REQUEST['upload_'.$fup.'_saved'] = '';
+		$_REQUEST['upload_'.$fup.'_error'] = (count($_FILES[$fup]['tmp_name']) - count($save_list)).' missing';
 	}
 }
 
@@ -705,7 +716,7 @@ private function saveMultipleFileUpload($fup, $max) {
  * @param string $fup
  */
 private function saveFileUpload($fup) {
-	// \rkphplib\lib\log_debug("TUpload.saveFileUpload:708> fup=$fup conf: ".print_r($this->conf, true));
+	\rkphplib\lib\log_debug([ "TUpload.saveFileUpload:708> fup=$fup <1>\n<2>", $this->conf, $_FILES[$fup] ]);
 	Dir::create($this->conf['save_in'], 0777, true);
 	$target = $this->conf['save_in'].'/'.$this->getSaveAs($_FILES[$fup]['name'], $_FILES[$fup]['tmp_name']);
 
@@ -713,6 +724,7 @@ private function saveFileUpload($fup) {
 		$this->convertImage($_FILES[$fup]['tmp_name'], $target);
 	}
 	else {
+		\rkphplib\lib\log_debug("TUpload.saveFileUpload:715> move fup=$fup {$_FILES[$fup]['tmp_name']} to {$target}");
 		File::move($_FILES[$fup]['tmp_name'], $target, 0666);
 	}
 
@@ -720,12 +732,11 @@ private function saveFileUpload($fup) {
 		$target = str_replace($this->conf['save_dir'].'/', '', $target);
 	}
 
-	$name = $this->conf['upload'];
 	$this->options['@plugin_action'] = 1;
-	$_REQUEST['upload_'.$name.'_saved'] = 'yes';
-	$_REQUEST['upload_'.$name.'_file'] = $target;
-	$_REQUEST['upload_'.$name.'_error'] = '';
-	$_REQUEST['upload_'.$name] = $_FILES[$fup]['name'];
+	$_REQUEST['upload_'.$fup.'_saved'] = 'yes';
+	$_REQUEST['upload_'.$fup.'_file'] = $target;
+	$_REQUEST['upload_'.$fup.'_error'] = '';
+	$_REQUEST['upload_'.$fup] = $_FILES[$fup]['name'];
 }
 
 
