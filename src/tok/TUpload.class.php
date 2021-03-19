@@ -52,7 +52,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$this->tok = $tok;
 
 	$plugin = [];
-  $plugin['upload:save'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
+  $plugin['upload:save'] = TokPlugin::KV_BODY;
   $plugin['upload:init'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
   $plugin['upload:conf'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
   $plugin['upload:formData'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
@@ -154,7 +154,7 @@ public function tok_upload_exists($p) {
 
 	if (empty($this->conf['save_in'])) {
 		if (!empty($p['save_in'])) {
-			$this->conf['save_in'] = $p['save_in'];
+			$this->conf['save_in'] = DOCROOT.'/'.$p['save_in'];
 		}
 		else {
 			if (!empty($p['images'])) {
@@ -266,7 +266,7 @@ public function tok_upload_init(string $name, array $p) : void {
 	$_REQUEST['upload_'.$name] = '';
 
 	if ($scan) {
-		$p['save_in'] = empty($p['save_in']) ? 'data/.tmp/'.$name : $p['save_in'];
+		$p['save_in'] = empty($p['save_in']) ? DOCROOT.'/data/.tmp/'.$name : DOCROOT.'/'.$p['save_in'];
 		$p['save_as'] = empty($p['save_as']) ? '@name' : $p['save_as'];
 		$p['overwrite'] = empty($p['overwrite']) ? 'yes' : $p['overwrite'];
 	}
