@@ -116,20 +116,20 @@ public static function loadTable(string $uri, array $options = []) : array {
 		}
 
 		if (!empty($options['delimiter'])) {
-			$table = File::loadCSV($uri, $options['delimiter'], $options);
+			$table = self::loadCSV($uri, $options['delimiter'], $options);
 		}
 		else {
-			$table = File::loadCSV($uri, $options[0], [ 'quote' => $options[1] ]);
+			$table = self::loadCSV($uri, $options[0], [ 'quote' => $options[1] ]);
 		}
 	}
 	else if ($match[2] == 'file') {
-		$data = File::load($uri);
+		$data = self::load($uri);
 	}
 	else if ($match[2] == 'string') {
 		$data = $uri;
 	}
 	else {
-		$data = File::fromURL($uri);
+		$data = self::fromURL($uri);
 		$type = $match[1];
 	}
 
@@ -181,32 +181,32 @@ public static function nfo(string $file, string $source = '') : array {
 		$nfo = $file.'.nfo';
 	}
 
-	File::exists($file, true);
+	self::exists($file, true);
 
-	if (File::exists($nfo) && File::lastModified($file) <= File::lastModified($nfo)) {
-		return JSON::decode(File::load($nfo));
+	if (self::exists($nfo) && self::lastModified($file) <= self::lastModified($nfo)) {
+		return JSON::decode(self::load($nfo));
 	}
 
 	$json = [];
 	$json['file'] = $file;
-	$json['name'] = File::basename($file, true);
-	$json['size'] = File::size($file);
+	$json['name'] = self::basename($file, true);
+	$json['size'] = self::size($file);
 
 	if ($json['size'] == 0) {
 		throw new Exception($file.' has zero size');
 	}
 
-	$json['mime'] = File::mime($file);
-	$json['suffix'] = File::suffix($file, true);
-	$json['lastModified'] = File::lastModified($file);
-	$json['md5'] = File::md5($file);
+	$json['mime'] = self::mime($file);
+	$json['suffix'] = self::suffix($file, true);
+	$json['lastModified'] = self::lastModified($file);
+	$json['md5'] = self::md5($file);
 	
 	if (substr($json['mime'], 0, 6) == 'image/') {
-		$ii = File::imageInfo($file);
+		$ii = self::imageInfo($file);
 		$json = array_merge($json, $ii);
 	}
 
-	File::save_rw($nfo, JSON::encode($json));
+	self::save_rw($nfo, JSON::encode($json));
 
 	return $json;
 }
@@ -216,27 +216,27 @@ public static function nfo(string $file, string $source = '') : array {
  * Return true if source and target files are equal. Autocreate $target.nfo file.
  */
 public static function equal(string $source, string $target, bool $check_source_nfo = false) : bool {
-	File::exists($source, true);
+	self::exists($source, true);
 
-	if ($source == $target || !File::exists($target)) {
+	if ($source == $target || !self::exists($target)) {
 		return false;
 	}
 
-	$ti = $check_source_nfo ? File::nfo($source) : File::nfo($target);
+	$ti = $check_source_nfo ? self::nfo($source) : self::nfo($target);
 
-	if ($ti['size'] != File::size($source)) {
+	if ($ti['size'] != self::size($source)) {
 		return false;
 	}
 
 	if ($ti['width'] > 0) {
-		$si = File::imageInfo($source);
+		$si = self::imageInfo($source);
 
 		if ($si['width'] != $ti['width'] || $si['height'] != $ti['height']) {
 			return false;
 		}
 	}
 
-	if ($ti['md5'] != File::md5($source)) {
+	if ($ti['md5'] != self::md5($source)) {
 		return false;
 	}
 
@@ -257,7 +257,7 @@ public static function equal(string $source, string $target, bool $check_source_
  * @eol
  */
 public static function loadCSV(string $file, string $delimiter = ',', array $options = []) : array {
-	$fh = File::open($file, 'rb');
+	$fh = self::open($file, 'rb');
 	$table = [];
 
 	if ($delimiter == '\\t') {
@@ -274,7 +274,7 @@ public static function loadCSV(string $file, string $delimiter = ',', array $opt
 	}
 
 	$n = 1;
-	while (($row = File::readCSV($fh, $delimiter, $opt['quote'], $opt['escape']))) {
+	while (($row = self::readCSV($fh, $delimiter, $opt['quote'], $opt['escape']))) {
 		if (count($row) == 0 || (count($row) == 1 && strlen(trim($row[0])) == 0)) {
 			if (empty($opt['skip_empty'])) {
 				throw new Exception("line $n is empty");
@@ -301,7 +301,7 @@ public static function loadCSV(string $file, string $delimiter = ',', array $opt
 		$n++;
 	}
 
-	File::close($fh);
+	self::close($fh);
 	return $table;
 }
 
@@ -329,7 +329,7 @@ public static function fromURL(string $url, bool $required = true, array $header
 		unset($header['cache_as']);
 		unset($header['cache_ttl']);
 
-		if (self::exists($cache_as) && File::lastModified($cache_as) + $cache_ttl > time()) {
+		if (self::exists($cache_as) && self::lastModified($cache_as) + $cache_ttl > time()) {
 			return self::load($cache_as);
 		}
 	}
@@ -387,7 +387,7 @@ public static function fromURL(string $url, bool $required = true, array $header
 	}
 
   if ($cache_ttl) {
-    File::save($cache_as, $res);
+    self::save($cache_as, $res);
   }
 
 	return $res;
@@ -463,7 +463,7 @@ private static function _lload(string $file, int $offset = -1) : string {
  */
 public static function resizeImage(string $wxh, string $source, string $target = '') : void {
 
-	$info = File::imageInfo($source);
+	$info = self::imageInfo($source);
 	$resize = '';
 
 	if (!empty($wxh)) {
@@ -481,23 +481,23 @@ public static function resizeImage(string $wxh, string $source, string $target =
 	}
 
 	if (empty($target)) {
-		$suffix = File::suffix($source, true);
-		$base = File::basename($source, true);
+		$suffix = self::suffix($source, true);
+		$base = self::basename($source, true);
 		$temp = dirname($source).'/'.$base.'_'.$wxh.$suffix;
 
-		if (File::exists($temp)) {
+		if (self::exists($temp)) {
 			throw new Exception('already resizing or resize failed', $temp);
 		}
 
 		execute("convert $resize '$wxh' '$source' '$temp'");
-		File::move($temp, $source);
+		self::move($temp, $source);
 		$target = $source;
 	}
 	else {
 		execute("convert $resize '$wxh' '$source' '$target'");
 	}
 
-	File::exists($target, true);
+	self::exists($target, true);
 }
 
 
@@ -552,7 +552,7 @@ public static function imageInfo(string $file, bool $abort = true) : array {
 		$res['suffix'] = $suffix_map[$info[2]];
 	}
 	else {
-		$suffix = File::suffix($file, true);
+		$suffix = self::suffix($file, true);
 
 		if ($suffix == '.jpeg') {
 			$suffix = '.jpg';
@@ -713,18 +713,18 @@ public static function md5(string $file) : string {
  * True if file was modified.
  */
 public static function hasChanged(string $file, string $md5_log) : bool {
-  $md5 = File::md5($file);
+  $md5 = self::md5($file);
 
 	if (!FSEntry::isFile($md5_log, false)) {
-		File::save($md5_log, $md5);
+		self::save($md5_log, $md5);
 		return true;
 	}
 
-	$old_md5 = trim(File::load($md5_log));
+	$old_md5 = trim(self::load($md5_log));
 	$res = ($old_md5 == $md5);
 
 	if (!$res) {
-		File::save($md5_log, $md5);
+		self::save($md5_log, $md5);
 	}
 
 	return !$res;
@@ -735,9 +735,9 @@ public static function hasChanged(string $file, string $md5_log) : bool {
  * Return true if file changes within $watch seconds (default = 15 sec, max = 300 sec).
  */
 public static function isChanging(string $file, int $watch = 15) : bool {
-	$md5_old = File::md5($file);
+	$md5_old = self::md5($file);
 	sleep(min($watch, 300));
-	$md5_new = File::md5($file);
+	$md5_new = self::md5($file);
 	return $md5_old != $md5_new;
 }
 
@@ -789,7 +789,7 @@ public static function save(string $file, string $data, int $flag = 0) : void {
  * Save $data to $file and modify privileges to $mode.
  */
 public static function save_rw(string $file, string $data, int $mode = 0) : void {
-	File::save($file, $data);
+	self::save($file, $data);
 
 	if (!$mode) {
 		$mode = FILE_DEFAULT_MODE;
@@ -875,7 +875,7 @@ public static function open(string $file, string $mode = 'rb') {
 public static function loadLines(string $file, int $flags = 0) : array {
 	$lines = array();
 
-	if (File::size($file) > 0) {
+	if (self::size($file) > 0) {
 		$lines = file($file, $flags);
 	}
 
@@ -1018,11 +1018,11 @@ public static function saveJSON(string $file, $data, int $flag = 0) : bool {
   $json = json_encode($data, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);
 
   if (($err_no = json_last_error()) || strlen($json) == 0) {
-		$base = dirname($file).'/'.File::basename($file, true);				
-		File::save($base.'.dump', print_r($data, true));
+		$base = dirname($file).'/'.self::basename($file, true);
+		self::save($base.'.dump', print_r($data, true));
 
 		if ($flag & 2) {
-			File::save($base.'.ser', serialize($data));
+			self::save($base.'.ser', serialize($data));
 		}
 
 		if ($flag & 1) { 
@@ -1035,10 +1035,10 @@ public static function saveJSON(string $file, $data, int $flag = 0) : bool {
 	else if (substr($file, -3) == '.js' && ($pos = strpos($file, '=')) !== false) {
 		$jsvar = substr($file, 0, $pos);
 		$file = substr($file, $pos + 1);
-		File::save($file, "var $jsvar = $json;\n");
+		self::save($file, "var $jsvar = $json;\n");
 	}
 	else {
-		File::save($file, $json);
+		self::save($file, $json);
 	}
 
 	return true;
@@ -1051,7 +1051,7 @@ public static function saveJSON(string $file, $data, int $flag = 0) : bool {
  */
 public static function loadConf(string $file) : array {
 	require_once __DIR__.'/lib/conf2kv.php';
-	return \rkphplib\lib\conf2kv(File::load($file));
+	return \rkphplib\lib\conf2kv(self::load($file));
 }
 
 
@@ -1061,7 +1061,7 @@ public static function loadConf(string $file) : array {
 public static function saveConf(string $file, array $conf, string $d2 = HASH_DELIMITER, string $d1 = '=') : void {
 	require_once __DIR__.'/lib/kv2conf.php';
 	$nfo = '@@="'.$d1.'","'.str_replace("\n", '\\n', $d2).'"'."\n";
-	File::save($file, $nfo.\rkphplib\lib\kv2conf($conf, $d1, $d2));
+	self::save($file, $nfo.\rkphplib\lib\kv2conf($conf, $d1, $d2));
 }
 
 
@@ -1071,7 +1071,7 @@ public static function saveConf(string $file, array $conf, string $d2 = HASH_DEL
  * @return any
  */
 public static function loadJSON(string $file, int $flag = 1) {
-	return JSON::decode(File::load($file), $flag);
+	return JSON::decode(self::load($file), $flag);
 }
 
 
@@ -1079,7 +1079,7 @@ public static function loadJSON(string $file, int $flag = 1) {
  * Save serialized data in file.
  */
 public static function serialize(string $file, $data) : void {
-	File::save($file, serialize($data));
+	self::save($file, serialize($data));
 }
 
 
@@ -1087,9 +1087,9 @@ public static function serialize(string $file, $data) : void {
  * Return unserialized file content.
  */
 public static function unserialize(string $file) {
-	$res = unserialize(File::load($file));
+	$res = unserialize(self::load($file));
 
-	if ($res === false && File::size($file) > 100) {
+	if ($res === false && self::size($file) > 100) {
 		throw new Exception('error unserialize file '.$file);
 	}
 
@@ -1306,14 +1306,13 @@ public static function basename_collect(array $list, array $options = []) : arra
  * @param int $mode default = 0 = source file mode
  */
 public static function copy(string $source, string $target, int $mode = 0) : void {
-
 	if (!$mode) {
 		$stat = FSEntry::stat($source);
 		$mode = $stat['perms']['octal'];
 	}
 
 	if (!copy($source, $target)) {
-		throw new Exception("Filecopy failed", "$source to $target");
+		throw new Exception("copy file failed", "$source to $target");
 	}
 
 	if (class_exists('\\rkphplib\\tok\\Tokenizer', false)) {
@@ -1328,7 +1327,6 @@ public static function copy(string $source, string $target, int $mode = 0) : voi
  * Move file. Use default $mode = 0 = source file mode.
  */
 public static function move(string $source, string $target, int $mode = 0) : void {
-
 	$rp_target = realpath($target);
 
 	if ($rp_target && realpath($source) == $rp_target) {
@@ -1336,11 +1334,13 @@ public static function move(string $source, string $target, int $mode = 0) : voi
 	}
 
 	if ($mode == 0) {
-		rename($source, $target);
+		if (!rename($source, $target)) {
+			throw new Exception('move file failed', "mv '$source' '$target'");
+		}
 	}
 	else {
-		File::copy($source, $target, $mode);
-		File::remove($source);
+		self::copy($source, $target, $mode);
+		self::remove($source);
 	}
 }
 
@@ -1375,7 +1375,7 @@ public static function httpSend(string $file, string $disposition = 'attachment'
 		exit;
 	}
 
-	$mime_type = File::mime($file);
+	$mime_type = self::mime($file);
 	$content_type = empty($mime_type) ? 'application/force-download' : $mime_type;
 
 	// send header
