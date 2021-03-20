@@ -58,6 +58,35 @@ public static function tail(string $file, int $lnum = 5, int $maxLen = 250) : vo
 
 
 /**
+ * Save $data as $file. If $data is null gzip $file as $file.gz.
+ */
+public static function gzip(string $file, ?string $data = null) : void {
+	if (!is_null($data)) {
+		if (!($gh = gzopen($file, 'w9'))) {
+			throw new Exception('gzopen failed', $file);
+		}
+
+		gzwrite($gh, $data);
+		gzclose($gh);
+		return;
+	}
+
+	$fh = self::open($file);
+	
+	if (!($gh = gzopen($file.'.gz', 'w9'))) {
+		throw new Exception('gzopen failed', $file);
+	}
+
+	while(!feof($fh)) {
+		gzwrite($gh, fread($fh, 1024 * 512)); 
+	}
+
+	self::close($fh);
+	gzclose($gh);
+}
+
+
+/**
  * Get|Print first $lnum lines
  */
 public static function head(string $file, int $lnum = 5, bool $print = true) : array {
