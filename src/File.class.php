@@ -17,7 +17,7 @@ use function rkphplib\lib\execute;
  * By default file locking is disabled (enable with self::$USE_FLOCK = true).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2016 Roland Kujundzic
+ * @copyright 2016-2021 Roland Kujundzic
  *
  */
 class File {
@@ -54,6 +54,26 @@ public static function tail(string $file, int $lnum = 5, int $maxLen = 250) : vo
 	}
 
 	self::close($fp);
+}
+
+
+/**
+ *
+ */
+public static function gunzip(string $file) : string {
+	$data = '';
+
+	if (!($gh = gzopen($file, 'rb'))) {
+		throw new Exception('gzopen failed', $file);
+	}
+
+	while (!gzeof($gh)) {
+		$data .= gzread($gh, 4096);
+	}
+
+	gzclose($gh);
+
+	return $data;
 }
 
 
