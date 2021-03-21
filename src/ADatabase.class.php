@@ -219,11 +219,21 @@ public function getQueryMap() : array {
 
 
 /**
- * Split data source name into hash (type, login, password, protocol, host, port, name, [file]). 
+ * Split data source name into hash
  *
- * Example:
- * type://login:password@protocol+host:port/name 
- * type://[password]@./file or type://@/path/to/file 
+ * @hash return …
+ * type: mysqli
+ * login:
+ * password:
+ * protocol: tcp|udp
+ * host: localhost
+ * port: 3306
+ * name:
+ * file: SQLite only
+ * @eol
+ *
+ * @example type://login:password@protocol+host:port/name 
+ * @example type://[password]@./file or type://@/path/to/file 
  */
 public static function splitDSN(string $dsn) : array {
 
