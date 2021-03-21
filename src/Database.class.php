@@ -80,6 +80,14 @@ public static function esc(string $value, bool $quote = false) : string {
 
 
 /**
+ * Return escaped tablename/colname $name 
+ */
+public static function escName(string $name, bool $abort = false) : string {
+	return ADatabase::escape_name($name, $abort);
+}
+
+
+/**
  * Singelton method. Return unused ADatabase object instance with dsn from pool.
  * Use query_map with no prefix. Use SETTINGS_DSN if $dsn is empty (=default). 
  */
