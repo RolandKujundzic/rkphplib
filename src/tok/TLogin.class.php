@@ -991,7 +991,7 @@ public function tok_login(string $key, ?string $alt_key = '') : ?string {
  */
 public function getSession(string $name) : \rkphplib\Session {
 	if (empty($name) || $this->sess->getConf('name') != $name) {
-		throw new Exception('invalid session '.$name);
+		throw new Exception('invalid session '.$name, $this->sess->getConf('name'));
 	}
 
 	return $this->sess;
