@@ -2040,11 +2040,11 @@ public function tok_plugin(string $ns, array $p) : void {
 			$obj = '\\rkphplib\\tok\\'.$plugin;
 		}
 		else {
-			list ($path, $obj) = explode(':', $plugin);
+			list ($path_name, $cname) = explode(':', $plugin);
 
-			if (defined("PATH_$path")) {
-				$path = constant("PATH_$path").'tok/'.$obj;
-				$obj = '\\'.strtolower($path).'\\tok\\'.$obj;
+			if (defined('PATH_'.$path_name)) {
+				$obj = '\\'.strtolower($path_name).'\\tok\\'.$cname;
+				$path = constant('PATH_'.$path_name).'tok/'.$cname;
 			}
 		}
 
