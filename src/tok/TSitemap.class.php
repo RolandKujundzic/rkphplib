@@ -106,7 +106,7 @@ public function __construct(array $custom_query_map = []) {
 			'fix_shop_cat_url' => self::sqlFixUrl('shop_category'),
 
 			'shop_cat_alias' => "SELECT id AS s_cat_id, name, 'brands' AS dir, url, DATE_FORMAT(lchange, '%Y-%m-%d') AS lchange ".
-				"FROM shop_category WHERE url={:=url} AND owner=3 AND (ti > 0 OR tii > 0) AND status='active'",
+				"FROM shop_category WHERE url={:=url} AND owner=3 AND ti > 0 AND status='active'",
 
 			'shop_item_alias' => "SELECT id, brand AS cat, IF(model, model, brand) AS name, 'watch' AS dir, ".
 				"url, DATE_FORMAT(lchange, '%Y-%m-%d') AS lchange FROM shop_item WHERE url={:=url} AND owner=3 AND status='active'"
