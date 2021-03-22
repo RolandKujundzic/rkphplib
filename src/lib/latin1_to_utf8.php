@@ -14,8 +14,8 @@ namespace rkphplib\lib;
 function latin1_to_utf8(&$data) {
 
 	if (is_string($data)) {
-		if (mb_detect_encoding($data, 'ISO-8859-1', true)) {
-			$data = utf8_encode($data);
+		if (mb_detect_encoding($data, 'UTF-8,ISO-8859-1', true) == 'ISO-8859-1') {
+			$data = mb_convert_encoding($data, 'UTF-8', 'ISO-8859-1');
 		}
 	}
 	else if (is_array($data)) {
