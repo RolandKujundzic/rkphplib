@@ -179,17 +179,29 @@ public static function getTokenAndAuth(array $allow_auth) : array {
  * Set $request[method|content-type|input-type|token|auth].
  * If $options[force_basic_auth] is true and token was not determined call askBasicAuth (overwrite if necessary).
  *
+ * @hash $options …
+ * [
+ *   'allow_method' => [ 'put', 'get', 'post', 'delete', 'patch', 'head', 'options' ],
+ *   'allow_auth' => [ 'header', 'request', 'basic_auth', 'oauth2', 'cli' ],
+ *   'require_auth' => false,
+ *   'force_basic_auth' => true
+ * ]
+ * @eol
+ * 
  * @see getMethod
  * @see getContentType
  * @see getInputType
  * @see getTokenAndAuth
  */
-public static function parseHeader(array &$request, array $options = [
-		'allow_method' => [ 'put', 'get', 'post', 'delete', 'patch', 'head', 'options' ],
-		'allow_auth' => [ 'header', 'request', 'basic_auth', 'oauth2', 'cli' ],
-		'require_auth' => false,
-		'force_basic_auth' => true
-		]) : void {
+public static function parseHeader(array &$request, ?array $options = null) : void {
+	if (is_null($options)) {
+		$options = [
+			'allow_method' => [ 'put', 'get', 'post', 'delete', 'patch', 'head', 'options' ],
+			'allow_auth' => [ 'header', 'request', 'basic_auth', 'oauth2', 'cli' ],
+			'require_auth' => false,
+			'force_basic_auth' => true
+		];
+	}
 
 	$request['method'] = self::getMethod();
 
