@@ -106,8 +106,9 @@ private static function _error_msg(int $err_no) : string {
 
 /**
  * Return json encoded $any. Wrapper of json_encode() with sane options.
+ * $options = 448 = JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT
  */
-public static function encode($any, int $options = JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT, int $depth = 512) : string {
+public static function encode($any, int $options = 448, int $depth = 512) : string {
 	$res = json_encode($any, $options, $depth);
 
 	if (($err_no = json_last_error())) {
