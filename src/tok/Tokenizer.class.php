@@ -1239,7 +1239,7 @@ private function tryPluginMap(string $name) : void {
 		'TGDLib' => [ 'gdlib:print', 'gdlib:font', 'gdlib:init', 'gdlib:load', 'gdlib:new', 'gdlib' ],
 		'THighlight' => [ 'source:php', 'source:html' ],
 		'THtml' => [ 'html:tag', 'html:inner', 'html:append', 'html:meta', 'html:meta_og', 'html:tidy', 'html:xml', 'html:uglify', 'html:nobr', 'html', 'google', 'text2html', 'input:checkbox', 'input:radio', 'input:select', 'input:xcrypt', 'input', 'user_agent' ],
-		'THttp' => [ 'http:get', 'http', 'domain:idn', 'domain:utf8', 'cookie', 'domain' ],
+		'THttp' => [ 'http:get', 'url', 'http', 'domain:idn', 'domain:utf8', 'cookie', 'domain' ],
 		'TJob' => [ 'job' ],
 		'TLanguage' => [ 'language:init', 'language:get', 'language:script', 'language', 'txt:js', 'txt', 't', 'ptxt' ],
 		'TLogin' => [ 'login', 'login_account', 'login_check', 'login_auth', 'login_auth:basic', 'login_auth:digest', 'login_access', 'login_update', 'login_clear' ],
