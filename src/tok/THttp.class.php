@@ -135,7 +135,7 @@ public function tok_http_get(string $name) : string {
  * @tok {url:} = {http:get:abs_path}/
  */
 public function tok_url() : string {
-	return self::httpGet($name).'/';
+	return self::httpGet('abs_path').'/';
 }
 
 
@@ -196,8 +196,8 @@ public static function httpGet(string $name) : string {
 			$path = getenv('REQUEST_URI');
 			$dir = empty($_REQUEST[SETTINGS_REQ_DIR]) ? '' : $_REQUEST[SETTINGS_REQ_DIR];
 
-			if (($pos = strpos($path, '/index.php?')) !== false || ($pos = strpos($path, '/?')) !== false) {
-				$res = $port_host.substr($path, 0, $pos);
+			if (($pos = strpos($path, '?')) !== false) {
+				$res = dirname($port_host.substr($path, 0, $pos));
 			}
  			else if (substr(getcwd().'/', -1 * strlen($path)) == $path) {
 				$res = $port_host.$path;
