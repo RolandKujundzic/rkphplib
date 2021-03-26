@@ -108,7 +108,7 @@ public static function getInstance(string $dsn = '', array $query_map = []) : ob
 			array_push($found, $i);
 
 			if (!self::$pool[$i]->hasResultSet()) {
-				// \rkphplib\lib\log_debug("Database::getInstance:103> use instance $i = ".self::$pool[$i]->getId());
+				// \rkphplib\lib\log_debug("Database::getInstance:111> use instance $i = ".self::$pool[$i]->getId());
 				return self::$pool[$i];
 			}
 		}
@@ -116,21 +116,21 @@ public static function getInstance(string $dsn = '', array $query_map = []) : ob
 
 	if (is_map($query_map, true)) {
 		array_push(self::$pool, self::create($dsn, $query_map));
-		// \rkphplib\lib\log_debug("Database::getInstance:111> create and use new instance $i = ".self::$pool[$i]->getId());
+		// \rkphplib\lib\log_debug("Database::getInstance:119> create and use new instance $i = ".self::$pool[$i]->getId());
 		return self::$pool[$i];
 	}
 	else if (count($found) > 0) {
 		// check if instance has become available ...
 		for ($i = 0; $i < count($found); $i++) {
 			if (!self::$pool[$i]->hasResultSet()) {
-				// \rkphplib\lib\log_debug("Database::getInstance:118> use available instance $i = ".self::$pool[$i]->getId());
+				// \rkphplib\lib\log_debug("Database::getInstance:126> use available instance $i = ".self::$pool[$i]->getId());
 				return self::$pool[$i];
 			}
 		}
 
 		// create new instance
 		array_push(self::$pool, self::create($dsn, self::$pool[$found[0]]->getQueryMap()));
-		// \rkphplib\lib\log_debug("Database::getInstance:125> found=$found - create and use new instance $i");
+		// \rkphplib\lib\log_debug("Database::getInstance:133> found=$found - create and use new instance $i");
 		return self::$pool[$i];	
 	}
 	else {
