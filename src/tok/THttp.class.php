@@ -29,9 +29,10 @@ class THttp implements TokPlugin {
 public function getPlugins(Tokenizer $tok) : array {
 	$plugin = [];
 	$plugin['http:get'] = TokPlugin::ONE_PARAM;
+	$plugin['url'] = TokPlugin::NO_PARAM || TokPlugin::NO_BODY;
 	$plugin['http'] = 0;
-	$plugin['domain:idn'] =  TokPlugin::NO_PARAM;
-	$plugin['domain:utf8'] =  TokPlugin::NO_PARAM;
+	$plugin['domain:idn'] = TokPlugin::NO_PARAM;
+	$plugin['domain:utf8'] = TokPlugin::NO_PARAM;
 	$plugin['cookie'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY;
 	$plugin['domain'] = 0;
   return $plugin;
@@ -52,7 +53,7 @@ public function getPlugins(Tokenizer $tok) : array {
 public static function tok_cookie(string $name, array $p) : ?string {
 	if (count($p) == 0) {
 		$res = isset($_COOKIE[$name]) ? $_COOKIE[$name] : '';
-		// \rkphplib\lib\log_debug("THttp::tok_cookie:55> return $name = '$res'");
+		// \rkphplib\lib\log_debug("THttp::tok_cookie:56> return $name = '$res'");
 		return $res;
 	}
 
@@ -66,7 +67,7 @@ public static function tok_cookie(string $name, array $p) : ?string {
 	}
 
 	cookie($name, $value, $p);
-	// \rkphplib\lib\log_debug([ "THttp::tok_cookie:69> set $name = '$value' - <1>", $p ]);
+	// \rkphplib\lib\log_debug([ "THttp::tok_cookie:70> set $name = '$value' - <1>", $p ]);
   return null;
 }
 
@@ -127,6 +128,14 @@ public function tok_domain_utf8(string $domain) : string {
  */
 public function tok_http_get(string $name) : string {
 	return self::httpGet($name);
+}
+
+
+/**
+ * @tok {url:} = {http:get:abs_path}/
+ */
+public function tok_url() : string {
+	return self::httpGet($name).'/';
 }
 
 
