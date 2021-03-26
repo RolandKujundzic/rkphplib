@@ -199,6 +199,9 @@ public static function httpGet(string $name) : string {
 			if (($pos = strpos($path, '?')) !== false) {
 				$res = dirname($port_host.substr($path, 0, $pos));
 			}
+			else if (substr($path, -4) == '.php') {
+				$res = dirname($port_host.$path);
+			}
  			else if (substr(getcwd().'/', -1 * strlen($path)) == $path) {
 				$res = $port_host.$path;
 			}
