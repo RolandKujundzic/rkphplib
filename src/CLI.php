@@ -44,6 +44,7 @@ public static $log = STDERR;
  * Set self::$arg[$name] = $value if unset.
  */
 public static function setDefault(string $name, string $value) : void {
+	self::init();
 	if (!isset(self::$arg[$name])) {
 		self::$arg[$name] = $value;
 	}
@@ -54,6 +55,7 @@ public static function setDefault(string $name, string $value) : void {
  * Return value of self::$arg[$name] 
  */
 public static function get(string $name) : string {
+	self::init();
 	return isset(self::$arg[$name]) ? self::$arg[$name] : '';
 }
 
@@ -62,6 +64,7 @@ public static function get(string $name) : string {
  * Return true if self::$arg[$name] == 1
  */
 public static function flag(string $name) : bool {
+	self::init();
 	return isset(self::$arg[$name]) && self::$arg[$name] == 1;
 }
 
@@ -128,9 +131,7 @@ public static function confirm(string $question, string $default = 'n', bool $ab
  * @eol
  */
 public static function syntax(array $args = [], array $opts = []) : bool {
-	if (count(self::$argv) == 0) {
-		self::parse();
-	}
+	self::init();
 
 	if (defined('APP_HELP')) {
 		self::$abort = false;
@@ -250,6 +251,16 @@ private static function checkParam(string $name, string $value, string $arg) : ?
 
 
 /**
+ * Call parse() if necessary
+ */
+private static function init() : void {
+	if (count(self::$argv) == 0 && php_sapi_name() === 'cli') {
+		self::parse();
+	}
+}
+
+
+/**
  * 
  */
 private static function syntaxError(string $syntax, array $error = [], array $opts = []) : void {
@@ -338,7 +349,7 @@ public static function parse(?string $arg_str = null) : ?array {
 		$key = null;
 	
 		if ($no_parse) {
-			// \rkphplib\lib\log_debug("CLI::parse:341> push $value");
+			// \rkphplib\lib\log_debug("CLI::parse:352> push $value");
 			array_push(self::$arg, $value);
 		}
 		else if ($value == '--') {
@@ -354,7 +365,7 @@ public static function parse(?string $arg_str = null) : ?array {
 			}
 			else {
 				$akey = substr($value, 2);
-				// \rkphplib\lib\log_debug("CLI::parse:357> $akey=1");
+				// \rkphplib\lib\log_debug("CLI::parse:368> $akey=1");
 				self::$arg[$akey] = 1;
 			}
 		}
@@ -363,7 +374,7 @@ public static function parse(?string $arg_str = null) : ?array {
 
 			if ($plen == 2) {
 				$akey = $value[1];
-				// \rkphplib\lib\log_debug("CLI::parse:366> $akey=1");
+				// \rkphplib\lib\log_debug("CLI::parse:377> $akey=1");
 				self::$arg[$akey] = 1;
 			}
 			else {
@@ -373,7 +384,7 @@ public static function parse(?string $arg_str = null) : ?array {
 						throw new \Exception('invalid flag '.$akey, $value);
 					}
 
-					// \rkphplib\lib\log_debug("CLI::parse:376> $akey=1");
+					// \rkphplib\lib\log_debug("CLI::parse:387> $akey=1");
 					self::$arg[$akey] = 1;
 				}
 			}
@@ -391,7 +402,7 @@ public static function parse(?string $arg_str = null) : ?array {
 				array_push(self::$arg[$key], $value);
 			}
 			else {
-				// \rkphplib\lib\log_debug("CLI::parse:394> $key=$value");
+				// \rkphplib\lib\log_debug("CLI::parse:405> $key=$value");
 				self::$arg[$key] = $value;
 			}
 		}
@@ -424,11 +435,11 @@ private static function parseAction(string $do, string $value) : void {
 				$_REQUEST[$key] = [ $_REQUEST[$key] ];
 			}
 
-			// \rkphplib\lib\log_debug("CLI::parseAction:427> push '$value' to _REQUEST[$key]");
+			// \rkphplib\lib\log_debug("CLI::parseAction:438> push '$value' to _REQUEST[$key]");
 			array_push($_REQUEST[$key], $value);
 		}
 		else {
-			// \rkphplib\lib\log_debug("CLI::parseAction:431> set _REQUEST[$key]='$value'");
+			// \rkphplib\lib\log_debug("CLI::parseAction:442> set _REQUEST[$key]='$value'");
 			$_REQUEST[$key] = $value;
 		}
 	}
@@ -444,14 +455,14 @@ private static function parseAction(string $do, string $value) : void {
 		}
 
 		if (!isset($_SERVER[$key])) {
-			// \rkphplib\lib\log_debug("CLI::parseAction:447> set _SERVER[$key]='".$match[2].'"");
+			// \rkphplib\lib\log_debug("CLI::parseAction:458> set _SERVER[$key]='".$match[2].'"");
 			$_SERVER[$key] = $value;
 		}
 	}
 
 	if ($json && ((substr($json, 0, 1) == '{' && substr($json, -1) == '}') ||
 			(substr($json, 0, 1) == '[' && substr($json, -1) == ']'))) {
-		// \rkphplib\lib\log_debug([ "CLI::parseAction:454> merge self::arg with <1>", $hash ]);
+		// \rkphplib\lib\log_debug([ "CLI::parseAction:465> merge self::arg with <1>", $hash ]);
 		$hash = json_decode($json, true);
 		self::$arg = array_merge(self::$arg, $hash);
 	}
