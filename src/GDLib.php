@@ -5,18 +5,203 @@ namespace rkphplib;
 require_once __DIR__.'/File.class.php';
 require_once __DIR__.'/Dir.class.php';
 
+use \rkphplib\Exception;
+
 
 /**
  * GDLib wrapper
  *
  * @author Roland Kujundzic <roland@inkoeln.com>
- * @copyright 2021 Roland Kujundzic
+ * @copyright 2017-2021 Roland Kujundzic
  */
 class GDLib {
 
-private $_conf = array();
-private $_info = array();
-private $_im;
+// @var resource $im
+public $im = null;
+
+// @var array $conf
+private $conf = [];
+
+// private $_info = array();
+
+
+/**
+ * @hash $conf ¿
+ * jpeg_quality: -1 (= default = 75)
+ * bgcolor: 
+ * @eol
+ */
+public function __construct(array $conf = []) {
+	$this->conf = array_merge([
+		'bgcolor' => '',
+		'jpeg_quality' => -1,
+	], $conf);
+}
+
+ 
+/**
+ * Create new $w x $h pixel image with white background
+ */
+public function create(int $w, int $h, string $rgb_bg = '#ffffff') : void {
+	if (!($this->im = imagecreatetruecolor($w, $h))) {
+		throw new Exception("create $w * $h pixel image");
+	}
+
+	if ($rgb_bg) {
+		$this->bgcolor($rgb_bg);
+		$this->conf['bgcolor'] = $rgb_bg;
+	}
+}
+
+
+/**
+ * Set image background
+ */
+public function bgcolor(string $rgb) : void {
+	list($r, $g, $b) = self::rgb($rgb);
+	$color = imagecolorallocate($this->im, $r, $g, $b);
+
+	$w = imagesx($this->im);
+	$h = imagesy($this->im);
+
+	imagefilledrectangle($this->im, 0, 0, $w, $h, $color);
+}
+
+
+/**
+ * Save image
+ */
+public function save(string $save_as, int $jpeg_quality = 0) : void {
+	$suffix = File::suffix($save_as);
+
+	if ($suffix == 'gif') {
+		$res = imagegif($this->im, $save_as);
+	}
+	else if ($suffix == 'png') {
+		$res = imagepng($this->im, $save_as);
+	}
+	else if ($suffix == 'jpg' || $suffix == 'jpeg') {
+		$quality = $jpeg_quality > 0 ? $jpeg_quality : $this->conf['jpeg_quality']; 
+		$res = imagejpeg($this->im, $save_as, $jpeg_quality);
+	}
+	else {
+		throw new Exception('invalid image filename', $save_as);
+	}
+
+  if (!$res) {
+		throw new Exception('save image failed', $save_as);
+	}
+
+	imagedestroy($this->im);
+}
+
+
+/**
+ * Return [ r, g, b ] from e.g. #eeaabb
+ */
+public static function rgb(string $rgb) : array {
+	if (!preg_match('/^#[0-9a-fA-F]{6}$/', $rgb)) {
+		throw new Exception("invalid RGB hex value '$rgb' use e.g. #eeaa00");
+	}
+
+	return sscanf($rgb, '#%2x%2x%2x');
+}
+
+
+/**
+ * Load j[e]pg|png|gif image 
+ */
+public function load(string $file) : void {
+	$gis = getimagesize($file);
+ 
+	if (!is_array($gis) || $gis[0] < 1 || $gis[1] < 1) {
+		$this->_error_img($file);
+		return;
+	}
+
+	$type = $gis[2];
+	$alpha = false;
+  
+	if (!is_null($this->im)) {
+		imagedestroy($this->im);
+		$this->im = null;
+	}
+
+	switch($type) {
+		case 1:
+			$this->im = imagecreatefromgif($file);
+			$alpha = true;
+			break;
+		case 2:
+			$this->im = imagecreatefromjpeg($file);
+			break;
+		case 3:
+			$this->im = imagecreatefrompng($file); 
+			$alpha = true;
+			break;
+		default:
+			$this->_error_img($file);
+	}
+
+	if ($alpha) {
+		// preserve transparency ...
+		imagealphablending($this->im, true);
+		imagesavealpha($this->im, true);
+	}
+
+	$this->conf['width'] = $gis[0];
+	$this->conf['height'] = $gis[1];
+}
+
+
+/**
+ * Clone existing image.
+ * 
+ * @param int $w image width
+ * @param int $h image height
+ * @param image_handle $im_old
+ * @param bool $set_bg
+ */
+private function clone($w, $h, $im_old) {
+
+  $im = imagecreatetruecolor($w, $h);
+
+  if (!$im) {
+    lib_abort("Couldn't create image", "width=[$w] height=[$h]");
+  }
+
+  if ($im_old) {
+    if ($set_bg) {
+
+      $old_w = imagesx($im_old);
+      $old_h = imagesy($im_old);
+
+      if (!empty($this->_conf['bgcolor'])) {
+        list($r, $g, $b) = $this->rgb($this->_conf['bgcolor']);
+      }
+      else {
+        list ($r, $g, $b) = imagecolorsforindex($im, imagecolorat($im, 0, 0));
+      }
+
+      $color = imagecolorallocate($im, $r, $g, $b);
+      imagefilledrectangle($im, 0, 0, $w, $h, $color);
+    }
+    else {
+      // keep transparency from old image ...
+      $transparent = imagecolortransparent($im_old);
+
+      if  ($transparent >= 0 && $transparent < imagecolorstotal($im_old)) {
+        $tc = imagecolorsforindex($im_old, $transparent);
+        $new_tc = imagecolorallocate($im, $tc['red'], $tc['green'], $tc['blue']);
+        imagefill($im, 0, 0, $new_tc);
+        imagecolortransparent($im, $new_tc);
+      }
+    }
+  }
+
+  return $im;
+}
+
 
 
 /**
@@ -95,7 +280,7 @@ public function doInit($p) {
   if (!empty($p['open'])) {
 
     if (empty($p['width']) && empty($p['height'])) {
-      $this->_im = $this->_load_img($p['open']);
+      $this->_im = $this->load($p['open']);
     }
     else {
       $p['resize_mode'] = empty($p['resize_mode']) ? '' : $p['resize_mode'];
@@ -109,7 +294,7 @@ public function doInit($p) {
     $this->_conf['height'] = $this->_info['height'];
   }
   else if (!empty($p['width']) && !empty($p['height'])) {
-    $this->_im = $this->_new_img($p['width'], $p['height'], null, true);
+    $this->create($p['width'], $p['height'], $p['bgcolor']);
   }
   else {
     lib_abort("either parameter width+height or open is required");
@@ -117,7 +302,9 @@ public function doInit($p) {
 }
 
 
-//-----------------------------------------------------------------------------
+/**
+ *
+ */
 public function doPrintln($p) {
 
   if (!isset($p['text']) || strlen($p['text']) == 0) {
@@ -297,7 +484,7 @@ public function doPrint($p) {
   $fsize = empty($p['font.size']) ? $this->_conf['font.size'] : $p['font.size'];
   $fname = empty($p['font.ttf']) ? $this->_conf['font.ttf'] : $p['font.ttf'];
 
-  list($r, $g, $b) = $this->_rgb($fcolor);
+  list($r, $g, $b) = $this->rgb($fcolor);
   $color = imagecolorallocate($this->_im, $r, $g, $b);
 
   $x = isset($p['x']) ? $p['x'] : 5;
@@ -356,38 +543,6 @@ public function doPrint($p) {
 }
 
 
-//-----------------------------------------------------------------------------
-public function doSave() {
-
-  if ($this->_conf['cache']) {
-    return $this->_conf['cache'];
-  }
-
-  if (!empty($this->_conf['save_as'])) {
-    $save_as = $this->_conf['save_as'];
-  }
-  else if (!empty($this->_conf['save_in'])) {
-    $save_as = $this->_conf['save_in'].'/'.md5($this->_conf['md5']).'.'.$this->_conf['format'];
-  }
-
-  if ($this->_conf['format'] == 'gif') {
-    imagegif($this->_im, $save_as);
-  }
-  else if ($this->_conf['format'] == 'png') {
-    imagepng($this->_im, $save_as);
-  }
-  else if ($this->_conf['format'] == 'jpg') {
-    imagejpeg($this->_im, $save_as, $this->_conf['jpeg_quality']);
-  }
-
-  imagedestroy($this->_im);
-
-  File::chmod($save_as);
-
-  return $save_as;
-}
-
-
 /**
  * Return image info. Parameter:
  * 
@@ -404,56 +559,6 @@ public function getInfo($key) {
 
   $res = $this->_info[$key];
   return $res;
-}
-
-
-/**
- * Load jpg|png|gif image. 
- * 
- * @param string $file
- * @return image_handle GDLib handle
- */
-private function _load_img($file) {
-	
-  $gis = getimagesize($file);
- 
-  if (!is_array($gis) || $gis[0] < 1 || $gis[1] < 1) {
-    return $this->_error_img(basename($file), $file);
-  }
-
-  $type = $gis[2];
-  $alpha = false;
-  $im = null;
-
-  switch($type) {
-    case 1:
-      $im = imagecreatefromgif($file);
-      $alpha = true;
-      break;
-    case 2:
-      $im = imagecreatefromjpeg($file);
-      break;
-    case 3:
-      $im = imagecreatefrompng($file); 
-      $alpha = true;
-      break;
-    default:
-      $im = imagecreatefromjpeg($file);
-  }
-
-  if (!$im) {
-    $im = $this->_error_img(basename($file), $file);
-  }
-  else if ($alpha) {
-    // preserve transparency ...
-    imagealphablending($im, true);
-    imagesavealpha($im, true);
-  }
-
-  $this->_info['width'] = $gis[0];
-  $this->_info['height'] = $gis[1];
-
-  return $im;
 }
 
 
@@ -474,92 +579,6 @@ private function _error_img($error_msg, $log_msg = '') {
   return $im;
 }
 
-
-/**
- * Save image to file. If file is empty print out. 
- * 
- * @param image_handle $im
- * @param string $file
- */
-private function _save_img($im, $file) {
-
-  $res = false;
-
-  $suffix = strtolower(substr($file, -3));
-
-  if ($suffix == 'jpg' || $suffix == 'peg') {
-    $res = imagejpeg($im, $file, 100);
-  }
-  else if ($suffix == 'gif') {
-    $res = imagegif($im, $file);
-  }
-  else if ($suffix == 'png') {
-  	$res = imagepng($im, $file);
-  }
-  else {
-    lib_abort("invalid output file [$file] use [.gif|.png|.jpg|.jpeg]");
-  }
-
-  if (!$res) {
-    lib_abort("save [$file] failed");
-  }
-
-  imagedestroy($im);
-}
-
-
-/**
- * Create new image. If im_old isset copy existing image. 
- * 
- * @param int $w image width
- * @param int $h image height
- * @param image_handle $im_old
- * @param bool $set_bg
- */
-private function _new_img($w, $h, $im_old = null, $set_bg = false) {
-
-  $im = imagecreatetruecolor($w, $h);
-
-  if (!$im) {
-    lib_abort("Couldn't create image", "width=[$w] height=[$h]");
-  }
-
-  if ($im_old) {
-    if ($set_bg) {
-
-      $old_w = imagesx($im_old);
-      $old_h = imagesy($im_old);
-
-      if (!empty($this->_conf['bgcolor'])) {
-        list($r, $g, $b) = $this->_rgb($this->_conf['bgcolor']);
-      }
-      else {
-        list ($r, $g, $b) = imagecolorsforindex($im, imagecolorat($im, 0, 0));
-      }
-
-      $color = imagecolorallocate($im, $r, $g, $b);
-      imagefilledrectangle($im, 0, 0, $w, $h, $color);
-    }
-    else {
-      // keep transparency from old image ...
-      $transparent = imagecolortransparent($im_old);
-
-      if  ($transparent >= 0 && $transparent < imagecolorstotal($im_old)) {
-        $tc = imagecolorsforindex($im_old, $transparent);
-        $new_tc = imagecolorallocate($im, $tc['red'], $tc['green'], $tc['blue']);
-        imagefill($im, 0, 0, $new_tc);
-        imagecolortransparent($im, $new_tc);
-      }
-    }
-  }
-  else if ($set_bg && !empty($this->_conf['bgcolor'])) {
-    list($r, $g, $b) = $this->_rgb($this->_conf['bgcolor']);
-    $color = imagecolorallocate($im, $r, $g, $b);
-    imagefilledrectangle($im, 0, 0, $w, $h, $color);
-  }
-
-  return $im;
-}
 
 
 /**
@@ -596,7 +615,7 @@ public function crop($x, $y, $width, $height, $input = '', $output = '') {
   	$height = $img_h;
   }
   
-	$crop_im = $this->_new_img($width, $height);
+	$crop_im = $this->create($width, $height);
 	imagecopy($crop_im, $im, 0, 0, $x, $y, $width, $height);
 
   if (empty($output)) {
@@ -682,11 +701,11 @@ public function resize($max_w, $max_h, $input = '', $output = '', $mode = '') {
   $this->_info['width'] = $new_w;
   $this->_info['height'] = $new_h;
 
-  $im_n = $this->_new_img($new_w, $new_h, $im);
+  $im_n = $this->create($new_w, $new_h, $im);
   imagecopyresampled($im_n, $im, 0, 0, $x, $y, $new_w, $new_h, $w, $h);
 
   if ($mode == 'box') {
-    $im_bg = $this->_new_img($max_w, $max_h, $im_n, true);
+    $im_bg = $this->create($max_w, $max_h, $im_n, true);
 
     $x = floor(($max_w - $new_w) / 2);
     $y = floor(($max_h - $new_h) / 2);
@@ -705,18 +724,6 @@ public function resize($max_w, $max_h, $input = '', $output = '', $mode = '') {
   }
 
   imagedestroy($im);
-}
-
-
-//-----------------------------------------------------------------------------
-private function _rgb($rgb) {
-
-  if (!preg_match('/#[0-9a-fA-F]{6}/', $rgb)) {
-    lib_abort("invalid RGB value [$rgb]");
-  }
-
-  $res = sscanf($rgb, '#%2x%2x%2x');
-  return $res;
 }
 
 
@@ -753,7 +760,7 @@ private function _merge($p) {
   $x = floor(($bg_w - $w) / 2);
   $y = floor(($bg_h - $h) / 2);
 
-  $im = $this->_new_img($w, $h, $im_fg);
+  $im = $this->create($w, $h, $im_fg);
   imagecopyresampled($im, $im_fg, 0, 0, 0, 0, $w, $h, $fg_w, $fg_h);
   imagecopymerge($im_bg, $im, $x, $y, 0, 0, imagesx($im_bg), imagesy($im_bg), $fill);
   $this->_save_img($im_bg, $output);
@@ -829,7 +836,7 @@ public function merge($bg_img, $fg_img, $output, $fill = 100) {
   $x = floor(($bg_w - $w) / 2);
   $y = floor(($bg_h - $h) / 2);
 
-  $im = $this->_new_img($w, $h, $im_fg);
+  $im = $this->create($w, $h, $im_fg);
   imagecopyresampled($im, $im_fg, 0, 0, 0, 0, $w, $h, $fg_w, $fg_h);
   imagecopymerge($im_bg, $im, $x, $y, 0, 0, imagesx($im_bg), imagesy($im_bg), $fill);
   $this->_save_img($im_bg, $output);
