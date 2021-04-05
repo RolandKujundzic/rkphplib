@@ -1,0 +1,2 @@
+out/t1.jpg: 300x300
+out/t1.png: 300x300
