@@ -256,7 +256,7 @@ public function loadLayer(string $file, array $p = []) : void {
 /**
  *
  */
-private function reset() : void {  
+private function reset() : void {
 	$this->env['bgcolor'] = '';
 	$this->env['file'] = '';
 	$this->env['width'] = 0;
