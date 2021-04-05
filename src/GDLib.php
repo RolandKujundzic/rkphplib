@@ -17,7 +17,7 @@ use \rkphplib\Exception;
 class GDLib {
 
 // @var resource $im
-public $im = null;
+protected $im = null;
 
 // @var array $conf
 private $conf = [];
@@ -28,14 +28,27 @@ private $conf = [];
 /**
  * @hash $conf ¿
  * jpeg_quality: -1 (= default = 75)
- * bgcolor: 
+ * file: '' (set in load())
+ * width: 0
+ * height: 0
+ * bgcolor: '' 
  * @eol
  */
 public function __construct(array $conf = []) {
 	$this->conf = array_merge([
 		'bgcolor' => '',
+		'width' => 0,
+		'height' => 0,
 		'jpeg_quality' => -1,
 	], $conf);
+}
+
+
+/**
+ *
+ */
+public function __destruct() {
+	$this->reset();
 }
 
  
@@ -46,6 +59,9 @@ public function create(int $w, int $h, string $rgb_bg = '#ffffff') : void {
 	if (!($this->im = imagecreatetruecolor($w, $h))) {
 		throw new Exception("create $w * $h pixel image");
 	}
+
+	$this->conf['width'] = $w;
+	$this->conf['height'] = $h;
 
 	if ($rgb_bg) {
 		$this->bgcolor($rgb_bg);
@@ -92,7 +108,7 @@ public function save(string $save_as, int $jpeg_quality = 0) : void {
 		throw new Exception('save image failed', $save_as);
 	}
 
-	imagedestroy($this->im);
+	$this->reset();
 }
 
 
@@ -121,11 +137,8 @@ public function load(string $file) : void {
 
 	$type = $gis[2];
 	$alpha = false;
-  
-	if (!is_null($this->im)) {
-		imagedestroy($this->im);
-		$this->im = null;
-	}
+
+	$this->reset();
 
 	switch($type) {
 		case 1:
@@ -149,8 +162,25 @@ public function load(string $file) : void {
 		imagesavealpha($this->im, true);
 	}
 
+	$this->conf['file'] = $file;
 	$this->conf['width'] = $gis[0];
 	$this->conf['height'] = $gis[1];
+}
+
+
+/**
+ *
+ */
+private function reset() : void {  
+	$this->conf['bgcolor'] = '';
+	$this->conf['file'] = '';
+	$this->conf['width'] = 0;
+	$this->conf['height'] = 0;
+
+	if (!is_null($this->im)) {
+		imagedestroy($this->im);
+		$this->im = null;
+	}
 }
 
 
@@ -625,7 +655,7 @@ public function crop($x, $y, $width, $height, $input = '', $output = '') {
     $this->_save_img($crop_im, $output);
   }
 
-  imagedestroy($im);
+  $this->reset();
 }
 
 
