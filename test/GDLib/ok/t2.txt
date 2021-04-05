@@ -1,0 +1,2 @@
+out/t2.png: 350x350 has alpha=1
+: 80x30 has alpha=1
