@@ -3,6 +3,7 @@
 require_once '../../src/GDLib.php';
 
 $img = new \rkphplib\GDLib();
-$img->create(300, 300);
-$img->save('out/test.jpg');
+$img->create(800, 800);
+$img->loadLayer('crosshair.png');
+$img->save('out/t3.png');
 

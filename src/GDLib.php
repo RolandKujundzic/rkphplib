@@ -17,31 +17,10 @@ use \rkphplib\Exception;
 class GDLib {
 
 // @var resource $im
-protected $im = null;
+private $im = null;
 
-// @var array $conf
-protected $conf = [];
-
-// private $_info = array();
-
-
-/**
- * @hash $conf …
- * jpeg_quality: -1 (= default = 75)
- * file: '' (set in load())
- * width: 0
- * height: 0
- * bgcolor: '' 
- * @eol
- */
-public function __construct(array $conf = []) {
-	$this->conf = array_merge([
-		'bgcolor' => '',
-		'width' => 0,
-		'height' => 0,
-		'jpeg_quality' => -1,
-	], $conf);
-}
+// @var array $env
+private $env = [];
 
 
 /**
@@ -51,7 +30,7 @@ public function __destruct() {
 	$this->reset();
 }
 
- 
+
 /**
  * Create new $w x $h pixel image with white background
  */
@@ -62,8 +41,8 @@ public function create(int $w, int $h, string $rgb_bg = '#ffffff') : void {
 		throw new Exception("create $w * $h pixel image");
 	}
 
-	$this->conf['width'] = $w;
-	$this->conf['height'] = $h;
+	$this->env['width'] = $w;
+	$this->env['height'] = $h;
 
 	if ($rgb_bg) {
 		$this->bgcolor($rgb_bg);
@@ -86,21 +65,24 @@ public function bgcolor(string $rgba) : void {
 		$color = imagecolorallocate($this->im, $r, $g, $b);
 	}
 
-	imagefilledrectangle($this->im, 0, 0, $this->conf['width'], $this->conf['height'], $color);
-	$this->conf['bgcolor'] = $rgba;
+	imagefilledrectangle($this->im, 0, 0, $this->env['width'], $this->env['height'], $color);
+	$this->env['bgcolor'] = $rgba;
 }
 
 
 /**
- * Return with|height|file value.
- * @return string|int
+ * Return im|with|height|file value.
+ * @return string|int|resource
  */
-public function get(string $key) {
-	if (!isset($this->conf[$key])) {
-		throw new Exception('invalid key '.$key, 'try: '.join('|', array_keys($this->conf)));
+public function __get(string $key) {
+	if ($key == 'im') {
+		return $this->im;
+	}
+	else if (!isset($this->env[$key])) {
+		throw new Exception('invalid name '.$key, 'try: '.join('|', array_keys($this->env)));
 	}
 
-	return $this->conf[$key];
+	return $this->env[$key];
 }
 
 
@@ -108,8 +90,8 @@ public function get(string $key) {
  * Return true if transparent pixel exists
  */
 public function hasAlpha() : bool {
-	for ($i = 0; $i < $this->conf['width']; $i++) {
-		for ($j = 0; $j < $this->conf['height']; $j++) {
+	for ($i = 0; $i < $this->env['width']; $i++) {
+		for ($j = 0; $j < $this->env['height']; $j++) {
 			$rgba = imagecolorat($this->im, $i, $j);
 			if (($rgba & 0x7F000000) >> 24) {
 				return true;
@@ -122,9 +104,10 @@ public function hasAlpha() : bool {
 
 
 /**
- * Save image
+ * Save image. Save quality for *.jpg can be defined via
+ * $jpeg_quality (default = -1 = 75).
  */
-public function save(string $save_as, int $jpeg_quality = 0) : void {
+public function save(string $save_as, int $jpeg_quality = -1) : void {
 	$suffix = File::suffix($save_as);
 
 	if ($suffix == 'gif') {
@@ -134,7 +117,6 @@ public function save(string $save_as, int $jpeg_quality = 0) : void {
 		$res = imagepng($this->im, $save_as);
 	}
 	else if ($suffix == 'jpg' || $suffix == 'jpeg') {
-		$quality = $jpeg_quality > 0 ? $jpeg_quality : $this->conf['jpeg_quality']; 
 		$res = imagejpeg($this->im, $save_as, $jpeg_quality);
 	}
 	else {
@@ -210,9 +192,55 @@ public function load(string $file) : void {
 		imagesavealpha($this->im, true);
 	}
 
-	$this->conf['file'] = $file;
-	$this->conf['width'] = $gis[0];
-	$this->conf['height'] = $gis[1];
+	$this->env['file'] = $file;
+	$this->env['width'] = $gis[0];
+	$this->env['height'] = $gis[1];
+}
+
+
+/**
+ * Add layer to image
+ *
+ * @hash $p …
+ * opacity: 100
+ * fit: [center|left|right]-[middle|top|bottom]|cover|contain|none, default = center-middle
+ * x: 0, only if fill=none
+ * y: 0, only if fill=none
+ * @eol
+ */
+public function loadLayer(string $file, array $p = []) : void {
+  $p = array_merge([
+		'opacity' => 100,
+		'fit'  => 'center-middle'
+	], $p);
+
+	$layer = new GDLib();
+	$layer->load($file);
+
+	$w = $this->env['width'];
+	$h = $this->env['height'];
+	$lw = $layer->width;
+	$lh = $layer->height;
+
+	if ($p['fit'] == 'center-middle') {
+		if ($lw > $w || $lh > $h) {
+			throw new Exception('ToDo …');
+		}
+
+		$x = floor(($w - $lw) / 2);
+		$y = floor(($h - $lh) / 2);
+	}
+	else {
+		throw new Exception('ToDo …', print_r($p, true));
+	}
+
+	if ($p['opacity'] < 100) {
+		// ToDo: transparency broken !!!
+		imagecopymerge($this->im, $layer->im, $x, $y, 0, 0, $lw, $lh, $p['opacity']);
+	}
+	else {
+		imagecopy($this->im, $layer->im, $x, $y, 0, 0, $lw, $lh);
+	}
 }
 
 
@@ -220,10 +248,10 @@ public function load(string $file) : void {
  *
  */
 private function reset() : void {  
-	$this->conf['bgcolor'] = '';
-	$this->conf['file'] = '';
-	$this->conf['width'] = 0;
-	$this->conf['height'] = 0;
+	$this->env['bgcolor'] = '';
+	$this->env['file'] = '';
+	$this->env['width'] = 0;
+	$this->env['height'] = 0;
 
 	if (!is_null($this->im)) {
 		imagedestroy($this->im);
@@ -795,46 +823,6 @@ public function resize($max_w, $max_h, $input = '', $output = '', $mode = '') {
   imagedestroy($im);
 }
 
-
-//-----------------------------------------------------------------------------
-private function _merge($p) {
-
-  $required = array('width', 'height');
-
-  $p['opacity'] = empty($p['opacity']) ? 100 : intval($p['opacity']);
-
-  $im_bg = $this->_load_img($bg_img);
-  $im_fg = $this->_load_img($fg_img);
-
-  $fg_w = imagesx($im_fg);
-  $fg_h = imagesy($im_fg);
-  $bg_w = imagesx($im_bg);
-  $bg_h = imagesy($im_bg);
-
-  if  ($fg_w > $bg_w || $fg_h > $bg_h) {
-    if ($fg_w > $fg_h) {
-      $w = $bg_w;
-      $h = $bg_w * $fg_h / $fg_w;
-    } 
-    else {
-      $h = $bg_h;
-      $w = $bg_h * $fg_w / $fg_h;
-    }
-  }
-  else {
-    $w = $bg_w;
-    $h = $bg_h;
-  }
-
-  $x = floor(($bg_w - $w) / 2);
-  $y = floor(($bg_h - $h) / 2);
-
-  $im = $this->create($w, $h, $im_fg);
-  imagecopyresampled($im, $im_fg, 0, 0, 0, 0, $w, $h, $fg_w, $fg_h);
-  imagecopymerge($im_bg, $im, $x, $y, 0, 0, imagesx($im_bg), imagesy($im_bg), $fill);
-  $this->_save_img($im_bg, $output);
-  imagedestroy($im_fg);
-}
 
 
 //-----------------------------------------------------------------------------
