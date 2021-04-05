@@ -13,5 +13,5 @@ function wxh(string $file) : void {
 
 global $th;
 
-$th->run(1, 1);
+$th->run(1, 2);
 

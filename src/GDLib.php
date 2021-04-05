@@ -20,13 +20,13 @@ class GDLib {
 protected $im = null;
 
 // @var array $conf
-private $conf = [];
+protected $conf = [];
 
 // private $_info = array();
 
 
 /**
- * @hash $conf ¿
+ * @hash $conf â€¦
  * jpeg_quality: -1 (= default = 75)
  * file: '' (set in load())
  * width: 0
@@ -56,6 +56,8 @@ public function __destruct() {
  * Create new $w x $h pixel image with white background
  */
 public function create(int $w, int $h, string $rgb_bg = '#ffffff') : void {
+	$this->reset();
+
 	if (!($this->im = imagecreatetruecolor($w, $h))) {
 		throw new Exception("create $w * $h pixel image");
 	}
@@ -65,22 +67,57 @@ public function create(int $w, int $h, string $rgb_bg = '#ffffff') : void {
 
 	if ($rgb_bg) {
 		$this->bgcolor($rgb_bg);
-		$this->conf['bgcolor'] = $rgb_bg;
 	}
 }
 
 
 /**
- * Set image background
+ * Set image background. Use #rrggbbaa for alpha aa = 0 (=opaque) Â¿ 7f (=127=transparent)
  */
-public function bgcolor(string $rgb) : void {
-	list($r, $g, $b) = self::rgb($rgb);
-	$color = imagecolorallocate($this->im, $r, $g, $b);
+public function bgcolor(string $rgba) : void {
+	list($r, $g, $b, $a) = self::rgba($rgba);
 
-	$w = imagesx($this->im);
-	$h = imagesy($this->im);
+	if ($a > 0) {
+		imagealphablending($this->im, false);
+		imagesavealpha($this->im, true);
+		$color = imagecolorallocatealpha($this->im, $r, $g, $b, $a);
+	}
+	else {
+		$color = imagecolorallocate($this->im, $r, $g, $b);
+	}
 
-	imagefilledrectangle($this->im, 0, 0, $w, $h, $color);
+	imagefilledrectangle($this->im, 0, 0, $this->conf['width'], $this->conf['height'], $color);
+	$this->conf['bgcolor'] = $rgba;
+}
+
+
+/**
+ * Return with|height|file value.
+ * @return string|int
+ */
+public function get(string $key) {
+	if (!isset($this->conf[$key])) {
+		throw new Exception('invalid key '.$key, 'try: '.join('|', array_keys($this->conf)));
+	}
+
+	return $this->conf[$key];
+}
+
+
+/**
+ * Return true if transparent pixel exists
+ */
+public function hasAlpha() : bool {
+	for ($i = 0; $i < $this->conf['width']; $i++) {
+		for ($j = 0; $j < $this->conf['height']; $j++) {
+			$rgba = imagecolorat($this->im, $i, $j);
+			if (($rgba & 0x7F000000) >> 24) {
+				return true;
+			}
+		}
+	}
+ 
+	return false;
 }
 
 
@@ -107,32 +144,43 @@ public function save(string $save_as, int $jpeg_quality = 0) : void {
   if (!$res) {
 		throw new Exception('save image failed', $save_as);
 	}
-
-	$this->reset();
 }
 
 
 /**
- * Return [ r, g, b ] from e.g. #eeaabb
+ * Return [ r, g, b, a ] from e.g. #eeaabb and #0000007f for transparent.
+ * You can Use 0,0,255 instead of #0000ff.
  */
-public static function rgb(string $rgb) : array {
-	if (!preg_match('/^#[0-9a-fA-F]{6}$/', $rgb)) {
-		throw new Exception("invalid RGB hex value '$rgb' use e.g. #eeaa00");
+public static function rgba(string $rgba) : array {
+	if (preg_match('/^#[0-9a-fA-F]{6}$/', $rgba)) {
+		$res = sscanf($rgba, '#%2x%2x%2x');
+		$res[3] = 0;
+	}
+	else if (preg_match('/^#[0-9a-fA-F]{8}$/', $rgba)) {
+		$res = sscanf($rgba, '#%2x%2x%2x%2x');
+	}
+	else if (strpos($rgba, ',') > 0) {
+		$res = explode(',', $rgba);
+		if (count($res) == 3) {
+			$res[3] = 0;
+		}
+	}
+	else {
+		throw new Exception("invalid RGBA hex value '$rgb' use e.g. #eeaa00, #0000007f or '0,0,255'");
 	}
 
-	return sscanf($rgb, '#%2x%2x%2x');
+	return $res;
 }
 
 
 /**
- * Load j[e]pg|png|gif image 
+ * Load j[e]pg|png|gif image.
  */
 public function load(string $file) : void {
 	$gis = getimagesize($file);
  
 	if (!is_array($gis) || $gis[0] < 1 || $gis[1] < 1) {
-		$this->_error_img($file);
-		return;
+		throw new Exception('load image', $file);
 	}
 
 	$type = $gis[2];
@@ -153,7 +201,7 @@ public function load(string $file) : void {
 			$alpha = true;
 			break;
 		default:
-			$this->_error_img($file);
+			throw new Exception('image detection failed');
 	}
 
 	if ($alpha) {
@@ -207,7 +255,7 @@ private function clone($w, $h, $im_old) {
       $old_h = imagesy($im_old);
 
       if (!empty($this->_conf['bgcolor'])) {
-        list($r, $g, $b) = $this->rgb($this->_conf['bgcolor']);
+        list($r, $g, $b) = $this->rgba($this->_conf['bgcolor']);
       }
       else {
         list ($r, $g, $b) = imagecolorsforindex($im, imagecolorat($im, 0, 0));
@@ -488,7 +536,7 @@ public function autoresize($p) {
 /**
  * Print text into picture. Parameter:
  * 
- * - text: text to print (if empty do nothing) use §Fontname:§ for font change.
+ * - text: text to print (if empty do nothing) use Â§Fontname:Â§ for font change.
  * - font.*: overwrite default font. 
  * - x: x-position (default = 5)
  * - y: y-position (default = 5)
@@ -501,8 +549,8 @@ public function doPrint($p) {
     return;
   }
 
-  if (($pos1 = strpos($p['text'], '§')) !== false && 
-  		($pos2 = strpos($p['text'], ':§', $pos1 + 1)) !== false) { 
+  if (($pos1 = strpos($p['text'], 'Â§')) !== false && 
+  		($pos2 = strpos($p['text'], ':Â§', $pos1 + 1)) !== false) { 
 		$use_font = substr($p['text'], $pos1 + 1, $pos2 - $pos1 - 1);
 		$p['text'] = substr($p['text'], $pos2 + 2);
 		$p['font.ttf'] = $p['font.ttf.'.$use_font]; 
@@ -592,24 +640,6 @@ public function getInfo($key) {
 }
 
 
-//-----------------------------------------------------------------------------
-private function _error_img($error_msg, $log_msg = '') {
-
-  lib_warn($log_msg);
-
-  $w = 400;
-  $h = 20;
-  
-  $im = ImageCreate ($w, $h);
-  $bgc = ImageColorAllocate ($im, 255, 255, 255);
-  $tc = ImageColorAllocate ($im, 255, 0, 0);
-  ImageFilledRectangle ($im, 0, 0, $w, $h, $bgc);
-  ImageString($im, 1, 5, 5, 'ERROR: '.$error_msg, $tc);
-
-  return $im;
-}
-
-
 
 /**
  * Extract $width x $height part of image at top,left = $x,$y.
@@ -670,6 +700,15 @@ public function crop($x, $y, $width, $height, $input = '', $output = '') {
  * @param string $mode empty or center|box
  */
 public function resize($max_w, $max_h, $input = '', $output = '', $mode = '') {
+
+/*
+        $thumb = imagecreatetruecolor(10, 10);
+        imagealphablending($thumb, FALSE);
+        imagecopyresized( $thumb, $imgdata, 0, 0, 0, 0, 10, 10, $w, $h );
+        $imgdata = $thumb;
+        $w = imagesx($imgdata);
+        $h = imagesy($imgdata);
+*/
 
   if ($max_w < 1 && $max_h < 1) {
     lib_abort("invalid resize [$max_w] x [$max_h]");
