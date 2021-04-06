@@ -232,10 +232,6 @@ public function loadLayer(string $file, array $p = []) : void {
 	$lh = $layer->height;
 
 	if ($p['fit'] == 'center-middle') {
-		if ($lw > $w || $lh > $h) {
-			throw new Exception('ToDo …');
-		}
-
 		$x = floor(($w - $lw) / 2);
 		$y = floor(($h - $lh) / 2);
 	}
