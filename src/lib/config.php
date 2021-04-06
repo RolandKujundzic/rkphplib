@@ -47,7 +47,10 @@ if (!defined('DOCROOT')) {
 		define('DOCROOT', $_SERVER['CONTEXT_DOCUMENT_ROOT']);
 	}
 	else {
-		define('DOCROOT', getcwd()); 
+		$cwd = getcwd();
+		if (file_exists($cwd.'/settings.php') || is_dir($cwd.'/data')) {
+			define('DOCROOT', $cwd);
+		}
 	}
 }
 
@@ -128,7 +131,7 @@ if (!defined('SETTINGS_REQ_DIR')) {
 	define('SETTINGS_REQ_DIR', 'dir');
 }
 
-if (!defined('SETTINGS_CACHE_DIR')) {
+if (defined('DOCROOT') && !defined('SETTINGS_CACHE_DIR')) {
 	// @define string SETTINGS_CACHE_DIR = DOCROOT.'/data/.tmp'
 	define('SETTINGS_CACHE_DIR', DOCROOT.'/data/.tmp');
 }
