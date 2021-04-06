@@ -1,0 +1,4 @@
+out/t3a.jpg: 200x500
+out/t3b.jpg: 500x200
+out/t3c.jpg: 200x200
+out/t3d.jpg: 400x400
