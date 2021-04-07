@@ -66,6 +66,8 @@ const ONE_PARAM = 65536;
 // @const IS_STATIC use if plugin can be resolved in pre-process 
 const IS_STATIC = 131072;
 
+// @const ASK plugin('?', null) will be called first, if true execute plugin ... 
+const ASK = 262144;
 
 
 /**
