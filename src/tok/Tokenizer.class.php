@@ -672,6 +672,9 @@ private function _join_tok_plugin(int &$i) : ?string {
 				// do not parse argument ...
 				$arg = $this->_merge_txt($i + 1, $ep - 1);
 			}
+			else if ($tp & TokPlugin::ASK) {
+				$arg = $this->_call_plugin($name, '?') ? $this->_join_tok($i + 1, $ep) : '';
+			}
 			else {
 				// parse argument with recursive _join_tok call ...
 				// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:677> compute arg of $name with recursion: start=$i+1 end=$ep\n");
