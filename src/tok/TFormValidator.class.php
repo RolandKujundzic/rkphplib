@@ -106,7 +106,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['fv:hidden'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 	$plugin['fv:in'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY | TokPlugin::REDO;
 	$plugin['fv:init'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY; 
-	$plugin['fv:preset'] = 0;
+	$plugin['fv:preset'] = TokPlugin::ASK;
 	$plugin['fv:set_error_message'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:tpl'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY | TokPlugin::REDO;
 
@@ -232,7 +232,8 @@ public function tok_fv_appendjs(string $name, array $id_list = []) : string {
  * {:fv}
  * @eol
  */
-public function tok_fv_preset(string $param, string $arg) : string {
+public function tok_fv_preset(string $param, ?string $arg) : string {
+	\rkphplib\lib\log_debug("TFormValidator.tok_fv_preset:236> param=[$param] arg=[$arg]");
 	$skey = $this->getConf('submit');
 
 	if (!empty($_REQUEST[$skey])) {
@@ -422,7 +423,6 @@ public function tok_fv_conf(string $name, array $p) : void {
  * - option.label_empty: ...
  */
 public function tok_fv_init(string $do, array $p) : void {
-
 	if (empty($p['use'])) {
 		$p['use'] = 'default';
 	}
@@ -885,8 +885,7 @@ private function _fv_in_html(string $name, array $r, string $output_in = '') : s
 		}
 	}
 
-	$res = preg_replace('/>\s+</', '><', trim($res));
-	$res = preg_replace('/<span .+?'.'>'.'<\/span>/', '', $res);
+	$res = preg_replace([ '/>\s+</', '/<span [^>]+><\/span>/' ], [ '><', '' ], trim($res));
  
 	// \rkphplib\lib\log_debug([ "TFormValidator._fv_in_html:891> name=$name res=[$res] r: <1>", $r ]);
 	return $res;
@@ -905,7 +904,7 @@ public function tok_fv_in(string $name, array $p) : string {
 	$skey = $conf['submit'];
 	$is_action = !empty($_REQUEST[$skey]);
 
-	// \rkphplib\lib\log_debug([ "TFormValidator.tok_fv_in:908> name=$name key=$skey is_action=$is_action p: <1>", $p ]);
+	// \rkphplib\lib\log_debug([ "TFormValidator.tok_fv_in:907> name=$name key=$skey is_action=$is_action p: <1>", $p ]);
 	if (!$is_action && (isset($p['value']) || isset($_REQUEST[$name])) && $skey != 'form_action' && !isset($_REQUEST['use_'.$skey])) {
 		$p['value'] = '';
 	}
@@ -930,7 +929,7 @@ public function tok_fv_in(string $name, array $p) : string {
 	}
 
 	if (!isset($p['type'])) {
-		throw new Exception('define [fv:init]in.'.$name.'= ...');
+		throw new Exception('define [fv:init]in.'.$name.'= ...', print_r($p, true));
 	}
 
 	if ($p['type'] == 'const') {
@@ -939,6 +938,9 @@ public function tok_fv_in(string $name, array $p) : string {
 		}
 	}
 
+	$this->setInputAttrib($name, $p);
+
+	// \rkphplib\lib\log_debug([ "TFormValidator.tok_fv_in:943> name=$name p: <1>", $p ]);
 	$p['input'] = $this->getInput($name, $p);
 
 	return $this->_fv_in_html($name, $p);
@@ -946,9 +948,33 @@ public function tok_fv_in(string $name, array $p) : string {
 
 
 /**
- * Return configuration key. Use 1|true for template.engine or name engine.
+ * Set $p[maxlength]=N if check.name=maxLength:N exists
  */
-public function getConf(string $key, string $engine = '', bool $required = true) : string {
+function setInputAttrib(string $name, array &$p) : void {
+	if (isset($p['maxlength'])) {
+		return;
+	}
+
+	$mlc = 'check.'.$name;
+	$dc = !empty($this->conf['current']['data_check']);
+	foreach ($this->conf['current'] as $key => $check) {
+		if ($key == $mlc) {
+			if (substr($check, 0, 10) == 'maxLength:') {
+				$p['maxlength'] = intval(substr($check, 10));
+			}
+			else if (substr($check, 0, 2) == 'is') {
+				$p['data-check'] = $check;
+			}
+		}
+	}
+}
+
+
+/**
+ * Return configuration key. Use $engine = true|1 for conf[template.engine].
+ * @param string|bool $engine
+ */
+private function getConf(string $key, $engine = '', bool $required = true) : string {
 	$conf = $this->conf['current'];
 
 	if (!empty($engine)) {
@@ -1009,15 +1035,11 @@ public function getConf(string $key, string $engine = '', bool $required = true)
  */
 protected function parseInName(string $name, string $value, array &$p) : void {
 	$r = conf2kv($value, '=', ',');
+	// \rkphplib\lib\log_debug([ "TFormValidator.parseInName:1039> name=$name, value=$value, r: <1>\np: <2>", $r, $p ]);
 
 	if (is_string($r)) {
 		$p['type'] = $r;
 		$r = [];
-	}
-
-	if (!empty($r['@_1'])) {
-		$p['type'] = $r['@_1'];
-		unset($r['@_1']);
 	}
 	else if (!empty($r[0])) {
 		$p['type'] = $r[0];
@@ -1026,11 +1048,10 @@ protected function parseInName(string $name, string $value, array &$p) : void {
 
 	if (!empty($r['multi'])) {
 		$p = array_merge($p, $r);
-		// \rkphplib\lib\log_debug([ "TFormValidator.parseInName:1029> name=$name, value=$value, multi p: <1>", $p ]);
+		// \rkphplib\lib\log_debug([ "TFormValidator.parseInName:1052> name=$name, value=$value, multi p: <1>", $p ]);
 		return;
 	}
 
-	// \rkphplib\lib\log_debug([ "TFormValidator.parseInName:1033> name=$name, value=$value, r: <1>\np: <2>", $r, $p ]);
 	$html5_input = [ 'text', 'password', 'email', 'date', 'datetime-local', 'color', 'number', 'month', 'range', 'tel', 'time', 'url', 'week' ];
 	$type = $p['type'];
 
@@ -1047,7 +1068,7 @@ protected function parseInName(string $name, string $value, array &$p) : void {
 		}
 
 		if (!empty($r[2])) {
-			$p['maxwidth'] = $r[2];
+			$p['maxlength'] = $r[2];
 			unset($r[2]);
 		}
 
@@ -1119,8 +1140,7 @@ protected function parseInName(string $name, string $value, array &$p) : void {
 	foreach ($r as $key => $value) {
 		$p[$key] = $value;
 	}
-
-	// \rkphplib\lib\log_debug([ "TFormValidator.parseInName:1123> name=$name, value=$value, p: <1>", $p ]);
+	// \rkphplib\lib\log_debug([ "TFormValidator.parseInName:1144> name=$name, value=$value, p: <1>", $p ]);
 }
 
 
@@ -1177,8 +1197,8 @@ protected function getInput(string $name, array $ri) : string {
 		}
 	}
 
-	$attributes = [ 'id', 'size', 'maxlength', 'placeholder', 'pattern', 'rows', 'cols', 
-		'style', 'class', 'wrap', 'accept', 'onchange', 'onblur', 'autocomplete' ];
+	$attributes = [ 'id', 'size', 'maxlength', 'placeholder', 'pattern', 'step', 'rows', 'cols', 
+		'style', 'class', 'wrap', 'accept', 'onchange', 'onblur', 'autocomplete', 'min', 'max' ];
 	foreach ($attributes as $key) {
 		if (isset($ri[$key]) && !mb_strpos($input, $this->tok->getTag($key))) {
 			$tags .= ' '.$key.'="'.$this->tok->getTag($key).'"';
@@ -1239,7 +1259,7 @@ protected function getInput(string $name, array $ri) : string {
 
 	$input = $this->tok->replaceTags($input, $ri);
 
-	// \rkphplib\lib\log_debug([ "TFormValidator.getInput:1242> name=$name, input=[$input] ri: <1>", $ri ]);
+	// \rkphplib\lib\log_debug([ "TFormValidator.getInput:1264> name=$name, input=[$input] ri: <1>", $ri ]);
 	return $input;
 }
 
