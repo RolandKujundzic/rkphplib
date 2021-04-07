@@ -42,7 +42,7 @@ public static function conf() : array {
 		'show_example' 				=> 1,
 	];
 
-	$conf['label_required']	= '<div class="label_required">'.TAG_PREFIX.'label'.TAG_SUFFIX.'</div>';
+	$conf['label_required']	= '<span class="label_required">'.TAG_PREFIX.'label'.TAG_SUFFIX.'</span>';
 
 	self::merge($conf, 'default');
 	self::merge($conf, 'bootstrap');
@@ -273,11 +273,11 @@ private static function default() : array {
 	];
 
 	$conf['output'] = [
-		'in'						=> '<span class="label «error»">«label»</span>«input»«example»«error_message»<br class="fv" />',
+		'in'						=> '<label for="«id»" class="label «error»">«label»</label>«input»«example»«error_message»<br class="fv" />',
 
-		'in.cbox_query' => '«input»<span class="cbox_query «error»">«label»</span><br class="fv" />',		
+		'in.cbox_query' => '«input»<label for="«id»" class="cbox_query «error»">«label»</label><br class="fv" />',
 
-		'in.multi'			=> '<span class="label «error»">«label»</span>«input»
+		'in.multi'			=> '<label for="«id»" class="label «error»">«label»</label>«input»
 													<div class="example_error_wrapper">«example»«error_message»</div>',
 	];
 
