@@ -20,7 +20,7 @@ show_error=1
 show_example=1
 
 
-label_required=<div class="label_required">{:=label}</div>
+label_required=<span class="label_required">{:=label}</span>
 
 
 default.in.const=<span class="const">{:=value}</span>
@@ -68,13 +68,13 @@ default.error.message_multi=<i>{:=name}</i>: <tt>{:=error}</tt><br class="fv" />
 default.error.const=error
 
 
-default.output.in=<span class="label {:=error}">{:=label}</span>{:=input}{:=example}{:=error_message}<br class="fv" />
+default.output.in=<label for="{:=id}" class="label {:=error}">{:=label}</label>{:=input}{:=example}{:=error_message}<br class="fv" />
 
 
-default.output.in.cbox_query={:=input}<span class="cbox_query {:=error}">{:=label}</span><br class="fv" />
+default.output.in.cbox_query={:=input}<label for="{:=id}" class="cbox_query {:=error}">{:=label}</label><br class="fv" />
 
 
-default.output.in.multi=<span class="label {:=error}">{:=label}</span>{:=input} <div class="example_error_wrapper">{:=example}{:=error_message}</div>
+default.output.in.multi=<label for="{:=id}" class="label {:=error}">{:=label}</label>{:=input} <div class="example_error_wrapper">{:=example}{:=error_message}</div>
 
 
 default.example=<span class="example">{:=example}</span>
