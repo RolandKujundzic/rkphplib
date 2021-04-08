@@ -124,6 +124,11 @@ public function tok_menu_add(string $level, array $node) : void {
 		throw new Exception('invalid level', print_r($node, true));
 	}
 
+	if (!empty($node['dir']) && ($pos = strpos($node['dir'], '&')) > 0) {
+		$node['dir_param'] = substr($node['dir'], $pos + 1);
+		$node['dir'] = substr($node['dir'], 0, $pos);
+	}
+
 	$label = isset($node['label']) ? $node['label'] : (isset($node['dir']) ? $node['dir'] : $level); 
 
 	// \rkphplib\lib\log_debug("AMenu.tok_menu_add:129> label=$label level=$level ignore_level=".$this->ignore_level);
@@ -289,7 +294,6 @@ private function hasTables(string $tables) : bool {
  * - label: isset(node.label) ? node.label : ''
  */
 protected function getNodeHTML(int $n, string $tpl) : string {
-
 	$node = $this->node[$n];
 	$r = [ 'href' => '' ];
 
@@ -298,12 +302,16 @@ protected function getNodeHTML(int $n, string $tpl) : string {
   }
 	else if (isset($node['dir'])) {
 		$r['href'] = 'index.php?dir='.$node['dir'];
+		if (!empty($node['dir_param'])) {
+			$r['href'] .= '&'.$node['dir_param'];
+		}
 	}
 
 	$r['target'] = empty($node['target']) ? '' : ' target="'.$node['target'].'"';
 	$r['label'] = isset($node['label']) ? $node['label'] : '';
 
-  $res = TokMarker::replace($tpl, $tok_replace);
+	$res = TokMarker::replace($tpl, $tok_replace);
+	// \rkphplib\lib\log_debug("AMenu.getNodeHTML:315> ($n) $res"); 
   return $res;
 }
 
