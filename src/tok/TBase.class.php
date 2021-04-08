@@ -1175,7 +1175,6 @@ public function tok_li(string $dir, string $label) : string {
  * If SETTINGS_REQ_CRYPT is empty do not encode link.
  */
 public function tok_link(array $name_list, array $p) : string {
-	// \rkphplib\lib\log_debug("TBase.tok_link:1178> name_list: ".print_r($name_list, true)."\np: ".print_r($p, true));
 	$res = 'index.php?'.SETTINGS_REQ_CRYPT.'=';
 	$keep = false;
 	$seo = '';
@@ -1237,6 +1236,7 @@ public function tok_link(array $name_list, array $p) : string {
 		}
 	}
 
+	// \rkphplib\lib\log_debug([ "TBase.tok_link:1239> <1>", $p ]);
 	if (empty(SETTINGS_REQ_CRYPT)) {
 		$dir = '';
 
@@ -1254,11 +1254,12 @@ public function tok_link(array $name_list, array $p) : string {
 
 		$res = '';
 		foreach ($p as $key => $value) {
+			$value = ($key == SETTINGS_REQ_DIR) ? $value : rawurlencode($value);
 			if (empty($res)) {
-				$res .= 'index.php?'.$key.'='.rawurlencode($value);
+				$res .= 'index.php?'.$key.'='.$value;
 			}
 			else {
-				$res .= '&'.$key.'='.rawurlencode($value);
+				$res .= '&'.$key.'='.$value;
 			}
 		}
 
@@ -1278,7 +1279,7 @@ public function tok_link(array $name_list, array $p) : string {
 		$res .= self::encodeHash($p);
 	}
 
-	// \rkphplib\lib\log_debug("TBase.tok_link:1281> return $res");
+	// \rkphplib\lib\log_debug("TBase.tok_link:1282> return $res");
 	return $res;
 }
 
