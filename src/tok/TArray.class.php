@@ -51,7 +51,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['array:push'] = TokPlugin::NO_PARAM;
 	$plugin['array:join'] = 0;
 	$plugin['array:length'] = TokPlugin::NO_PARAM;
-	$plugin['array:split'] = TokPlugin::REQUIRE_BODY;
+	$plugin['array:split'] = 0;
 	return $plugin;
 }
 
@@ -99,7 +99,7 @@ public function tok_array(string $name, ?string $arg) : void {
  * @tok {array:split::}a:b:c{:array} = [a, b, c]
  * @tok {array:split:,}a, b\,c{:array} = ['a', 'b,c']
  */
-public function tok_array_split(string $delimiter, string $arg) : void {
+public function tok_array_split(string $delimiter, ?string $arg) : void {
 	$this->array[$this->name] = split_str($delimiter, $arg);
 	// \rkphplib\lib\log_debug([ "TArray.tok_array_split:104> {$this->name} = <1>", $this->array[$this->name] ]);
 }
