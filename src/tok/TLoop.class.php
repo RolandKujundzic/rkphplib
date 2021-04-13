@@ -37,7 +37,7 @@ public function getPlugins(Tokenizer $tok) : array {
 
   $plugin = [];
   $plugin['loop:var'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
-  $plugin['loop:list'] = TokPlugin::PARAM_LIST;
+  $plugin['loop:list'] = 0;
   $plugin['loop:json'] = TokPlugin::NO_PARAM;
   $plugin['loop:hash'] = TokPlugin::NO_PARAM | TokPlugin::KV_BODY;
   $plugin['loop:show'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
@@ -80,12 +80,12 @@ public function tok_loop_var(string $name) : void {
  * {:loop}
  * @EOL
  */
-public function tok_loop_list(array $p, string $txt) : void {
-	$delimiter = ',';
-
-	if (count($p) > 0 && strlen($p[0]) > 0) {
-		$delimiter = str_replace([ '\n', '\t' ], [ "\n", "\t" ], $p[0]);
+public function tok_loop_list(string $delimiter, string $txt) : void {
+	if (empty($delimiter)) {
+		$delimiter = ',';
 	}
+
+	$delimiter = str_replace([ '\n', '\t' ], [ "\n", "\t" ], $delimiter);
 
 	$this->loop = split_str($delimiter, $txt, true);
 }
