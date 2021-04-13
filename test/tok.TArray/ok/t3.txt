@@ -1,0 +1,14 @@
+{array:}x|#|y{:array}{array:get} = [0=x|#|
+1=y]
+{array:set:3}z{:array}{array:set:5}a{:array}{array:get} = [0=x|#|
+1=y|#|
+3=z|#|
+5=a]
+{array:h}{array:set:a} ABC {:array}{array:set:b}B{:array}{array:get} = [a=" ABC "|#|
+b=B]
+{array:h}{array:set}a=A|#|c=C{:array}{array:get} = [a=A|#|
+b=B|#|
+c=C]
+{array:vx}{array:split::}u:v:w{:array}{array:get:0},{array:get:1},{array:get:2} = [u,v,w]
+{array:split:,}a, b\,c{:array}{array:get:0}|{array:get:1} = [a|b,c]
+

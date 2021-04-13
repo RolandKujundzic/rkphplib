@@ -1,0 +1,8 @@
+{test_helper:show_value}
+{array:}x|#|y{:array}{array:get}
+{array:set:3}z{:array}{array:set:5}a{:array}{array:get}
+{array:h}{array:set:a} ABC {:array}{array:set:b}B{:array}{array:get}
+{array:h}{array:set}a=A|#|c=C{:array}{array:get}
+{array:vx}{array:split::}u:v:w{:array}{array:get:0},{array:get:1},{array:get:2}
+{array:split:,}a, b\,c{:array}{array:get:0}|{array:get:1}
+{:test_helper}
