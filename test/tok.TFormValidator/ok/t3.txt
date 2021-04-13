@@ -17,6 +17,7 @@ default.in.file_btn=<div class="file_btn_wrapper"><button class="file_btn"{:=tag
 default.in.check.option=<label for="{:=id}"><input id="{:=id}" type="{:=type}" name="{:=name}" class="{:=class}" value="{:=value}" {:=checked}>{:=label}</label>|#|
 default.in.multi_checkbox=<div class="multi_checkbox_wrapper">{:=input}</div>|#|
 default.in.multi_checkbox.entry=<div class="multi_checkbox"><span>{:=input}</span><span>{:=label}</span></div>|#|
+default.in.images=<input type="hidden" id="fvin_images" name="images" value="{:=value}"><a href="javascript:rkAdmin.toggleDiv('image_preview')">Detailansicht</a><div id="images_wrapper"></div>|#|
 default.error.message=<span class="error_message">{:=error}</span>|#|
 default.error.message_concat=", "|#|
 default.error.message_multi=<i>{:=name}</i>: <tt>{:=error}</tt><br class="fv" />|#|
