@@ -1,20 +1,12 @@
 {array:a4}{:array}{array:get} = []
-{array:}b{:array}{array:get} = []
 {array:vx}a|#|b|#|c{:array}{array:get} = [0=a|#|
 1=b|#|
 2=c]
 {array:s}Hello{:array}{array:get} = [0=Hello]
-{array:set:3}x1{:array}{array:set:5}x2{:array}{array:get} = [0=Hello|#|
-3=x1|#|
-5=x2]
-{array:#h}{array:set:a} ABC {:array}{array:set:b}B{:array}{array:get} = [a=" ABC "|#|
-b=B]
-{array:#h}[]{:array}{array:get} = [0=[]]
-{array:#hx}a=x|#|b=y{:array}{array:get} = [a=x|#|
+{array:=}vx{:array}{array:get} = [0=a|#|
+1=b|#|
+2=c]
+{array:vx}[]{:array}{array:get} = []
+{array:hx}a=x|#|b=y{:array}{array:get} = [a=x|#|
 b=y]
-{array:set}a=5|#|c=z{:array}{array:get} = [a=5|#|
-b=y|#|
-c=z]
-{array:vx}{array:split::}u:v:w{:array}{array:get:0}{array:get:1}{array:get:2} = [uvw]
-{array:split:,}a, b\,c{:array}{array:get:0}{array:get:1} = [ab,c]
 
