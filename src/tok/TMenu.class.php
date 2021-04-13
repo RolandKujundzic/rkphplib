@@ -182,7 +182,7 @@ private function node_html($pos) {
 	}
 
 	$tpl = $this->tok->replaceTags($tpl, $node);
-	// \rkphplib\lib\log_debug("TMenu.node_html:184> pos=$pos tpl=[$tpl] node: ".print_r($node, true));
+	// \rkphplib\lib\log_debug("TMenu.node_html:185> pos=$pos tpl=[$tpl] node: ".print_r($node, true));
 	return $tpl;
 }
 
