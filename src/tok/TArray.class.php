@@ -27,7 +27,7 @@ use function rkphplib\lib\split_str;
  * @tok {array:set:a}xyz{:array}
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- *
+ * @copyright 2018-2021 Roland Kujundzic
  */
 class TArray implements TokPlugin {
 
