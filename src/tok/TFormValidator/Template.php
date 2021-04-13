@@ -260,6 +260,9 @@ private static function default() : array {
 		'multi_checkbox'	=> '<div class="multi_checkbox_wrapper">«input»</div>',
 
 		'multi_checkbox.entry'	=> '<div class="multi_checkbox"><span>«input»</span><span>«label»</span></div>',
+
+		'images'	=> '<input type="hidden" id="fvin_images" name="images" value="«value»"><a href="'.
+				'javascript:rkAdmin.toggleDiv(\'image_preview\')">Detailansicht</a><div id="images_wrapper"></div>'
 	];
 
 	$conf['error'] = [
