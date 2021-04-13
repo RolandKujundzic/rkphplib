@@ -14,7 +14,6 @@ use function rkphplib\lib\kv2conf;
 use function rkphplib\lib\split_str;
 
 
-
 /**
  * Array plugin. Array is either vector or hash (use #name). Example:
  *
@@ -31,12 +30,11 @@ use function rkphplib\lib\split_str;
  */
 class TArray implements TokPlugin {
 
-// @var hash $env 
-protected $env = [ 'name' => null, 'isHash' => false, 'isVector' => false ];
+// @var string $name
+private $name = '';
 
 // @var array $array 
-protected $array = [];
-
+private $array = [];
 
 
 /**
@@ -59,108 +57,39 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
- * Return array[name]. Abort if array is not activated or if $type (hash|vector) mismatch. 
- */
-private function &getArray(string $name = '', string $type = '') : array {
-	if ('' == $name && strlen($this->env['name']) > 0) {
-		if ($this->env['isHash']) {
-			$name = '#'.$this->env['name'];
-		}
-		else {
-			$name = $this->env['name'];
-		}
-	}
-
-	if ('' == $type) {
-		$type = 'vector';
-	}
-	else if ('hash' != $type && 'vector' != $type) {
-		throw new Exception('invalid array type '.$type);
-	}
-	else if ('hash' == $type && !$this->env['isHash']) {
-		throw new Exception('array '.$name.' is not hash');
-	}
-	else if ('vector' == $type && !$this->env['isVector']) {
-		throw new Exception('array '.$name.' is not vector');
-	}
-
-	if ('#' == substr($name, 0, 1)) {
-		$name = substr($name, 1);
-		$type = 'hash';
-	}
-
-	// \rkphplib\lib\log_debug("TArray.&getArray:92> name=[$name] type=[$type] env.name=[".$this->env['name']."]");
-	if ($this->env['name'] != $name || !array_key_exists($name, $this->array)) {
-		$prefix = $this->env['isHash'] ? '#' : '';
-		throw new Exception("no such array '$prefix$name' - call [array:$prefix$name] or [array:]$prefix$name".'[:array] first');
-	}
-
-	return $this->array[$name];
-}
-
-
-/**
- * Use array $name. Create empty array $name if necessary. 
- * If $name is empty use trim($arg). If $name has leading '#' create hash.
+ * Use|Create array $name. Use '=' to switch to trim($arg) as name.
  *
- * @tok {array:a4} = use|create vector a4
- * @tok {array:}b{:array} = use|create array b
+ * @tok {array:}a=5{:array} - create [ 'a' => 5 ]
+ * @tok {array:}a|#|b{:array} - create [ 'a', 'b' ]
+ * @tok {array:a4} = use|create a4
+ * @tok {array:=}b{:array} = use|create b
  * @tok {array:vx}a|#|b|#|c{:array} - create vx = [ 'a', 'b', 'c' ]
  * @tok {array:s}Hello{:array} - create s = [ 'Hello' ]
- * @tok {array:r}[]{:array} - reset to r = []
- * @tok {array:#h} = use|create hash h
- * @tok {array:#hx}a=x|#|b=y{:array} - create hx = [ 'a' => 'x', 'b' => 'y' ]
+ * @tok {array:r}[]{:array} - (re)set r = []
+ * @tok {array:hx}a=x|#|b=y{:array} - create hx = [ 'a' => 'x', 'b' => 'y' ]
  */
 public function tok_array(string $name, ?string $arg) : void {
-	$data = null;
-
-	if (empty($name)) {
+	if ($name === '=') {
 		$name = trim($arg);
+		$arg = null;
 	}
-	else if (!empty($arg)) {
-		$data = conf2kv($arg);
 
-		if (is_string($data)) {
-			if ('[]' == $data) {
-				$data = [];
-			}
-			else {
-				$data = [ $data ];
-			}
+	if (strlen(preg_replace('/[a-zA-Z0-9_]/', '', $name)) > 0) {
+		throw new Exception("no special chars allowed use [a-zA-Z0-9_]+ instead of '$name'");
+	}
+
+	$this->name = $name;
+
+	if (is_null($arg) || $arg === '' || $arg === '[]') {
+		if (!isset($this->array[$name]) || $arg === '[]') {
+			$this->array[$name] = [];
 		}
+
+		return;
 	}
 
-	if (empty($name)) {
-		throw new Exception('empty array name');
-	}
-
-	$type = 'isVector';
-	if ('#' == substr($name, 0, 1)) {
-		$name = substr($name, 1);
-		$type = 'isHash';
-	}
-
-	$fix_name = preg_replace('/[a-zA-Z0-9_]/', '', $name);
-	if ('' != $fix_name) {
-		throw new Exception("no special chars allowed use [a-zA-Z0-9_] instead of '$name'");
-	}
-
-	$this->env['name'] = $name;
-	$this->env['isVector'] = false;
-	$this->env['isHash'] = false;
-	$this->env[$type] = true;
-
-	if (!is_null($data)) {
-		// \rkphplib\lib\log_debug("TArray.tok_array:154> create new array $name ($type) = ".print_r($data, true));
-		$this->array[$name] = $data;
-	}
-	else if (!isset($this->array[$name])) {
-		// \rkphplib\lib\log_debug("TArray.tok_array:158> create new empty array $name ($type)");
-		$this->array[$name] = [];
-	}
-	else {
-		// \rkphplib\lib\log_debug("TArray.tok_array:162> use array $name ($type)");
-	}
+	$this->array[$name] = conf2kv($arg);
+	// \rkphplib\lib\log_debug([ "TArray.tok_array:92> create '$name' = <1>", $this->array[$name] ]);
 }
 
 
@@ -171,10 +100,8 @@ public function tok_array(string $name, ?string $arg) : void {
  * @tok {array:split:,}a, b\,c{:array} = ['a', 'b,c']
  */
 public function tok_array_split(string $delimiter, string $arg) : void {
-	// \rkphplib\lib\log_debug("TArray.tok_array_split:174> delimiter=[$delimiter] arg=[$arg]");
-	$a = &$this->getArray('', 'vector');
-	$a = split_str($delimiter, $arg);
-	// \rkphplib\lib\log_debug('TArray.tok_array_split:177> '.$this->env['name'].': '.print_r($this->array[$this->env['name']], true));
+	$this->array[$this->name] = split_str($delimiter, $arg);
+	// \rkphplib\lib\log_debug([ "TArray.tok_array_split:104> {$this->name} = <1>", $this->array[$this->name] ]);
 }
 
 
@@ -186,20 +113,18 @@ public function tok_array_split(string $delimiter, string $arg) : void {
  * @tok {array:set}a=x1|#|b=x2{:array} - array = array_merge(array, [ 'a' => 'x1', 'b' => 'x2' ])
  */
 public function tok_array_set(string $key, string $value) : void {
-	$pos = intval($key);
-	$type = ("$pos" == $key) ? 'vector' : 'hash';
-
-	// \rkphplib\lib\log_debug('TArray.tok_array_set:192> '.$this->env['name']." ($type) - set [$key]=[$value]");
-	$a = &$this->getArray('', $type);
-
-	if ('' == $key) {
-		$a = array_merge($a, conf2kv($value));
-		// \rkphplib\lib\log_debug('TArray.tok_array_set:197> merge: '.print_r($this->array[$this->env['name']], true));
+	if ($key === '') {
+		$this->array[$this->name] = array_merge($this->array[$this->name], conf2kv($value));
+		// \rkphplib\lib\log_debug([ "TArray.tok_array_set:118> {$this->name} = <1>", $this->array[$this->name] ]);
+		return;
 	}
-	else {
-		$a[$key] = $value;
-		// \rkphplib\lib\log_debug('TArray.tok_array_set:201> set key: '.print_r($this->array[$this->env['name']], true));
+
+	if (is_integer($key)) {
+		$key = intval($key);
 	}
+
+	// \rkphplib\lib\log_debug("TArray.tok_array_set:126> set {$this->name}[$key] = '$value'");
+	$this->array[$this->name][$key] = $value;
 }
 
 
@@ -213,17 +138,15 @@ public function tok_array_set(string $key, string $value) : void {
  * @tok {array:get:abc} - array['abc']
  */
 public function tok_array_get(string $key) : string {
-	$a = &$this->getArray();
-
 	if ('' == $key) {
-		return kv2conf($a);
+		return kv2conf($this->array[$this->name]);
 	}
 
-	if (!array_key_exists($key, $a)) {
-		throw new Exception("no such key $key", $this->env['name'].': '.print_r($a, true));
+	if (!array_key_exists($key, $this->array[$this->name])) {
+		throw new Exception("missing {$this->name}[$key]", print_r($this->array[$this->name], true));
 	}
 
-	return $a[$key];
+	return $this->array[$this->name][$key];
 }
 
 
@@ -233,8 +156,7 @@ public function tok_array_get(string $key) : string {
  * @tok {array:shift} = a ([a] to []) 
  */
 public function tok_array_shift() : string {
-	$a = &$this->getArray('', 'vector');
-	return array_shift($a);
+	return array_shift($this->array[$this->name]);
 }
 
 
@@ -244,8 +166,7 @@ public function tok_array_shift() : string {
  * @tok {array:unshift}b{:array} ([a] to [b,a])
  */
 public function tok_array_unshift(string $value) : void {
-	$a = &$this->getArray('', 'vector');
-	array_unshift($a, $value);
+	array_unshift($this->array[$this->name], $value);
 }
 
 
@@ -255,8 +176,7 @@ public function tok_array_unshift(string $value) : void {
  * @tok {array:pop} = a ([a] to []) 
  */
 public function tok_array_pop() : string {
-	$a = &$this->getArray('', 'vector');
-	return array_pop($a);
+	return array_pop($this->array[$this->name]);
 }
 
 
@@ -266,15 +186,14 @@ public function tok_array_pop() : string {
  * @tok {array:push}b{:array} ([a] to [a,b])
  */
 public function tok_array_push(string $value) : void {
-	$a = &$this->getArray('', 'vector');
-	array_push($a, $value);
+	array_push($this->array[$this->name], $value);
 }
 
 
 /**
  * Return joined array. Default delimiter is '|'.
  *
- * @tok {array:test}a|#|b{:array} {array:join:|} {array:join},{:array} = "a|b" "a,b"
+ * @tok {array:}a|#|b{:array} {array:join:|} {array:join},{:array} = "a|b" "a,b"
  */
 public function tok_array_join(?string $param_delimiter, ?string $arg_delimiter) : string {
 	$delimiter = '|';
@@ -286,8 +205,7 @@ public function tok_array_join(?string $param_delimiter, ?string $arg_delimiter)
 		$delimiter = $arg_delimiter;
 	}
 	
-	$a = &$this->getArray('', 'vector');
-	return join($delimiter, $a);
+	return join($delimiter, $this->array[$this->name]);
 }
 
 
@@ -297,9 +215,7 @@ public function tok_array_join(?string $param_delimiter, ?string $arg_delimiter)
  * @tok {array:}a{:array}{array:length} = 1 ([a])
  */
 public function tok_array_length() : int {
-	$a = &$this->getArray();
-	return count($a);
+	return count($this->array[$this->name]);
 }
-
 
 }
