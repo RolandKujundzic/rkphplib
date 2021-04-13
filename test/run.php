@@ -27,8 +27,7 @@ $tests = $th->getTests('../src', [
 	'ArrayHelper',
 	'StringHelper',
 	'ShellCode',
-	'SQLiteDatabase',
-	'tok.TArray'
+	'SQLiteDatabase'
 ]);
 
 foreach ($tests as $test) {
