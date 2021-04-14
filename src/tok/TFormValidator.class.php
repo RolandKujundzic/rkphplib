@@ -35,7 +35,7 @@ use function rkphplib\lib\kv2conf;
  * default.header|footer= ...|#|
  * {:fv}
  *
- * {fv:init:[add]}
+ * {fv:init:}
  * use= NAME|#| (default: use=default)
  * hidden_keep= (default = empty, cs-list)|#|
  * hidden.form_action=1|#|
@@ -86,7 +86,7 @@ protected $example = [];
 /**
  * Register plugins. Return {fv:init|conf|get|get_conf|check|in|tpl|hidden|preset|error|appendjs|error_message|set_error_message} 
  *
- * @tok {fv:init:[|add]}required=...|#|...{:fv}
+ * @tok {fv:init:}required=...|#|...{:fv}
  * @tok {fv:in:name}label=...|#|...{:fv}
  * @tok {fv:check}
  */
@@ -105,7 +105,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['fv:get_conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['fv:hidden'] = TokPlugin::NO_PARAM | TokPlugin::NO_BODY;
 	$plugin['fv:in'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY | TokPlugin::REDO;
-	$plugin['fv:init'] = TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY; 
+	$plugin['fv:init'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY; 
 	$plugin['fv:preset'] = TokPlugin::ASK;
 	$plugin['fv:set_error_message'] = TokPlugin::REQUIRE_PARAM;
 	$plugin['fv:tpl'] = TokPlugin::REQUIRE_PARAM | TokPlugin::KV_BODY | TokPlugin::REDO;
@@ -240,7 +240,8 @@ public function tok_fv_preset(string $param, ?string $arg) : string {
 		return '';
 	}
 
-	if (!empty($_REQUEST['id']) && $_REQUEST['id'] == 'add') {
+	if ((!empty($_REQUEST['id']) && $_REQUEST['id'] == 'add') ||
+			(!empty($_REQUEST['do']) && in_array($_REQUEST['do'], [ 'delete', 'add' ]))) {
 		return '';
 	}
 
@@ -422,7 +423,7 @@ public function tok_fv_conf(string $name, array $p) : void {
  * - submit: form_action (use NEW_KEY to reset form)
  * - option.label_empty: ...
  */
-public function tok_fv_init(string $do, array $p) : void {
+public function tok_fv_init(array $p) : void {
 	if (empty($p['use'])) {
 		$p['use'] = 'default';
 	}
@@ -431,15 +432,10 @@ public function tok_fv_init(string $do, array $p) : void {
 		$p['use'] = $p['use'] ? 'default,'.$p['use'] : 'default';
 	}
 
-	if ($do == 'add') {
-		// do nothing ...
-	}
-	else {
-		// \rkphplib\lib\log_debug([ "TFormValidator.tok_fv_init:438> reset, do=$do p: <1>", $p ]);
-		$this->conf['current'] = [];
-		$this->error = [];
-		$this->example = [];
-	}
+	// \rkphplib\lib\log_debug([ "TFormValidator.tok_fv_init:438> reset, p: <1>", $p ]);
+	$this->conf['current'] = [];
+	$this->error = [];
+	$this->example = [];
 
 	$conf = $this->conf['current'];
 	$use_conf = \rkphplib\lib\split_str(',', $p['use']);
@@ -462,7 +458,7 @@ public function tok_fv_init(string $do, array $p) : void {
 
 	$submit_name = $this->conf['current']['submit'];
 	$this->conf['current']['hidden.'.$submit_name] = 1;
-	// \rkphplib\lib\log_debug([ "TFormValidator.tok_fv_init:465> ($do, …) use_conf: <1>\ncurrent: <2>", $use_conf, $this->conf['current'] ]);
+	// \rkphplib\lib\log_debug([ "TFormValidator.tok_fv_init:465> use_conf: <1>\ncurrent: <2>", $use_conf, $this->conf['current'] ]);
 }
 
 
