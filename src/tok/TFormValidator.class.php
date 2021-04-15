@@ -751,9 +751,9 @@ private function get2NData(string $name, string $name_def) : string {
 	// [0] => multi_checkbox|radio, [1] => value_2^0, [2] => value_2^1, ...
 	$r = conf2kv($name_def, '=', ',');
 
-	if (isset($r['@_1'])) {
-		$r[0] = $r['@_1'];
-		unset($r['@_1']);
+	if (isset($r[1])) {
+		$r[0] = $r[1];
+		unset($r[1]);
 	}
 
 	if (!isset($r[0]) || ($r[0] != 'multi_checkbox' && $r[0] != 'multi_radio')) {
@@ -1303,14 +1303,14 @@ private function getOptions(array &$p, string $opt_value, string $str_options) :
 	$empty_label = null;
 
 	// \rkphplib\lib\log_debug([ "TFormValidator.getOptions:1305> opt_value=[$opt_value] str_options=[$str_options] p: <1>", $p ]);
-	if (!empty($p['@_1']) && substr($p['@_1'], 0, 1) == '=') {
-		$empty_label = substr($p['@_1'], 1);
-		unset($p['@_1']);
+	if (!empty($p[1]) && substr($p[1], 0, 1) == '=') {
+		$empty_label = substr($p[1], 1);
+		unset($p[1]);
 	}
 
-	if (!empty($p['@_2']) && substr($p['@_2'], 0, 1) == '=') {
-		$empty_label = substr($p['@_2'], 1);
-		unset($p['@_2']);
+	if (!empty($p[2]) && substr($p[2], 0, 1) == '=') {
+		$empty_label = substr($p[2], 1);
+		unset($p[2]);
 	}
 
 	if (!is_null($empty_label)) {
