@@ -1762,15 +1762,16 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 	$key_list = [];
 	$val_list = [];
 
+	$skip_col = [ 'since', 'lchange' ];
 	$allow_all = empty($kv['@allow']);
 	$add_default = !empty($kv['@add_default']);
 	$use_tag = !empty($kv['@tag']) && in_array($type, $kv['@tag']);
 
-	// \rkphplib\lib\log_debug([ "ADatabase.buildQuery:1769> ($table, $type, …) kv: <1>\n<2>", $kv, array_keys($p) ]);
+	// \rkphplib\lib\log_debug([ "ADatabase.buildQuery:1770> ($table, $type, …) kv: <1>\n<2>", $kv, array_keys($p) ]);
 	foreach ($p as $col => $cinfo) {
 		$val = false;
 
-		if (!$allow_all && !in_array($col, $kv['@allow'])) {
+		if (in_array($col, $skip_col) || (!$allow_all && !in_array($col, $kv['@allow']))) {
 			continue;
 		}
 
@@ -1798,14 +1799,14 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		}
 
 		if ($val !== false) {
-			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1801> $col=[$val]");
+			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1802> $col=[$val]");
 			array_push($key_list, self::escape_name($col));
 			array_push($val_list, $val);
 		}
 	}
 
 	if (count($key_list) == 0) {
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1808> empty key_list - return");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1809> empty key_list - return");
 		return '';
 	}
 
@@ -1849,7 +1850,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1852> $res");
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1853> $res");
 	return $res;
 }
 
