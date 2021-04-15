@@ -7,7 +7,7 @@
     "show_error": 1,
     "show_example": 1,
     "label_required": "<span class=\"label_required\">{:=label}</span>",
-    "default.in.const": "<span class=\"const\">{:=value}</span>",
+    "default.in.const": "<span class=\"const\">{:=value}</span><input type=\"hidden\" name=\"{:=name}\" value=\"{:=value}\">",
     "default.in.input": "<input type=\"{:=type}\" name=\"{:=name}\" value=\"{:=value}\" class=\"{:=class}\"{:=tags}>",
     "default.in.select": "<select name=\"{:=name}\" class=\"{:=class}\"{:=tags}>{:=options}</select>",
     "default.in.check": "<div class=\"check_wrapper\">{:=options}</div>",

@@ -234,7 +234,7 @@ private static function default() : array {
 	$conf = [];
 
 	$conf['in'] = [
-		'const'		=> '<span class="const">«value»</span>',
+		'const'		=> '<span class="const">«value»</span><input type="hidden" name="«name»" value="«value»">',
 
 		'input'		=> '<input type="«type»" name="«name»" value="«value»" class="«class»"«tags»>',
 
