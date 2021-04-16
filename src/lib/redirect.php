@@ -21,6 +21,10 @@ function redirect(string $url, array $p = []) : void {
 		$url = \rkphplib\tok\Tokenizer::$site->callPlugin('link', 'tok_link', [ [], [ '_' => $url ] ]);
 	}
 	
+	if (empty($url)) {
+		throw new Exception('empty redirect url');
+	}
+
 	// avoid [index.php?dir=xxx] redirect loop
 	$md5 = md5($url);
 	if (!empty($_REQUEST['_ld']) && $_REQUEST['_ld'] === $md5) {
@@ -51,7 +55,7 @@ function redirect(string $url, array $p = []) : void {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('redirect:54> exit redirect: Location '.$url);
+	// \rkphplib\lib\log_debug('redirect:58> exit redirect: Location '.$url);
 	session_write_close(); // avoid redirect delay 
 
 	if (php_sapi_name() === 'cli') {
