@@ -30,7 +30,7 @@ class Tokenizer {
 public static $site = null;
 
 // @var vector $rx Token expression (regular expression for start+end token, prefix, delimiter, suffix, esc-prefix, esc-delimiter, esc-suffix)
-public $rx = [ "/\{([a-zA-Z0-9_]*\:.*?)\}/s", '{', ':', '}', '&#123;', '&#58;', '&#125;' ];
+public $rx = [ "/\{([a-zA-Z0-9_\.]*\:.*?)\}/s", '{', ':', '}', '&#123;', '&#58;', '&#125;' ];
 
 // @var string $file Token data from $file - defined if load($file) was used
 public $file = '';
@@ -325,7 +325,30 @@ public function load(string $file) : void {
  */
 public function setText(string $txt) : void {
 	$this->_tok = preg_split($this->rx[0], $txt, -1, PREG_SPLIT_DELIM_CAPTURE);
-	$this->_endpos = $this->_compute_endpos($this->_tok);
+	$this->_compute_endpos();
+
+	// Check endpos sanity, e.g. {a:}{b:}{:a}{:b} is forbidden
+	$max_ep = array(count($this->_endpos) - 2);
+	$max = 0;
+
+	for ($i = 1; $i < count($this->_endpos) - 1; $i = $i + 2) {
+		$max = end($max_ep);
+
+		if ($max < $i) {
+			array_pop($max_ep);
+			$max = end($max_ep);
+		}
+
+		if ($this->_endpos[$i] > 0) {
+			if ($this->_endpos[$i] > $max) {
+				throw new Exception('invalid plugin', "Plugin [".$this->_tok[$i]."] must end before [".
+					$this->_tok[$max]." i=[$i] ep=[".$this->_endpos[$i]."] max=[$max]");
+			}
+			else {
+				array_push($max_ep, $this->_endpos[$i]);
+			}
+		}
+	}
 }
 
 
@@ -500,7 +523,7 @@ private function _join_tok(int $start, int $end) : string {
 		throw new Exception('invalid status - call setText() first');
 	}
 
-	// \rkphplib\lib\log_debug([ "Tokenizer._join_tok:503> start=$start end=$end\ntok: <1>\nendpos: <2>", $this->_tok, $this->_endpos ]);
+	// \rkphplib\lib\log_debug([ "Tokenizer._join_tok:526> start=$start end=$end\ntok: <1>\nendpos: <2>", $this->_tok, $this->_endpos ]);
 	$tok_out = array();
 
 	for ($i = $start; $i < $end; $i++) {
@@ -535,7 +558,7 @@ private function _join_tok(int $start, int $end) : string {
 	$res = join('', $tok_out);
 	array_pop($this->_callstack);
 
-	// \rkphplib\lib\log_debug("Tokenizer._join_tok:538> i=[$i] return: [$res]");
+	// \rkphplib\lib\log_debug("Tokenizer._join_tok:561> i=[$i] return: [$res]");
 	return $res;
 }
 
@@ -588,7 +611,7 @@ public function getPluginFeatures(string $name) : ?int {
 private function _join_tok_plugin(int &$i) : ?string {
 	$tok = $this->_tok[$i];
 
-	// \rkphplib\lib\log_debug([ "Tokenizer._join_tok_plugin:591> tok.$i=<1>", $tok ]);
+	// \rkphplib\lib\log_debug([ "Tokenizer._join_tok_plugin:614> tok.$i=<1>", $tok ]);
 	$d  = $this->rx[2];
 	$dl = mb_strlen($d);
 	$pos = mb_strpos($tok, $d);
@@ -663,9 +686,9 @@ private function _join_tok_plugin(int &$i) : ?string {
 	}
 	else {
 		if ($ep == -1) {
-			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:666> no arg: name=$name param=[$param] i=$i ep=$ep");
+			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:689> no arg: name=$name param=[$param] i=$i ep=$ep");
 			$out = $this->_call_plugin($name, $param);
-			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:668> out: [$out]");
+			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:691> out: [$out]");
 		}
 		else if ($ep > $i) {
 			if ($tp & TokPlugin::TEXT) {
@@ -677,13 +700,13 @@ private function _join_tok_plugin(int &$i) : ?string {
 			}
 			else {
 				// parse argument with recursive _join_tok call ...
-				// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:680> compute arg of $name with recursion: start=$i+1 end=$ep\n");
+				// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:703> compute arg of $name with recursion: start=$i+1 end=$ep\n");
 				$arg = $this->_join_tok($i + 1, $ep);
 			}
  
-			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:684> arg: name=$name param=[$param] arg=[$arg] i=$i ep=$ep");
+			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:707> arg: name=$name param=[$param] arg=[$arg] i=$i ep=$ep");
 			$out = $this->_call_plugin($name, $param, $arg);
- 			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:686> set i=$ep - out: [$out]");
+ 			// \rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:709> set i=$ep - out: [$out]");
 
 			$i = $ep; // modify loop position
 		}
@@ -855,7 +878,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 		}
 
 		$flag = is_array($args) ? 3 : 0;
-		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:858> return this._call_plugin($name, $func, $args, $flag)");
+		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:881> return this._call_plugin($name, $func, $args, $flag)");
 		return $this->_call_plugin($name, $func, $args, $flag);
 	}
 
@@ -863,7 +886,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 		throw new Exception("no such plugin method $name.".$func);
 	}
 
-	// \rkphplib\lib\log_debug([ "Tokenizer.callPlugin:866> name=$name, func=$func, args: [<1>]", $args ]);
+	// \rkphplib\lib\log_debug([ "Tokenizer.callPlugin:889> name=$name, func=$func, args: [<1>]", $args ]);
 	if (count($args) == 0) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func));
 	}
@@ -947,7 +970,7 @@ private function _call_plugin(string $name, string $param, $arg = null, int $fla
 		$old_tok = $this->_tok;
 		$old_endpos = $this->_endpos;
 
-		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:950> redo=[$res]");
+		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:973> redo=[$res]");
 		$this->setText($res);
 		$res = $this->_join_tok(0, count($this->_tok));
 
@@ -1025,6 +1048,7 @@ private function _prepare_call(string $name, string &$param, ?string &$arg) : vo
 
 /**
  * Return endpos list for $tok. Values of _endpos[n]:
+ * Allow name.sub:param instead of name:sub:param.
  * 
  *   0: unknown
  * > 0: position of plugin end 
@@ -1032,24 +1056,22 @@ private function _prepare_call(string $name, string &$param, ?string &$arg) : vo
  *  -2: ignore
  *  -3: plugin end ({:xxxx})
  */
-private function _compute_endpos(array $tok) : array {
-
-	$endpos = array();
-
-	for ($i = 0; $i < count($tok); $i++) {
-		$endpos[$i] = 0;
-	}
-
+private function _compute_endpos() : void {
 	$d = $this->rx[2];
 	$dl = mb_strlen($d);
+	$ep = array();
   
-	for ($i = 1; $i < count($tok); $i = $i + 2) {
-		$plugin = $tok[$i];
+	for ($i = 0; $i < count($this->_tok); $i++) {
+		$ep[$i] = 0;
+	}
+
+	for ($i = 1; $i < count($this->_tok); $i = $i + 2) {
+		$plugin = $this->_tok[$i];
 		$start = '';
 
 		if (mb_substr($plugin, 0, $dl) == $d) {
 			// ignore plugin ... unless start is found ...
-			$endpos[$i] = -2;
+			$ep[$i] = -2;
 			$end = mb_substr($plugin, $dl);
 
 			// {=:}x{:=} is forbidden ...
@@ -1057,50 +1079,34 @@ private function _compute_endpos(array $tok) : array {
 				$start = empty($end) ? $d : $end.$d;
 			}
 		}
+		else if (($dot = strpos($plugin, '.')) > 0 && strpos($plugin, $d) > $dot + 1) {
+			// allow name.sub:param instead of name:sub:param
+			$plugin = substr($plugin, 0, $dot).$d.substr($plugin, $dot + 1);
+			// \rkphplib\lib\log_debug("Tokenizer._compute_endpos:1085> change {$this->_tok[$i]} into $plugin");
+			$this->_tok[$i] = $plugin;
+		}
 
 		if ($start) {
 			// find plugin start ...
 			$found = false;
 
 			for ($j = $i - 2; !$found && $j > 0; $j = $j - 2) {
-				$prev_plugin = $tok[$j];
+				$prev_plugin = $this->_tok[$j];
 
-				if ($endpos[$j] == -1 && ($xpos = mb_strpos($prev_plugin, $start)) !== false && ($start == $d || $xpos == 0)) {
+				if ($ep[$j] == -1 && ($xpos = mb_strpos($prev_plugin, $start)) !== false && ($start == $d || $xpos == 0)) {
 					$found = true;
-					$endpos[$j] = $i;
-					$endpos[$i] = -3;
+					$ep[$j] = $i;
+					$ep[$i] = -3;
 				}
 			}
 		}
-		else if ($endpos[$i] == 0) {
+		else if ($ep[$i] == 0) {
 			// parameter only plugin ...
-			$endpos[$i] = -1;
+			$ep[$i] = -1;
 		}
 	}
 
-	// Check endpos sanity, e.g. {a:}{b:}{:a}{:b} is forbidden
-	$max_ep = array(count($endpos) - 2);
-	$max = 0;
-
-	for ($i = 1; $i < count($endpos) - 1; $i = $i + 2) {
-		$max = end($max_ep);
-
-		if ($max < $i) {
-			array_pop($max_ep);
-			$max = end($max_ep);
-		}
-
-		if ($endpos[$i] > 0) {
-			if ($endpos[$i] > $max) {
-				throw new Exception('invalid plugin', "Plugin [".$tok[$i]."] must end before [".$tok[$max]." i=[$i] ep=[".$endpos[$i]."] max=[$max]");
-			}
-			else {
-				array_push($max_ep, $endpos[$i]);
-			}
-		}
-	}
-
-	return $endpos;
+	$this->_endpos = $ep;
 }
 
 
