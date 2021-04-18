@@ -1,0 +1,8 @@
+a[x]
+a[y]
+a[z]
+
+b[x|b[y|b[z|Z]]]
+b[y|Y]
+b[z|Z]
+

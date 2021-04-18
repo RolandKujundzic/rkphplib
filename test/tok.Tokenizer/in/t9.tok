@@ -1,0 +1,8 @@
+{test:a}x{:test}
+{test:a:}y{:test}
+{test.a:}z{:test}
+
+{test:b:x}{test.b:y}{test.b:z}Z{:test}{:test}{:test}
+{test:b:y}Y{:test}
+{test.b:z}Z{:test}
+
