@@ -19,13 +19,11 @@ public function __construct($mode = 'A') {
 
 public function getPlugins(Tokenizer $tok) : array {
 	$plugin = [];
-
 	$plugin['output_header'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['output_loop']   = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::REDO | TokPlugin::TEXT;
 	$plugin['output_footer'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::TEXT;
 	$plugin['output:header2'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['output'] = 0;
-
 	return $plugin;
 }
 
@@ -37,6 +35,26 @@ public function tok_output_footer($txt) {	return 'f['.$txt.']'; }
 }
 
 
+/**
+ *
+ */
+class TTest implements TokPlugin {
+
+public function getPlugins(Tokenizer $tok) : array {
+	$plugin = [];
+	$plugin['test'] = 0;
+	$plugin['test:a'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['test:b'] = 0;
+	return $plugin;
+}
+
+public function tok_test_a(string $arg) {	return "a[$arg]"; }
+public function tok_test_b(string $param, ?string $arg) {	return "b[$param|$arg]"; }
+
+}
+
+
+
 /*
  * M A I N
  */
@@ -44,6 +62,7 @@ public function tok_output_footer($txt) {	return 'f['.$txt.']'; }
 global $th;
 
 $t_output = new TOutput();
-$th->useTokPlugin([ $t_output ]);
-$th->run(1, 8);
+$t_test = new TTest();
+$th->useTokPlugin([ $t_output, $t_test ]);
+$th->run(1, 9);
 
