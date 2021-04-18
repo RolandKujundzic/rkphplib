@@ -30,7 +30,7 @@ use function rkphplib\lib\conf2kv;
  * File upload.
  * 
  * @author Roland Kujundzic <roland@kujundzic.de>
- *
+ * @copyright 2017-2021 Roland Kujundzic
  */
 class TUpload implements TokPlugin {
 
@@ -74,11 +74,8 @@ public function getPlugins(Tokenizer $tok) : array {
  * @tok {upload:formData}
  * 		formData.append("id", document.getElementById("fvin_id").value); 
  *		formData.append("ajax", document.getElementById("ajax").value);
- *
- * @param string $param (hidden|append)
- * @return string
  */
-public function tok_upload_formData($param) {
+public function tok_upload_formData(string $param) : string {
 
 	if (!isset($this->conf['ajax_parameter'])) {
 		throw new Exception("ajax_parameter missing", print_r($this->conf, true));
@@ -118,7 +115,7 @@ public function tok_upload_formData($param) {
 /**
  * Return path to thumbnail of $file.
  */
-private function getThumbnail($file, $http_path = false) {
+private function getThumbnail(string $file, bool $http_path = false) : string {
 	// \rkphplib\lib\log_debug("TUpload.getThumbnail:122> file=$file http_path=$http_path");
 	$tpic = new TPicture();
 
@@ -144,13 +141,9 @@ private function getThumbnail($file, $http_path = false) {
  * parameter can be defined in upload:init).
  * 
  * @tok {upload:exists}mode=dropzone|#|images={get:images}|#|url_prefix=|#|save_in=...|#|thumbnail=...{:upload}
- * 
- * @throws
- * @param hash $p
- * @return string
- * @return json
+ * @return JSON
  */
-public function tok_upload_exists($p) {
+public function tok_upload_exists(array $p) : string {
 
 	if (empty($this->conf['save_in'])) {
 		if (!empty($p['save_in'])) {
@@ -223,10 +216,24 @@ public function tok_upload_save(string $name, array $p) : string {
 
 
 /**
+ * Scan $_FILES[] for $prefix keys 
+ */		
+private function multiUpload(string $prefix, array $p) : void {
+	unset($p['upload']);
+	foreach ($_FILES as $key => $info) {
+		if (strpos($key, $prefix) === 0 && !empty($info['tmp_name'])) {
+			$this->tok_upload_init($key, $p);
+		}
+	}
+}
+
+
+/**
  * Execute upload ([upload:init:name]...[:upload]). Export _REQUEST[upload_name_(saved|file|name)]. Parameter:
+ * Use $name = prefix_* or $p[upload] = prefix_* for multi upload.
  *
- * name: upload (=default) overwrite with $p['upload'] or $name
- * upload: upload (=default)
+ * @hash $p …
+ * upload: upload (=default) (or $name if set)
  * url: retrieve upload from url
  * stream: yes=upload is stream, no=ignore stream, []=normal post upload
  * save_in: save directory (auto-create) (default = data/upload/name)
@@ -247,18 +254,22 @@ public function tok_upload_save(string $name, array $p) : string {
  * image_convert: execute convert command
  * ajax_output: AJAX_TEMPLATE
  * scan: 0 (if true parse upload)
+ * @eol
  *
  * If ajax_output is specified, print parsed {tpl:AJAX_TEMPLATE} and exit.
- *
- * @param string $name 
- * @param hash $p
  */
 public function tok_upload_init(string $name, array $p) : void {
-	$scan = !empty($name) || !empty($p['scan']) || (empty($p['name']) && !empty($p['upload']));
-	unset($p['scan']);
-
+	\rkphplib\lib\log_debug([ "TUpload.tok_upload_init:262> name=[$name] <1>", $p ]);
 	$name = $this->getUploadName($name, $p);
 	$p['upload'] = $name;
+
+	if (substr($name, -1) == '*') {
+		$this->multiUpload(substr($name, 0, -1), $p);
+		return;
+	}
+
+	$scan = !empty($name) || !empty($p['scan']);
+	unset($p['scan']);
 
 	// reset save upload export
 	$_REQUEST['upload_'.$name.'_saved'] = '';
@@ -266,7 +277,11 @@ public function tok_upload_init(string $name, array $p) : void {
 	$_REQUEST['upload_'.$name] = '';
 
 	if ($scan) {
-		$p['save_in'] = empty($p['save_in']) ? DOCROOT.'/data/.tmp/'.$name : DOCROOT.'/'.$p['save_in'];
+		$p['save_in'] = empty($p['save_in']) ? DOCROOT.'/data/.tmp/'.$name : $p['save_in'];
+		if (substr($p['save_in'], 0, 1) !== '/') {
+			$p['save_in'] = DOCROOT.'/'.$p['save_in'];
+		}
+
 		$p['save_as'] = empty($p['save_as']) ? '@name' : $p['save_as'];
 		$p['overwrite'] = empty($p['overwrite']) ? 'yes' : $p['overwrite'];
 	}
@@ -282,8 +297,7 @@ public function tok_upload_init(string $name, array $p) : void {
 		$p['jpeg2jpg'] = 1;
 	}
 
-	// \rkphplib\lib\log_debug([ "TUpload.tok_upload_init:285> name=[$name] <1>", $p ]);
-
+	\rkphplib\lib\log_debug([ "TUpload.tok_upload_init:295> name=[$name] <1>", $p ]);
 	if (!isset($this->options['_default'])) {
 		$this->options['_default'] = $p;
 		$this->conf = $p;
@@ -300,16 +314,9 @@ public function tok_upload_init(string $name, array $p) : void {
 
 
 /**
- * If $name is set use name. Otherwise use $p[name].
- * If both are unset use default name 'upload'.
- *
- * @throws
- * @param string $name
- * @param hash $p
- * @return string
+ * Return $p[upload] if set otherwise $name or 'upload' if $name is empty.
  */
-private function getUploadName($name, $p) {
-	
+private function getUploadName(string $name, array $p) : string {
 	if (!empty($p['upload'])) {
 		if (!empty($name) && $name != $p['upload']) {
 			throw new Exception('upload name mismatch', 'name=['.$name.'] != p.upload=['.$p['upload'].']');
@@ -331,13 +338,8 @@ private function getUploadName($name, $p) {
  * 
  * @tok {upload:conf:file}save_as=...{:upload}
  * @tok {upload:conf}upload=logo|#|save_as=...|#|scan=1{:upload} 
- *
- * @throws
- * @param string $name
- * @param hash $p
  */
-public function tok_upload_conf($name, $p) {
-
+public function tok_upload_conf(string $name, array $p) : void {
 	$name = $this->getUploadName($name, $p);
 	$scan = !empty($p['scan']);
 	unset($p['scan']);
@@ -379,18 +381,15 @@ public function tok_upload_conf($name, $p) {
  * Scan upload. Only do something if name == basename(conf.save_in).
  *
  * @tok {upload:scan:logo}
- *
- * @param string $name (=upload)
  */
-public function tok_upload_scan($name = 'upload') {
-
+public function tok_upload_scan(string $name = 'upload') : void {
 	if ((!empty($_REQUEST['ajax']) && $_REQUEST['ajax'] != $name && $_REQUEST['ajax'] != 'upload') || isset($this->options['_done_'.$name])) {
 		// \rkphplib\lib\log_debug("TUpload.tok_upload_scan:388> return - name=[$name] _REQUEST=".print_r($_REQUEST, true));
 		return;
 	}
 
 	$this->conf = isset($this->options[$name]) ? array_merge($this->options['_default'], $this->options[$name]) : $this->options['_default'];
-	// \rkphplib\lib\log_debug("TUpload.tok_upload_scan:393> name=[$name] this.conf: ".print_r($this->conf, true));
+	\rkphplib\lib\log_debug([ "TUpload.tok_upload_scan:387> name=[$name] this.conf: <1>", $this->conf ]);
 
 	try {
 
@@ -475,7 +474,7 @@ public function tok_upload_scan($name = 'upload') {
  * @param string $name
  * @return string [|files|multiple_files]
  */
-private function scanFiles($name) {
+private function scanFiles(string $name) : string {
 	$fup = $name;
 
 	// \rkphplib\lib\log_debug("TUpload.scanFiles:481> name=[$name] _FILES: ".print_r($_FILES, true));
@@ -521,7 +520,7 @@ private function scanFiles($name) {
  * Remove image if conf.remove_image=name:num and table_id=table.id:val is set.
  *
  */
-private function removeImage() {
+private function removeImage() : void {
 	list ($name, $num) = explode(':', $this->conf['remove_image']);
 	list ($tmp, $id_val) = explode(':', $this->conf['table_id']);
 	list ($table, $id_col) = explode('.', $tmp);
@@ -554,7 +553,7 @@ private function removeImage() {
  * Remove images from filesystem. Use conf.save_in|save_as|remove_image.
  * Export _REQUEST[removed_files|removed_filenum].
  */
-private function removeFSImages() {
+private function removeFSImages() : void {
 	$remove = [];
 
 	$rm_file = basename($this->conf['remove_image']);
@@ -592,7 +591,7 @@ private function removeFSImages() {
  * Replace image if conf.replace_image=name:num and table_id=table.id:val is set.
  *
  */
-private function replaceImage() {
+private function replaceImage() : void {
 	list ($name, $num) = explode(':', $this->conf['replace_image']);
 	list ($tmp, $id_val) = explode(':', $this->conf['table_id']);
 	list ($table, $id_col) = explode('.', $tmp);
@@ -645,7 +644,7 @@ private function replaceImage() {
  * @throws
  * @param string $message
  */
-private function error($message) {
+private function error($message) : void {
 	$name = $this->conf['upload'];
   $_REQUEST['upload_'.$name.'_saved'] = '';
   $_REQUEST['upload_'.$name.'_file'] = '';
@@ -663,10 +662,8 @@ private function error($message) {
  * Use save_as=@count|@base_count|NAME(_nn.suffix).
  *
  * @see getSaveAs 
- * @param string $fup
- * @param int $max
  */
-private function saveMultipleFileUpload($fup, $max) {
+private function saveMultipleFileUpload(string $fup, int $max) : void {
 	// \rkphplib\lib\log_debug("TUpload.saveMultipleFileUpload:670> fup=$fup max=$max conf: ".print_r($this->conf, true));
 	Dir::create($this->conf['save_in'], 0777, true);
 
@@ -713,9 +710,8 @@ private function saveMultipleFileUpload($fup, $max) {
  * Save upload. Autocreate conf.save_in directory. 
  *
  * @see getSaveAs 
- * @param string $fup
  */
-private function saveFileUpload($fup) {
+private function saveFileUpload(string $fup) : void {
 	// \rkphplib\lib\log_debug([ "TUpload.saveFileUpload:719> fup=$fup <1>\n<2>", $this->conf, $_FILES[$fup] ]);
 	Dir::create($this->conf['save_in'], 0777, true);
 	$target = $this->conf['save_in'].'/'.$this->getSaveAs($_FILES[$fup]['name'], $_FILES[$fup]['tmp_name']);
@@ -743,12 +739,9 @@ private function saveFileUpload($fup) {
 /**
  * Convert image to cmyk, gray or use custom convert or gm command.
  * Use conf.image_convert=cmyk|gray|convert {:=source} {:=target}|gm command.
- *
- * @param string $source
- * @param string $target
+ * @todo
  */
-private function convertImage($source, $target) {
-
+private function convertImage(string $source, string $target) : void {
 	throw new Exception('ToDo ...');
 /*
 	$img_info = lib_exec("identify -verbose {:=image}", array('image' => $_REQUEST['upload_file']));
@@ -812,14 +805,8 @@ private function convertImage($source, $target) {
  * - @base_count: BASE_01.SUFFIX
  * - @original: FILE_NAME.SUFFIX
  * - value: basename(value) (e.g. logo, floorplan, ...)
- *
- * @throws
- * @param string $upload_file
- * @param string $temp_file
- * @param int $nc (default = 0) 
- * @return string
  */
-private function getSaveAs($upload_file, $temp_file, $nc = 0) {
+private function getSaveAs(string $upload_file, string $temp_file, int $nc = 0) : string {
 	$base = File::basename($upload_file, true);
 	$suffix = File::suffix($upload_file, true);
 	$save_as = isset($this->conf['save_as']) ? $this->conf['save_as'] : null;
