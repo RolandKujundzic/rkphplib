@@ -2406,7 +2406,12 @@ public function tok_true(string $val, string $out) : string {
 		}
 	}
 
-	// \rkphplib\lib\log_debug('TBase.tok_true:2409> val='.print_r($val, true).' tf='.print_r($tf, true));
+	if (is_bool($tf) && !$tf && ((is_string($val) && strpos($val, "''") !== false) || 
+			(is_array($val) && in_array("''", $val)))) {
+		$tf = true;
+	}
+
+	// \rkphplib\lib\log_debug([ 'TBase.tok_true:2414> tf=<1> val=<2>', $tf, $val ]);
 	return ((is_bool($tf) && $tf) || (is_array($val) && in_array($tf, $val)) || (is_string($tf) && $tf === $val) || 
 		(is_array($tf) && !empty($val) && in_array($val, $tf))) ? $out : '';
 }
@@ -2434,7 +2439,7 @@ public function tok_false(string $out) : string {
  * Write message via log_debug.
  */
 public function tok_log(string $txt) : void {
-	\rkphplib\lib\log_debug("TBase.tok_log:2437> $txt"); // @keep
+	\rkphplib\lib\log_debug("TBase.tok_log:2442> $txt"); // @keep
 }
 
 
