@@ -118,7 +118,7 @@ public static function run(string $key, $value, string $check) : bool {
 /**
  * Return match pattern. Names:
  *
- * Required, Int, UInt, Integer (=UInt), Real, UReal, Email, EmailPrefix, HTTP, HTTPS, 
+ * Required, Int(eger), UInt, PInt(>0), Real, UReal, Email, EmailPrefix, HTTP, HTTPS, 
  * Phone, PhoneNumber (=Phone), Variable, PLZ
  */
 public static function getMatch(string $name) : string {
@@ -126,9 +126,10 @@ public static function getMatch(string $name) : string {
 		'Required' => '/^.+$/',
 		'Bool' => '/^(1|0|)$/',
 		'Boolean' => '/^(1|0|)$/',
-		'Int' => '/^\-?[1-9][0-9]*$/',
-		'UInt' => '/^[1-9][0-9]*$/',
-		'Integer' => '/^[1-9][0-9]*$/',
+		'Int' => '/^\-?[0-9]*$/',
+		'UInt' => '/^[0-9]*$/',
+		'PInt' => '/^[1-9][0-9]*$/',
+		'Integer' => '/^\-?[0-9]*$/',
 		'Real' => '/^\-?([0-9]+|[0-9]+\.[0-9]+)$/',
 		'UReal' => '/^([0-9]+|[0-9]+\.[0-9]+)$/',
 		'Email' => '/^[a-z0-9_\.\-]+@[a-z0-9\.\-]+$/i',
