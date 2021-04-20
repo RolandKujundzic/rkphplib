@@ -1650,7 +1650,7 @@ public function tok_filter(string $tag, array $filter) : void {
  *
  * @see tag_filter
  */
-private function applyFilter(string $tag, string $value) : string {
+private function applyFilter(string $tag, ?string $value) : string {
 	// \rkphplib\lib\log_debug("TBase.applyFilter:1654> tag=$tag value=[$value]");
 	$filter_list = $this->plugin_conf['filter'][$tag];
 	foreach ($filter_list as $filter) {
