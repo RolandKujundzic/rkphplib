@@ -18,7 +18,7 @@ class SQL {
  * @example $_REQUEST['sort'] = 'aname'; sort('', 'sort') = 'ORDER BY name'
  */
 public static function sort(string $sort = '', string $rkey = '') : string {
-	if (empty($sort) && !empty($rkey) && !empty($_REQUEST[$rkey])) {
+	if (isset($_REQUEST[$rkey])) {
 		$sort = $_REQUEST[$rkey];
 	}
 
@@ -26,7 +26,6 @@ public static function sort(string $sort = '', string $rkey = '') : string {
 		return '';
 	}
 
-  $scol = isset($_REQUEST[$rs]) ? $_REQUEST[$rs] : $this->conf['sort'];
 	$direction = mb_substr($sort, 0, 1);
 	$column = ADatabase::escape_name(mb_substr($sort, 1));
 	$res = 'ORDER BY '.$column;

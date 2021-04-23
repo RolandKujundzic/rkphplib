@@ -4,21 +4,23 @@ namespace rkphplib\tok;
 
 $parent_dir = dirname(__DIR__);
 require_once __DIR__.'/TokPlugin.iface.php';
-require_once $parent_dir.'/Exception.class.php';
-require_once $parent_dir.'/Database.class.php';
-require_once $parent_dir.'/JSON.class.php';
-require_once $parent_dir.'/File.class.php';
-require_once $parent_dir.'/lib/htmlescape.php';
-require_once $parent_dir.'/lib/split_str.php';
-require_once $parent_dir.'/lib/conf2kv.php';
-require_once $parent_dir.'/lib/kv2conf.php';
-require_once $parent_dir.'/lib/is_map.php';
+require_once __DIR__.'/../Exception.class.php';
+require_once __DIR__.'/../Database.class.php';
+require_once __DIR__.'/../JSON.class.php';
+require_once __DIR__.'/../File.class.php';
+require_once __DIR__.'/../SQL.php';
+require_once __DIR__.'/../lib/htmlescape.php';
+require_once __DIR__.'/../lib/split_str.php';
+require_once __DIR__.'/../lib/conf2kv.php';
+require_once __DIR__.'/../lib/kv2conf.php';
+require_once __DIR__.'/../lib/is_map.php';
 
 use rkphplib\Exception;
 use rkphplib\ADatabase;
 use rkphplib\Database;
 use rkphplib\JSON;
 use rkphplib\File;
+use rkphplib\SQL;
 
 use function rkphplib\lib\htmlescape;
 use function rkphplib\lib\split_str;
@@ -27,11 +29,11 @@ use function rkphplib\lib\kv2conf;
 use function rkphplib\lib\is_map;
 
 
-
 /**
  * Render table data into output template.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
+ * @copyright 2016-2021 Roland Kujundzic
  */
 class TOutput implements TokPlugin {
 
@@ -107,7 +109,7 @@ public function tok_search(string $col, array $p) : string {
 
 	$s_value = isset($_REQUEST['s_'.$col]) ? htmlescape($_REQUEST['s_'.$col]) : '';
 
-	// \rkphplib\lib\log_debug("TOutput.tok_search:110> col=[$col] type=[".$p['type']."] s_value=[$s_value]");
+	// \rkphplib\lib\log_debug("TOutput.tok_search:112> col=[$col] type=[".$p['type']."] s_value=[$s_value]");
 	if ($p['type'] == 'select') {
 		$res = '<select name="s_'.$col.'" onchange="rkphplib.searchOutput(this)">';
 		$options = \rkphplib\lib\conf2kv($p['options'], '=', ',');
@@ -153,7 +155,7 @@ public function tok_search(string $col, array $p) : string {
 		$res = empty($p['sort']) ? $p['label'] : $p['label'].' '.$this->tok->getPluginTxt('sort:'.$col);
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_search:156> return [$res]");
+	// \rkphplib\lib\log_debug("TOutput.tok_search:158> return [$res]");
 	return $res;
 }
 
@@ -217,7 +219,7 @@ public function tok_output_set(string $name, string $value) : void {
 		$this->tok_output_conf([]);
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_set:220> set conf[$name]=[$value]");
+	// \rkphplib\lib\log_debug("TOutput.tok_output_set:222> set conf[$name]=[$value]");
 	$this->conf[$name] = $value;
 }
 
@@ -416,7 +418,7 @@ public function tok_output_header(string $tpl) : string {
 		$tpl = $this->tok->getPluginTxt('redo:', $this->tok->replaceTags($tpl, [ 'header_label' => $this->getHeaderLabel() ]));
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_header:419> replace tpl: $tpl");
+	// \rkphplib\lib\log_debug("TOutput.tok_output_header:421> replace tpl: $tpl");
 	if (!empty($this->env['tags'][0]) && $this->tok->hasReplaceTags($tpl, [ $this->env['tags'][0] ])) {
 		$replace = [];
 
@@ -435,7 +437,7 @@ public function tok_output_header(string $tpl) : string {
   	}
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_header:438> exit tpl: $tpl");
+	// \rkphplib\lib\log_debug("TOutput.tok_output_header:440> exit tpl: $tpl");
 	return $tpl;
 }
 
@@ -477,7 +479,7 @@ public function tok_output_json() : string {
 
 	$res = JSON::encode(array_slice($this->table, $start, $end - $start + 1));
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_json:480> return $res");
+	// \rkphplib\lib\log_debug("TOutput.tok_output_json:482> return $res");
 	return $res;
 }
 
@@ -520,7 +522,7 @@ protected function getOutputLoopTemplate(string $tpl) : string {
 	}
 	
 	$tpl = $this->tok->replaceTags($tpl, [ 'loop_column' => join("\n", $loop_column) ]); 
-	// \rkphplib\lib\log_debug("TOutput.getOutputLoopTemplate:523> return [$tpl]");
+	// \rkphplib\lib\log_debug("TOutput.getOutputLoopTemplate:525> return [$tpl]");
 	return $tpl;
 }
 
@@ -557,7 +559,7 @@ public function tok_output_loop(string $tpl) : string {
 		$end = $this->env['end'] % $this->env['pagebreak'];
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_loop:560> start=$start end=$end lang=$lang tpl:\n$tpl");
+	// \rkphplib\lib\log_debug("TOutput.tok_output_loop:562> start=$start end=$end lang=$lang tpl:\n$tpl");
 	for ($i = $start; $i <= $end; $i++) {
 		$row = $this->table[$i];
 
@@ -594,12 +596,12 @@ public function tok_output_loop(string $tpl) : string {
 			}
 		}
 
-		// \rkphplib\lib\log_debug("TOutput.tok_output_loop:597> replace: ".print_r($replace, true)); 
+		// \rkphplib\lib\log_debug("TOutput.tok_output_loop:599> replace: ".print_r($replace, true)); 
 		array_push($output, $this->tok->replaceTags($tpl, $replace));
 
 		if ($this->env['rowbreak'] > 0 && $i > 0 && (($i + 1) % $this->env['rowbreak']) == 0 && $i != $end) {
 			$rowbreak_html = $this->tok->replaceTags($this->conf['rowbreak_html'], [ 'row' =>  ($i + 1) / $this->env['rowbreak'] ]);
-			// \rkphplib\lib\log_debug("TOutput.tok_output_loop:602> rowbreak:\n$rowbreak_html"); 
+			// \rkphplib\lib\log_debug("TOutput.tok_output_loop:604> rowbreak:\n$rowbreak_html"); 
 			array_push($output, $rowbreak_html);
 		}
 	}
@@ -608,7 +610,7 @@ public function tok_output_loop(string $tpl) : string {
 		$fill_rest = $i % $this->env['rowbreak'];
 
 		for ($j = $fill_rest; $j > 0 && $j < $this->env['rowbreak']; $j++) {
-			// \rkphplib\lib\log_debug("TOutput.tok_output_loop:611> rowbreak_fill:\n{$this->conf['rowbreak_fill']}");
+			// \rkphplib\lib\log_debug("TOutput.tok_output_loop:613> rowbreak_fill:\n{$this->conf['rowbreak_fill']}");
 			array_push($output, $this->conf['rowbreak_fill']);
 			$i++;
 		}
@@ -617,11 +619,11 @@ public function tok_output_loop(string $tpl) : string {
 				!empty($this->conf['pagebreak_fill']) && !empty($this->conf['pagebreak_fill'])) {
 			for ($j = $i; $j < $this->env['pagebreak']; $j++) {
 				if ($j % $this->env['rowbreak'] == 0) {
-					// \rkphplib\lib\log_debug("TOutput.tok_output_loop:620> rowbreak:\n{$this->conf['rowbreak_html']}");
+					// \rkphplib\lib\log_debug("TOutput.tok_output_loop:622> rowbreak:\n{$this->conf['rowbreak_html']}");
 					array_push($output, $this->conf['rowbreak_html']);    			
 				}
 
-				// \rkphplib\lib\log_debug("TOutput.tok_output_loop:624> rowbreak_fill:\n{$this->conf['rowbreak_fill']}"); 
+				// \rkphplib\lib\log_debug("TOutput.tok_output_loop:626> rowbreak_fill:\n{$this->conf['rowbreak_fill']}"); 
 				array_push($output, $this->conf['rowbreak_fill']);    		
 			}
 		}	
@@ -722,7 +724,7 @@ public function tok_output_conf(array $p) : void {
 	foreach ($p as $key => $value) {
 		$this->conf[$key] = $value;
 	}
-	// \rkphplib\lib\log_debug("TOutput.tok_output_conf:725> this.conf: ".print_r($this->conf, true));
+	// \rkphplib\lib\log_debug("TOutput.tok_output_conf:727> this.conf: ".print_r($this->conf, true));
 }
 
 
@@ -992,7 +994,7 @@ private function _scroll_link(string $key, int $last) : string {
 	$link = $this->conf['scroll.'.$key];
 
 	$res = $this->tok->replaceTags($tpl, [ 'link' => $link, 'last' => $last ]);
-	// \rkphplib\lib\log_debug("TOutput._scroll_link:995> key=[$key], last=[$last] tpl=[$tpl] link=[$link] last=[$last] res=[$res]");
+	// \rkphplib\lib\log_debug("TOutput._scroll_link:997> key=[$key], last=[$last] tpl=[$tpl] link=[$link] last=[$last] res=[$res]");
 	return $res;
 }
 
@@ -1016,7 +1018,7 @@ private function exportLinkKeep() : void {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.exportLinkKeep:1019> keep_param: ".join('|', $keep_param));
+	// \rkphplib\lib\log_debug("TOutput.exportLinkKeep:1021> keep_param: ".join('|', $keep_param));
 	foreach ($keep_param as $name) {
 		if (isset($_REQUEST[$name])) {
 			$kv[$name] = $this->getValue($name);
@@ -1068,7 +1070,7 @@ protected function getSearch() : array {
 		list ($where, $and) = $this->getSqlSearch($options);
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.getSearch:1071> return where=[$where]\nand=[$and]");
+	// \rkphplib\lib\log_debug("TOutput.getSearch:1073> return where=[$where]\nand=[$and]");
 	return [ $where, $and ];
 }
 
@@ -1247,7 +1249,7 @@ private function searchColumnValue(array &$env) : bool {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.searchColumnValue:1250> return - expr_before=[$expr_befrore] env: ".print_r($env, true));
+	// \rkphplib\lib\log_debug("TOutput.searchColumnValue:1252> return - expr_before=[$expr_befrore] env: ".print_r($env, true));
 	return $expr_before < count($env['expr']);
 }
 
@@ -1262,7 +1264,7 @@ private function selectSearch(array $cols) : array {
 
 	$query = "SELECT ".join(', ', $cols)." FROM ".ADatabase::escape_name($this->conf['query.table']);
 	$db = Database::getInstance($this->conf['query.dsn'], [ 'search_info' => $query ]);
-	// \rkphplib\lib\log_debug("TOutput.selectSearch:1265> query.search_info: ".$db->getQuery('search_info'));
+	// \rkphplib\lib\log_debug("TOutput.selectSearch:1267> query.search_info: ".$db->getQuery('search_info'));
 	return $db->selectOne($db->getQuery('search_info'));
 }
 
@@ -1310,35 +1312,6 @@ private function getRangeExpression(string $col, string $value, string $range) :
 
 
 /**
- * Return "ORDER BY ...". Use conf.sort or _REQUEST[conf.req.sort] = sort.
- * Sort value is [a|d]colname.
- */
-protected function getSqlSort() : string {
-  $sort = isset($_REQUEST[$this->conf['req.sort']]) ? $_REQUEST[$this->conf['req.sort']] : $this->conf['sort'];
-
-	if (empty($sort)) {
-		return '';
-	}
-
-	$direction = mb_substr($sort, 0, 1);
-	$column = ADatabase::escape_name(mb_substr($sort, 1));
-	$res = 'ORDER BY '.$column;
-		
-	if ($direction == 'a') {
-		// ASC = ASCENDING = DEFAULT
-	}
-	else if ($direction == 'd') {
-		$res .= ' DESC';
-	}
-	else {
-		throw new Exception("invalid sort value [$sort]");
-	}
-
-	return $res;
-}
-
-
-/**
  * Load data with select query. Extract only data we are displaying.
  */
 protected function selectData() : void {
@@ -1348,15 +1321,16 @@ protected function selectData() : void {
 		$query = str_replace([ '_WHERE_SEARCH', '_AND_SEARCH' ], $this->getSearch(), $query);
 	}
 
-	$query = str_replace('_SORT', $this->getSqlSort(), $query);
+	$sort = SQL::sort($this->conf['sort'], $this->conf['req.sort']);
+	$query = str_replace('_SORT', $sort, $query);
 
 	$this->conf['query'] = $query;
 	$db = Database::getInstance($this->conf['query.dsn'], [ 'output' => $this->conf['query'] ]);
-	// \rkphplib\lib\log_debug("TOutput.selectData:1355> query.output: ".$db->getQuery('output', $_REQUEST));
+	// \rkphplib\lib\log_debug("TOutput.selectData:1329> query.output: ".$db->getQuery('output', $_REQUEST));
 	$db->execute($db->getQuery('output', $_REQUEST), true);
 
 	$this->env['total'] = $db->getRowNumber();
-	// \rkphplib\lib\log_debug("TOutput.selectData:1359> found ".$this->env['total'].' entries');
+	// \rkphplib\lib\log_debug("TOutput.selectData:1333> found ".$this->env['total'].' entries');
 	$this->table = [];
 
 	if ($this->env['start'] >= $this->env['total']) {
@@ -1371,7 +1345,7 @@ protected function selectData() : void {
 	$skip = intval($this->conf['skip']);
 	$this->env['total'] -= $skip;
 
-	// \rkphplib\lib\log_debug("TOutput.selectData:1374> show max. $n rows");
+	// \rkphplib\lib\log_debug("TOutput.selectData:1348> show max. $n rows");
 	while (($row = $db->getNextRow()) && $n < $this->env['pagebreak']) {
 		if ($skip > 0) {
 			$skip--;
@@ -1387,7 +1361,7 @@ protected function selectData() : void {
 		$this->checkColumnLabel();
 	}
 
-	// \rkphplib\lib\log_debug('TOutput.selectData:1390> show '.count($this->table).' rows');
+	// \rkphplib\lib\log_debug('TOutput.selectData:1364> show '.count($this->table).' rows');
 	$db->freeResult();
 }
 
@@ -1400,7 +1374,7 @@ public function fillTable(?array $table_data = null) : void {
 	if (!is_null($table_data)) {
 		$this->table = $table_data;
 		$this->env['total'] = count($this->table);		
-		// \rkphplib\lib\log_debug("TOutput.fillTable:1403> env.total=".$this->env['total']);
+		// \rkphplib\lib\log_debug("TOutput.fillTable:1377> env.total=".$this->env['total']);
 		return;
 	}
 
