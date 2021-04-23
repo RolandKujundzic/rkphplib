@@ -1,0 +1,65 @@
+{output:init}
+table.columns= first_line|#|
+table.url= in/t2.csv|#|
+table.type= csv, \,
+{:output}
+
+{output:header}{:=KNr}|{:=Vorname}|{:=Name}{:output}
+{output:loop}{:=KNr}|{:=Vorname}|{:=Name}{:output}
+
+{output:init}
+reset=0|#|
+rowbreak=3|#|
+rowbreak_fill= <td colspan="3">&nbsp;</td>|#|
+{:output}
+
+<table>
+<tr>
+{output:loop}
+	<td>{:=KNr}</td>
+	<td>{:=Vorname}</td>
+	<td>{:=Name}</td>
+{:output}
+</tr>
+</table>
+
+{output:conf}
+scroll.link= <a href="last={:=last}">{:=link}</a>|#|
+scroll.first= FIRST|#|
+scroll.prev= PREV|#|
+scroll.next= NEXT|#|
+scroll.last= LAST|#|
+scroll.no_first= NO_FIRST|#|
+scroll.no_prev= NO_PREV|#|
+scroll.no_next= NO_NEXT|#|
+scroll.no_last= NO_LAST|#|
+scroll.jump= {:=min} - {:=max}|#|
+scroll.jump_active= {:=min} - {:=max}|#|
+scroll.jump_delimiter=" | "|#|
+scroll.jump_num= 4|#|
+{:output}
+
+{output:init}
+reset=0|#|
+rowbreak=0|#|
+pagebreak=2|#|
+keep=t|#|
+{:output}
+
+<table border="1" style="min-width:40%">
+{output:loop}
+<tr>
+	<td>{:=KNr}</td>
+	<td>{:=Vorname}</td>
+	<td>{:=Name}</td>
+</tr>
+{:output}
+{output:footer}
+<tr>
+	<td colspan="3" align="center" class="output_scroll">
+		{:=scroll.first} {:=scroll.prev} <span class="scroll_jump">{:=scroll.jump}</span> {:=scroll.next} {:=scroll.last} 
+		<span style="width:100%;height:1px;display:inline-block;"> </span>
+	</td>
+</tr>
+{:output}
+</table>

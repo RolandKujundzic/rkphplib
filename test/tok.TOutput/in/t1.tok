@@ -1,0 +1,13 @@
+{output:init}
+table.columns= col_1n|#|
+table.url= in/t1.csv|#|
+table.type= csv, ;|#|{:output}
+{output:header}
+Header: {:=col_1}|{:=col_2}|{:=col_3}|{:=col_4}
+{:output}
+{output:loop}
+Loop: {:=col_1}|{:=col_2}|{:=col_3}|{:=col_4}
+{:output}
+{output:footer}
+Footer:
+{:output}

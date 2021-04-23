@@ -1,0 +1,60 @@
+
+
+KNr|Vorname|Name
+100|Joe|Smith101|Lara|Croft102|Jim|Beam103|Ben|Hur104|Daniel|Craig
+
+
+
+<table>
+<tr>
+
+	<td>100</td>
+	<td>Joe</td>
+	<td>Smith</td>
+
+	<td>101</td>
+	<td>Lara</td>
+	<td>Croft</td>
+
+	<td>102</td>
+	<td>Jim</td>
+	<td>Beam</td>
+</tr><tr>
+	<td>103</td>
+	<td>Ben</td>
+	<td>Hur</td>
+
+	<td>104</td>
+	<td>Daniel</td>
+	<td>Craig</td>
+<td colspan="3">&nbsp;</td>
+</tr>
+</table>
+
+
+
+
+
+<table border="1" style="min-width:40%">
+
+<tr>
+	<td>100</td>
+	<td>Joe</td>
+	<td>Smith</td>
+</tr>
+
+<tr>
+	<td>101</td>
+	<td>Lara</td>
+	<td>Croft</td>
+</tr>
+
+
+<tr>
+	<td colspan="3" align="center" class="output_scroll">
+		NO_FIRST NO_PREV <span class="scroll_jump">1 - 2 | <a href="last=2">3 - 4</a> | <a href="last=4">5 - 5</a></span> <a href="last=2">NEXT</a> <a href="last=4">LAST</a> 
+		<span style="width:100%;height:1px;display:inline-block;"> </span>
+	</td>
+</tr>
+
+</table>
