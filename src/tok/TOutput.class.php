@@ -1046,11 +1046,11 @@ protected function selectData() : void {
 	$this->conf['query'] = $sql->query($this->conf['query']);
 
 	$db = Database::getInstance($this->conf['query.dsn'], [ 'output' => $this->conf['query'] ]);
-	// \rkphplib\lib\log_debug("TOutput.selectData:1329> query.output: ".$db->getQuery('output', $_REQUEST));
+	// \rkphplib\lib\log_debug("TOutput.selectData:1049> query.output: ".$db->getQuery('output', $_REQUEST));
 	$db->execute($db->getQuery('output', $_REQUEST), true);
 
 	$this->env['total'] = $db->getRowNumber();
-	// \rkphplib\lib\log_debug("TOutput.selectData:1333> found ".$this->env['total'].' entries');
+	// \rkphplib\lib\log_debug("TOutput.selectData:1053> found ".$this->env['total'].' entries');
 	$this->table = [];
 
 	if ($this->env['start'] >= $this->env['total']) {
@@ -1065,7 +1065,7 @@ protected function selectData() : void {
 	$skip = intval($this->conf['skip']);
 	$this->env['total'] -= $skip;
 
-	// \rkphplib\lib\log_debug("TOutput.selectData:1348> show max. $n rows");
+	// \rkphplib\lib\log_debug("TOutput.selectData:1068> show max. $n rows");
 	while (($row = $db->getNextRow()) && $n < $this->env['pagebreak']) {
 		if ($skip > 0) {
 			$skip--;
@@ -1081,7 +1081,7 @@ protected function selectData() : void {
 		$this->checkColumnLabel();
 	}
 
-	// \rkphplib\lib\log_debug('TOutput.selectData:1364> show '.count($this->table).' rows');
+	// \rkphplib\lib\log_debug('TOutput.selectData:1084> show '.count($this->table).' rows');
 	$db->freeResult();
 }
 
@@ -1094,7 +1094,7 @@ public function fillTable(?array $table_data = null) : void {
 	if (!is_null($table_data)) {
 		$this->table = $table_data;
 		$this->env['total'] = count($this->table);		
-		// \rkphplib\lib\log_debug("TOutput.fillTable:1377> env.total=".$this->env['total']);
+		// \rkphplib\lib\log_debug("TOutput.fillTable:1097> env.total=".$this->env['total']);
 		return;
 	}
 
