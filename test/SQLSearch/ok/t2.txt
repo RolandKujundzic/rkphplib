@@ -1,0 +1,2 @@
+ WHERE id='17' OR name='17' OR descr='17'
+ AND (id='John' OR name LIKE 'John%' OR name2 LIKE '%John' OR descr LIKE '%John%')
