@@ -96,15 +96,16 @@ public function query(string $query = '_WHERE_SEARCH') : string {
 		$query = str_replace('_SORT', $this->sort(), $query);
 	}
 
-	if (strpos($query, '_WHERE_SEARCH') > 0) {
+	if (strpos($query, '_WHERE_SEARCH') !== false) {
 		$tag = '_WHERE_SEARCH';
 		$type = 'where';
 	}
-	else if (strpos($query, '_AND_SEARCH') > 0) {
+	else if (strpos($query, '_AND_SEARCH') !== false) {
 		$tag = '_AND_SEARCH';
 		$type = 'and';
 	}
 	else {
+		// \rkphplib\lib\log_debug("SQLSearch.query:108> $query");
 		return $query;
 	}
 
@@ -117,15 +118,37 @@ public function query(string $query = '_WHERE_SEARCH') : string {
 	else if (!empty($this->conf['search'])) {
 		$opt['cols'] = split_str(',', $this->conf['search']);
 	}
-	else {
-		// @ToDo compute cols dynamically
+	else if (($cols = self::searchCols())) {
+		$opt['cols'] = $cols;
 	}
-
-	if (empty($opt['cols'])) {
+	else {
+		// \rkphplib\lib\log_debug("SQLSearch.query:125> $query");
 		return $query;
 	}
 
-	return str_replace($tag, $sql->where($opt), $query);
+	return str_replace($tag, $this->where($opt), $query);
+}
+
+
+/**
+ * Return names where $_REQUEST[s_NAME] not empty.
+ */
+public static function searchCols() : ?array {
+	$rkeys = array_keys($_REQUEST);
+	$scol = [];
+
+	foreach ($rkeys as $key) {
+		if (substr($key, 0, 2) == 's_' && substr($key, -3) !== '_op' && strlen($_REQUEST[$key]) > 0) {
+			$col = substr($key, 2);
+			if (!empty($_REQUEST[$key.'_op'])) {
+				$col .= ':'.$_REQUEST[$key.'_op'];
+			}
+
+			array_push($scol, $col);
+		}
+	}
+
+	return count($scol) > 0 ? $scol : null;
 }
 
 
@@ -158,8 +181,8 @@ private function where(array $options = []) : string {
 		$this->search['multicol'] = true;
 	}
 
-	foreach ($cols as $col_method) {
-		if (strpos($col, ':') === false) {
+	foreach ($this->search['cols'] as $col_method) {
+		if (strpos($col_method, ':') === false) {
 			$col = $col_method;
 			$method = null;
 		}
@@ -181,6 +204,11 @@ private function where(array $options = []) : string {
 			$this->search['value'] = $_REQUEST[$rkey];
 		}
 
+		if (is_null($method) && !empty($_REQUEST['s_'.$col.'_op'])) {
+			$this->search['method'] = $_REQUEST['s_'.$col.'_op'];
+		}
+
+		// \rkphplib\lib\log_debug("SQLSearch.where:211> col=$col method={$this->search['method']} value=".$this->search['value']);
 		if (strlen($this->search['value']) == 0 ||
 				$this->searchDefault() ||
 				$this->searchLike() ||
@@ -196,13 +224,13 @@ private function where(array $options = []) : string {
 	}
 
 	if ($this->search['multicol']) {
-		$sql_and = '(('.join(') OR (', $this->search['expr']).'))';
+		$sql_and = join(' OR ', $this->search['expr']);
 	}
 	else {
 		$sql_and = join(' AND ', $this->search['expr']);
 	}
 
-	return [ ' WHERE '.$sql_and, ' AND '.$sql_and ];
+	return $this->search['where'] == 'where' ? ' WHERE '.$sql_and : ' AND ('.$sql_and.')';
 }
 
 
@@ -231,16 +259,17 @@ private function searchCompare() : bool {
  */
 private function searchDefault() : bool {
 	if (is_null($this->search['method'])) {
-		array_push($this->search['expr'],
-			$col."='".ADatabase::escape($this->search['value'])."'");
+		$expr = $this->search['cname']."='".ADatabase::escape($this->search['value'])."'";
 	}
 	else if ($this->search['method'] == 'NULL') {
-		$array_push($this->search['expr'], $col.' IS NULL');
+		$expr = $this->search['cname'].' IS NULL';
 	}
 	else {
 		return false;
 	}
 
+	array_push($this->search['expr'], $expr);
+	// \rkphplib\lib\log_debug("SQLSearch.searchDefault:272> expr=$expr");
 	return true;
 }
 
