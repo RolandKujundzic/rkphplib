@@ -42,6 +42,10 @@ function split_str(string $delim, $txt, bool $ignore_empty = false, int $limit =
 		throw new Exception("text has no delimiter [$delim]", $txt);
 	}
 
+	if ($txt === '') {
+		return [];
+	}
+
 	$esc = '\\';
 	$dl = strlen($delim);
 	$len = strlen($txt);
