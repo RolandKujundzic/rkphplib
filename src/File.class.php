@@ -822,6 +822,11 @@ public static function save(string $file, string $data, int $flag = 0) : void {
 		$flag = $flag & LOCK_EX;
 	}
 
+	$fix_priv = defined('SETTINGS_FIX_PRIV') && self::doFixPriv($file);
+	if ($fix_priv) {
+		self::fixPriv($file, 'www-data');
+	}
+
 	if (($bytes = file_put_contents($file, $data, $flag)) === false) {
 		throw new Exception('failed to save data to file', $file);
 	}
@@ -830,7 +835,70 @@ public static function save(string $file, string $data, int $flag = 0) : void {
 		\rkphplib\tok\Tokenizer::log([ 'label' => 'create file', 'message' => $file ], 'log.file_system');
 	}
 
-	FSEntry::chmod($file, FILE_DEFAULT_MODE);
+	if ($fix_priv) {
+		FSEntry::chmod($file, 0644);
+		self::fixPriv($file, 'rk');
+	}
+	else {
+		FSEntry::chmod($file, FILE_DEFAULT_MODE);
+	}
+}
+
+
+/**
+ * Execute suid script "./fix_priv $path $owner". Owner is either rk or www-data.
+ * Use "www-data create" to create empty file writable by webserver.
+ * Option is non_recursive|create|create_dir|mkdir.
+ */
+private static function fixPriv(string $path, string $owner = '', string $opt = '') : void {
+	if (!$path) {
+		throw new Exception('empty path');
+	}
+
+	$suid = file_exists('fix_priv') && is_executable('fix_priv');
+	if ($suid) {
+		$stat = FSEntry::stat('fix_priv');
+		$suid = $stat != false && $stat['owner']['fileowner'] == 0;
+	}
+
+	if (!$suid) {
+		throw new Exception('invalid fix_priv');
+	}
+
+	if ($opt == 'mkdir') {
+		$spath = explode('/', $path);
+		$rpath = getcwd();
+
+		while (count($spath) > 0) {
+			$rpath .= '/'.array_shift($spath);
+			if (!Dir::exists($rpath)) {
+				$use_owner = count($spath) == 0 ? $owner : 'rk';
+				execute("./fix_priv {:=path} {:=owner} {:=opt}", [ 'path' => $rpath, 'owner' => $use_owner, 'opt' => $opt ]);
+			}
+		}
+	}
+	else {
+		execute("./fix_priv {:=path} {:=owner} {:=opt}", [ 'path' => $path, 'owner' => $owner, 'opt' => $opt ]);
+	}
+}
+
+
+/**
+ * Return true if realpath($path) starts with path from SETTINGS_FIX_PRIV = [ path1, … ]
+ */
+private static function doFixPriv(string $path) : bool {
+	if (is_writable($path) || php_sapi_name() == 'cli' ||
+			!is_array(SETTINGS_FIX_PRIV) || !count(SETTINGS_FIX_PRIV) ||
+			!($realpath = realpath($realpath)) || strpos($realpath, DOCROOT) !== 0) {
+		return false;
+	}
+
+	$found = false;
+	for ($i = 0; !$found && $i < count(SETTINGS_FIX_PRIV); $i++) {
+		$found = strpos($realpath, DOCROOT.'/'.SETTINGS_FIX_PRIV[$i]) === 0;
+	}
+
+	return $found;
 }
 
 
@@ -983,7 +1051,7 @@ public static function write($fh, string $data) : void {
 			$data_len = $data_len - $byte;
 			$byte = fwrite($fh, substr($data, $byte));
 			$msg = ($data_len > 80) ? substr($data, 0, 40).' ... '.substr($data, -40) : $data;
-			// \rkphplib\lib\log_debug("File::write:986> retry write: n=[$n] prev_len=[$prev_len] data_len=[$data_len] byte=[$byte] data=[$msg]");
+			// \rkphplib\lib\log_debug("File::write:1054> retry write: n=[$n] prev_len=[$prev_len] data_len=[$data_len] byte=[$byte] data=[$msg]");
 
 			if ($byte === false) {
 				throw new Exception('could not write data', "retry=[$n] fh=[$fh] byte=[$byte] len=[$data_len] prev_len=[$prev_len]");
