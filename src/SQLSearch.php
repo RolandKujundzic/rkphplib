@@ -31,12 +31,25 @@ private $search = [];
  * @eol
  */
 public function __construct(array $conf = []) {
-	$this->conf = array_merge([
-		'sort' => '',
-		'req.sort' => 'sort',
-		'search' => '',
-		'req.search' => ''
-	], $conf);
+	$this->setConf($conf);
+}
+
+
+/**
+ *
+ */
+public function setConf(array $conf, bool $reset = true) : void {
+	if ($reset) {
+		$this->conf = array_merge([
+			'sort' => '',
+			'req.sort' => 'sort',
+			'search' => '',
+			'req.search' => ''
+		], $conf);
+	}
+	else {
+		$this->conf = array_merge($this->conf, $conf);
+	}
 }
 
 
@@ -92,6 +105,10 @@ public function sort(string $sort = null) : string {
  * @eol
  */
 public function query(string $query = '_WHERE_SEARCH') : string {
+	if ((empty($query) || $query == '_WHERE_SEARCH') && !empty($this->conf['query'])) {
+		$query = $this->conf['query'];
+	}
+
 	if (strpos($query, '_SORT') > 0) {
 		$query = str_replace('_SORT', $this->sort(), $query);
 	}
