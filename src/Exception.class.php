@@ -27,7 +27,7 @@ public function __construct(string $message, string $internal_message = '') {
 	parent::__construct($message);
 	$this->internal_message = $internal_message;
 
-	$default_log_dir = DOCROOT.'/data/.log/exception';
+	$ledir = defined('DOCROOT') ? DOCROOT.'/data/.log/exception' : '';
 
 	if (defined('SETTINGS_LOG_EXCEPTION')) {
 		if (!empty(SETTINGS_LOG_EXCEPTION)) {
@@ -35,9 +35,9 @@ public function __construct(string $message, string $internal_message = '') {
 			self::logTrace($stack, SETTINGS_LOG_EXCEPTION);
 		}
 	}
-	else if (is_dir($default_log_dir) && is_readable($default_log_dir) && is_writeable($default_log_dir)) {
+	else if ($ledir && is_dir($ledir) && is_readable($ledir) && is_writeable($ledir)) {
 		$stack = debug_backtrace();
-		self::logTrace($stack, $default_log_dir);
+		self::logTrace($stack, $ledir);
 	}
 }
 
