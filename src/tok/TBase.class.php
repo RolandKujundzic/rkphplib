@@ -2215,7 +2215,10 @@ public function tok_tf(array $p, string $arg) : void {
 	$do = '';
 
 	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2217> ta=<1> p: <2>", $ta, $p ]);
-	if (count($p) == 1) {
+	if (count($p) == 0) {
+		$tf = !empty($ta);
+	}
+	else if (count($p) == 1) {
 		if ($p[0] === '') {
 			$tf = !empty($ta);
 		}
