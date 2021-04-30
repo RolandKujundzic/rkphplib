@@ -12,6 +12,9 @@ use rkphplib\Exception;
  * If $txt is vector return $txt (with trimmed elements, apply ignore_empty and limit).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
+ *
+ * @example split_str(',', '') === [ '' ]
+ * @example split_str(',', '', true) === []
  */
 function split_str(string $delim, $txt, bool $ignore_empty = false, int $limit = -1) : array {
 
@@ -40,10 +43,6 @@ function split_str(string $delim, $txt, bool $ignore_empty = false, int $limit =
 
 	if (strpos($txt, $delim) === false && $limit > 1) {
 		throw new Exception("text has no delimiter [$delim]", $txt);
-	}
-
-	if ($txt === '') {
-		return [];
 	}
 
 	$esc = '\\';
