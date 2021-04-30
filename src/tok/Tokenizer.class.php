@@ -307,7 +307,7 @@ public function getCallStack(string $name) {
 		}
 	}
 
-	throw new Exception('plugin missing in callstack', "get $name");
+	throw new Exception('plugin missing in callstack', "name=$name stack: ".print_r($this->_callstack));
 }
 
 
