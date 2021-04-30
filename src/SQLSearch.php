@@ -96,6 +96,8 @@ public function sort(string $sort = null) : string {
 /**
  * Replace _WHERE_SEARCH (or _AND_SEARCH) and _SORT in $query.
  * Return $query if not found or search column list is empty.
+ * Use $_REQUEST[scol]=COLUMN and $_REQUEST[sval]=VALUE to set
+ * $_REQUEST[s_COLUMN]=VALUE.
  * 
  * @example …
  * $sql = new SQLSearch([ 'search' => 'name,descr' ]);
@@ -107,6 +109,11 @@ public function sort(string $sort = null) : string {
 public function query(string $query = '_WHERE_SEARCH') : string {
 	if ((empty($query) || $query == '_WHERE_SEARCH') && !empty($this->conf['query'])) {
 		$query = $this->conf['query'];
+	}
+
+	if (!empty($_REQUEST['scol']) && isset($_REQUEST['sval'])) {
+		$scol = 's_'.$_REQUEST['scol'];
+		$_REQUEST[$scol] = $_REQUEST['sval'];
 	}
 
 	if (strpos($query, '_SORT') > 0) {
@@ -122,7 +129,7 @@ public function query(string $query = '_WHERE_SEARCH') : string {
 		$type = 'and';
 	}
 	else {
-		// \rkphplib\lib\log_debug("SQLSearch.query:125> $query");
+		\rkphplib\lib\log_debug("SQLSearch.query:125> $query");
 		return $query;
 	}
 
@@ -139,11 +146,13 @@ public function query(string $query = '_WHERE_SEARCH') : string {
 		$opt['cols'] = $cols;
 	}
 	else {
-		// \rkphplib\lib\log_debug("SQLSearch.query:142> $query");
+		\rkphplib\lib\log_debug([ "SQLSearch.query:142> $query <1>", $_REQUEST ]);
 		return $query;
 	}
 
-	return str_replace($tag, $this->where($opt), $query);
+	$query = str_replace($tag, $this->where($opt), $query);
+	\rkphplib\lib\log_debug("SQLSearch.query:147> $query");
+	return $query;
 }
 
 
@@ -247,7 +256,7 @@ private function where(array $options = []) : string {
 		$sql_and = join(' AND ', $this->search['expr']);
 	}
 
-	return $this->search['where'] == 'where' ? ' WHERE '.$sql_and : ' AND ('.$sql_and.')';
+	return $this->search['where'] == 'where' ? 'WHERE '.$sql_and : 'AND ('.$sql_and.')';
 }
 
 
