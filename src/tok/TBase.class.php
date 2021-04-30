@@ -2260,7 +2260,7 @@ public function tok_tf(array $p, string $arg) : void {
 		$ap = array_merge($p, split_str(HASH_DELIMITER, $arg));
 	}
 
-	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2260> do=<1> tf=<2> ap: <3>", $do, $tf, $ap ]);
+	// \rkphplib\lib\log_debug([ "TBase.tok_tf:2263> do=<1> tf=<2> ap: <3>", $do, $tf, $ap ]);
 	if (empty($do)) {
 		$this->_tok->setCallStack('tf', $tf);
 		return;
@@ -2339,7 +2339,7 @@ public function tok_tf(array $p, string $arg) : void {
 			$set = split_str(',', $ap[1]);
 			$tf = in_array($ap[0], $set);
 		}
-		// \rkphplib\lib\log_debug([ "TBase.tok_tf:2339> tf=<1> set: <2>", $tf, $set ]);
+		// \rkphplib\lib\log_debug([ "TBase.tok_tf:2342> tf=<1> set: <2>", $tf, $set ]);
 	}
 	else if ($do == 'and' || $do == 'or') {
 		$apn = count($ap);
@@ -2442,7 +2442,7 @@ public function tok_false(string $out) : string {
  * Write message via log_debug.
  */
 public function tok_log(string $txt) : void {
-	\rkphplib\lib\log_debug("TBase.tok_log:2442> $txt"); // @keep
+	\rkphplib\lib\log_debug("TBase.tok_log:2445> $txt"); // @keep
 }
 
 
