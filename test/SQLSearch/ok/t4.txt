@@ -1,0 +1,7 @@
+WHERE id='ID'
+
+WHERE name LIKE '%NAME%'
+WHERE name IS NULL
+WHERE name=''
+WHERE (name='' or name IS NULL)
+WHERE price <= '100'
