@@ -291,6 +291,7 @@ private function searchCompare() : bool {
 /**
  * Add COL='VALUE' to search.expr if search.method is null.
  * Add COL IS NULL to search.expr if search.method is 'NULL'.
+ * Specal search values are 'NULL', 'NOT NULL', 'EMPTY' and "''".
  */
 private function searchDefault() : bool {
 	if (is_null($this->search['method'])) {
@@ -299,12 +300,21 @@ private function searchDefault() : bool {
 	else if ($this->search['method'] == 'NULL') {
 		$expr = $this->search['cname'].' IS NULL';
 	}
+	else if ($this->search['value'] == 'NULL' || $this->search['value'] == 'NOT NULL') {
+		$expr = $this->search['cname'].' IS '.$this->search['value'];
+	}
+	else if ($this->search['value'] == "''") {
+		$expr = $this->search['cname']."=''";
+	}
+	else if ($this->search['value'] == "EMPTY") {
+		$expr = '('.$this->search['cname']."='' or ".$this->search['cname'].' IS NULL)';
+	}
 	else {
 		return false;
 	}
 
 	array_push($this->search['expr'], $expr);
-	// \rkphplib\lib\log_debug("SQLSearch.searchDefault:307> expr=$expr");
+	// \rkphplib\lib\log_debug("SQLSearch.searchDefault:317> expr=$expr");
 	return true;
 }
 
