@@ -96,8 +96,6 @@ public function sort(string $sort = null) : string {
 /**
  * Replace _WHERE_SEARCH (or _AND_SEARCH) and _SORT in $query.
  * Return $query if not found or search column list is empty.
- * Use $_REQUEST[scol]=COLUMN and $_REQUEST[sval]=VALUE to set
- * $_REQUEST[s_COLUMN]=VALUE.
  * 
  * @example …
  * $sql = new SQLSearch([ 'search' => 'name,descr' ]);
@@ -111,10 +109,7 @@ public function query(string $query = '_WHERE_SEARCH') : string {
 		$query = $this->conf['query'];
 	}
 
-	if (!empty($_REQUEST['scol']) && isset($_REQUEST['sval'])) {
-		$scol = 's_'.$_REQUEST['scol'];
-		$_REQUEST[$scol] = $_REQUEST['sval'];
-	}
+	self::scanRequest();
 
 	if (strpos($query, '_SORT') > 0) {
 		$query = str_replace('_SORT', $this->sort(), $query);
@@ -129,11 +124,11 @@ public function query(string $query = '_WHERE_SEARCH') : string {
 		$type = 'and';
 	}
 	else {
-		\rkphplib\lib\log_debug("SQLSearch.query:125> $query");
+		// \rkphplib\lib\log_debug("SQLSearch.query:127> $query");
 		return $query;
 	}
 
-	$opt = [ 'where' => $type ];
+	$opt = [ 'where' => $type, 'cols' => [] ];
 	$rkey = $this->conf['req.search'];
 
 	if ($rkey && isset($_REQUEST[$rkey]) && !empty($this->conf['search.'.$rkey])) {
@@ -145,14 +140,26 @@ public function query(string $query = '_WHERE_SEARCH') : string {
 	else if (($cols = self::searchCols())) {
 		$opt['cols'] = $cols;
 	}
-	else {
-		\rkphplib\lib\log_debug([ "SQLSearch.query:142> $query <1>", $_REQUEST ]);
-		return $query;
-	}
 
 	$query = str_replace($tag, $this->where($opt), $query);
-	\rkphplib\lib\log_debug("SQLSearch.query:147> $query");
+	// \rkphplib\lib\log_debug("SQLSearch.query:145> $query");
 	return $query;
+}
+
+
+/**
+ * Use $_REQUEST[scol]=COLUMN ($_REQUEST[sop]) and $_REQUEST[sval]=VALUE to set
+ * $_REQUEST[s_COLUMN]=VALUE (and $_REQUEST[s_COLUMN_op]=$_REQUEST[sop]).
+ */
+private static function scanRequest() {
+	if (!empty($_REQUEST['scol']) && isset($_REQUEST['sval'])) {
+		$scol = 's_'.$_REQUEST['scol'];
+		$_REQUEST[$scol] = $_REQUEST['sval'];
+	
+		if (!empty($_REQUEST['sop'])) {
+			$_REQUEST['s_'.$_REQUEST['scol'].'_op'] = $_REQUEST['sop'];
+		}
+	}
 }
 
 
@@ -160,6 +167,8 @@ public function query(string $query = '_WHERE_SEARCH') : string {
  * Return names where $_REQUEST[s_NAME] not empty.
  */
 public static function searchCols() : ?array {
+	self::scanRequest();
+
 	$rkeys = array_keys($_REQUEST);
 	$scol = [];
 
@@ -196,15 +205,14 @@ private function where(array $options = []) : string {
 		'col' => '',
 		'cname' => '',
 		'method' => '',
-		'multicol' => false,
 		'value' => ''
 	], $options);
 
 	$this->search['expr'] = [];
 
-	if (!empty($this->conf['search.value'])) {
-		$this->search['value'] = $this->conf['search.value'];
-		$this->search['multicol'] = true;
+	$multicol = false;
+	if (isset($this->conf['search.value']) && $this->conf['search.value'] !== '') {
+		$multicol = $this->conf['search.value'];
 	}
 
 	foreach ($this->search['cols'] as $col_method) {
@@ -226,7 +234,8 @@ private function where(array $options = []) : string {
 		$this->search['col'] = $col;
 		$rkey = 's_'.$col;
 
-		if (!$this->search['multicol'] && isset($_REQUEST[$rkey])) {
+		$this->search['value'] = $multicol === false ? '' : $multicol;
+		if (isset($_REQUEST[$rkey]) && $_REQUEST[$rkey] !== '') {
 			$this->search['value'] = $_REQUEST[$rkey];
 		}
 
@@ -234,7 +243,7 @@ private function where(array $options = []) : string {
 			$this->search['method'] = $_REQUEST['s_'.$col.'_op'];
 		}
 
-		// \rkphplib\lib\log_debug("SQLSearch.where:228> col=$col method={$this->search['method']} value=".$this->search['value']);
+		// \rkphplib\lib\log_debug("SQLSearch.where:246> col=$col method={$this->search['method']} value=".$this->search['value']);
 		if (strlen($this->search['value']) == 0 ||
 				$this->searchDefault() ||
 				$this->searchLike() ||
@@ -249,11 +258,11 @@ private function where(array $options = []) : string {
 		return '';
 	}
 
-	if ($this->search['multicol']) {
-		$sql_and = join(' OR ', $this->search['expr']);
+	if ($multicol === false) {
+		$sql_and = join(' AND ', $this->search['expr']);
 	}
 	else {
-		$sql_and = join(' AND ', $this->search['expr']);
+		$sql_and = join(' OR ', $this->search['expr']);
 	}
 
 	return $this->search['where'] == 'where' ? 'WHERE '.$sql_and : 'AND ('.$sql_and.')';
@@ -295,7 +304,7 @@ private function searchDefault() : bool {
 	}
 
 	array_push($this->search['expr'], $expr);
-	// \rkphplib\lib\log_debug("SQLSearch.searchDefault:289> expr=$expr");
+	// \rkphplib\lib\log_debug("SQLSearch.searchDefault:307> expr=$expr");
 	return true;
 }
 
