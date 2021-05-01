@@ -10,4 +10,4 @@ function msearch(string $cols, string $val = '', string $query = '_WHERE_SEARCH'
 	print "search='$cols', search.value='$val', query='$query'\nrequest: $req\n[".$search->query($query)."]\n\n";
 }
 
-$th->run(1, 3);
+$th->run(1, 4);

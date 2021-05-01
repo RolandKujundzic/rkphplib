@@ -7,6 +7,9 @@ $search = new \rkphplib\SQLSearch([
 $_REQUEST = [ 's_id' => 'ID' ];
 print $search->query()."\n";
 
+$_REQUEST = [ 's_id' => '' ];
+print $search->query()."\n";
+
 $_REQUEST = [ 's_name' => 'NAME' ];
 print $search->query()."\n";
 
