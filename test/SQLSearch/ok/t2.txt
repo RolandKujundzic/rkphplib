@@ -1,2 +1,28 @@
- WHERE id='17' OR name='17' OR descr='17'
- AND (id='John' OR name LIKE 'John%' OR name2 LIKE '%John' OR descr LIKE '%John%')
+search='id,name,descr', search.value='17', query='_WHERE_SEARCH'
+request: []
+[WHERE id='17' OR name='17' OR descr='17']
+
+search='', search.value='', query='_WHERE_SEARCH'
+request: []
+[]
+
+search='id,name,name2,descr:LIKE', search.value='John', query='_AND_SEARCH _SORT'
+request: {"s_name_op":"LLIKE","s_name2_op":"RLIKE"}
+[AND (id='John' OR name LIKE 'John%' OR name2 LIKE '%John' OR descr LIKE '%John%') ]
+
+search='', search.value='', query='SELECT WHERE _AND_SEARCH _SORT'
+request: {"s_name_op":"LLIKE","s_name2_op":"RLIKE"}
+[SELECT WHERE  ]
+
+search='', search.value='', query='SELECT _SORT'
+request: {"sort":"aprice"}
+[SELECT ORDER BY price]
+
+search='id:EQ,name:LLIKE', search.value='', query='_WHERE_SEARCH'
+request: {"s_id":"ID"}
+[WHERE id = '']
+
+search='id:EQ,name:LLIKE,descr:LIKE', search.value='', query='_WHERE_SEARCH'
+request: {"s_name":"NAME"}
+[WHERE name LIKE 'NAME%']
+
