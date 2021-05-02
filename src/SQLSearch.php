@@ -214,6 +214,9 @@ private function where(array $options = []) : string {
 	if (isset($this->conf['search.value']) && $this->conf['search.value'] !== '') {
 		$multicol = $this->conf['search.value'];
 	}
+	else if (!empty($_REQUEST['sval'])) {
+		$multicol = $_REQUEST['sval'];
+	}
 
 	foreach ($this->search['cols'] as $col_method) {
 		if (strpos($col_method, ':') === false) {
