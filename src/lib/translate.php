@@ -29,7 +29,6 @@ use rkphplib\File;
  * @EOL
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2017-2020 Roland Kujundzic
  */
 function translate(string $msg, array $plist = []) : string {
 	static $translation = [];

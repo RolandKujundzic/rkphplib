@@ -8,8 +8,6 @@ namespace rkphplib\lib;
  * Parameter $data (can be anything) will be modified if latin1 strings are detected.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2016 Roland Kujundzic
- *
  */
 function latin1_to_utf8(&$data) {
 
