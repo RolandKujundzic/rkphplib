@@ -19,6 +19,7 @@ use function rkphplib\lib\split_str;
  * Tokenizer base Menu plugin.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
+ * @copyright 2014-2021 Roland Kujundzic
  */
 abstract class AMenu implements TokPlugin {
 
