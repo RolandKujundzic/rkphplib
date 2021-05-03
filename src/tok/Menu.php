@@ -152,7 +152,7 @@ private function node_html($pos) {
 	if (empty($node['link'])) {
 		if (!empty($node['dir'])) {
 			$lnk = empty($node['dir_param']) ? $node['dir'] : $node['dir'].'&'.$node['dir_param'];
-			$node['link'] = '{link:}@='.$lnk.'{:link}';
+			$node['link'] = '{link:}_='.$lnk.'{:link}';
 		}
 	}
 
