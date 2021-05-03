@@ -6,7 +6,6 @@ namespace rkphplib\tok\TFormValidator;
  * HTML Form Tag Templates
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2021 Roland Kujundzic
  *
  * alt+x = «, alt+y = »
  */
