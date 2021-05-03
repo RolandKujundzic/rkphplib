@@ -1,0 +1,4 @@
+
+index.php?dir=list
+index.php?scol=name&sval=John&dir=list
+index.php?scol=name&sval=John&dir=list

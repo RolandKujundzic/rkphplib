@@ -1,0 +1,4 @@
+{set:}scol=name|#|sval=John|#|dir=list|#|last=25{:set}
+{link:_}
+{link:@}
+{link:}@={get:dir}{:link}
