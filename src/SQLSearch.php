@@ -132,10 +132,10 @@ public function query(string $query = '_WHERE_SEARCH') : string {
 	$rkey = $this->conf['req.search'];
 
 	if ($rkey && isset($_REQUEST[$rkey]) && !empty($this->conf['search.'.$rkey])) {
-		$opt['cols'] = split_str(',', $this->conf['search.'.$rkey]);
+		$opt['cols'] = split_str(',', $this->conf['search.'.$rkey], true);
 	}
 	else if (!empty($this->conf['search'])) {
-		$opt['cols'] = split_str(',', $this->conf['search']);
+		$opt['cols'] = split_str(',', $this->conf['search'], true);
 	}
 	else if (($cols = self::searchCols())) {
 		$opt['cols'] = $cols;
@@ -214,7 +214,7 @@ private function where(array $options = []) : string {
 	if (isset($this->conf['search.value']) && $this->conf['search.value'] !== '') {
 		$multicol = $this->conf['search.value'];
 	}
-	else if (!empty($_REQUEST['sval'])) {
+	else if (empty($_REQUEST['scol']) && !empty($_REQUEST['sval'])) {
 		$multicol = $_REQUEST['sval'];
 	}
 
@@ -246,7 +246,7 @@ private function where(array $options = []) : string {
 			$this->search['method'] = $_REQUEST['s_'.$col.'_op'];
 		}
 
-		// \rkphplib\lib\log_debug("SQLSearch.where:246> col=$col method={$this->search['method']} value=".$this->search['value']);
+		// \rkphplib\lib\log_debug("SQLSearch.where:249> col=$col method={$this->search['method']} value=".$this->search['value']);
 		if (strlen($this->search['value']) == 0 ||
 				$this->searchDefault() ||
 				$this->searchLike() ||
@@ -317,7 +317,7 @@ private function searchDefault() : bool {
 	}
 
 	array_push($this->search['expr'], $expr);
-	// \rkphplib\lib\log_debug("SQLSearch.searchDefault:317> expr=$expr");
+	// \rkphplib\lib\log_debug("SQLSearch.searchDefault:320> expr=$expr");
 	return true;
 }
 
