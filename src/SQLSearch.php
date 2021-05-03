@@ -123,7 +123,7 @@ public function query(string $query = '_WHERE_SEARCH') : string {
 		$type = 'and';
 	}
 	else {
-		// \rkphplib\lib\log_debug("SQLSearch.query:127> $query");
+		// \rkphplib\lib\log_debug("SQLSearch.query:126> $query");
 		return $query;
 	}
 
@@ -141,7 +141,7 @@ public function query(string $query = '_WHERE_SEARCH') : string {
 	}
 
 	$query = str_replace($tag, $this->where($opt), $query);
-	// \rkphplib\lib\log_debug("SQLSearch.query:145> $query");
+	// \rkphplib\lib\log_debug("SQLSearch.query:144> $query");
 	return $query;
 }
 
@@ -245,7 +245,7 @@ private function where(array $options = []) : string {
 			$this->search['method'] = $_REQUEST['s_'.$col.'_op'];
 		}
 
-		// \rkphplib\lib\log_debug("SQLSearch.where:249> col=$col method={$this->search['method']} value=".$this->search['value']);
+		// \rkphplib\lib\log_debug("SQLSearch.where:248> col=$col method={$this->search['method']} value=".$this->search['value']);
 		if (strlen($this->search['value']) == 0 ||
 				$this->searchDefault() ||
 				$this->searchLike() ||
@@ -316,7 +316,7 @@ private function searchDefault() : bool {
 	}
 
 	array_push($this->search['expr'], $expr);
-	// \rkphplib\lib\log_debug("SQLSearch.searchDefault:320> expr=$expr");
+	// \rkphplib\lib\log_debug("SQLSearch.searchDefault:319> expr=$expr");
 	return true;
 }
 

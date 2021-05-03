@@ -185,7 +185,7 @@ private function getPSub(string $path_str, array $map = null) {
 	$fkey = '';
 	$pkey = '';
 
-	// \rkphplib\lib\log_debug("Request.getPSub:189> path_str=[$path_str] path=[".join('|', $path)."] map: ".print_r($map, true));
+	// \rkphplib\lib\log_debug("Request.getPSub:188> path_str=[$path_str] path=[".join('|', $path)."] map: ".print_r($map, true));
 	while (count($path) > 0) {
 		$pkey = array_shift($path);
 
@@ -204,7 +204,7 @@ private function getPSub(string $path_str, array $map = null) {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("Request.getPSub:208> found=[$found] fkey=[$fkey] pkey=[$pkey] is_array=[$is_array] map: ".print_r($map, true));
+	// \rkphplib\lib\log_debug("Request.getPSub:207> found=[$found] fkey=[$fkey] pkey=[$pkey] is_array=[$is_array] map: ".print_r($map, true));
 	if (isset($map[$fkey])) {
 		$path_str = $fkey;
 		$found = false;
@@ -225,7 +225,7 @@ private function getPSub(string $path_str, array $map = null) {
 				$key = mb_substr($mkey, $len + 1);
 				$res[$key] = $value;
 			}
-			// \rkphplib\lib\log_debug("Request.getPSub:229> path_str=[$path_str] mkey=[$mkey] value=[$value] res: ".print_r($res, true));
+			// \rkphplib\lib\log_debug("Request.getPSub:228> path_str=[$path_str] mkey=[$mkey] value=[$value] res: ".print_r($res, true));
 		}
 
 		if (count($res) == 1) {

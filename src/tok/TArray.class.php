@@ -88,7 +88,7 @@ public function tok_array(string $name, ?string $arg) : void {
 	}
 
 	$this->array[$name] = conf2kv($arg);
-	// \rkphplib\lib\log_debug([ "TArray.tok_array:92> create '$name' = <1>", $this->array[$name] ]);
+	// \rkphplib\lib\log_debug([ "TArray.tok_array:91> create '$name' = <1>", $this->array[$name] ]);
 }
 
 
@@ -100,7 +100,7 @@ public function tok_array(string $name, ?string $arg) : void {
  */
 public function tok_array_split(string $delimiter, ?string $arg) : void {
 	$this->array[$this->name] = split_str($delimiter, $arg);
-	// \rkphplib\lib\log_debug([ "TArray.tok_array_split:104> {$this->name} = <1>", $this->array[$this->name] ]);
+	// \rkphplib\lib\log_debug([ "TArray.tok_array_split:103> {$this->name} = <1>", $this->array[$this->name] ]);
 }
 
 
@@ -114,7 +114,7 @@ public function tok_array_split(string $delimiter, ?string $arg) : void {
 public function tok_array_set(string $key, string $value) : void {
 	if ($key === '') {
 		$this->array[$this->name] = array_merge($this->array[$this->name], conf2kv($value));
-		// \rkphplib\lib\log_debug([ "TArray.tok_array_set:118> {$this->name} = <1>", $this->array[$this->name] ]);
+		// \rkphplib\lib\log_debug([ "TArray.tok_array_set:117> {$this->name} = <1>", $this->array[$this->name] ]);
 		return;
 	}
 
@@ -122,7 +122,7 @@ public function tok_array_set(string $key, string $value) : void {
 		$key = intval($key);
 	}
 
-	// \rkphplib\lib\log_debug("TArray.tok_array_set:126> set {$this->name}[$key] = '$value'");
+	// \rkphplib\lib\log_debug("TArray.tok_array_set:125> set {$this->name}[$key] = '$value'");
 	$this->array[$this->name][$key] = $value;
 }
 

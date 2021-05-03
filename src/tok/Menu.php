@@ -3,7 +3,7 @@
 namespace rkphplib\tok;
 
 require_once __DIR__.'/TokPlugin.iface.php';
-require_once __DIR__.'/AMenu.class.php';
+require_once __DIR__.'/AMenu.php';
 
 use rkphplib\Exception;
 
@@ -75,7 +75,7 @@ public function tok_menu(?string $tpl) : string {
 		$lname = 'level_'.$i;
 		$out = $this->conf[$lname.'_header'].join($this->conf[$lname.'_delimiter'], $html[$i]).
 			$this->conf[$lname.'_footer'];
-		// \rkphplib\lib\log_debug("TMenu.tok_menu:79> $lname:\n$out");
+		// \rkphplib\lib\log_debug("Menu.tok_menu:78> $lname:\n$out");
 		$res = $this->tok->replaceTags($res, [ $lname => $out ]);
 	}
 
@@ -83,7 +83,7 @@ public function tok_menu(?string $tpl) : string {
 		$res = $this->tok->replaceTags($res, [ $tag => $out ]);
 	}
 
-	// \rkphplib\lib\log_debug("TMenu.tok_menu:87> i=$i res: [$res]");
+	// \rkphplib\lib\log_debug("Menu.tok_menu:86> i=$i res: [$res]");
 
 	// remove next level include
 	$res = $this->tok->replaceTags($res, [ 'level_'.$i => '' ]);
@@ -141,7 +141,7 @@ private function level_n($start, &$html) {
  * @param int $pos
  */
 private function node_html($pos) {
-	// \rkphplib\lib\log_debug("TMenu.node_html:145> pos=$pos, node=(".join('|', $this->node[$pos]).")");
+	// \rkphplib\lib\log_debug("Menu.node_html:144> pos=$pos, node=(".join('|', $this->node[$pos]).")");
 	$node = $this->node[$pos];
 	$lname = 'level_'.$node['level'];
 
@@ -181,7 +181,7 @@ private function node_html($pos) {
 	}
 
 	$tpl = $this->tok->replaceTags($tpl, $node);
-	// \rkphplib\lib\log_debug("TMenu.node_html:185> pos=$pos tpl=[$tpl] node: ".print_r($node, true));
+	// \rkphplib\lib\log_debug("Menu.node_html:184> pos=$pos tpl=[$tpl] node: ".print_r($node, true));
 	return $tpl;
 }
 

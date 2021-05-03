@@ -1239,6 +1239,7 @@ public function getTag(string $name) : string {
 private function tryPluginMap(string $name) : void {
 	static $map = [
 		'FormValidator' => [ 'fv2', 'fv2:check', 'fv2:hidden', 'fv2:in', 'fv2:init', 'fv2:preset' ],
+		'Menu' => [ 'menu', 'menu:add', 'menu:conf' ],
 		'TArray' => [ 'array', 'array:set', 'array:get', 'array:shift', 'array:unshift', 'array:pop', 'array:push', 'array:join', 'array:length', 'array:split' ],
 		'TBase' => [ 'clear', 'const', 'decode', 'encode', 'esc', 'escape', 'escape:tok', 'f', 'false', 'filter', 'find', 'get', 'hidden', 'if', 'ignore', 'include', 'include_if', 'join', 'json', 'json:exit', 'keep', 'li', 'link', 'load', 'loadJSON', 'log', 'log_debug', 'plugin', 'redirect', 'redo', 'row', 'row:init', 'set', 'set_default', 'shorten', 'skin', 'strlen', 'switch', 't', 'tf', 'tolower', 'toupper', 'tpl', 'tpl_set', 'trim', 'true', 'unescape', 'var', 'view' ],
 		'TConf' => [ 'conf', 'conf:append', 'conf:get', 'conf:get_path', 'conf:id', 'conf:load', 'conf:set', 'conf:set_path', 'conf:set_default', 'conf:var' ],
@@ -1256,7 +1257,6 @@ private function tryPluginMap(string $name) : void {
 		'TLoop' => [ 'loop:var', 'loop:list', 'loop:json', 'loop:hash', 'loop:show', 'loop:join', 'loop:count', 'loop' ],
 		'TMailer' => [ 'mail:init', 'mail:html', 'mail:txt', 'mail:send', 'mail:attach', 'mail' ],
 		'TMath' => [ 'nf', 'number_format', 'intval', 'floatval', 'rand', 'math', 'md5' ],
-		'TMenu' => [ 'menu', 'menu:add', 'menu:conf' ],
 		'TMisc' => [ 'sleep' ],
 		'TOutput' => [ 'output:set', 'output:get', 'output:conf', 'output:init', 'output:loop', 'output:json', 'output:header', 'output:footer', 'output:empty', 'output', 'sort', 'search' ],
 		'TPicture' => [ 'picture:init', 'picture:src', 'picture:list', 'picture:tpl', 'picture:tbn', 'picture' ],
