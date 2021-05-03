@@ -10,8 +10,6 @@ require_once __DIR__.'/File.class.php';
  * XML Parser based on Expat.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2008-2020 Roland Kujundzic
- *
  */
 class XMLParser {
 

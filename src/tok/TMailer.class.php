@@ -14,7 +14,6 @@ use rkphplib\Mailer;
  * Mailer plugin.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2018-2020 Roland Kujundzic 
  */
 class TMailer implements TokPlugin {
 use TokHelper;

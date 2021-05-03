@@ -12,7 +12,6 @@ use \rkphplib\Exception;
  * GDLib wrapper
  *
  * @author Roland Kujundzic <roland@inkoeln.com>
- * @copyright 2017-2021 Roland Kujundzic
  */
 class GDLib {
 

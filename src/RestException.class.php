@@ -9,7 +9,6 @@ require_once __DIR__.'/Exception.class.php';
  * Custom exception with public properties http_error and internal_message.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2020
  */
 class RestException extends \Exception {
 

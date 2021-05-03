@@ -21,9 +21,6 @@ use function rkphplib\lib\execute;
  * Shell job wrapper.
  * 
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright Roland Kujundzic 2018
- * @date 2018/11/01
- *
  */
 class Job {
 

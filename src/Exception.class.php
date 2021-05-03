@@ -11,8 +11,6 @@ require_once __DIR__.'/lib/config.php';
  * SETTINGS_LOG_EXCEPTION is not set use SETTINGS_LOG_EXCEPTION=data/.log/exception.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2016 Roland Kujundzic
- *
  */
 class Exception extends \Exception {
 

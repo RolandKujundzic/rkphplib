@@ -13,7 +13,6 @@ use function rkphplib\lib\execute;
 /**
  * Start|Stop|Check Server
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2020 Roland Kujundzic
  */
 abstract class AServerJob {
 

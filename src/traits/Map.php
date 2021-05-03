@@ -18,7 +18,6 @@ use rkphplib\Exception;
  * @EOL
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2018 Roland Kujundzic
  */
 trait Map {
 

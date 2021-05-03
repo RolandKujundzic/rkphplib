@@ -16,8 +16,6 @@ if (umask() > 0) {
  * All methods are static.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2016 Roland Kujundzic
- *
  */
 class FSEntry {
 

@@ -14,7 +14,6 @@ use function rkphplib\lib\split_str;
  * XOR En/Decryption.
  * 
  * @author Roland Kujundzic <roland@kujundzic.de> 
- * @copyright 2020 Roland Kujundzic
  */
 class XCrypt {
 

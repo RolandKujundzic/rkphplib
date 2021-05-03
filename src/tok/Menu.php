@@ -13,7 +13,6 @@ use rkphplib\Exception;
  * Tokenizer Menu plugin.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- *
  */
 class Menu extends AMenu implements TokPlugin {
 

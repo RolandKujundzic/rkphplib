@@ -7,7 +7,6 @@ namespace rkphplib\traits;
  * Number handling
  * 
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2021 Roland Kujundzic
  */
 trait Number {
 

@@ -16,7 +16,6 @@ use function rkphplib\lib\is_map;
  * Abstract database access wrapper class.
  * 
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2016 Roland Kujundzic
  */
 abstract class ADatabase {
 

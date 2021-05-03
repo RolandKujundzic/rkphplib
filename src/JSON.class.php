@@ -12,8 +12,6 @@ use function rkphplib\lib\http_code;
  * JSON wrapper. 
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2016 Roland Kujundzic
- *
  */
 class JSON {
 

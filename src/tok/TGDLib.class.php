@@ -13,7 +13,6 @@ use function rkphplib\lib\split_str;
  * GDLib Plugin
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2020 Roland Kujundzic
  */
 class TGDLib implements TokPlugin {
 

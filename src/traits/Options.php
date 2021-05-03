@@ -17,7 +17,6 @@ namespace rkphplib\traits;
  * @EOL
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2020 Roland Kujundzic
  */
 trait Options {
 

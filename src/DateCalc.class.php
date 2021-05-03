@@ -11,7 +11,6 @@ use rkphplib\Exception;
  * Date calculation helper class. All methods are static.
  *
  * @author Roland Kujundzic <roland@inkoeln.com>
- * @copyright 2016-2020 Roland Kujundzic
  */
 class DateCalc {
 

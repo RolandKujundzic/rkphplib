@@ -23,7 +23,6 @@ use rkphplib\File;
  * @EOL
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2020 Roland Kujundzic
  */
 trait RestQuery {
 

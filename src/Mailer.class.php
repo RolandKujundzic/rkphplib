@@ -25,7 +25,6 @@ use function rkphplib\lib\resolvPath;
  * Mailer.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2016-2020 Roland Kujundzic
  */
 class Mailer {
 

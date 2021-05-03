@@ -23,7 +23,6 @@ use function rkphplib\lib\replace_tags;
  * Server side picture handling plugin.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2016-2021 Roland Kujundzic
  */
 class TPicture implements TokPlugin {
 

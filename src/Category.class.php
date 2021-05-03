@@ -13,7 +13,6 @@ use rkphplib\Exception;
  * Category table.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2020 Roland Kujundzic
  */
 class Category {
 

@@ -17,8 +17,6 @@ use function rkphplib\lib\execute;
  * By default file locking is disabled (enable with self::$USE_FLOCK = true).
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2016-2021 Roland Kujundzic
- *
  */
 class File {
 

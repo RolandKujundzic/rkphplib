@@ -17,7 +17,6 @@ use rkphplib\Dir;
  * PHP Session wrapper
  * 
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2016-2021 Roland Kujundzic
  */
 class Session {
 

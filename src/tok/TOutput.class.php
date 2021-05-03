@@ -33,7 +33,6 @@ use function rkphplib\lib\is_map;
  * Render table data into output template.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2016-2021 Roland Kujundzic
  */
 class TOutput implements TokPlugin {
 

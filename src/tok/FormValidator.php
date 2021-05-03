@@ -38,7 +38,6 @@ use function rkphplib\lib\kv2conf;
  * @eol
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2017-2021 Roland Kujundzic
  */
 class FormValidator implements TokPlugin {
 

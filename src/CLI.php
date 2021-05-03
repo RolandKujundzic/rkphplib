@@ -21,7 +21,6 @@ namespace rkphplib;
  * @eol
  *
  * @author Roland Kujundzic
- * @copyright 2019-2021 Roland Kujundzic
  */
 class CLI {
 

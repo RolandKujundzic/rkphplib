@@ -12,7 +12,6 @@ use function rkphplib\lib\split_str;
  * Compute SQL where/and query part according to $_REQUEST.
  *
  * @author Roland Kujundzic <roland@inkoeln.com>
- * @copyright 2018-2021 Roland Kujundzic
  */
 class SQLSearch {
 

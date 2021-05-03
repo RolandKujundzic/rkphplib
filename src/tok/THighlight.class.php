@@ -15,7 +15,6 @@ use rkphplib\File;
  * Show syntax highlighted (*.php|html) code.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2020 Roland Kujundzic
  */
 class THighlight implements TokPlugin {
 

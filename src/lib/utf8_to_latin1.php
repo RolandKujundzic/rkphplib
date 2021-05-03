@@ -7,7 +7,6 @@ namespace rkphplib\lib;
  * Convert all strings within $data (any) from utf8 to latin1.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2016 Roland Kujundzic
  */
 function utf8_to_latin1(&$data) : void {
 

@@ -10,8 +10,6 @@ require_once __DIR__.'/File.class.php';
  * XML wrapper.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2016 Roland Kujundzic
- *
  */
 class XML {
 

@@ -13,8 +13,6 @@ use rkphplib\Exception;
  * Persistant Hash. 
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2017-2019 Roland Kujundzic
- *
  */
 class Map {
 

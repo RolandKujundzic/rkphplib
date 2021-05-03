@@ -15,8 +15,6 @@ use function rkphplib\lib\execute;
  * Create *.zip files.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2018 Roland Kujundzic
- *
  */
 class Zip {
 

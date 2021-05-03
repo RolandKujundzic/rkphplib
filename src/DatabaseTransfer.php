@@ -10,7 +10,6 @@ require_once __DIR__.'/traits/Log.php';
  * Transfer data from one database to another
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2021 Roland Kujundzic
  */
 class DatabaseTransfer {
 use \rkphplib\traits\Log;

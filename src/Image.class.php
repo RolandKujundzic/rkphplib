@@ -11,8 +11,6 @@ require_once __DIR__.'/Dir.class.php';
  * Image access wrapper. Create *.nfo file (JSON hash with: name, width, height, md5, size, created, lastModified ...).
  * 
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2018 Roland Kujundzic
- *
  */
 class Image {
 

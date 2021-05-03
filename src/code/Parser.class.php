@@ -12,7 +12,6 @@ use rkphplib\File;
  * Code parser.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2019 Roland Kujundzic
  */
 class Parser {
 

@@ -3,16 +3,11 @@
 namespace rkphplib\lib;
 
 /**
- * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2020 Roland Kujundzic
- *
- * @example print '10000 * md5(random) = '.timer_ssp('md5')."s\n";
- */
-
-
-/**
  * Check performace of single string parameter function $func.
  * Call $loop (10000) times. Return elapsed time in seconds.
+ * @author Roland Kujundzic <roland@kujundzic.de>
+ *
+ * @example print '10000 * md5(random) = '.timer_ssp('md5')."s\n";
  */
 function timer_ssp(string $func, int $loop = 10000) : int {
 	$start = microtime(true);

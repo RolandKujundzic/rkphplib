@@ -13,8 +13,6 @@ require_once __DIR__.'/XML.class.php';
  * Curl wrapper.
  * 
  * @author Roland Kujundzic <roland@kujundzic.de>
- * @copyright 2020 Roland Kujundzic
- *
  */
 class Curl {
 
