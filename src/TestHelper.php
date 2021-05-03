@@ -387,6 +387,8 @@ public function test(string $dir) : void {
 		throw new Exception("chdir $dir");
 	}
 
+	$_REQUEST = [];
+
 	if (!empty($this->options['ob_wrap'])) {
 		ob_start();
 		include 'run.php';
@@ -658,7 +660,6 @@ private function load_src(string $cpath = '') : void {
  * n = _GET[test] is print result of execPHP(tN.php).
  */
 private function prepareRun(int $first, int $last) : int {
-
 	if (!count($this->options) && File::exists('run.json')) {
 		$this->options = File::loadJSON('run.json');
 	}
@@ -750,7 +751,6 @@ private function getTestNumber(int $first, int $last) : int {
  * @example run(1, 6)
  */
 public function run(int $first, int $last, array $opt = []) : void {
-
 	if (($tnum = $this->prepareRun($first, $last)) == 0) {
 		return;
 	}
