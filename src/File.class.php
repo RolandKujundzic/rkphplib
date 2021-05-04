@@ -23,6 +23,15 @@ class File {
 // @var bool $USE_FLOCK don't use file locking by default (BEWARE: locking will not work on NFS) 
 public static $USE_FLOCK = false;
 
+/** 
+ * @var int $COPY 2^n flag for self::copy()
+ * 0 = default, don't compare existing files
+ * 1 = don't copy file if exists and size and md5 are the same
+ * 2 = print log message if same
+ * 4 = print log message if update
+ */
+public static $COPY = 0;
+
 
 /**
  * Return url encoded path
@@ -1424,6 +1433,19 @@ public static function copy(string $source, string $target, int $mode = 0) : voi
 	if (!$mode) {
 		$stat = FSEntry::stat($source);
 		$mode = $stat['perms']['octal'];
+	}
+
+	if ((self::$COPY & 1) && file_exists($target)) {
+		if (self::size($source) == self::size($target) && self::md5($source) == self::md5($target)) {
+			if (self::$COPY & 2) {
+				print "keep $target\n";
+			}
+
+			return;
+		}
+		else if (self::$COPY & 4) {		
+			print "update $target\n";
+		}
 	}
 
 	if (!copy($source, $target)) {
