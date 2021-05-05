@@ -1,0 +1,8 @@
+[
+	"rkphplib\\Dir::exists",
+	["/etc", true, "1"],
+	["/etc/apache2", "1"],
+	["/no_such_dir", ""],
+	["/no_such_dir", true, "EXCEPTION"]
+]
+
