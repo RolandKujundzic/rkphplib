@@ -1,0 +1,2 @@
+scan(out/t2): 1.txt|a
+scanTree(out/t2): out/t2/1.txt|out/t2/a/b/3.txt|out/t2/a/2.txt
