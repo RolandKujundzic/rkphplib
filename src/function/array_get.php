@@ -9,7 +9,7 @@
  * array_get('a.b2.c', $x) == 3;
  * @eol
  */
-function array_path(string $key, array $p) {
+function array_get(string $key, array $p) {
   $path = explode('.', $key);
 	$res = null;
 
