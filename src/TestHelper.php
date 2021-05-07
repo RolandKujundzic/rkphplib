@@ -649,9 +649,20 @@ private function load_src(string $cpath = '') : void {
 	else if (File::exists(PATH_SRC.$cpath.'.class.php')) {
 		require_once PATH_SRC.$cpath.'.class.php';
 	}
-	else {
-		throw new Exception('missing '.PATH_SRC.'.[php|class.php]');
+	else if (substr($cpath, 0, 9) == 'function/') {
+		require_once dirname(PATH_SRC).'/'.$cpath.'.php';
 	}
+	else {
+		throw new Exception('missing '.PATH_SRC.$cpath.'.[php|class.php]');
+	}
+}
+
+
+/**
+ * print $name($p1, $p2) == RESULT
+ */
+public static function call2(string $name, $p1, $p2) : void {
+  print "$name(".json_encode($p1).', '.json_encode($p2).") == ".json_encode($name($p1, $p2)).";\n";
 }
 
 
