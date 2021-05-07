@@ -87,6 +87,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['conf:get_path'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY | TokPlugin::REDO;
 	$plugin['conf:id'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
 	$plugin['conf:load'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY;
+	$plugin['conf:save'] = TokPlugin::KV_BODY;
 	$plugin['conf:set'] = TokPlugin::TEXT;
 	$plugin['conf:set_path'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['conf:set_default'] = TokPlugin::TEXT;
@@ -96,8 +97,38 @@ public function getPlugins(Tokenizer $tok) : array {
 
 
 /**
+ * Save hash to file (.json|.conf). Use $p['save_as'] or $file.
+ * If $p is empty save $_REQUEST.
+ */
+public function tok_conf_save(string $file, array $p) : void {
+	if (empty($file) && !empty($p['save_as'])) {
+		$file = $p['save_as'];
+		unset($p['save_as']);
+	}
+
+	if (empty($file)) {
+		return;
+	}
+
+	if (is_null($p) || count($p) == 0) {
+		$p = $_REQUEST;
+	}
+
+	if (substr($file, -5) == '.conf') {
+		$this->conf = File::saveConf($file, $p);
+	}
+	else if (substr($file, -5) == '.json') {
+		$this->conf = File::saveJSON($file, $p);
+	}
+	else {
+		throw new Exception('invalid configuration file suffix (use .conf|.json)', $file);
+	}
+}
+
+
+/**
  * Load configuration file (.json|.conf). Set conf[@file] = $file.
- * If configuration file does not exist it will be auto-created with default values.
+ * @tok {conf:load}path/file.conf{:conf}{set:}{conf:get:*}{:set}
  */
 public function tok_conf_load(string $file) : void {
 	// \rkphplib\lib\log_debug("TConf.tok_conf_load:103> $file");
@@ -283,11 +314,19 @@ public function tok_conf_var(string $key) : string {
 
 
 /**
- * Return tokenized configuration value.
+ * Return tokenized configuration value. Return value hash if key is *.
+ *
+ * @tok {conf:get:key}
+ * @tok {conf:get:*}
  */
 public function tok_conf_get(string $key) : string {
-	if (!is_null($this->conf) && isset($this->conf[$key])) {
-		return $this->conf[$key];
+	if (!is_null($this->conf)) {
+		if ($key == '*') {
+			return kv2conf($this->conf);
+		}
+		else if (isset($this->conf[$key])) {
+			return $this->conf[$key];
+		}
 	}
 
 	return $this->get($key);
