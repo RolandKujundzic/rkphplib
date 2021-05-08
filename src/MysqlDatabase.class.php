@@ -1222,18 +1222,34 @@ public function getTableDesc(string $table) : array {
 
 	foreach ($db_res as $info) {
 		$colname = $info['Field'];
+		$type = $info['Type'];
 		$cinfo = [];
-		$cinfo['type'] = $info['Type'];
-		$cinfo['is_null'] = $info['Null'] === 'YES';
+		$flag = 0;
+
+		$cinfo['type'] = $type;
 		$cinfo['key'] = $info['Key'];
+		$cinfo['is_null'] = $info['Null'] === 'YES';
 		$cinfo['default'] = $info['Default'];
 		$cinfo['extra'] = $info['Extra'];
+
+		if ($type == 'double' || strpos($type, 'int(') !== false || strpos($type, 'decimal(') !== false) {
+			$flag += 1;
+		}
+
+		if ($type == 'text' || strpos($type, 'varchar(') === 0 || strpos($type, 'varbinary(') === 0) {
+			$flag += 2;
+		}
+
+		if (in_array($type, [ 'date', 'datetime', 'timestamp' ])) {
+			$flag += 4;
+		}
+
+		$cinfo['flag'] = $flag;
 
 		$res[$colname] = $cinfo;
 	}
 
 	$this->_cache['DESC:'.$table] = $res;
-
 	return $res;
 }
 
@@ -1242,7 +1258,7 @@ public function getTableDesc(string $table) : array {
  *
  */
 public function getInsertId() : int {
-	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1245> id=".$this->getId().", insert_id=".$this->_db->insert_id);
+	// \rkphplib\lib\log_debug("MysqlDatabase.getInsertId:1261> id=".$this->getId().", insert_id=".$this->_db->insert_id);
 	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) === 0) {
 		return intval($this->error('no_id', $this->_db->insert_id, 2));
 	}
