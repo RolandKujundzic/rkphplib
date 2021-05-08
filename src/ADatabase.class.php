@@ -1459,10 +1459,14 @@ abstract public function selectColumn($query, string $colname = 'col') : ?array;
 
 
 /**
- * Return table description. 
+ * Return table description. Flag is 2^n: 1=is_number, 2=is_text, 4=is_date
  *
- * Result hash keys are column names, values are arrays with column info
- * (e.g. mysql: { type: 'double', is_null: true|false, key: '', default: '', extra: '' }).
+ * @example …
+ * {
+ *   id: { type:'int(11)', is_null:false, flag:3, key:'primary', default:'', extra:'' },
+ *   name: { type:'varchar(80)', is_null:false, flag:, key:'', default:'', extra:'' }
+ * }
+ * @eol 
  */
 abstract public function getTableDesc(string $table) : array;
 
@@ -1766,7 +1770,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 	$add_default = !empty($kv['@add_default']);
 	$use_tag = !empty($kv['@tag']) && in_array($type, $kv['@tag']);
 
-	// \rkphplib\lib\log_debug([ "ADatabase.buildQuery:1769> ($table, $type, …) kv: <1>\n<2>", $kv, array_keys($p) ]);
+	// \rkphplib\lib\log_debug([ "ADatabase.buildQuery:1773> ($table, $type, …) kv: <1>\n<2>", $kv, array_keys($p) ]);
 	foreach ($p as $col => $cinfo) {
 		$val = false;
 
@@ -1798,14 +1802,14 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		}
 
 		if ($val !== false) {
-			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1801> $col=[$val]");
+			// \rkphplib\lib\log_debug("ADatabase.buildQuery:1805> $col=[$val]");
 			array_push($key_list, self::escape_name($col));
 			array_push($val_list, $val);
 		}
 	}
 
 	if (count($key_list) == 0) {
-		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1808> empty key_list - return");
+		// \rkphplib\lib\log_debug("ADatabase.buildQuery:1812> empty key_list - return");
 		return '';
 	}
 
@@ -1849,7 +1853,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
-	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1852> $res");
+	// \rkphplib\lib\log_debug("ADatabase.buildQuery:1856> $res");
 	return $res;
 }
 
