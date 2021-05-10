@@ -4,6 +4,6 @@ require_once '../settings.php';
 
 global $th;
 
-$th->useTokPlugin([ 'FileSystem' ]);
-$th->run(0, 0);
+$th->useTokPlugin([ 'TBase', 'FileSystem' ]);
+$th->run(1, 1);
 
