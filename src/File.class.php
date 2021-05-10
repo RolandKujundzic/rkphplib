@@ -676,20 +676,44 @@ public static function size(string $file, bool $as_text = false) : int {
 /**
  * Return formated size (N MB, N KB or N Byte).
  */
-public static function formatSize(int $bytes) : string {
+public static function formatSize(int $bytes, $suffix = [ ' Byte', ' KB', ' MB' ]) : string {
+	$sl = count($suffix);
+	$n = 0;
 
-	if ($bytes > 1024 * 1024) {
-		$res = round($bytes / (1024 * 1024), 2).' MB';
-	}
-	else if ($bytes > 1024) {
-		$res = round($bytes / 1024, 2).' KB';
-	}
-	else {
-		$res = $bytes.' Byte';
+	while ($bytes > 1024 && $n < $sl - 1) {
+  	$bytes = round($bytes / 1024, 2);
+  	$n++;
 	}
 
-	return $res;
+	return $res.$suffix[$n];
 }
+
+
+/**
+ * @return …
+ * 
+ * @eol
+ */
+public static function info(string $file) : ?array {
+	if (!self::exists($file)) {
+		return null;
+	}
+
+	$info = FSEntry::stat($file);
+	$info['perms'] = $stat['perms']['human'];
+	$info['since'] = $stat['time']['since'];
+	$info['lchange'] = $stat['time']['modified'];
+	$info['owner'] = $stat['owner']['owner']['name'];
+	$info['group'] = $stat['owner']['group']['name'];
+	$info['size'] = self::formatSize($stat['size']['size']);
+	$info['name'] = $stat['file']['basename'];	
+	$info['file'] = $stat['file']['filename'];
+	$info['path'] = $stat['file']['realpath'];
+	$info['dir'] = $stat['file']['dirname'];
+
+	return $info;
+}
+
 
 /**
  * Save Exception information to file.
