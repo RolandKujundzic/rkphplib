@@ -152,10 +152,18 @@ public function tok_conf_load(string $file) : void {
 /**
  * Return tokenized configuration value.
  * If configuration value is not in database add it tokenized.
+ * Use key! to allow overwrite of key in conf.
  * 
  * @tok {conf:since}{date:now}{:conf} - set since=NOW() if not already set
+ * @tok {conf:lchange!}{date:now}{:conf} - update value of lchange
  */
 public function tok_conf(string $key, ?string $value) : string {
+	$update = false;
+	if (substr($key, -1) == '!') {
+		$key = substr($key, 0, -1);
+		$update = true;
+	}
+	
 	if (!is_null($this->conf)) {
 		$val = self::array_get($key, $this->conf);
 	}
@@ -165,27 +173,53 @@ public function tok_conf(string $key, ?string $value) : string {
 		$val = (count($dbres) == 0) ? null : $dbres[0]['value'];
 	}
 
-	if (is_null($val)) {
-		\rkphplib\lib\log_debug("Conf.tok_conf:169> set [$key]=[$value]");
+	if (is_null($val) || ($update && $val != $value)) {
+		// \rkphplib\lib\log_debug("Conf.tok_conf:169> set $key=[$value]");
 		$this->set($key, $value);
 		$val = is_null($value) ? '' : $value;
 	}
 
-	\rkphplib\lib\log_debug("Conf.tok_conf:174> [$key]=[$val]");
+	// \rkphplib\lib\log_debug("Conf.tok_conf:174> $key=[$val]");
 	return $val;
 }
 
 
 /**
+ * @function array_set
+ */
+private static function array_set(string $key, $value, array &$p) : void {
+	$path = explode('.', $key);
+	$tmp = &$p;
+
+	while (count($path)) {
+		$key = array_shift($path);
+
+		if (!count($path)) {
+			$tmp[$key] = $value;
+		}
+		else {
+			if (!array_key_exists($key, $tmp)) {
+				$tmp[$key] = [];
+			}
+			else if (!is_array($tmp[$key])) {
+				$key .= '.'.array_shift($path);
+
+				if (!count($path)) {
+					$tmp[$key] = $value;
+				}
+				else {
+					$tmp[$key] = [];
+				}
+			}
+
+			$tmp = &$tmp[$key];
+		}
+	}
+}
+
+
+/**
  * @function array_get
- * @example …
- * $x = [ 'a' => [ 'b' => 1, [ 'c' => 2 ], 'b2.c' => 3 ] ];
- * array_get('a', $x) == [ 'b' => 1, [ 'c' => 2 ] ];
- * array_get('a.b', $x) == 1;
- * array_get('a.b.c', $x) == 2;
- * array_get('a.b2.c', $x) == 3;
- * array_get('a.g') == null;
- * @eol
  */
 private static function array_get(string $key, array $p) {
 	$path = explode('.', $key);
@@ -374,17 +408,27 @@ public function get(string $name) : string {
 /**
  *
  */
-private function updateConfFile() : void {
-	$conf = $this->conf;
-	$file = $conf['@file'];
-	unset($conf['@file']);
+private function updateConfFile(string $name, ?string $value) : void {
+	$file = $this->conf['@file'];
+	// \rkphplib\lib\log_debug("Conf.set:392> $name=[$value] in $file");
 
-	if (substr($file, -5) == '.conf') {
-		File::saveConf($file, $conf);
+	if (substr($file, -5) == '.json') {
+		self::array_set($name, $value, $this->conf);
 	}
 	else {
-		File::saveJSON($file, $conf);
+		$this->conf[$name] = $value;
 	}
+
+	unset($this->conf['@file']);
+
+	if (substr($file, -5) == '.json') {
+		File::saveJSON($file, $this->conf);
+	}
+	else {
+		File::saveConf($file, $this->conf);
+	}
+
+	$this->conf['@file'] = $file;
 }
 
 
@@ -393,9 +437,7 @@ private function updateConfFile() : void {
  */
 public function set(string $name, ?string $value) : int {
 	if (!is_null($this->conf)) {
-		// \rkphplib\lib\log_debug("Conf.set:392> [$name]=[$value]");
-		$this->conf[$name] = $value;
-		$this->updateConfFile();
+		$this->updateConfFile($name, $value);
 		return 0;
 	}
 

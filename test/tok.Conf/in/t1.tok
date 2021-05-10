@@ -2,6 +2,8 @@
 {conf:a}A{:conf}
 {conf:a.b}A.B{:conf}
 {conf:a.c}A.C{:conf}
+{conf:b.x}b.X{:conf}
+{conf:b.y}B.Y{:conf}
 {load:}{const:DOCROOT}/Conf.json{:load}
 ---
 {conf:load}{const:DOCROOT}/Conf.conf{:conf}
