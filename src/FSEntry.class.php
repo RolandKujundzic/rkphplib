@@ -510,13 +510,12 @@ public static function stat(string $path, bool $clearcache = false) : array {
 
 	$s['time'] = array(
 		'stime' => $since,
-		'mtime' => $ss['mtime'], //Time of last modification
-		'atime' => $ss['atime'], //Time of last access.
-		'ctime' => $ss['ctime'], //Time of last status change
+		'mtime' => $ss['mtime'], // last modification time
+		'atime' => $ss['atime'], // last access time
+		'ctime' => $ss['ctime'], // last status change time
 		'since' => date('Y-m-d H:i:s',$since),
 		'accessed' => date('Y-m-d H:i:s',$ss['atime']),
-		'modified' => date('Y-m-d H:i:s',$ss['mtime']),
-		'created' => date('Y-m-d H:i:s',$ss['ctime']));
+		'modified' => date('Y-m-d H:i:s',$ss['mtime']));
 
 	return $s;
 }
