@@ -8,4 +8,6 @@ $th->call2('array_get', 'a.b', $x);
 $th->call2('array_get', 'a.b.c', $x);
 $th->call2('array_get', 'a.b.c.d', $x);
 $th->call2('array_get', 'a.b2.c', $x);
+$th->call2('array_get', 'a.g', $x);
+$th->call2('array_get', 'x', $x);
 
