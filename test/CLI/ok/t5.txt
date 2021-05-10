@@ -11,5 +11,5 @@ SYNTAX: test.php
 
 App Description
 
-run in /home/rk/workspace
+not in DOCROOT
 ---

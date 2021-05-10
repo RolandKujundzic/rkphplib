@@ -174,7 +174,7 @@ public static function syntax(array $args = [], array $opts = []) : bool {
 				$error_msg = 'DOCROOT is undefined';
 			}
 			else if (getcwd() != DOCROOT) {
-				$error_msg = 'run in '.DOCROOT;
+				$error_msg = 'not in DOCROOT';
 			}
 		}
 

@@ -20,7 +20,7 @@ App Description
 
 e.g. test.php Poppins 300,300i
 
-run in /home/rk/workspace
+not in DOCROOT
 ---
 # cmd=[font.php] check=[fontname|?parameter] opt=[@docroot|#1:Poppins|#2:300,300i]
 SYNTAX: test.php fontname [parameter]
