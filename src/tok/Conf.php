@@ -174,12 +174,12 @@ public function tok_conf(string $key, ?string $value) : string {
 	}
 
 	if (is_null($val) || ($update && $val != $value)) {
-		// \rkphplib\lib\log_debug("Conf.tok_conf:169> set $key=[$value]");
+		// \rkphplib\lib\log_debug("Conf.tok_conf:177> set $key=[$value]");
 		$this->set($key, $value);
 		$val = is_null($value) ? '' : $value;
 	}
 
-	// \rkphplib\lib\log_debug("Conf.tok_conf:174> $key=[$val]");
+	// \rkphplib\lib\log_debug("Conf.tok_conf:182> $key=[$val]");
 	return $val;
 }
 
@@ -410,7 +410,7 @@ public function get(string $name) : string {
  */
 private function updateConfFile(string $name, ?string $value) : void {
 	$file = $this->conf['@file'];
-	// \rkphplib\lib\log_debug("Conf.set:392> $name=[$value] in $file");
+	// \rkphplib\lib\log_debug("Conf.updateConfFile:413> $name=[$value] in $file");
 
 	if (substr($file, -5) == '.json') {
 		self::array_set($name, $value, $this->conf);
@@ -441,7 +441,7 @@ public function set(string $name, ?string $value) : int {
 		return 0;
 	}
 
-	// \rkphplib\lib\log_debug("Conf.set:398> [$name]=[$value]");
+	// \rkphplib\lib\log_debug("Conf.set:444> [$name]=[$value]");
 	$qtype = ($this->lid > 0) ? 'select_user_path' : 'select_system_path';
 	$path = explode('.', $name);
 
