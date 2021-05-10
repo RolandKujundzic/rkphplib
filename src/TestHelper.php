@@ -9,7 +9,7 @@ if (!defined('DOCROOT')) {
 	if (is_dir(dirname(__DIR__).'/data')) {
 		define('DOCROOT', dirname(__DIR__));
 	}
-	else if (substr(PATH_RKPHPLIB, -18) == '/php/rkphplib/src/' && is_dir(dirname(dirname(dirname(__DIR__)))).'/data') {
+	else if (substr(PATH_RKPHPLIB, -18) == '/php/rkphplib/src/' && is_dir(dirname(dirname(dirname(__DIR__))).'/data')) {
 		define('DOCROOT', dirname(dirname(dirname(__DIR__))));
 	}
 }
