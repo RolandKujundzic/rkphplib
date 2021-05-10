@@ -1,0 +1,12 @@
+{conf:load}{const:DOCROOT}/Conf.json{:conf}
+{conf:a}A{:conf}
+{conf:a.b}A.B{:conf}
+{conf:a.c}A.C{:conf}
+{load:}{const:DOCROOT}/Conf.json{:load}
+---
+{conf:load}{const:DOCROOT}/Conf.conf{:conf}
+{conf:a}A{:conf}
+{conf:a.b}A.B{:conf}
+{conf:a.c}A.C{:conf}
+{load:}{const:DOCROOT}/Conf.conf{:load}
+
