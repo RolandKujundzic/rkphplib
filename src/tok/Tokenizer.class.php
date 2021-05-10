@@ -1238,7 +1238,7 @@ public function getTag(string $name) : string {
 // AUTO CREATED BY bin/plugin_map
 private function tryPluginMap(string $name) : void {
 	static $map = [
-		'FileSystem' => [ 'directory', 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'file', 'file:size', 'file:copy', 'file:exists', 'csv_file', 'csv_file:conf', 'csv_file:append', 'csv_file:open', 'csv_file:close', 'dirname', 'basename' ],
+		'FileSystem' => [ 'directory', 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'file', 'file:info', 'file:size', 'file:copy', 'file:exists', 'csv_file', 'csv_file:conf', 'csv_file:append', 'csv_file:open', 'csv_file:close', 'dirname', 'basename' ],
 		'FormValidator' => [ 'fv2', 'fv2:check', 'fv2:hidden', 'fv2:in', 'fv2:init', 'fv2:preset' ],
 		'Menu' => [ 'menu', 'menu:add', 'menu:conf' ],
 		'TArray' => [ 'array', 'array:set', 'array:get', 'array:shift', 'array:unshift', 'array:pop', 'array:push', 'array:join', 'array:length', 'array:split' ],
