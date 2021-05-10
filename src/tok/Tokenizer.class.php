@@ -1238,6 +1238,7 @@ public function getTag(string $name) : string {
 // AUTO CREATED BY bin/plugin_map
 private function tryPluginMap(string $name) : void {
 	static $map = [
+		'FileSystem' => [ 'directory', 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'file', 'file:size', 'file:copy', 'file:exists', 'csv_file', 'csv_file:conf', 'csv_file:append', 'csv_file:open', 'csv_file:close', 'dirname', 'basename' ],
 		'FormValidator' => [ 'fv2', 'fv2:check', 'fv2:hidden', 'fv2:in', 'fv2:init', 'fv2:preset' ],
 		'Menu' => [ 'menu', 'menu:add', 'menu:conf' ],
 		'TArray' => [ 'array', 'array:set', 'array:get', 'array:shift', 'array:unshift', 'array:pop', 'array:push', 'array:join', 'array:length', 'array:split' ],
@@ -1245,7 +1246,6 @@ private function tryPluginMap(string $name) : void {
 		'TConf' => [ 'conf', 'conf:append', 'conf:get', 'conf:get_path', 'conf:id', 'conf:load', 'conf:save', 'conf:set', 'conf:set_path', 'conf:set_default', 'conf:var' ],
 		'TDate' => [ 'date' ],
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval:call', 'eval' ],
-		'TFileSystem' => [ 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'directory', 'file:size', 'file:copy', 'file:exists', 'csv_file:conf', 'csv_file:append', 'csv_file:open', 'csv_file:close', 'csv_file', 'file', 'dirname', 'basename' ],
 		'TFormValidator' => [ 'fv', 'fv:appendjs', 'fv:check', 'fv:conf', 'fv:emsg', 'fv:error', 'fv:error_message', 'fv:get', 'fv:get_conf', 'fv:hidden', 'fv:in', 'fv:init', 'fv:preset', 'fv:set_error_message', 'fv:tpl' ],
 		'TGDLib' => [ 'gdlib:print', 'gdlib:font', 'gdlib:init', 'gdlib:load', 'gdlib:new', 'gdlib' ],
 		'THighlight' => [ 'source:php', 'source:html' ],
