@@ -1270,7 +1270,12 @@ private function tryPluginMap(string $name) : void {
 
 	foreach ($map as $cname => $list) {
 		if (in_array($name, $list)) {
-			require_once __DIR__.'/'.$cname.'.class.php';
+			$path = __DIR__."/$cname.class.php";
+			if (!is_file($path)) {
+				$path = __DIR__."/$cname.php";
+			}
+
+			require_once $path;
 			$cname = '\\rkphplib\\tok\\'.$cname;
 			$obj = new $cname();
 			$this->register($obj);
