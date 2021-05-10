@@ -68,6 +68,10 @@ public function tok_file_info(array $p) : string {
 	$info = File::info($p[0]);
 	$res = '';
 
+	if (!count($info)) {
+		return $res;
+	}
+
 	if (!isset($p[1])) {
 		foreach ($info as $key => $value) {
 			$this->tok->setVar('file.'.$key, $value);
