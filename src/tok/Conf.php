@@ -29,7 +29,7 @@ use function rkphplib\lib\kv2conf;
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
  */
-class TConf implements TokPlugin {
+class Conf implements TokPlugin {
 use \rkphplib\traits\Map;
 
 // @var ADatabase $db
@@ -131,7 +131,7 @@ public function tok_conf_save(string $file, array $p) : void {
  * @tok {conf:load}path/file.conf{:conf}{set:}{conf:get:*}{:set}
  */
 public function tok_conf_load(string $file) : void {
-	// \rkphplib\lib\log_debug("TConf.tok_conf_load:134> $file");
+	// \rkphplib\lib\log_debug("Conf.tok_conf_load:134> $file");
 	if (!File::exists($file)) {
 		$this->conf = [];
 	}
@@ -166,47 +166,51 @@ public function tok_conf(string $key, ?string $value) : string {
 	}
 
 	if (is_null($val)) {
-		// \rkphplib\lib\log_debug("TConf.tok_conf:169> set [$key]=[$value]");
+		\rkphplib\lib\log_debug("Conf.tok_conf:169> set [$key]=[$value]");
 		$this->set($key, $value);
 		$val = is_null($value) ? '' : $value;
 	}
 
-	// \rkphplib\lib\log_debug("TConf.tok_conf:174> [$key]=[$val]");
+	\rkphplib\lib\log_debug("Conf.tok_conf:174> [$key]=[$val]");
 	return $val;
 }
 
 
 /**
+ * @function array_get
  * @example …
  * $x = [ 'a' => [ 'b' => 1, [ 'c' => 2 ], 'b2.c' => 3 ] ];
  * array_get('a', $x) == [ 'b' => 1, [ 'c' => 2 ] ];
  * array_get('a.b', $x) == 1;
  * array_get('a.b.c', $x) == 2;
  * array_get('a.b2.c', $x) == 3;
+ * array_get('a.g') == null;
  * @eol
- * @return any
  */
 private static function array_get(string $key, array $p) {
-  $path = explode('.', $key);
+	$path = explode('.', $key);
 	$res = null;
 
   while (!is_null($p) && count($path) > 0) {
 		$pkey = join('.', $path);
-    $key = array_shift($path);
+		$key = array_shift($path);
+
 		if (isset($p[$pkey])) {
 			$res = $p[$pkey];
 			$p = null;
 		}
-    if (isset($p[$key])) {
+
+		if (isset($p[$key])) {
 			$p = $p[$key];
 			$res = $p;
-    }
-    else {
-     	$p = null;
-    }
-  }
+		}
+		else if (!is_null($p)) {
+			$res = null;
+			$p = null;
+		}
+	}
 
-  return $res;
+	return $res;
 }
 
 
@@ -389,13 +393,13 @@ private function updateConfFile() : void {
  */
 public function set(string $name, ?string $value) : int {
 	if (!is_null($this->conf)) {
-		// \rkphplib\lib\log_debug("TConf.set:392> [$name]=[$value]");
+		// \rkphplib\lib\log_debug("Conf.set:392> [$name]=[$value]");
 		$this->conf[$name] = $value;
 		$this->updateConfFile();
 		return 0;
 	}
 
-	// \rkphplib\lib\log_debug("TConf.set:398> [$name]=[$value]");
+	// \rkphplib\lib\log_debug("Conf.set:398> [$name]=[$value]");
 	$qtype = ($this->lid > 0) ? 'select_user_path' : 'select_system_path';
 	$path = explode('.', $name);
 
