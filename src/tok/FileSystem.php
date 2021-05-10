@@ -46,6 +46,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['file:info'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['file:size'] = TokPlugin::REQUIRE_BODY;
 	$plugin['file:copy'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
+	$plugin['file:download'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
 	$plugin['file:exists'] = TokPlugin::REQUIRE_BODY;
 	$plugin['csv_file'] = 0;
 	$plugin['csv_file:conf'] = TokPlugin::NO_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::KV_BODY;
@@ -446,6 +447,23 @@ public function tok_file_copy(array $p) : void {
 	}
 
 	File::copy($p[0], $p[1]);
+}
+
+
+/**
+ * @tok {file:download}url=http://domain.tld/file.zip|#|save_as=data/.tmp/file.zip{:file}
+ */
+public function tok_file_download(array $p) : void {
+	if (empty($p['url']) || empty($p['save_as'])) {
+		return;
+	}
+
+	if (!($fh = fopen($url, 'rb'))) {
+		File::save($p['save_as'], File::fromURL($p['url']));
+	}
+
+	file_put_contents($p['save_as'], $fh);
+	fclose($fh);
 }
 
 
