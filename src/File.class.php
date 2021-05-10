@@ -685,21 +685,22 @@ public static function formatSize(int $bytes, $suffix = [ ' Byte', ' KB', ' MB' 
   	$n++;
 	}
 
-	return $res.$suffix[$n];
+	return $bytes.$suffix[$n];
 }
 
 
 /**
- * @return …
- * 
- * @eol
+ * Return hash with keys (or [] if file does not exist): 
+ * perms, since, lchange, owner, group, size, name, file, path, dir
  */
-public static function info(string $file) : ?array {
+public static function info(string $file) : array {
 	if (!self::exists($file)) {
-		return null;
+		return [];
 	}
 
-	$info = FSEntry::stat($file);
+	$stat = FSEntry::stat($file);
+
+	$info = [];
 	$info['perms'] = $stat['perms']['human'];
 	$info['since'] = $stat['time']['since'];
 	$info['lchange'] = $stat['time']['modified'];
@@ -1082,7 +1083,7 @@ public static function write($fh, string $data) : void {
 			$data_len = $data_len - $byte;
 			$byte = fwrite($fh, substr($data, $byte));
 			$msg = ($data_len > 80) ? substr($data, 0, 40).' ... '.substr($data, -40) : $data;
-			// \rkphplib\lib\log_debug("File::write:1085> retry write: n=[$n] prev_len=[$prev_len] data_len=[$data_len] byte=[$byte] data=[$msg]");
+			// \rkphplib\lib\log_debug("File::write:1086> retry write: n=[$n] prev_len=[$prev_len] data_len=[$data_len] byte=[$byte] data=[$msg]");
 
 			if ($byte === false) {
 				throw new Exception('could not write data', "retry=[$n] fh=[$fh] byte=[$byte] len=[$data_len] prev_len=[$prev_len]");
