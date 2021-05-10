@@ -13,3 +13,6 @@ require_once PATH_SRC.'TestHelper.php';
 
 $th = new rkphplib\TestHelper();
 
+if (!defined('DOCROOT') && is_dir(dirname(__DIR__).'/tmp')) {
+	define('DOCROOT', dirname(__DIR__).'/tmp');
+}
