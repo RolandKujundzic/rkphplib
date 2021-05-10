@@ -362,7 +362,7 @@ public static function checkPath(string $path, string $prefix = '', array $allow
 		$prefix = DOCROOT;
 	}
 
-	if (substr($path, 0, 1) == '/') {
+	if (substr($path, 0, 1) == '/' && strpos($path, $prefix) === false) {
 		$path = $prefix.$path;
 	}
 
