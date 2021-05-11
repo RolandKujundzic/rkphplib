@@ -7,7 +7,6 @@ require_once __DIR__.'/../Dir.class.php';
 require_once __DIR__.'/../File.class.php';
 require_once __DIR__.'/../lib/execute.php';
 require_once __DIR__.'/../lib/split_str.php';
-require_once __DIR__.'/../lib/replace_tags.php';
 
 use rkphplib\Exception;
 use rkphplib\FSEntry;
@@ -16,7 +15,6 @@ use rkphplib\Dir;
 
 use function rkphplib\lib\execute;
 use function rkphplib\lib\split_str;
-use function rkphplib\lib\replace_tags;
 
 
 /**
@@ -81,11 +79,11 @@ public function tok_picture_tbn(string $param, array $images) : string {
 	else if ($param == 'strip2') {
 		$src = count($images) == 0 || empty($images[0]) ? $tbn_dir.'/default.jpg' : $tbn_dir.'/'.$images[0];
 		$r = [ 'num' => 0, 'src' => $src ]; 
-		$res = replace_tags($this->conf['tpl.strip2'], $r, [ '$', '', '' ]);
+		$res = self::replace_tags($this->conf['tpl.strip2'], $r);
 
 		if (count($images) > 1) {
 			$r = [ 'num' => 2, 'src' => $tbn_dir.'/'.$images[1] ]; 
-			$res .= "\n".replace_tags($this->conf['tpl.strip2'], $r, [ '$', '', '' ]);
+			$res .= "\n".self::replace_tags($this->conf['tpl.strip2'], $r);
 		}
 	}
 	else if ($param == 'strip') {
@@ -93,13 +91,37 @@ public function tok_picture_tbn(string $param, array $images) : string {
 
 		for ($i = 0;$i < count($images); $i++) {
 			$r = [ 'num' => $i + 1, 'src' => $tbn_dir.'/'.$images[$i] ]; 
-			$res .= replace_tags($this->conf['tpl.strip'], $r, [ '$', '', '' ]);
+			$res .= self::replace_tags($this->conf['tpl.strip'], $r);
 		}
 	
 		$res .= $this->conf['tpl.strip_footer'];
 	}
 
 	return $res;
+}
+
+
+/**
+ * @function replace_tags
+ */
+private static function replace_tags(string $text, array $hash, array $conf = [ '$', '', '' ]) : string {
+	if ($conf[1] === '') {
+		krsort($hash);
+	}
+
+	foreach ($hash as $key => $value) {
+    if (is_array($value)) {
+			$sub_conf = $conf;
+			$sub_conf[2] = empty($conf[2]) ? $key : $conf[2].'.'.$key;
+			$text = replace_tags($text, $value, $sub_conf);
+		}
+		else {
+			$prefix = empty($conf[2]) ? '' : $conf[2].'.';
+			$text = str_replace($conf[0].$prefix.$key.$conf[1], $value, $text);
+		}
+	}
+
+	return $text;
 }
 
 

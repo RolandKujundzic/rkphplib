@@ -440,6 +440,11 @@ public function tok_tpl(array $p, ?string $arg) : string {
 		throw new Exception("call [tpl_set:$key] first");
 	}
 
+	if (substr($key, 0, 1) == '$') {
+		$key = substr($key, 1);
+		return self::replace_tags($this->_tpl[$key]['tpl'], conf2kv($arg)); 
+	}
+
 	$pnum = $this->_tpl[$key]['pnum'];
 	$anum = $this->_tpl[$key]['anum'];
 	$tnum = $this->_tpl[$key]['tnum'];
@@ -471,6 +476,30 @@ public function tok_tpl(array $p, ?string $arg) : string {
 
 	// \rkphplib\lib\log_debug("TBase.tok_tpl:472> return $tpl"); 
 	return $tpl;
+}
+
+
+/**
+ * @function replace_tags
+ */
+private static function replace_tags(string $text, array $hash, array $conf = [ '$', '', '' ]) : string {
+	if ($conf[1] === '') {
+		krsort($hash);
+	}
+
+	foreach ($hash as $key => $value) {
+    if (is_array($value)) {
+			$sub_conf = $conf;
+			$sub_conf[2] = empty($conf[2]) ? $key : $conf[2].'.'.$key;
+			$text = replace_tags($text, $value, $sub_conf);
+		}
+		else {
+			$prefix = empty($conf[2]) ? '' : $conf[2].'.';
+			$text = str_replace($conf[0].$prefix.$key.$conf[1], $value, $text);
+		}
+	}
+
+	return $text;
 }
 
 
