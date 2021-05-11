@@ -85,6 +85,23 @@ public static function gunzip(string $file) : string {
 
 
 /**
+ * @code File::unzip('archive.zip', 'target/directory');
+ * @code File::unzip('archive.zip', 'target/directory', 'file.csv');
+ */
+public static function unzip(string $zip_file, string $target_dir, $files = null) : void {
+	$zip = new \ZipArchive();
+	$res = '';
+
+	if (!$zip->open($zip_file)) {
+		throw new Exception('unzip failed', $zip_file);
+	}
+
+	$zip->extractTo($target_dir, $files);
+	$zip->close();
+}
+
+
+/**
  * Save $data as $file. If $data is null gzip $file as $file.gz.
  */
 public static function gzip(string $file, ?string $data = null) : void {
@@ -370,9 +387,17 @@ public static function loadCSV(string $file, string $delimiter = ',', array $opt
  * 
  * @hash $header …
  * cache_ttl: 0
+ * cache_return: 1
  * cache_as: optional, if cache_ttl > 0 use SETTINGS_CACHE_DIR/url_MD5($url).cache
  * return_html_body: 1|true|y (optional, return html body only if set)
  * CURL_HEADER: VALUE
+ * @eol
+ * 
+ * @code …
+ * $csv = self::fromURL('https://domain.tld/download/data.csv');
+ * $html = self::fromURL('https://domain.tld/index.php', true, [ 'return_html_body' => 1 ]);
+ * self::fromURL('https://domain.tld/path/to/file.csv', true,
+ *   [ 'cache_ttl' => 3600 * 24 * 31, 'cache_as' => 'download/file.csv', 'cache_return' => 0 ]);
  * @eol
  */
 public static function fromURL(string $url, bool $required = true, array $header = []) : string {
@@ -381,14 +406,18 @@ public static function fromURL(string $url, bool $required = true, array $header
 	}
 
 	$cache_ttl = 0;
+	$cache_return = 1;
 	if (!empty($header['cache_ttl']) && intval($header['cache_ttl']) > 5) {
 		$cache_ttl = $header['cache_ttl'];
 		$cache_as = empty($header['cache_as']) ? SETTINGS_CACHE_DIR.'/url_'.md5($url).'.cache' : $header['cache_as'];
+		$cache_return = isset($header['cache_return']) ? $header['cache_return'] : 1;
+
 		unset($header['cache_as']);
 		unset($header['cache_ttl']);
+		unset($header['cache_return']);
 
 		if (self::exists($cache_as) && self::lastModified($cache_as) + $cache_ttl > time()) {
-			return self::load($cache_as);
+			return $cache_return ? self::load($cache_as) : '';
 		}
 	}
 
@@ -446,6 +475,9 @@ public static function fromURL(string $url, bool $required = true, array $header
 
 	if ($cache_ttl) {
 		self::save($cache_as, $res);
+		if (!$cache_return) {
+			$res = '';
+		}
 	}
 
 	return $res;
@@ -1085,7 +1117,7 @@ public static function write($fh, string $data) : void {
 			$data_len = $data_len - $byte;
 			$byte = fwrite($fh, substr($data, $byte));
 			$msg = ($data_len > 80) ? substr($data, 0, 40).' ... '.substr($data, -40) : $data;
-			// \rkphplib\lib\log_debug("File::write:1088> retry write: n=[$n] prev_len=[$prev_len] data_len=[$data_len] byte=[$byte] data=[$msg]");
+			// \rkphplib\lib\log_debug("File::write:1120> retry write: n=[$n] prev_len=[$prev_len] data_len=[$data_len] byte=[$byte] data=[$msg]");
 
 			if ($byte === false) {
 				throw new Exception('could not write data', "retry=[$n] fh=[$fh] byte=[$byte] len=[$data_len] prev_len=[$prev_len]");
