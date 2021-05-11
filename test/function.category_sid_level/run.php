@@ -16,4 +16,4 @@ function cat_tree(string $cat_str) : void {
 
 global $th;
 
-$th->run(1, 1);
+$th->run(1, 2);

@@ -12,5 +12,6 @@ b,,B
 c,,C
 EOL;
 
+category_sid_level(null);
 cat_tree($cat_str);
 
