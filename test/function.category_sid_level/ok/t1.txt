@@ -1,0 +1,10 @@
+  ID|   PID| SID| LVL|      NAME
+   a|      |   1|   1|         A
+  aa|     a|  11|   2|        AA
+  ab|     a|  12|   2|        AB
+   b|      |   2|   1|         B
+  ba|     b|  21|   2|        BA
+ baa|    ba| 211|   3|       BAA
+  bb|     b|  22|   2|        BB
+ bba|    bb| 221|   3|       BBA
+   c|      |   3|   1|         C
