@@ -1,6 +1,7 @@
 <?php
 
 /**
+ * @function category_sid_level
  * Return [ sid, level]. Call category_sid_level(null) to reset counter.
  * Max 57 entries per level.
  * @function category_sid
