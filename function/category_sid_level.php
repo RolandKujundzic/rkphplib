@@ -26,7 +26,7 @@ function category_sid_level(?string $id, ?string $pid = null) : array {
 		$last_level = 1;
 		$id_pid = [];
 		$id_sid = [];
-		$ln = [];
+		$ln = [ 1 ];
 
 		return [];
 	}
@@ -48,12 +48,17 @@ function category_sid_level(?string $id, ?string $pid = null) : array {
 	}
 
 	$n = $ln[$level - 1];
+
+	if ($n > 61) {
+		throw new \Exception('too many categories');
+	}
+
 	$sid .= $az[$n];
 
 	$ln[$level - 1]++;
 
 	if ($last_level > $level) {
-		array_pop($ln);
+		$ln = array_slice($ln, 0, $level);
 	}
 
 	$id_pid[$id] = $pid;
