@@ -1,22 +1,14 @@
 <?php
 
-global $th;
+require_once '../settings.php';
 
-$src_dir = dirname(dirname(__DIR__)).'/src/';
-
-if (!isset($th)) {
-	require_once $src_dir.'TestHelper.php';
-	$th = new rkphplib\TestHelper();
-}
-
-require_once $src_dir.'code/Parser.class.php';
-require_once $src_dir.'Dir.class.php';
+require_once PATH_SRC.'code/Parser.class.php';
+require_once PATH_SRC.'Dir.class.php';
 
 use rkphplib\Exception;
 use rkphplib\code\Parser;
 use rkphplib\FSEntry;
 use rkphplib\Dir;
-
 
 
 /**
@@ -39,6 +31,8 @@ function _scan_code($dir, $suffix) {
 /*
  * M A I N
  */
+
+global $th;
 
 $load = 0;
 try {
@@ -72,3 +66,4 @@ _scan_code($src_dir, 'php');
 _scan_code(DOCROOT.'/php/phplib/src', 'php');
 _scan_code(DOCROOT.'/shell/rkscript/src', 'sh');
 _scan_code(DOCROOT.'/shell/shlib/sh/run', 'sh');
+
