@@ -167,7 +167,7 @@ public function tok_conf(string $key, ?string $value) : string {
 	}
 	
 	if (!is_null($this->conf)) {
-		$val = Hash::array_get($key, $this->conf);
+		$val = Hash::get($key, $this->conf);
 	}
 	else {
 		$qtype = ($this->lid > 0) ? 'select_user_path' : 'select_system_path';
@@ -351,7 +351,7 @@ private function updateConfFile(string $name, ?string $value) : void {
 	// \rkphplib\lib\log_debug("Conf.updateConfFile:351> $name=[$value] in $file");
 
 	if (substr($file, -5) == '.json') {
-		Hash::array_set($name, $value, $this->conf);
+		Hash::set($name, $value, $this->conf);
 	}
 	else {
 		$this->conf[$name] = $value;
