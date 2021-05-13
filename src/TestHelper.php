@@ -659,10 +659,17 @@ private function load_src(string $cpath = '') : void {
 
 
 /**
- * print $name($p1, $p2) == RESULT
+ * print $name($param_list) == RESULT
  */
-public static function call2(string $name, $p1, $p2) : void {
-  print "$name(".json_encode($p1).', '.json_encode($p2).") == ".json_encode($name($p1, $p2)).";\n";
+public static function pcall(string $name, array $param_list) : void {
+	$res = \rkphplib\lib\call($name, $param_list);
+
+	$plist = [];
+	foreach ($param_list as $param) {
+		array_push($plist, json_encode($param));
+	}
+
+  print "$name(".join(', ', $plist).") == ".json_encode($res).";\n";
 }
 
 
