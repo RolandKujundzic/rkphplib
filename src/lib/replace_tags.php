@@ -1,10 +1,15 @@
 <?php
 
+namespace rkphplib\lib;
+
+
 /**
- * @function replace_tags
  * Replace {:=key} in $text with $hash.key value. Replace $key.subkey with $hash[key][sub] value.
  * Use "(array)$obj" to convert object into $hash. Default $conf = [ '{:=', '}', '' ] ($conf[2] is prefix). 
  * If $conf[1] == '' reverse sort $hash keys to prevent replace errors.
+ *
+ * @example replace_tags('$a $a2 $a2x', [ 'a' => 1, 'a2' => 2, 'a2x' => 3 ]) == '1 2 3'
+ * @author Roland Kujundzic <roland@kujundzic.de>
  */
 function replace_tags(string $text, array $hash, array $conf = [ '$', '', '' ]) : string {
 	if ($conf[1] === '') {
