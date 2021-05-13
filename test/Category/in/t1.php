@@ -1,22 +1,17 @@
 <?php
 
-$text_opt = [
-	'branch' => '+',
-	'leaf' => '--',
-	'line_feed' => "\n",
-	'tpl' => '{:=name}{:=ds_di}',
-	'ds_di' => ' ({:=ds}/{:=id})'
-];
+$cat_str = <<<EOL
+a,,A
+	aa,a,AA
+	ab,a,AB
+b,,B
+	ba,b,BA
+		baa,ba,BAA
+	bb,b,BB
+		bba,bb,BBA
+c,,C
+EOL;
 
-$cat = new Category();
-
-$cat->add('Shop', 'root', '', 0);
-print $cat->toText($text_opt);
-
-$cat->add('Hosen', 'h', '', 1);
-$cat->add('Herren', 'h-h', 'h');
-$cat->add('Damen', 'h-d', '', 2);
-$cat->addNode([ 'name' => 'Zubehör', 'id' => 'z', 'level' => 1 ]);
-
-print $cat->toText($text_opt);
+category_sid_level(null);
+cat_tree($cat_str);
 

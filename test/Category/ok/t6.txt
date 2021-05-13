@@ -1,0 +1,10 @@
+[]
+
+[
+	{ "id": "root", "name": "Shop", "level": "1", "ds": "2", "ts": "4" },
+	{ "id": "h", "name": "Hosen", "level": "2", "ds": "2", "ts": "2" },
+	{ "id": "h-h", "name": "Herren", "level": "3", "ds": "0", "ts": "0" },
+	{ "id": "h-d", "name": "Damen", "level": "3", "ds": "0", "ts": "0" },
+	{ "id": "z", "name": "Zubehör", "level": "1", "ds": "0", "ts": "0" }
+]
+
