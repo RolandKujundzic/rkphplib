@@ -4,16 +4,16 @@ namespace rkphplib;
 
 
 /**
- * Array manipulation.
+ * Vector manipulation.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class ArrayHelper {
+class Vector {
 
 /**
  * Normalize nested array into array.
  *
- * @example self::normalize([ [ [ a, b ], c ], d ]) = [ a, b, c, d ]
+ * @example Vector::normalize([ [ [ a, b ], c ], d ]) = [ a, b, c, d ]
  */
 public static function normalize(array &$arr) : void {
 	for ($i = 0; $i < count($arr); $i++) {
