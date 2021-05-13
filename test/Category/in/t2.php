@@ -175,6 +175,5 @@ s143,s30,Knöchelschuhe
 s144,s30,Stiefel
 EOL;
 
-category_sid_level(null);
 cat_tree($cat_str);
 
