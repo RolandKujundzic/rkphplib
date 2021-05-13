@@ -160,10 +160,8 @@ public function add(string $name, int $pid = NULL) : void {
 
 
 /**
- * @function category_sid_level
  * Return [ sid, level]. Call category_sid_level(null) to reset counter.
  * Max 57 entries per level.
- * @function category_sid
  */
 public static function sid_level(?string $id, ?string $pid = null) : array {
 	static $last_pid = null;
