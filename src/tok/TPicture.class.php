@@ -7,6 +7,7 @@ require_once __DIR__.'/../Dir.class.php';
 require_once __DIR__.'/../File.class.php';
 require_once __DIR__.'/../lib/execute.php';
 require_once __DIR__.'/../lib/split_str.php';
+require_once __DIR__.'/../lib/replace_tags.php';
 
 use rkphplib\Exception;
 use rkphplib\FSEntry;
@@ -15,6 +16,7 @@ use rkphplib\Dir;
 
 use function rkphplib\lib\execute;
 use function rkphplib\lib\split_str;
+use function rkphplib\lib\replace_tags;
 
 
 /**
@@ -79,11 +81,11 @@ public function tok_picture_tbn(string $param, array $images) : string {
 	else if ($param == 'strip2') {
 		$src = count($images) == 0 || empty($images[0]) ? $tbn_dir.'/default.jpg' : $tbn_dir.'/'.$images[0];
 		$r = [ 'num' => 0, 'src' => $src ]; 
-		$res = self::replace_tags($this->conf['tpl.strip2'], $r);
+		$res = replace_tags($this->conf['tpl.strip2'], $r);
 
 		if (count($images) > 1) {
 			$r = [ 'num' => 2, 'src' => $tbn_dir.'/'.$images[1] ]; 
-			$res .= "\n".self::replace_tags($this->conf['tpl.strip2'], $r);
+			$res .= "\n".replace_tags($this->conf['tpl.strip2'], $r);
 		}
 	}
 	else if ($param == 'strip') {
@@ -91,37 +93,13 @@ public function tok_picture_tbn(string $param, array $images) : string {
 
 		for ($i = 0;$i < count($images); $i++) {
 			$r = [ 'num' => $i + 1, 'src' => $tbn_dir.'/'.$images[$i] ]; 
-			$res .= self::replace_tags($this->conf['tpl.strip'], $r);
+			$res .= replace_tags($this->conf['tpl.strip'], $r);
 		}
 	
 		$res .= $this->conf['tpl.strip_footer'];
 	}
 
 	return $res;
-}
-
-
-/**
- * @function replace_tags
- */
-private static function replace_tags(string $text, array $hash, array $conf = [ '$', '', '' ]) : string {
-	if ($conf[1] === '') {
-		krsort($hash);
-	}
-
-	foreach ($hash as $key => $value) {
-    if (is_array($value)) {
-			$sub_conf = $conf;
-			$sub_conf[2] = empty($conf[2]) ? $key : $conf[2].'.'.$key;
-			$text = replace_tags($text, $value, $sub_conf);
-		}
-		else {
-			$prefix = empty($conf[2]) ? '' : $conf[2].'.';
-			$text = str_replace($conf[0].$prefix.$key.$conf[1], $value, $text);
-		}
-	}
-
-	return $text;
 }
 
 
@@ -224,7 +202,7 @@ public function tok_picture_init(array $p) : void {
 		$this->conf[$key] = $value;
 	}
 
-	// \rkphplib\lib\log_debug([ "TPicture.tok_picture_init:227> this.conf: <1>\n<2>", $this->conf, $p ]);
+	// \rkphplib\lib\log_debug([ "TPicture.tok_picture_init:205> this.conf: <1>\n<2>", $this->conf, $p ]);
 }
 
 
@@ -313,7 +291,7 @@ public function tok_picture_src(array $p) : string {
 	$this->checkConf($p);
 	$this->computeImgSource();
 
-	// \rkphplib\lib\log_debug('TPicture.tok_picture_src:316> this.conf: '.print_r($this->conf, true));
+	// \rkphplib\lib\log_debug('TPicture.tok_picture_src:294> this.conf: '.print_r($this->conf, true));
 	if (empty($this->conf['source'])) {
 		return '';
 	}
@@ -482,21 +460,21 @@ private function runConvertCmd($p) {
 
   Dir::create($target_dir, 0777, true);
 
-	// \rkphplib\lib\log_debug([ "TPicture.runConvertCmd:485> <1>", $p ]);
+	// \rkphplib\lib\log_debug([ "TPicture.runConvertCmd:463> <1>", $p ]);
 	if (File::exists($this->conf['target']) && !empty($this->conf['use_cache'])) {
 		if ($this->conf['use_cache'] == 'check_time') {
 			if (File::lastModified($this->conf['source']) <= File::lastModified($this->conf['target'])) {
-				// \rkphplib\lib\log_debug("TPicture.runConvertCmd:489> check_time - use cache: ".$this->conf['target']);
+				// \rkphplib\lib\log_debug("TPicture.runConvertCmd:467> check_time - use cache: ".$this->conf['target']);
 				return $this->conf['target'];
 			}
 		}
 		else {
-			// \rkphplib\lib\log_debug("TPicture.runConvertCmd:494> use cache: ".$this->conf['target']);
+			// \rkphplib\lib\log_debug("TPicture.runConvertCmd:472> use cache: ".$this->conf['target']);
 			return $this->conf['target'];
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TPicture.runConvertCmd:499> $cmd");
+	// \rkphplib\lib\log_debug("TPicture.runConvertCmd:477> $cmd");
 	execute($cmd.' 2>/dev/null', $p); 
 
 	if (!FSEntry::isFile($p['target'], false)) {
