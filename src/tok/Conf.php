@@ -6,12 +6,14 @@ require_once __DIR__.'/TokPlugin.iface.php';
 require_once __DIR__.'/../Database.class.php';
 require_once __DIR__.'/../traits/Map.php';
 require_once __DIR__.'/../File.class.php';
+require_once __DIR__.'/../Hash.php';
 require_once __DIR__.'/../lib/conf2kv.php';
 require_once __DIR__.'/../lib/kv2conf.php';
 
 use rkphplib\Exception;
 use rkphplib\ADatabase;
 use rkphplib\Database;
+use rkphplib\Hash;
 use rkphplib\File;
 
 use function rkphplib\lib\conf2kv;
@@ -131,7 +133,7 @@ public function tok_conf_save(string $file, array $p) : void {
  * @tok {conf:load}path/file.conf{:conf}{set:}{conf:get:*}{:set}
  */
 public function tok_conf_load(string $file) : void {
-	// \rkphplib\lib\log_debug("Conf.tok_conf_load:134> $file");
+	// \rkphplib\lib\log_debug("Conf.tok_conf_load:136> $file");
 	if (!File::exists($file)) {
 		$this->conf = [];
 	}
@@ -165,7 +167,7 @@ public function tok_conf(string $key, ?string $value) : string {
 	}
 	
 	if (!is_null($this->conf)) {
-		$val = self::array_get($key, $this->conf);
+		$val = Hash::array_get($key, $this->conf);
 	}
 	else {
 		$qtype = ($this->lid > 0) ? 'select_user_path' : 'select_system_path';
@@ -174,77 +176,13 @@ public function tok_conf(string $key, ?string $value) : string {
 	}
 
 	if (is_null($val) || ($update && $val != $value)) {
-		// \rkphplib\lib\log_debug("Conf.tok_conf:177> set $key=[$value]");
+		// \rkphplib\lib\log_debug("Conf.tok_conf:179> set $key=[$value]");
 		$this->set($key, $value);
 		$val = is_null($value) ? '' : $value;
 	}
 
-	// \rkphplib\lib\log_debug("Conf.tok_conf:182> $key=[$val]");
+	// \rkphplib\lib\log_debug("Conf.tok_conf:184> $key=[$val]");
 	return $val;
-}
-
-
-/**
- * @function array_set
- */
-private static function array_set(string $key, $value, array &$p) : void {
-	$path = explode('.', $key);
-	$tmp = &$p;
-
-	while (count($path)) {
-		$key = array_shift($path);
-
-		if (!count($path)) {
-			$tmp[$key] = $value;
-		}
-		else {
-			if (!array_key_exists($key, $tmp)) {
-				$tmp[$key] = [];
-			}
-			else if (!is_array($tmp[$key])) {
-				$key .= '.'.array_shift($path);
-
-				if (!count($path)) {
-					$tmp[$key] = $value;
-				}
-				else {
-					$tmp[$key] = [];
-				}
-			}
-
-			$tmp = &$tmp[$key];
-		}
-	}
-}
-
-
-/**
- * @function array_get
- */
-private static function array_get(string $key, array $p) {
-	$path = explode('.', $key);
-	$res = null;
-
-  while (!is_null($p) && count($path) > 0) {
-		$pkey = join('.', $path);
-		$key = array_shift($path);
-
-		if (isset($p[$pkey])) {
-			$res = $p[$pkey];
-			$p = null;
-		}
-
-		if (isset($p[$key])) {
-			$p = $p[$key];
-			$res = $p;
-		}
-		else if (!is_null($p)) {
-			$res = null;
-			$p = null;
-		}
-	}
-
-	return $res;
 }
 
 
@@ -410,10 +348,10 @@ public function get(string $name) : string {
  */
 private function updateConfFile(string $name, ?string $value) : void {
 	$file = $this->conf['@file'];
-	// \rkphplib\lib\log_debug("Conf.updateConfFile:413> $name=[$value] in $file");
+	// \rkphplib\lib\log_debug("Conf.updateConfFile:351> $name=[$value] in $file");
 
 	if (substr($file, -5) == '.json') {
-		self::array_set($name, $value, $this->conf);
+		Hash::array_set($name, $value, $this->conf);
 	}
 	else {
 		$this->conf[$name] = $value;
@@ -441,7 +379,7 @@ public function set(string $name, ?string $value) : int {
 		return 0;
 	}
 
-	// \rkphplib\lib\log_debug("Conf.set:444> [$name]=[$value]");
+	// \rkphplib\lib\log_debug("Conf.set:382> [$name]=[$value]");
 	$qtype = ($this->lid > 0) ? 'select_user_path' : 'select_system_path';
 	$path = explode('.', $name);
 
