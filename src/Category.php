@@ -46,9 +46,11 @@ public function __construct(array $conf = []) {
 	$item = empty($this->conf['item']) ? $this->conf['prefix'].'item' : $this->conf['item'];
 
 	$a_import = '';
+	$and_import = '';
 	$where_import = '';
 	if (!empty($this->conf['import']) && preg_match('/^[a-z0-9_]+$/', $this->conf['import'])) {
 		$a_import = "AND a.import='".$this->conf['import']."'";
+		$and_import = "AND import='".$this->conf['import']."'";
 		$where_import = "WHERE import='".$this->conf['import']."'";
 	}
 
@@ -61,26 +63,30 @@ public function __construct(array $conf = []) {
 
 		'select_id' => "SELECT * FROM $category WHERE id={:=id}",
 
+		'select_max_cat_level' => "SELECT MAX(level) AS max_level FROM $category $where_import",
+
 		'reset_cat_count' => "UPDATE $category SET dc=0, tc=0, di=0, ti=0 $where_import",
 
 		'update_cat_dc' => "UPDATE $category AS a INNER JOIN ".
 			"(SELECT pid, count(*) AS dc FROM $category $where_import GROUP BY pid) AS b ".
 			"ON a.id=b.pid $a_import SET a.dc=b.dc",
 
-		'update_cat_tc' => "UPDATE $category AS a INNER JOIN ".
-			"(SELECT sid, sum(dc) AS tc FROM $category $where_import GROUP BY sid) AS b ".
-			"ON b.sid LIKE CONCAT(a.sid, '%') $a_import SET a.tc=b.tc",
-
 		'update_cat_di' => "UPDATE $category AS a INNER JOIN ".
 			"(SELECT ci.category, count(*) AS di FROM $cat_item ci, $item i ".
 			"WHERE ci.item=i.id AND i.status=1 GROUP BY ci.category) AS b ".
 			"ON a.id=b.category $a_import SET a.di=b.di",
 
-		'update_cat_ti' => "SELECT 'ToDo'",
+		'update_cat_tc_max' => "UPDATE $category SET tc=dc WHERE level={:=level} $and_import",
 
 		'update_cat_tc' => "UPDATE $category AS a INNER JOIN ".
-			"(SELECT pid, count(*) AS tc FROM $category $where_import GROUP BY pid) AS b ".
-			"ON b.id LIKE CONCAT(a.id, '%') $a_import SET a.tc=b.tc",
+			"(SELECT pid, sum(tc) AS tc FROM $category WHERE level={:=level} $and_import GROUP BY pid) AS b ".
+			"ON a.id=b.pid $a_import SET a.tc=b.tc",
+
+		'update_cat_ti_max' => "UPDATE $category SET ti=di WHERE level={:=level} $and_import",
+
+		'update_cat_ti' => "UPDATE $category AS a INNER JOIN ".
+			"(SELECT pid, sum(ti) AS ti FROM $category WHERE level={:=level} $and_import GROUP BY pid) AS b ".
+			"ON a.id=b.pid $a_import SET a.ti=a.di + b.ti",
 	];
 
 	$qmap['create'] = <<<END
@@ -102,21 +108,34 @@ END;
  * Update dc, tc, di, ti counter
  */
 public function updateCounter() : void {
-	$this->runQuery([ 'reset_cat_count', 'update_cat_dc', 'update_cat_di' ]); // , 'update_cat_tc', 'update_cat_ti' ]); 
+	foreach ([ 'reset_cat_count', 'update_cat_dc', 'update_cat_di' ] as $qkey) {
+		$this->dbExec($qkey);
+	} 
+
+	$dbres = $this->db->selectOne($this->db->getQuery('select_max_cat_level'));
+	$max_level = $dbres['max_level'];
+
+	$this->dbExec('update_cat_tc_max', [ 'level' => $max_level - 1 ]);
+	for ($i = $max_level - 1; $i > 1; $i--) {
+		$this->dbExec('update_cat_tc', [ 'level' => $i ]);
+	}
+
+	$this->dbExec('update_cat_ti_max', [ 'level' => $max_level ]);
+	for ($i = $max_level; $i > 0; $i--) {
+		$this->dbExec('update_cat_ti', [ 'level' => $i ]);
+	}
 }
 
 
 /**
- * Run queries from $qkey_list.
+ * Execute database query
  */
-private function runQuery(array $qkey_list) : void {
-	for ($i = 0; $i < count($qkey_list); $i++) {
-		if ($this->conf['log']) {
-			print $this->db->getQuery($qkey_list[$i]).";\n";
-		}
-
-		$this->db->exec($qkey_list[$i]);
+private function dbExec(string $qkey, array $replace = []) : void {
+	if ($this->conf['log']) {
+		print trim($this->db->getQuery($qkey, $replace)).";\n";
 	}
+
+	$this->db->exec($qkey, $replace);
 }
 
 
