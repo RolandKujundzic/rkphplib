@@ -25,7 +25,7 @@ public static function get(string $key, array $p) {
 	$path = explode('.', $key);
 	$res = null;
 
-  while (!is_null($p) && count($path) > 0) {
+	while (!is_null($p) && count($path) > 0) {
 		$pkey = join('.', $path);
 		$key = array_shift($path);
 
