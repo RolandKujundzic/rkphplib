@@ -378,7 +378,7 @@ private function setDBVariable(string $table) : void {
 
 	$query_map = [
 		'select_login' => "SELECT *, PASSWORD({:=password}) AS password_input ".
-			"FROM $table WHERE login={:=login} AND (status='active' OR status='registered')",
+			"FROM $table WHERE login={:=login} AND status IN ({:=_status_list})",
 		'registered2active' => "UPDATE $table SET status='active' WHERE id={:=id}",
 		'insert' => "INSERT INTO $table (login, password, type, person, language, priv) VALUES ".
 			"({:=login}, PASSWORD({:=password}), {:=type}, {:=person}, {:=language}, {:=priv})",
@@ -715,7 +715,7 @@ private function selectFromDb(array $p) : ?array {
 				$table = ADatabase::escape_name($p['table']);
 				$p['select_login'] = !empty($p['select_login_'.$p['table']]) ? $p['select_login_'.$p['table']] : 
 					"SELECT *, PASSWORD({:=password}) AS password_input FROM $table ".
-					"WHERE login={:=login} AND (status='active' OR status='registered')";
+					"WHERE login={:=login} AND status IN ({:=_status_list})";
 				$p['registered2active'] = "UPDATE $table SET status='active' WHERE id={:=id}";
 				$user = $this->selectFromDatabase($p);
 			}
@@ -821,15 +821,16 @@ private function selectFromDatabase(array $p) : ?array {
 		$p['login'] = $tmp[0];
 	}
 
+	$p['_status_list'] = empty($p['status']) ? "1, 20, 'active', 'registered'" : Database::escName($p['status']);
 	$query = $this->db->getCustomQuery('select_login', $p);
 	$dbres = $this->db->select($query);
-	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:826> query=$query - ".print_r($dbres, true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:827> query=$query - ".print_r($dbres, true));
 	if (count($dbres) == 0) {
 		$this->tok->setVar('login_error', 'invalid');
 		return null;
 	}
 
-	// \rkphplib\lib\log_debug('TLogin.selectFromDatabase:832> use master_password = PASSWORD('.$p['password'].') = '.$dbres[0]['password_input']);
+	// \rkphplib\lib\log_debug('TLogin.selectFromDatabase:833> use master_password = PASSWORD('.$p['password'].') = '.$dbres[0]['password_input']);
 	if (!empty($p['master_password']) && $dbres[0]['password_input'] == $p['master_password']) {
 		$dbres[0]['password'] = $p['master_password'];
 	}
@@ -839,10 +840,14 @@ private function selectFromDatabase(array $p) : ?array {
 	 	if ($dbres[$i]['password'] == $dbres[$i]['password_input']) {
 			$found = $i;
 		}
+		else if (($plen = strlen($dbres[$i]['password'])) < 40 && $plen > 3 && $dbres[$i]['password'] == $p['password']) {
+			// accept unencrypted
+			$found = $i;
+		}
 	}
 
 	if ($found === false) {
-		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:845> invalid password");
+		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:850> invalid password");
 		$this->tok->setVar('password_error', 'invalid');
 		return null;
 	}
@@ -850,14 +855,14 @@ private function selectFromDatabase(array $p) : ?array {
 	$user = $admin2user === false ? $dbres[$found] :
 		$this->admin2user($admin2user, $dbres[$found], $p);
 
-	// \rkphplib\lib\log_debug([ "TLogin.selectFromDatabase:853> found=<1> user: <2>", $found, $user ]);
+	// \rkphplib\lib\log_debug([ "TLogin.selectFromDatabase:858> found=<1> user: <2>", $found, $user ]);
 	if (is_null($user)) {
 		return null;
 	}
 
 	if ($admin2user === false && $user['status'] == 'registered') {
 		$query = $this->db->getCustomQuery('registered2active', $user);
-		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:860> auto-activate user: ".$query);
+		// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:865> auto-activate user: ".$query);
 		$this->db->execute($query);
 	}
 
@@ -865,7 +870,7 @@ private function selectFromDatabase(array $p) : ?array {
 	unset($user['password_input']);
 	unset($user['password']);
 
-	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:868> return user: ".print_r($user, true));
+	// \rkphplib\lib\log_debug("TLogin.selectFromDatabase:873> return user: ".print_r($user, true));
 	return $user;
 }
 
@@ -882,6 +887,7 @@ private function admin2user(array $admin_type, array $admin, array $p) : ?array 
 	list ($admin_login, $user_login) = explode(':=', $p['login']);
 	$p['login'] = $user_login;
 
+	$p['_status_list'] = empty($p['status']) ? "1, 20, 'active', 'registered'" : Database::escName($p['status']);
 	$query = $this->db->getCustomQuery('select_login', $p);
 	$dbres = $this->db->select($query);
 	if (count($dbres) != 1) {
@@ -894,7 +900,7 @@ private function admin2user(array $admin_type, array $admin, array $p) : ?array 
 	}
 
 	$dbres[0]['admin2user'] = $admin;
-	// \rkphplib\lib\log_debug([ "TLogin.admin2user:897> return admin: <1>", $dbres[0] ]);
+	// \rkphplib\lib\log_debug([ "TLogin.admin2user:903> return admin: <1>", $dbres[0] ]);
 	return $dbres[0];
 }
 
@@ -917,7 +923,7 @@ private function admin2user(array $admin_type, array $admin, array $p) : ?array 
  * @tok {login:@lchange} -> date('d.m.Y H:i:s', @last)
  */
 public function tok_login(string $key, ?string $alt_key = '') : ?string {
-	// \rkphplib\lib\log_debug("TLogin.tok_login:920> key=$key alt_key=$alt_key");
+	// \rkphplib\lib\log_debug("TLogin.tok_login:926> key=$key alt_key=$alt_key");
 	$res = '';
 
 	if (strlen($key) == 0 && strlen($alt_key) > 0) {
@@ -981,7 +987,7 @@ public function tok_login(string $key, ?string $alt_key = '') : ?string {
 		$res = kv2conf($res);
 	}
 
-	// \rkphplib\lib\log_debug("TLogin.tok_login:984> res=[$res]");
+	// \rkphplib\lib\log_debug("TLogin.tok_login:990> res=[$res]");
 	return $res;
 }
 
