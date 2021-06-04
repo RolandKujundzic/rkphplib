@@ -1,0 +1,5 @@
+https://www.techonthenet.com/sqlite/tables/alter_table.php
+ALTERT column !!!
+
+https://www.sqlitetutorial.net/sqlite-tutorial/sqlite-describe-table/
+SHOW TABLE, DESC TABLES
