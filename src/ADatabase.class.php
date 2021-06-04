@@ -363,6 +363,7 @@ public function getQueryInfo(string $qkey, string $ikey = '') {
  * If tag is '{:=x}' use prepared statement value bind (or change into {:=x} if this.use_prepared = false). 
  * If tag is {:=x} apply escape($value).
  * If tag is {:=^x} apply escape_name($value).
+ * If tag is {:=?x} set null if empty.
  * If tag is {:=_x} keep $value.
  */
 public function setQuery(string $qkey, string $query, array $info = []) : void {
@@ -388,7 +389,7 @@ public function setQuery(string $qkey, string $query, array $info = []) : void {
 		return;
 	}
 
-	$tok = preg_split("/('?\\".TAG_PREFIX."[a-zA-Z0-9_\^]+\\".TAG_SUFFIX."'?)/s", $query, -1, PREG_SPLIT_DELIM_CAPTURE);
+	$tok = preg_split("/('?\\".TAG_PREFIX."[a-zA-Z0-9_\?\^]+\\".TAG_SUFFIX."'?)/s", $query, -1, PREG_SPLIT_DELIM_CAPTURE);
 	// value is: bind, escape, escape2, escape_name, keep
 	$map = array('bind' => array());
 	$pl = mb_strlen(TAG_PREFIX);
@@ -420,6 +421,10 @@ public function setQuery(string $qkey, string $query, array $info = []) : void {
 		else if (mb_substr($m, $pl, 1) === '^') {
 			$key = mb_substr($m, $pl + 1, -$sl);
 			$map[$key] = 'escape_name';
+		}
+		else if (mb_substr($m, $pl, 1) === '?') {
+			$key = mb_substr($m, $pl + 1, -$sl);
+			$map[$key] = 'escape_null';
 		}
 		else {
 			$key = mb_substr($m, $pl, -$sl);
@@ -522,7 +527,12 @@ public function getQuery(string $qkey, ?array $replace = null) {
 
 	foreach ($q as $key => $do) {
 		if (!isset($replace[$key]) && !array_key_exists($key, $replace)) {
-			throw new Exception("query replace key $key missing", "($qkey) $query: ".print_r($replace, true));
+			if ($do == 'escape_null') {
+				$replace[$key] = '';
+			}
+			else {
+				throw new Exception("query replace key $key missing", "($qkey) $query: ".print_r($replace, true));
+			}
 		}
 
 		if ($do === 'escape') {
@@ -539,6 +549,10 @@ public function getQuery(string $qkey, ?array $replace = null) {
 			}
 
 			$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, $value, $query);
+		}
+		else if ($do === 'escape_null') {
+			$value = in_array($replace[$key], [ '', null, 'null', 'NULL' ]) ? 'NULL' : "'".$this->esc($replace[$key])."'";
+			$query = str_replace(TAG_PREFIX.'?'.$key.TAG_SUFFIX, $value, $query);
 		}
 		else if ($do === 'escape_name') {
 			$query = str_replace(TAG_PREFIX.'^'.$key.TAG_SUFFIX, self::escape_name($replace[$key]), $query);
