@@ -49,10 +49,9 @@ public static function get(string $key, int $flag = 3) : ?string {
  * @code Request::check([ 'firstname', 'email:email', 'phone?:phone', 'az:/[a-z]/' ]);
  */
 public static function check(array $checklist) : bool {
-	$error = false;
-
 	foreach ($checklist as $key) {
 		$required = true;
+		$error = false;
 		$rx = '';
 
 		if (strpos($key, ':')) {
@@ -74,7 +73,7 @@ public static function check(array $checklist) : bool {
 			$error = true;
 		}
 		else if ($rx) {
-			$error = preg_match($rx, $value);
+			$error = !preg_match($rx, $value);
 		}
 
 		if ($error) {
