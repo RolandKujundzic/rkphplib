@@ -48,7 +48,7 @@ public static function get(string $key, int $flag = 3) : ?string {
 /**
  * @code Request::check([ 'firstname', 'email:email', 'phone?:phone', 'az:/[a-z]/' ]);
  */
-public static function check(array $checklist) : bool {
+public static function check(array $checklist, int $get_flag = 3) : bool {
 	foreach ($checklist as $key) {
 		$required = true;
 		$error = false;
@@ -67,7 +67,7 @@ public static function check(array $checklist) : bool {
 			}
 		}
 
-		$value = self::get($key);
+		$value = self::get($key, $get_flag);
 
 		if ($required && $value == '') {
 			$error = true;
@@ -111,7 +111,7 @@ public static function getMatch(string $name) : string {
 		'Phone' => '/^[\+0-9\(\)\/ \.\-]+$/i',
 		'PhoneNumber' => '/^[\+0-9\(\)\/ \.\-]+$/i',
 		'Variable' => '/^[0-9A-Z_]+$/i',
-		'PLZ' => '/^[0-9]{5}$/',
+		'PLZ' => '/^[0-9]{4,5}$/',
 		'deDate' => '/^[0-9]{2}\.[0-9]{2}\.[12][0-9]{3}$/',
 		'deDateTime' => '/^[0-9]{2}\.[0-9]{2}\.[12][0-9]{3} [0-9]{2}:[0-9]{2}(:[0-9]{2})?$/',
 		'sqlDate' => '/^[1-2][0-9]{3}\-[0-9]{2}\-[0-9]{2}$/',
