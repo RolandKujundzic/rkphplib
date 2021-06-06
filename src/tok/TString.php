@@ -11,7 +11,7 @@ use rkphplib\StringHelper;
 
 
 /**
- * String plugin.
+ * String plugins.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
