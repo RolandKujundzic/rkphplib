@@ -1243,7 +1243,7 @@ private function tryPluginMap(string $name) : void {
 		'FormValidator' => [ 'fv2', 'fv2:check', 'fv2:hidden', 'fv2:in', 'fv2:init', 'fv2:preset' ],
 		'Menu' => [ 'menu', 'menu:add', 'menu:conf' ],
 		'TArray' => [ 'array', 'array:set', 'array:get', 'array:shift', 'array:unshift', 'array:pop', 'array:push', 'array:join', 'array:length', 'array:split' ],
-		'TBase' => [ 'clear', 'const', 'decode', 'encode', 'esc', 'escape', 'escape:tok', 'f', 'false', 'filter', 'find', 'get', 'hidden', 'if', 'ignore', 'include', 'include_if', 'join', 'json', 'json:exit', 'keep', 'li', 'link', 'load', 'loadJSON', 'log', 'log_debug', 'plugin', 'redirect', 'redo', 'row', 'row:init', 'set', 'set_default', 'shorten', 'skin', 'strlen', 'switch', 't', 'tf', 'tolower', 'toupper', 'tpl', 'tpl_set', 'trim', 'true', 'unescape', 'var', 'view' ],
+		'TBase' => [ 'clear', 'const', 'decode', 'encode', 'esc', 'escape', 'escape:tok', 'f', 'false', 'filter', 'find', 'get', 'hidden', 'if', 'if:get', 'ignore', 'include', 'include_if', 'join', 'json', 'json:exit', 'keep', 'li', 'link', 'load', 'loadJSON', 'log', 'log_debug', 'plugin', 'redirect', 'redo', 'row', 'row:init', 'set', 'set_default', 'shorten', 'skin', 'strlen', 'switch', 't', 'tf', 'tolower', 'toupper', 'tpl', 'tpl_set', 'trim', 'true', 'unescape', 'var', 'view' ],
 		'TDate' => [ 'date' ],
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval:call', 'eval' ],
 		'TFormValidator' => [ 'fv', 'fv:appendjs', 'fv:check', 'fv:conf', 'fv:emsg', 'fv:error', 'fv:error_message', 'fv:get', 'fv:get_conf', 'fv:hidden', 'fv:in', 'fv:init', 'fv:preset', 'fv:set_error_message', 'fv:tpl' ],
