@@ -15,7 +15,7 @@ use rkphplib\XCrypt;
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
  */
-class THtml implements TokPlugin {
+class Html implements TokPlugin {
 
 
 /**
@@ -77,6 +77,7 @@ public static function tok_html_nobr(string $txt) : string {
 
 /**
  * Return 1 if visitors browser matches entry from $user_agent_list.
+ * Use SETTINGS_USER_AGENT='mobile|handheld|iphone|ipad|android' for simulation.
  * 
  * @tok {user_agent:Android} -> 1 if true
  * @tok {user_agent:iPad|iPhone|iPod} = {user_agent:iOS} -> 1 if true
@@ -86,13 +87,17 @@ public static function tok_user_agent(array $user_agent_list) : string {
   $ua = $_SERVER['HTTP_USER_AGENT'];
   $res = '';
 
-	if (count($user_agent_list) == 1) {
-		$ua_name = $user_agent_list[0];
+	if (defined('SETTINGS_USER_AGENT') && SETTINGS_USER_AGENT) {
+		$ua = SETTINGS_USER_AGENT;
+	}
 
-		if ($ua_name == 'iOS') {
+	if (count($user_agent_list) == 1) {
+		$ua_name = strtolower($user_agent_list[0]);
+
+		if ($ua_name == 'ios') {
 			$user_agent_list = [ 'iPad', 'iPhone', 'iPod' ];
 		}
-		else if ($ua_name == 'Handheld') {
+		else if ('handheld' == $ua_name || 'mobile' == $ua_name) {
 			$user_agent_list = [ 'iPad', 'iPhone', 'iPod', 'Android' ];
 		}
 	}
