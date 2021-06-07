@@ -154,18 +154,25 @@ public function encodeString(string $str, string $encoding = 'base64') : string 
  * Return true if email is valid (or throw error).
  */
 public static function isValidEmail(string $email, bool $throw_error = false) : bool {
-	$res = true;
-	$rx = '/^(?:[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+\.)*[\w\!\#\$\%\&\'\*\+\-\/\=\?\^\`\{\|\}\~]+@(?:(?:(?:[a-zA-Z0-9_](?:[a-zA-Z0-9_\-](?!\.)){0,61}[a-zA-Z0-9_-]?\.)+[a-zA-Z0-9_](?:[a-zA-Z0-9_\-](?!$)){0,61}[a-zA-Z0-9_]?)|(?:\[(?:(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\.){3}(?:[01]?\d{1,2}|2[0-4]\d|25[0-5])\]))$/';
+	if (preg_match('/^[a-z0-9_\.\-]+@([a-z0-9\-]+\.)+[a-z]{2,}$/i', $email)) {
+		return true;
+	}
 
-	if (empty($email) || mb_strpos($email, '@') == false) {
-		$res = false;
+	$ip4 = '\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\]';
+	$rx = '/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@(('.$ip4.
+		')|(([A-Z\-0-9]+\.)+[A-Z]{2,}))$/i';
+
+	if (preg_match($rx, $email)) {
+		return true;
 	}
-	else {
-		$res = preg_match($rx, $email);
-		if (!$res) {
-			$res = preg_match($rx, idn_to_ascii($email));
-		}
+
+	if (!preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]+$/', $email)) {
+		return false;
 	}
+
+	$tmp = explode('@', $email);
+	$ascii_email = idn_to_ascii($tmp[0]).'@'.idn_to_ascii($tmp[1]);
+	$res = preg_match($rx, $ascii_email);
 
 	if (!$res && $throw_error) {
 		throw new Exception("Invalid email", $email);
