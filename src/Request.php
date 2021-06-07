@@ -46,6 +46,40 @@ public static function get(string $key, int $flag = 3) : ?string {
 
 
 /**
+ *
+ */
+public static function checkEmail(string $email) : bool {
+	if (preg_match('/^[a-z0-9_\.\-]+@([a-z0-9\-]+\.)+[a-z]{2,}$/i', $email)) {
+		return true;
+	}
+
+	$ip4 = '\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\]';
+	$rx = '/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@(('.$ip4.
+		')|(([A-Z\-0-9]+\.)+[A-Z]{2,}))$/i';
+
+	if (preg_match($rx, $email)) {
+		return true;
+	}
+
+	if (!preg_match('/^[^\s@]+@[^\s@]+\.[^\s@]+$/', $email)) {
+		return false;
+	}
+
+	$tmp = explode('@', $email);
+	$ascii_email = idn_to_ascii($tmp[0]).'@'.idn_to_ascii($tmp[1]);
+	return preg_match($rx, $ascii_email);
+}
+
+
+/**
+ *
+ */
+public static function checkEmailPrefix(string $email) : bool {
+	return self::checkEmail($email.'@test.de');
+}
+
+
+/**
  * @code Request::check([ 'firstname', 'email:email', 'phone?:phone', 'az:/[a-z]/' ]);
  */
 public static function check(array $checklist, int $get_flag = 3) : bool {
@@ -72,6 +106,9 @@ public static function check(array $checklist, int $get_flag = 3) : bool {
 		if (is_null($value) || ($required && $value == '')) {
 			$error = true;
 		}
+		else if ($rx && substr($rx, 0, 5) == 'check') {
+			$error = self::$rx($value);
+		}
 		else if ($rx) {
 			$error = !preg_match($rx, $value);
 		}
@@ -86,7 +123,8 @@ public static function check(array $checklist, int $get_flag = 3) : bool {
 
 
 /**
- * Return match pattern. Names:
+ * Return match pattern or 'check$name' if self::check$name($value)
+ * should be used. Names:
  *
  * Required, Int(eger), UInt, PInt(>0), Real, UReal, Email, EmailPrefix, HTTP, HTTPS, 
  * Phone, PhoneNumber (=Phone), Variable, PLZ
@@ -102,9 +140,8 @@ public static function getMatch(string $name) : string {
 		'Integer' => '/^\-?[0-9]*$/',
 		'Real' => '/^\-?([0-9]+|[0-9]+\.[0-9]+)$/',
 		'UReal' => '/^([0-9]+|[0-9]+\.[0-9]+)$/',
-		'Email' => '/^[a-z0-9_\.\-]+@[a-z0-9\.\-]+$/i',
-		'Email2' => '/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([A-Z\-0-9]+\.)+[A-Z]{2,}))$/i',
-		'EmailPrefix' => '/^[a-z0-9_\.\-]+$/i',
+		'Email' => 'checkEmail',
+		'EmailPrefix' => 'checkEmailPrefix',
 		'HTTP' => '/^http\:\/\//i',
 		'HTTPS' => '/^https\:\/\//i',
 		'Mobile' => '/^\+[0-9]+$/',
@@ -124,8 +161,8 @@ public static function getMatch(string $name) : string {
 	if (!isset($rx[$name])) {
 		throw new \Exception('invalid regular expression check '.$name);
 	}
-
-  return $rx[$name];
+ 
+	return $rx[$name];
 }
 
 }
