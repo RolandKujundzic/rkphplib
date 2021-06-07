@@ -69,7 +69,7 @@ public static function check(array $checklist, int $get_flag = 3) : bool {
 
 		$value = self::get($key, $get_flag);
 
-		if ($required && $value == '') {
+		if (is_null($value) || ($required && $value == '')) {
 			$error = true;
 		}
 		else if ($rx) {
