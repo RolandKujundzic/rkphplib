@@ -22,6 +22,8 @@ private $conf = [];
 // @var ADatabase $db (default = null)
 private $db = null;
 
+private $id_pid = [];
+
 
 /**
  * @hash $conf …
@@ -62,6 +64,12 @@ public function __construct(array $conf = []) {
 		'select_name_pid' => "SELECT * FROM $category WHERE name={:=name} AND pid={:=pid}",
 
 		'select_id' => "SELECT * FROM $category WHERE id={:=id}",
+
+		'update_sid_level' => "UPDATE $category SET sid={:=sid}, level={:=level} WHERE id={:=id}",
+
+		'select_children' => "SELECT id, pid FROM $category WHERE {:=_pid} $and_import ORDER BY name",
+
+		'reset_sid' => "UPDATE $category SET sid=NULL $where_import",
 
 		'select_max_cat_level' => "SELECT MAX(level) AS max_level FROM $category $where_import",
 
@@ -165,21 +173,48 @@ public function createTable(string $table = 'category', array $custom_cols = [])
  * @ToDo
  */
 public function add(string $name, int $pid = NULL) : void {
-
-  $check_category_query = "select * from category WHERE cat_name='$add_categoryname' AND parent_id='$cat_pid'";
-  $result = mysqli_query($db_conn, $check_category_query);
-
-  if (mysqli_num_rows($result) > 0) {
-    $error_flag = true;
-    echo "categorynamerror";
-  }
-
 	throw new Exception('ToDo ...');
 }
 
 
 /**
- * Return [ sid, level]. Call category_sid_level(null) to reset counter.
+ * Set category sid and level. Order by name.
+ */
+public function setSid() : void {
+	self::sid_level(null);
+
+	$this->id_pid = [];
+	$this->setIdPid(null);
+
+	for ($i = 0; $i < count($this->id_pid); $i++) {
+		$id = $this->id_pid[$i][0];
+		$pid = $this->id_pid[$i][1];
+
+		list ($sid, $level) = Category::sid_level($id, $pid);
+		$r = [ 'id' => $id, 'sid' => $sid, 'level' => $level ];
+		$this->db->exec('update_sid_level', $r);
+	}
+}
+
+
+/**
+ *
+ */
+private function setIdPid(?string $pid) : void {
+	$this->db->exec('reset_sid');
+	$pid = is_null($pid) ? 'pid IS NULL' : "pid='$pid'";
+
+	$dbres = $this->db->select($this->db->getQuery('select_children', [ '_pid' => $pid ]));
+
+	foreach ($dbres as $row) {
+		array_push($this->id_pid, [ $row['id'], $row['pid'] ]);
+		$this->setIdPid($row['id']);
+	}
+}
+
+
+/**
+ * Return [ sid, level]. Call sid_level(null) to reset counter.
  * Max 57 entries per level.
  */
 public static function sid_level(?string $id, ?string $pid = null) : array {
