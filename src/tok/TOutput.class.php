@@ -280,6 +280,10 @@ public function tok_output_get(string $name) : string {
 		$res = $row[$col];
 	}
 	else if ($name == 'colnum') {
+		if (!is_array($this->conf['column_label'])) {
+			$this->conf['column_label'] = conf2kv($this->conf['column_label'], ':', ',');
+		}
+
 		$res = count($this->conf['column_label']);
 	}
 	else if (method_exists($this, 'get_'.$name)) {
