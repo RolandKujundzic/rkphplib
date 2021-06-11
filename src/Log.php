@@ -10,7 +10,7 @@ if (!defined('SETTINGS_LOG_DEBUG')) {
 /**
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-final class Log {
+class Log {
 
 // @var bool $verbose use 1 = for timestamp and script logging
 public static $verbose = false;
