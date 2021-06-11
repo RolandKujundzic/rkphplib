@@ -57,6 +57,8 @@ private static function debugTo() : string {
 	else if (defined('SETTINGS_LOG_DEBUG') && !empty(SETTINGS_LOG_DEBUG)) {
 		$log_to = SETTINGS_LOG_DEBUG;
 	}
+
+	return $log_to;
 }
 
 
@@ -64,6 +66,8 @@ private static function debugTo() : string {
  *
  */
 private static function format(string $msg) : string {
+	$prefix = self::$verbose ? self::ts_script() : '';
+
 	if (preg_match('/^([a-zA-Z0-9_:\.]+>) /', $msg, $match)) {
 		$prefix .= $match[1]."\n";
 		$msg = str_replace($match[1].' ', '',  $msg);
@@ -75,10 +79,6 @@ private static function format(string $msg) : string {
 	else {
 		self::$last_prefix = $prefix;
 		$prefix = '··· '.$prefix;
-	}
-
-	if (self::$verbose) {
-		$prefix = self::ts_script().$prefix;
 	}
 
 	return $prefix.$msg;
