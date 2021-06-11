@@ -52,26 +52,6 @@ function log_debug($msg, int $flag = 0) : void {
 		return;
 	}
 
-	if (is_array($msg)) {
-		$out = $msg[0].' ';
-
-		for ($i = 1; $i < count($msg); $i++) {
-			if (is_string($msg[$i])) {
-				$out .= $i.'=['.$msg[$i];
-			}
-			else {
-				$out .= $i.'=[';
-				foreach ($msg[$i] as $key => $value) {
-					$out .= '('.$key.'|'.$value.')';
-				}
-			}
-
-			$out .= '] ';
-		}
-
-		$msg = $out;
-	}
-
 	static $last_prefix = '';
 	$prefix = '';
 
