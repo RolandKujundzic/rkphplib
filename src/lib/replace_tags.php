@@ -17,7 +17,7 @@ function replace_tags(string $text, array $hash, array $conf = [ '$', '', '' ]) 
 	}
 
 	foreach ($hash as $key => $value) {
-    if (is_array($value)) {
+		if (is_array($value)) {
 			$sub_conf = $conf;
 			$sub_conf[2] = empty($conf[2]) ? $key : $conf[2].'.'.$key;
 			$text = replace_tags($text, $value, $sub_conf);
