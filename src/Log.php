@@ -29,8 +29,8 @@ private static $last_prefix = '';
  *
  * @example …
  * Log::debug('message');
- * Log::debug('Class::func> return $1');
- * Log::debug('Obj.func> ($1, $2)', $1, $2);
+ * Log::debug("Class::func> return $res");
+ * Log::debug("Obj.func> (<1>, <2>)', $param1, $param2);
  * @eol
  */
 public static function debug(string $msg, ...$arg) : void {
@@ -87,9 +87,9 @@ private static function format(string $msg) : string {
 
 /**
  * Return formated log message. Use traling '…' to shorten string (max 130 character).
- * If $arg is set replace $1, $2 with json encoded value of $arg[N].
+ * If $arg is set replace <N> with json encoded value of $arg[N-1].
  */
-private static function msg(string $msg, array $arg = []) : string {
+private static function msg(string $msg, array $arg) : string {
 	if (!count($arg)) {
 		$res = $msg;
 
@@ -97,9 +97,11 @@ private static function msg(string $msg, array $arg = []) : string {
 			$res = mb_strlen($msg) > 130 ? mb_substr($msg, 0, 130).'…' : mb_substr($msg, 0, -1);
 		}
 	}
-	else if (mb_strpos($arg[0], '$1') !== false) {
-		for ($i = 1; $i < $len; $i++) {
-			$res = str_replace('$i', self::msg($arg[$i]), $res);
+	else if (mb_strpos($msg, '<1>') !== false) {
+		$res = $msg;
+
+		for ($i = 0; $i < count($arg); $i++) {
+			$res = str_replace('<'.($i + 1).'>', json_encode($arg[$i]), $res);
 		}
 	} 
 	else {
