@@ -5,7 +5,9 @@
 	["http://x.y.z.de/index.php?dir=u&v=p%20h", 1, true],
 	["https://test.co.uk/index.html?x=4,8&y=5.7", 1, true],
 	["/index.html#section", 1, true],
-	["a b", false]
+	["a b", false],
+	["domain.tld/path/to/script.php", true],
+	["domain.tld/path/to/script.php?a=5", 1, true]
 ]
 
 
