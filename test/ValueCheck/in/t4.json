@@ -1,0 +1,27 @@
+[
+	"rkphplib\\ValueCheck::isDomain",
+	[ "täst.de", true ],
+	[ "gülle.Müller.de", true ],
+	[ "-aaa.de", false ],
+	[ "aaa-.de", false ],
+	[ "_x.de", false ],
+	[ "aa.bb.cc.de", true ],
+	[ "g.co", true ],
+	[ "nic.谷歌", true ],
+	[ "♡.com", true ],
+	[ "xn--stackoverflow.com", true ],
+	[ "stackoverflow.xn--com", true ],
+	[ "oil.ارامكو", true ],
+	[ "tckwe.コム", true ],
+	[ "fhbei.كوم", true ],
+	[ "c2br7g.नेट", true ],
+	[ "9dbq2a.קום", true ],
+	[ "3pxu8k.点看", true ],
+	[ "t60b56a.닷넷", true ],
+	[ "j1aef.ком", true ],
+	[ "pssy2u.大拿", true ],
+	[ "42c2d9a.คอม", true ],
+	[ "mk1bu44c.닷컴", true ],
+	["x/y.de", false ]
+]
+
