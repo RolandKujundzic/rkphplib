@@ -1,6 +1,6 @@
 <?php
 
-require_once(dirname(dirname(__DIR__)).'/src/XML.class.php');
+require_once(dirname(dirname(__DIR__)).'/src/XML.php');
   
 use rkphplib\XML;
 

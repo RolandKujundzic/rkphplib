@@ -10,7 +10,7 @@ if (!isset($th)) {
 	$th = new rkphplib\TestHelper();
 }
 
-$th->load('Database.class.php');
+$th->load('Database.php');
 $th->load('TestHelper.php');
 $th->load('lib/log_debug.php');
 $th->load('lib/config.php');

@@ -1,6 +1,6 @@
 <?php
 
-require_once('../rkphplib/src/ARestAPI.class.php');
+require_once('../rkphplib/src/ARestAPI.php');
 
 
 class API extends rkphplib\ARestAPI {

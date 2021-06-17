@@ -7,7 +7,7 @@ if (!isset($th)) {
 	$th = new rkphplib\TestHelper();
 }
 
-$th->load('src/ShellCode.class.php');
+$th->load('src/ShellCode.php');
 
 $code = new \rkphplib\ShellCode();
 $code->parse(DOCROOT.'/run.sh');

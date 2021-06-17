@@ -7,7 +7,7 @@ if (!isset($th)) {
 	$th = new rkphplib\TestHelper();
 }
 
-$th->load('src/SQLiteDatabase.class.php');
+$th->load('src/SQLiteDatabase.php');
 
 
 /**

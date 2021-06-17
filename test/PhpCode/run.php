@@ -7,10 +7,10 @@ if (!isset($th)) {
 	$th = new rkphplib\TestHelper();
 }
 
-$th->load('src/PhpCode.class.php');
+$th->load('src/PhpCode.php');
 
 $code = new \rkphplib\PhpCode();
-$code->load(PATH_SRC.'tok/TBase.class.php');
+$code->load(PATH_SRC.'tok/TBase.php');
 
 $namespace = $code->getNamespace(true);
 $th->compare("PhpCode->getNamespace", [ 'rkphplib\tok' ], [ 'rkphplib\tok' ]);

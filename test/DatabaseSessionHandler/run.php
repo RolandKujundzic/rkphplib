@@ -4,7 +4,7 @@ require_once '../settings.php';
 
 global $th;
 
-$th->load('src/DatabaseSessionHandler.class.php');
+$th->load('src/DatabaseSessionHandler.php');
 $sh = new \rkphplib\DatabaseSessionHandler(TEST_MYSQL);
 
 /**

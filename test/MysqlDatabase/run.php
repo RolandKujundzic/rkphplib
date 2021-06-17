@@ -7,7 +7,7 @@ if (!isset($th)) {
 	$th = new rkphplib\TestHelper();
 }
 
-$th->load('src/MysqlDatabase.class.php');
+$th->load('src/MysqlDatabase.php');
 
 
 /**

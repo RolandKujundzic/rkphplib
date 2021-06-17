@@ -8,7 +8,7 @@ if (!isset($th)) {
 }
 
 
-$th->load('src/Session.class.php');
+$th->load('src/Session.php');
 
 $sess = new \rkphplib\Session();
 $sess->init([ 'name' => 'test' ]);

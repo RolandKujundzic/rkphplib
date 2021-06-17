@@ -8,7 +8,7 @@ if (!isset($th)) {
 }
 
 $th->load('src/tok/TokHelper.trait.php');
-$th->load('src/File.class.php');
+$th->load('src/File.php');
 
 
 /**

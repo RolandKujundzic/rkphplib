@@ -4,7 +4,7 @@ require_once '../settings.php';
 
 global $th;
 
-$th->load('src/FileSessionHandler.class.php');
+$th->load('src/FileSessionHandler.php');
 $sh = new \rkphplib\FileSessionHandler();
 
 /**

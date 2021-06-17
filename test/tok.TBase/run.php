@@ -10,7 +10,7 @@ function _de_en_codeHash($map) {
 	$th->compare('(de|en)codeHash', [ \rkphplib\lib\kv2conf($dec) ], [ \rkphplib\lib\kv2conf($map) ]);
 }
 
-// $th->tokCheck(PATH_SRC.'tok/TBase.class.php'); exit(0);
+// $th->tokCheck(PATH_SRC.'tok/TBase.php'); exit(0);
 
 global $th;
 
