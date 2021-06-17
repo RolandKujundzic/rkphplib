@@ -3,9 +3,9 @@
 namespace rkphplib\tok;
 
 require_once __DIR__.'/TokPlugin.iface.php';
-require_once __DIR__.'/../Database.class.php';
+require_once __DIR__.'/../Database.php';
 require_once __DIR__.'/../traits/Map.php';
-require_once __DIR__.'/../File.class.php';
+require_once __DIR__.'/../File.php';
 require_once __DIR__.'/../Hash.php';
 require_once __DIR__.'/../lib/conf2kv.php';
 require_once __DIR__.'/../lib/kv2conf.php';

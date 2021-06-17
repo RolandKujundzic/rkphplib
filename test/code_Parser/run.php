@@ -2,8 +2,8 @@
 
 require_once '../settings.php';
 
-require_once PATH_SRC.'code/Parser.class.php';
-require_once PATH_SRC.'Dir.class.php';
+require_once PATH_SRC.'code/Parser.php';
+require_once PATH_SRC.'Dir.php';
 
 use rkphplib\Exception;
 use rkphplib\code\Parser;

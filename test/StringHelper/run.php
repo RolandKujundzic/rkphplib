@@ -2,7 +2,7 @@
 
 require_once '../settings.php';
 
-require_once PATH_SRC.'StringHelper.class.php';
+require_once PATH_SRC.'StringHelper.php';
 
 global $th;
 

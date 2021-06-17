@@ -1,6 +1,6 @@
 <?php
 
-require_once '../../src/JSON.class.php';
+require_once '../../src/JSON.php';
 
 $test = [
 	'rkphplib\JSON::decode',

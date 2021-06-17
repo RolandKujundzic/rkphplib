@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once __DIR__.'/DateCalc.class.php';
+require_once __DIR__.'/DateCalc.php';
 require_once __DIR__.'/lib/split_str.php';
 
 
@@ -157,7 +157,7 @@ public static function getMatch(string $name) : string {
  * @example check.postcode= sqlQuery:email,postcode:SELECT 1 AS ok FROM shop_customer WHERE type='consumer' AND status='active'
  */
 public static function sqlQuery(string $ignore, string $colnames, string $query) : bool {
-  require_once __DIR__.'/Database.class.php';
+  require_once __DIR__.'/Database.php';
 
   $db = \rkphplib\Database::getInstance();
 
@@ -278,7 +278,7 @@ public static function isDomain(string $domain, int $min_level = 2, int $max_lev
  *  4: If not empty and 3 not empty add to where: AND p[3] != p[4]
  */
 public static function isUnique(string $value, array $p) : bool {
-	require_once __DIR__.'/Database.class.php';
+	require_once __DIR__.'/Database.php';
 
 	$query = 'SELECT count(*) AS anz FROM ';
 

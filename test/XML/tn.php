@@ -1,6 +1,6 @@
 <?php
 
-require_once '../../src/XML.class.php';
+require_once '../../src/XML.php';
 
 if (empty($_SERVER['argv'][1]) || intval($_SERVER['argv'][1]) < 1) {
 	print "\nSYNTAX: php {$_SERVER['argv'][0]} N\n\nN=1 execute in/t1.php\n\n";

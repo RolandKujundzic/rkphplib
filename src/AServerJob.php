@@ -2,9 +2,9 @@
 
 namespace rkphplib;
 
-require_once __DIR__.'/File.class.php';
-require_once __DIR__.'/Curl.class.php';
-require_once __DIR__.'/Dir.class.php';
+require_once __DIR__.'/File.php';
+require_once __DIR__.'/Curl.php';
+require_once __DIR__.'/Dir.php';
 require_once __DIR__.'/lib/execute.php';
 
 use function rkphplib\lib\execute;

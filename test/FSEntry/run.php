@@ -1,7 +1,7 @@
 <?php
 
 require_once '../settings.php';
-require_once PATH_SRC.'FSEntry.class.php';
+require_once PATH_SRC.'FSEntry.php';
 
 
 function suffix_list(array $list) : void {

@@ -1,7 +1,7 @@
 <?php
 
 require_once '../settings.php';
-require_once PATH_SRC.'XML.class.php';
+require_once PATH_SRC.'XML.php';
 
 global $th;
 

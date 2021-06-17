@@ -2,7 +2,7 @@
 
 namespace rkphplib\lib;
 
-require_once dirname(__DIR__).'/File.class.php';
+require_once dirname(__DIR__).'/File.php';
 
 use rkphplib\File;
 

@@ -186,7 +186,7 @@ if (!defined('FILE_DEFAULT_MODE') && !defined('DIR_DEFAULT_MODE')) {
 }
 
 if (defined('SETTINGS_XCRYPT_SECRET') && defined('SETTINGS_XCRYPT_RKEY')) {
-	require_once __DIR__.'/../XCrypt.class.php';
+	require_once __DIR__.'/../XCrypt.php';
 	\rkphplib\XCrypt::updateRequest();
 }
 

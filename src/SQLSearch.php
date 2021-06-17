@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once __DIR__.'/ADatabase.class.php';
+require_once __DIR__.'/ADatabase.php';
 require_once __DIR__.'/lib/split_str.php';
 
 use function rkphplib\lib\split_str;

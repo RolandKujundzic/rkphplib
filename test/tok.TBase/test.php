@@ -1,7 +1,7 @@
 <?php
 
-require_once '../../src/tok/Tokenizer.class.php';
-require_once '../../src/tok/TBase.class.php';
+require_once '../../src/tok/Tokenizer.php';
+require_once '../../src/tok/TBase.php';
 
 $tok = new \rkphplib\tok\Tokenizer();
 $tok->register(new \rkphplib\tok\TBase());

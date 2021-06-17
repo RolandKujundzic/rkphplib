@@ -17,18 +17,18 @@ if (!defined('DOCROOT')) {
 require_once __DIR__.'/lib/call.php';
 require_once __DIR__.'/lib/config.php';
 require_once __DIR__.'/lib/execute.php';
-require_once __DIR__.'/tok/Tokenizer.class.php';
+require_once __DIR__.'/tok/Tokenizer.php';
 require_once __DIR__.'/tok/TokPlugin.iface.php';
-require_once __DIR__.'/MysqlDatabase.class.php';
-require_once __DIR__.'/FSEntry.class.php';
-require_once __DIR__.'/PhpCode.class.php';
+require_once __DIR__.'/MysqlDatabase.php';
+require_once __DIR__.'/FSEntry.php';
+require_once __DIR__.'/PhpCode.php';
 require_once __DIR__.'/BuildinHttpServer.php';
-require_once __DIR__.'/Profiler.class.php';
-require_once __DIR__.'/PhpCode.class.php';
-require_once __DIR__.'/JSON.class.php';
-require_once __DIR__.'/Curl.class.php';
-require_once __DIR__.'/File.class.php';
-require_once __DIR__.'/Dir.class.php';
+require_once __DIR__.'/Profiler.php';
+require_once __DIR__.'/PhpCode.php';
+require_once __DIR__.'/JSON.php';
+require_once __DIR__.'/Curl.php';
+require_once __DIR__.'/File.php';
+require_once __DIR__.'/Dir.php';
 
 use rkphplib\tok\Tokenizer;
 use rkphplib\tok\TokPlugin;
@@ -647,7 +647,7 @@ private function load_src(string $cpath = '') : void {
 		require_once PATH_SRC.$cpath.'.php';
 	}
 	else if (File::exists(PATH_SRC.$cpath.'.class.php')) {
-		require_once PATH_SRC.$cpath.'.class.php';
+		require_once PATH_SRC.$cpath.'.php';
 	}
 	else if (substr($cpath, 0, 9) == 'function/') {
 		require_once dirname(PATH_SRC).'/'.$cpath.'.php';

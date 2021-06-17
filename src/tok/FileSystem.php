@@ -5,8 +5,8 @@ namespace rkphplib\tok;
 $parent_dir = dirname(__DIR__);
 require_once __DIR__.'/TokPlugin.iface.php';
 require_once __DIR__.'/TokHelper.trait.php';
-require_once $parent_dir.'/File.class.php';
-require_once $parent_dir.'/Dir.class.php';
+require_once $parent_dir.'/File.php';
+require_once $parent_dir.'/Dir.php';
 
 use rkphplib\Exception;
 use rkphplib\File;

@@ -3,10 +3,10 @@
 namespace rkphplib\traits;
 
 $parent_dir = dirname(__DIR__);
-require_once $parent_dir.'/RestException.class.php';
-require_once $parent_dir.'/File.class.php';
-require_once $parent_dir.'/XML.class.php';
-require_once $parent_dir.'/JSON.class.php';
+require_once $parent_dir.'/RestException.php';
+require_once $parent_dir.'/File.php';
+require_once $parent_dir.'/XML.php';
+require_once $parent_dir.'/JSON.php';
 
 use rkphplib\RestException;
 use rkphplib\File;

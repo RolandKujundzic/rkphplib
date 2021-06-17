@@ -3,7 +3,7 @@
 namespace rkphplib\tok;
 
 require_once __DIR__.'/TokPlugin.iface.php';
-require_once __DIR__.'/../Exception.class.php';
+require_once __DIR__.'/../Exception.php';
 require_once __DIR__.'/../lib/conf2kv.php';
 require_once __DIR__.'/../lib/split_str.php';
 require_once __DIR__.'/../lib/redirect.php';
@@ -274,7 +274,7 @@ public function addNodeHi() : void {
  * Return true if table exists. Parameter is string array with [,] as delimiter.
  */
 private function hasTables(string $tables) : bool {
-	require_once __DIR__.'/../Database.class.php';
+	require_once __DIR__.'/../Database.php';
 	$db = \rkphplib\Database::getInstance();
 
 	$table_list = split_str(',', $tables);
