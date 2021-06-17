@@ -1411,6 +1411,9 @@ function _rks_app {
 		fi
 	fi
 
+	test -z "$APP_DIR" &&
+		APP_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)
+
 	test -z "${#SYNTAX_CMD[@]}" && _abort "SYNTAX_CMD is empty"
 	test -z "${#SYNTAX_HELP[@]}" && _abort "SYNTAX_HELP is empty"
 
@@ -1742,9 +1745,9 @@ function _version {
 		else
 			_abort "failed to convert $version to number"
 		fi
-	elif [[ $((flag & 2)) ]]; then
+	elif [[ $((flag & 2)) = 2 ]]; then
 		echo -n "${version%%.*}"
-	elif [[ $((flag & 4)) ]]; then
+	elif [[ $((flag & 4)) = 4 ]]; then
 		echo -n "${version%.*}"
 	else
 		echo -n "$version"
@@ -1753,7 +1756,11 @@ function _version {
 
 
 function _warn {
-	echo -e "\033[0;31m$1\033[0m" 1>&2
+	if test "$2" == '-n'; then
+		echo -n -e "\033[0;31m$1\033[0m" 1>&2
+	else
+		echo -e "\033[0;31m$1\033[0m" 1>&2
+	fi
 }
 
 
@@ -1852,7 +1859,7 @@ function build {
 	echo -e "bin/toggle src log_debug off\nsee: $RKBASH_DIR/log_debug_off.log"
 	"$PATH_PHPLIB/bin/toggle" src log_debug off >"$RKBASH_DIR/log_debug_off.log"
 
-	bin/plugin_map
+	rks-tokscan src/tok
 
 	_syntax_check_php 'src' 'syntax_check_src.php' 1
 	_syntax_check_php 'bin' 'syntax_check_bin.php' 1

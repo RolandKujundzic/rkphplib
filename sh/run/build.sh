@@ -21,7 +21,7 @@ function build {
 	echo -e "bin/toggle src log_debug off\nsee: $RKBASH_DIR/log_debug_off.log"
 	"$PATH_PHPLIB/bin/toggle" src log_debug off >"$RKBASH_DIR/log_debug_off.log"
 
-	bin/plugin_map
+	rks-tokscan src/tok
 
 	_syntax_check_php 'src' 'syntax_check_src.php' 1
 	_syntax_check_php 'bin' 'syntax_check_bin.php' 1
