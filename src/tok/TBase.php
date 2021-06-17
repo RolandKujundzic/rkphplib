@@ -1006,10 +1006,9 @@ public function tok_loadJSON(string $file, array $p = []) : void {
 	
 			$tmp = explode('\\', $class);
 			array_shift($tmp);
-			$path = constant('PATH_'.strtoupper(array_shift($tmp))).join('/', $tmp);
-			$cpath = File::exists($path.'.class.php') ? $path.'.class.php' : $path.'.php';
-			File::exists($cpath, true);
-			require_once $cpath;
+			$path = constant('PATH_'.strtoupper(array_shift($tmp))).join('/', $tmp).'.php';
+			File::exists($path, true);
+			require_once $path;
 
 			// \rkphplib\lib\log_debug("TBase.tok_loadJSON:1014> $class::\$$property = '$value'");
 			$class::${$property} = $value;
@@ -2083,10 +2082,9 @@ public function tok_plugin(string $ns, array $p) : void {
 			}
 		}
 
-		$cpath = File::exists($path.'.class.php') ? $path.'.class.php' : $path.'.php';
-		File::exists($cpath, true);
+		File::exists($path.'.php', true);
+		require_once $path.'.php';
 
-		require_once $cpath;
 		if (isset($this->plugin_conf[$obj])) {
 			// \rkphplib\lib\log_debug([ "TBase.tok_plugin:2091> register new $obj(<1>);", $this->plugin_conf[$obj] ]);
 			$this->_tok->register(new $obj($this->plugin_conf[$obj]));

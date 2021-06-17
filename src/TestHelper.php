@@ -417,8 +417,8 @@ public function getTests(string $src_dir, array $skip = []) : array {
 	$test = [];
 	
 	foreach ($files as $file) {
-		$tdir = str_replace([ $src_dir.'/', '.class.php', '.trait.php', '.php', '/' ],
-			[ '', '', '', '', '.'], $file);
+		$tdir = str_replace([ $src_dir.'/', '.trait.php', '.php', '/' ],
+			[ '', '', '', '.'], $file);
 
 		if (in_array($tdir, $skip)) {
 			$this->_tc['t_skip']++;
@@ -646,14 +646,11 @@ private function load_src(string $cpath = '') : void {
 	if (File::exists(PATH_SRC.$cpath.'.php')) {
 		require_once PATH_SRC.$cpath.'.php';
 	}
-	else if (File::exists(PATH_SRC.$cpath.'.class.php')) {
-		require_once PATH_SRC.$cpath.'.php';
-	}
 	else if (substr($cpath, 0, 9) == 'function/') {
 		require_once dirname(PATH_SRC).'/'.$cpath.'.php';
 	}
 	else {
-		throw new Exception('missing '.PATH_SRC.$cpath.'.[php|class.php]');
+		throw new Exception('missing '.PATH_SRC.$cpath.'.php');
 	}
 }
 
