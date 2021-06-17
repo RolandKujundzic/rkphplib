@@ -1,6 +1,6 @@
 <?php
 
-namespace rkphplib;
+namespace rkphplib\db;
 
 require_once __DIR__.'/Exception.php';
 require_once __DIR__.'/File.php';
