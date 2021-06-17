@@ -19,7 +19,7 @@ require_once __DIR__.'/lib/config.php';
 require_once __DIR__.'/lib/execute.php';
 require_once __DIR__.'/tok/Tokenizer.php';
 require_once __DIR__.'/tok/TokPlugin.iface.php';
-require_once __DIR__.'/MysqlDatabase.php';
+require_once __DIR__.'/db/MySQL.php';
 require_once __DIR__.'/FSEntry.php';
 require_once __DIR__.'/PhpCode.php';
 require_once __DIR__.'/BuildinHttpServer.php';
@@ -110,10 +110,10 @@ public static function prepare(array $opt = []) : void {
 	}
 
 	// create database if necessary ...
-	$db = new \rkphplib\MysqlDatabase([ 'abort' => false ]);
+	$db = new \rkphplib\db\MySQL([ 'abort' => false ]);
 	$db->setDSN(TEST_MYSQL);
 
-	$dsn_info = \rkphplib\ADatabase::splitDSN(TEST_MYSQL);
+	$dsn_info = \rkphplib\db\ADatabase::splitDSN(TEST_MYSQL);
 	if (!$db->hasDatabase($dsn_info['name'])) {
 		if (!$db->createDatabase()) {
 			print "create database ${dsn_info['name']} failed try:\n";

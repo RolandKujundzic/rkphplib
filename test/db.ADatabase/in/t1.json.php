@@ -1,7 +1,7 @@
 <?php
 
 $test = [
-	'rkphplib\ADatabase::splitDSN',
+	'rkphplib\db\ADatabase::splitDSN',
 	[ 'type://login:password@protocol+host:port/name', 
 		'{"login":"login","password":"password","protocol":"protocol","host":"host","port":"port","name":"name","file":"","type":"type"}' ],
 	[ 'mysqli://DBLOGIN:PASS@tcp+127.0.0.1:13306/DBNAME',

@@ -2,11 +2,15 @@
 
 namespace rkphplib\db;
 
-require_once __DIR__.'/Exception.php';
-require_once __DIR__.'/File.php';
-require_once __DIR__.'/Dir.php';
-require_once __DIR__.'/lib/split_str.php';
-require_once __DIR__.'/lib/is_map.php';
+require_once __DIR__.'/../Exception.php';
+require_once __DIR__.'/../File.php';
+require_once __DIR__.'/../Dir.php';
+require_once __DIR__.'/../lib/split_str.php';
+require_once __DIR__.'/../lib/is_map.php';
+
+use rkphplib\Exception;
+use rkphplib\File;
+use rkphplib\Dir;
 
 use function rkphplib\lib\split_str;
 use function rkphplib\lib\is_map;
@@ -1221,7 +1225,7 @@ private function getTableFlag(string $flag) : int {
 	if ($o == 0) {
 		$cflag = explode('|', $flag);
 		foreach ($cflag as $flag) {
-			$o += constant('\rkphplib\ADatabase::'.$flag);
+			$o += constant('\rkphplib\db\ADatabase::'.$flag);
 		}
 	}
 

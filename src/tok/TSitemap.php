@@ -2,15 +2,14 @@
 
 namespace rkphplib\tok;
 
-$parent_dir = dirname(__DIR__);
 require_once __DIR__.'/TokPlugin.iface.php';
-require_once $parent_dir.'/ADatabase.php';
-require_once $parent_dir.'/Database.php';
-require_once $parent_dir.'/File.php';
+require_once __DIR__.'/../Database.php';
+require_once __DIR__.'/../db/ADatabase.php';
+require_once __DIR__.'/../File.php';
 
 use rkphplib\Exception;
-use rkphplib\ADatabase;
 use rkphplib\Database;
+use rkphplib\db\ADatabase;
 use rkphplib\File;
 
 

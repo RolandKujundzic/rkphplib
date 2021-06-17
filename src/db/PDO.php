@@ -1,6 +1,6 @@
 <?php
 
-namespace rkphplib;
+namespace rkphplib\db;
 
 require_once __DIR__.'/ADatabase.php';
 
@@ -12,7 +12,7 @@ require_once __DIR__.'/ADatabase.php';
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class PDODatabase extends ADatabase {
+class PDO extends ADatabase {
 
 
 /**

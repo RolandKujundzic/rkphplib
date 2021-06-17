@@ -1,7 +1,7 @@
 <?php
 
 $test = [
-	'rkphplib\ADatabase::escape',
+	'rkphplib\db\ADatabase::escape',
 	[ 'a"b;\\c', 'a"b;\\c' ],
 	[ '\\', '\\\\' ],
 	[ '\\\\', '\\\\' ],

@@ -1,11 +1,12 @@
 <?php
 
-namespace rkphplib;
+namespace rkphplib\db;
 
 require_once __DIR__.'/ADatabase.php';
-require_once __DIR__.'/PipeExecute.php';
-require_once __DIR__.'/File.php';
+require_once __DIR__.'/../PipeExecute.php';
+require_once __DIR__.'/../File.php';
 
+use \rkphplib\Exception;
 
 
 /**
@@ -13,7 +14,7 @@ require_once __DIR__.'/File.php';
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class MysqlDatabase extends ADatabase {
+class MySQL extends ADatabase {
 
 private $_db = null;
 private $_conn_ttl = 0;
@@ -25,7 +26,7 @@ private $_abort_error = null;
 
 
 /**
- * @example $mysql = new \rkphplib\MysqlDatabase([ 'abort' => false, 'charset' => 'latin1' ]);
+ * @example $mysql = new \rkphplib\db\MySQL([ 'abort' => false, 'charset' => 'latin1' ]);
  */
 public function __construct(array $options = []) {
 	foreach ($options as $key => $value) {

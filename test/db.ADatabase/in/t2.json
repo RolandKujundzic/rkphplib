@@ -1,5 +1,5 @@
 [
-	"rkphplib\\ADatabase::escape_name",
+	"rkphplib\\db\\ADatabase::escape_name",
 	[ "Shop Items", "`Shop Items`" ],
 	[ "Joe's\"", "`Joe's\"`" ],
 	[ "-\"*'\\+?!.;,", "`-\"*'\\+?!.;,`" ],

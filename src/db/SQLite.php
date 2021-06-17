@@ -1,6 +1,6 @@
 <?php
 
-namespace rkphplib;
+namespace rkphplib\db;
 
 require_once __DIR__.'/ADatabase.php';
 
@@ -10,7 +10,7 @@ require_once __DIR__.'/ADatabase.php';
  * 
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
-class SQLiteDatabase extends ADatabase {
+class SQLite extends ADatabase {
 
 //
 private $db = null;

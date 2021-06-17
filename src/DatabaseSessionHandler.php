@@ -14,7 +14,7 @@ require_once __DIR__.'/lib/dec2n.php';
  */
 class DatabaseSessionHandler implements \SessionHandlerInterface, \SessionIdInterface, \SessionUpdateTimestampHandlerInterface {
 
-// @param ADatabase $db = null
+// @param \rkphplib\db\ADatabase $db = null
 private $db = null;
 
 // @param int $ttl = 3600 (1h valid)

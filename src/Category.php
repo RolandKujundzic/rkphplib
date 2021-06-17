@@ -19,7 +19,7 @@ class Category {
 // @var hash $conf
 private $conf = [];
 
-// @var ADatabase $db (default = null)
+// @var \rkphplib\db\ADatabase $db (default = null)
 private $db = null;
 
 private $id_pid = [];

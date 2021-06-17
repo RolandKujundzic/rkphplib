@@ -14,7 +14,7 @@ require_once __DIR__.'/Exception.php';
  */
 class DatabaseSync {
 
-// @var ADatabase $local_db
+// @var \rkphplib\db\ADatabase $local_db
 protected $local_db = null;
 
 // @var ADatabase $remote_db

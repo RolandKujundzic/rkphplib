@@ -11,7 +11,6 @@ require_once __DIR__.'/../lib/conf2kv.php';
 require_once __DIR__.'/../lib/kv2conf.php';
 
 use rkphplib\Exception;
-use rkphplib\ADatabase;
 use rkphplib\Database;
 use rkphplib\Hash;
 use rkphplib\File;
@@ -34,7 +33,7 @@ use function rkphplib\lib\kv2conf;
 class Conf implements TokPlugin {
 use \rkphplib\traits\Map;
 
-// @var ADatabase $db
+// @var \rkphplib\db\ADatabase $db
 private $db = null;
 
 // @var int $lid
@@ -48,13 +47,11 @@ private $conf = null;
  * @hash $options …
  * dsn: empty (default = SETTINGS_DSN)
  * table.conf: cms_conf
- * table.link: cms_login
  * @eol
  */
 public function __construct(array $options = []) {
 	$default = [
 		'table.conf' => 'cms_conf',
-		'table.login' => 'cms_login',
 		'json' => '',
 		'dsn' => ''
 	];
@@ -64,8 +61,7 @@ public function __construct(array $options = []) {
 	}
 
 	$opt = array_merge($default, $options);
-  $table = ADatabase::escape($opt['table.conf']);
-  $table_login = ADatabase::escape($opt['table.login']);
+  $table = Database::escName($opt['table.conf']);
 
   $query_map = [
 		'insert' => "INSERT INTO $table (lid, pid, path, name, value) VALUES ({:=lid}, {:=pid}, {:=path}, {:=name}, {:=value})",

@@ -15,8 +15,8 @@ $th->load('TestHelper.php');
 $th->load('lib/log_debug.php');
 $th->load('lib/config.php');
 
-use \rkphplib\ADatabase;
 use \rkphplib\Database;
+use \rkphplib\db\ADatabase;
 
 
 /**

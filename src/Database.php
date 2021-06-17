@@ -3,17 +3,18 @@
 namespace rkphplib;
 
 require_once __DIR__.'/Exception.php';
-require_once __DIR__.'/ADatabase.php';
+require_once __DIR__.'/db/ADatabase.php';
 require_once __DIR__.'/lib/is_map.php';
 
 use rkphplib\Exception;
+use rkphplib\db\ADatabase;
 
 use function rkphplib\lib\is_map;
 
 
 
 /**
- * Instantiate [Mysql|SQLite]Database.
+ * Instantiate [Mysql|SQLite|Dummy]Database.
  *
  * @author Roland Kujundzic <roland@kujundzic.de>
  */
@@ -29,7 +30,7 @@ private static $pool = [];
  * $mysqli = Database::create('mysqli://user:password@tcp+localhost/dbname');
  * $sqlite = Database::create('sqlite://[password]@path/to/file.sqlite');
  */
-public static function create(string $dsn = '', array $query_map = []) : object {
+public static function create(string $dsn = '', array $query_map = []) : ADatabase {
 	$db = null;
 
 	if (empty($dsn) && defined('SETTINGS_DSN')) {
@@ -41,12 +42,16 @@ public static function create(string $dsn = '', array $query_map = []) : object 
 	}
 
 	if (mb_substr($dsn, 0, 9) == 'mysqli://') {
-		require_once __DIR__.'/MysqlDatabase.php';
-		$db = new MysqlDatabase();
+		require_once __DIR__.'/db/MySQL.php';
+		$db = new \rkphplib\db\MySQL();
 	}
 	else if (mb_substr($dsn, 0, 9) == 'sqlite://') {
-		require_once __DIR__.'/SQLiteDatabase.php';
-		$db = new SQLiteDatabase();
+		require_once __DIR__.'/db/SQLite.php';
+		$db = new \rkphplib\db\SQLite();
+	}
+	else if (mb_substr($dsn, 0, 8) == 'dummy://') {
+		require_once __DIR__.'/db/Dummy.php';
+		$db = new \rkphplib\db\Dummy();
 	}
 	else {
 		throw new Exception('invalid dsn', "dsn=$dsn");
@@ -90,11 +95,16 @@ public static function escName(string $name, bool $abort = false) : string {
 /**
  * Singelton method. Return unused ADatabase object instance with dsn from pool.
  * Use query_map with no prefix. Use SETTINGS_DSN if $dsn is empty (=default). 
+ * Use SETTINGS_DSN = dummy:// to skip database action.
  */
-public static function getInstance(string $dsn = '', array $query_map = []) : object {
+public static function getInstance(string $dsn = '', array $query_map = []) : ?ADatabase {
 
 	if (empty($dsn) && defined('SETTINGS_DSN')) {
 		$dsn = SETTINGS_DSN;
+	}
+
+	if ($dsn == 'SKIP') {
+		return null;
 	}
 
 	if (empty($dsn)) {

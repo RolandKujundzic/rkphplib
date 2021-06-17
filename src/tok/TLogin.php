@@ -14,8 +14,8 @@ require_once $parent_dir.'/lib/split_str.php';
 
 use rkphplib\Exception;
 use rkphplib\Session;
-use rkphplib\ADatabase;
 use rkphplib\Database;
+use rkphplib\db\ADatabase;
 
 use function rkphplib\lib\kv2conf;
 use function rkphplib\lib\redirect;

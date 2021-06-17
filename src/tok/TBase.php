@@ -1692,8 +1692,8 @@ private function applyFilter(string $tag, ?string $value) : string {
 			$value = str_replace(HASH_DELIMITER, entity(HASH_DELIMITER), $value);
 		}
 		else if ($filter == 'escape_db') {
-			require_once __DIR__.'/../ADatabase.php';
-			$value = "'".\rkphplib\ADatabase::escape($value)."'";
+			require_once __DIR__.'/../db/ADatabase.php';
+			$value = "'".\rkphplib\db\ADatabase::escape($value)."'";
 		}
 		else {
 			throw new Exception('invalid filter', "tag=$tag filter=$filter value=[$value]");

@@ -2,7 +2,7 @@
 
 namespace rkphplib;
 
-require_once __DIR__.'/ADatabase.php';
+require_once __DIR__.'/Database.php';
 require_once __DIR__.'/lib/split_str.php';
 
 use function rkphplib\lib\split_str;
@@ -75,7 +75,7 @@ public function sort(string $sort = null) : string {
 	}
 
 	$direction = mb_substr($sort, 0, 1);
-	$column = ADatabase::escape_name(mb_substr($sort, 1), true);
+	$column = Database::escName(mb_substr($sort, 1), true);
 	$res = 'ORDER BY '.$column;
 		
 	if ($direction == 'a') {
@@ -297,7 +297,7 @@ private function searchCompare() : bool {
  */
 private function searchDefault() : bool {
 	if (is_null($this->search['method'])) {
-		$expr = $this->search['cname']."='".ADatabase::escape($this->search['value'])."'";
+		$expr = $this->search['cname']."='".Database::esc($this->search['value'])."'";
 	}
 	else if ($this->search['method'] == 'NULL') {
 		$expr = $this->search['cname'].' IS NULL';
@@ -335,7 +335,7 @@ private function searchLike() : bool {
 
 	$value = preg_replace('/ +/', '%', $this->search['value']);
 	$value = str_replace('$', $value, $like[$cmp]);
-	$expr = $this->search['cname']." LIKE '".ADatabase::escape($value)."'";
+	$expr = $this->search['cname']." LIKE '".Database::esc($value)."'";
 	array_push($this->search['expr'], $expr);
 	return true;
 }
@@ -360,7 +360,7 @@ private function searchFunc() : bool {
 		$list = preg_split('/\s*,\s*/', $value);
 				
 		for ($i = 0; $i < count($list); $i++) {
-			$list[$i] = $col."='".ADatabase::escape($list[$i])."'";
+			$list[$i] = $col."='".Database::esc($list[$i])."'";
 		}
 
 		$expr = '('.join(' OR ', $list).')';
@@ -369,13 +369,13 @@ private function searchFunc() : bool {
 		$list = preg_split('/\s*,\s*/', $value);
 				
 		for ($i = 0; $i < count($list); $i++) {
-			$list[$i] = ADatabase::escape($list[$i]);
+			$list[$i] = Database::esc($list[$i]);
 		}
 
 		$expr = $col.str_replace('$,', join("','", $list), $fcall);
 	}
 	else {
-		$expr = $col.str_replace('$', ADatabase::escape($value), $fcall);
+		$expr = $col.str_replace('$', Database::esc($value), $fcall);
 	}
 
 	array_push($this->search['expr'], $expr);
