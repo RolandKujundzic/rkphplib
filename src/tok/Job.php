@@ -27,7 +27,7 @@ use function rkphplib\lib\execute;
  * @author Roland Kujundzic <roland@kujundzic.de>
  *
  */
-class TJob implements TokPlugin {
+class Job implements TokPlugin {
 
 // @var Tokenizer $tok
 private $tok = null;
