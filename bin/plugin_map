@@ -1,10 +1,10 @@
 #!/usr/bin/php
 <?php
 
-require_once 'src/tok/Tokenizer.class.php';
+require_once 'src/tok/Tokenizer.php';
 require_once 'src/lib/config.php';
-require_once 'src/File.class.php';
-require_once 'src/Dir.class.php';
+require_once 'src/File.php';
+require_once 'src/Dir.php';
 require_once 'src/CLI.php';
 
 use rkphplib\tok\TokPlugin;
@@ -23,17 +23,17 @@ private $_plugins = [];
 
 
 /**
- * Scan src/tok for *.class.php. Execute register for every class.
+ * Scan src/tok for *.php. Execute register for every class.
  */
 public function scan(string $dir) : void {
 	Dir::exists($dir);
-	$php_files = Dir::scanTree($dir, [ '.php', '!AMenu.class.php', '!Tokenizer.class.php', '!.iface.php', '!.trait.php' ]);
+	$php_files = Dir::scanTree($dir, [ '.php', '!AMenu.php', '!Tokenizer.php', '!.iface.php', '!.trait.php' ]);
 	$obj = [];
 	$n = 0;
 
 	foreach ($php_files as $file) {
 		require_once $file;
-		$cname = '\\rkphplib\\'.str_replace([ 'src/', '/', '.class.php', '.php' ], [ '', '\\', '', '' ], $file);
+		$cname = '\\rkphplib\\'.str_replace([ 'src/', '/', '.php' ], [ '', '\\', '' ], $file);
 
 		// skip abstract class ...
 		if (substr($cname, 0, 15) == '\rkphplib\tok\A') {
@@ -72,8 +72,8 @@ public function register(TokPlugin $handler, string $cname) : void {
  * Create plugin map. Add to Tokenizer class.
  */
 public function createMap() {
-	$tokenizer = mb_substr(trim(File::load('src/tok/Tokenizer.class.php')), 0, -1);
-	$md5 = File::md5('src/tok/Tokenizer.class.php');
+	$tokenizer = mb_substr(trim(File::load('src/tok/Tokenizer.php')), 0, -1);
+	$md5 = File::md5('src/tok/Tokenizer.php');
 
 	if (($pos = mb_strpos($tokenizer, '// AUTO CREATED BY bin/plugin_map')) < 1) {
 		throw new Exception('append point not found');
@@ -98,10 +98,7 @@ public function createMap() {
 	$code = mb_substr($code, 0, -4)."$s1];\n$s1".
 		'foreach ($map as $cname => $list) {'.$s2.
 		'if (in_array($name, $list)) {'.$s3.
-		'$path = __DIR__."/$cname.class.php";'.$s3.
-		'if (!is_file($path)) {'.$s4.
-		'$path = __DIR__."/$cname.php";'.$s3."}\n$s3".
-		'require_once $path;'.$s3.
+		'require_once __DIR__."/$cname.php";'.$s3.
 		"\$cname = '".'\\\\rkphplib\\\\tok\\\\'."'.\$cname;$s3".
 		'$obj = new $cname();'.$s3.
 		'$this->register($obj);'.$s3.
@@ -110,11 +107,11 @@ public function createMap() {
 	$new_code = $tokenizer.$code;
 
 	if (md5($new_code) != $md5) {
-		File::save('src/tok/Tokenizer.class.php', $tokenizer.$code);
-		print "src/tok/Tokenizer.class.php: tryPluginMap() has been updated\n";
+		File::save('src/tok/Tokenizer.php', $tokenizer.$code);
+		print "src/tok/Tokenizer.php: tryPluginMap() has been updated\n";
 	}
 	else {
-		print "src/tok/Tokenizer.class.php: no change\n";
+		print "src/tok/Tokenizer.php: no change\n";
 	}
 }
 

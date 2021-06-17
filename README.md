@@ -32,8 +32,8 @@ File and Dir example.
 ```php
 <?php
 
-require_once('src/File.class.php');
-require_once('src/Dir.class.php');
+require_once('src/File.php');
+require_once('src/Dir.php');
 
 use rkphplib\File;
 use rkphplib\Dir;
@@ -48,7 +48,7 @@ Date calculation.
 ```php
 <?php
 
-require_once('src/DateCalc.class.php');
+require_once('src/DateCalc.php');
 
 use rkphplib\DateCalc;
 
@@ -64,7 +64,7 @@ Parser is bottom-up but can be changed by plugin to top-down.
 ```php
 <?php
 
-require_once('src/Tokenizer.class.php');
+require_once('src/Tokenizer.php');
 
 class Plugin {
 	private $n = 0;
@@ -89,7 +89,7 @@ Extend abstract class ARestAPI for simple REST API implementation.
 ```php
 <?php
 
-require_once('src/ARestAPI.class.php');
+require_once('src/ARestAPI.php');
 
 class APIExample extends rkphplib\ARestAPI {
 

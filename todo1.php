@@ -1,7 +1,7 @@
 <?php
 
 require_once 'settings.php';
-require_once 'php/rkphplib/src/Database.class.php';
+require_once 'php/rkphplib/src/Database.php';
 
 $conf = [
 	'@table' => 'csv_nitras2',

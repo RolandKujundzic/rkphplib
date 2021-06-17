@@ -1,7 +1,7 @@
 #!/usr/bin/php
 <?php
 
-require_once __DIR__.'/../src/SwaggerYaml.class.php';
+require_once __DIR__.'/../src/SwaggerYaml.php';
 require_once __DIR__.'/../src/CLI.php';
 require_once 'vendor/autoload.php';
 

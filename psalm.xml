@@ -4,7 +4,7 @@
 		<!--
 		<directory name="src" />
 		-->
-		<file name="src/Exception.class.php" />
+		<file name="src/Exception.php" />
 	</projectFiles>
 
 	<issueHandlers>

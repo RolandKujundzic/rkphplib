@@ -1,9 +1,9 @@
 #!/usr/bin/php
 <?php
 
-require_once __DIR__.'/../src/tok/Tokenizer.class.php';
-require_once __DIR__.'/../src/tok/TTwig.class.php';
-require_once __DIR__.'/../src/File.class.php';
+require_once __DIR__.'/../src/tok/Tokenizer.php';
+require_once __DIR__.'/../src/tok/TTwig.php';
+require_once __DIR__.'/../src/File.php';
 require_once __DIR__.'/../src/CLI.php';
 
 

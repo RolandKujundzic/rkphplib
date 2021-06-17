@@ -5,4 +5,4 @@ http://phpdoc.org/docs/latest/references/phpdoc/tags/author.html
 Static Code Analysis:
 ---------------------
 tools/phpstan analyse src
-tools/psalm.phar [--show-info=true] src/File.class.php
+tools/psalm.phar [--show-info=true] src/File.php

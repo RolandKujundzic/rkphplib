@@ -6,11 +6,11 @@ if (!defined('PATH_RKPHPLIB')) {
 }
 
 require_once PATH_RKPHPLIB.'lib/config.php';
-require_once PATH_RKPHPLIB.'PhpDoc/PDParser.class.php';
+require_once PATH_RKPHPLIB.'PhpDoc/PDParser.php';
 require_once PATH_RKPHPLIB.'CLI.php';
 
 require_once dirname(PATH_RKPHPLIB).'/vendor/autoload.php';
-require_once PATH_RKPHPLIB.'YAML.class.php';
+require_once PATH_RKPHPLIB.'YAML.php';
 
 
 /*

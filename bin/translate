@@ -11,13 +11,13 @@ if (!file_exists($docroot.'/settings.php')) {
 }
 
 require_once $docroot.'/settings.php';
-require_once PATH_RKPHPLIB.'Database.class.php';
+require_once PATH_RKPHPLIB.'Database.php';
 require_once PATH_RKPHPLIB.'tok/TokPlugin.iface.php';
-require_once PATH_RKPHPLIB.'tok/TLanguage.class.php';
-require_once PATH_RKPHPLIB.'tok/Tokenizer.class.php';
-require_once PATH_RKPHPLIB.'FSEntry.class.php';
-require_once PATH_RKPHPLIB.'File.class.php';
-require_once PATH_RKPHPLIB.'Dir.class.php';
+require_once PATH_RKPHPLIB.'tok/TLanguage.php';
+require_once PATH_RKPHPLIB.'tok/Tokenizer.php';
+require_once PATH_RKPHPLIB.'FSEntry.php';
+require_once PATH_RKPHPLIB.'File.php';
+require_once PATH_RKPHPLIB.'Dir.php';
 require_once PATH_RKPHPLIB.'CLI.php';
 
 use rkphplib\Exception;
