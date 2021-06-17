@@ -1235,7 +1235,7 @@ public function getTag(string $name) : string {
 }
 
 
-// AUTO CREATED BY bin/plugin_map
+// AUTO CREATED
 private function tryPluginMap(string $name) : void {
 	static $map = [
 		'Conf' => [ 'conf', 'conf:append', 'conf:get', 'conf:get_path', 'conf:id', 'conf:load', 'conf:save', 'conf:set', 'conf:set_path', 'conf:set_default', 'conf:var' ],
