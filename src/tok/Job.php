@@ -78,7 +78,7 @@ public function getPlugins(Tokenizer $tok) : array {
  */
 public function tok_job(array $conf) : void {
 	$default = [ 'do.run' => 'run=yes', 'do.remove' => 'lock=remove' ];
-	// \rkphplib\lib\log_debug("TJob.tok_job:81> default: ".print_r($default, true)." conf: ".print_r($conf, true));
+	// \rkphplib\lib\log_debug("Job.tok_job:81> default: ".print_r($default, true)." conf: ".print_r($conf, true));
 	$this->conf = array_merge($default, $conf);  
 
 	if (isset($this->conf['if']) && empty($this->conf['if'])) {
@@ -118,7 +118,7 @@ public function tok_job(array $conf) : void {
  * @return boolean
  */
 private function running() : bool {
-	// \rkphplib\lib\log_debug("TJob.running:121> lockfile=".$this->conf['lockfile']);
+	// \rkphplib\lib\log_debug("Job.running:121> lockfile=".$this->conf['lockfile']);
 
 	if (!File::exists($this->conf['lockfile'])) {	
 		$_REQUEST['job_status'] = 'prepare';
