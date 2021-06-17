@@ -129,7 +129,7 @@ public function tok_conf_save(string $file, array $p) : void {
  * @tok {conf:load}path/file.conf{:conf}{set:}{conf:get:*}{:set}
  */
 public function tok_conf_load(string $file) : void {
-	// \rkphplib\lib\log_debug("Conf.tok_conf_load:136> $file");
+	// \rkphplib\lib\log_debug("Conf.tok_conf_load:132> $file");
 	if (!File::exists($file)) {
 		$this->conf = [];
 	}
@@ -172,12 +172,12 @@ public function tok_conf(string $key, ?string $value) : string {
 	}
 
 	if (is_null($val) || ($update && $val != $value)) {
-		// \rkphplib\lib\log_debug("Conf.tok_conf:179> set $key=[$value]");
+		// \rkphplib\lib\log_debug("Conf.tok_conf:175> set $key=[$value]");
 		$this->set($key, $value);
 		$val = is_null($value) ? '' : $value;
 	}
 
-	// \rkphplib\lib\log_debug("Conf.tok_conf:184> $key=[$val]");
+	// \rkphplib\lib\log_debug("Conf.tok_conf:180> $key=[$val]");
 	return $val;
 }
 
@@ -344,7 +344,7 @@ public function get(string $name) : string {
  */
 private function updateConfFile(string $name, ?string $value) : void {
 	$file = $this->conf['@file'];
-	// \rkphplib\lib\log_debug("Conf.updateConfFile:351> $name=[$value] in $file");
+	// \rkphplib\lib\log_debug("Conf.updateConfFile:347> $name=[$value] in $file");
 
 	if (substr($file, -5) == '.json') {
 		Hash::set($name, $value, $this->conf);
@@ -375,7 +375,7 @@ public function set(string $name, ?string $value) : int {
 		return 0;
 	}
 
-	// \rkphplib\lib\log_debug("Conf.set:382> [$name]=[$value]");
+	// \rkphplib\lib\log_debug("Conf.set:378> [$name]=[$value]");
 	$qtype = ($this->lid > 0) ? 'select_user_path' : 'select_system_path';
 	$path = explode('.', $name);
 
