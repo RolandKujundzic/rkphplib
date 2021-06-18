@@ -140,6 +140,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['if:get'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REQUIRE_BODY | TokPlugin::TEXT | TokPlugin::REDO;
 	$plugin['ignore'] = TokPlugin::NO_PARAM | TokPlugin::TEXT | TokPlugin::REQUIRE_BODY;
 	$plugin['include'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY;
+	$plugin['inc_html'] = TokPlugin::REQUIRE_PARAM | TokPlugin::NO_BODY;
 	$plugin['include_if'] = TokPlugin::REDO | TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['join'] = TokPlugin::LIST_BODY;
 	$plugin['json'] = 0;
@@ -922,6 +923,24 @@ public function tok_view(string $name, array $p) : string {
 	}
  
 	return '<div '.$attrib.'>'.File::load($file).'</div>';
+}
+
+
+/**
+ * Same as {trim:}{include:}{find:main.inc.html}{:include}{:trim}.
+ * Return empty string if content is empty.
+ * 
+ * @tok {inc_html:main} = <div id="main_inc_html">{find:main.inc.html}</div>
+ */
+public function tok_inc_html(string $name) : string {
+	$html = $this->tok_load('', $this->tok_find($name.'.inc.html'));
+	$html = trim($this->_tok->redo($html));
+
+	if (!empty($html)) {
+		$html = '<div id="'.$name.'_inc_html">'.$html.'</div>';
+	}
+
+	return $html;
 }
 
 
@@ -2232,7 +2251,7 @@ public static function findPath(string $file, string $dir = '.') : string {
  *
  * @tok {tf:eq:5}3{:tf} = false, {tf:lt:3}1{:tf} = true, {tf:}0{:tf} = false, {tf:}00{:tf} = true
  */
-public function tok_tf(array $p, string $arg) : void {
+public function tok_tf(array $p, ?string $arg) : void {
 	$tf = false;
 
 	$ta = trim($arg);
