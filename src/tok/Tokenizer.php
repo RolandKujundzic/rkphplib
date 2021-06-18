@@ -717,15 +717,7 @@ private function _join_tok_plugin(int &$i) : ?string {
 
 /*
 	if ($tp & TokPlugin::REDO) {
-		$old_tok = $this->_tok;
-		$old_endpos = $this->_endpos;
-
-		\rkphplib\lib\log_debug("Tokenizer._join_tok_plugin:680> redo: [$out]");
-		$this->setText($out);
-		$out = $this->_join_tok(0, count($this->_tok));
-		
-		$this->_tok = $old_tok;
-		$this->_endpos = $old_endpos;
+		$out = $this->redo($out);
 	}
 */
 
@@ -967,17 +959,26 @@ private function _call_plugin(string $name, string $param, $arg = null, int $fla
 	}
 
 	if ($this->_plugin[$name][1] & TokPlugin::REDO) {
-		$old_tok = $this->_tok;
-		$old_endpos = $this->_endpos;
-
-		// \rkphplib\lib\log_debug("Tokenizer._call_plugin:973> redo=[$res]");
-		$this->setText($res);
-		$res = $this->_join_tok(0, count($this->_tok));
-
-		$this->_tok = $old_tok;
-		$this->_endpos = $old_endpos;
+		$res = $this->redo($res);
 	}
 
+	return $res;
+}
+
+
+/**
+ *
+ */
+public function redo(string $txt) : string {
+	\rkphplib\Log::debug("Tokenizer.redo> (<1>)", $txt);
+	$old_endpos = $this->_endpos;
+	$old_tok = $this->_tok;
+
+	$this->setText($txt);
+	$res = $this->_join_tok(0, count($this->_tok));
+
+	$this->_endpos = $old_endpos;
+	$this->_tok = $old_tok;
 	return $res;
 }
 
