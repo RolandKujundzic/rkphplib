@@ -870,7 +870,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 		}
 
 		$flag = is_array($args) ? 3 : 0;
-		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:881> return this._call_plugin($name, $func, $args, $flag)");
+		// \rkphplib\lib\log_debug("Tokenizer.callPlugin:873> return this._call_plugin($name, $func, $args, $flag)");
 		return $this->_call_plugin($name, $func, $args, $flag);
 	}
 
@@ -878,7 +878,7 @@ public function callPlugin(string $name, string $func, $args = []) {
 		throw new Exception("no such plugin method $name.".$func);
 	}
 
-	// \rkphplib\lib\log_debug([ "Tokenizer.callPlugin:889> name=$name, func=$func, args: [<1>]", $args ]);
+	// \rkphplib\lib\log_debug([ "Tokenizer.callPlugin:881> name=$name, func=$func, args: [<1>]", $args ]);
 	if (count($args) == 0) {
 		$res = call_user_func(array($this->_plugin[$name][0], $func));
 	}
@@ -970,7 +970,7 @@ private function _call_plugin(string $name, string $param, $arg = null, int $fla
  *
  */
 public function redo(string $txt) : string {
-	\rkphplib\Log::debug("Tokenizer.redo> (<1>)", $txt);
+	// \rkphplib\Log::debug("Tokenizer.redo> (<1>)", $txt);
 	$old_endpos = $this->_endpos;
 	$old_tok = $this->_tok;
 
@@ -1083,7 +1083,7 @@ private function _compute_endpos() : void {
 		else if (($dot = strpos($plugin, '.')) > 0 && strpos($plugin, $d) > $dot + 1) {
 			// allow name.sub:param instead of name:sub:param
 			$plugin = substr($plugin, 0, $dot).$d.substr($plugin, $dot + 1);
-			// \rkphplib\lib\log_debug("Tokenizer._compute_endpos:1085> change {$this->_tok[$i]} into $plugin");
+			// \rkphplib\lib\log_debug("Tokenizer._compute_endpos:1086> change {$this->_tok[$i]} into $plugin");
 			$this->_tok[$i] = $plugin;
 		}
 
@@ -1246,7 +1246,7 @@ private function tryPluginMap(string $name) : void {
 		'Job' => [ 'job' ],
 		'Menu' => [ 'menu', 'menu:add', 'menu:conf' ],
 		'TArray' => [ 'array', 'array:set', 'array:get', 'array:shift', 'array:unshift', 'array:pop', 'array:push', 'array:join', 'array:length', 'array:split' ],
-		'TBase' => [ 'clear', 'const', 'decode', 'encode', 'esc', 'escape', 'escape:tok', 'f', 'false', 'filter', 'find', 'get', 'hidden', 'if', 'if:get', 'ignore', 'include', 'include_if', 'join', 'json', 'json:exit', 'keep', 'li', 'link', 'load', 'loadJSON', 'log', 'log_debug', 'plugin', 'redirect', 'redo', 'row', 'row:init', 'set', 'set_default', 'shorten', 'skin', 'strlen', 'switch', 't', 'tf', 'tolower', 'toupper', 'tpl', 'tpl_set', 'trim', 'true', 'unescape', 'var', 'view' ],
+		'TBase' => [ 'clear', 'const', 'decode', 'encode', 'esc', 'escape', 'escape:tok', 'f', 'false', 'filter', 'find', 'get', 'hidden', 'if', 'if:get', 'ignore', 'include', 'inc_html', 'include_if', 'join', 'json', 'json:exit', 'keep', 'li', 'link', 'load', 'loadJSON', 'log', 'log_debug', 'plugin', 'redirect', 'redo', 'row', 'row:init', 'set', 'set_default', 'shorten', 'skin', 'strlen', 'switch', 't', 'tf', 'tolower', 'toupper', 'tpl', 'tpl_set', 'trim', 'true', 'unescape', 'var', 'view' ],
 		'TDate' => [ 'date' ],
 		'TEval' => [ 'eval:math', 'eval:logic', 'eval:call', 'eval' ],
 		'TFormValidator' => [ 'fv', 'fv:appendjs', 'fv:check', 'fv:conf', 'fv:emsg', 'fv:error', 'fv:error_message', 'fv:get', 'fv:get_conf', 'fv:hidden', 'fv:in', 'fv:init', 'fv:preset', 'fv:set_error_message', 'fv:tpl' ],
