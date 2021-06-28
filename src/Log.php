@@ -90,22 +90,22 @@ private static function format(string $msg) : string {
  * If $arg is set replace <N> with json encoded value of $arg[N-1].
  */
 private static function msg(string $msg, array $arg) : string {
-	if (!count($arg)) {
-		$res = $msg;
+	$je_flag = JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE;
+	$res = $msg;
 
+	if (!count($arg)) {
 		if (mb_substr($msg, -1) == '…') {
 			$res = mb_strlen($msg) > 130 ? mb_substr($msg, 0, 130).'…' : mb_substr($msg, 0, -1);
 		}
 	}
 	else if (mb_strpos($msg, '<1>') !== false) {
-		$res = $msg;
-
 		for ($i = 0; $i < count($arg); $i++) {
-			$res = str_replace('<'.($i + 1).'>', json_encode($arg[$i]), $res);
+			$val = is_string($arg[$i]) || is_numeric($arg[$i]) ? $arg[$i] : json_encode($arg[$i], $je_flag);
+			$res = str_replace('<'.($i + 1).'>', $val, $res);
 		}
 	} 
 	else {
-		$json_str = json_encode($arg, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+		$json_str = json_encode($arg, $je_flag);
 		$res = mb_strlen($json_str) < 130 ? $json_str : trim(print_r($arg, true));
 	}
 
