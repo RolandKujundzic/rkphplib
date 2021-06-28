@@ -1241,7 +1241,6 @@ private function tryPluginMap(string $name) : void {
 	static $map = [
 		'Conf' => [ 'conf', 'conf:append', 'conf:get', 'conf:get_path', 'conf:id', 'conf:load', 'conf:save', 'conf:set', 'conf:set_path', 'conf:set_default', 'conf:var' ],
 		'FileSystem' => [ 'directory', 'directory:copy', 'directory:move', 'directory:create', 'directory:exists', 'directory:entries', 'directory:is', 'file', 'file:info', 'file:size', 'file:copy', 'file:download', 'file:exists', 'csv_file', 'csv_file:conf', 'csv_file:append', 'csv_file:open', 'csv_file:close', 'dirname', 'basename' ],
-		'FormValidator' => [ 'fv2', 'fv2:check', 'fv2:hidden', 'fv2:in', 'fv2:init', 'fv2:preset' ],
 		'Html' => [ 'html:tag', 'html:inner', 'html:append', 'html:meta', 'html:meta_og', 'html:tidy', 'html:xml', 'html:uglify', 'html:nobr', 'html', 'google', 'text2html', 'input:checkbox', 'input:radio', 'input:select', 'input:xcrypt', 'input', 'user_agent' ],
 		'Job' => [ 'job' ],
 		'Menu' => [ 'menu', 'menu:add', 'menu:conf' ],
