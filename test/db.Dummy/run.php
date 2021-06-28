@@ -15,5 +15,5 @@ function query(string $query, ?array $replace = null) {
 
 global $th;
 
-$th->run(1, 1);
+$th->run(1, 2);
 
