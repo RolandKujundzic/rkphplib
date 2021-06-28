@@ -1,0 +1,7 @@
+SELECT * FROM test;
+SELECT id FROM test;
+SELECT '1,2; DROP ALL TABLES; --' FROM a'n;
+EXCEPTION
+SELECT * FROM x WHERE id IN ('7');
+SELECT * FROM x WHERE id IN ('1', '3', 'empty');
+SELECT * FROM x WHERE id IN ('1', '3', 'empty');
