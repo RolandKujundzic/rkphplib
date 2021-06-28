@@ -413,14 +413,13 @@ public function setQuery(string $qkey, string $query, array $info = []) : void {
 				$map[$key] = 'escape';
 			}
 		}
+		else if (substr($tok[$i - 1], -5) == ' IN (' && substr($tok[$i + 1], 0, 1) == ')') {
+			$key = mb_substr($m, $pl, -$sl);
+			$map[$key] = 'in';
+		}
 		else if (mb_substr($m, $pl, 1) === '_') {
 			$key = mb_substr($m, $pl, -$sl);
-			if (substr($tok[$i - 1], -5) == ' IN (' && substr($tok[$i + 1], 0, 1) == ')') {
-				$map[$key] = 'in';
-			}
-			else {
-				$map[$key] = 'keep';
-			}
+			$map[$key] = 'keep';
 		}
 		else if (mb_substr($m, $pl, 1) === '^') {
 			$key = mb_substr($m, $pl + 1, -$sl);
@@ -566,7 +565,7 @@ public function getQuery(string $qkey, ?array $replace = null) {
 				$replace[$key] = split_str(',', $replace[$key]);
 			}
 
-			if (is_string($replace[$key])) {
+			if (!is_array($replace[$key])) {
 				$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, "'".$this->esc($replace[$key])."'", $query);
 			}
 			else {
@@ -579,6 +578,10 @@ public function getQuery(string $qkey, ?array $replace = null) {
 			}
 		}
 		else if ($do === 'keep') {
+			if (strpos($replace[$key], '--') !== false || strpos($replace[$key], '--') !== false) {
+				throw new Exception('invalid query replace', "$key=".json_encode($replace[$key]));
+			}
+
 			$query = str_replace(TAG_PREFIX.$key.TAG_SUFFIX, $replace[$key], $query);
 		}
 		else {
@@ -586,6 +589,11 @@ public function getQuery(string $qkey, ?array $replace = null) {
 		}
 
 		unset($replace[$key]);
+	}
+
+	if (($wp = strpos($query, ' WHERE ')) > 0 && ($np = strpos($query, '=NULL', $wp)) > 0) {
+		$tmp = explode(' WHERE ', $query, 2);
+		$query = $tmp[0].' WHERE '.str_replace('=NULL', ' IS NULL', $tmp[1]);
 	}
 
 	if (!$bind) {
