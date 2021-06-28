@@ -185,7 +185,7 @@ public function dropTable(string $table) : void {
  *
  */
 public function esc(string $value) : string {
-	return true;
+	return self::escape($value);
 }
 
 
