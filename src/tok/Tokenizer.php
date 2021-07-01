@@ -971,6 +971,10 @@ private function _call_plugin(string $name, string $param, $arg = null, int $fla
  */
 public function redo(string $txt) : string {
 	// \rkphplib\Log::debug("Tokenizer.redo> (<1>)", $txt);
+	if (strpos($txt, $this->rx[1]) === false) {
+		return $res;
+	}
+
 	$old_endpos = $this->_endpos;
 	$old_tok = $this->_tok;
 
@@ -1083,7 +1087,7 @@ private function _compute_endpos() : void {
 		else if (($dot = strpos($plugin, '.')) > 0 && strpos($plugin, $d) > $dot + 1) {
 			// allow name.sub:param instead of name:sub:param
 			$plugin = substr($plugin, 0, $dot).$d.substr($plugin, $dot + 1);
-			// \rkphplib\lib\log_debug("Tokenizer._compute_endpos:1086> change {$this->_tok[$i]} into $plugin");
+			// \rkphplib\lib\log_debug("Tokenizer._compute_endpos:1090> change {$this->_tok[$i]} into $plugin");
 			$this->_tok[$i] = $plugin;
 		}
 
