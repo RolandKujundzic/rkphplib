@@ -972,7 +972,7 @@ private function _call_plugin(string $name, string $param, $arg = null, int $fla
 public function redo(string $txt) : string {
 	// \rkphplib\Log::debug("Tokenizer.redo> (<1>)", $txt);
 	if (strpos($txt, $this->rx[1]) === false) {
-		return $res;
+		return is_null($txt) ? '' : $txt;
 	}
 
 	$old_endpos = $this->_endpos;
