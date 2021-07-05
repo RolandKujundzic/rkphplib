@@ -104,6 +104,41 @@ public static function sql2num(string $sql_date, int $day = 0) {
 
 
 /**
+ * @example Calendar::weekDays(); Calendar::weekDays(2); Calendar::weekDays(3);
+ */
+public static function weekDays($len = 0) : array {
+	$days = [];
+
+	$days['de'] = [ 'Mon' => 'Montag', 'Tue' => 'Dienstag',
+		'Wed' => 'Mittwoch', 'Thu' => 'Donnerstag', 'Fri' => 'Freitag',
+		'Sat' => 'Samstag', 'Sun' => 'Sonntag' ];
+
+	$days['en'] = [ 'Mon' => 'Monday', 'Tue' => 'Tuesday',
+		'Wed' => 'Wednesday', 'Thu' => 'Thursay', 'Fri' => 'Friday',
+		'Sat' => 'Saturday', 'Sun' => 'Sunday' ];
+
+	$days['hr'] = [ 'Mon' => 'Ponedjeljak', 'Tue' => 'Utorak',
+		'Wed' => 'Srijeda', 'Thu' => 'Četvrtak', 'Fri' => 'Petak',
+		'Sat' => 'Subota', 'Sun' => 'Nedjelja' ];
+
+	$lang = defined('SETTINGS_LANGUAGE') && mb_strlen(SETTINGS_LANGUAGE) === 2 ? SETTINGS_LANGUAGE : 'de';
+	if (!isset($days[$lang])) {
+		throw new Exception('undefined week days', "lang=$lang");
+	}
+
+	$res = $days[$lang];
+
+	if ($len > 0) {
+		foreach ($res as $key => $value) {
+			$res[$key] = mb_substr($value, 0, $len);
+		}
+	}
+
+	return $res;
+}
+
+
+/**
  * Return day name. Format (default = num): 
  * - num: 1, 2, 3, 4, 5, 6, 7
  * - de: Mo, Di, Mi, Do, Fr, Sa, So
