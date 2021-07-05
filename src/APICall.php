@@ -90,8 +90,10 @@ public function __construct(array $opt = []) {
  *  - header: e.g. [ 'Content-Type' => 'application/json', ... ]
  *  - save_as: Save result here
  *  - decode: decode JSON/XML result (default = true)
+ *
+ * @param string|array $value
  */
-public function set(string $name, string $value) : void {
+public function set(string $name, $value) : void {
 
 	if (!is_string($name)) {
 		throw new Exception('name is not string', print_r($name, true));
