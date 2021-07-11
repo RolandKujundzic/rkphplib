@@ -27,11 +27,11 @@ public function connect() : bool {
 		return true;
 	}
 
-	if (empty($this->_dsn)) {
+	if (empty($this->dsn)) {
 		return $this->error('call setDSN first', '', 2);
 	}
 
-	$dsn = self::splitDSN($this->_dsn);
+	$dsn = self::splitDSN($this->dsn);
 
 	if ($dsn['type'] != 'sqlite') {
 		return $this->error('invalid dsn type: '.$dsn['type'], '', 2);
@@ -157,8 +157,8 @@ public function selectHash($query, string $key_col = 'name', string $value_col =
 			$res = $this->_fetch($query, array($key_col, $value_col));
 		}
 
-		if (!$ignore_double && isset($this->_cache['FETCH:DOUBLE'])) {
-			return $this->error('Hashkeys are not unique', print_r($this->_cache['FETCH:DOUBLE'], true), 3);
+		if (!$ignore_double && isset($this->cache['FETCH:DOUBLE'])) {
+			return $this->error('Hashkeys are not unique', print_r($this->cache['FETCH:DOUBLE'], true), 3);
 		}
 	}
 
