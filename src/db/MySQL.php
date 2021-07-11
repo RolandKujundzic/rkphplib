@@ -16,13 +16,20 @@ use \rkphplib\Exception;
  */
 class MySQL extends ADatabase {
 
-private $_db = null;
-private $_conn_ttl = 0;
-private $_seek = -1;
-private $_cache = array();
-private $_dbres = null;
-private $_abort_error = null;
+// @var mysqli $db
+private $db = null;
 
+// @var int $conn_ttl
+private $conn_ttl = 0;
+
+// @var int $seek
+private $seek = -1;
+
+// @var array $abort_error
+private $abort_error = null;
+
+// @var string $rollback 'y' or error query
+private $rollback = '';
 
 
 /**
@@ -197,8 +204,8 @@ public function setDSN(string $dsn = '') : void {
  *
  */
 public function getId() : string {
-	$dsn_query_id = self::computeId($this->_dsn, $this->_query);
-	$db_id = is_null($this->_db) ? 0 : md5(spl_object_hash($this->_db));
+	$dsn_query_id = self::computeId($this->dsn, $this->query);
+	$db_id = is_null($this->db) ? 0 : md5(spl_object_hash($this->db));
 	$tmp = [ md5(spl_object_hash($this)), $db_id, $dsn_query_id ];
 
 	for ($j = 0; $j < count($tmp); $j++) {
@@ -217,7 +224,7 @@ public function getId() : string {
  *
  */
 public function hasResultSet() : bool {
-	return !is_null($this->_dbres);
+	return !is_null($this->dbres);
 }
 
 
@@ -269,8 +276,8 @@ public function releaseLock(string $name) : int {
  */
 public function connect() : bool {
 
-	if (is_object($this->_db)) {
-		if ($this->_conn_ttl < time() && !$this->_db->ping()) {
+	if (is_object($this->db)) {
+		if ($this->conn_ttl < time() && !$this->db->ping()) {
 			// \rkphplib\lib\log_debug('MySQL.connect:274> close expired connection '.$this->getId());
 			$this->close();
 		}
@@ -279,32 +286,32 @@ public function connect() : bool {
 		}
 	}
 
-	if (empty($this->_dsn)) {
+	if (empty($this->dsn)) {
 		return $this->error('call setDSN first', '', 2);
 	}
 
-	$dsn = self::splitDSN($this->_dsn);
+	$dsn = self::splitDSN($this->dsn);
 
 	if ($dsn['type'] != 'mysqli') {
 		return $this->error('invalid dsn type: '.$dsn['type'], '', 2);
 	}
 
 	if (!empty($dsn['port'])) {
-		$this->_db = \mysqli_init();
-		if (!$this->_db->real_connect($dsn['host'], $dsn['login'], $dsn['password'], $dsn['name'], $dsn['port'])) {
-			return $this->error('Failed to connect to MySQL ('.$this->_db->connect_errno.')', $this->_db->connect_error, 2);
+		$this->db = \mysqli_init();
+		if (!$this->db->real_connect($dsn['host'], $dsn['login'], $dsn['password'], $dsn['name'], $dsn['port'])) {
+			return $this->error('Failed to connect to MySQL ('.$this->db->connect_errno.')', $this->db->connect_error, 2);
 		}
 	}
 	else {
 		try {
-			$this->_db = new \mysqli($dsn['host'], $dsn['login'], $dsn['password'], $dsn['name']);
+			$this->db = new \mysqli($dsn['host'], $dsn['login'], $dsn['password'], $dsn['name']);
 		}
 		catch (\Exception $e) {
 			return $this->error('Failed to connect to MySQL ('.$e->getCode().')', $e->getMessage(), 2);
 		}
 	}
 
-	if (!empty($this->charset) && !$this->_db->set_charset($this->charset)) {
+	if (!empty($this->charset) && !$this->db->set_charset($this->charset)) {
 		// $this->execute("SET names '".self::escape($this->charset)."'");
 		return $this->error('set charset failed', $this->charset, 2);
 	}
@@ -316,7 +323,7 @@ public function connect() : bool {
 	}
 	
 	// \rkphplib\lib\log_debug('MySQL.connect:318> login@host='.$dsn['login'].'@'.$dsn['host'].', name='.$dsn['name'].', id='.$this->getId());
-	$this->_conn_ttl = time() + 5 * 60; // re-check connection in 5 minutes ...
+	$this->conn_ttl = time() + 5 * 60; // re-check connection in 5 minutes ...
 	return $res;
 }
 
@@ -326,24 +333,24 @@ public function connect() : bool {
  */
 public function close() : bool {
 
-	if (!$this->_db) {
+	if (!$this->db) {
 		return $this->error('no open database connection', '', 2);
 	}
 
-	if (!$this->_db->close()) {
+	if (!$this->db->close()) {
 		return $this->error('failed to close database connection', '', 2);
 	}
 
-	foreach ($this->_query as $key) {
-		if (is_object($this->_query[$key])) {
-			if (!$this->_query[$key]->close()) {
+	foreach ($this->query as $key) {
+		if (is_object($this->query[$key])) {
+			if (!$this->query[$key]->close()) {
 				return $this->error('failed to close prepared statement', $key, 2);
 			}
 		}
 	}
 
-	$this->_db = null;
-	$this->_conn_ttl = 0;
+	$this->db = null;
+	$this->conn_ttl = 0;
 	return true;
 }
 
@@ -352,7 +359,7 @@ public function close() : bool {
  * 
  */
 public function createDatabase(string $dsn = '', string $opt = 'utf8') : bool {
-	$db = empty($dsn) ? self::splitDSN($this->_dsn) : self::splitDSN($dsn);
+	$db = empty($dsn) ? self::splitDSN($this->dsn) : self::splitDSN($dsn);
 	$name = self::escape_name($db['name']);
 	$login = self::escape_name($db['login']);
 	$pass = self::escape_name($db['password']);
@@ -382,7 +389,7 @@ public function createDatabase(string $dsn = '', string $opt = 'utf8') : bool {
  * 
  */
 public function dropDatabase(string $dsn = '') : void {
-	$db = empty($dsn) ? self::splitDSN($this->_dsn) : self::splitDSN($dsn);
+	$db = empty($dsn) ? self::splitDSN($this->dsn) : self::splitDSN($dsn);
 	$name = self::escape_name($db['name']);
 	$login = self::escape_name($db['login']);
 	$host = self::escape_name($db['host']);
@@ -507,7 +514,7 @@ public function saveTableDump(array $opt) : void {
  *
  */
 public function loadDumpShell(string $file, int $flags = self::LOAD_DUMP_IGNORE_KEYS, array $tables = []) : void {
-	$dsn = self::splitDSN($this->_dsn);
+	$dsn = self::splitDSN($this->dsn);
 	$mysql = new PipeExecute('mysql -h {:=host} -u {:=login} -p{:=password} {:=name}', $dsn);
 
 	$tkeys = ($flags & self::LOAD_DUMP_DROP_TABLES) ? [] : $tables;
@@ -556,7 +563,7 @@ public function execute($query, bool $use_result = false) : bool {
 			}
 		}
 		else {
-			if (!empty($this->_query['@fh']) && !$use_result) {
+			if (!empty($this->query['@fh']) && !$use_result) {
 				throw new Exception('saveTo() does not work in prepared mode');
 			}
 			else if (($stmt = $this->_exec_stmt($query)) === null) {
@@ -571,22 +578,62 @@ public function execute($query, bool $use_result = false) : bool {
 			return false;
 		}
 
-		if (!empty($this->_query['@fh']) && !$use_result) {
-			File::write($this->_query['@fh'], $query.";\n");
+		if (!empty($this->query['@fh']) && !$use_result) {
+			File::write($this->query['@fh'], $query.";\n");
 			return true;
 		}
-		else if ($this->_db->real_query($query) === false) {
+		else if ($this->rollback != '') {
+			if ($this->rollback != 'y') {
+				// skip - error has occurred
+			}
+			else if (!$this->db->query($query)) {
+				$this->rollback = $query;
+			}
+		}
+		else if ($this->db->real_query($query) === false) {
 			return $this->error('failed to execute sql query', $query);
 		}
 
 		if ($use_result) {
-			if (($this->_dbres = $this->_db->store_result()) === false) {
+			if (($this->dbres = $this->db->store_result()) === false) {
 				return $this->error('failed to use query result', $query);
 			}
 		}
 	}
 
 	return true;
+}
+
+
+/**
+ * Start/End transaction. Return error query if rollback was applied.
+ * 
+ * @example
+ * $db->transaction(true);
+ * // execute queries
+ * if (($error_quey = $db->transaction())) {
+ *   die($error_query);
+ * }
+ * @eol
+ */
+public function transaction(bool $begin = false) : string {
+	$res = '';
+
+	if ($begin) {
+		$mysqli->begin_transaction();
+		$this->rollback = 'y';
+	}
+	else if ($this->rollback == 'y') {
+		$this->db->commit();
+		$this->rollback = '';
+	}
+	else if (strlen($this->rollback) > 1) {
+		$this->db->rollback();
+		$res = $this->rollback;
+		$this->rollback = '';	
+	}
+
+	return $res;
 }
 
 
@@ -600,16 +647,16 @@ public function execute($query, bool $use_result = false) : bool {
 private function error(string $msg, string $internal = '', int $flag = 0) : ?bool {
 	if ($this->abort) {
 		if (2 != $flag & 2) {
-			$internal .= "\n(".$this->_db->errno.') '.$this->_db->error;
+			$internal .= "\n(".$this->db->errno.') '.$this->db->error;
 		}
 
 		throw new Exception($msg, $internal);
 	}
 
-	$this->_abort_error = [ $msg, null, null, $internal ];
+	$this->abort_error = [ $msg, null, null, $internal ];
 	if (2 != $flag & 2) {
-		$this->_abort_error[1] = $this->_db->error;
-		$this->_abort_error[2] = $this->_db->errno;
+		$this->abort_error[1] = $this->db->error;
+		$this->abort_error[2] = $this->db->errno;
 	}
 
 	if ($flag & 4) {
@@ -627,7 +674,7 @@ private function error(string $msg, string $internal = '', int $flag = 0) : ?boo
  *
  */
 public function setFirstRow(int $offset) : void {
-	if (!$this->_dbres->data_seek($offset)) {
+	if (!$this->dbres->data_seek($offset)) {
 		throw new Exception('failed to scroll to position '.$offset.' in database result set');
 	}
 }
@@ -638,18 +685,18 @@ public function setFirstRow(int $offset) : void {
  */
 public function getNextRow() : ?array {
 
-	if (!is_object($this->_dbres)) {
+	if (!is_object($this->dbres)) {
 		throw new Exception('no resultset');
   }
 
-	$is_prepared = $this->_dbres instanceof mysqli_stmt;
+	$is_prepared = $this->dbres instanceof mysqli_stmt;
 
 	if ($is_prepared) {
 		// see $this->_fetch_stmt()
 		throw new Exception('ToDo');
 	}
 	else {
-		$row = $this->_dbres->fetch_assoc();
+		$row = $this->dbres->fetch_assoc();
 	}
 
 	if (is_null($row)) {
@@ -664,20 +711,20 @@ public function getNextRow() : ?array {
  *
  */
 public function freeResult() : void {
-	if (is_null($this->_dbres)) {
+	if (is_null($this->dbres)) {
 		return;
 	}
 
-	$is_prepared = $this->_dbres instanceof mysqli_stmt;
+	$is_prepared = $this->dbres instanceof mysqli_stmt;
 
 	if ($is_prepared) {
-		$this->_dbres->close();
+		$this->dbres->close();
 	}
 	else {
-		$this->_dbres->free();
+		$this->dbres->free();
 	}
 
-	$this->_dbres = null;
+	$this->dbres = null;
 }
 
 
@@ -686,11 +733,11 @@ public function freeResult() : void {
  */
 public function getRowNumber() : int {
 
-	if (!is_object($this->_dbres)) {
+	if (!is_object($this->dbres)) {
 		throw new Exception('no resultset');
   }
 
-	return $this->_dbres->num_rows;
+	return $this->dbres->num_rows;
 }
 
 
@@ -753,8 +800,8 @@ public function selectHash($query, string $key_col = 'name', string $value_col =
 			$res = $this->_fetch($query, array($key_col, $value_col));
 		}
 
-		if (!$ignore_double && isset($this->_cache['FETCH:DOUBLE'])) {
-			return $this->error('Hashkeys are not unique', print_r($this->_cache['FETCH:DOUBLE'], true), 3);
+		if (!$ignore_double && isset($this->cache['FETCH:DOUBLE'])) {
+			return $this->error('Hashkeys are not unique', print_r($this->cache['FETCH:DOUBLE'], true), 3);
 		}
 	}
 
@@ -766,7 +813,7 @@ public function selectHash($query, string $key_col = 'name', string $value_col =
  * Return double keys from selectHash.
  */
 public function getDoubles() : array {
-	return $this->_cache['FETCH:DOUBLE'];
+	return $this->cache['FETCH:DOUBLE'];
 }
 
 
@@ -799,7 +846,7 @@ public function multiQuery(string $query) : ?array {
 		return null;
 	}
 
-	if (($dbres = $this->_db->multi_query($query)) === false) {
+	if (($dbres = $this->db->multi_query($query)) === false) {
 		$this->error('multi query failed', $query, 1);
 	}
 	
@@ -807,7 +854,7 @@ public function multiQuery(string $query) : ?array {
 
 	do {
 
-		if (($dbres = $this->_db->store_result()) === false) {
+		if (($dbres = $this->db->store_result()) === false) {
 			continue;
 		}
 
@@ -818,7 +865,7 @@ public function multiQuery(string $query) : ?array {
 		}
 
 		array_push($res, $rows);
-	} while ($this->_db->more_results() && $this->_db->next_result());
+	} while ($this->db->more_results() && $this->db->next_result());
 
 	return (count($res) == 1) ? array_pop($res) : $res;
 }
@@ -838,7 +885,7 @@ private function _fetch(string $query, ?array $rbind = null, int $rcount = 0) : 
 	}
 
 	// query = real_query + store_result
-	if (($dbres = $this->_db->query($query)) === false) {
+	if (($dbres = $this->db->query($query)) === false) {
 		return $this->error('failed to execute sql query', $query, 1);
 	}
 
@@ -872,10 +919,10 @@ private function _fetch(string $query, ?array $rbind = null, int $rcount = 0) : 
 		$dbres->data_seek(-1 * $rcount + 1);
 		$end = 1;
 	}
-	else if ($this->_seek > -1) {
-		$dbres->data_seek($this->_seek);
-		$end -= $this->_seek + 1;
-		$this->_seek = -1;
+	else if ($this->seek > -1) {
+		$dbres->data_seek($this->seek);
+		$end -= $this->seek + 1;
+		$this->seek = -1;
 	}
 
 	$bl = is_null($rbind) ? 0 : count($rbind);
@@ -894,15 +941,15 @@ private function _fetch(string $query, ?array $rbind = null, int $rcount = 0) : 
 			$key = $dbrow[$rbind[0]];
 
 			if (isset($res[$key])) {
-				if (!isset($this->_cache['FETCH:DOUBLES'])) {
-					$this->_cache['FETCH:DOUBLE'] = array();
+				if (!isset($this->cache['FETCH:DOUBLE'])) {
+					$this->cache['FETCH:DOUBLE'] = array();
 				}
 
-				if (!isset($this->_cache['FETCH:DOUBLE'][$key])) {
-					$this->_cache['FETCH:DOUBLE'][$key] = 0;
+				if (!isset($this->cache['FETCH:DOUBLE'][$key])) {
+					$this->cache['FETCH:DOUBLE'][$key] = 0;
 				}
 
-				$this->_cache['FETCH:DOUBLE'][$key]++;
+				$this->cache['FETCH:DOUBLE'][$key]++;
 			}
 
 			$res[$key] = $dbrow[$rbind[1]];
@@ -948,7 +995,7 @@ private function _exec_stmt(array $q) : ?object {
 	$replace = $q[$ql - 1];
 	$query = $q[$ql - 2];
 
-	if (!($stmt = $this->_db->prepare($query))) {
+	if (!($stmt = $this->db->prepare($query))) {
 		return $this->error('Prepared query failed', $query, 1);
 	}
 
@@ -1045,10 +1092,10 @@ private function _fetch_stmt(object $stmt, ?array $rbind = null, int $rcount = 0
 		$stmt->data_seek(-1 * $rcount + 1);
 		$end = 1;
 	}
-	else if ($this->_seek > -1) {
-		$stmt->data_seek($this->_seek);
-		$end -= $this->_seek + 1;
-		$this->_seek = -1;
+	else if ($this->seek > -1) {
+		$stmt->data_seek($this->seek);
+		$end -= $this->seek + 1;
+		$this->seek = -1;
 	}
 
 	if (call_user_func_array(array($stmt, 'bind_result'), $db_refs) === false) {
@@ -1088,11 +1135,11 @@ private function _fetch_stmt(object $stmt, ?array $rbind = null, int $rcount = 0
  */
 public function esc(string $txt) : string {
 
-	if (!$this->_db) {
+	if (!$this->db) {
 		return self::escape($txt);
 	}
 
-	return $this->_db->real_escape_string($txt);	
+	return $this->db->real_escape_string($txt);	
 }
 
 
@@ -1100,20 +1147,19 @@ public function esc(string $txt) : string {
  * 
  */
 public function getDatabaseList(bool $reload_cache = false) : ?array {
-
-	if ($reload_cache || !isset($this->_cache['DATABASE_LIST:']) || count($this->_cache['DATABASE_LIST:']) === 0) {
+	if ($reload_cache || !isset($this->cache['DATABASE_LIST:']) || count($this->cache['DATABASE_LIST:']) === 0) {
 		if (($dbres = $this->select('SHOW DATABASES')) === null) { 
 			return null;
 		}
 
-		$this->_cache['DATABASE_LIST:'] = [ ];
+		$this->cache['DATABASE_LIST:'] = [ ];
 
 		for ($i = 0; $i < count($dbres); $i++) {
-			array_push($this->_cache['DATABASE_LIST:'], array_pop($dbres[$i]));
+			array_push($this->cache['DATABASE_LIST:'], array_pop($dbres[$i]));
 		}
 	}
 
-	return $this->_cache['DATABASE_LIST:'];
+	return $this->cache['DATABASE_LIST:'];
 }
 
 
@@ -1121,17 +1167,16 @@ public function getDatabaseList(bool $reload_cache = false) : ?array {
  * 
  */
 public function getTableList(bool $reload_cache = false) : array {
-
-	if ($reload_cache || !isset($this->_cache['TABLE_LIST:']) || count($this->_cache['TABLE_LIST:']) === 0) {
+	if ($reload_cache || !isset($this->cache['TABLE_LIST:']) || count($this->cache['TABLE_LIST:']) === 0) {
 		$dbres = $this->select('SHOW TABLES');
-		$this->_cache['TABLE_LIST:'] = [ ];
+		$this->cache['TABLE_LIST:'] = [ ];
 
 		for ($i = 0; $i < count($dbres); $i++) {
-			array_push($this->_cache['TABLE_LIST:'], array_pop($dbres[$i]));
+			array_push($this->cache['TABLE_LIST:'], array_pop($dbres[$i]));
 		}
 	}
 
-	return $this->_cache['TABLE_LIST:'];
+	return $this->cache['TABLE_LIST:'];
 }
 
 
@@ -1140,11 +1185,11 @@ public function getTableList(bool $reload_cache = false) : array {
  */
 public function getReferences(string $table, string $column = 'id') : array {
 	$ckey = "FOREIGN_KEY_REFERENCES:$table.$column";
-	if (isset($this->_cache[$ckey])) {
-		return $this->_cache[$ckey];
+	if (isset($this->cache[$ckey])) {
+		return $this->cache[$ckey];
 	}
 
-  $dsn = self::splitDSN($this->_dsn);
+  $dsn = self::splitDSN($this->dsn);
 	$db_name = self::escape($dsn['name']);
 
 	if ($column == '*') {
@@ -1175,7 +1220,7 @@ public function getReferences(string $table, string $column = 'id') : array {
     }
   }
 
-	$this->_cache[$ckey] = $res;
+	$this->cache[$ckey] = $res;
 	return $res;
 }
 
@@ -1184,7 +1229,7 @@ public function getReferences(string $table, string $column = 'id') : array {
  * 
  */
 public function getAffectedRows() : int {
-	return $this->_db->affected_rows;
+	return $this->db->affected_rows;
 }
 
 
@@ -1193,19 +1238,19 @@ public function getAffectedRows() : int {
  */
 public function getError() : ?array {
 
-	if (!$this->_db->errno) {
-		return $this->_abort_error;
+	if (!$this->db->errno) {
+		return $this->abort_error;
 	}
 
-	if (!is_null($this->_abort_error) && $this->_abort_error[2] == $this->_db->errno) {
-		return $this->_abort_error;
+	if (!is_null($this->abort_error) && $this->abort_error[2] == $this->db->errno) {
+		return $this->abort_error;
 	}
 
 	$map = [ 1146 => 'no_such_table' ];
 
-	$error = isset($map[$this->_db->errno]) ? $map[$this->_db->errno] : '';
+	$error = isset($map[$this->db->errno]) ? $map[$this->db->errno] : '';
 
-	return  [ $error, $this->_db->error, $this->_db->errno, null ];
+	return  [ $error, $this->db->error, $this->db->errno, null ];
 }
 
 
@@ -1213,9 +1258,8 @@ public function getError() : ?array {
  *
  */
 public function getTableDesc(string $table) : array {
-
-	if (isset($this->_cache['DESC:'.$table])) {
-		return $this->_cache['DESC:'.$table];
+	if (isset($this->cache['DESC:'.$table])) {
+		return $this->cache['DESC:'.$table];
 	}
 
 	$db_res = $this->select('DESC '.self::escape_name($table));
@@ -1250,7 +1294,7 @@ public function getTableDesc(string $table) : array {
 		$res[$colname] = $cinfo;
 	}
 
-	$this->_cache['DESC:'.$table] = $res;
+	$this->cache['DESC:'.$table] = $res;
 	return $res;
 }
 
@@ -1259,12 +1303,12 @@ public function getTableDesc(string $table) : array {
  *
  */
 public function getInsertId() : int {
-	// \rkphplib\lib\log_debug("MySQL.getInsertId:1262> id=".$this->getId().", insert_id=".$this->_db->insert_id);
-	if (!is_numeric($this->_db->insert_id) || intval($this->_db->insert_id) === 0) {
-		return intval($this->error('no_id', $this->_db->insert_id, 2));
+	// \rkphplib\lib\log_debug("MySQL.getInsertId:1262> id=".$this->getId().", insert_id=".$this->db->insert_id);
+	if (!is_numeric($this->db->insert_id) || intval($this->db->insert_id) === 0) {
+		return intval($this->error('no_id', $this->db->insert_id, 2));
 	}
 
-	return $this->_db->insert_id;
+	return $this->db->insert_id;
 }
 
 
@@ -1275,7 +1319,7 @@ public function getTableChecksum(string $table, bool $native = false) : string {
 	$tname = self::escape_name($table);
 
 	if ($native) {
-		return $this->_db->selectOne('CHECKSUM TABLE '.$tname, 'Checksum');
+		return $this->db->selectOne('CHECKSUM TABLE '.$tname, 'Checksum');
 	}
 
 	// default size GROUP_CONCAT result (=1024) must be increased to at least #TABLE_ENTRIES * 34
@@ -1287,7 +1331,7 @@ public function getTableChecksum(string $table, bool $native = false) : string {
 	}
 
 	$column_names = join(',', array_keys(getTableDesc($table)));
-	$res = $this->_db->selectOne("SELECT MD5(GROUP_CONCAT(MD5(CONCAT_WS('|',$column_names)))) AS md5 FROM $tname", 'md5');
+	$res = $this->db->selectOne("SELECT MD5(GROUP_CONCAT(MD5(CONCAT_WS('|',$column_names)))) AS md5 FROM $tname", 'md5');
 }
 
 
