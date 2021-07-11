@@ -73,14 +73,52 @@ public $charset = '';
 public $abort = true;
 
 
-// @var string $_dsn 
-protected $_dsn = null;
+// @var string $dsn
+protected $dsn = null;
 
-// @var array[string]string $_query
-protected $_query = [];
+// @var hash $query
+protected $query = [];
+
+// @var hash $cache
+protected $cache = [];
+
 
 // @var array[string]array $_qinfo
-protected $_qinfo = [];
+private $qinfo = [];
+
+
+/**
+ *
+ */
+public function setDatabaseList(array $list) : void {
+	$this->cache['DATABASE_LIST:'] = $list;
+}
+
+
+/**
+ *
+ */
+public function setTableList(array $list) : void {
+	$this->cache['TABLE_LIST:'] = $list;
+}
+
+
+/**
+ * Set only is_null and default = NULL
+ */
+public function setTableDesc(string $table, array $cols, array $null_cols = []) : void {
+	$desc = [];
+
+	foreach ($cols as $col) {
+		$is_null = in_array($col, $null_cols);
+		$desc[$col] =	[
+			'is_null' => in_array($col, $null_cols),
+			'default' => 'NULL'
+		];
+	}
+
+	$this->cache['DESC:'.$table] = $desc;
+}
 
 
 /**
@@ -88,24 +126,24 @@ protected $_qinfo = [];
  */
 public function saveAs(string $file = '', array $table_list = []) : void {
 	if ($file == '') {
-		if (!isset($this->_query['@fh'])) {
+		if (!isset($this->query['@fh'])) {
 			throw new Exception('saveAs file was not opened or already closed');
 		}
 
-		if (count($table_list) == 0 && isset($this->_query['@key_tables'])) {
-			$table_list = $this->_query['@key_tables'];
-			unset($this->_query['@key_tables']);
+		if (count($table_list) == 0 && isset($this->query['@key_tables'])) {
+			$table_list = $this->query['@key_tables'];
+			unset($this->query['@key_tables']);
 		}
 
 		$this->enableKeys($table_list);
-		File::close($this->_query['@fh']);
-		unset($this->_query['@save_to']);
-		unset($this->_query['@fh']);
+		File::close($this->query['@fh']);
+		unset($this->query['@save_to']);
+		unset($this->query['@fh']);
 	}
 	else {
-		$this->_query['@save_to'] = $file;
-		$this->_query['@key_tables'] = $table_list;
-		$this->_query['@fh'] = File::open($file, 'wb');
+		$this->query['@save_to'] = $file;
+		$this->query['@key_tables'] = $table_list;
+		$this->query['@fh'] = File::open($file, 'wb');
 		$this->disableKeys($table_list);
 	}
 }
@@ -192,11 +230,11 @@ public function setDSN(string $dsn = '') : void {
 		throw new Exception('empty database source name');
 	}
 
-	if (!empty($this->_dsn) && $this->_dsn != $dsn) {
+	if (!empty($this->dsn) && $this->dsn != $dsn) {
 		throw new Exception('close connection first');
 	}
 
-	$this->_dsn = $dsn;
+	$this->dsn = $dsn;
 }
 
 
@@ -205,11 +243,11 @@ public function setDSN(string $dsn = '') : void {
  */
 public function getDSN() : string {
 
-	if (empty($this->_dsn)) {
+	if (empty($this->dsn)) {
 		throw new Exception('call setDSN() first');
 	}
 
-	return $this->_dsn;
+	return $this->dsn;
 }
 
 
@@ -217,7 +255,7 @@ public function getDSN() : string {
  * Return query map.
  */
 public function getQueryMap() : array {
-	return $this->_query;
+	return $this->query;
 }
 
 
@@ -330,7 +368,7 @@ public function setQueryInfo(string $qkey, array $info) : void {
 		}
 	}
 
-	$this->_qinfo[$qkey] = $info;
+	$this->qinfo[$qkey] = $info;
 }
 
 
@@ -342,19 +380,19 @@ public function getQueryInfo(string $qkey, string $ikey = '') {
 		throw new Exception('empty query key');
 	}
 
-	if (!isset($this->_qinfo[$qkey])) {
+	if (!isset($this->qinfo[$qkey])) {
 		throw new Exception('no query info', $qkey);
 	}
 
 	if (empty($ikey)) {
-		return $this->_qinfo[$qkey];
+		return $this->qinfo[$qkey];
 	}
 
-	if (!isset($this->_qinfo[$qkey][$ikey])) {
+	if (!isset($this->qinfo[$qkey][$ikey])) {
 		throw new Exception('no query info key', "qkey=$qkey ikey=$ikey");
 	}
 
-	return $this->_qinfo[$qkey][$ikey];
+	return $this->qinfo[$qkey][$ikey];
 }
 
 
@@ -389,7 +427,7 @@ public function setQuery(string $qkey, string $query, array $info = []) : void {
 	}
 
 	if (mb_strpos($query, TAG_PREFIX) === false) {
-		$this->_query[$qkey] = [ '@query' => $query ];
+		$this->query[$qkey] = [ '@query' => $query ];
 		return;
 	}
 
@@ -440,7 +478,7 @@ public function setQuery(string $qkey, string $query, array $info = []) : void {
 	}
 
 	$map['@query'] = join('', $tok);
-	$this->_query[$qkey] = $map;
+	$this->query[$qkey] = $map;
 }
 
 
@@ -490,10 +528,10 @@ public function getQueryTable(string $query) : string {
  * @return array|string
  */
 public function getQuery(string $qkey, ?array $replace = null) {
-	if (!isset($this->_query[$qkey])) {
+	if (!isset($this->query[$qkey])) {
 		if (preg_match('/^SELECT|INSERT|UPDATE|REPLACE /i', $qkey)) {
 			$qkey_md5 = md5($qkey);
-			if (!isset($this->_query[$qkey_md5])) {
+			if (!isset($this->query[$qkey_md5])) {
 				$this->setQuery($qkey_md5, $qkey);
 			}
 
@@ -504,7 +542,7 @@ public function getQuery(string $qkey, ?array $replace = null) {
 		}
 	}
 
-	$q = $this->_query[$qkey];
+	$q = $this->query[$qkey];
 
 	if (!is_array($q)) {
 		if (is_array($replace) && count($replace) > 0) {
@@ -612,7 +650,7 @@ public function getQuery(string $qkey, ?array $replace = null) {
  */
 public function hasQuery(string $qkey, string $query = '') : bool {
 
-	if (!isset($this->_query[$qkey])) {
+	if (!isset($this->query[$qkey])) {
 		return false;
 	}
 
@@ -620,7 +658,7 @@ public function hasQuery(string $qkey, string $query = '') : bool {
 		return true;
 	}
 
-	$qkey_query = is_array($this->_query[$qkey]) ? $this->_query[$qkey]['@query'] : $this->_query[$qkey];
+	$qkey_query = is_array($this->query[$qkey]) ? $this->query[$qkey]['@query'] : $this->query[$qkey];
 
 	// don't compare '{:=a}' with {:=a}
 	$query = str_replace("'", '', $query);
@@ -679,7 +717,7 @@ public function setQueryMap(array $query_map) : void {
 public function setQueryHash(array $conf_hash, array $require_keys = []) : void {
 
 	foreach ($require_keys as $qkey) {
-		if (empty($conf_hash['query.'.$qkey]) && empty($this->_query[$qkey])) {
+		if (empty($conf_hash['query.'.$qkey]) && empty($this->query[$qkey])) {
 			throw new Exception("no such key [query.$qkey]");
 		}
 	}
@@ -1766,16 +1804,20 @@ public static function columnList(array $cols, string $prefix = '') : string {
 
 
 /**
- * Return insert|select|update query string. If type=update key either @id=idCol or @where='WHERE ...' is required in $kv.
+ * Return insert|insert_update|select|replace|update query string.
+ * If type=update key either @id=idCol or @where='WHERE ...' is required in $kv.
  * Use kv[@add_default] add default columns. If @query=qkey is set use getQuery(qkey, $kv).
  * If @allow=[ col1, … colN ] isset use only this keys in $kv. Use @add_default=col1, … to add default values.
  * Use @tag=[ $type ] for {:=column} (use 'CONST' for constant values) instead of 'value' values.
+ * Use @is_null= [ col1, … ] or @is_null = [] to avoid getTableDesc() query.
  *
- * @code buildQuery('customer', 'insert', [ 'name' => … ]);
- * @code buildQuery('customer', 'insert', [ '@tag' => [ 'insert' ], 'name' => … ]);
- * @code buildQuery('customer', 'insert', [ '@query' => 'insert' ]);
- * @code buildQuery('customer', 'update', [ '@id' => 'id', 'id' => 7, 'name' => … ]);
- * @code buildQuery('customer', 'update', [ '@where' => 'id=7', '@allow' => [ 'email', … ], 'email' => … ]);
+ * @code …
+ * buildQuery('customer', 'insert_update', [ 'name' => … ]);
+ * buildQuery('customer', 'insert', [ '@tag' => [ 'insert' ], 'name' => … ]);
+ * buildQuery('customer', 'insert', [ '@query' => 'insert' ]);
+ * buildQuery('customer', 'update', [ '@id' => 'id', 'id' => 7, 'name' => … ]);
+ * buildQuery('customer', 'update', [ '@where' => 'id=7', '@allow' => [ 'email', … ], 'email' => … ]);
+ * @eol
  *
  * @code …
  *   buildQuery('item', 'select', [ 'name' => 'name', 'status' => "'1'", 'import' => "'test'", 'vk' => price ]) ==
@@ -1787,7 +1829,13 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		return $this->getQuery($kv['@query'], $kv);
 	}
 
+	if (!isset($p['@is_null'])) {
+		$this->setTableDesc($table, array_keys($kv), $p['@is_null']);
+		unset($p['@is_null']);
+	}
+
 	$p = $this->getTableDesc($table);
+
 	$key_list = [];
 	$val_list = [];
 
@@ -1839,8 +1887,13 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		return '';
 	}
 
-	if ($type === 'insert') {
+	$res = '';
+
+	if ($type == 'insert' || $type == 'insert_update') {
 		$res = 'INSERT INTO '.self::escape_name($table).' ('.join(', ', $key_list).') VALUES ('.join(', ', $val_list).')';
+	}
+	else if ($type == 'replace') {
+		$res = 'REPLACE INTO '.self::escape_name($table).' ('.join(', ', $key_list).') VALUES ('.join(', ', $val_list).')';
 	}
 	else if ($type === 'select') {
 		$res = 'SELECT ';
@@ -1856,8 +1909,12 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 
 		$res .= " FROM $table";
 	}
-	else if ($type == 'update') {
-		$res = 'UPDATE '.self::escape_name($table).' SET ';
+
+	if ($type == 'update' || $type == 'insert_update') {
+		$res = $type == 'update' ?
+			'UPDATE '.self::escape_name($table).' SET ' :
+			$res . ' ON DUPLICATE KEY UPDATE ';
+
 		for ($i = 0; $i < count($key_list); $i++) {
 			$res .= $key_list[$i].'='.$val_list[$i];
 			if ($i < count($key_list) - 1) {
@@ -1875,7 +1932,8 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 
 		$res .= ' '.$kv['@where'];
 	}
-	else {
+
+	if ($res == '')	 {
 		throw new Exception('invalid query type - use insert|update', "table=$table type=$type"); 
 	}
 
