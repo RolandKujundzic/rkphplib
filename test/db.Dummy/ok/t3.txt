@@ -1,0 +1,4 @@
+INSERT INTO test (id, name, comment) VALUES ('7', 'Joe', 'bla');
+EXCEPTION
+REPLACE INTO test (id, name) VALUES ('7', 'Joe');
+INSERT INTO test (id, name) VALUES ('7', 'Joe') ON DUPLICATE KEY UPDATE id='7', name='Joe';
