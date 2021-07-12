@@ -51,7 +51,10 @@ public static function debug(string $msg, ...$arg) : void {
 private static function debugTo() : string {
 	$log_to = '';
 
-	if (!empty($GLOBALS['SETTINGS']['LOG_DEBUG'])) {
+	if (php_sapi_name() == 'cli') {
+		$log_to = '/dev/stdout';
+	}
+	else if (!empty($GLOBALS['SETTINGS']['LOG_DEBUG'])) {
 		$log_to = $GLOBALS['SETTINGS']['LOG_DEBUG'];
 	}
 	else if (defined('SETTINGS_LOG_DEBUG') && !empty(SETTINGS_LOG_DEBUG)) {
