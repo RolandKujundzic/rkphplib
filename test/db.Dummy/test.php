@@ -2,16 +2,14 @@
 
 require_once '../../src/db/Dummy.php';
 
-function query(string $query, ?array $replace = null) {
+function build_query(string $type, array $kv) : void {
 	$db = new \rkphplib\db\Dummy();
-	try {
-		print $db->getQuery($query, $replace).";\n";
-	}
-	catch (\Exception $e) {
-		print "EXCEPTION\n";
-	}
+	$kv['@is_null'] = [ 'comment' ];
+	print $db->buildQuery('test', $type, $kv).";\n";
 }
 
-query("SELECT * FROM test WHERE pid={:=pid}", [ 'pid' => null ]);
-query("UPDATE SET id=NULL WHERE pid={:=pid}", [ 'pid' => null ]);
+build_query('insert', [ 'id' => 7, 'name' => 'Joe', 'comment' => 'bla' ]);
+build_query('update', [ 'id' => 7, 'name' => 'Joe', 'comment' => '', '@id'=> 'id' ]);
+build_query('replace', [ 'id' => 7, 'name' => 'Joe' ]);
+build_query('insert_update', [ 'id' => 7, 'name' => 'Joe' ]);
 
