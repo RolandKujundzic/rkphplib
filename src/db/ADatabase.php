@@ -1829,9 +1829,9 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		return $this->getQuery($kv['@query'], $kv);
 	}
 
-	if (!isset($p['@is_null'])) {
-		$this->setTableDesc($table, array_keys($kv), $p['@is_null']);
-		unset($p['@is_null']);
+	if (isset($kv['@is_null'])) {
+		$this->setTableDesc($table, array_keys($kv), $kv['@is_null']);
+		unset($kv['@is_null']);
 	}
 
 	$p = $this->getTableDesc($table);
@@ -1844,7 +1844,13 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 	$add_default = !empty($kv['@add_default']);
 	$use_tag = !empty($kv['@tag']) && in_array($type, $kv['@tag']);
 
-	// \rkphplib\Log::debug("ADatabase.buildQuery> ($table, $type, …) kv: <1>\n<2>", $kv, array_keys($p));
+	if (!empty($kv['@id']) && !empty($kv[$kv['@id']])) {
+		$kv['@where'] = 'WHERE '.self::escape_name($kv['@id'])."='".self::escape($kv[$kv['@id']])."'";
+		unset($kv[$kv['@id']]);
+		unset($kv['@id']);
+	}
+
+	// \rkphplib\Log::debug("ADatabase.buildQuery> ($table, $type, …) kv: <1>\nkeys(p): <2>", $kv, array_keys($p));
 	foreach ($p as $col => $cinfo) {
 		$val = false;
 
@@ -1922,15 +1928,13 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			}
 		}
 
-		if (!empty($kv['@id']) && !empty($kv[$kv['@id']])) {
-			$kv['@where'] = 'WHERE '.self::escape_name($kv['@id'])."='".self::escape($kv[$kv['@id']])."'";
-		}
+		if ($type != 'insert_update') {
+			if (empty($kv['@where']) || mb_substr($kv['@where'], 0, 6) !== 'WHERE ') {
+				throw new Exception('missing @where');
+			}
 
-		if (empty($kv['@where']) || mb_substr($kv['@where'], 0, 6) !== 'WHERE ') {
-			throw new Exception('missing @where');
+			$res .= ' '.$kv['@where'];
 		}
-
-		$res .= ' '.$kv['@where'];
 	}
 
 	if ($res == '')	 {
