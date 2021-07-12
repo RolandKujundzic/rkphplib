@@ -102,7 +102,7 @@ public function hasResultSet() : bool {
  *
  */
 public function getDatabaseList(bool $reload_cache = false) : ?array {
-	return [];
+	return isset($this->cache['DATABASE_LIST:']) ? $this->cache['DATABASE_LIST:'] : [];
 }
 
 
@@ -110,7 +110,7 @@ public function getDatabaseList(bool $reload_cache = false) : ?array {
  *
  */
 public function getTableList(bool $reload_cache = false) : array {
-	return [];
+	return isset($this->cache['TABLE_LIST:']) ? $this->cache['TABLE_LIST:'] : [];
 }
 
 
@@ -239,7 +239,7 @@ public function selectColumn($query, string $colname = 'col') : ?array {
  *
  */
 public function getTableDesc(string $table) : array {
-	return [];
+	return isset($this->cache['DESC:'.$table]) ? $this->cache['DESC:'.$table] : [];
 }
 
 
