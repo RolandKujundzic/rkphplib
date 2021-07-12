@@ -36,6 +36,9 @@ use \rkphplib\traits\Map;
 // @var \rkphplib\db\ADatabase $db
 private $db = null;
 
+// @var \rkphplib\Tokenizer
+private $tok = null;
+
 // @var int $lid
 private $lid = null;
 
@@ -78,6 +81,8 @@ public function __construct(array $options = []) {
  *
  */
 public function getPlugins(Tokenizer $tok) : array {
+	$this->tok = $tok;
+
   $plugin = [];
 	$plugin['conf'] = TokPlugin::REQUIRE_PARAM | TokPlugin::REDO;
 	$plugin['conf:append'] = TokPlugin::REQUIRE_PARAM | TokPlugin::TEXT;
@@ -90,6 +95,7 @@ public function getPlugins(Tokenizer $tok) : array {
 	$plugin['conf:set_path'] = TokPlugin::REQUIRE_BODY | TokPlugin::LIST_BODY;
 	$plugin['conf:set_default'] = TokPlugin::TEXT;
 	$plugin['conf:var'] = TokPlugin::REQUIRE_PARAM;
+
   return $plugin;
 }
 
@@ -129,7 +135,7 @@ public function tok_conf_save(string $file, array $p) : void {
  * @tok {conf:load}path/file.conf{:conf}{set:}{conf:get:*}{:set}
  */
 public function tok_conf_load(string $file) : void {
-	// \rkphplib\lib\log_debug("Conf.tok_conf_load:132> $file");
+	// \rkphplib\Log::debug("Conf.tok_conf_load> ($file)");
 	if (!File::exists($file)) {
 		$this->conf = [];
 	}
@@ -138,6 +144,16 @@ public function tok_conf_load(string $file) : void {
 	}
 	else if (substr($file, -5) == '.json') {
 		$this->conf = File::loadJSON($file);
+
+		foreach ($this->conf as $key => $arg) {
+			if (is_array($arg) && strpos($key, ':') > 1 && $this->tok->hasPlugin($key)) {
+				list ($plugin, $action) = explode(':', $key);
+				$arg['_callPlugin'] = 1;
+
+				// \rkphplib\Log::debug("Conf.tok_conf_load> callPlugin($plugin, $action, …)");
+				$this->tok->callPlugin($plugin, $action, $arg);
+			}
+		}
 	}
 	else {
 		throw new Exception('invalid configuration file suffix (use .conf|.json)', $file);
@@ -172,12 +188,12 @@ public function tok_conf(string $key, ?string $value) : string {
 	}
 
 	if (is_null($val) || ($update && $val != $value)) {
-		// \rkphplib\lib\log_debug("Conf.tok_conf:175> set $key=[$value]");
+		// \rkphplib\Log::debug("Conf.tok_conf> set $key=[$value]");
 		$this->set($key, $value);
 		$val = is_null($value) ? '' : $value;
 	}
 
-	// \rkphplib\lib\log_debug("Conf.tok_conf:180> $key=[$val]");
+	// \rkphplib\Log::debug("Conf.tok_conf> $key=[$val]");
 	return $val;
 }
 
@@ -344,7 +360,7 @@ public function get(string $name) : string {
  */
 private function updateConfFile(string $name, ?string $value) : void {
 	$file = $this->conf['@file'];
-	// \rkphplib\lib\log_debug("Conf.updateConfFile:347> $name=[$value] in $file");
+	// \rkphplib\Log::debug("Conf.updateConfFile> ($name, $value) in $file");
 
 	if (substr($file, -5) == '.json') {
 		Hash::set($name, $value, $this->conf);
@@ -367,6 +383,24 @@ private function updateConfFile(string $name, ?string $value) : void {
 
 
 /**
+ * Save plugin configuration
+ */
+public function pluginConf(string $plugin, array $hash) : void {
+	if (!empty($this->conf[$plugin]) || empty($this->conf['@file']) || substr($this->conf['@file'], -5) != '.json') {
+		// \rkphplib\Log::debug("Conf.pluginConf> skip $plugin");
+		return;
+	}
+
+	$conf = $this->conf;
+	$conf[$plugin] = $hash;
+	unset($conf['@file']);
+
+	// \rkphplib\Log::debug("Conf.pluginConf> set $plugin = <1>", $hash);
+	File::saveJSON($this->conf['@file'], $conf);
+}
+
+
+/**
  * Set configuration value, return id. 
  */
 public function set(string $name, ?string $value) : int {
@@ -375,7 +409,7 @@ public function set(string $name, ?string $value) : int {
 		return 0;
 	}
 
-	// \rkphplib\lib\log_debug("Conf.set:378> [$name]=[$value]");
+	// \rkphplib\Log::debug("Conf.set> [$name]=[$value]");
 	$qtype = ($this->lid > 0) ? 'select_user_path' : 'select_system_path';
 	$path = explode('.', $name);
 
