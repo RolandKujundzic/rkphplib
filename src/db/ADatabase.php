@@ -153,30 +153,42 @@ public function saveAs(string $file = '', array $table_list = []) : void {
 
 
 /**
- * Return md5 hash based on dsn and $query_map (see setQueryMap).
+ * Return object identifier. Use '.' as delimiter if
+ * database is connected otherwise use '-'.
  */
-public static function computeId(string $dsn, array $query_map = null) : string {
-	if (empty($dsn)) {
+public function getId() : string {
+	if (empty($this->dsn)) {
 		throw new Exception('empty database source name');
 	}
 
-	$res = md5($dsn);
+	$tmp = [ md5($this->dsn), md5(spl_object_hash($this)) ];
 
-	if (is_null($query_map) || (is_array($query_map) && count($query_map) === 0)) {
-		return $res;
+	if (is_array($this->query) && count($this->query) > 0) {
+		$query_map = $this->query;
+		ksort($query_map);
+		$md5 = '';
+
+		foreach ($query_map as $key => $query) {
+			if (is_array($query)) {
+				$query = $query['@query'];
+			}
+ 
+			$md5 = md5($md5.$key.$query);
+		}
+
+		array_push($tmp, $md5);
 	}
 
-	if (!is_array($query_map)) {
-		throw new Exception('invalid query map', print_r($query_map, true));
+	for ($j = 0; $j < count($tmp); $j++) {
+		for ($i = 0, $q = 0; $i < strlen($tmp[$j]); $i++) {
+			$q += hexdec($tmp[$j][$i]);
+		}
+
+		$tmp[$j] = substr($tmp[$j], 0, 3).$q.substr($tmp[$j], -3);
 	}
 
-	ksort($query_map);
-
-	foreach ($query_map as $key => $value) {
-		$res = is_array($value) ? md5($res.':'.md5($key).':'.md5($value['@query'])) : md5($res.':'.md5($key).':'.md5($value));
-	}
-
-	return $res;
+	$delimiter = $this->connected() ? '.' : '-';
+	return join($delimiter, $tmp);
 }
 
 
@@ -207,12 +219,6 @@ abstract public function disableKeys(array $table_list = [], bool $as_string = f
  * command as string.
  */
 abstract public function enableKeys(array $table_list = [], bool $as_string = false) : string;
-
-
-/**
- * Return object identifier or null if not connected.
- */
-abstract public function getId() : ?string;
 
 
 /**
@@ -411,7 +417,6 @@ public function getQueryInfo(string $qkey, string $ikey = '') {
  * If tag is {:=_x} keep $value.
  */
 public function setQuery(string $qkey, string $query, array $info = []) : void {
-
 	if (empty($qkey)) {
 		throw new Exception('empty query key');
 	}
@@ -1648,6 +1653,12 @@ abstract public function connect() : bool;
 
 
 /**
+ * True if connect was called
+ */
+abstract public function connected() : bool;
+
+
+/**
  * Usage is optional
  */
 abstract public function close() : bool;
@@ -1838,7 +1849,8 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 
 	$p = $this->getTableDesc($table);
 
-	$key_list = [];
+	$col_list = [];
+	$ecol_list = [];
 	$val_list = [];
 
 	$skip_col = [ 'since', 'lchange' ];
@@ -1860,7 +1872,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			continue;
 		}
 
-		if (isset($kv[$col]) && (is_null($kv[$col]) || strtolower($kv[$col]) == 'null' || empty($kv[$col]) && !empty($cinfo['is_null']))) {
+		if (array_key_exists($col, $kv) && (is_null($kv[$col]) || strtolower($kv[$col]) == 'null' || empty($kv[$col]) && !empty($cinfo['is_null']))) {
 			$val = 'NULL';
 		}
 		else if (isset($kv[$col])) {
@@ -1885,30 +1897,30 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 
 		if ($val !== false) {
 			// \rkphplib\Log::debug("ADatabase.buildQuery> $col=[$val]");
-			array_push($key_list, self::escape_name($col));
+			array_push($col_list, $col);
+			array_push($ecol_list, self::escape_name($col));
 			array_push($val_list, $val);
 		}
 	}
 
-	if (count($key_list) == 0) {
-		// \rkphplib\Log::debug("ADatabase.buildQuery> empty key_list - return");
+	if (count($col_list) == 0) {
+		// \rkphplib\Log::debug("ADatabase.buildQuery> empty col_list - return");
 		return '';
 	}
 
 	$res = '';
 
 	if ($type == 'insert' || $type == 'insert_update') {
-		$res = 'INSERT INTO '.self::escape_name($table).' ('.join(', ', $key_list).') VALUES ('.join(', ', $val_list).')';
+		$res = 'INSERT INTO '.self::escape_name($table).' ('.join(', ', $ecol_list).') VALUES ('.join(', ', $val_list).')';
 	}
 	else if ($type == 'replace') {
-		$res = 'REPLACE INTO '.self::escape_name($table).' ('.join(', ', $key_list).') VALUES ('.join(', ', $val_list).')';
+		$res = 'REPLACE INTO '.self::escape_name($table).' ('.join(', ', $ecol_list).') VALUES ('.join(', ', $val_list).')';
 	}
 	else if ($type === 'select') {
-		$cols = array_keys($p);
 		$res = 'SELECT ';
 
-		for ($i = 0; $i < count($cols); $i++) {
-			$col = $cols[$i];
+		for ($i = 0; $i < count($col_list); $i++) {
+			$col = $col_list[$i];
 			$val = $kv[$col];
 
 			if ($i > 0) {
@@ -1934,9 +1946,9 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 			'UPDATE '.self::escape_name($table).' SET ' :
 			$res . ' ON DUPLICATE KEY UPDATE ';
 
-		for ($i = 0; $i < count($key_list); $i++) {
-			$res .= $key_list[$i].'='.$val_list[$i];
-			if ($i < count($key_list) - 1) {
+		for ($i = 0; $i < count($ecol_list); $i++) {
+			$res .= $ecol_list[$i].'='.$val_list[$i];
+			if ($i < count($ecol_list) - 1) {
 				$res .= ', ';
 			}
 		}
