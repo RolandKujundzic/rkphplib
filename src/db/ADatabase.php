@@ -110,13 +110,16 @@ public function setTableDesc(string $table, array $cols, array $null_cols = []) 
 	$desc = [];
 
 	foreach ($cols as $col) {
-		$is_null = in_array($col, $null_cols);
-		$desc[$col] =	[
-			'is_null' => in_array($col, $null_cols),
-			'default' => 'NULL'
-		];
+		if (substr($col, 0, 1) !== '@') {
+			$is_null = in_array($col, $null_cols);
+			$desc[$col] =	[
+				'is_null' => in_array($col, $null_cols),
+				'default' => 'NULL'
+			];
+		}
 	}
 
+	// \rkphplib\Log::debug("ADatabase.setTableDesc> DESC:$table = <1>", $desc);
 	$this->cache['DESC:'.$table] = $desc;
 }
 
