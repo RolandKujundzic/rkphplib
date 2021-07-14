@@ -28,8 +28,8 @@ private $seek = -1;
 // @var array $abort_error
 private $abort_error = null;
 
-// @var string $rollback 'y' or error query
-private $rollback = '';
+// @var bool $rollback
+private $rollback = false;
 
 
 /**
@@ -201,12 +201,18 @@ public function setDSN(string $dsn = '') : void {
 
 
 /**
- *
+ * Return null if not connected
  */
-public function getId() : string {
-	$dsn_query_id = self::computeId($this->dsn, $this->query);
-	$db_id = is_null($this->db) ? 0 : md5(spl_object_hash($this->db));
-	$tmp = [ md5(spl_object_hash($this)), $db_id, $dsn_query_id ];
+public function getId() : ?string {
+	if (is_null($this->db)) {
+		return null;
+	}
+
+	$tmp = [
+		md5(spl_object_hash($this)),
+		md5(spl_object_hash($this->db)),
+		self::computeId($this->dsn, $this->query)
+	];
 
 	for ($j = 0; $j < count($tmp); $j++) {
 		for ($i = 0, $q = 0; $i < strlen($tmp[$j]); $i++) {
@@ -275,7 +281,6 @@ public function releaseLock(string $name) : int {
  *
  */
 public function connect() : bool {
-
 	if (is_object($this->db)) {
 		if ($this->conn_ttl < time() && !$this->db->ping()) {
 			// \rkphplib\Log::debug('MySQL.connect> close expired connection '.$this->getId());
@@ -291,6 +296,7 @@ public function connect() : bool {
 	}
 
 	$dsn = self::splitDSN($this->dsn);
+	// \rkphplib\Log::debug('MySQL.connect> login@host='.$dsn['login'].'@'.$dsn['host'].', name='.$dsn['name']);
 
 	if ($dsn['type'] != 'mysqli') {
 		return $this->error('invalid dsn type: '.$dsn['type'], '', 2);
@@ -322,7 +328,7 @@ public function connect() : bool {
 		$res = $this->execute("SET time_zone = '".self::escape($this->time_zone)."'");
 	}
 	
-	// \rkphplib\Log::debug('MySQL.connect> login@host='.$dsn['login'].'@'.$dsn['host'].', name='.$dsn['name'].', id='.$this->getId());
+	// \rkphplib\Log::debug('MySQL.connect> id='.$this->getId());
 	$this->conn_ttl = time() + 5 * 60; // re-check connection in 5 minutes ...
 	return $res;
 }
@@ -332,7 +338,6 @@ public function connect() : bool {
  * Close database connection.
  */
 public function close() : bool {
-
 	if (!$this->db) {
 		return $this->error('no open database connection', '', 2);
 	}
@@ -582,12 +587,11 @@ public function execute($query, bool $use_result = false) : bool {
 			File::write($this->query['@fh'], $query.";\n");
 			return true;
 		}
-		else if ($this->rollback != '') {
-			if ($this->rollback != 'y') {
-				// skip - error has occurred
-			}
-			else if (!$this->db->query($query)) {
-				$this->rollback = $query;
+		else if ($this->rollback) {
+			if (!$this->db->query($query)) {
+				$this->db->rollback();
+				$this->rollback = false;
+				return $this->error('failed to execute sql query', $query);
 			}
 		}
 		else if ($this->db->real_query($query) === false) {
@@ -606,34 +610,24 @@ public function execute($query, bool $use_result = false) : bool {
 
 
 /**
- * Start/End transaction. Return error query if rollback was applied.
+ * Start transaction if $begin=true. Otherwise end (commit) transaction.
  * 
  * @example
  * $db->transaction(true);
- * // execute queries
- * if (($error_quey = $db->transaction())) {
- *   die($error_query);
- * }
+ * // execute queries …
+ * $db->transaction();
  * @eol
  */
-public function transaction(bool $begin = false) : string {
-	$res = '';
-
-	if ($begin) {
-		$mysqli->begin_transaction();
-		$this->rollback = 'y';
-	}
-	else if ($this->rollback == 'y') {
+public function transaction(bool $begin = false) : void {
+	// \rkphplib\Log::debug('MySQL.transaction> begin=<1> rollback=<2>', $begin, $this->rollback);
+	if ($this->rollback) {
 		$this->db->commit();
-		$this->rollback = '';
+		$this->rollback = false;
 	}
-	else if (strlen($this->rollback) > 1) {
-		$this->db->rollback();
-		$res = $this->rollback;
-		$this->rollback = '';	
+	else if ($begin) {
+		$this->db->begin_transaction();
+		$this->rollback = true;
 	}
-
-	return $res;
 }
 
 
