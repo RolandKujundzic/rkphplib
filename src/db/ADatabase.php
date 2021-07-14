@@ -156,7 +156,6 @@ public function saveAs(string $file = '', array $table_list = []) : void {
  * Return md5 hash based on dsn and $query_map (see setQueryMap).
  */
 public static function computeId(string $dsn, array $query_map = null) : string {
-	
 	if (empty($dsn)) {
 		throw new Exception('empty database source name');
 	}
@@ -211,9 +210,9 @@ abstract public function enableKeys(array $table_list = [], bool $as_string = fa
 
 
 /**
- * Return md5 identifier. Same as self::computeId(getDSN(), getQueryMap()).
+ * Return object identifier or null if not connected.
  */
-abstract public function getId() : string;
+abstract public function getId() : ?string;
 
 
 /**
