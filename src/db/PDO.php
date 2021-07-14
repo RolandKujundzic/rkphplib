@@ -53,7 +53,7 @@ public function hasIndex(string $table, string $column, string $type = '') : boo
 /**
  *
  */
-public function getId() : string {
+public function getId() : ?string {
 	throw new Exception('ToDo');
 }
 
