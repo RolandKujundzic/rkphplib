@@ -1845,7 +1845,7 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 	$skip_col = [ 'since', 'lchange' ];
 	$allow_all = empty($kv['@allow']);
 	$add_default = !empty($kv['@add_default']);
-	$use_tag = !empty($kv['@tag']) && in_array($type, $kv['@tag']);
+	$use_tag = !empty($kv['@tag']) && (!is_array($kv['@tag']) || in_array($type, $kv['@tag']));
 
 	if (!empty($kv['@id']) && !empty($kv[$kv['@id']])) {
 		$kv['@where'] = 'WHERE '.self::escape_name($kv['@id'])."='".self::escape($kv[$kv['@id']])."'";
@@ -1905,14 +1905,25 @@ public function buildQuery(string $table, string $type, array $kv = []) : string
 		$res = 'REPLACE INTO '.self::escape_name($table).' ('.join(', ', $key_list).') VALUES ('.join(', ', $val_list).')';
 	}
 	else if ($type === 'select') {
+		$cols = array_keys($p);
 		$res = 'SELECT ';
-		foreach ($kv as $key => $value) {
-			if (substr($key, 0, 1) !== '@') {
-				if ($res != 'SELECT ') {
-					$res .= ', ';
-				}
 
-				$res .= ($key == $value) ? $key : $value.' AS '.$key;
+		for ($i = 0; $i < count($cols); $i++) {
+			$col = $cols[$i];
+			$val = $kv[$col];
+
+			if ($i > 0) {
+				$res .= ', ';
+			}
+
+			if ($use_tag) {
+				$res .= (substr($val, 0, 1) == "'" && substr($val, -1) == "'") ? $val : TAG_PREFIX.$col.TAG_SUFFIX;
+			}
+			else if ($col == $val) {
+				$res .= $col;
+			}
+			else {
+				$res .= $val.' AS '.$col;
 			}
 		}
 
