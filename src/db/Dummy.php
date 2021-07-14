@@ -31,8 +31,8 @@ public function enableKeys(array $table_list = [], bool $as_string = false) : st
 /**
  *
  */
-public function getId() : string {
-	return '';
+public function getId() : ?string {
+	return null;
 }
 
 
