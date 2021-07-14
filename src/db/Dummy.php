@@ -31,14 +31,6 @@ public function enableKeys(array $table_list = [], bool $as_string = false) : st
 /**
  *
  */
-public function getId() : ?string {
-	return null;
-}
-
-
-/**
- *
- */
 public function addIndex(string $table, string $column, string $type = '') : bool {
 	return true;
 }
@@ -297,6 +289,14 @@ public function getTableStatus(string $table) : array {
  */
 public function multiQuery(string $query) : ?array {
 	return [];
+}
+
+
+/**
+ *
+ */
+public function connected() : bool {
+	return true;
 }
 
 

@@ -53,15 +53,15 @@ public function hasIndex(string $table, string $column, string $type = '') : boo
 /**
  *
  */
-public function getId() : ?string {
+public function close() : bool {
 	throw new Exception('ToDo');
 }
 
 
 /**
- *
+ * 
  */
-public function close() : bool {
+public function connected() : bool {
 	throw new Exception('ToDo');
 }
 

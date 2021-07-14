@@ -20,7 +20,15 @@ private $seek = -1;
 
 
 /**
- * Connect to sqlite3 database.
+ *
+ */
+public function connected() : bool {
+	return !is_null($this->db);
+}
+
+
+/**
+ *
  */
 public function connect() : bool {
 	if (is_object($this->db)) {
@@ -232,14 +240,6 @@ public function addIndex(string $table, string $column, string $type = '') : boo
 public function hasIndex(string $table, string $column, string $type = '') : bool {
 	throw new Exception('ToDo');
 	return false;
-}
-
-
-/**
- *
- */
-public function getId() : ?string {
-	throw new Exception('ToDo');
 }
 
 
