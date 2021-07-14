@@ -64,7 +64,7 @@ public static function create(string $dsn = '', array $query_map = [], bool $add
 	}
 
 	if ($add_to_pool) {
-		\rkphplib\Log::debug("Database::getInstance> create instance <1> = <2>\nqueries: <3>", count(self::$pool), $db->getId(), array_keys($query_map));
+		// \rkphplib\Log::debug("Database::getInstance> create instance <1> = <2>\nqueries: <3>", count(self::$pool), $db->getId(), array_keys($query_map));
 		array_push(self::$pool, $db);
 	}
 
@@ -115,36 +115,18 @@ public static function getInstance(string $dsn = '', array $query_map = []) : ?A
 		throw new Exception('empty dsn');
 	}
 
-	$found = []; 
+	$found = -1;
 
-	for ($i = 0; $i < count(self::$pool); $i++) {
-		if (self::$pool[$i]->getDSN() == $dsn && self::$pool[$i]->hasQueries($query_map)) {
-			array_push($found, $i);
-
-			if (!self::$pool[$i]->hasResultSet()) {
-				\rkphplib\Log::debug("Database::getInstance> use instance $i = ".self::$pool[$i]->getId());
-				return self::$pool[$i];
-			}
+	for ($i = 0; $found == -1 && $i < count(self::$pool); $i++) {
+		$db = self::$pool[$i];
+		if ($db->getDSN() == $dsn && $db->hasQueries($query_map) && !$db->hasResultSet()) {
+			$found = $i;
 		}
 	}
 
-	if (is_map($query_map, true)) {
-		return self::create($dsn, $query_map, true);
-	}
-	else if (count($found) > 0) {
-		// check if instance has become available ...
-		for ($i = 0; $i < count($found); $i++) {
-			if (!self::$pool[$i]->hasResultSet()) {
-				\rkphplib\Log::debug("Database::getInstance> use available instance $i = ".self::$pool[$i]->getId());
-				return self::$pool[$i];
-			}
-		}
-
-		return self::create($dsn, self::$pool[$found[0]]->getQueryMap(), true);
-	}
-	else {
-		throw new Exception('no matching database instance', 'dsn='.$dsn.' query_map='.print_r($query_map, true));
-	}
+	$db = $found == -1 ? self::create($dsn, $query_map, true) : self::$pool[$found];
+	// \rkphplib\Log::debug("Database::getInstance> use instance $found, getId() = ".$db->getId());
+	return $db;
 }
 
 
