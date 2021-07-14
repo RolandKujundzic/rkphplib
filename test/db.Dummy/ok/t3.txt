@@ -3,3 +3,4 @@ EXCEPTION
 REPLACE INTO test (id, name) VALUES ('7', 'Joe');
 INSERT INTO test (id, name) VALUES ('7', 'Joe') ON DUPLICATE KEY UPDATE id='7', name='Joe';
 INSERT INTO test (id, name, c) VALUES ({:=id}, {:=name}, 'CONST') ON DUPLICATE KEY UPDATE id={:=id}, name={:=name}, c='CONST';
+SELECT {:=id}, {:=name} FROM test;

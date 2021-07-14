@@ -18,3 +18,6 @@ build_query('replace', [ 'id' => 7, 'name' => 'Joe' ]);
 build_query('insert_update', [ 'id' => 7, 'name' => 'Joe' ]);
 build_query('insert_update', [ 'id' => 7, 'name' => 'Joe', 'c' => "'CONST'", '@tag' => [ 'insert_update' ] ]);
 
+$r = array_flip([ 'id', 'name' ]); $r['@tag'] = 1;
+build_query('select', $r);
+

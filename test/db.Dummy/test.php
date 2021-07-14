@@ -8,5 +8,8 @@ function build_query(string $type, array $kv) : void {
 	print $db->buildQuery('test', $type, $kv).";\n";
 }
 
-build_query('insert_update', [ 'id' => 7, 'name' => 'Joe', 'x' => "'a'", '@tag' => [ 'insert_update' ] ]);
+$r = array_flip([ 'id', 'name' ]);
+$r['@tag'] = 1;
+
+build_query('select', $r);
 
