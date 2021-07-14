@@ -16,4 +16,5 @@ build_query('insert', [ 'id' => 7, 'name' => 'Joe', 'comment' => 'bla' ]);
 build_query('update', [ 'id' => 7, 'name' => 'Joe', 'comment' => '' ]);
 build_query('replace', [ 'id' => 7, 'name' => 'Joe' ]);
 build_query('insert_update', [ 'id' => 7, 'name' => 'Joe' ]);
+build_query('insert_update', [ 'id' => 7, 'name' => 'Joe', 'c' => "'CONST'", '@tag' => [ 'insert_update' ] ]);
 
