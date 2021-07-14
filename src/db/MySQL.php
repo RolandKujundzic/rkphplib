@@ -19,6 +19,9 @@ class MySQL extends ADatabase {
 // @var mysqli $db
 private $db = null;
 
+// @var mysqli_result|mysqli_stmt|null $dbres
+private $dbres = null;
+
 // @var int $conn_ttl
 private $conn_ttl = 0;
 
@@ -201,32 +204,6 @@ public function setDSN(string $dsn = '') : void {
 
 
 /**
- * Return null if not connected
- */
-public function getId() : ?string {
-	if (is_null($this->db)) {
-		return null;
-	}
-
-	$tmp = [
-		md5(spl_object_hash($this)),
-		md5(spl_object_hash($this->db)),
-		self::computeId($this->dsn, $this->query)
-	];
-
-	for ($j = 0; $j < count($tmp); $j++) {
-		for ($i = 0, $q = 0; $i < strlen($tmp[$j]); $i++) {
-			$q += hexdec($tmp[$j][$i]);
-		}
-
-		$tmp[$j] = substr($tmp[$j], 0, 3).$q.substr($tmp[$j], -3);
-	}
-
-	return join('-', $tmp);
-}
-
-
-/**
  *
  */
 public function hasResultSet() : bool {
@@ -274,6 +251,14 @@ public function hasLock(string $name) : bool {
 public function releaseLock(string $name) : int {
 	$r = $this->selectOne("SELECT RELEASE_LOCK('lck_$name') AS r", 'r');
 	return intval($r);
+}
+
+
+/**
+ *
+ */
+public function connected() : bool {
+	return !is_null($this->db);
 }
 
 
@@ -561,6 +546,10 @@ public function dropTable(string $table) : void {
  */
 public function execute($query, bool $use_result = false) : bool {
 	// \rkphplib\Log::debug("MySQL.execute> (<1>, <2>) id=".$this->getId(), $query, $use_result);
+	if ($use_result && !is_null($this->dbres)) {
+		throw new Exception('resultset already exists');
+	}
+
 	if (is_array($query)) {
 		if ($use_result) {
 			if (($stmt = $this->_exec_stmt($query)) === null) {
@@ -625,6 +614,7 @@ public function transaction(bool $begin = false) : void {
 		$this->rollback = false;
 	}
 	else if ($begin) {
+		$this->connect();
 		$this->db->begin_transaction();
 		$this->rollback = true;
 	}
@@ -678,7 +668,6 @@ public function setFirstRow(int $offset) : void {
  *
  */
 public function getNextRow() : ?array {
-
 	if (!is_object($this->dbres)) {
 		throw new Exception('no resultset');
   }
@@ -726,7 +715,6 @@ public function freeResult() : void {
  *
  */
 public function getRowNumber() : int {
-
 	if (!is_object($this->dbres)) {
 		throw new Exception('no resultset');
   }
@@ -873,7 +861,6 @@ public function multiQuery(string $query) : ?array {
  * Return hash if $rcount < 0 (result[-1 * $rcount + 1]).
  */
 private function _fetch(string $query, ?array $rbind = null, int $rcount = 0) : ?array {
-
 	if (!$this->connect()) {
 		return null;
 	}
@@ -980,7 +967,6 @@ public function selectRow($query, int $rnum = 0) : ?array {
  * Execute prepared statement. Return statement.
  */
 private function _exec_stmt(array $q) : ?object {
-
 	if (!$this->connect()) {
 		return null;
 	}
