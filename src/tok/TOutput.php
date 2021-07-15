@@ -107,7 +107,7 @@ public function tok_search(string $col, array $p) : string {
 
 	$s_value = isset($_REQUEST['s_'.$col]) ? htmlescape($_REQUEST['s_'.$col]) : '';
 
-	// \rkphplib\lib\log_debug("TOutput.tok_search:110> col=[$col] type=[".$p['type']."] s_value=[$s_value]");
+	// \rkphplib\Log::debug("TOutput.tok_search> col=[$col] type=[".$p['type']."] s_value=[$s_value]");
 	if ($p['type'] == 'select') {
 		$res = '<select name="s_'.$col.'" onchange="rkphplib.searchOutput(this)">';
 		$options = conf2kv($p['options'], '=', ',');
@@ -153,7 +153,7 @@ public function tok_search(string $col, array $p) : string {
 		$res = empty($p['sort']) ? $p['label'] : $p['label'].' '.$this->tok->getPluginTxt('sort:'.$col);
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_search:156> return [$res]");
+	// \rkphplib\Log::debug("TOutput.tok_search> return [$res]");
 	return $res;
 }
 
@@ -210,7 +210,7 @@ public function tok_sort(string $col) : string {
 
 	$reset_last = $this->conf['req.last'].'=';
 	$link = $this->tok->callPlugin('link', '@', $this->conf['req.sort'].'='.$new_sort.HASH_DELIMITER.$reset_last);
-	// \rkphplib\lib\log_debug("TOutput.tok_sort:213> $col: ".$link);
+	// \rkphplib\Log::debug("TOutput.tok_sort> $col: ".$link);
 	return str_replace('$link', $link, $res);
 }
 
@@ -223,7 +223,7 @@ public function tok_output_set(string $name, string $value) : void {
 		$this->tok_output_conf([]);
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_set:226> set conf[$name]=[$value]");
+	// \rkphplib\Log::debug("TOutput.tok_output_set> set conf[$name]=[$value]");
 	$this->conf[$name] = $value;
 }
 
@@ -407,7 +407,7 @@ private function getHeaderColumn() : string {
 	}
 
 	$res = join("\n", $header_column); 
-	// \rkphplib\lib\log_debug("TOutput.getHeaderColumn:410> $res");
+	// \rkphplib\Log::debug("TOutput.getHeaderColumn> $res");
 	return $res;
 }
 
@@ -432,7 +432,7 @@ public function tok_output_header(string $tpl) : string {
 	$replace = [];
 	$replace['_column'] = empty($this->conf['column_label']) ? '' : $this->getHeaderColumn();
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_header:436> replace tpl: $tpl");
+	// \rkphplib\Log::debug("TOutput.tok_output_header> replace tpl: $tpl");
 	if (!empty($this->env['tags'][0]) && $this->tok->hasReplaceTags($tpl, [ $this->env['tags'][0] ])) {
 		for ($i = 0; $i < count($this->env['tags']); $i++) {
 			$tag = $this->env['tags'][$i];
@@ -449,7 +449,7 @@ public function tok_output_header(string $tpl) : string {
 
 	$tpl = $this->tok->replaceTags($tpl, $replace);
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_header:455> exit tpl: $tpl");
+	// \rkphplib\Log::debug("TOutput.tok_output_header> exit tpl: $tpl");
 	return $tpl;
 }
 
@@ -491,7 +491,7 @@ public function tok_output_json() : string {
 
 	$res = JSON::encode(array_slice($this->table, $start, $end - $start + 1));
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_json:497> return $res");
+	// \rkphplib\Log::debug("TOutput.tok_output_json> return $res");
 	return $res;
 }
 
@@ -537,7 +537,7 @@ private function getLoopColumn(string $tpl) : string {
 	}
 	
 	$tpl = $this->tok->replaceTags($tpl, [ '_column' => join("\n", $loop_column) ]); 
-	// \rkphplib\lib\log_debug("TOutput.getLoopColumn:543> return [$tpl]");
+	// \rkphplib\Log::debug("TOutput.getLoopColumn> return [$tpl]");
 	return $tpl;
 }
 
@@ -577,7 +577,7 @@ public function tok_output_loop(string $tpl) : string {
 		$end = $this->env['end'] % $this->env['pagebreak'];
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.tok_output_loop:580> start=$start end=$end lang=$lang tpl:\n$tpl");
+	// \rkphplib\Log::debug("TOutput.tok_output_loop> start=$start end=$end lang=$lang tpl:\n$tpl");
 	for ($i = $start; $i <= $end; $i++) {
 		$row = $this->table[$i];
 
@@ -614,12 +614,12 @@ public function tok_output_loop(string $tpl) : string {
 			}
 		}
 
-		// \rkphplib\lib\log_debug("TOutput.tok_output_loop:617> replace: ".print_r($replace, true)); 
+		// \rkphplib\Log::debug("TOutput.tok_output_loop> replace: <1>", $replace); 
 		array_push($output, $this->tok->replaceTags($tpl, $replace));
 
 		if ($this->env['rowbreak'] > 0 && $i > 0 && (($i + 1) % $this->env['rowbreak']) == 0 && $i != $end) {
 			$rowbreak_html = $this->tok->replaceTags($this->conf['rowbreak_html'], [ 'row' =>  ($i + 1) / $this->env['rowbreak'] ]);
-			// \rkphplib\lib\log_debug("TOutput.tok_output_loop:622> rowbreak:\n$rowbreak_html"); 
+			// \rkphplib\Log::debug("TOutput.tok_output_loop> rowbreak:\n$rowbreak_html"); 
 			array_push($output, $rowbreak_html);
 		}
 	}
@@ -628,7 +628,7 @@ public function tok_output_loop(string $tpl) : string {
 		$fill_rest = $i % $this->env['rowbreak'];
 
 		for ($j = $fill_rest; $j > 0 && $j < $this->env['rowbreak']; $j++) {
-			// \rkphplib\lib\log_debug("TOutput.tok_output_loop:631> rowbreak_fill:\n{$this->conf['rowbreak_fill']}");
+			// \rkphplib\Log::debug("TOutput.tok_output_loop> rowbreak_fill:\n".$this->conf['rowbreak_fill']);
 			array_push($output, $this->conf['rowbreak_fill']);
 			$i++;
 		}
@@ -637,11 +637,11 @@ public function tok_output_loop(string $tpl) : string {
 				!empty($this->conf['pagebreak_fill']) && !empty($this->conf['pagebreak_fill'])) {
 			for ($j = $i; $j < $this->env['pagebreak']; $j++) {
 				if ($j % $this->env['rowbreak'] == 0) {
-					// \rkphplib\lib\log_debug("TOutput.tok_output_loop:640> rowbreak:\n{$this->conf['rowbreak_html']}");
+					// \rkphplib\Log::debug("TOutput.tok_output_loop> rowbreak:\n".$this->conf['rowbreak_html']);
 					array_push($output, $this->conf['rowbreak_html']);    			
 				}
 
-				// \rkphplib\lib\log_debug("TOutput.tok_output_loop:644> rowbreak_fill:\n{$this->conf['rowbreak_fill']}"); 
+				// \rkphplib\Log::debug("TOutput.tok_output_loop> rowbreak_fill:\n".$this->conf['rowbreak_fill']); 
 				array_push($output, $this->conf['rowbreak_fill']);    		
 			}
 		}	
@@ -742,7 +742,7 @@ public function tok_output_conf(array $p) : void {
 	foreach ($p as $key => $value) {
 		$this->conf[$key] = $value;
 	}
-	// \rkphplib\lib\log_debug("TOutput.tok_output_conf:745> this.conf: ".print_r($this->conf, true));
+	// \rkphplib\Log::debug("TOutput.tok_output_conf> this.conf: <1>", $this->conf);
 }
 
 
@@ -1013,7 +1013,7 @@ private function _scroll_link(string $key, int $last) : string {
 	$link = $this->conf['scroll.'.$key];
 
 	$res = $this->tok->replaceTags($tpl, [ 'link' => $link, 'last' => $last ]);
-	// \rkphplib\lib\log_debug("TOutput._scroll_link:1016> key=[$key], last=[$last] tpl=[$tpl] link=[$link] last=[$last] res=[$res]");
+	// \rkphplib\Log::debug("TOutput._scroll_link> key=[$key], last=[$last] tpl=[$tpl] link=[$link] last=[$last] res=[$res]");
 	return $res;
 }
 
@@ -1037,7 +1037,7 @@ private function exportLinkKeep() : void {
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TOutput.exportLinkKeep:1040> keep_param: ".join('|', $keep_param));
+	// \rkphplib\Log::debug("TOutput.exportLinkKeep> keep_param: <1>", $keep_param);
 	foreach ($keep_param as $name) {
 		if (isset($_REQUEST[$name])) {
 			$kv[$name] = $this->getValue($name);
@@ -1071,11 +1071,11 @@ protected function selectData() : void {
 	$this->conf['query'] = $sql->query($this->conf['query']);
 
 	$db = Database::getInstance($this->conf['query.dsn'], [ 'output' => $this->conf['query'] ]);
-	// \rkphplib\lib\log_debug("TOutput.selectData:1074> query.output: ".$db->getQuery('output', $_REQUEST));
+	// \rkphplib\Log::debug("TOutput.selectData> query.output: ".$db->getQuery('output', $_REQUEST));
 	$db->execute($db->getQuery('output', $_REQUEST), true);
 
 	$this->env['total'] = $db->getRowNumber();
-	// \rkphplib\lib\log_debug("TOutput.selectData:1078> found ".$this->env['total'].' entries');
+	// \rkphplib\Log::debug("TOutput.selectData> found ".$this->env['total'].' entries');
 	$this->table = [];
 
 	if ($this->env['start'] >= $this->env['total']) {
@@ -1090,7 +1090,7 @@ protected function selectData() : void {
 	$skip = intval($this->conf['skip']);
 	$this->env['total'] -= $skip;
 
-	// \rkphplib\lib\log_debug("TOutput.selectData:1093> show max. $n rows");
+	// \rkphplib\Log::debug("TOutput.selectData> show max. $n rows");
 	while (($row = $db->getNextRow()) && $n < $this->env['pagebreak']) {
 		if ($skip > 0) {
 			$skip--;
@@ -1109,7 +1109,7 @@ protected function selectData() : void {
 		$this->checkColumnLabel();
 	}
 
-	// \rkphplib\lib\log_debug('TOutput.selectData:1112> show '.count($this->table).' rows');
+	// \rkphplib\Log::debug('TOutput.selectData> show '.count($this->table).' rows');
 	$db->freeResult();
 }
 
@@ -1122,7 +1122,7 @@ public function fillTable(?array $table_data = null) : void {
 	if (!is_null($table_data)) {
 		$this->table = $table_data;
 		$this->env['total'] = count($this->table);		
-		// \rkphplib\lib\log_debug("TOutput.fillTable:1125> env.total=".$this->env['total']);
+		// \rkphplib\Log::debug("TOutput.fillTable> env.total=".$this->env['total']);
 		return;
 	}
 
