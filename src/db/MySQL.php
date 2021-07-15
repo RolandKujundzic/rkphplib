@@ -1021,7 +1021,6 @@ private function _exec_stmt(array $q) : ?object {
  * Return hash if $rcount < 0 (result[-1 * $rcount + 1]).
  */
 private function _fetch_stmt(object $stmt, ?array $rbind = null, int $rcount = 0) : ?array {
-
 	if (is_null($stmt)) {
 		return null;
 	}
@@ -1217,7 +1216,6 @@ public function getAffectedRows() : int {
  *
  */
 public function getError() : ?array {
-
 	if (!$this->db->errno) {
 		return $this->abort_error;
 	}
@@ -1319,7 +1317,6 @@ public function getTableChecksum(string $table, bool $native = false) : string {
  * 
  */
 public function getTableStatus(string $table) : array {
-
 	if (empty($table)) {
 		throw new Exception('empty table name');
 	}
