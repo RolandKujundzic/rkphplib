@@ -491,6 +491,10 @@ public function tok_sql_query($qkey, $query) {
 		$this->first_row = null;
 	}
 
+	if ($use_result) {
+		Database::recreate($this->db);
+	}
+
 	$this->db->execute($query, $use_result);
 	return '';
 }
