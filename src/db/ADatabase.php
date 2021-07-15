@@ -153,8 +153,8 @@ public function saveAs(string $file = '', array $table_list = []) : void {
 
 
 /**
- * Return object identifier. Use '.' as delimiter if
- * database is connected otherwise use '-'.
+ * Return object identifier. Use '-' as delimiter if
+ * database is connected otherwise use ':'.
  */
 public function getId() : string {
 	if (empty($this->dsn)) {
@@ -187,7 +187,7 @@ public function getId() : string {
 		$tmp[$j] = substr($tmp[$j], 0, 3).$q.substr($tmp[$j], -3);
 	}
 
-	$delimiter = $this->connected() ? '.' : '-';
+	$delimiter = $this->connected() ? '-' : ':';
 	return join($delimiter, $tmp);
 }
 
@@ -263,7 +263,12 @@ public function getDSN() : string {
  * Return query map.
  */
 public function getQueryMap() : array {
-	return $this->query;
+	$qmap = [];
+	foreach ($this->query as $key => $info) {
+		$qmap[$key] = isset($info['@query']) ? $info['@query'] : $info;
+	}
+
+	return $qmap;
 }
 
 
