@@ -25,6 +25,22 @@ private static $pool = [];
 
 
 /**
+ * Connect $db to new database object if $db->hasResultSet()
+ */
+public static function recreate(ADatabase &$db) : void {
+	if (!$db->hasResultSet()) {
+		return;
+	}
+
+	$connected = $db->connected();
+	$db = self::create($db->getDSN(), $db->getQueryMap());
+	if ($connected) {
+		$db->connect();
+	}
+}
+
+
+/**
  * Factory method. Return ADatabase object with dsn set (use SETTINGS_DSN if $dsn is empty). Example:
  *
  * $mysqli = Database::create('mysqli://user:password@tcp+localhost/dbname');
