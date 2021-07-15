@@ -429,14 +429,11 @@ public function tok_output_header(string $tpl) : string {
 		return '';
 	}
 
-	if (!empty($this->conf['column_label'])) {
-		$tpl = $this->tok->replaceTags($tpl, [ '_column' => $this->getHeaderColumn() ]);
-	}
+	$replace = [];
+	$replace['_column'] = empty($this->conf['column_label']) ? '' : $this->getHeaderColumn();
 
 	// \rkphplib\lib\log_debug("TOutput.tok_output_header:436> replace tpl: $tpl");
 	if (!empty($this->env['tags'][0]) && $this->tok->hasReplaceTags($tpl, [ $this->env['tags'][0] ])) {
-		$replace = [];
-
 		for ($i = 0; $i < count($this->env['tags']); $i++) {
 			$tag = $this->env['tags'][$i];
 
@@ -447,10 +444,10 @@ public function tok_output_header(string $tpl) : string {
 			else {
 				$replace[$tag] = $tag;
   		}
-
-			$tpl = $this->tok->replaceTags($tpl, $replace);
   	}
 	}
+
+	$tpl = $this->tok->replaceTags($tpl, $replace);
 
 	// \rkphplib\lib\log_debug("TOutput.tok_output_header:455> exit tpl: $tpl");
 	return $tpl;
@@ -565,6 +562,9 @@ public function tok_output_loop(string $tpl) : string {
 
 	if (!empty($this->conf['column_label'])) {
 		$tpl = $this->getLoopColumn($tpl);
+	}
+	else {
+		$tpl = $this->tok->replaceTags($tpl, [ '_column' => '' ]);
 	}
 
 	$start = $this->env['start'];
