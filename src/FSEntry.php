@@ -148,7 +148,6 @@ public static function hasSuffix(string $file, array $suffix_list) : bool {
  * If $flag is 2^1: cd dirname($link); ln -s relpath($target) basename($link); cd back 
  */
 public static function link(string $target, string $link, int $flag = 0) : void {
-
 	$rp_target = realpath($target);
 	if (is_link($link) && ($rp_target == realpath($link) || $rp_target == realpath(readlink($link)))) {
 		// already exists
@@ -201,7 +200,6 @@ public static function link(string $target, string $link, int $flag = 0) : void 
  * Remove link.
  */
 public static function unlink(string $link) : void {
-
 	if (!is_link($link)) {
 		throw new Exception('no such link', "link=[$link]");
 	}
@@ -225,7 +223,6 @@ public static function path(string $path, int $opt = 0) {
  * change is not possible but privileges are already rw(x).
  */
 public static function chmod(string $path, int $mode) : bool {
-
 	if (mb_strlen(trim($path)) == 0) {
 		throw new Exception('empty path');
 	}
@@ -303,7 +300,6 @@ public static function chmod(string $path, int $mode) : bool {
  * True if $path is link. Default is to throw exception if path is not link. 
  */
 public static function isLink(string $path, bool $abort = true) : bool {
-
 	if (empty($path)) {
 		if ($abort) {
 			throw new Exception('empty file path');
@@ -327,7 +323,6 @@ public static function isLink(string $path, bool $abort = true) : bool {
  * Return true if file exists. If $abort is true throw exception (default) otherwise return false.
  */
 public static function isFile(string $path, bool $abort = true, bool $is_readable = true) : bool {
-
 	if (empty($path)) {
 		if ($abort) {
 			throw new Exception('empty file path');
@@ -400,7 +395,6 @@ public static function checkPath(string $path, string $prefix = '', array $allow
  * Return true if directory exists. If $abort is true throw exception (default) otherwise return false.
  */
 public static function isDir(string $path, bool $abort = true, bool $is_readable = true) : bool {
-
 	if (empty($path)) {
 		if ($abort) {
 			throw new Exception('empty directory path');
@@ -431,7 +425,6 @@ public static function isDir(string $path, bool $abort = true, bool $is_readable
  * time.[stime|mtime|atime|ctime|since|accessed|modified|created].
  */
 public static function stat(string $path, bool $clearcache = false) : array {
-
 	if ($clearcache) {
 		clearstatcache();
 	}

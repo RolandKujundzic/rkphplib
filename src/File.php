@@ -169,7 +169,6 @@ public static function head(string $file, int $lnum = 5, bool $print = true) : a
  * @example File::loadTable('split:string://a=1|&|b=2|@|c=3|&|d=4', [ '|&|', '|@|', '=' ])
  */
 public static function loadTable(string $uri, array $options = []) : array {
-
 	if (!preg_match('#^(csv|unserialize|json|split)\:(file|string|https?)\://#', substr($uri, 0, 20), $match)) {
 		throw new Exception('invalid uri', $uri);
 	}
@@ -493,7 +492,6 @@ public static function fromURL(string $url, bool $required = true, array $header
  * (-n = seek n bytes from end).
  */
 public static function load(string $file, int $offset = 0) : string {
-
 	if (empty($file)) {
 		throw new Exception("empty filename");
 	}
@@ -523,7 +521,6 @@ public static function load(string $file, int $offset = 0) : string {
  * Return file content. Apply file locking. If $file = STDIN return self::stdin().
  */
 private static function _lload(string $file, int $offset = -1) : string {
-
 	$fsize = self::size($file);
 	$res = '';
 
@@ -552,7 +549,6 @@ private static function _lload(string $file, int $offset = -1) : string {
  * Abort if w or h is greater than 2 * original size. Requires convert from ImageMagic.
  */
 public static function resizeImage(string $wxh, string $source, string $target = '') : void {
-
 	$info = self::imageInfo($source);
 	$resize = '';
 
@@ -596,7 +592,6 @@ public static function resizeImage(string $wxh, string $source, string $target =
  * width=height=0 and suffix=mime=file=''. Return (width, height, mime, suffix, file).
  */
 public static function imageInfo(string $file, bool $abort = true) : array {
-
 	if (!FSEntry::isFile($file, $abort)) {
 		return false;
 	}
@@ -665,7 +660,6 @@ public static function imageInfo(string $file, bool $abort = true) : array {
  * @return resource
  */
 private static function _open_lock(string $file, int $lock_mode, string $open_mode) {
-
 	$map = array('STDIN' => 'php://stdin', 'STDOUT' => 'php://stdout');
 	if (!empty($map[$file])) {
 		$file = $map[$file];
@@ -692,7 +686,6 @@ private static function _open_lock(string $file, int $lock_mode, string $open_mo
  * Return filesize in byte (or formattet via File::formatSize if $as_text is true).
  */
 public static function size(string $file, bool $as_text = false) : int {
-
 	FSEntry::isFile($file);
 
 	if (($res = filesize($file)) === false) {
@@ -861,7 +854,6 @@ public static function isChanging(string $file, int $watch = 15) : bool {
  * Change file permissions. Use octal value for file priviles $mode (0 = default = FILE_DEFAULT_MODE).
  */
 public static function chmod(string $file, int $mode = 0) : void {
-
 	if (!$mode) {
 		$mode = FILE_DEFAULT_MODE;
 	}
@@ -875,7 +867,6 @@ public static function chmod(string $file, int $mode = 0) : void {
  * Save $data to $file. Apply chmod($file, FILE_DEFAULT_MODE).
  */
 public static function save(string $file, string $data, int $flag = 0) : void {
-
 	if (empty($file)) {
 		throw new Exception('empty filename');
 	}
@@ -986,7 +977,6 @@ public static function save_rw(string $file, string $data, int $mode = 0) : void
  * Delete file. Abort if file does not exists (unless must_exist = false).
  */
 public static function remove(string $file, bool $must_exist = true) : void {
-
 	if (!FSEntry::isFile($file, $must_exist)) {
 		return;
 	}
@@ -1012,7 +1002,6 @@ public static function append(string $file, string $data) : void {
  * @return resource
  */
 public static function open(string $file, string $mode = 'rb') {
-
 	$write_utf8_bom = false;
 	$read_utf8_bom = false;
 	$utf8_bom = chr(239).chr(187).chr(191); // byte order mark == b"\xEF\xBB\xBF"
@@ -1074,7 +1063,6 @@ public static function loadLines(string $file, int $flags = 0) : array {
  * @param resource $fh
  */
 public static function writeCSV($fh, array $data, string $delimiter = ',', string $enclosure = '"', string $escape = '\\') : void {
-
 	if (!$fh) {
 		throw new Exception('invalid file handle');
 	}
@@ -1144,7 +1132,6 @@ public static function write($fh, string $data) : void {
  * @return mixed string|false
  */
 public static function read($fh, int $length = 8192) {
-
 	if (!$fh) {
 		throw new Exception('invalid file handle');
 	}
@@ -1178,7 +1165,6 @@ public static function end($fh) : bool {
  * @return mixed string|bool
  */
 public static function readLine($fh) {
-
 	if (!$fh) {
 		throw new Exception('invalid file handle');
 	}
@@ -1286,7 +1272,6 @@ public static function unserialize(string $file) {
  * @param resource $fh
  */
 public static function readCSV($fh, string $delimiter = ',', string $enclosure = '"', string $escape = '\\') : ?array {
-
 	if (!$fh) {
 		throw new Exception('invalid file handle');
 	}
@@ -1314,7 +1299,6 @@ public static function readCSV($fh, string $delimiter = ',', string $enclosure =
  * @param resource &$fh
  */
 public static function close(&$fh) : void {
-
 	if (!$fh) {
 		throw new Exception('invalid file handle');
 	}
@@ -1417,7 +1401,6 @@ public static function suffix(string $file, bool $keep_dot = false) : string {
  * If rsuffix is set remove everything after rsuffix rpos (apply after remove_suffix). 
  */
 public static function basename(string $file, bool $remove_suffix = false, string $rsuffix = '') : string {
-
 	$res = basename($file);
 
 	if ($remove_suffix && ($pos = mb_strrpos($res, '.')) !== false) {
@@ -1440,7 +1423,6 @@ public static function basename(string $file, bool $remove_suffix = false, strin
  * - rsuffix: _
  */
 public static function basename_collect(array $list, array $options = []) : array {
-
 	$default_options = [ 'remove_suffix' => true, 'remove_prefix' => '', 'rsuffix' => '_' ];
 
 	foreach ($default_options as $key => $value) {
@@ -1545,7 +1527,6 @@ public static function move(string $source, string $target, int $mode = 0) : voi
  * Return last modified. Return Y-m-d H:i:s instead of unix timestamp if $sql_ts is true.
  */
 public static function lastModified(string $path, bool $sql_ts = false) {
-
 	FSEntry::isFile($path);
 
 	if (($res = filemtime($path)) === false) {
@@ -1565,7 +1546,6 @@ public static function lastModified(string $path, bool $sql_ts = false) {
  * Exit after send. If file does not exist send 404 not found.
  */
 public static function httpSend(string $file, string $disposition = 'attachment') : void {
-	
 	if (!FSEntry::isFile($file, false)) {
 		header("HTTP/1.0 404 Not Found");
 		exit;

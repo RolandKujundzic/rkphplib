@@ -61,7 +61,6 @@ public static function exists(?string $path, bool $required = false) : bool {
  * Return last modified (int or string). Return Y-m-d H:i:s instead of unix timestamp if $sql_ts is true.
  */
 public static function lastModified(string $path, bool $sql_ts = false) {
-
 	FSEntry::isDir($path);
 
 	if (($res = filemtime($path)) === false) {
@@ -80,7 +79,6 @@ public static function lastModified(string $path, bool $sql_ts = false) {
  * Remove directory.
  */
 public static function remove(string $path, bool $must_exist = true) : void {
-
 	if ($path != trim($path)) {
 		throw new Exception('no leading or trailing whitespace allowed in path', $path);
 	}
@@ -121,7 +119,6 @@ public static function remove(string $path, bool $must_exist = true) : void {
  * default value is DIR_DEFAULT_MODE.
  */
 public static function create(string $path, int $mode = 0, bool $recursive = false) : bool {
-
 	if (!$mode) {
 		$mode = DIR_DEFAULT_MODE;
 	}
@@ -201,7 +198,6 @@ public static function move(string $old_dir, string $new_dir, int $opt = 0) : vo
  * defined as $link_root (e.g. $link_root = getcwd()).
  */
 public static function copy(string $source_dir, string $target_dir, string $link_root = '') : void {
-
 	if (empty($source_dir)) {
 		throw new Exception("Source directory is empty");
 	}
@@ -269,7 +265,6 @@ public static function copy(string $source_dir, string $target_dir, string $link
  * Return directory entries (with full path). Parameter $type is 0=any (default), 1=files, 2=directories.
  */
 public static function entries(string $path, int $type = 0) : array {
-
 	if (mb_substr($path, -1) == '/') {
 		$path = mb_substr($path, 0, -1);
 	}
@@ -349,7 +344,6 @@ public static function scanDir(string $path, array $suffix_list = array(), strin
  * @see FSEntry::fixSuffixList
  */
 public static function scanTree(string $path, array $suffix_list = array(), array $exclude_dir = array(), bool $_recursion = false) : array {
-
 	if (!$_recursion) {
 		$suffix_list = FSEntry::fixSuffixList($suffix_list);
 
@@ -391,7 +385,6 @@ public static function scanTree(string $path, array $suffix_list = array(), arra
  * Return directory size (= sum of all filesizes in directory tree).
  */
 public static function size(string $path) : int {
-
 	$entries = Dir::entries($path);
 	$size = 0;
 
@@ -412,7 +405,6 @@ public static function size(string $path) : int {
  * Return true if all directory entries are $action (readable|writable).
  */
 public static function check(string $path, string $action) : int {
-
 	if ($action != 'readable' && $action != 'writeable') {
 		throw new Exception("invalid action [$action] use check(PATH, readable|writeable)", "path=[$path] action=[$action]");
 	}
