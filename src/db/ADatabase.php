@@ -773,11 +773,11 @@ public static function escape_name(string $name, bool $abort = false) : string {
 
 	if (!preg_match("/^[a-zA-Z0-9_\.]+$/", $res)) {
 		if ($abort) {
-			throw new Exception('invalid sql name', "[$name]");
+			throw new Exception('invalid sql name', "[$res]");
 		}
 
-		if (mb_strpos($name, '`') !== false) {
-			throw new Exception('invalid sql name', "[$name]");
+		if (mb_strpos($res, '`') !== false || mb_strlen($res) > 40) {
+			throw new Exception('invalid sql name', "[$res]");
 		}
 
 		$res = '`'.$res.'`';
