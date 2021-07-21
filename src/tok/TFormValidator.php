@@ -202,11 +202,8 @@ public function tok_fv_appendjs(string $name, array $id_list = []) : string {
 		}
 	}
 
-	if (!empty($conf['hidden_keep'])) {
-		$hidden_keys = split_str(',', $conf['hidden_keep']);
-		foreach ($hidden_keys as $key) {
-			array_push($list, $name.'.append("'.$key.'", document.getElementById("'.$id_prefix.$key.'").value);');
-		}
+	foreach ($conf['hidden_keep'] as $key) {
+		array_push($list, $name.'.append("'.$key.'", document.getElementById("'.$id_prefix.$key.'").value);');
 	}
 
 	$res = join("\n", $list);
@@ -309,12 +306,9 @@ public function tok_fv_hidden() : string {
 
 	$id_prefix = $this->getConf('id_prefix', '', true);
 
-	if (!empty($hidden_keep = $this->getConf('hidden_keep', '', false))) {
-		$list = split_str(',', $hidden_keep);
-		foreach ($list as $key) {
-			if (isset($_REQUEST[$key])) {
-				$res .= '<input type="hidden" id="'.$id_prefix.$key.'" name="'.$key.'" value="'.htmlescape($_REQUEST[$key]).'">'."\n";
-			}
+	foreach ($this->conf['current']['hidden_keep'] as $key) {
+		if (isset($_REQUEST[$key])) {
+			$res .= '<input type="hidden" id="'.$id_prefix.$key.'" name="'.$key.'" value="'.htmlescape($_REQUEST[$key]).'">'."\n";
 		}
 	}
 
@@ -447,13 +441,15 @@ public function tok_fv_init(array $p) : void {
 
 	$this->conf['current'] = array_merge($conf, $p);
 
-	if (!isset($this->conf['current']['required'])) {
-		$this->conf['current']['required'] = [];
-	}
+	foreach (['required', 'optional', 'allow_column', 'hidden_keep' ] as $akey) {
+		if (!isset($this->conf['current'][$akey])) {
+			$this->conf['current'][$akey] = [];
+		}
 
-	if (!is_array($this->conf['current']['required'])) {
-		$this->conf['current']['required'] = empty($this->conf['current']['required']) ? [] : 
-		\rkphplib\lib\split_str(',', $this->conf['current']['required']);
+		if (!is_array($this->conf['current'][$akey])) {
+			$this->conf['current'][$akey] = empty($this->conf['current'][$akey]) ? [] : 
+				\rkphplib\lib\split_str(',', $this->conf['current'][$akey]);
+		}
 	}
 
 	$submit_name = $this->conf['current']['submit'];
@@ -491,10 +487,6 @@ public function tok_fv_check(string $ajax = '') : string {
 		return $ajax == '0' ? '' : 'error';
 	}
 
-	if (!is_array($this->conf['current']['required'])) {
-		$this->conf['current']['required'] = \rkphplib\lib\split_str(',', $this->conf['current']['required']);
-	}
-
 	if (empty($this->conf['current']['col_val'])) {
 		foreach ($this->conf['current']['required'] as $key) {
 			if (!isset($_REQUEST[$key]) || mb_strlen($_REQUEST[$key]) == 0) {
@@ -523,13 +515,9 @@ public function tok_fv_check(string $ajax = '') : string {
 			array_push($this->error[$column], 'required');
 		}
 
-		if (!empty($this->conf['current']['allow_column'])) {
-			$allow_col = \rkphplib\lib\split_str(',', $this->conf['current']['allow_column']);
-
-			// \rkphplib\Log::debug("TFormValidator.tok_fv_check> column=$column allow_col: <1>", $allow_col);
-			if (!in_array($column, $allow_col)) {
-				$this->error['parameter'] = [ $column.' is immutable' ];
-			}
+		if (isset($this->conf['current']['allow_column']) && !in_array($column, $this->conf['current']['allow_column'])) {
+			// \rkphplib\Log::debug("TFormValidator.tok_fv_check> column=$column is immutable");
+			$this->error['parameter'] = [ $column.' is immutable' ];
 		}
 	}
 
