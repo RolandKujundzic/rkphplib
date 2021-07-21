@@ -336,12 +336,20 @@ public function tok_fv_get(string $name) : string {
 	if ($name == '*') {
 		$request = [];
 
+		$rkey = array_merge($this->conf['current']['required'], $this->conf['current']['optional']);
+		foreach ($rkey as $key) {
+			if (isset($_REQUEST[$key])) {
+				$request[$key] = $_REQUEST[$key];
+			}
+		}
+
 		foreach ($this->conf['current'] as $key => $value) {
 			if (substr($key, 0, 3) == 'in.' && ($in = substr($key, 3)) && isset($_REQUEST[$in])) {
 				$request[$in] = $_REQUEST[$in];
 			}
 		}
 
+		// \rkphplib\Log::debug("TFormValidator:tok_fv_get> return <1>", $request);
 		return kv2conf($request);
 	}
 
@@ -355,6 +363,7 @@ public function tok_fv_get(string $name) : string {
 		list ($name, $engine) = explode('@', $name, 2);
 	}
 
+	// \rkphplib\Log::debug("TFormValidator:tok_fv_get> $name=", $this->getConf($name, $engine, $required));
 	return $this->getConf($name, $engine, $required);
 }
 
