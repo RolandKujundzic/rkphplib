@@ -60,4 +60,7 @@ in.gender=select, m=Herr, f=Frau|#|
 in.firstname=text|#|
 in.lastname=text|#|
 in.terms=checkbox|#|
+optional=@1 |#|
+allow_column=@1 |#|
+hidden_keep=@1 |#|
 hidden.form_action=1
