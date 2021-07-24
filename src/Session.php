@@ -177,7 +177,7 @@ public static function readPHPSessionFile(string $file) : array {
  * 
  */
 public function init(array $conf) : void {
-	// \rkphplib\lib\log_debug([ 'Session.init:293> <1>', $conf);
+	// \rkphplib\Log::debug('Session.init> <1>', $conf);
 	$this->initConf($conf);
 	$this->start();
 
@@ -194,7 +194,7 @@ public function init(array $conf) : void {
 	$this->initMeta();
 	$this->checkScope();
 
-	// \rkphplib\lib\log_debug([ "Session.init:197> skey=$skey mkey=$mkey <1>", $this->conf);	
+	// \rkphplib\Log::debug("Session.init> skey=$skey mkey=$mkey <1>", $this->conf);
 	if (!empty($_REQUEST[SETTINGS_REQ_DIR])) {
 		$dir = $_REQUEST[SETTINGS_REQ_DIR];
 		foreach ($this->conf['allow_dir'] as $allow_dir) {
@@ -256,11 +256,11 @@ private function redirectLogin(string $reason, array $p = []) : void {
 	unset($_SESSION[$mkey]);
 
 	if (!empty($this->conf['redirect_login'])) {
-		// \rkphplib\lib\log_debug('Session.redirectLogin:259> redirect '.$this->conf['redirect_login'], $reason);
+		// \rkphplib\Log::debug('Session.redirectLogin> redirect '.$this->conf['redirect_login']);
 		redirect($this->conf['redirect_login'], $p);
 	}
 	else {
-		// \rkphplib\lib\log_debug('Session.redirectLogin:263> invalid session', $reason);
+		// \rkphplib\Log::debug('Session.redirectLogin> exception: '.$reason);
 		throw new Exception($reason);
 	}
 }
@@ -365,7 +365,7 @@ private function checkScope() : void {
 
 	if (!$ok) {
 		if (!empty($this->conf['redirect_forbidden'])) {
-			// \rkphplib\lib\log_debug('Session.checkScope:368> invalid scope, redirect: '.$this->conf['redirect_forbidden']);
+			// \rkphplib\Log::debug('Session.checkScope> invalid scope, redirect: '.$this->conf['redirect_forbidden']);
 			redirect($this->conf['redirect_forbidden']);
 		}
 		else {
@@ -383,7 +383,7 @@ private function start() {
 		return;
 	}
 
-	// \rkphplib\lib\log_debug('Session.start:386> start session');
+	// \rkphplib\Log::debug('Session.start> start session');
 	$secure = intval(\rkphplib\lib\is_ssl());
 	$same_site = $secure && $this->conf['cross_site'] ? 'none' : 'strict';
 	$sess_opt = [
@@ -418,7 +418,7 @@ private function start() {
  */
 private function initMeta() : void {
 	if (!empty($this->conf['init_meta'])) {
-		// \rkphplib\lib\log_debug('Session.initMeta:421> use existing'); 
+		// \rkphplib\Log::debug('Session.initMeta> use existing');
 		return;
 	}
 
