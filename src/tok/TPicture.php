@@ -55,7 +55,7 @@ public function getPlugins(Tokenizer $tok) : array {
  * @tok {picture:tbn}1.jpg,2.jpg{:picture} = data/shop/tbn/1.jpg
  *
  * @tok …
- * {picture:tbn:strip}1.jpg,2.jpg,3.jpg{:picture}
+ * {picture:tbn:strip[2|-vertical|-horizontal]}1.jpg,2.jpg,3.jpg{:picture}
  * <div class="thumbnail_strip">
  *   <img src="data/shop/tbn/1.jpg">
  *   <img src="data/shop/tbn/2.jpg">
@@ -88,8 +88,14 @@ public function tok_picture_tbn(string $param, array $images) : string {
 			$res .= "\n".replace_tags($this->conf['tpl.strip2'], $r);
 		}
 	}
-	else if ($param == 'strip') {
+	else if (substr($param, 0, 5) == 'strip') {
 		$res = $this->conf['tpl.strip_header'];
+		if ($param == 'strip-vertical') {
+			$res = str_replace('thumbnail_strip"', 'thumbnail_strip rkScroll_vertical_strip"', $res);
+		}
+		else if ($param == 'strip-horizontal') {
+			$res = str_replace('thumbnail_strip"', 'thumbnail_strip rkScroll_horizontal_strip"', $res);
+		}
 
 		for ($i = 0;$i < count($images); $i++) {
 			$r = [ 'num' => $i + 1, 'src' => $tbn_dir.'/'.$images[$i] ]; 
@@ -202,7 +208,7 @@ public function tok_picture_init(array $p) : void {
 		$this->conf[$key] = $value;
 	}
 
-	// \rkphplib\lib\log_debug([ "TPicture.tok_picture_init:205> this.conf: <1>\n<2>", $this->conf, $p ]);
+	// \rkphplib\Log::debug("TPicture.tok_picture_init> this.conf: <1>\n<2>", $this->conf, $p);
 }
 
 
@@ -291,7 +297,7 @@ public function tok_picture_src(array $p) : string {
 	$this->checkConf($p);
 	$this->computeImgSource();
 
-	// \rkphplib\lib\log_debug('TPicture.tok_picture_src:294> this.conf: '.print_r($this->conf, true));
+	// \rkphplib\Log::debug('TPicture.tok_picture_src> this.conf: <1>', $this->conf);
 	if (empty($this->conf['source'])) {
 		return '';
 	}
@@ -460,21 +466,21 @@ private function runConvertCmd($p) {
 
   Dir::create($target_dir, 0777, true);
 
-	// \rkphplib\lib\log_debug([ "TPicture.runConvertCmd:463> <1>", $p ]);
+	// \rkphplib\Log::debug("TPicture.runConvertCmd> <1>", $p);
 	if (File::exists($this->conf['target']) && !empty($this->conf['use_cache'])) {
 		if ($this->conf['use_cache'] == 'check_time') {
 			if (File::lastModified($this->conf['source']) <= File::lastModified($this->conf['target'])) {
-				// \rkphplib\lib\log_debug("TPicture.runConvertCmd:467> check_time - use cache: ".$this->conf['target']);
+				// \rkphplib\Log::debug("TPicture.runConvertCmd> check_time - use cache: ".$this->conf['target']);
 				return $this->conf['target'];
 			}
 		}
 		else {
-			// \rkphplib\lib\log_debug("TPicture.runConvertCmd:472> use cache: ".$this->conf['target']);
+			// \rkphplib\Log::debug("TPicture.runConvertCmd> use cache: ".$this->conf['target']);
 			return $this->conf['target'];
 		}
 	}
 
-	// \rkphplib\lib\log_debug("TPicture.runConvertCmd:477> $cmd");
+	// \rkphplib\Log::debug("TPicture.runConvertCmd> $cmd");
 	execute($cmd.' 2>/dev/null', $p); 
 
 	if (!FSEntry::isFile($p['target'], false)) {
