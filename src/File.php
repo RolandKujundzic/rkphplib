@@ -1236,11 +1236,25 @@ public static function saveConf(string $file, array $conf, string $d2 = HASH_DEL
 
 /**
  * Return file content converted from json.
+ * Use 'name=file.js' for 'var name = …;' content.
+ *
  * @see JSON::decode 
  * @return any
  */
 public static function loadJSON(string $file, int $flag = 1) {
-	return JSON::decode(self::load($file), $flag);
+	$vname = '';
+
+	if (strpos($file, '=') > 0) {
+		list ($vname, $file) = explode('=', $file, 2);
+	}
+
+	$json = self::load($file);
+
+	if (!empty($vname)) {
+		$json = substr($json, strlen($vname) + 7, -2);
+	}
+
+	return JSON::decode($json, $flag);
 }
 
 
