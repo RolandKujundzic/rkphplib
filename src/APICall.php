@@ -377,10 +377,10 @@ private function curlOtherData(array $data, array &$options) {
 		throw new Exception('Content-Type is array', print_r($ct, true));
 	}
 
-	if ($ct == 'application/xml') {
+	if (strpos($ct, 'application/xml') === 0) {
 		$data = XML::fromMap($data);
 	}
-	else if ($ct == 'application/json') {
+	else if (strpos($ct, 'application/json') === 0) {
 		$data = JSON::encode($data); 
 	}
 	else if ($ct == 'application/x-www-form-urlencoded') {
