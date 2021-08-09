@@ -26,28 +26,19 @@ use \rkphplib\traits\Map;
 
 
 /** 
- * @var map $opt default options: 
- *
- * - method = GET, (GET|POST|PUT|DELETE|PATCH)
- * - uri = '', some/action (with or without leading /)
- * - url = '', e.g. https://domain.tld/api/v1.0
- * - auth = request, (request|header|basic_auth|cookie:name)
- * - header = { Content-Type: application/json, Accept: application/json, Accept-Charset: utf-8 }
- * - token = '', e.g. iSFxH73p91Klm
- * - save = '', result save path
- * - tags = [], use as default !TAG_REPLACE! in test() mode
- * - decode = true, decode result if JSON/XML
+ * @var hash $opt
+ * @see set()
  */
 public $opt = [
-	'method' => 'GET', 
-	'uri' => '', 
-	'url' => '', 
-	'auth' => 'request', 
-	'token' => '', 
-	'header' => [ 'CONTENT-TYPE' => 'application/json', 'ACCEPT' => 'application/json', 'ACCEPT-CHARSET' => 'utf-8' ],
-	'save' => '',
+	'auth' => 'request',
 	'decode' => true,
-	'tags' => []
+	'header' => [ 'CONTENT-TYPE' => 'application/json', 'ACCEPT' => 'application/json', 'ACCEPT-CHARSET' => 'utf-8' ],
+	'method' => 'GET',
+	'save' => '',
+	'tags' => [],
+	'token' => '',
+	'uri' => '',
+	'url' => '',
 	];
 
 // @var hash|string $result
@@ -83,17 +74,18 @@ public function __construct(array $opt = []) {
 /**
  * Configure api call. Parameter:
  *
- *  - method: GET|POST|PUT|DELETE|PATCH
- *  - uri|path: request path e.g. some/action
+ *  - method: GET|POST|PUT|DELETE|PATCH  (default = GET)
  *  - url: required e.g. https://domain.tld/api/v1.0
- *  - token: required e.g. iSFxH73p91Klm
- *  - auth:  request|header|basic_auth
+ *  - uri|path: request path e.g. some/action (default = '', with or without leading /)
+ *  - token: e.g. iSFxH73p91Klm
+ *  - auth: request|header|basic_auth|cookie:name (default = request)
  *  - content: same as header[Content-Type] e.g. application/json=default|application/xml|image/jpeg|...
  *  - accept: same as header[Accept] = result format e.g application/json=default|application/xml|...
  *  - header: e.g. [ 'Content-Type' => 'application/json', ... ]
- *  - save_as: Save result here
+ *  - save: if set save to this file (if decode is true save JSON)
  *  - decode: decode JSON/XML result (default = true)
- *
+ *  - header: { Content-Type: application/json, Accept: application/json, Accept-Charset: utf-8 }
+ *  - tags: [], use as default !TAG_REPLACE! in test() mode
  * @param string|array $value
  */
 public function set(string $name, $value) : void {
@@ -145,25 +137,18 @@ public function set(string $name, $value) : void {
 			}
 		}
 	}
-	else {
-		$allow = [
-			'uri' => null,
-			'url' => null,
-			'token' => null,
-			'save' => null,
-			'decode' => null,
-			'method' => [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ],
-			'auth' => [ 'request', 'header', 'basic_auth' ] ];
-
-		if (!array_key_exists($name, $allow)) {
-			throw new Exception('invalid name', "$name=$value");
-		}
-
-		if (is_array($allow[$name]) && !in_array($value, $allow[$name])) {
-			throw new Exception('invalid value', "$name=$value");
-		}
-
+	else if (in_array($name, [ 'url', 'uri', 'token', 'save', 'decode' ])) {
 		$this->opt[$name] = $value;
+	}
+	else if ($name == 'method' && in_array($value, [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ])) {
+		$this->opt[$name] = $value;
+	}
+	else if ($name == 'auth' && (substr($value, 0, 7) == 'cookie:' ||
+						in_array($value, [ 'request', 'header', 'basic_auth' ]))) {
+		$this->opt[$name] = $value;
+	}
+	else {
+		throw new Exception('invalid name', "$name=$value");
 	}
 }
 
@@ -248,9 +233,14 @@ public function exec(?array $data = null) : bool {
 	}
 
 	$header = $this->opt['header'];
-	$options = [ 'FOLLOWLOCATION' => true, 'SSL_VERIFYPEER' => false,
-		'TIMEOUT' => 30, 'SSL_VERIFYHOST' => false, 'RETURNTRANSFER' => true,
-		'BINARYTRANSFER' => true, 'HEADERFUNCTION' => [ $this, 'readHeader' ] ];
+	$options = [
+		'BINARYTRANSFER' => true,
+		'FOLLOWLOCATION' => true,
+		'HEADERFUNCTION' => [ $this, 'readHeader' ],
+		'RETURNTRANSFER' => true,
+		'SSL_VERIFYHOST' => false,
+		'SSL_VERIFYPEER' => false,
+		'TIMEOUT' => 30 ];
 
 	if (!empty($this->opt['token'])) {
 		if (empty($this->opt['auth'])) {
