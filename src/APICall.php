@@ -50,11 +50,14 @@ public $opt = [
 	'tags' => []
 	];
 
-// @var map|string $result
+// @var hash|string $result
 public $result = null;
 
-// @var map $info
+// @var hash $info
 public $info = null;
+
+// @var hash $header
+public $header = null;
 
 // @var int $status
 public $status = null;
@@ -98,8 +101,8 @@ public function set(string $name, $value) : void {
 		throw new Exception('name is not string', print_r($name, true));
 	}
 
-	if ($name != 'header' && !is_string($value)) {
-		throw new Exception('value is not string', "$name: ".print_r($value, true));
+	if ($name != 'header' && !is_string($value) && !is_bool($value) && !is_numeric($value)) {
+		throw new Exception('value is not bool|number|string', "$name: ".print_r($value, true));
 	}
 
 	if ($name == 'path') {
@@ -143,8 +146,14 @@ public function set(string $name, $value) : void {
 		}
 	}
 	else {
-		$allow = [ 'method' => [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ], 'uri' => null, 'url' => null, 'token' => null, 
-			'auth' => [ 'request', 'header', 'basic_auth' ], 'save' => null, 'decode' => null ];
+		$allow = [
+			'uri' => null,
+			'url' => null,
+			'token' => null,
+			'save' => null,
+			'decode' => null,
+			'method' => [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ],
+			'auth' => [ 'request', 'header', 'basic_auth' ] ];
 
 		if (!array_key_exists($name, $allow)) {
 			throw new Exception('invalid name', "$name=$value");
@@ -194,6 +203,35 @@ public function call(string $method, string $uri, ?array $data = null) : bool {
 
 
 /**
+ * Curl callback function
+ * @param ressource $curl curl-Handler
+ */
+public function readHeader($curl, string $line) : int {
+	$len = strlen($line);
+
+	$kv = explode(':', $line, 2);
+	if (count($kv) < 2) {
+		return $len;
+	}
+
+	$key = strtolower(trim($kv[0]));
+
+	if (!isset($this->header[$key])) {
+		$this->header[$key] = trim($kv[1]);
+	}
+	else {
+		if (!is_array($this->header[$key])) {
+			$this->header[$key] = [ $this->header[$key] ];
+		}
+
+		array_push($this->header[$key], trim($kv[1]));
+	}
+
+	return $len;
+}
+
+
+/**
  * Execute API call.
  * 
  * If set('auth', 'basic_auth') use set('token, 'login:password').
@@ -210,8 +248,9 @@ public function exec(?array $data = null) : bool {
 	}
 
 	$header = $this->opt['header'];
-	$options = [ 'FOLLOWLOCATION' => true, 'SSL_VERIFYPEER' => false, 'TIMEOUT' => 30, 
-		'SSL_VERIFYHOST' => false, 'RETURNTRANSFER' => true, 'BINARYTRANSFER' => true ];
+	$options = [ 'FOLLOWLOCATION' => true, 'SSL_VERIFYPEER' => false,
+		'TIMEOUT' => 30, 'SSL_VERIFYHOST' => false, 'RETURNTRANSFER' => true,
+		'BINARYTRANSFER' => true, 'HEADERFUNCTION' => [ $this, 'readHeader' ] ];
 
 	if (!empty($this->opt['token'])) {
 		if (empty($this->opt['auth'])) {
@@ -275,12 +314,13 @@ public function exec(?array $data = null) : bool {
 		curl_setopt($ch, constant('CURLOPT_'.$key), $value);
 	}
 
+	$this->header = [];
 	$this->result = curl_exec($ch);
 	$this->info = curl_getinfo($ch);
 	$this->status = intval($this->info['http_code']);
 	$success = $this->status >= 200 && $this->status < 300;
 	curl_close($ch);
-	
+
 	$this->dump = print_r($options, true);
 
 	if ($this->opt['decode']) {	
@@ -303,7 +343,12 @@ public function exec(?array $data = null) : bool {
 	}
 
 	if ($this->opt['save']) {
-		File::save($this->opt['save'], $this->result);
+		if (!is_string($this->result)) {
+			File::saveJSON($this->opt['save'], $this->result);
+		}
+		else {
+			File::save($this->opt['save'], $this->result);
+		}
 	}
 
 	return $success;
