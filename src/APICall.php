@@ -94,7 +94,6 @@ public function __construct(array $opt = []) {
  * @param string|array $value
  */
 public function set(string $name, $value) : void {
-
 	if (!is_string($name)) {
 		throw new Exception('name is not string', print_r($name, true));
 	}
@@ -164,7 +163,6 @@ public function set(string $name, $value) : void {
  * Return set value (any). 
  */
 public function get(string $name) {
-
 	if ($name == 'path') {
 		$name = 'uri';
 	}
@@ -204,7 +202,6 @@ public function call(string $method, string $uri, ?array $data = null) : bool {
  * json_encode(...) for default content (application/json). If accept is application/json auto-convert result to map.
  */
 public function exec(?array $data = null) : bool {
-
 	$required = [ 'method', 'uri', 'url' ];
 	foreach ($required as $key) {
 		if (empty($this->opt[$key])) {
@@ -336,7 +333,6 @@ private function curlGetData(string $url, ?array $data) : string {
  * Return encoded data (string|hash). Options are modified if content is multipart/form-data.
  */
 private function curlOtherData(array $data, array &$options) {
-
 	if (!isset($this->opt['header']['CONTENT-TYPE'])) {
 		throw new Exception('Content-Type is not set');
 	}
@@ -387,7 +383,6 @@ private function curlOtherData(array $data, array &$options) {
  * - input_map: map - replace :TAG: with value (e.g. "header": { "Authorization": "Bearer !OAUTH2_TOKEN!" }
  */
 public function test(array $config = []) {
-
 	if (empty($config['url'])) {
 		throw new Exception('url missing');
 	}
@@ -497,7 +492,6 @@ private function exportTags(array $data, array $tag_list) : array {
  * Return ignore message list. 
  */
 private function compare_result(array $curr, array $ok, array $opt) : array {
-
 	if (!isset($opt['key'])) {
     $opt['key'] = [];
   }
